@@ -17,14 +17,14 @@ struct CartHeader {
     pub nintendo_logo: [u8; 48], // 0x0104-0x0133: Nintendo logo
     pub title: String,           // 0x0134-0x0143: Game title
     pub manufacturer_code: Option<String>, // 0x013F-0x0142: Manufacturer code (if exists)
-    pub cgb_flag: u8,            // 0x0143: Game Boy Color compatibility
+    pub cgb_flag: CgbFlag,            // 0x0143: Game Boy Color compatibility
     pub new_licensee_code: NewLicenseeCode, // 0x0144-0x0145: New licensee code
     pub sgb_flag: u8,            // 0x0146: Super Game Boy compatibility
     pub cartridge_type: CartridgeType, // 0x0147: Type of cartridge
     pub rom_size: u8,            // 0x0148: ROM size
     pub ram_size: u8,            // 0x0149: RAM size
     pub destination_code: u8,    // 0x014A: Destination code (Japan or non-Japan)
-    pub old_licensee_code: OldLicenseeCode,   // 0x014B: Old licensee code
+    pub old_licensee_code: OldLicenseeCode, // 0x014B: Old licensee code
     pub mask_rom_version: u8,    // 0x014C: Version number
     pub header_checksum: u8,     // 0x014D: Header checksum
     pub global_checksum: u16,    // 0x014E-0x014F: Global checksum
@@ -47,7 +47,7 @@ impl CartHeader {
             } else {
                 None
             },
-            cgb_flag: data[0x0143],
+            cgb_flag: CgbFlag::try_from_byte(data[0x0143])?,
             new_licensee_code: NewLicenseeCode::from_bytes(
                 data[0x0144..0x0146].try_into().unwrap(),
             ),
@@ -64,7 +64,23 @@ impl CartHeader {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
+pub enum CgbFlag {
+    CGBMode,
+    NonCGBMode,
+}
+
+impl CgbFlag {
+    pub fn try_from_byte(byte: u8) -> Result<Self, String> {
+        match byte {
+            0x80 => Ok(CgbFlag::CGBMode),
+            0xC0 => Ok(CgbFlag::NonCGBMode),
+            _ => Err("Invalid CGB flag".into()),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum NewLicenseeCode {
     None,
     NintendoResearchAndDevelopment1,
@@ -126,7 +142,7 @@ pub enum NewLicenseeCode {
     KonamiYuGiOh,
     MTO,
     Kodansha,
-    Unknown(String), // For unrecognized or custom codes
+    Unknown, // For unrecognized or custom codes
 }
 
 impl NewLicenseeCode {
@@ -137,7 +153,7 @@ impl NewLicenseeCode {
             }
         }
 
-        NewLicenseeCode::Unknown(hex::encode(bytes)) // Encodes invalid bytes to hex for debugging
+        NewLicenseeCode::Unknown // Encodes invalid bytes to hex for debugging
     }
 
     pub fn from_str(code: &str) -> Self {
@@ -206,7 +222,7 @@ impl NewLicenseeCode {
             "A4" => NewLicenseeCode::KonamiYuGiOh,
             "BL" => NewLicenseeCode::MTO,
             "DK" => NewLicenseeCode::Kodansha,
-            _ => NewLicenseeCode::Unknown(code.to_string()),
+            _ => NewLicenseeCode::Unknown,
         }
     }
 }
@@ -473,6 +489,8 @@ impl OldLicenseeCode {
             0xDF => OldLicenseeCode::Altron,
             0xE0 => OldLicenseeCode::JalecoEntertainment,
             0xE1 => OldLicenseeCode::TowaChiki,
+            0xE2 => OldLicenseeCode::Yutaka,
+            0xE5 => OldLicenseeCode::Epoch,
             0xE7 => OldLicenseeCode::Athena,
             0xE8 => OldLicenseeCode::AsmikAceEntertainment,
             0xE9 => OldLicenseeCode::Natsume,
@@ -487,7 +505,6 @@ impl OldLicenseeCode {
         }
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
