@@ -11,14 +11,14 @@ pub struct Emu {
 }
 
 impl Emu {
-    pub fn new() -> Self {
-        Self {
-            cart: Cart::new(),
+    pub fn new(cart_bytes: &[u8]) -> Result<Self, String> {
+        Ok(Self {
+            cart: Cart::from_bytes(cart_bytes)?,
             cpu: Cpu::new(),
             running: false,
             paused: false,
             ticks: 0,
-        }
+        })
     }
 
     pub fn run(&mut self) {
