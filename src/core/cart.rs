@@ -475,6 +475,14 @@ impl OldLicenseeCode {
             0xE1 => OldLicenseeCode::TowaChiki,
             0xE7 => OldLicenseeCode::Athena,
             0xE8 => OldLicenseeCode::AsmikAceEntertainment,
+            0xE9 => OldLicenseeCode::Natsume,
+            0xEA => OldLicenseeCode::KingRecords,
+            0xEB => OldLicenseeCode::Atlus,
+            0xEC => OldLicenseeCode::EpicSonyRecords,
+            0xEE => OldLicenseeCode::IGS,
+            0xF0 => OldLicenseeCode::AWave,
+            0xF3 => OldLicenseeCode::ExtremeEntertainment,
+            0xFF => OldLicenseeCode::LJN,
             _ => OldLicenseeCode::Unknown,
         }
     }
