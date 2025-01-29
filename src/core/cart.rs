@@ -63,15 +63,13 @@ impl CartHeader {
                 None
             },
             cgb_flag: data[0x0143].try_into()?,
-            new_licensee_code: NewLicenseeCode::from_bytes(
-                data[0x0144..0x0146].try_into().unwrap(),
-            ),
+            new_licensee_code: data[0x0144..0x0146].into(),
             sgb_flag: data[0x0146],
             cartridge_type: data[0x0147].try_into()?,
             rom_size: data[0x0148].try_into()?,
             ram_size: data[0x0149].try_into()?,
             destination_code: data[0x014A].try_into()?,
-            old_licensee_code: OldLicenseeCode::from_byte(data[0x014B]),
+            old_licensee_code: data[0x014B].into(),
             mask_rom_version: data[0x014C],
             header_checksum: data[0x014D],
             global_checksum: u16::from_be_bytes(data[0x014E..0x0150].try_into().unwrap()),
@@ -79,7 +77,7 @@ impl CartHeader {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum RomSize {
     _32KiB,
     _64KiB,
@@ -153,7 +151,7 @@ impl RomSize {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum RamSize {
     NoRam = 0x00,
     Unused = 0x01,
@@ -179,7 +177,7 @@ impl TryFrom<u8> for RamSize {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum DestinationCode {
     Japan,
     OverseasOnly,
@@ -197,7 +195,7 @@ impl TryFrom<u8> for DestinationCode {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum CgbFlag {
     CGBMode,
     NonCGBMode,
@@ -215,7 +213,7 @@ impl TryFrom<u8> for CgbFlag {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum NewLicenseeCode {
     None,
     NintendoResearchAndDevelopment1,
@@ -280,17 +278,19 @@ pub enum NewLicenseeCode {
     Unknown, // For unrecognized or custom codes
 }
 
-impl NewLicenseeCode {
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        if bytes.len() == 2 {
-            if let Ok(code) = std::str::from_utf8(bytes) {
+impl From<&[u8]> for NewLicenseeCode {
+    fn from(value: &[u8]) -> Self {
+        if value.len() == 2 {
+            if let Ok(code) = std::str::from_utf8(value) {
                 return NewLicenseeCode::from_str(code);
             }
         }
 
-        NewLicenseeCode::Unknown // Encodes invalid bytes to hex for debugging
+        NewLicenseeCode::Unknown
     }
+}
 
+impl NewLicenseeCode {
     pub fn from_str(code: &str) -> Self {
         match code {
             "00" => NewLicenseeCode::None,
@@ -487,9 +487,9 @@ pub enum OldLicenseeCode {
     Unknown,
 }
 
-impl OldLicenseeCode {
-    pub fn from_byte(byte: u8) -> Self {
-        match byte {
+impl From<u8> for OldLicenseeCode {
+    fn from(value: u8) -> Self {
+        match value {
             0x00 => OldLicenseeCode::None,
             0x01 => OldLicenseeCode::Nintendo,
             0x08 => OldLicenseeCode::Capcom,
