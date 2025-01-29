@@ -48,9 +48,8 @@ impl CartHeader {
                 None
             },
             cgb_flag: data[0x0143],
-            new_licensee_code: NewLicenseeCode::try_from_u16(u16::from_be_bytes(
-                data[0x0144..0x0146].try_into().unwrap(),
-            ))?,
+            new_licensee_code: u16::from_be_bytes(data[0x0144..0x0146].try_into().unwrap())
+                .try_into()?,
             sgb_flag: data[0x0146],
             cartridge_type: data[0x0147].try_into()?,
             rom_size: data[0x0148],
@@ -74,9 +73,10 @@ pub enum NewLicenseeCode {
     // todo: add others
 }
 
-impl NewLicenseeCode {
-    // Convert a u16 value to a NewLicenseeCode enum variant
-    pub fn try_from_u16(code: u16) -> Result<Self, String> {
+impl TryFrom<u16> for NewLicenseeCode {
+    type Error = String;
+
+    fn try_from(code: u16) -> Result<Self, String> {
         match code {
             0x00 => Ok(NewLicenseeCode::Nintendo),
             0x01 => Ok(NewLicenseeCode::Capcom),
@@ -85,6 +85,10 @@ impl NewLicenseeCode {
             _ => Err("Unknown licensee_code".into()),
         }
     }
+}
+
+impl NewLicenseeCode {
+    // Convert a u16 value to a NewLicenseeCode enum variant
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -149,7 +153,7 @@ impl TryFrom<u8> for CartridgeType {
             0xFD => Ok(CartridgeType::BandaiTama5),
             0xFE => Ok(CartridgeType::HuC3),
             0xFF => Ok(CartridgeType::HuC1RamBattery),
-            _ => Err(format!("Unknown CartridgeType: {value}"))
+            _ => Err(format!("Unknown CartridgeType: {value}")),
         }
     }
 }
