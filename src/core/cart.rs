@@ -22,7 +22,7 @@ struct CartHeader {
     pub sgb_flag: u8,            // 0x0146: Super Game Boy compatibility
     pub cartridge_type: CartridgeType, // 0x0147: Type of cartridge
     pub rom_size: RomSize,            // 0x0148: ROM size
-    pub ram_size: u8,            // 0x0149: RAM size
+    pub ram_size: RamSize,            // 0x0149: RAM size
     pub destination_code: DestinationCode,    // 0x014A: Destination code (Japan or non-Japan)
     pub old_licensee_code: OldLicenseeCode, // 0x014B: Old licensee code
     pub mask_rom_version: u8,    // 0x014C: Version number
@@ -54,7 +54,7 @@ impl CartHeader {
             sgb_flag: data[0x0146],
             cartridge_type: data[0x0147].try_into()?,
             rom_size: data[0x0148].try_into()?,
-            ram_size: data[0x0149],
+            ram_size: data[0x0149].try_into()?,
             destination_code: data[0x014A].try_into()?,
             old_licensee_code: OldLicenseeCode::from_byte(data[0x014B]),
             mask_rom_version: data[0x014C],
@@ -103,7 +103,7 @@ impl TryFrom<u8> for RomSize {
 }
 
 impl RomSize {
-    pub fn number_of_banks(&self) -> usize {
+    pub fn _number_of_banks(&self) -> usize {
         match self {
             RomSize::_32KiB => 2,
             RomSize::_64KiB => 4,
@@ -120,7 +120,7 @@ impl RomSize {
         }
     }
 
-    pub fn size_in_bytes(&self) -> usize {
+    pub fn _size_in_bytes(&self) -> usize {
         match self {
             RomSize::_32KiB => 32 * 1024,
             RomSize::_64KiB => 64 * 1024,
@@ -134,6 +134,32 @@ impl RomSize {
             RomSize::_1_1MiB => 1_1 * 1024 * 1024,
             RomSize::_1_2MiB => 1_2 * 1024 * 1024,
             RomSize::_1_5MiB => 1_5 * 1024 * 1024,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum RamSize {
+    NoRam = 0x00,
+    Unused = 0x01,
+    _8KiB = 0x02,
+    _32KiB = 0x03,
+    _128KiB = 0x04,
+    _64KiB = 0x05,
+}
+
+impl TryFrom<u8> for RamSize {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0x00 => Ok(RamSize::NoRam),
+            0x01 => Ok(RamSize::Unused),
+            0x02 => Ok(RamSize::_8KiB),
+            0x03 => Ok(RamSize::_32KiB),
+            0x04 => Ok(RamSize::_128KiB),
+            0x05 => Ok(RamSize::_64KiB),
+            _ => Err("Invalid RAM size code".into()),
         }
     }
 }
