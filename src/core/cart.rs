@@ -48,8 +48,9 @@ impl CartHeader {
                 None
             },
             cgb_flag: data[0x0143],
-            new_licensee_code: u16::from_be_bytes(data[0x0144..0x0146].try_into().unwrap())
-                .try_into()?,
+            new_licensee_code: NewLicenseeCode::from_bytes(
+                data[0x0144..0x0146].try_into().unwrap(),
+            ),
             sgb_flag: data[0x0146],
             cartridge_type: data[0x0147].try_into()?,
             rom_size: data[0x0148],
@@ -63,26 +64,149 @@ impl CartHeader {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-#[repr(u16)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NewLicenseeCode {
-    Nintendo = 0x00,
-    Capcom = 0x01,
-    Konami = 0x02,
-    ElectronicArts = 0x03,
-    // todo: add others
+    None,
+    NintendoResearchAndDevelopment1,
+    Capcom,
+    EA,
+    HudsonSoft,
+    BAI,
+    KSS,
+    PlanningOfficeWada,
+    PCMComplete,
+    SanX,
+    Kemco,
+    SetaCorporation,
+    Viacom,
+    Nintendo,
+    Bandai,
+    OceanSoftwareOrAcclaimEntertainment,
+    Konami,
+    HectorSoft,
+    Taito,
+    Banpresto,
+    UbiSoft,
+    Atlus,
+    MalibuInteractive,
+    Angel,
+    BulletProofSoftware,
+    Irem,
+    Absolute,
+    AcclaimEntertainment,
+    Activision,
+    SammyUsaCorporation,
+    HiTechExpressions,
+    Ljn,
+    Matchbox,
+    Mattel,
+    MiltonBradleyCompany,
+    TitusInteractive,
+    VirginGamesLtd,
+    LucasfilmGames,
+    OceanSoftware,
+    Infogrames,
+    InterplayEntertainment,
+    Broderbund,
+    SculpturedSoftware,
+    TheSalesCurveLimited,
+    THQ,
+    Accolade,
+    MisawaEntertainment,
+    Lozc,
+    TokumaShoten,
+    TsukudaOriginal,
+    ChunsoftCo,
+    VideoSystem,
+    Varie,
+    YonezawaSPal,
+    Kaneko,
+    PackInVideo,
+    BottomUp,
+    KonamiYuGiOh,
+    MTO,
+    Kodansha,
+    Unknown(String), // For unrecognized or custom codes
 }
 
-impl TryFrom<u16> for NewLicenseeCode {
-    type Error = String;
+impl NewLicenseeCode {
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        if bytes.len() == 2 {
+            if let Ok(code) = std::str::from_utf8(bytes) {
+                return NewLicenseeCode::from_str(code);
+            }
+        }
 
-    fn try_from(code: u16) -> Result<Self, String> {
+        NewLicenseeCode::Unknown(hex::encode(bytes)) // Encodes invalid bytes to hex for debugging
+    }
+
+    pub fn from_str(code: &str) -> Self {
         match code {
-            0x00 => Ok(NewLicenseeCode::Nintendo),
-            0x01 => Ok(NewLicenseeCode::Capcom),
-            0x02 => Ok(NewLicenseeCode::Konami),
-            0x03 => Ok(NewLicenseeCode::ElectronicArts),
-            _ => Err("Unknown licensee_code".into()),
+            "00" => NewLicenseeCode::None,
+            "01" => NewLicenseeCode::NintendoResearchAndDevelopment1,
+            "08" => NewLicenseeCode::Capcom,
+            "13" => NewLicenseeCode::EA,
+            "18" => NewLicenseeCode::HudsonSoft,
+            "19" => NewLicenseeCode::BAI,
+            "20" => NewLicenseeCode::KSS,
+            "22" => NewLicenseeCode::PlanningOfficeWada,
+            "24" => NewLicenseeCode::PCMComplete,
+            "25" => NewLicenseeCode::SanX,
+            "28" => NewLicenseeCode::Kemco,
+            "29" => NewLicenseeCode::SetaCorporation,
+            "30" => NewLicenseeCode::Viacom,
+            "31" => NewLicenseeCode::Nintendo,
+            "32" => NewLicenseeCode::Bandai,
+            "33" => NewLicenseeCode::OceanSoftwareOrAcclaimEntertainment,
+            "34" => NewLicenseeCode::Konami,
+            "35" => NewLicenseeCode::HectorSoft,
+            "37" => NewLicenseeCode::Taito,
+            "38" => NewLicenseeCode::HudsonSoft,
+            "39" => NewLicenseeCode::Banpresto,
+            "41" => NewLicenseeCode::UbiSoft,
+            "42" => NewLicenseeCode::Atlus,
+            "44" => NewLicenseeCode::MalibuInteractive,
+            "46" => NewLicenseeCode::Angel,
+            "47" => NewLicenseeCode::BulletProofSoftware,
+            "49" => NewLicenseeCode::Irem,
+            "50" => NewLicenseeCode::Absolute,
+            "51" => NewLicenseeCode::AcclaimEntertainment,
+            "52" => NewLicenseeCode::Activision,
+            "53" => NewLicenseeCode::SammyUsaCorporation,
+            "54" => NewLicenseeCode::Konami,
+            "55" => NewLicenseeCode::HiTechExpressions,
+            "56" => NewLicenseeCode::Ljn,
+            "57" => NewLicenseeCode::Matchbox,
+            "58" => NewLicenseeCode::Mattel,
+            "59" => NewLicenseeCode::MiltonBradleyCompany,
+            "60" => NewLicenseeCode::TitusInteractive,
+            "61" => NewLicenseeCode::VirginGamesLtd,
+            "64" => NewLicenseeCode::LucasfilmGames,
+            "67" => NewLicenseeCode::OceanSoftware,
+            "69" => NewLicenseeCode::EA,
+            "70" => NewLicenseeCode::Infogrames,
+            "71" => NewLicenseeCode::InterplayEntertainment,
+            "72" => NewLicenseeCode::Broderbund,
+            "73" => NewLicenseeCode::SculpturedSoftware,
+            "75" => NewLicenseeCode::TheSalesCurveLimited,
+            "78" => NewLicenseeCode::THQ,
+            "79" => NewLicenseeCode::Accolade,
+            "80" => NewLicenseeCode::MisawaEntertainment,
+            "83" => NewLicenseeCode::Lozc,
+            "86" => NewLicenseeCode::TokumaShoten,
+            "87" => NewLicenseeCode::TsukudaOriginal,
+            "91" => NewLicenseeCode::ChunsoftCo,
+            "92" => NewLicenseeCode::VideoSystem,
+            "93" => NewLicenseeCode::OceanSoftwareOrAcclaimEntertainment,
+            "95" => NewLicenseeCode::Varie,
+            "96" => NewLicenseeCode::YonezawaSPal,
+            "97" => NewLicenseeCode::Kaneko,
+            "99" => NewLicenseeCode::PackInVideo,
+            "9H" => NewLicenseeCode::BottomUp,
+            "A4" => NewLicenseeCode::KonamiYuGiOh,
+            "BL" => NewLicenseeCode::MTO,
+            "DK" => NewLicenseeCode::Kodansha,
+            _ => NewLicenseeCode::Unknown(code.to_string()),
         }
     }
 }
