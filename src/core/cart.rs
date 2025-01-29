@@ -17,13 +17,13 @@ struct CartHeader {
     pub nintendo_logo: [u8; 48], // 0x0104-0x0133: Nintendo logo
     pub title: String,           // 0x0134-0x0143: Game title
     pub manufacturer_code: Option<String>, // 0x013F-0x0142: Manufacturer code (if exists)
-    pub cgb_flag: CgbFlag,            // 0x0143: Game Boy Color compatibility
+    pub cgb_flag: CgbFlag,       // 0x0143: Game Boy Color compatibility
     pub new_licensee_code: NewLicenseeCode, // 0x0144-0x0145: New licensee code
     pub sgb_flag: u8,            // 0x0146: Super Game Boy compatibility
     pub cartridge_type: CartridgeType, // 0x0147: Type of cartridge
     pub rom_size: u8,            // 0x0148: ROM size
     pub ram_size: u8,            // 0x0149: RAM size
-    pub destination_code: u8,    // 0x014A: Destination code (Japan or non-Japan)
+    pub destination_code: DestinationCode,    // 0x014A: Destination code (Japan or non-Japan)
     pub old_licensee_code: OldLicenseeCode, // 0x014B: Old licensee code
     pub mask_rom_version: u8,    // 0x014C: Version number
     pub header_checksum: u8,     // 0x014D: Header checksum
@@ -47,7 +47,7 @@ impl CartHeader {
             } else {
                 None
             },
-            cgb_flag: CgbFlag::try_from_byte(data[0x0143])?,
+            cgb_flag: data[0x0143].try_into()?,
             new_licensee_code: NewLicenseeCode::from_bytes(
                 data[0x0144..0x0146].try_into().unwrap(),
             ),
@@ -55,7 +55,7 @@ impl CartHeader {
             cartridge_type: data[0x0147].try_into()?,
             rom_size: data[0x0148],
             ram_size: data[0x0149],
-            destination_code: data[0x014A],
+            destination_code: data[0x014A].try_into()?,
             old_licensee_code: OldLicenseeCode::from_byte(data[0x014B]),
             mask_rom_version: data[0x014C],
             header_checksum: data[0x014D],
@@ -65,14 +65,34 @@ impl CartHeader {
 }
 
 #[derive(Debug, Clone)]
+pub enum DestinationCode {
+    Japan,
+    OverseasOnly,
+}
+
+impl TryFrom<u8> for DestinationCode {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0x00 => Ok(DestinationCode::Japan),
+            0x01 => Ok(DestinationCode::OverseasOnly),
+            _ => Err("Invalid DestinationCode".into()),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum CgbFlag {
     CGBMode,
     NonCGBMode,
 }
 
-impl CgbFlag {
-    pub fn try_from_byte(byte: u8) -> Result<Self, String> {
-        match byte {
+impl TryFrom<u8> for CgbFlag {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
             0x80 => Ok(CgbFlag::CGBMode),
             0xC0 => Ok(CgbFlag::NonCGBMode),
             _ => Err("Invalid CGB flag".into()),
@@ -342,7 +362,6 @@ pub enum OldLicenseeCode {
     TowaChiki,
     Yutaka,
     Epoch,
-    AngelEntertainment,
     Banpresto,
     SOFEL,
     Quest,
