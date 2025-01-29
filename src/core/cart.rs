@@ -21,7 +21,7 @@ struct CartHeader {
     pub new_licensee_code: NewLicenseeCode, // 0x0144-0x0145: New licensee code
     pub sgb_flag: u8,            // 0x0146: Super Game Boy compatibility
     pub cartridge_type: CartridgeType, // 0x0147: Type of cartridge
-    pub rom_size: u8,            // 0x0148: ROM size
+    pub rom_size: RomSize,            // 0x0148: ROM size
     pub ram_size: u8,            // 0x0149: RAM size
     pub destination_code: DestinationCode,    // 0x014A: Destination code (Japan or non-Japan)
     pub old_licensee_code: OldLicenseeCode, // 0x014B: Old licensee code
@@ -53,7 +53,7 @@ impl CartHeader {
             ),
             sgb_flag: data[0x0146],
             cartridge_type: data[0x0147].try_into()?,
-            rom_size: data[0x0148],
+            rom_size: data[0x0148].try_into()?,
             ram_size: data[0x0149],
             destination_code: data[0x014A].try_into()?,
             old_licensee_code: OldLicenseeCode::from_byte(data[0x014B]),
@@ -61,6 +61,80 @@ impl CartHeader {
             header_checksum: data[0x014D],
             global_checksum: u16::from_be_bytes(data[0x014E..0x0150].try_into().unwrap()),
         })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum RomSize {
+    _32KiB,
+    _64KiB,
+    _128KiB,
+    _256KiB,
+    _512KiB,
+    _1MiB,
+    _2MiB,
+    _4MiB,
+    _8MiB,
+    _1_1MiB,
+    _1_2MiB,
+    _1_5MiB,
+}
+
+impl TryFrom<u8> for RomSize {
+    type Error = String;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0x00 => Ok(RomSize::_32KiB),
+            0x01 => Ok(RomSize::_64KiB),
+            0x02 => Ok(RomSize::_128KiB),
+            0x03 => Ok(RomSize::_256KiB),
+            0x04 => Ok(RomSize::_512KiB),
+            0x05 => Ok(RomSize::_1MiB),
+            0x06 => Ok(RomSize::_2MiB),
+            0x07 => Ok(RomSize::_4MiB),
+            0x08 => Ok(RomSize::_8MiB),
+            0x52 => Ok(RomSize::_1_1MiB),
+            0x53 => Ok(RomSize::_1_2MiB),
+            0x54 => Ok(RomSize::_1_5MiB),
+            _ => Err("Invalid ROM size code".into()),
+        }
+    }
+}
+
+impl RomSize {
+    pub fn number_of_banks(&self) -> usize {
+        match self {
+            RomSize::_32KiB => 2,
+            RomSize::_64KiB => 4,
+            RomSize::_128KiB => 8,
+            RomSize::_256KiB => 16,
+            RomSize::_512KiB => 32,
+            RomSize::_1MiB => 64,
+            RomSize::_2MiB => 128,
+            RomSize::_4MiB => 256,
+            RomSize::_8MiB => 512,
+            RomSize::_1_1MiB => 72,
+            RomSize::_1_2MiB => 80,
+            RomSize::_1_5MiB => 96,
+        }
+    }
+
+    pub fn size_in_bytes(&self) -> usize {
+        match self {
+            RomSize::_32KiB => 32 * 1024,
+            RomSize::_64KiB => 64 * 1024,
+            RomSize::_128KiB => 128 * 1024,
+            RomSize::_256KiB => 256 * 1024,
+            RomSize::_512KiB => 512 * 1024,
+            RomSize::_1MiB => 1024 * 1024,
+            RomSize::_2MiB => 2 * 1024 * 1024,
+            RomSize::_4MiB => 4 * 1024 * 1024,
+            RomSize::_8MiB => 8 * 1024 * 1024,
+            RomSize::_1_1MiB => 1_1 * 1024 * 1024,
+            RomSize::_1_2MiB => 1_2 * 1024 * 1024,
+            RomSize::_1_5MiB => 1_5 * 1024 * 1024,
+        }
     }
 }
 
