@@ -18,7 +18,7 @@ struct CartHeader {
     pub title: String,           // 0x0134-0x0143: Game title
     pub manufacturer_code: Option<String>, // 0x013F-0x0142: Manufacturer code (if exists)
     pub cgb_flag: u8,            // 0x0143: Game Boy Color compatibility
-    pub new_licensee_code: u16,  // 0x0144-0x0145: New licensee code
+    pub new_licensee_code: NewLicenseeCode,  // 0x0144-0x0145: New licensee code
     pub sgb_flag: u8,            // 0x0146: Super Game Boy compatibility
     pub cartridge_type: u8,      // 0x0147: Type of cartridge
     pub rom_size: u8,            // 0x0148: ROM size
@@ -48,7 +48,7 @@ impl CartHeader {
                 None
             },
             cgb_flag: data[0x0143],
-            new_licensee_code: u16::from_be_bytes(data[0x0144..0x0146].try_into().unwrap()),
+            new_licensee_code: NewLicenseeCode::try_from_u16(u16::from_be_bytes(data[0x0144..0x0146].try_into().unwrap()))?,
             sgb_flag: data[0x0146],
             cartridge_type: data[0x0147],
             rom_size: data[0x0148],
@@ -59,5 +59,28 @@ impl CartHeader {
             header_checksum: data[0x014D],
             global_checksum: u16::from_be_bytes(data[0x014E..0x0150].try_into().unwrap()),
         })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+#[repr(u16)]
+pub enum NewLicenseeCode {
+    Nintendo = 0x00,
+    Capcom = 0x01,
+    Konami = 0x02,
+    ElectronicArts = 0x03,
+    // todo: add others
+}
+
+impl NewLicenseeCode {
+    // Convert a u16 value to a NewLicenseeCode enum variant
+    pub fn try_from_u16(code: u16) -> Result<Self, String> {
+        match code {
+            0x00 => Ok(NewLicenseeCode::Nintendo),
+            0x01 => Ok(NewLicenseeCode::Capcom),
+            0x02 => Ok(NewLicenseeCode::Konami),
+            0x03 => Ok(NewLicenseeCode::ElectronicArts),
+            _ => Err("Unknown licensee_code".into()),
+        }
     }
 }
