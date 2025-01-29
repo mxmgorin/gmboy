@@ -13,21 +13,36 @@ impl Cart {
 
 #[derive(Debug, Clone)]
 struct CartHeader {
-    pub entry_point: [u8; 4],    // 0x0100-0x0103: Execution start point
-    pub nintendo_logo: [u8; 48], // 0x0104-0x0133: Nintendo logo
-    pub title: String,           // 0x0134-0x0143: Game title
-    pub manufacturer_code: Option<String>, // 0x013F-0x0142: Manufacturer code (if exists)
-    pub cgb_flag: CgbFlag,       // 0x0143: Game Boy Color compatibility
-    pub new_licensee_code: NewLicenseeCode, // 0x0144-0x0145: New licensee code
-    pub sgb_flag: u8,            // 0x0146: Super Game Boy compatibility
-    pub cartridge_type: CartridgeType, // 0x0147: Type of cartridge
-    pub rom_size: RomSize,            // 0x0148: ROM size
-    pub ram_size: RamSize,            // 0x0149: RAM size
-    pub destination_code: DestinationCode,    // 0x014A: Destination code (Japan or non-Japan)
-    pub old_licensee_code: OldLicenseeCode, // 0x014B: Old licensee code
-    pub mask_rom_version: u8,    // 0x014C: Version number
-    pub header_checksum: u8,     // 0x014D: Header checksum
-    pub global_checksum: u16,    // 0x014E-0x014F: Global checksum
+    /// 0x0100-0x0103: Execution start point
+    pub entry_point: [u8; 4],
+    /// 0x0104-0x0133: Nintendo logo
+    pub nintendo_logo: [u8; 48],
+    /// 0x0134-0x0143: Game title
+    pub title: String,
+    /// 0x013F-0x0142: Manufacturer code (if exists)
+    pub manufacturer_code: Option<String>,
+    /// 0x0143: Game Boy Color compatibility
+    pub cgb_flag: CgbFlag,
+    /// 0x0144-0x0145: New licensee code
+    pub new_licensee_code: NewLicenseeCode,
+    /// 0x0146: Super Game Boy compatibility
+    pub sgb_flag: u8,
+    /// 0x0147: Type of cartridge
+    pub cartridge_type: CartridgeType,
+    /// 0x0148: ROM size
+    pub rom_size: RomSize,
+    /// 0x0149: RAM size
+    pub ram_size: RamSize,
+    /// 0x014A: Destination code (Japan or non-Japan)
+    pub destination_code: DestinationCode,
+    /// 0x014B: Old licensee code
+    pub old_licensee_code: OldLicenseeCode,
+    /// 0x014C: This byte specifies the version number of the game. It is usually $00.
+    pub mask_rom_version: u8,
+    /// 0x014D: Header checksum
+    pub header_checksum: u8,
+    /// 0x014E-0x014F: Global checksum
+    pub global_checksum: u16,
 }
 
 impl CartHeader {
