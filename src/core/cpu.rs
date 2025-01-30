@@ -116,15 +116,17 @@ pub struct CpuInstruction {
     pub param: Option<u8>,
 }
 
-const CPU_INSTRUCTIONS: [CpuInstruction; 0x100] = {
-    let mut instructions = [CpuInstruction {
-        r#type: None,
-        address_mode: AddressMode::Imp,
-        register_1_type: None,
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    }; 0x100];
+const NONE_INSTRUCTION: CpuInstruction = CpuInstruction {
+    r#type: None,
+    address_mode: AddressMode::Imp,
+    register_1_type: None,
+    register_2_type: None,
+    condition_type: None,
+    param: None,
+};
+const INSTRUCTIONS_LEN: usize = 1;
+const CPU_INSTRUCTIONS: [CpuInstruction; INSTRUCTIONS_LEN] = {
+    let mut instructions = [NONE_INSTRUCTION; INSTRUCTIONS_LEN];
 
     instructions[0x00] = CpuInstruction {
         r#type: Some(InstructionType::Nop),
