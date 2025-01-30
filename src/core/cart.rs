@@ -115,10 +115,6 @@ fn parse_title(bytes: &[u8]) -> Result<String, String> {
 
     let trimmed_title = title.trim_end_matches('\0').to_string();
 
-    if cfg!(debug_assertions) {
-        println!("Title: {}", trimmed_title);
-    }
-
     Ok(trimmed_title)
 }
 
@@ -253,8 +249,8 @@ impl TryFrom<u8> for CgbFlag {
     type Error = String;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
-        if std::env::var("DEBUG").is_ok() {
-            println!("CGB Flag: {value}");
+        if cfg!(debug_assertions) {
+            println!("CGB Flag byte: {value}");
         }
 
         match value {
