@@ -1,5 +1,5 @@
 use crate::core::bus::Bus;
-use crate::core::util::reverse_u16;
+use crate::core::util::{get_bit_flag, reverse_u16};
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -230,6 +230,14 @@ impl CpuRegisters {
             sp: 0,
             pc: 0x100,
         }
+    }
+
+    pub fn get_flag_z(&self) -> bool {
+        get_bit_flag(self.f, 7)
+    }
+
+    pub fn get_flag_c(&self) -> bool {
+        get_bit_flag(self.f, 4)
     }
 }
 
