@@ -233,6 +233,10 @@ impl TryFrom<u8> for CgbFlag {
     type Error = String;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
+        if std::env::var("DEBUG").is_ok() {
+            println!("CGB Flag: {value}");
+        }
+
         match value {
             0x80 => Ok(CgbFlag::CGBMode),
             0xC0 => Ok(CgbFlag::NonCGBMode),
