@@ -18,11 +18,11 @@ impl Cart {
     }
 }
 
-pub fn calc_checksum(bytes: &[u8]) -> Result<u8, String> {
+fn calc_checksum(bytes: &[u8]) -> Result<u8, String> {
     let end = 0x014C;
 
     if bytes.len() < end {
-        return Err("Can't calc calc_checksum: bytes are shorter than 0x014E".into());
+        return Err("Can't calc_checksum: bytes are shorter than 0x014E".into());
     }
 
     let start = 0x0134;
@@ -73,7 +73,7 @@ struct CartHeader {
 impl CartHeader {
     pub fn new(bytes: &[u8]) -> Result<Self, String> {
         if bytes.len() < 0x50 {
-            return Err("Insufficient data for cartridge header".into());
+            return Err("Insufficient data for cart header".into());
         }
 
         Ok(Self {
@@ -104,13 +104,13 @@ fn parse_title(bytes: &[u8]) -> Result<String, String> {
     let title_bytes = &bytes[0x0134..0x0144];
 
     if cfg!(debug_assertions) {
-        println!("Title bytes: {:?}", title_bytes);
+        println!("Cart title bytes: {:?}", title_bytes);
     }
 
     let result = String::from_utf8(title_bytes.to_vec());
 
     let Ok(title) = result else {
-        return Err(format!("Failed to parse title: {}", result.unwrap_err()));
+        return Err(format!("Failed to parse cart title: {}", result.unwrap_err()));
     };
 
     let trimmed_title = title.trim_end_matches('\0').to_string();
