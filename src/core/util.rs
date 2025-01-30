@@ -20,3 +20,42 @@ pub fn set_bit(a: &mut u8, n: u8, on: bool) {
 pub fn between(a: u8, b: u8, c: u8) -> bool {
     a >= b && a <= c
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_bit_flag_1() {
+        assert!(get_bit_flag(0b0001, 0));
+        assert!(!get_bit_flag(0b0010, 0));
+
+        assert!(get_bit_flag(0b0010, 1));
+        assert!(!get_bit_flag(0b0001, 1));
+
+        assert!(get_bit_flag(0b10000000, 7));
+        assert!(!get_bit_flag(0b01000000, 7));
+
+        assert!(get_bit_flag(0b10101010, 1));
+        assert!(!get_bit_flag(0b10101010, 2));
+    }
+
+    #[test]
+    fn test_set_bit_1() {
+        let mut a = 0b1010; // 10 in decimal
+
+        set_bit(&mut a, 2, true);
+        assert_eq!(a, 0b1110);
+
+        set_bit(&mut a, 2, false);
+        assert_eq!(a, 0b1010);
+    }
+
+    #[test]
+    fn test_between_1() {
+        assert!(between(5, 3, 7));
+        assert!(!between(2, 3, 7));
+        assert!(between(3, 3, 7));
+        assert!(between(7, 3, 7));
+    }
+}
