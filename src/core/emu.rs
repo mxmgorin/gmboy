@@ -12,8 +12,12 @@ pub struct Emu {
 
 impl Emu {
     pub fn new(cart_bytes: &[u8]) -> Result<Self, String> {
+        let cart = Cart::new(cart_bytes)?;
+        
+        println!("Cart: {:?}", cart);
+        
         Ok(Self {
-            cart: Cart::from_bytes(cart_bytes)?,
+            cart,
             cpu: Cpu::new(),
             running: false,
             paused: false,

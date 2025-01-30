@@ -4,9 +4,9 @@ pub struct Cart {
 }
 
 impl Cart {
-    pub fn from_bytes(data: &[u8]) -> Result<Cart, String> {
+    pub fn new(bytes: &[u8]) -> Result<Cart, String> {
         Ok(Self {
-            header: CartHeader::from_bytes(data)?,
+            header: CartHeader::new(bytes)?,
         })
     }
 }
@@ -46,33 +46,33 @@ struct CartHeader {
 }
 
 impl CartHeader {
-    pub fn from_bytes(data: &[u8]) -> Result<Self, String> {
-        if data.len() < 0x50 {
+    pub fn new(bytes: &[u8]) -> Result<Self, String> {
+        if bytes.len() < 0x50 {
             return Err("Insufficient data for cartridge header".into());
         }
 
         Ok(Self {
-            entry_point: data[0x0100..0x0104].try_into().unwrap(),
-            nintendo_logo: data[0x0104..0x0134].try_into().unwrap(),
-            title: String::from_utf8_lossy(&data[0x0134..0x0144])
+            entry_point: bytes[0x0100..0x0104].try_into().unwrap(),
+            nintendo_logo: bytes[0x0104..0x0134].try_into().unwrap(),
+            title: String::from_utf8_lossy(&bytes[0x0134..0x0144])
                 .trim_end_matches('\0')
                 .to_string(),
-            manufacturer_code: if data[0x013F..0x0143] != [0x00, 0x00, 0x00, 0x00] {
-                Some(String::from_utf8_lossy(&data[0x013F..0x0143]).to_string())
+            manufacturer_code: if bytes[0x013F..0x0143] != [0x00, 0x00, 0x00, 0x00] {
+                Some(String::from_utf8_lossy(&bytes[0x013F..0x0143]).to_string())
             } else {
                 None
             },
-            cgb_flag: data[0x0143].try_into()?,
-            new_licensee_code: data[0x0144..0x0146].into(),
-            sgb_flag: data[0x0146],
-            cartridge_type: data[0x0147].try_into()?,
-            rom_size: data[0x0148].try_into()?,
-            ram_size: data[0x0149].try_into()?,
-            destination_code: data[0x014A].try_into()?,
-            old_licensee_code: data[0x014B].into(),
-            mask_rom_version: data[0x014C],
-            header_checksum: data[0x014D],
-            global_checksum: u16::from_be_bytes(data[0x014E..0x0150].try_into().unwrap()),
+            cgb_flag: bytes[0x0143].try_into()?,
+            new_licensee_code: bytes[0x0144..0x0146].into(),
+            sgb_flag: bytes[0x0146],
+            cartridge_type: bytes[0x0147].try_into()?,
+            rom_size: bytes[0x0148].try_into()?,
+            ram_size: bytes[0x0149].try_into()?,
+            destination_code: bytes[0x014A].try_into()?,
+            old_licensee_code: bytes[0x014B].into(),
+            mask_rom_version: bytes[0x014C],
+            header_checksum: bytes[0x014D],
+            global_checksum: u16::from_be_bytes(bytes[0x014E..0x0150].try_into().unwrap()),
         })
     }
 }
