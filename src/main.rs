@@ -28,7 +28,10 @@ fn main() {
         std::process::exit(1);
     };
 
-    emu.run();
+    if let Err(err) = emu.run() {
+        eprintln!("Emu run failed: {}", err);
+        std::process::exit(1);
+    }
 }
 
 fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {

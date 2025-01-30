@@ -26,7 +26,7 @@ impl Emu {
         })
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
 
         while self.running {
@@ -35,7 +35,10 @@ impl Emu {
                 continue;
             }
 
+            self.cpu.step()?;
             self.ticks += 1;
         }
+
+        Ok(())
     }
 }
