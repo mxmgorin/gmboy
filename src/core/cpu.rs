@@ -62,6 +62,19 @@ impl Cpu {
                 self.fetched_data = self
                     .read_register(instruction.register_1_type.expect("must be set for R type"));
             }
+            AddressMode::R_D8 => {
+                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+                self.registers.pc += 1;
+            }
+            AddressMode::R_D16 => {
+                let lo = self.bus.read(self.registers.pc);
+                //emu_cycles(1);
+                let hi = self.bus.read(self.registers.pc + 1);
+                //emu_cycles(1);
+                self.fetched_data = (hi as u16) << 8 | (lo as u16);
+                self.registers.pc += 2;
+            }
             _ => eprintln!(
                 "Unimplemented Addressing Mode: {:?}",
                 instruction.address_mode
