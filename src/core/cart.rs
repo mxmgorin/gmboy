@@ -16,6 +16,14 @@ impl Cart {
             bytes,
         })
     }
+
+    pub fn read(&self, address: u16) -> u8 {
+        self.bytes[address as usize]
+    }
+
+    pub fn write(&mut self, address: u16, value: u8) {
+        self.bytes[address as usize] = value;
+    }
 }
 
 fn calc_checksum(bytes: &[u8]) -> Result<u8, String> {
@@ -110,7 +118,10 @@ fn parse_title(bytes: &[u8]) -> Result<String, String> {
     let result = String::from_utf8(title_bytes.to_vec());
 
     let Ok(title) = result else {
-        return Err(format!("Failed to parse cart title: {}", result.unwrap_err()));
+        return Err(format!(
+            "Failed to parse cart title: {}",
+            result.unwrap_err()
+        ));
     };
 
     let trimmed_title = title.trim_end_matches('\0').to_string();

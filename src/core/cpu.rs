@@ -1,11 +1,15 @@
-#[derive(Debug)]
+use crate::core::bus::Bus;
+
+#[derive(Debug, Clone)]
 pub struct Cpu {
+    bus: Bus,
     registers: CpuRegisters,
 }
 
 impl Cpu {
-    pub fn new() -> Cpu {
+    pub fn new(bus: Bus) -> Cpu {
         Self {
+            bus,
             registers: CpuRegisters::new(),
         }
     }

@@ -1,10 +1,10 @@
+use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use std::thread;
 
 #[derive(Debug)]
 pub struct Emu {
-    cart: Cart,
     cpu: Cpu,
     running: bool,
     paused: bool,
@@ -18,8 +18,7 @@ impl Emu {
         println!("Cart: {:?}", cart);
 
         Ok(Self {
-            cart,
-            cpu: Cpu::new(),
+            cpu: Cpu::new(Bus::new(cart)),
             running: false,
             paused: false,
             ticks: 0,
