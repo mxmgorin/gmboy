@@ -47,7 +47,9 @@ impl Cpu {
             ));
         };
 
-        println!("Executing: {:?}", current_instruction);
+        if cfg!(debug_assertions) {
+            println!("Executing: {:?}", current_instruction);
+        }
 
         Err("cpu execute not implemented yet".into())
     }
