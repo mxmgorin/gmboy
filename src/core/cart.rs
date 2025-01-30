@@ -78,19 +78,20 @@ impl CartHeader {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[repr(u8)]
 pub enum RomSize {
-    _32KiB,
-    _64KiB,
-    _128KiB,
-    _256KiB,
-    _512KiB,
-    _1MiB,
-    _2MiB,
-    _4MiB,
-    _8MiB,
-    _1_1MiB,
-    _1_2MiB,
-    _1_5MiB,
+    _32KiB = 0x00,
+    _64KiB = 0x01,
+    _128KiB = 0x02,
+    _256KiB = 0x03,
+    _512KiB = 0x04,
+    _1MiB = 0x05,
+    _2MiB = 0x06,
+    _4MiB = 0x07,
+    _8MiB = 0x08,
+    _1_1MiB = 0x52,
+    _1_2MiB = 0x53,
+    _1_5MiB = 0x54,
 }
 
 impl TryFrom<u8> for RomSize {
@@ -152,6 +153,7 @@ impl RomSize {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[repr(u8)]
 pub enum RamSize {
     NoRam = 0x00,
     Unused = 0x01,
@@ -178,9 +180,10 @@ impl TryFrom<u8> for RamSize {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[repr(u8)]
 pub enum DestinationCode {
-    Japan,
-    OverseasOnly,
+    Japan = 0x00,
+    OverseasOnly = 0x01,
 }
 
 impl TryFrom<u8> for DestinationCode {
