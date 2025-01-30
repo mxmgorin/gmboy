@@ -5,8 +5,6 @@ use crate::core::util::reverse_u16;
 pub struct Cpu {
     bus: Bus,
     registers: CpuRegisters,
-    current_opcode: u8,
-    current_instruction: Option<&'static CpuInstruction>,
     halted: bool,
     mem_dest: u16,
     fetched_data: u16,
@@ -18,8 +16,6 @@ impl Cpu {
         Self {
             bus,
             registers: CpuRegisters::new(),
-            current_opcode: 0,
-            current_instruction: None,
             halted: false,
             mem_dest: 0,
             fetched_data: 0,
@@ -32,49 +28,44 @@ impl Cpu {
             return Ok(());
         }
 
-        self.fetch_instruction();
-        self.fetch_data();
-        self.execute()?;
+        let opcode = self.fetch_opcode();
+
+        let Some(instruction) = get_instruction_by_opcode(opcode) else {
+            return Err(format!("Unknown instruction opcode: {opcode}",));
+        };
+
+        self.fetch_data(instruction);
+        self.execute(instruction)?;
 
         Ok(())
     }
 
-    fn execute(&mut self) -> Result<(), String> {
-        let Some(current_instruction) = self.current_instruction.take() else {
-            return Err(format!(
-                "Unknown instruction opcode: {}",
-                self.current_opcode
-            ));
-        };
-
+    fn execute(&mut self, instruction: &CpuInstruction) -> Result<(), String> {
         if cfg!(debug_assertions) {
-            println!("Executing: {:?}", current_instruction);
+            println!("Executing: {:?}", instruction);
         }
 
-        Err("cpu execute not implemented yet".into())
+        Ok(())
     }
 
-    fn fetch_instruction(&mut self) {
-        self.current_opcode = self.bus.read(self.registers.pc);
+    fn fetch_opcode(&mut self) -> u8 {
+        let opcode = self.bus.read(self.registers.pc);
         self.registers.pc += 1;
-        self.current_instruction = get_instruction_by_opcode(self.current_opcode);
+
+        opcode
     }
 
-    fn fetch_data(&mut self) {
-        let Some(current_instruction) = self.current_instruction else {
-            return;
-        };
-
-        match current_instruction.address_mode {
+    fn fetch_data(&mut self, instruction: &CpuInstruction) {
+        match instruction.address_mode {
             AddressMode::Imp => (),
             AddressMode::R => {
-                self.fetched_data = self.read_register(
-                    current_instruction
-                        .register_1_type
-                        .expect("must be set for R type"),
-                );
+                self.fetched_data = self
+                    .read_register(instruction.register_1_type.expect("must be set for R type"));
             }
-            _ => eprintln!("Not implemented instruction: {:?}", current_instruction),
+            _ => eprintln!(
+                "Unimplemented Addressing Mode: {:?}",
+                instruction.address_mode
+            ),
         }
     }
 
