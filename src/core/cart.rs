@@ -79,9 +79,7 @@ impl CartHeader {
         Ok(Self {
             entry_point: bytes[0x0100..0x0104].try_into().unwrap(),
             nintendo_logo: bytes[0x0104..0x0134].try_into().unwrap(),
-            title: String::from_utf8_lossy(&bytes[0x0134..0x0144])
-                .trim_end_matches('\0')
-                .to_string(),
+            title: parse_title(bytes)?,
             manufacturer_code: if bytes[0x013F..0x0143] != [0x00, 0x00, 0x00, 0x00] {
                 Some(String::from_utf8_lossy(&bytes[0x013F..0x0143]).to_string())
             } else {
@@ -100,6 +98,28 @@ impl CartHeader {
             global_checksum: u16::from_be_bytes(bytes[0x014E..0x0150].try_into().unwrap()),
         })
     }
+}
+
+fn parse_title(bytes: &[u8]) -> Result<String, String> {
+    let title_bytes = &bytes[0x0134..0x0144];
+
+    if cfg!(debug_assertions) {
+        println!("Title bytes: {:?}", title_bytes);
+    }
+
+    let result = String::from_utf8(title_bytes.to_vec());
+
+    let Ok(title) = result else {
+        return Err(format!("Failed to parse title: {}", result.unwrap_err()));
+    };
+
+    let trimmed_title = title.trim_end_matches('\0').to_string();
+
+    if cfg!(debug_assertions) {
+        println!("Title: {}", trimmed_title);
+    }
+
+    Ok(trimmed_title)
 }
 
 #[derive(Debug, Clone, Copy)]
