@@ -24,7 +24,7 @@ fn main() {
     let result = Emu::new(&cart_bytes);
 
     let Ok(mut emu) = result else {
-        eprintln!("Usage: {} <file_path>", args[0]);
+        eprintln!("Emu failed: {}", result.unwrap_err());
         std::process::exit(1);
     };
 
