@@ -21,7 +21,7 @@ fn main() {
         std::process::exit(1);
     };
 
-    let result = Emu::new(&cart_bytes);
+    let result = Emu::new(cart_bytes);
 
     let Ok(mut emu) = result else {
         eprintln!("Emu failed: {}", result.unwrap_err());
