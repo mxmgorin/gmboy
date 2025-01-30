@@ -1,3 +1,5 @@
+use crate::core::cpu::Cpu;
+use crate::core::instructions::nop;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Instruction {
@@ -7,6 +9,7 @@ pub struct Instruction {
     pub register_2_type: Option<RegisterType>,
     pub condition_type: Option<ConditionType>,
     pub param: Option<u8>,
+    pub execute_fn: fn(instruction: &Instruction, cpu: &mut Cpu),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,6 +37,7 @@ const NONE_INSTRUCTION: Instruction = Instruction {
     register_2_type: None,
     condition_type: None,
     param: None,
+    execute_fn: nop::execute,
 };
 
 const INSTRUCTIONS_LEN: usize = 0xFF;
@@ -41,14 +45,7 @@ const INSTRUCTIONS_LEN: usize = 0xFF;
 const INSTRUCTIONS: [Instruction; INSTRUCTIONS_LEN] = {
     let mut instructions = [NONE_INSTRUCTION; INSTRUCTIONS_LEN];
 
-    instructions[0x00] = Instruction {
-        r#type: Some(InstructionType::NOP),
-        address_mode: Some(AddressMode::IMP),
-        register_1_type: None,
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
+    instructions[nop::OPCODE as usize] = nop::new();
     instructions[0x04] = Instruction {
         r#type: Some(InstructionType::INC),
         address_mode: Some(AddressMode::R),
