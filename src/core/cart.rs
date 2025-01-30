@@ -93,7 +93,7 @@ impl CartHeader {
             } else {
                 None
             },
-            cgb_flag: bytes[0x0143].try_into()?,
+            cgb_flag: bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCGBMode),
             new_licensee_code: bytes[0x0144..0x0146].into(),
             sgb_flag: bytes[0x0146],
             cartridge_type: bytes[0x0147].try_into()?,
