@@ -428,3 +428,28 @@ pub enum ConditionType {
     /// Carry
     C,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::core::cpu::{CpuRegisters};
+
+    #[test]
+    fn test_get_flag_z() {
+        let mut regs = CpuRegisters::new();
+        regs.f = 0b10000000;
+        assert!(regs.get_flag_z());
+
+        regs.f = 0b00000000;
+        assert!(!regs.get_flag_z());
+    }
+
+    #[test]
+    fn test_get_flag_c() {
+        let mut regs = CpuRegisters::new();
+        regs.f = 0b00010000;
+        assert!(regs.get_flag_c());
+        
+        regs.f = 0b00000000;
+        assert!(!regs.get_flag_c());
+    }
+}
