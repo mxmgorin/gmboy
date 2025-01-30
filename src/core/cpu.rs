@@ -31,7 +31,7 @@ impl Cpu {
         let opcode = self.fetch_opcode();
 
         let Some(instruction) = get_instruction_by_opcode(opcode) else {
-            return Err(format!("Unknown instruction opcode: {opcode}",));
+            return Err(format!("Unknown instruction opcode: 0x{opcode:X}",));
         };
 
         self.fetch_data(instruction);
@@ -57,7 +57,7 @@ impl Cpu {
 
     fn fetch_data(&mut self, instruction: &CpuInstruction) {
         match instruction.address_mode {
-            AddressMode::Imp => (),
+            AddressMode::IMP => (),
             AddressMode::R => {
                 self.fetched_data = self
                     .read_register(instruction.register_1_type.expect("must be set for R type"));
@@ -109,19 +109,27 @@ pub struct CpuInstruction {
 
 const NONE_INSTRUCTION: CpuInstruction = CpuInstruction {
     r#type: None,
-    address_mode: AddressMode::Imp,
+    address_mode: AddressMode::IMP,
     register_1_type: None,
     register_2_type: None,
     condition_type: None,
     param: None,
 };
-const INSTRUCTIONS_LEN: usize = 1;
+const INSTRUCTIONS_LEN: usize = 0xFF;
 const CPU_INSTRUCTIONS: [CpuInstruction; INSTRUCTIONS_LEN] = {
     let mut instructions = [NONE_INSTRUCTION; INSTRUCTIONS_LEN];
 
     instructions[0x00] = CpuInstruction {
-        r#type: Some(InstructionType::Nop),
-        address_mode: AddressMode::Imp,
+        r#type: Some(InstructionType::NOP),
+        address_mode: AddressMode::IMP,
+        register_1_type: None,
+        register_2_type: None,
+        condition_type: None,
+        param: None,
+    };
+    instructions[0xC3] = CpuInstruction {
+        r#type: Some(InstructionType::JP),
+        address_mode: AddressMode::D16,
         register_1_type: None,
         register_2_type: None,
         condition_type: None,
@@ -168,28 +176,63 @@ impl CpuRegisters {
     }
 }
 
+/// Represents the different address modes in the CPU's instruction set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
 pub enum AddressMode {
-    Imp,
+    /// Immediate Addressing: The operand is directly specified in the instruction.
+    IMP,
+    /// Register with 16-bit immediate address: The operand is a 16-bit immediate value,
+    /// and the instruction works with a register.
     R_D16,
+    /// Register to Register: The operand is another register, and the instruction operates
+    /// between two registers.
     R_R,
+    /// Memory to Register: The operand is a memory location, and the instruction operates
+    /// between memory and a register.
     MR_R,
+    /// Register: The operand is a register.
     R,
+    /// Register with 8-bit immediate value: The operand is an 8-bit immediate value,
+    /// and the instruction operates with a register.
     R_D8,
+    /// Register with Memory to Register: The instruction reads a value from memory and stores
+    /// it into a register.
     R_MR,
+    /// Register and HL increment: The instruction uses the `HL` register pair, increments it,
+    /// and accesses memory using the updated value of `HL`.
     R_HLI,
+    /// Register and HL decrement: The instruction uses the `HL` register pair, decrements it,
+    /// and accesses memory using the updated value of `HL`.
     R_HLD,
+    /// HL increment and Register: The instruction stores a value from a register to memory and
+    /// increments the `HL` register pair.
     HLI_R,
+    /// HL decrement and Register: The instruction stores a value from a register to memory and
+    /// decrements the `HL` register pair.
     HLD_R,
+    /// Register and 8-bit immediate address: The instruction uses a 8-bit immediate address and
+    /// a register for memory access.
     R_A8,
+    /// 8-bit address and Register: The instruction uses a memory address and a register to store
+    /// a value from the register to memory.
     A8_R,
+    /// HL and Special Register Pair: This mode uses the `HL` register and other special register pairs
+    /// for specific operations.
     HL_SPR,
+    /// 16-bit immediate data: The instruction involves a 16-bit immediate operand.
     D16,
+    /// 8-bit immediate data: The instruction involves an 8-bit immediate operand.
     D8,
+    /// 16-bit immediate data to Register: The instruction loads a 16-bit immediate operand to a register.
     D16_R,
+    /// Memory Read and 8-bit immediate address: The instruction reads from memory using an 8-bit immediate address.
     MR_D8,
+    /// Memory Read: The instruction performs a read operation from memory.
     MR,
+    /// 16-bit Address and Register: The instruction works with a 16-bit memory address and a register.
     A16_R,
+    /// Register and 16-bit Address: The instruction stores a value from a register to a 16-bit memory address.
     R_A16,
 }
 
@@ -213,8 +256,7 @@ pub enum RegisterType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstructionType {
-    None,
-    Nop,
+    NOP,
     Ld,
     Inc,
     Dec,
@@ -238,7 +280,7 @@ pub enum InstructionType {
     Or,
     Cp,
     Pop,
-    Jp,
+    JP,
     Push,
     Ret,
     Cb,
@@ -265,7 +307,6 @@ pub enum InstructionType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConditionType {
-    None,
     /// Non-zero
     Nz,
     /// Zero
