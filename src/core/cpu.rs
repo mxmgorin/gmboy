@@ -56,7 +56,11 @@ impl Cpu {
     }
 
     fn fetch_data(&mut self, instruction: &CpuInstruction) {
-        match instruction.address_mode {
+        let Some(address_mode) = instruction.address_mode else {
+            return;
+        };
+
+        match address_mode {
             AddressMode::IMP => (),
             AddressMode::R => {
                 self.fetched_data = self
@@ -113,7 +117,7 @@ impl Cpu {
 #[derive(Debug, Clone, Copy)]
 pub struct CpuInstruction {
     pub r#type: Option<InstructionType>,
-    pub address_mode: AddressMode,
+    pub address_mode: Option<AddressMode>,
     pub register_1_type: Option<RegisterType>,
     pub register_2_type: Option<RegisterType>,
     pub condition_type: Option<ConditionType>,
@@ -122,7 +126,7 @@ pub struct CpuInstruction {
 
 const NONE_INSTRUCTION: CpuInstruction = CpuInstruction {
     r#type: None,
-    address_mode: AddressMode::IMP,
+    address_mode: None,
     register_1_type: None,
     register_2_type: None,
     condition_type: None,
@@ -134,15 +138,55 @@ const CPU_INSTRUCTIONS: [CpuInstruction; INSTRUCTIONS_LEN] = {
 
     instructions[0x00] = CpuInstruction {
         r#type: Some(InstructionType::NOP),
-        address_mode: AddressMode::IMP,
+        address_mode: Some(AddressMode::IMP),
         register_1_type: None,
+        register_2_type: None,
+        condition_type: None,
+        param: None,
+    };
+    instructions[0x04] = CpuInstruction {
+        r#type: Some(InstructionType::INC),
+        address_mode: Some(AddressMode::R),
+        register_1_type: Some(RegisterType::B),
+        register_2_type: None,
+        condition_type: None,
+        param: None,
+    };
+    instructions[0x05] = CpuInstruction {
+        r#type: Some(InstructionType::DEC),
+        address_mode: Some(AddressMode::R),
+        register_1_type: Some(RegisterType::B),
+        register_2_type: None,
+        condition_type: None,
+        param: None,
+    };
+    instructions[0x0E] = CpuInstruction {
+        r#type: Some(InstructionType::LD),
+        address_mode: Some(AddressMode::R_D8),
+        register_1_type: Some(RegisterType::C),
+        register_2_type: None,
+        condition_type: None,
+        param: None,
+    };
+    instructions[0xAF] = CpuInstruction {
+        r#type: Some(InstructionType::XOR),
+        address_mode: Some(AddressMode::R),
+        register_1_type: Some(RegisterType::A),
         register_2_type: None,
         condition_type: None,
         param: None,
     };
     instructions[0xC3] = CpuInstruction {
         r#type: Some(InstructionType::JP),
-        address_mode: AddressMode::D16,
+        address_mode: Some(AddressMode::D16),
+        register_1_type: None,
+        register_2_type: None,
+        condition_type: None,
+        param: None,
+    };
+    instructions[0xF3] = CpuInstruction {
+        r#type: Some(InstructionType::DI),
+        address_mode: None,
         register_1_type: None,
         register_2_type: None,
         condition_type: None,
@@ -269,53 +313,100 @@ pub enum RegisterType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstructionType {
+    /// No Operation
     NOP,
-    Ld,
-    Inc,
-    Dec,
-    Rlca,
-    Add,
-    Rrca,
-    Stop,
-    Rla,
-    Jr,
-    Rra,
-    Daa,
-    Cpl,
-    Scf,
-    Ccf,
-    Halt,
-    Adc,
-    Sub,
-    Sbc,
-    And,
-    Xor,
-    Or,
-    Cp,
-    Pop,
+    /// Load (LD) instruction
+    LD,
+    /// Increment (INC) instruction
+    INC,
+    /// Decrement (DEC) instruction
+    DEC,
+    /// Rotate Left Circular (RLCA) instruction
+    RLCA,
+    /// Add (ADD) instruction
+    ADD,
+    /// Rotate Right Circular (RRCA) instruction
+    RRCA,
+    /// Stop execution
+    STOP,
+    /// Rotate Left (RLA) instruction
+    RLA,
+    /// Jump Relative (JR) instruction
+    JR,
+    /// Rotate Right (RRA) instruction
+    RRA,
+    /// Decimal Adjust Accumulator (DAA) instruction
+    DAA,
+    /// Complement (CPL) instruction
+    CPL,
+    /// Set Carry Flag (SCF) instruction
+    SCF,
+    /// Complement Carry Flag (CCF) instruction
+    CCF,
+    /// Halt execution
+    HALT,
+    /// Add with Carry (ADC) instruction
+    ADC,
+    /// Subtract (SUB) instruction
+    SUB,
+    /// Subtract with Carry (SBC) instruction
+    SBC,
+    /// Logical AND (AND) instruction
+    AND,
+    /// Logical XOR (XOR) instruction
+    XOR,
+    /// Logical OR (OR) instruction
+    OR,
+    /// Compare (CP) instruction
+    CP,
+    /// Pop value from stack (POP) instruction
+    POP,
+    /// Jump (JP) instruction
     JP,
-    Push,
-    Ret,
-    Cb,
-    Call,
-    Reti,
-    Ldh,
-    Jphl,
-    Di,
-    Ei,
-    Rst,
-    Err,
-    Rlc,
-    Rrc,
-    Rl,
-    Rr,
-    Sla,
-    Sra,
-    Swap,
-    Srl,
-    Bit,
-    Res,
-    Set,
+    /// Push value to stack (PUSH) instruction
+    PUSH,
+    /// Return from function (RET) instruction
+    RET,
+    /// CB prefix instruction (used for extended instructions)
+    CB,
+    /// Call function (CALL) instruction
+    CALL,
+    /// Return from interrupt (RETI) instruction
+    RETI,
+    /// Load high byte (LDH) instruction
+    LDH,
+    /// Jump to address in HL register (JPHL) instruction
+    JPHL,
+    /// Disable interrupts (DI) instruction
+    DI,
+    /// Enable interrupts (EI) instruction
+    EI,
+    /// Restart (RST) instruction
+    RST,
+    /// Error instruction
+    ERR,
+    /// Rotate Left Circular (RLC) instruction
+    RLC,
+    /// Rotate Right Circular (RRC) instruction
+    RRC,
+    /// Rotate Left (RL) instruction
+    RL,
+    /// Rotate Right (RR) instruction
+    RR,
+    /// Shift Left Arithmetic (SLA) instruction
+    SLA,
+    /// Shift Right Arithmetic (SRA) instruction
+    SRA,
+    /// Swap nibbles (SWAP) instruction
+    SWAP,
+    /// Shift Right Logical (SRL) instruction
+    SRL,
+    /// Test bit in register (BIT) instruction
+    BIT,
+    /// Reset bit in register (RES) instruction
+    RES,
+    /// Set bit in register (SET) instruction
+    SET,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
