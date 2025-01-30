@@ -25,7 +25,8 @@ struct CartHeader {
     pub cgb_flag: CgbFlag,
     /// 0x0144-0x0145: New licensee code
     pub new_licensee_code: NewLicenseeCode,
-    /// 0x0146: Super Game Boy compatibility
+    /// 0x0146: This byte specifies whether the game supports SGB functions.
+    /// The SGB will ignore any command packets if this byte is set to a value other than $03 (typically $00).
     pub sgb_flag: u8,
     /// 0x0147: Type of cartridge
     pub cartridge_type: CartridgeType,
