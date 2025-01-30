@@ -1,5 +1,6 @@
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
+use std::thread;
 
 #[derive(Debug)]
 pub struct Emu {
@@ -13,9 +14,9 @@ pub struct Emu {
 impl Emu {
     pub fn new(cart_bytes: Vec<u8>) -> Result<Self, String> {
         let cart = Cart::new(cart_bytes)?;
-        
+
         println!("Cart: {:?}", cart);
-        
+
         Ok(Self {
             cart,
             cpu: Cpu::new(),
@@ -30,7 +31,7 @@ impl Emu {
 
         while self.running {
             if self.paused {
-                // todo: add pause
+                thread::sleep(std::time::Duration::from_millis(50));
                 continue;
             }
 
