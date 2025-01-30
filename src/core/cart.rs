@@ -115,15 +115,7 @@ fn parse_title(bytes: &[u8]) -> Result<String, String> {
         println!("Cart title bytes: {:?}", title_bytes);
     }
 
-    let result = String::from_utf8(title_bytes.to_vec());
-
-    let Ok(title) = result else {
-        return Err(format!(
-            "Failed to parse cart title: {}",
-            result.unwrap_err()
-        ));
-    };
-
+    let title = String::from_utf8_lossy(title_bytes).to_string();
     let trimmed_title = title.trim_end_matches('\0').to_string();
 
     Ok(trimmed_title)
