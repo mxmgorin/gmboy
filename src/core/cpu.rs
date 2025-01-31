@@ -34,8 +34,12 @@ impl Cpu {
         let opcode = self.fetch_opcode();
 
         let Some(instruction) = Instruction::get_by_opcode(opcode) else {
-            return Err(format!("Unknown instruction opcode: 0x{opcode:X}",));
+            return Err(format!("Unknown instruction OPCODE: {opcode:X}",));
         };
+
+        if cfg!(debug_assertions) {
+            self.print_debug_info(instruction, opcode);
+        }
 
         self.fetch_data(instruction);
         self.execute(instruction)?;
@@ -43,10 +47,7 @@ impl Cpu {
         Ok(())
     }
 
-    fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {
-        if cfg!(debug_assertions) {
-            println!("Executing: {:?}; {:?}", instruction, self.registers);
-        }
+    fn execute(&mut self, _instruction: &Instruction) -> Result<(), String> {
 
         Ok(())
     }
@@ -106,7 +107,10 @@ impl Cpu {
             AddressMode::R_HLD(_r1, r2) => {
                 self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
                 //emu_cycles(1);
-                self.set_register(RegisterType::HL, self.read_register(RegisterType::H).wrapping_sub(1));
+                self.set_register(
+                    RegisterType::HL,
+                    self.read_register(RegisterType::H).wrapping_sub(1),
+                );
             }
             AddressMode::HLI_R(r1, r2) => {
                 self.fetched_data = self.read_register(r2);
@@ -261,6 +265,50 @@ impl Cpu {
             set_bit(&mut self.registers.f, 4, c != 0);
         }
     }
+
+    fn print_debug_info(&self, instruction: &Instruction, opcode: u8) {
+        let mut flags = String::new();
+        flags.push(if self.registers.f & (1 << 7) != 0 {
+            'Z'
+        } else {
+            '-'
+        });
+        flags.push(if self.registers.f & (1 << 6) != 0 {
+            'N'
+        } else {
+            '-'
+        });
+        flags.push(if self.registers.f & (1 << 5) != 0 {
+            'H'
+        } else {
+            '-'
+        });
+        flags.push(if self.registers.f & (1 << 4) != 0 {
+            'C'
+        } else {
+            '-'
+        });
+
+        let inst = format!("{:?}", instruction);
+
+        println!(
+            "{:08X} - {:04X}: {:<12} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
+            0,
+            self.registers.pc,
+            inst,
+            opcode,
+            self.bus.read(self.registers.pc + 1),
+            self.bus.read(self.registers.pc + 2),
+            self.registers.a,
+            flags,
+            self.registers.b,
+            self.registers.c,
+            self.registers.d,
+            self.registers.e,
+            self.registers.h,
+            self.registers.l
+        );
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -288,7 +336,7 @@ impl Registers {
             e: 0,
             h: 0,
             l: 0,
-            sp: 0,
+            sp: 0xFFFE,
             pc: 0x100,
         }
     }

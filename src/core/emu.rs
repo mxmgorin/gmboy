@@ -15,7 +15,7 @@ impl Emu {
     pub fn new(cart_bytes: Vec<u8>) -> Result<Self, String> {
         let cart = Cart::new(cart_bytes)?;
 
-        println!("Cart: {:?}", cart);
+        println!("Loaded: {}", cart);
 
         Ok(Self {
             cpu: Cpu::new(Bus::new(cart)),

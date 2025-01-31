@@ -1,8 +1,20 @@
+use std::fmt::Display;
+
 #[derive(Debug, Clone)]
 pub struct Cart {
     header: CartHeader,
     bytes: Vec<u8>,
     checksum_valid: bool,
+}
+
+impl Display for Cart {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = format!(
+            "Cart {{ header: {:?}, checksum_valid: {:?} }}",
+            self.header, self.checksum_valid
+        );
+        write!(f, "{}", str)
+    }
 }
 
 impl Cart {
