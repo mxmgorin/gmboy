@@ -47,7 +47,8 @@ impl Cpu {
         Ok(())
     }
 
-    fn execute(&mut self, _instruction: &Instruction) -> Result<(), String> {
+    fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {
+        instruction.execute(self);
 
         Ok(())
     }
