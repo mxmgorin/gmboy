@@ -1,4 +1,5 @@
 use crate::core::instructions::common::{AddressMode, ConditionType, Instruction, RegisterType};
+use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::inc::IncInstruction;
@@ -149,9 +150,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x2E] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_D8(RegisterType::L),
     });
-    //instructions[0x2F] = Instruction::CPL(LdInstruction {
-    //    address_mode: AddressMode::R_D8(RegisterType::L),
-    //});
+    instructions[0x2F] = Instruction::Cpl(CplInstruction);
 
     // 0x3X
     instructions[0x30] = Instruction::Jr(JrInstruction {
