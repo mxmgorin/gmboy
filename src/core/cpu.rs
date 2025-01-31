@@ -1,7 +1,6 @@
 use crate::core::bus::Bus;
 use crate::core::instructions::common::{
-    AddressMode, ExecutableInstruction, Instruction,
-    RegisterType,
+    AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
 use crate::core::util::{get_bit_flag, reverse_u16};
 

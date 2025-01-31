@@ -1,4 +1,5 @@
 use crate::core::instructions::common::{AddressMode, ConditionType, Instruction, RegisterType};
+use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::jr::JrInstruction;
@@ -126,9 +127,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x26] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_D8(RegisterType::H),
     });
-    //instructions[0x27] = Instruction::DAA(LdInstruction {
-    //    address_mode: AddressMode::R_D8(RegisterType::H),
-    //});
+    instructions[0x27] = Instruction::Daa(DaaInstruction);
     instructions[0x28] = Instruction::Jr(JrInstruction {
         condition_type: Some(ConditionType::Z),
     });
@@ -167,7 +166,6 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x33] = Instruction::Inc(IncInstruction {
         register_type: RegisterType::SP,
     });
-
     instructions[0x38] = Instruction::Jr(JrInstruction {
         condition_type: Some(ConditionType::C),
     });
