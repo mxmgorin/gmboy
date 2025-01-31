@@ -64,12 +64,15 @@ impl Cpu {
             AddressMode::R(r1) => {
                 self.fetched_data = self.read_register(r1);
             }
-            AddressMode::R_D8(_) => {
+            AddressMode::R_R(_r1, r2) => {
+                self.fetched_data = self.read_register(r2);
+            }
+            AddressMode::R_D8(_r1) => {
                 self.fetched_data = self.bus.read(self.registers.pc) as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
-            AddressMode::R_D16(_) => {
+            AddressMode::D16 | AddressMode::R_D16(_)  => {
                 let lo = self.bus.read(self.registers.pc);
                 //emu_cycles(1);
                 let hi = self.bus.read(self.registers.pc + 1);
@@ -77,10 +80,41 @@ impl Cpu {
                 self.fetched_data = (hi as u16) << 8 | (lo as u16);
                 self.registers.pc += 2;
             }
-            _ => eprintln!(
-                "Unimplemented Addressing Mode: {:?}",
-                instruction.get_address_mode()
-            ),
+            AddressMode::R_MR(r1) => {
+                let mut addr = self.read_register(r1);
+                
+                if r1 == RegisterType::C {
+                    addr |= 0xFF0;
+                }
+                self.fetched_data = self.bus.read(addr) as u16;
+                //emu_cycles(1);
+            }
+            AddressMode::MR_R(r1, r2) => {
+                self.fetched_data = self.read_register(r2);
+                self.mem_dest = self.read_register(r1);
+                self.dest_is_mem = true;
+                
+                if r1 == RegisterType::C {
+                    self.mem_dest |= 0xFF00;
+                }
+            }
+            AddressMode::R_HLI(_r1, r2) => {
+                self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
+                //emu_cycles(1);
+                self.set_register(RegisterType::HL, self.read_register(RegisterType::H) - 1);
+            }
+            AddressMode::R_HLD(_, _) => {}
+            AddressMode::HLI_R(_, _) => {}
+            AddressMode::HLD_R(_, _) => {}
+            AddressMode::R_A8(_) => {}
+            AddressMode::A8_R(_) => {}
+            AddressMode::HL_SPR(_, _) => {}
+            AddressMode::D8 => {}
+            AddressMode::D16_R(_) => {}
+            AddressMode::MR_D8(_) => {}
+            AddressMode::MR(_) => {}
+            AddressMode::A16_R(_) => {}
+            AddressMode::R_A16(_) => {}
         }
     }
 
@@ -108,6 +142,41 @@ impl Cpu {
             }
             RegisterType::PC => self.registers.pc,
             RegisterType::SP => self.registers.sp,
+        }
+    }
+    
+    fn set_register(&mut self, register_type: RegisterType, val: u16) {
+        match register_type {
+            RegisterType::A => self.registers.a = (val & 0xFF) as u8,
+            RegisterType::F => self.registers.f = (val & 0xFF) as u8,
+            RegisterType::B => self.registers.b = (val & 0xFF) as u8,
+            RegisterType::C => self.registers.c = (val & 0xFF) as u8,
+            RegisterType::D => self.registers.d = (val & 0xFF) as u8,
+            RegisterType::E => self.registers.e = (val & 0xFF) as u8,
+            RegisterType::H => self.registers.h = (val & 0xFF) as u8,
+            RegisterType::L => self.registers.l = (val & 0xFF) as u8,
+            RegisterType::AF => {
+                let reversed = reverse_u16(val);
+                self.registers.a = (reversed >> 8) as u8;
+                self.registers.f = (reversed & 0xFF) as u8;
+            }
+            RegisterType::BC => {
+                let reversed = reverse_u16(val);
+                self.registers.b = (reversed >> 8) as u8;
+                self.registers.c = (reversed & 0xFF) as u8;
+            }
+            RegisterType::DE => {
+                let reversed = reverse_u16(val);
+                self.registers.d = (reversed >> 8) as u8;
+                self.registers.e = (reversed & 0xFF) as u8;
+            }
+            RegisterType::HL => {
+                let reversed = reverse_u16(val);
+                self.registers.h = (reversed >> 8) as u8;
+                self.registers.l = (reversed & 0xFF) as u8;
+            }
+            RegisterType::PC => self.registers.pc = val,
+            RegisterType::SP => self.registers.sp = val,
         }
     }
 }
