@@ -1,6 +1,5 @@
 use crate::core::cpu::Cpu;
 use crate::core::instructions::ccf::CcfInstruction;
-use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
@@ -11,6 +10,7 @@ use crate::core::instructions::jp::JpInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
+use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
 
 #[derive(Debug, Clone, Copy)]

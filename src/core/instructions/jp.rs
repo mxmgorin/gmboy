@@ -1,5 +1,7 @@
 use crate::core::cpu::Cpu;
-use crate::core::instructions::common::{AddressMode, ConditionType, ExecutableInstruction, Instruction};
+use crate::core::instructions::common::{
+    AddressMode, ConditionType, ExecutableInstruction, Instruction,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct JpInstruction {

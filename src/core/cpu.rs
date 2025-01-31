@@ -34,7 +34,7 @@ impl Cpu {
         }
 
         let pc = self.registers.pc;
-        let opcode = self.fetch_opcode();
+        let opcode = self.fetch_opcode()?;
 
         let Some(instruction) = Instruction::get_by_opcode(opcode) else {
             return Err(format!("Unknown instruction OPCODE: {opcode:X}",));
@@ -44,7 +44,7 @@ impl Cpu {
             self.print_debug_info(pc, instruction, opcode);
         }
 
-        self.fetch_data(instruction);
+        self.fetch_data(instruction)?;
         self.execute(instruction)?;
 
         Ok(())
@@ -56,16 +56,16 @@ impl Cpu {
         Ok(())
     }
 
-    fn fetch_opcode(&mut self) -> u8 {
-        let opcode = self.bus.read(self.registers.pc);
+    fn fetch_opcode(&mut self) -> Result<u8, String> {
+        let opcode = self.bus.read(self.registers.pc)?;
         self.registers.pc += 1;
 
-        opcode
+        Ok(opcode)
     }
 
-    fn fetch_data(&mut self, instruction: &Instruction) {
+    fn fetch_data(&mut self, instruction: &Instruction) -> Result<(), String> {
         match instruction.get_address_mode() {
-            AddressMode::IMP => (),
+            AddressMode::IMP => {},
             AddressMode::R(r1) => {
                 self.fetched_data = self.read_register(r1);
             }
@@ -73,14 +73,14 @@ impl Cpu {
                 self.fetched_data = self.read_register(r2);
             }
             AddressMode::R_D8(_r1) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                self.fetched_data = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::D16 | AddressMode::R_D16(_) => {
-                let lo = self.bus.read(self.registers.pc);
+                let lo = self.bus.read(self.registers.pc)?;
                 //emu_cycles(1);
-                let hi = self.bus.read(self.registers.pc + 1);
+                let hi = self.bus.read(self.registers.pc + 1)?;
                 //emu_cycles(1);
                 self.fetched_data = (hi as u16) << 8 | (lo as u16);
                 self.registers.pc += 2;
@@ -91,7 +91,7 @@ impl Cpu {
                 if r1 == RegisterType::C {
                     addr |= 0xFF0;
                 }
-                self.fetched_data = self.bus.read(addr) as u16;
+                self.fetched_data = self.bus.read(addr)? as u16;
                 //emu_cycles(1);
             }
             AddressMode::MR_R(r1, r2) => {
@@ -104,12 +104,12 @@ impl Cpu {
                 }
             }
             AddressMode::R_HLI(_r1, r2) => {
-                self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
+                self.fetched_data = self.bus.read(self.read_register(r2))? as u16;
                 //emu_cycles(1);
                 self.set_register(RegisterType::HL, self.read_register(RegisterType::H) + 1);
             }
             AddressMode::R_HLD(_r1, r2) => {
-                self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
+                self.fetched_data = self.bus.read(self.read_register(r2))? as u16;
                 //emu_cycles(1);
                 self.set_register(
                     RegisterType::HL,
@@ -129,31 +129,31 @@ impl Cpu {
                 self.set_register(RegisterType::HL, self.read_register(RegisterType::HL) - 1);
             }
             AddressMode::R_A8(_r1) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                self.fetched_data = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::A8_R(_r1) => {
-                self.mem_dest = self.bus.read(self.registers.pc) as u16 | 0xFF00;
+                self.mem_dest = self.bus.read(self.registers.pc)? as u16 | 0xFF00;
                 self.dest_is_mem = true;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::HL_SPR(_r1, _r2) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                self.fetched_data = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::D8 => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                self.fetched_data = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::D16_R(r1) | AddressMode::A16_R(r1) => {
-                let lo = self.bus.read(self.registers.pc) as u16;
+                let lo = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
 
-                let hi = self.bus.read(self.registers.pc + 1) as u16;
+                let hi = self.bus.read(self.registers.pc + 1)? as u16;
                 //emu_cycles(1);
 
                 self.mem_dest = lo | (hi << 8);
@@ -163,7 +163,7 @@ impl Cpu {
                 self.fetched_data = self.read_register(r1);
             }
             AddressMode::MR_D8(r1) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                self.fetched_data = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
                 self.mem_dest = self.read_register(r1);
@@ -172,22 +172,24 @@ impl Cpu {
             AddressMode::MR(r1) => {
                 self.mem_dest = self.read_register(r1);
                 self.dest_is_mem = true;
-                self.fetched_data = self.bus.read(self.read_register(r1)) as u16;
+                self.fetched_data = self.bus.read(self.read_register(r1))? as u16;
             }
             AddressMode::R_A16(_r1) => {
-                let lo = self.bus.read(self.registers.pc) as u16;
+                let lo = self.bus.read(self.registers.pc)? as u16;
                 //emu_cycles(1);
 
-                let hi = self.bus.read(self.registers.pc + 1) as u16;
+                let hi = self.bus.read(self.registers.pc + 1)? as u16;
                 //emu_cycles(1);
 
                 let addr = lo | (hi << 8);
 
                 self.registers.pc += 2;
-                self.fetched_data = self.bus.read(addr) as u16;
+                self.fetched_data = self.bus.read(addr)? as u16;
                 //emu_cycles(1);
             }
         }
+        
+        Ok(())
     }
 
     pub fn read_register(&self, register_type: RegisterType) -> u16 {
@@ -288,26 +290,10 @@ impl Cpu {
 
     fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
         let mut flags = String::new();
-        flags.push(if self.get_flag_z() {
-            'Z'
-        } else {
-            '-'
-        });
-        flags.push(if self.get_flag_n() {
-            'N'
-        } else {
-            '-'
-        });
-        flags.push(if self.get_flag_h() {
-            'H'
-        } else {
-            '-'
-        });
-        flags.push(if self.get_flag_c() {
-            'C'
-        } else {
-            '-'
-        });
+        flags.push(if self.get_flag_z() { 'Z' } else { '-' });
+        flags.push(if self.get_flag_n() { 'N' } else { '-' });
+        flags.push(if self.get_flag_h() { 'H' } else { '-' });
+        flags.push(if self.get_flag_c() { 'C' } else { '-' });
 
         println!(
             "{:08X} - {:04X}: {:?} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
@@ -315,8 +301,8 @@ impl Cpu {
             pc,
             instruction,
             opcode,
-            self.bus.read(pc + 1),
-            self.bus.read(pc + 2),
+            self.bus.read(pc + 1).unwrap(),
+            self.bus.read(pc + 2).unwrap(),
             self.registers.a,
             flags,
             self.registers.b,
