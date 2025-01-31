@@ -2,9 +2,9 @@ use std::fmt::Display;
 
 #[derive(Debug, Clone)]
 pub struct Cart {
-    header: CartHeader,
-    bytes: Vec<u8>,
-    checksum_valid: bool,
+    pub header: CartHeader,
+    pub bytes: Vec<u8>,
+    pub checksum_valid: bool,
 }
 
 impl Display for Cart {
@@ -56,7 +56,7 @@ fn calc_checksum(bytes: &[u8]) -> Result<u8, String> {
 }
 
 #[derive(Debug, Clone)]
-struct CartHeader {
+pub struct CartHeader {
     /// 0x0100-0x0103: Execution start point
     pub entry_point: [u8; 4],
     /// 0x0104-0x0133: Nintendo logo
@@ -73,7 +73,7 @@ struct CartHeader {
     /// The SGB will ignore any command packets if this byte is set to a value other than $03 (typically $00).
     pub sgb_flag: u8,
     /// 0x0147: Type of cartridge
-    pub cartridge_type: CartridgeType,
+    pub cart_type: CartridgeType,
     /// 0x0148: ROM size
     pub rom_size: RomSize,
     /// 0x0149: RAM size
@@ -108,7 +108,7 @@ impl CartHeader {
             cgb_flag: bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCGBMode),
             new_licensee_code: bytes[0x0144..0x0146].into(),
             sgb_flag: bytes[0x0146],
-            cartridge_type: bytes[0x0147].try_into()?,
+            cart_type: bytes[0x0147].try_into()?,
             rom_size: bytes[0x0148].try_into()?,
             ram_size: bytes[0x0149].try_into()?,
             destination_code: bytes[0x014A].try_into()?,
