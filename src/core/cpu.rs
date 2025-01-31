@@ -45,7 +45,7 @@ impl Cpu {
 
     fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {
         if cfg!(debug_assertions) {
-            println!("Executing: {:?}", instruction);
+            println!("Executing: {:?}; {:?}", instruction, self.registers);
         }
 
         Ok(())
@@ -106,7 +106,7 @@ impl Cpu {
             AddressMode::R_HLD(_r1, r2) => {
                 self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
                 //emu_cycles(1);
-                self.set_register(RegisterType::HL, self.read_register(RegisterType::H) - 1);
+                self.set_register(RegisterType::HL, self.read_register(RegisterType::H).wrapping_sub(1));
             }
             AddressMode::HLI_R(r1, r2) => {
                 self.fetched_data = self.read_register(r2);
