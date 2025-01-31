@@ -104,8 +104,6 @@ impl AddressRange {
         self.start <= address && address <= self.end
     }
 }
-const ROM_DATA_ADDRESS_END: u16 = 0x8000;
-
 
 #[cfg(test)]
 mod tests {
@@ -113,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_contains() {
-        println!("{}", ROM_BANK0.contains(0x100));
+        assert!(ROM_BANK0.contains(0x100));
 
         //assert!(RAM_BANK1.contains(0x100));
         //assert!(RAM_BANK0.contains(0x100));
