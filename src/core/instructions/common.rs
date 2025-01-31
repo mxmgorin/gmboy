@@ -1,15 +1,16 @@
 use crate::core::cpu::Cpu;
 use crate::core::instructions::ccf::CcfInstruction;
+use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::di::DiInstruction;
 use crate::core::instructions::halt::HaltInstruction;
 use crate::core::instructions::inc::IncInstruction;
+use crate::core::instructions::jp::JpInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
-use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
 
 #[derive(Debug, Clone, Copy)]
@@ -25,11 +26,37 @@ pub enum Instruction {
     Halt(HaltInstruction),
     Xor(XorInstruction),
     Di(DiInstruction),
+    Jp(JpInstruction),
 }
 
 impl Instruction {
     pub fn get_by_opcode(opcode: u8) -> Option<&'static Instruction> {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
+    }
+
+    pub fn check_cond(cpu: &Cpu, cond: Option<ConditionType>) -> bool {
+        let Some(cond) = cond else {
+            return true;
+        };
+
+        match cond {
+            ConditionType::C => cpu.get_flag_c(),
+            ConditionType::NC => !cpu.get_flag_c(),
+            ConditionType::Z => cpu.get_flag_z(),
+            ConditionType::NZ => !cpu.get_flag_z(),
+        }
+    }
+
+    pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
+        if Instruction::check_cond(cpu, cond) {
+            if push_pc {
+                //emu_cycles(2);
+                //stack_push16(cpu.registers.pc);  todo
+            }
+
+            cpu.registers.pc = addr;
+            //emu_cycles(1);
+        }
     }
 }
 
@@ -47,6 +74,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Halt(inst) => inst.execute(cpu),
             Instruction::Xor(inst) => inst.execute(cpu),
             Instruction::Di(inst) => inst.execute(cpu),
+            Instruction::Jp(inst) => inst.execute(cpu),
         }
     }
 
@@ -63,6 +91,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Halt(inst) => inst.get_address_mode(),
             Instruction::Xor(inst) => inst.get_address_mode(),
             Instruction::Di(inst) => inst.get_address_mode(),
+            Instruction::Jp(inst) => inst.get_address_mode(),
         }
     }
 }

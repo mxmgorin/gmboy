@@ -6,6 +6,7 @@ use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::di::DiInstruction;
 use crate::core::instructions::halt::HaltInstruction;
 use crate::core::instructions::inc::IncInstruction;
+use crate::core::instructions::jp::JpInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
@@ -196,10 +197,34 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0xBX
 
     // 0xCX
+    instructions[0xC2] = Instruction::Jp(JpInstruction {
+        address_mode: AddressMode::D16,
+        condition_type: Some(ConditionType::NZ),
+    });
+    instructions[0xC3] = Instruction::Jp(JpInstruction {
+        address_mode: AddressMode::D16,
+        condition_type: None,
+    });
+    instructions[0xCA] = Instruction::Jp(JpInstruction {
+        address_mode: AddressMode::D16,
+        condition_type: Some(ConditionType::Z),
+    });
 
     // 0xDX
+    instructions[0xD2] = Instruction::Jp(JpInstruction {
+        address_mode: AddressMode::D16,
+        condition_type: Some(ConditionType::NC),
+    });
+    instructions[0xDA] = Instruction::Jp(JpInstruction {
+        address_mode: AddressMode::D16,
+        condition_type: Some(ConditionType::C),
+    });
 
     // 0xEX
+    instructions[0xE9] = Instruction::Jp(JpInstruction {
+        address_mode: AddressMode::R(RegisterType::HL),
+        condition_type: None,
+    });
 
     // 0xFX
     instructions[0xF3] = Instruction::Di(DiInstruction);

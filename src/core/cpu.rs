@@ -270,24 +270,40 @@ impl Cpu {
         }
     }
 
+    pub fn get_flag_z(&self) -> bool {
+        get_bit_flag(self.registers.f, 7)
+    }
+
+    pub fn get_flag_n(&self) -> bool {
+        get_bit_flag(self.registers.f, 6)
+    }
+
+    pub fn get_flag_h(&self) -> bool {
+        get_bit_flag(self.registers.f, 5)
+    }
+
+    pub fn get_flag_c(&self) -> bool {
+        get_bit_flag(self.registers.f, 4)
+    }
+
     fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
         let mut flags = String::new();
-        flags.push(if self.registers.f & (1 << 7) != 0 {
+        flags.push(if self.get_flag_z() {
             'Z'
         } else {
             '-'
         });
-        flags.push(if self.registers.f & (1 << 6) != 0 {
+        flags.push(if self.get_flag_n() {
             'N'
         } else {
             '-'
         });
-        flags.push(if self.registers.f & (1 << 5) != 0 {
+        flags.push(if self.get_flag_h() {
             'H'
         } else {
             '-'
         });
-        flags.push(if self.registers.f & (1 << 4) != 0 {
+        flags.push(if self.get_flag_c() {
             'C'
         } else {
             '-'

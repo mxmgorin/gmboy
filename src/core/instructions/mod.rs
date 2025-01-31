@@ -13,3 +13,4 @@ mod ccf;
 mod halt;
 mod xor;
 mod di;
+mod jp;
