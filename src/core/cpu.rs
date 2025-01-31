@@ -31,6 +31,7 @@ impl Cpu {
             return Ok(());
         }
 
+        let pc = self.registers.pc;
         let opcode = self.fetch_opcode();
 
         let Some(instruction) = Instruction::get_by_opcode(opcode) else {
@@ -38,7 +39,7 @@ impl Cpu {
         };
 
         if cfg!(debug_assertions) {
-            self.print_debug_info(instruction, opcode);
+            self.print_debug_info(pc, instruction, opcode);
         }
 
         self.fetch_data(instruction);
@@ -267,7 +268,7 @@ impl Cpu {
         }
     }
 
-    fn print_debug_info(&self, instruction: &Instruction, opcode: u8) {
+    fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
         let mut flags = String::new();
         flags.push(if self.registers.f & (1 << 7) != 0 {
             'Z'
@@ -293,11 +294,11 @@ impl Cpu {
         println!(
             "{:08X} - {:04X}: {:?} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             0,
-            self.registers.pc,
+            pc,
             instruction,
             opcode,
-            self.bus.read(self.registers.pc + 1),
-            self.bus.read(self.registers.pc + 2),
+            self.bus.read(pc + 1),
+            self.bus.read(pc + 2),
             self.registers.a,
             flags,
             self.registers.b,
