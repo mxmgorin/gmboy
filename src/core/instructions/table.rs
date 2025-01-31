@@ -1,3 +1,4 @@
+use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::common::{AddressMode, ConditionType, Instruction, RegisterType};
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
@@ -168,6 +169,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x38] = Instruction::Jr(JrInstruction {
         condition_type: Some(ConditionType::C),
     });
+
+    instructions[0x3F] = Instruction::Ccf(CcfInstruction);
 
     // 0x4X
 

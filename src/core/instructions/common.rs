@@ -1,4 +1,5 @@
 use crate::core::cpu::Cpu;
+use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
@@ -17,6 +18,7 @@ pub enum Instruction {
     Jr(JrInstruction),
     Daa(DaaInstruction),
     Cpl(CplInstruction),
+    Ccf(CcfInstruction),
 }
 
 impl Instruction {
@@ -35,6 +37,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Jr(inst) => inst.execute(cpu),
             Instruction::Daa(inst) => inst.execute(cpu),
             Instruction::Cpl(inst) => inst.execute(cpu),
+            Instruction::Ccf(inst) => inst.execute(cpu),
         }
     }
 
@@ -47,6 +50,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Jr(inst) => inst.get_address_mode(),
             Instruction::Daa(inst) => inst.get_address_mode(),
             Instruction::Cpl(inst) => inst.get_address_mode(),
+            Instruction::Ccf(inst) => inst.get_address_mode(),
         }
     }
 }
