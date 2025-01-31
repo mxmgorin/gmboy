@@ -290,13 +290,11 @@ impl Cpu {
             '-'
         });
 
-        let inst = format!("{:?}", instruction);
-
         println!(
-            "{:08X} - {:04X}: {:<12} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
+            "{:08X} - {:04X}: {:?} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             0,
             self.registers.pc,
-            inst,
+            instruction,
             opcode,
             self.bus.read(self.registers.pc + 1),
             self.bus.read(self.registers.pc + 2),
