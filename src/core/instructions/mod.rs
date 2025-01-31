@@ -10,3 +10,4 @@ mod nop;
 mod table;
 mod cpl;
 mod ccf;
+mod halt;

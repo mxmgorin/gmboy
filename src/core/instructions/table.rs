@@ -3,6 +3,7 @@ use crate::core::instructions::common::{AddressMode, ConditionType, Instruction,
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
+use crate::core::instructions::halt::HaltInstruction;
 use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
@@ -179,6 +180,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0x6X
 
     // 0x7X
+    instructions[0x76] = Instruction::Halt(HaltInstruction);
 
     // 0x8X
 
