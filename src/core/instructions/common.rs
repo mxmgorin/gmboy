@@ -31,7 +31,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Dec(inst) => inst.execute(cpu),
             Instruction::Ld(inst) => inst.execute(cpu),
             Instruction::Jr(inst) => inst.execute(cpu),
-            Instruction::Da(inst) => inst.execute(cpu),
+            Instruction::Daa(inst) => inst.execute(cpu),
         }
     }
 
@@ -42,7 +42,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Dec(inst) => inst.get_address_mode(),
             Instruction::Ld(inst) => inst.get_address_mode(),
             Instruction::Jr(inst) => inst.get_address_mode(),
-            Instruction::Da(inst) => inst.get_address_mode(),
+            Instruction::Daa(inst) => inst.get_address_mode(),
         }
     }
 }
