@@ -12,3 +12,4 @@ mod cpl;
 mod ccf;
 mod halt;
 mod xor;
+mod di;

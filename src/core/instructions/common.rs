@@ -3,6 +3,7 @@ use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
 use crate::core::instructions::dec::DecInstruction;
+use crate::core::instructions::di::DiInstruction;
 use crate::core::instructions::halt::HaltInstruction;
 use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::jr::JrInstruction;
@@ -23,6 +24,7 @@ pub enum Instruction {
     Ccf(CcfInstruction),
     Halt(HaltInstruction),
     Xor(XorInstruction),
+    Di(DiInstruction),
 }
 
 impl Instruction {
@@ -44,6 +46,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Ccf(inst) => inst.execute(cpu),
             Instruction::Halt(inst) => inst.execute(cpu),
             Instruction::Xor(inst) => inst.execute(cpu),
+            Instruction::Di(inst) => inst.execute(cpu),
         }
     }
 
@@ -59,6 +62,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Ccf(inst) => inst.get_address_mode(),
             Instruction::Halt(inst) => inst.get_address_mode(),
             Instruction::Xor(inst) => inst.get_address_mode(),
+            Instruction::Di(inst) => inst.get_address_mode(),
         }
     }
 }
