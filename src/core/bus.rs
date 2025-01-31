@@ -69,8 +69,7 @@ impl Bus {
             return self.cart.read(address);
         }
 
-        eprint!("Can't bus read write address {address}");
-        0
+        panic!("Can't bus read read address {address}");
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
@@ -78,7 +77,7 @@ impl Bus {
             self.cart.write(address, value);
         }
 
-        eprint!("Can't bus write address {address}");
+        panic!("Can't bus write address {address}");
     }
 
     pub fn read16(&self, address: u16) -> u16 {
