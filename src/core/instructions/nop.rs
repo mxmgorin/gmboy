@@ -1,5 +1,5 @@
 use crate::core::cpu::Cpu;
-use crate::core::instructions::instruction::{AddressMode, Instruction, InstructionType};
+use crate::core::instructions::common::{AddressMode, Instruction, InstructionType};
 
 pub const OPCODE: u16 = 0x00;
 

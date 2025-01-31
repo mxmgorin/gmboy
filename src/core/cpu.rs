@@ -1,5 +1,5 @@
 use crate::core::bus::Bus;
-use crate::core::instructions::instruction::{get_instruction_by_opcode, AddressMode, Instruction, RegisterType};
+use crate::core::instructions::common::{get_instruction_by_opcode, AddressMode, Instruction, RegisterType};
 use crate::core::util::{get_bit_flag, reverse_u16};
 
 #[derive(Debug, Clone)]
