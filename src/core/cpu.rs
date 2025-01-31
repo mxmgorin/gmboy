@@ -72,7 +72,7 @@ impl Cpu {
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
-            AddressMode::D16 | AddressMode::R_D16(_)  => {
+            AddressMode::D16 | AddressMode::R_D16(_) => {
                 let lo = self.bus.read(self.registers.pc);
                 //emu_cycles(1);
                 let hi = self.bus.read(self.registers.pc + 1);
@@ -82,7 +82,7 @@ impl Cpu {
             }
             AddressMode::R_MR(r1) => {
                 let mut addr = self.read_register(r1);
-                
+
                 if r1 == RegisterType::C {
                     addr |= 0xFF0;
                 }
@@ -93,7 +93,7 @@ impl Cpu {
                 self.fetched_data = self.read_register(r2);
                 self.mem_dest = self.read_register(r1);
                 self.dest_is_mem = true;
-                
+
                 if r1 == RegisterType::C {
                     self.mem_dest |= 0xFF00;
                 }
@@ -101,20 +101,84 @@ impl Cpu {
             AddressMode::R_HLI(_r1, r2) => {
                 self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
                 //emu_cycles(1);
+                self.set_register(RegisterType::HL, self.read_register(RegisterType::H) + 1);
+            }
+            AddressMode::R_HLD(_r1, r2) => {
+                self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
+                //emu_cycles(1);
                 self.set_register(RegisterType::HL, self.read_register(RegisterType::H) - 1);
             }
-            AddressMode::R_HLD(_, _) => {}
-            AddressMode::HLI_R(_, _) => {}
-            AddressMode::HLD_R(_, _) => {}
-            AddressMode::R_A8(_) => {}
-            AddressMode::A8_R(_) => {}
-            AddressMode::HL_SPR(_, _) => {}
-            AddressMode::D8 => {}
-            AddressMode::D16_R(_) => {}
-            AddressMode::MR_D8(_) => {}
-            AddressMode::MR(_) => {}
-            AddressMode::A16_R(_) => {}
-            AddressMode::R_A16(_) => {}
+            AddressMode::HLI_R(r1, r2) => {
+                self.fetched_data = self.read_register(r2);
+                self.mem_dest = self.read_register(r1);
+                self.dest_is_mem = true;
+                self.set_register(RegisterType::HL, self.read_register(RegisterType::HL) + 1);
+            }
+            AddressMode::HLD_R(r1, r2) => {
+                self.fetched_data = self.read_register(r2);
+                self.mem_dest = self.read_register(r1);
+                self.dest_is_mem = true;
+                self.set_register(RegisterType::HL, self.read_register(RegisterType::HL) - 1);
+            }
+            AddressMode::R_A8(_r1) => {
+                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+                self.registers.pc += 1;
+            }
+            AddressMode::A8_R(_r1) => {
+                self.mem_dest = self.bus.read(self.registers.pc) as u16 | 0xFF00;
+                self.dest_is_mem = true;
+                //emu_cycles(1);
+                self.registers.pc += 1;
+            }
+            AddressMode::HL_SPR(_r1, _r2) => {
+                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+                self.registers.pc += 1;
+            }
+            AddressMode::D8 => {
+                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+                self.registers.pc += 1;
+            }
+            AddressMode::D16_R(r1) | AddressMode::A16_R(r1) => {
+                let lo = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+
+                let hi = self.bus.read(self.registers.pc + 1) as u16;
+                //emu_cycles(1);
+
+                self.mem_dest = lo | (hi << 8);
+                self.dest_is_mem = true;
+
+                self.registers.pc += 2;
+                self.fetched_data = self.read_register(r1);
+            }
+            AddressMode::MR_D8(r1) => {
+                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+                self.registers.pc += 1;
+                self.mem_dest = self.read_register(r1);
+                self.dest_is_mem = true;
+            }
+            AddressMode::MR(r1) => {
+                self.mem_dest = self.read_register(r1);
+                self.dest_is_mem = true;
+                self.fetched_data = self.bus.read(self.read_register(r1)) as u16;
+            }
+            AddressMode::R_A16(_r1) => {
+                let lo = self.bus.read(self.registers.pc) as u16;
+                //emu_cycles(1);
+
+                let hi = self.bus.read(self.registers.pc + 1) as u16;
+                //emu_cycles(1);
+
+                let addr = lo | (hi << 8);
+
+                self.registers.pc += 2;
+                self.fetched_data = self.bus.read(addr) as u16;
+                //emu_cycles(1);
+            }
         }
     }
 
@@ -144,7 +208,7 @@ impl Cpu {
             RegisterType::SP => self.registers.sp,
         }
     }
-    
+
     fn set_register(&mut self, register_type: RegisterType, val: u16) {
         match register_type {
             RegisterType::A => self.registers.a = (val & 0xFF) as u8,
