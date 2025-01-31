@@ -5,8 +5,8 @@ use crate::core::instructions::common::{AddressMode, ExecutableInstruction};
 pub struct DiInstruction;
 
 impl ExecutableInstruction for DiInstruction {
-    fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("DiInstruction not impl")
+    fn execute(&self, cpu: &mut Cpu) {
+        cpu.int_master_enabled = false;
     }
 
     fn get_address_mode(&self) -> AddressMode {

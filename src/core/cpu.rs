@@ -12,6 +12,7 @@ pub struct Cpu {
     pub mem_dest: u16,
     pub fetched_data: u16,
     pub dest_is_mem: bool,
+    pub int_master_enabled: bool,
 }
 
 impl Cpu {
@@ -23,6 +24,7 @@ impl Cpu {
             mem_dest: 0,
             fetched_data: 0,
             dest_is_mem: false,
+            int_master_enabled: false,
         }
     }
 
