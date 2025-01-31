@@ -1,5 +1,8 @@
 use crate::core::bus::Bus;
-use crate::core::instructions::common::{get_instruction_by_opcode, AddressMode, Instruction, RegisterType};
+use crate::core::instructions::common::{
+    AddressMode, ExecutableInstruction, Instruction,
+    RegisterType,
+};
 use crate::core::util::{get_bit_flag, reverse_u16};
 
 #[derive(Debug, Clone)]
@@ -31,7 +34,7 @@ impl Cpu {
 
         let opcode = self.fetch_opcode();
 
-        let Some(instruction) = get_instruction_by_opcode(opcode) else {
+        let Some(instruction) = Instruction::get_by_opcode(opcode) else {
             return Err(format!("Unknown instruction opcode: 0x{opcode:X}",));
         };
 
@@ -57,22 +60,17 @@ impl Cpu {
     }
 
     fn fetch_data(&mut self, instruction: &Instruction) {
-        let Some(address_mode) = instruction.address_mode else {
-            return;
-        };
-
-        match address_mode {
+        match instruction.get_address_mode() {
             AddressMode::IMP => (),
-            AddressMode::R => {
-                self.fetched_data = self
-                    .read_register(instruction.register_1_type.expect("must be set for R type"));
+            AddressMode::R(r1) => {
+                self.fetched_data = self.read_register(r1);
             }
-            AddressMode::R_D8 => {
+            AddressMode::R_D8(_) => {
                 self.fetched_data = self.bus.read(self.registers.pc) as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
             }
-            AddressMode::R_D16 => {
+            AddressMode::R_D16(_) => {
                 let lo = self.bus.read(self.registers.pc);
                 //emu_cycles(1);
                 let hi = self.bus.read(self.registers.pc + 1);
@@ -82,7 +80,7 @@ impl Cpu {
             }
             _ => eprintln!(
                 "Unimplemented Addressing Mode: {:?}",
-                instruction.address_mode
+                instruction.get_address_mode()
             ),
         }
     }
@@ -114,8 +112,6 @@ impl Cpu {
         }
     }
 }
-
-
 
 #[derive(Debug, Clone)]
 pub struct Registers {
@@ -158,7 +154,7 @@ impl Registers {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::cpu::{Registers};
+    use crate::core::cpu::Registers;
 
     #[test]
     fn test_get_flag_z() {

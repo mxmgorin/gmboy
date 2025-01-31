@@ -2,14 +2,16 @@ use crate::core::cpu::Cpu;
 use crate::core::instructions::common::{AddressMode, ExecutableInstruction};
 
 #[derive(Debug, Clone, Copy)]
-pub struct NopInstruction;
+pub struct LdInstruction {
+    pub address_mode: AddressMode,
+}
 
-impl ExecutableInstruction for NopInstruction {
+impl ExecutableInstruction for LdInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        // does nothing
+        eprintln!("LD instruction not implemented");
     }
 
     fn get_address_mode(&self) -> AddressMode {
-        AddressMode::IMP
+        self.address_mode
     }
 }

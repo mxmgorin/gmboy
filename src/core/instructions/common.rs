@@ -1,109 +1,77 @@
 use crate::core::cpu::Cpu;
-use crate::core::instructions::nop;
+use crate::core::instructions::inc::IncInstruction;
+use crate::core::instructions::ld::LdInstruction;
+use crate::core::instructions::nop::NopInstruction;
+use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Instruction {
-    pub r#type: Option<InstructionType>,
-    pub address_mode: Option<AddressMode>,
-    pub register_1_type: Option<RegisterType>,
-    pub register_2_type: Option<RegisterType>,
-    pub condition_type: Option<ConditionType>,
-    pub param: Option<u8>,
-    pub execute_fn: fn(instruction: &Instruction, cpu: &mut Cpu),
+pub enum Instruction {
+    Nop(NopInstruction),
+    Inc(IncInstruction),
+    Ld(LdInstruction),
 }
 
+impl Instruction {
+    pub fn get_by_opcode(opcode: u8) -> Option<&'static Instruction> {
+        INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
+    }
+}
+
+impl ExecutableInstruction for Instruction {
+    fn execute(&self, cpu: &mut Cpu) {
+        match self {
+            Instruction::Nop(inst) => inst.execute(cpu),
+            Instruction::Inc(inst) => inst.execute(cpu),
+            Instruction::Ld(inst) => inst.execute(cpu),
+        }
+    }
+
+    fn get_address_mode(&self) -> AddressMode {
+        match self {
+            Instruction::Nop(inst) => inst.get_address_mode(),
+            Instruction::Inc(inst) => inst.get_address_mode(),
+            Instruction::Ld(inst) => inst.get_address_mode(),
+        }
+    }
+}
+
+pub trait ExecutableInstruction {
+    fn execute(&self, cpu: &mut Cpu);
+    fn get_address_mode(&self) -> AddressMode;
+}
+
+/// Represents the various CPU registers in a Game Boy CPU.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RegisterType {
+    /// Accumulator register, used for arithmetic and logic operations.
     A,
+    /// Flags register, holds condition flags (Z, N, H, C).
     F,
+    /// General-purpose register B.
     B,
+    /// General-purpose register C.
     C,
+    /// General-purpose register D.
     D,
+    /// General-purpose register E.
     E,
+    /// High byte of the HL register pair.
     H,
+    /// Low byte of the HL register pair.
     L,
+    /// Register pair combining A and F (used for specific operations).
     AF,
+    /// Register pair combining B and C (used for addressing or data storage).
     BC,
+    /// Register pair combining D and E (used for addressing or data storage).
     DE,
+    /// Register pair combining H and L (often used as a memory address pointer).
     HL,
+    /// Stack pointer, points to the top of the stack.
     SP,
+    /// Program counter, points to the next instruction to be executed.
     PC,
 }
-
-const NONE_INSTRUCTION: Instruction = Instruction {
-    r#type: None,
-    address_mode: None,
-    register_1_type: None,
-    register_2_type: None,
-    condition_type: None,
-    param: None,
-    execute_fn: nop::execute,
-};
-
-const INSTRUCTIONS_LEN: usize = 0xFF;
-
-const INSTRUCTIONS: [Instruction; INSTRUCTIONS_LEN] = {
-    let mut instructions = [NONE_INSTRUCTION; INSTRUCTIONS_LEN];
-
-    instructions[nop::OPCODE as usize] = nop::new();
-    instructions[0x04] = Instruction {
-        r#type: Some(InstructionType::INC),
-        address_mode: Some(AddressMode::R),
-        register_1_type: Some(RegisterType::B),
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
-    instructions[0x05] = Instruction {
-        r#type: Some(InstructionType::DEC),
-        address_mode: Some(AddressMode::R),
-        register_1_type: Some(RegisterType::B),
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
-    instructions[0x0E] = Instruction {
-        r#type: Some(InstructionType::LD),
-        address_mode: Some(AddressMode::R_D8),
-        register_1_type: Some(RegisterType::C),
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
-    instructions[0xAF] = Instruction {
-        r#type: Some(InstructionType::XOR),
-        address_mode: Some(AddressMode::R),
-        register_1_type: Some(RegisterType::A),
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
-    instructions[0xC3] = Instruction {
-        r#type: Some(InstructionType::JP),
-        address_mode: Some(AddressMode::D16),
-        register_1_type: None,
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
-    instructions[0xF3] = Instruction {
-        r#type: Some(InstructionType::DI),
-        address_mode: None,
-        register_1_type: None,
-        register_2_type: None,
-        condition_type: None,
-        param: None,
-    };
-
-    // todo: Add more instructions here...
-
-    instructions
-};
-
-pub fn get_instruction_by_opcode(opcode: u8) -> Option<&'static Instruction> {
-    INSTRUCTIONS.get(opcode as usize)
-}
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstructionType {
@@ -221,56 +189,56 @@ pub enum ConditionType {
 pub enum AddressMode {
     /// Immediate Addressing: The operand is directly specified in the instruction.
     IMP,
+    /// Register: The operand is a register.
+    R(RegisterType),
     /// Register with 16-bit immediate address: The operand is a 16-bit immediate value,
     /// and the instruction works with a register.
-    R_D16,
+    R_D16(RegisterType),
     /// Register to Register: The operand is another register, and the instruction operates
     /// between two registers.
-    R_R,
+    R_R(RegisterType),
     /// Memory to Register: The operand is a memory location, and the instruction operates
     /// between memory and a register.
-    MR_R,
-    /// Register: The operand is a register.
-    R,
+    MR_R(RegisterType, RegisterType),
     /// Register with 8-bit immediate value: The operand is an 8-bit immediate value,
     /// and the instruction operates with a register.
-    R_D8,
+    R_D8(RegisterType),
     /// Register with Memory to Register: The instruction reads a value from memory and stores
     /// it into a register.
-    R_MR,
+    R_MR(RegisterType),
     /// Register and HL increment: The instruction uses the `HL` register pair, increments it,
     /// and accesses memory using the updated value of `HL`.
-    R_HLI,
+    R_HLI(RegisterType, RegisterType),
     /// Register and HL decrement: The instruction uses the `HL` register pair, decrements it,
     /// and accesses memory using the updated value of `HL`.
-    R_HLD,
+    R_HLD(RegisterType, RegisterType),
     /// HL increment and Register: The instruction stores a value from a register to memory and
     /// increments the `HL` register pair.
-    HLI_R,
+    HLI_R(RegisterType, RegisterType),
     /// HL decrement and Register: The instruction stores a value from a register to memory and
     /// decrements the `HL` register pair.
-    HLD_R,
+    HLD_R(RegisterType, RegisterType),
     /// Register and 8-bit immediate address: The instruction uses a 8-bit immediate address and
     /// a register for memory access.
-    R_A8,
+    R_A8(RegisterType),
     /// 8-bit address and Register: The instruction uses a memory address and a register to store
     /// a value from the register to memory.
-    A8_R,
+    A8_R(RegisterType),
     /// HL and Special Register Pair: This mode uses the `HL` register and other special register pairs
     /// for specific operations.
-    HL_SPR,
+    HL_SPR(RegisterType, RegisterType),
     /// 16-bit immediate data: The instruction involves a 16-bit immediate operand.
     D16,
     /// 8-bit immediate data: The instruction involves an 8-bit immediate operand.
     D8,
     /// 16-bit immediate data to Register: The instruction loads a 16-bit immediate operand to a register.
-    D16_R,
+    D16_R(RegisterType),
     /// Memory Read and 8-bit immediate address: The instruction reads from memory using an 8-bit immediate address.
-    MR_D8,
+    MR_D8(RegisterType),
     /// Memory Read: The instruction performs a read operation from memory.
-    MR,
+    MR(RegisterType),
     /// 16-bit Address and Register: The instruction works with a 16-bit memory address and a register.
-    A16_R,
+    A16_R(RegisterType),
     /// Register and 16-bit Address: The instruction stores a value from a register to a 16-bit memory address.
-    R_A16,
+    R_A16(RegisterType),
 }
