@@ -65,7 +65,7 @@ impl Bus {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if RAM_BANK0.contains(address) || ROM_BANK1.contains(address) || CHR_RAM.contains(address) {
+        if ROM_BANK0.contains(address) || ROM_BANK1.contains(address) {
             return self.cart.read(address);
         }
 
@@ -73,7 +73,7 @@ impl Bus {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        if RAM_BANK0.contains(address) || ROM_BANK1.contains(address) || CHR_RAM.contains(address) {
+        if ROM_BANK0.contains(address) || ROM_BANK1.contains(address) {
             self.cart.write(address, value);
         }
 
@@ -101,6 +101,22 @@ pub struct AddressRange {
 
 impl AddressRange {
     pub fn contains(&self, address: u16) -> bool {
-        self.start <= address && address < self.end
+        self.start <= address && address <= self.end
+    }
+}
+const ROM_DATA_ADDRESS_END: u16 = 0x8000;
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_contains() {
+        println!("{}", ROM_BANK0.contains(0x100));
+
+        //assert!(RAM_BANK1.contains(0x100));
+        //assert!(RAM_BANK0.contains(0x100));
+
     }
 }
