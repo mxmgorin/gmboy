@@ -8,6 +8,7 @@ use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
+use crate::core::instructions::xor::XorInstruction;
 
 const INSTRUCTIONS_LEN: usize = 0xFF;
 
@@ -187,6 +188,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0x9X
 
     // 0xAX
+    instructions[0xAF] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
+    });
 
     // 0xBX
 

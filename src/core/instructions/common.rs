@@ -9,6 +9,7 @@ use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
 use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
+use crate::core::instructions::xor::XorInstruction;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
@@ -21,6 +22,7 @@ pub enum Instruction {
     Cpl(CplInstruction),
     Ccf(CcfInstruction),
     Halt(HaltInstruction),
+    Xor(XorInstruction),
 }
 
 impl Instruction {
@@ -41,6 +43,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Cpl(inst) => inst.execute(cpu),
             Instruction::Ccf(inst) => inst.execute(cpu),
             Instruction::Halt(inst) => inst.execute(cpu),
+            Instruction::Xor(inst) => inst.execute(cpu),
         }
     }
 
@@ -55,6 +58,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Cpl(inst) => inst.get_address_mode(),
             Instruction::Ccf(inst) => inst.get_address_mode(),
             Instruction::Halt(inst) => inst.get_address_mode(),
+            Instruction::Xor(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -220,7 +224,7 @@ pub enum AddressMode {
     R_D16(RegisterType),
     /// Register to Register: The operand is another register, and the instruction operates
     /// between two registers.
-    R_R(RegisterType),
+    R_R(RegisterType, RegisterType),
     /// Memory to Register: The operand is a memory location, and the instruction operates
     /// between memory and a register.
     MR_R(RegisterType, RegisterType),
