@@ -1,4 +1,5 @@
 use crate::core::cpu::Cpu;
+use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
@@ -8,6 +9,7 @@ use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 pub enum Instruction {
     Nop(NopInstruction),
     Inc(IncInstruction),
+    Dec(DecInstruction),
     Ld(LdInstruction),
 }
 
@@ -22,6 +24,7 @@ impl ExecutableInstruction for Instruction {
         match self {
             Instruction::Nop(inst) => inst.execute(cpu),
             Instruction::Inc(inst) => inst.execute(cpu),
+            Instruction::Dec(inst) => inst.execute(cpu),
             Instruction::Ld(inst) => inst.execute(cpu),
         }
     }
@@ -30,6 +33,7 @@ impl ExecutableInstruction for Instruction {
         match self {
             Instruction::Nop(inst) => inst.get_address_mode(),
             Instruction::Inc(inst) => inst.get_address_mode(),
+            Instruction::Dec(inst) => inst.get_address_mode(),
             Instruction::Ld(inst) => inst.get_address_mode(),
         }
     }
