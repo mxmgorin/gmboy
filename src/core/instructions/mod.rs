@@ -6,3 +6,4 @@ mod inc;
 mod table;
 mod ld;
 mod dec;
+mod jr;

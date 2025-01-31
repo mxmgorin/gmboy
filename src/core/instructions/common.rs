@@ -1,6 +1,7 @@
 use crate::core::cpu::Cpu;
 use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::inc::IncInstruction;
+use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
 use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
@@ -11,6 +12,7 @@ pub enum Instruction {
     Inc(IncInstruction),
     Dec(DecInstruction),
     Ld(LdInstruction),
+    Jr(JrInstruction),
 }
 
 impl Instruction {
@@ -26,6 +28,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Inc(inst) => inst.execute(cpu),
             Instruction::Dec(inst) => inst.execute(cpu),
             Instruction::Ld(inst) => inst.execute(cpu),
+            Instruction::Jr(inst) => inst.execute(cpu),
         }
     }
 
@@ -35,6 +38,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Inc(inst) => inst.get_address_mode(),
             Instruction::Dec(inst) => inst.get_address_mode(),
             Instruction::Ld(inst) => inst.get_address_mode(),
+            Instruction::Jr(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -178,11 +182,11 @@ pub enum InstructionType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConditionType {
     /// Non-zero
-    Nz,
+    NZ,
     /// Zero
     Z,
     /// Non-carry
-    Nc,
+    NC,
     /// Carry
     C,
 }

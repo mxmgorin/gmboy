@@ -1,6 +1,7 @@
-use crate::core::instructions::common::{AddressMode, Instruction, RegisterType};
+use crate::core::instructions::common::{AddressMode, ConditionType, Instruction, RegisterType};
 use crate::core::instructions::dec::DecInstruction;
 use crate::core::instructions::inc::IncInstruction;
+use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
 
@@ -78,9 +79,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     //instructions[0x17] = Instruction::RLA(LdInstruction {
     //    address_mode: AddressMode::R_D8(RegisterType::D),
     //});
-    //instructions[0x18] = Instruction::JR(LdInstruction {
-    //    address_mode: AddressMode::R_D8(RegisterType::D),
-    //});
+    instructions[0x18] = Instruction::Jr(JrInstruction {
+        condition_type: None,
+    });
     //instructions[0x19] = Instruction::ADD(LdInstruction {
     //    address_mode: AddressMode::R_D8(RegisterType::D),
     //});
@@ -104,9 +105,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     //});
 
     // 0x2X
-    //instructions[0x20] = Instruction::JR(LdInstruction {
-    //     address_mode: AddressMode::R_D16(RegisterType::HL),
-    //});
+    instructions[0x20] = Instruction::Jr(JrInstruction {
+        condition_type: Some(ConditionType::NZ),
+    });
     instructions[0x21] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_D16(RegisterType::HL),
     });
@@ -128,9 +129,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     //instructions[0x27] = Instruction::DAA(LdInstruction {
     //    address_mode: AddressMode::R_D8(RegisterType::H),
     //});
-    //instructions[0x28] = Instruction::JR(LdInstruction {
-    //    address_mode: AddressMode::R_D8(RegisterType::H),
-    //});
+    instructions[0x28] = Instruction::Jr(JrInstruction {
+        condition_type: Some(ConditionType::Z),
+    });
     //instructions[0x29] = Instruction::ADD(LdInstruction {
     //    address_mode: AddressMode::R_D8(RegisterType::H),
     //});
@@ -154,6 +155,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     //});
 
     // 0x3X
+    instructions[0x30] = Instruction::Jr(JrInstruction {
+        condition_type: Some(ConditionType::NC),
+    });
     instructions[0x31] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_D16(RegisterType::SP),
     });
@@ -162,6 +166,10 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0x33] = Instruction::Inc(IncInstruction {
         register_type: RegisterType::SP,
+    });
+
+    instructions[0x38] = Instruction::Jr(JrInstruction {
+        condition_type: Some(ConditionType::C),
     });
 
     // 0x4X
