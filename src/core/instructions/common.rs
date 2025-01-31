@@ -105,6 +105,27 @@ pub enum RegisterType {
     PC,
 }
 
+impl RegisterType {
+    pub fn is_16bit(&self) -> bool {
+        match self {
+            RegisterType::A
+            | RegisterType::F
+            | RegisterType::B
+            | RegisterType::C
+            | RegisterType::D
+            | RegisterType::E
+            | RegisterType::H
+            | RegisterType::L => false,
+            RegisterType::AF
+            | RegisterType::BC
+            | RegisterType::DE
+            | RegisterType::HL
+            | RegisterType::SP
+            | RegisterType::PC => true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstructionType {
     /// No Operation

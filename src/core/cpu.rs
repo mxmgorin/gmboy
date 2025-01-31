@@ -2,16 +2,16 @@ use crate::core::bus::Bus;
 use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
-use crate::core::util::{get_bit_flag, reverse_u16};
+use crate::core::util::{get_bit_flag, reverse_u16, set_bit};
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
-    bus: Bus,
-    registers: Registers,
-    halted: bool,
-    mem_dest: u16,
-    fetched_data: u16,
-    dest_is_mem: bool,
+    pub bus: Bus,
+    pub registers: Registers,
+    pub halted: bool,
+    pub mem_dest: u16,
+    pub fetched_data: u16,
+    pub dest_is_mem: bool,
 }
 
 impl Cpu {
@@ -182,7 +182,7 @@ impl Cpu {
         }
     }
 
-    fn read_register(&self, register_type: RegisterType) -> u16 {
+    pub fn read_register(&self, register_type: RegisterType) -> u16 {
         match register_type {
             RegisterType::A => self.registers.a as u16,
             RegisterType::F => self.registers.f as u16,
@@ -209,7 +209,7 @@ impl Cpu {
         }
     }
 
-    fn set_register(&mut self, register_type: RegisterType, val: u16) {
+    pub fn set_register(&mut self, register_type: RegisterType, val: u16) {
         match register_type {
             RegisterType::A => self.registers.a = (val & 0xFF) as u8,
             RegisterType::F => self.registers.f = (val & 0xFF) as u8,
@@ -241,6 +241,24 @@ impl Cpu {
             }
             RegisterType::PC => self.registers.pc = val,
             RegisterType::SP => self.registers.sp = val,
+        }
+    }
+
+    pub fn set_flags(&mut self, z: i8, n: i8, h: i8, c: i8) {
+        if z != -1 {
+            set_bit(&mut self.registers.f, 7, z != 0);
+        }
+
+        if n != -1 {
+            set_bit(&mut self.registers.f, 6, n != 0);
+        }
+
+        if h != -1 {
+            set_bit(&mut self.registers.f, 5, h != 0);
+        }
+
+        if c != -1 {
+            set_bit(&mut self.registers.f, 4, c != 0);
         }
     }
 }
