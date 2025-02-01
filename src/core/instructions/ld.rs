@@ -23,7 +23,7 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R_A16(r1)
             | AddressMode::R(r1)
             | AddressMode::R_D16(r1) => {
-                cpu.set_register(r1, cpu.fetched_data);
+                cpu.registers.set_register(r1, cpu.fetched_data);
             }
             AddressMode::R_R(r1, r2)
             | AddressMode::MR_R(r1, r2)
@@ -36,7 +36,7 @@ impl ExecutableInstruction for LdInstruction {
                     return;
                 }
 
-                cpu.set_register(r1, cpu.fetched_data);
+                cpu.registers.set_register(r1, cpu.fetched_data);
             }
             AddressMode::HL_SPR(r1, r2) => {
                 if cpu.dest_is_mem {
@@ -44,10 +44,10 @@ impl ExecutableInstruction for LdInstruction {
                     return;
                 }
 
-                let h_flag = (cpu.read_register(r2) & 0xF) + (cpu.fetched_data & 0xF) >= 0x10;
-                let c_flag = (cpu.read_register(r2) & 0xFF) + (cpu.fetched_data & 0xFF) >= 0x100;
-                cpu.set_flags(0, 0, h_flag as i8, c_flag as i8);
-                cpu.set_register(r1, cpu.read_register(r2) + cpu.fetched_data); // todo: cast fetched_data to u8?
+                let h_flag = (cpu.registers.read_register(r2) & 0xF) + (cpu.fetched_data & 0xF) >= 0x10;
+                let c_flag = (cpu.registers.read_register(r2) & 0xFF) + (cpu.fetched_data & 0xFF) >= 0x100;
+                cpu.registers.set_flags(0, 0, h_flag as i8, c_flag as i8);
+                cpu.registers.set_register(r1, cpu.registers.read_register(r2) + cpu.fetched_data); // todo: cast fetched_data to u8?
             }
         }
     }

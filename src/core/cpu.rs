@@ -66,10 +66,10 @@ impl Cpu {
         match instruction.get_address_mode() {
             AddressMode::IMP => (),
             AddressMode::R(r1) => {
-                self.fetched_data = self.read_register(r1);
+                self.fetched_data = self.registers.read_register(r1);
             }
             AddressMode::R_R(_r1, r2) => {
-                self.fetched_data = self.read_register(r2);
+                self.fetched_data = self.registers.read_register(r2);
             }
             AddressMode::R_D8(_r1) => {
                 self.fetched_data = self.bus.read(self.registers.pc) as u16;
@@ -85,7 +85,7 @@ impl Cpu {
                 self.registers.pc += 2;
             }
             AddressMode::R_MR(r1) => {
-                let mut addr = self.read_register(r1);
+                let mut addr = self.registers.read_register(r1);
 
                 if r1 == RegisterType::C {
                     addr |= 0xFF0;
@@ -94,8 +94,8 @@ impl Cpu {
                 //emu_cycles(1);
             }
             AddressMode::MR_R(r1, r2) => {
-                self.fetched_data = self.read_register(r2);
-                self.mem_dest = self.read_register(r1);
+                self.fetched_data = self.registers.read_register(r2);
+                self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
 
                 if r1 == RegisterType::C {
@@ -103,29 +103,29 @@ impl Cpu {
                 }
             }
             AddressMode::R_HLI(_r1, r2) => {
-                self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
+                self.fetched_data = self.bus.read(self.registers.read_register(r2)) as u16;
                 //emu_cycles(1);
-                self.set_register(RegisterType::HL, self.read_register(RegisterType::H) + 1);
+                self.registers.set_register(RegisterType::HL, self.registers.read_register(RegisterType::H) + 1);
             }
             AddressMode::R_HLD(_r1, r2) => {
-                self.fetched_data = self.bus.read(self.read_register(r2)) as u16;
+                self.fetched_data = self.bus.read(self.registers.read_register(r2)) as u16;
                 //emu_cycles(1);
-                self.set_register(
+                self.registers.set_register(
                     RegisterType::HL,
-                    self.read_register(RegisterType::H).wrapping_sub(1),
+                    self.registers.read_register(RegisterType::H).wrapping_sub(1),
                 );
             }
             AddressMode::HLI_R(r1, r2) => {
-                self.fetched_data = self.read_register(r2);
-                self.mem_dest = self.read_register(r1);
+                self.fetched_data = self.registers.read_register(r2);
+                self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
-                self.set_register(RegisterType::HL, self.read_register(RegisterType::HL) + 1);
+                self.registers.set_register(RegisterType::HL, self.registers.read_register(RegisterType::HL) + 1);
             }
             AddressMode::HLD_R(r1, r2) => {
-                self.fetched_data = self.read_register(r2);
-                self.mem_dest = self.read_register(r1);
+                self.fetched_data = self.registers.read_register(r2);
+                self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
-                self.set_register(RegisterType::HL, self.read_register(RegisterType::HL) - 1);
+                self.registers.set_register(RegisterType::HL, self.registers.read_register(RegisterType::HL) - 1);
             }
             AddressMode::R_A8(_r1) => {
                 self.fetched_data = self.bus.read(self.registers.pc) as u16;
@@ -159,19 +159,19 @@ impl Cpu {
                 self.dest_is_mem = true;
 
                 self.registers.pc += 2;
-                self.fetched_data = self.read_register(r1);
+                self.fetched_data = self.registers.read_register(r1);
             }
             AddressMode::MR_D8(r1) => {
                 self.fetched_data = self.bus.read(self.registers.pc) as u16;
                 //emu_cycles(1);
                 self.registers.pc += 1;
-                self.mem_dest = self.read_register(r1);
+                self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
             }
             AddressMode::MR(r1) => {
-                self.mem_dest = self.read_register(r1);
+                self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
-                self.fetched_data = self.bus.read(self.read_register(r1)) as u16;
+                self.fetched_data = self.bus.read(self.registers.read_register(r1)) as u16;
             }
             AddressMode::R_A16(_r1) => {
                 let lo = self.bus.read(self.registers.pc) as u16;
@@ -189,121 +189,25 @@ impl Cpu {
         }
     }
 
-    pub fn read_register(&self, register_type: RegisterType) -> u16 {
-        match register_type {
-            RegisterType::A => self.registers.a as u16,
-            RegisterType::F => self.registers.f as u16,
-            RegisterType::B => self.registers.b as u16,
-            RegisterType::C => self.registers.c as u16,
-            RegisterType::D => self.registers.d as u16,
-            RegisterType::E => self.registers.e as u16,
-            RegisterType::H => self.registers.h as u16,
-            RegisterType::L => self.registers.l as u16,
-            RegisterType::AF => {
-                reverse_u16(((self.registers.a as u16) << 8) | (self.registers.f as u16))
-            }
-            RegisterType::BC => {
-                reverse_u16(((self.registers.b as u16) << 8) | (self.registers.c as u16))
-            }
-            RegisterType::DE => {
-                reverse_u16(((self.registers.d as u16) << 8) | (self.registers.e as u16))
-            }
-            RegisterType::HL => {
-                reverse_u16(((self.registers.h as u16) << 8) | (self.registers.l as u16))
-            }
-            RegisterType::PC => self.registers.pc,
-            RegisterType::SP => self.registers.sp,
-        }
-    }
-
-    pub fn set_register(&mut self, register_type: RegisterType, val: u16) {
-        match register_type {
-            RegisterType::A => self.registers.a = (val & 0xFF) as u8,
-            RegisterType::F => self.registers.f = (val & 0xFF) as u8,
-            RegisterType::B => self.registers.b = (val & 0xFF) as u8,
-            RegisterType::C => self.registers.c = (val & 0xFF) as u8,
-            RegisterType::D => self.registers.d = (val & 0xFF) as u8,
-            RegisterType::E => self.registers.e = (val & 0xFF) as u8,
-            RegisterType::H => self.registers.h = (val & 0xFF) as u8,
-            RegisterType::L => self.registers.l = (val & 0xFF) as u8,
-            RegisterType::AF => {
-                let reversed = reverse_u16(val);
-                self.registers.a = (reversed >> 8) as u8;
-                self.registers.f = (reversed & 0xFF) as u8;
-            }
-            RegisterType::BC => {
-                let reversed = reverse_u16(val);
-                self.registers.b = (reversed >> 8) as u8;
-                self.registers.c = (reversed & 0xFF) as u8;
-            }
-            RegisterType::DE => {
-                let reversed = reverse_u16(val);
-                self.registers.d = (reversed >> 8) as u8;
-                self.registers.e = (reversed & 0xFF) as u8;
-            }
-            RegisterType::HL => {
-                let reversed = reverse_u16(val);
-                self.registers.h = (reversed >> 8) as u8;
-                self.registers.l = (reversed & 0xFF) as u8;
-            }
-            RegisterType::PC => self.registers.pc = val,
-            RegisterType::SP => self.registers.sp = val,
-        }
-    }
-
-    pub fn set_flags(&mut self, z: i8, n: i8, h: i8, c: i8) {
-        if z != -1 {
-            set_bit(&mut self.registers.f, 7, z != 0);
-        }
-
-        if n != -1 {
-            set_bit(&mut self.registers.f, 6, n != 0);
-        }
-
-        if h != -1 {
-            set_bit(&mut self.registers.f, 5, h != 0);
-        }
-
-        if c != -1 {
-            set_bit(&mut self.registers.f, 4, c != 0);
-        }
-    }
-
-    pub fn get_flag_z(&self) -> bool {
-        get_bit_flag(self.registers.f, 7)
-    }
-
-    pub fn get_flag_n(&self) -> bool {
-        get_bit_flag(self.registers.f, 6)
-    }
-
-    pub fn get_flag_h(&self) -> bool {
-        get_bit_flag(self.registers.f, 5)
-    }
-
-    pub fn get_flag_c(&self) -> bool {
-        get_bit_flag(self.registers.f, 4)
-    }
-
     #[cfg(debug_assertions)]
     fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
         let mut flags = String::new();
-        flags.push(if self.get_flag_z() {
+        flags.push(if self.registers.get_flag_z() {
             'Z'
         } else {
             '-'
         });
-        flags.push(if self.get_flag_n() {
+        flags.push(if self.registers.get_flag_n() {
             'N'
         } else {
             '-'
         });
-        flags.push(if self.get_flag_h() {
+        flags.push(if self.registers.get_flag_h() {
             'H'
         } else {
             '-'
         });
-        flags.push(if self.get_flag_c() {
+        flags.push(if self.registers.get_flag_c() {
             'C'
         } else {
             '-'
@@ -359,8 +263,96 @@ impl Registers {
         }
     }
 
+    pub fn read_register(&self, register_type: RegisterType) -> u16 {
+        match register_type {
+            RegisterType::A => self.a as u16,
+            RegisterType::F => self.f as u16,
+            RegisterType::B => self.b as u16,
+            RegisterType::C => self.c as u16,
+            RegisterType::D => self.d as u16,
+            RegisterType::E => self.e as u16,
+            RegisterType::H => self.h as u16,
+            RegisterType::L => self.l as u16,
+            RegisterType::AF => {
+                reverse_u16(((self.a as u16) << 8) | (self.f as u16))
+            }
+            RegisterType::BC => {
+                reverse_u16(((self.b as u16) << 8) | (self.c as u16))
+            }
+            RegisterType::DE => {
+                reverse_u16(((self.d as u16) << 8) | (self.e as u16))
+            }
+            RegisterType::HL => {
+                reverse_u16(((self.h as u16) << 8) | (self.l as u16))
+            }
+            RegisterType::PC => self.pc,
+            RegisterType::SP => self.sp,
+        }
+    }
+
+    pub fn set_register(&mut self, register_type: RegisterType, val: u16) {
+        match register_type {
+            RegisterType::A => self.a = (val & 0xFF) as u8,
+            RegisterType::F => self.f = (val & 0xFF) as u8,
+            RegisterType::B => self.b = (val & 0xFF) as u8,
+            RegisterType::C => self.c = (val & 0xFF) as u8,
+            RegisterType::D => self.d = (val & 0xFF) as u8,
+            RegisterType::E => self.e = (val & 0xFF) as u8,
+            RegisterType::H => self.h = (val & 0xFF) as u8,
+            RegisterType::L => self.l = (val & 0xFF) as u8,
+            RegisterType::AF => {
+                let reversed = reverse_u16(val);
+                self.a = (reversed >> 8) as u8;
+                self.f = (reversed & 0xFF) as u8;
+            }
+            RegisterType::BC => {
+                let reversed = reverse_u16(val);
+                self.b = (reversed >> 8) as u8;
+                self.c = (reversed & 0xFF) as u8;
+            }
+            RegisterType::DE => {
+                let reversed = reverse_u16(val);
+                self.d = (reversed >> 8) as u8;
+                self.e = (reversed & 0xFF) as u8;
+            }
+            RegisterType::HL => {
+                let reversed = reverse_u16(val);
+                self.h = (reversed >> 8) as u8;
+                self.l = (reversed & 0xFF) as u8;
+            }
+            RegisterType::PC => self.pc = val,
+            RegisterType::SP => self.sp = val,
+        }
+    }
+
+    pub fn set_flags(&mut self, z: i8, n: i8, h: i8, c: i8) {
+        if z != -1 {
+            set_bit(&mut self.f, 7, z != 0);
+        }
+
+        if n != -1 {
+            set_bit(&mut self.f, 6, n != 0);
+        }
+
+        if h != -1 {
+            set_bit(&mut self.f, 5, h != 0);
+        }
+
+        if c != -1 {
+            set_bit(&mut self.f, 4, c != 0);
+        }
+    }
+
     pub fn get_flag_z(&self) -> bool {
         get_bit_flag(self.f, 7)
+    }
+
+    pub fn get_flag_n(&self) -> bool {
+        get_bit_flag(self.f, 6)
+    }
+
+    pub fn get_flag_h(&self) -> bool {
+        get_bit_flag(self.f, 5)
     }
 
     pub fn get_flag_c(&self) -> bool {
