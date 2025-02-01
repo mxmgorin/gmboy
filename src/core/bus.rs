@@ -56,14 +56,16 @@ impl Bus {
         let location = AddrLocation::try_from(address).unwrap();
 
         match location {
-            AddrLocation::RomBank0 | AddrLocation::RomBank1 => return self.cart.read(address),
+            AddrLocation::RomBank0 | AddrLocation::RomBank1 | AddrLocation::CartRam => {
+                return self.cart.read(address)
+            }
             AddrLocation::ChrRam => {}
             AddrLocation::BgMap1 => {}
             AddrLocation::BgMap2 => {}
-            AddrLocation::CartRam => {}
             AddrLocation::RamBank0 => {}
-            AddrLocation::RamBank1To7 => {}
-            AddrLocation::EchoRam => {}
+            AddrLocation::RamBank1To7 | AddrLocation::EchoRam => {
+                return self.ram.w_ram_read(address)
+            }
             AddrLocation::ObjectAttributeMemory => {}
             AddrLocation::Unusable => {}
             AddrLocation::IoRegisters => {}
@@ -77,16 +79,17 @@ impl Bus {
         let location = AddrLocation::try_from(address).unwrap();
 
         match location {
-            AddrLocation::RomBank0 | AddrLocation::RomBank1 => {
+            AddrLocation::RomBank0 | AddrLocation::RomBank1 | AddrLocation::CartRam => {
                 self.cart.write(address, value);
                 return;
             }
             AddrLocation::ChrRam => {}
             AddrLocation::BgMap1 => {}
             AddrLocation::BgMap2 => {}
-            AddrLocation::CartRam => {}
-            AddrLocation::RamBank0 => {}
-            AddrLocation::RamBank1To7 => {}
+            AddrLocation::RamBank0 | AddrLocation::RamBank1To7 => {
+                self.ram.w_ram_write(address, value);
+                return;
+            }
             AddrLocation::EchoRam => {}
             AddrLocation::ObjectAttributeMemory => {}
             AddrLocation::Unusable => {}
