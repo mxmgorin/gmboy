@@ -65,15 +65,19 @@ impl Bus {
             AddrLocation::RomBank0 | AddrLocation::RomBank1 | AddrLocation::CartRam => {
                 self.cart.read(address)
             }
-            AddrLocation::ChrRam => panic!("Can't bus read read address {address}"),
-            AddrLocation::BgMap1 => panic!("Can't bus read read address {address}"),
-            AddrLocation::BgMap2 => panic!("Can't bus read read address {address}"),
-            AddrLocation::RamBank0 => panic!("Can't bus read read address {address}"),
+            AddrLocation::ChrRam => panic!("Can't bus read address {:X}", address),
+            AddrLocation::BgMap1 => panic!("Can't bus read address {:X}", address),
+            AddrLocation::BgMap2 => panic!("Can't bus read address {:X}", address),
+            AddrLocation::RamBank0 => panic!("Can't bus read address {:X}", address),
             AddrLocation::RamBank1To7 | AddrLocation::EchoRam => self.ram.w_ram_read(address),
-            AddrLocation::ObjectAttributeMemory => panic!("Can't bus read read address {address}"),
+            AddrLocation::ObjectAttributeMemory => panic!("Can't bus read address {:X}", address),
             AddrLocation::Unusable => 0,
-            AddrLocation::IoRegisters => panic!("Can't bus read read address {address}"),
-            AddrLocation::ZeroPage => panic!("Can't bus read read address {address}"),
+            AddrLocation::IoRegisters => {
+                // TODO: impl
+                eprintln!("Can't bus read IoRegisters address {:X}", address);
+                0
+            }
+            AddrLocation::ZeroPage => self.ram.h_ram_read(address),
             AddrLocation::IeRegister => self.ie_register,
         }
     }
@@ -85,16 +89,16 @@ impl Bus {
             AddrLocation::RomBank0 | AddrLocation::RomBank1 | AddrLocation::CartRam => {
                 self.cart.write(address, value)
             }
-            AddrLocation::ChrRam => panic!("Can't bus write address {address}"),
-            AddrLocation::BgMap1 => panic!("Can't bus write address {address}"),
-            AddrLocation::BgMap2 => panic!("Can't bus write address {address}"),
+            AddrLocation::ChrRam => panic!("Can't bus write address {:X}", address),
+            AddrLocation::BgMap1 => panic!("Can't bus write address {:X}", address),
+            AddrLocation::BgMap2 => panic!("Can't bus write address {:X}", address),
             AddrLocation::RamBank0 | AddrLocation::RamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
-            AddrLocation::EchoRam => panic!("Can't bus write address {address}"),
-            AddrLocation::ObjectAttributeMemory => panic!("Can't bus write address {address}"),
+            AddrLocation::EchoRam => panic!("Can't bus write address {:X}", address),
+            AddrLocation::ObjectAttributeMemory => panic!("Can't bus write address {:X}", address),
             AddrLocation::Unusable => (),
-            AddrLocation::IoRegisters => panic!("Can't bus write address {address}"),
+            AddrLocation::IoRegisters => eprint!("Can't bus write IoRegisters address {:X}", address), // TODO: impl
             AddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
             AddrLocation::IeRegister => self.ie_register = value,
         }
