@@ -15,7 +15,7 @@ impl ExecutableInstruction for LdhInstruction {
             | AddressMode::R_R(_, _)
             | AddressMode::MR_R(_, _)
             | AddressMode::R_D8(_)
-            | AddressMode::R_MR(_)
+            | AddressMode::R_MR(_, _)
             | AddressMode::R_HLI(_, _)
             | AddressMode::R_HLD(_, _)
             | AddressMode::HLI_R(_, _)

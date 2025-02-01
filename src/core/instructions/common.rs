@@ -327,7 +327,7 @@ pub enum AddressMode {
     R_D8(RegisterType),
     /// Register and Indirect (memory address) Register: The instruction reads a value from memory and stores
     /// it into a register.
-    R_MR(RegisterType),
+    R_MR(RegisterType, RegisterType),
     /// Register and HL increment: The instruction uses the `HL` register pair, increments it,
     /// and accesses memory using the updated value of `HL`.
     R_HLI(RegisterType, RegisterType),

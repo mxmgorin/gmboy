@@ -13,7 +13,6 @@ impl ExecutableInstruction for LdInstruction {
                 unreachable!("Not used for LD")
             }
             AddressMode::R_D8(r1)
-            | AddressMode::R_MR(r1)
             | AddressMode::R_A8(r1)
             | AddressMode::A8_R(r1)
             | AddressMode::D16_R(r1)
@@ -25,7 +24,9 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R_D16(r1) => {
                 cpu.registers.set_register(r1, cpu.fetched_data);
             }
+            
             AddressMode::R_R(r1, r2)
+            | AddressMode::R_MR(r1, r2)
             | AddressMode::MR_R(r1, r2)
             | AddressMode::R_HLI(r1, r2)
             | AddressMode::R_HLD(r1, r2)

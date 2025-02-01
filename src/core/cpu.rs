@@ -84,10 +84,10 @@ impl Cpu {
                 self.fetched_data = (hi as u16) << 8 | (lo as u16);
                 self.registers.pc += 2;
             }
-            AddressMode::R_MR(r1) => {
-                let mut addr = self.registers.read_register(r1);
+            AddressMode::R_MR(_r1, r2) => {
+                let mut addr = self.registers.read_register(r2);
 
-                if r1 == RegisterType::C {
+                if r2 == RegisterType::C {
                     addr |= 0xFF0;
                 }
                 self.fetched_data = self.bus.read(addr) as u16;
