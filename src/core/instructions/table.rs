@@ -15,7 +15,15 @@ use crate::core::instructions::xor::XorInstruction;
 const INSTRUCTIONS_LEN: usize = 0xFF;
 
 pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
-    let mut instructions = [Instruction::Unknown; INSTRUCTIONS_LEN];
+    let mut instructions = {
+        let mut array = [Instruction::Unknown(0); INSTRUCTIONS_LEN];
+        let mut i = 0;
+        while i < INSTRUCTIONS_LEN {
+            array[i] = Instruction::Unknown(i as u8);
+            i += 1;
+        }
+        array
+    };
 
     // 0x0X
     instructions[0x00] = Instruction::Nop(NopInstruction);

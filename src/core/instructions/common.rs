@@ -21,7 +21,7 @@ pub trait ExecutableInstruction {
 
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
-    Unknown,
+    Unknown(u8),
     Nop(NopInstruction),
     Inc(IncInstruction),
     Dec(DecInstruction),
@@ -39,7 +39,7 @@ pub enum Instruction {
 impl Instruction {
     fn get_type(&self) -> InstructionType {
         match self {
-            Instruction::Unknown => panic!("Can't get_type for unknown instruction"),
+            Instruction::Unknown(opcode) => panic!("Can't get_type for unknown instruction {:X}", opcode),
             Instruction::Nop(_inst) => InstructionType::NOP,
             Instruction::Inc(_inst) => InstructionType::INC,
             Instruction::Dec(_inst) => InstructionType::DEC,
@@ -89,7 +89,7 @@ impl Instruction {
 impl ExecutableInstruction for Instruction {
     fn execute(&self, cpu: &mut Cpu) {
         match self {
-            Instruction::Unknown => panic!("Can't execute an unknown instruction"),
+            Instruction::Unknown(opcode) => panic!("Can't execute an unknown instruction {:X}", opcode),
             Instruction::Nop(inst) => inst.execute(cpu),
             Instruction::Inc(inst) => inst.execute(cpu),
             Instruction::Dec(inst) => inst.execute(cpu),
@@ -107,7 +107,7 @@ impl ExecutableInstruction for Instruction {
 
     fn get_address_mode(&self) -> AddressMode {
         match self {
-            Instruction::Unknown => panic!("Can't get_address_mode for unknown instruction"),
+            Instruction::Unknown(opcode) => panic!("Can't get_address_mode for unknown instruction {:X}", opcode),
             Instruction::Nop(inst) => inst.get_address_mode(),
             Instruction::Inc(inst) => inst.get_address_mode(),
             Instruction::Dec(inst) => inst.get_address_mode(),
@@ -364,7 +364,7 @@ mod tests {
         let inst = Instruction::Ld(LdInstruction {
             address_mode: AddressMode::R_D16(RegisterType::BC),
         });
-        
+
         println!("{}", inst);
     }
 
