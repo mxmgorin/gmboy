@@ -346,9 +346,9 @@ pub enum AddressMode {
     D16,
     /// 8-bit immediate data: The instruction involves an 8-bit immediate operand.
     D8,
-    /// 16-bit immediate data to Register: The instruction loads a 16-bit immediate operand to a register.
+    /// 16-bit immediate data to Register
     D16_R(RegisterType),
-    /// Memory Read and 8-bit immediate address: The instruction reads from memory using an 8-bit immediate address.
+    /// Memory Read and 8-bit immediate data
     MR_D8(RegisterType),
     /// Memory Read: The instruction performs a read operation from memory.
     MR(RegisterType),
