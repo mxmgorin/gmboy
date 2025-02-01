@@ -290,13 +290,13 @@ pub enum InstructionType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConditionType {
-    /// Non-zero
+    /// Non-zero: Execute if Z is not set.
     NZ,
-    /// Zero
+    /// Zero: Execute if Z is set.
     Z,
-    /// Non-carry
+    /// Non-carry: Execute if C is not set.
     NC,
-    /// Carry
+    /// Carry: Execute if C is set.
     C,
 }
 
@@ -304,23 +304,22 @@ pub enum ConditionType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum AddressMode {
-    /// Immediate Addressing: The operand is directly specified in the instruction.
+    /// Implied: The operand is specified in the instruction itself.
     IMP,
     /// Register: The operand is a register.
     R(RegisterType),
-    /// Register with 16-bit immediate address: The operand is a 16-bit immediate value,
-    /// and the instruction works with a register.
+    /// Register and 16-bit Data: The instruction stores direct value into register.
     R_D16(RegisterType),
     /// Register to Register: The operand is another register, and the instruction operates
     /// between two registers.
     R_R(RegisterType, RegisterType),
-    /// Memory to Register: The operand is a memory location, and the instruction operates
-    /// between memory and a register.
+    /// Indirect (memory address) Register and Register: The instruction read value from register
+    /// and stores it into memory address
     MR_R(RegisterType, RegisterType),
-    /// Register with 8-bit immediate value: The operand is an 8-bit immediate value,
+    /// Register and 8-bit data: The operand is an 8-bit immediate value,
     /// and the instruction operates with a register.
     R_D8(RegisterType),
-    /// Register with Memory to Register: The instruction reads a value from memory and stores
+    /// Register and Indirect (memory address) Register: The instruction reads a value from memory and stores
     /// it into a register.
     R_MR(RegisterType),
     /// Register and HL increment: The instruction uses the `HL` register pair, increments it,
@@ -353,9 +352,9 @@ pub enum AddressMode {
     MR_D8(RegisterType),
     /// Memory Read: The instruction performs a read operation from memory.
     MR(RegisterType),
-    /// 16-bit Address and Register: The instruction works with a 16-bit memory address and a register.
+    /// 16-bit Address and Register
     A16_R(RegisterType),
-    /// Register and 16-bit Address: The instruction stores a value from a register to a 16-bit memory address.
+    /// Register and 16-bit Address
     R_A16(RegisterType),
 }
 
