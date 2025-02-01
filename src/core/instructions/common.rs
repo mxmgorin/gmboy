@@ -1,3 +1,4 @@
+use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
@@ -12,6 +13,12 @@ use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::nop::NopInstruction;
 use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
+use std::fmt::Display;
+
+pub trait ExecutableInstruction {
+    fn execute(&self, cpu: &mut Cpu);
+    fn get_address_mode(&self) -> AddressMode;
+}
 
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
@@ -31,6 +38,24 @@ pub enum Instruction {
 }
 
 impl Instruction {
+    fn get_type(&self) -> InstructionType {
+        match self {
+            Instruction::Unknown => panic!("Can't get_type for unknown instruction"),
+            Instruction::Nop(_inst) => InstructionType::NOP,
+            Instruction::Inc(_inst) => InstructionType::INC,
+            Instruction::Dec(_inst) => InstructionType::DEC,
+            Instruction::Ld(_inst) => InstructionType::LD,
+            Instruction::Jr(_inst) => InstructionType::JR,
+            Instruction::Daa(_inst) => InstructionType::DAA,
+            Instruction::Cpl(_inst) => InstructionType::CPL,
+            Instruction::Ccf(_inst) => InstructionType::CCF,
+            Instruction::Halt(_inst) => InstructionType::HALT,
+            Instruction::Xor(_inst) => InstructionType::XOR,
+            Instruction::Di(_inst) => InstructionType::DI,
+            Instruction::Jp(_inst) => InstructionType::JP,
+        }
+    }
+
     pub fn get_by_opcode(opcode: u8) -> Option<&'static Instruction> {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
@@ -98,11 +123,6 @@ impl ExecutableInstruction for Instruction {
             Instruction::Jp(inst) => inst.get_address_mode(),
         }
     }
-}
-
-pub trait ExecutableInstruction {
-    fn execute(&self, cpu: &mut Cpu);
-    fn get_address_mode(&self) -> AddressMode;
 }
 
 /// Represents the various CPU registers in a Game Boy CPU.
@@ -327,4 +347,26 @@ pub enum AddressMode {
     A16_R(RegisterType),
     /// Register and 16-bit Address: The instruction stores a value from a register to a 16-bit memory address.
     R_A16(RegisterType),
+}
+
+impl Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = format!("{:?} {:?}", self.get_type(), self.get_address_mode());
+        write!(f, "{}", str)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn print_instruction() {
+        let inst = Instruction::Ld(LdInstruction {
+            address_mode: AddressMode::R_D16(RegisterType::BC),
+        });
+        
+        println!("{}", inst);
+    }
+
 }
