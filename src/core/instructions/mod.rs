@@ -13,3 +13,4 @@ mod ldh;
 mod nop;
 mod table;
 mod xor;
+mod call;

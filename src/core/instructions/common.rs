@@ -14,6 +14,7 @@ use crate::core::instructions::nop::NopInstruction;
 use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
 use std::fmt::Display;
+use crate::core::instructions::call::CallInstruction;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu);
@@ -36,6 +37,7 @@ pub enum Instruction {
     Di(DiInstruction),
     Jp(JpInstruction),
     Ldh(LdhInstruction),
+    Call(CallInstruction),
 }
 
 impl Instruction {
@@ -57,6 +59,8 @@ impl Instruction {
             Instruction::Di(_inst) => InstructionType::DI,
             Instruction::Jp(_inst) => InstructionType::JP,
             Instruction::Ldh(_inst) => InstructionType::LDH,
+            Instruction::Call(_inst) => InstructionType::CALL,
+
         }
     }
 
@@ -110,6 +114,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Di(inst) => inst.execute(cpu),
             Instruction::Jp(inst) => inst.execute(cpu),
             Instruction::Ldh(inst) => inst.execute(cpu),
+            Instruction::Call(inst) => inst.execute(cpu),
         }
     }
 
@@ -132,6 +137,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Di(inst) => inst.get_address_mode(),
             Instruction::Jp(inst) => inst.get_address_mode(),
             Instruction::Ldh(inst) => inst.get_address_mode(),
+            Instruction::Call(inst) => inst.get_address_mode(),
         }
     }
 }
