@@ -1,6 +1,4 @@
-use std::fmt::Display;
 use crate::core::cpu::Cpu;
-use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
@@ -11,8 +9,11 @@ use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::jp::JpInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
+use crate::core::instructions::ldh::LdhInstruction;
 use crate::core::instructions::nop::NopInstruction;
+use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
+use std::fmt::Display;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu);
@@ -34,12 +35,15 @@ pub enum Instruction {
     Xor(XorInstruction),
     Di(DiInstruction),
     Jp(JpInstruction),
+    Ldh(LdhInstruction),
 }
 
 impl Instruction {
     fn get_type(&self) -> InstructionType {
         match self {
-            Instruction::Unknown(opcode) => panic!("Can't get_type for unknown instruction {:X}", opcode),
+            Instruction::Unknown(opcode) => {
+                panic!("Can't get_type for unknown instruction {:X}", opcode)
+            }
             Instruction::Nop(_inst) => InstructionType::NOP,
             Instruction::Inc(_inst) => InstructionType::INC,
             Instruction::Dec(_inst) => InstructionType::DEC,
@@ -52,6 +56,7 @@ impl Instruction {
             Instruction::Xor(_inst) => InstructionType::XOR,
             Instruction::Di(_inst) => InstructionType::DI,
             Instruction::Jp(_inst) => InstructionType::JP,
+            Instruction::Ldh(_inst) => InstructionType::LDH,
         }
     }
 
@@ -89,7 +94,9 @@ impl Instruction {
 impl ExecutableInstruction for Instruction {
     fn execute(&self, cpu: &mut Cpu) {
         match self {
-            Instruction::Unknown(opcode) => panic!("Can't execute an unknown instruction {:X}", opcode),
+            Instruction::Unknown(opcode) => {
+                panic!("Can't execute an unknown instruction {:X}", opcode)
+            }
             Instruction::Nop(inst) => inst.execute(cpu),
             Instruction::Inc(inst) => inst.execute(cpu),
             Instruction::Dec(inst) => inst.execute(cpu),
@@ -102,12 +109,16 @@ impl ExecutableInstruction for Instruction {
             Instruction::Xor(inst) => inst.execute(cpu),
             Instruction::Di(inst) => inst.execute(cpu),
             Instruction::Jp(inst) => inst.execute(cpu),
+            Instruction::Ldh(inst) => inst.execute(cpu),
         }
     }
 
     fn get_address_mode(&self) -> AddressMode {
         match self {
-            Instruction::Unknown(opcode) => panic!("Can't get_address_mode for unknown instruction {:X}", opcode),
+            Instruction::Unknown(opcode) => panic!(
+                "Can't get_address_mode for unknown instruction {:X}",
+                opcode
+            ),
             Instruction::Nop(inst) => inst.get_address_mode(),
             Instruction::Inc(inst) => inst.get_address_mode(),
             Instruction::Dec(inst) => inst.get_address_mode(),
@@ -120,6 +131,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Xor(inst) => inst.get_address_mode(),
             Instruction::Di(inst) => inst.get_address_mode(),
             Instruction::Jp(inst) => inst.get_address_mode(),
+            Instruction::Ldh(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -323,8 +335,7 @@ pub enum AddressMode {
     /// HL decrement and Register: The instruction stores a value from a register to memory and
     /// decrements the `HL` register pair.
     HLD_R(RegisterType, RegisterType),
-    /// Register and 8-bit immediate address: The instruction uses a 8-bit immediate address and
-    /// a register for memory access.
+    /// Register and 8-bit immediate address
     R_A8(RegisterType),
     /// 8-bit address and Register: The instruction uses a memory address and a register to store
     /// a value from the register to memory.
@@ -367,5 +378,4 @@ mod tests {
 
         println!("{}", inst);
     }
-
 }

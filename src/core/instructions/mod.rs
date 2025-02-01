@@ -12,3 +12,4 @@ mod ld;
 mod nop;
 mod table;
 mod xor;
+mod ldh;

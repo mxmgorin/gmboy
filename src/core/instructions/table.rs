@@ -9,6 +9,7 @@ use crate::core::instructions::inc::IncInstruction;
 use crate::core::instructions::jp::JpInstruction;
 use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
+use crate::core::instructions::ldh::LdhInstruction;
 use crate::core::instructions::nop::NopInstruction;
 use crate::core::instructions::xor::XorInstruction;
 
@@ -229,12 +230,20 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
 
     // 0xEX
+    instructions[0xE0] = Instruction::Ldh(LdhInstruction {
+        address_mode: AddressMode::A8_R(RegisterType::A),
+    });
+
     instructions[0xE9] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::R(RegisterType::HL),
         condition_type: None,
     });
 
     // 0xFX
+    instructions[0xF0] = Instruction::Ldh(LdhInstruction {
+        address_mode: AddressMode::R_A8(RegisterType::A),
+    });
+
     instructions[0xF3] = Instruction::Di(DiInstruction);
 
     // todo: Add more instructions here...
