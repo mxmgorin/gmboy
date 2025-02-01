@@ -1,8 +1,10 @@
 use crate::core::cart::Cart;
+use crate::core::ram::Ram;
 
 #[derive(Debug, Clone)]
 pub struct Bus {
     cart: Cart,
+    ram: Ram,
 }
 
 const ROM_BANK0: AddressRange = AddressRange {
@@ -60,8 +62,8 @@ const ZERO_PAGE: AddressRange = AddressRange {
 };
 
 impl Bus {
-    pub fn new(cart: Cart) -> Self {
-        Self { cart }
+    pub fn new(cart: Cart, ram: Ram) -> Self {
+        Self { cart, ram }
     }
 
     pub fn read(&self, address: u16) -> u8 {

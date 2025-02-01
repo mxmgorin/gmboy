@@ -1,6 +1,7 @@
 use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
+use crate::core::ram::Ram;
 use std::thread;
 
 #[derive(Debug)]
@@ -24,7 +25,7 @@ impl Emu {
         println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
 
         Ok(Self {
-            cpu: Cpu::new(Bus::new(cart)),
+            cpu: Cpu::new(Bus::new(cart, Ram::new())),
             running: false,
             paused: false,
             ticks: 0,
