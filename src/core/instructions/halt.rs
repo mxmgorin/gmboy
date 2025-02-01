@@ -6,7 +6,7 @@ pub struct HaltInstruction;
 
 impl ExecutableInstruction for HaltInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("HaltInstruction not impl")
+        unimplemented!("Execute HaltInstruction")
     }
 
     fn get_address_mode(&self) -> AddressMode {

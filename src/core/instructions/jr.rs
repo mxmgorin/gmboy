@@ -1,6 +1,6 @@
 use crate::core::cpu::Cpu;
 use crate::core::instructions::common::{
-    AddressMode, ConditionType, ExecutableInstruction, RegisterType,
+    AddressMode, ConditionType, ExecutableInstruction,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -10,7 +10,7 @@ pub struct JrInstruction {
 
 impl ExecutableInstruction for JrInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("JrInstruction not impl")
+        panic!("Execute JrInstruction")
     }
 
     fn get_address_mode(&self) -> AddressMode {

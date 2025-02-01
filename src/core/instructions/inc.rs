@@ -8,7 +8,7 @@ pub struct IncInstruction {
 
 impl ExecutableInstruction for IncInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("IncInstruction not impl")
+        unimplemented!("Execute IncInstruction")
     }
 
     fn get_address_mode(&self) -> AddressMode {

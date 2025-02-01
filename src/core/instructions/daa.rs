@@ -7,7 +7,7 @@ pub struct DaaInstruction;
 
 impl ExecutableInstruction for DaaInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("DaaInstruction not impl")
+        unimplemented!("DaaInstruction")
     }
 
     fn get_address_mode(&self) -> AddressMode {

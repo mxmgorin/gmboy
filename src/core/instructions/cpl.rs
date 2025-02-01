@@ -6,7 +6,7 @@ pub struct CplInstruction;
 
 impl ExecutableInstruction for CplInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("CplInstruction not impl")
+        unimplemented!("CplInstruction")
     }
 
     fn get_address_mode(&self) -> AddressMode {

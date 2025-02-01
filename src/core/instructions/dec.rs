@@ -8,7 +8,7 @@ pub struct DecInstruction {
 
 impl ExecutableInstruction for DecInstruction {
     fn execute(&self, _cpu: &mut Cpu) {
-        eprintln!("DecInstruction not impl")
+        unimplemented!("Execute DecInstruction ")
     }
 
     fn get_address_mode(&self) -> AddressMode {

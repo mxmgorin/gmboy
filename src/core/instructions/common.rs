@@ -15,6 +15,7 @@ use crate::core::instructions::xor::XorInstruction;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Instruction {
+    Unknown,
     Nop(NopInstruction),
     Inc(IncInstruction),
     Dec(DecInstruction),
@@ -64,6 +65,7 @@ impl Instruction {
 impl ExecutableInstruction for Instruction {
     fn execute(&self, cpu: &mut Cpu) {
         match self {
+            Instruction::Unknown => panic!("Can't execute an unknown instruction"),
             Instruction::Nop(inst) => inst.execute(cpu),
             Instruction::Inc(inst) => inst.execute(cpu),
             Instruction::Dec(inst) => inst.execute(cpu),
@@ -81,6 +83,7 @@ impl ExecutableInstruction for Instruction {
 
     fn get_address_mode(&self) -> AddressMode {
         match self {
+            Instruction::Unknown => panic!("Can't get_address_mode for unknown instruction"),
             Instruction::Nop(inst) => inst.get_address_mode(),
             Instruction::Inc(inst) => inst.get_address_mode(),
             Instruction::Dec(inst) => inst.get_address_mode(),
