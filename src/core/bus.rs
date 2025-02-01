@@ -7,19 +7,45 @@ pub struct Bus {
     ram: Ram,
 }
 
-const ROM_BANK0: AddrRange = AddrRange(0x0000, 0x3FFF);
-const ROM_BANK1: AddrRange = AddrRange(0x4000, 0x7FFF);
-const CHR_RAM: AddrRange = AddrRange(0x8000, 0x97FF);
-const BG_MAP1: AddrRange = AddrRange(0x9800, 0x9BFF);
-const BG_MAP2: AddrRange = AddrRange(0x9C00, 0x9FFF);
-const CART_RAM: AddrRange = AddrRange(0xA000, 0xBFFF);
-const RAM_BANK0: AddrRange = AddrRange(0xC000, 0xCFFF);
-const RAM_BANK1TO7: AddrRange = AddrRange(0xD000, 0xDFFF);
-const ECHO_RAM: AddrRange = AddrRange(0xE000, 0xFDFF);
-const OBJECT_ATTRIBUTE_MEMORY: AddrRange = AddrRange(0xFE00, 0xFE9F);
-const UNUSABLE: AddrRange = AddrRange(0xFEA0, 0xFEFF);
-const IO_REGISTERS: AddrRange = AddrRange(0xFF00, 0xFF7F);
-const ZERO_PAGE: AddrRange = AddrRange(0xFF80, 0xFFFE);
+#[derive(Debug, PartialEq, Eq)]
+pub enum AddrLocation {
+    RomBank0,              // 0x0000 - 0x3FFF
+    RomBank1,              // 0x4000 - 0x7FFF
+    ChrRam,                // 0x8000 - 0x97FF
+    BgMap1,                // 0x9800 - 0x9BFF
+    BgMap2,                // 0x9C00 - 0x9FFF
+    CartRam,               // 0xA000 - 0xBFFF
+    RamBank0,              // 0xC000 - 0xCFFF
+    RamBank1To7,           // 0xD000 - 0xDFFF
+    EchoRam,               // 0xE000 - 0xFDFF
+    ObjectAttributeMemory, // 0xFE00 - 0xFE9F
+    Unusable,              // 0xFEA0 - 0xFEFF
+    IoRegisters,           // 0xFF00 - 0xFF7F
+    ZeroPage,              // 0xFF80 - 0xFFFE
+}
+
+impl TryFrom<u16> for AddrLocation {
+    type Error = String;
+
+    fn try_from(address: u16) -> Result<Self, Self::Error> {
+        match address {
+            0x0000..=0x3FFF => Ok(AddrLocation::RomBank0),
+            0x4000..=0x7FFF => Ok(AddrLocation::RomBank1),
+            0x8000..=0x97FF => Ok(AddrLocation::ChrRam),
+            0x9800..=0x9BFF => Ok(AddrLocation::BgMap1),
+            0x9C00..=0x9FFF => Ok(AddrLocation::BgMap2),
+            0xA000..=0xBFFF => Ok(AddrLocation::CartRam),
+            0xC000..=0xCFFF => Ok(AddrLocation::RamBank0),
+            0xD000..=0xDFFF => Ok(AddrLocation::RamBank1To7),
+            0xE000..=0xFDFF => Ok(AddrLocation::EchoRam),
+            0xFE00..=0xFE9F => Ok(AddrLocation::ObjectAttributeMemory),
+            0xFEA0..=0xFEFF => Ok(AddrLocation::Unusable),
+            0xFF00..=0xFF7F => Ok(AddrLocation::IoRegisters),
+            0xFF80..=0xFFFE => Ok(AddrLocation::ZeroPage),
+            _ => Err(format!("0x{:X} address out of range ", address)),
+        }
+    }
+}
 
 impl Bus {
     pub fn new(cart: Cart, ram: Ram) -> Self {
@@ -27,16 +53,45 @@ impl Bus {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if ROM_BANK0.contains(address) || ROM_BANK1.contains(address) {
-            return self.cart.read(address);
+        let location = AddrLocation::try_from(address).unwrap();
+
+        match location {
+            AddrLocation::RomBank0 | AddrLocation::RomBank1 => return self.cart.read(address),
+            AddrLocation::ChrRam => {}
+            AddrLocation::BgMap1 => {}
+            AddrLocation::BgMap2 => {}
+            AddrLocation::CartRam => {}
+            AddrLocation::RamBank0 => {}
+            AddrLocation::RamBank1To7 => {}
+            AddrLocation::EchoRam => {}
+            AddrLocation::ObjectAttributeMemory => {}
+            AddrLocation::Unusable => {}
+            AddrLocation::IoRegisters => {}
+            AddrLocation::ZeroPage => {}
         }
 
         panic!("Can't bus read read address {address}");
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        if ROM_BANK0.contains(address) || ROM_BANK1.contains(address) {
-            self.cart.write(address, value);
+        let location = AddrLocation::try_from(address).unwrap();
+
+        match location {
+            AddrLocation::RomBank0 | AddrLocation::RomBank1 => {
+                self.cart.write(address, value);
+                return;
+            }
+            AddrLocation::ChrRam => {}
+            AddrLocation::BgMap1 => {}
+            AddrLocation::BgMap2 => {}
+            AddrLocation::CartRam => {}
+            AddrLocation::RamBank0 => {}
+            AddrLocation::RamBank1To7 => {}
+            AddrLocation::EchoRam => {}
+            AddrLocation::ObjectAttributeMemory => {}
+            AddrLocation::Unusable => {}
+            AddrLocation::IoRegisters => {}
+            AddrLocation::ZeroPage => {}
         }
 
         panic!("Can't bus write address {address}");
@@ -52,27 +107,5 @@ impl Bus {
     pub fn write16(&mut self, address: u16, value: u16) {
         self.write(address + 1, ((value >> 8) & 0xFF) as u8);
         self.write(address, (value & 0xFF) as u8);
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct AddrRange(u16, u16);
-
-impl AddrRange {
-    pub fn contains(&self, address: u16) -> bool {
-        self.0 <= address && address <= self.1
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_contains() {
-        assert!(ROM_BANK0.contains(0x100));
-
-        //assert!(RAM_BANK1.contains(0x100));
-        //assert!(RAM_BANK0.contains(0x100));
     }
 }
