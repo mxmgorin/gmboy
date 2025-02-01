@@ -40,9 +40,8 @@ impl Cpu {
             return Err(format!("Unknown instruction OPCODE: {opcode:X}",));
         };
 
-        if cfg!(debug_assertions) {
-            self.print_debug_info(pc, instruction, opcode);
-        }
+        #[cfg(debug_assertions)]
+        self.print_debug_info(pc, instruction, opcode);
 
         self.fetch_data(instruction);
         self.execute(instruction)?;
@@ -286,6 +285,7 @@ impl Cpu {
         get_bit_flag(self.registers.f, 4)
     }
 
+    #[cfg(debug_assertions)]
     fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
         let mut flags = String::new();
         flags.push(if self.get_flag_z() {
