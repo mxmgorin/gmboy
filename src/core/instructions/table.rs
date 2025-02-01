@@ -1,3 +1,4 @@
+use crate::core::instructions::call::CallInstruction;
 use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::common::{AddressMode, ConditionType, Instruction, RegisterType};
 use crate::core::instructions::cpl::CplInstruction;
@@ -214,6 +215,15 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::D16,
         condition_type: None,
     });
+    instructions[0xC4] = Instruction::Call(CallInstruction {
+        condition_type: Some(ConditionType::NZ),
+    });
+    instructions[0xCC] = Instruction::Call(CallInstruction {
+        condition_type: Some(ConditionType::Z),
+    });
+    instructions[0xCD] = Instruction::Call(CallInstruction {
+        condition_type: None,
+    });
     instructions[0xCA] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::Z),
@@ -223,6 +233,12 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xD2] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::NC),
+    });
+    instructions[0xD4] = Instruction::Call(CallInstruction {
+        condition_type: Some(ConditionType::NC),
+    });
+    instructions[0xDC] = Instruction::Call(CallInstruction {
+        condition_type: Some(ConditionType::C),
     });
     instructions[0xDA] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,

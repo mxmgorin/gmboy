@@ -15,6 +15,7 @@ use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
 use std::fmt::Display;
 use crate::core::instructions::call::CallInstruction;
+use crate::core::stack::Stack;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu);
@@ -84,9 +85,8 @@ impl Instruction {
     pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
         if Instruction::check_cond(cpu, cond) {
             if push_pc {
-                unimplemented!("goto_addr with push_pc")
                 //emu_cycles(2);
-                //stack_push16(cpu.registers.pc);
+                Stack::push16(cpu, cpu.registers.pc);
             }
 
             cpu.registers.pc = addr;
