@@ -44,7 +44,6 @@ impl From<u16> for AddrLocation {
             0xFF00..=0xFF7F => AddrLocation::IoRegisters,
             0xFF80..=0xFFFE => AddrLocation::ZeroPage,
             0xFFFF => AddrLocation::IeRegister,
-            _ => unreachable!("Size of u16 doesn't allow bigger values"),
         }
     }
 }

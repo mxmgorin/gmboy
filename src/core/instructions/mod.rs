@@ -1,5 +1,3 @@
-#![feature(const_generics)]
-
 mod ccf;
 pub mod common;
 mod cpl;
