@@ -9,7 +9,7 @@ mod inc;
 mod jp;
 mod jr;
 mod ld;
+mod ldh;
 mod nop;
 mod table;
 mod xor;
-mod ldh;

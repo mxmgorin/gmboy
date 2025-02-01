@@ -105,27 +105,38 @@ impl Cpu {
             AddressMode::R_HLI(_r1, r2) => {
                 self.fetched_data = self.bus.read(self.registers.read_register(r2)) as u16;
                 //emu_cycles(1);
-                self.registers.set_register(RegisterType::HL, self.registers.read_register(RegisterType::H) + 1);
+                self.registers.set_register(
+                    RegisterType::HL,
+                    self.registers.read_register(RegisterType::H) + 1,
+                );
             }
             AddressMode::R_HLD(_r1, r2) => {
                 self.fetched_data = self.bus.read(self.registers.read_register(r2)) as u16;
                 //emu_cycles(1);
                 self.registers.set_register(
                     RegisterType::HL,
-                    self.registers.read_register(RegisterType::H).wrapping_sub(1),
+                    self.registers
+                        .read_register(RegisterType::H)
+                        .wrapping_sub(1),
                 );
             }
             AddressMode::HLI_R(r1, r2) => {
                 self.fetched_data = self.registers.read_register(r2);
                 self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
-                self.registers.set_register(RegisterType::HL, self.registers.read_register(RegisterType::HL) + 1);
+                self.registers.set_register(
+                    RegisterType::HL,
+                    self.registers.read_register(RegisterType::HL) + 1,
+                );
             }
             AddressMode::HLD_R(r1, r2) => {
                 self.fetched_data = self.registers.read_register(r2);
                 self.mem_dest = self.registers.read_register(r1);
                 self.dest_is_mem = true;
-                self.registers.set_register(RegisterType::HL, self.registers.read_register(RegisterType::HL) - 1);
+                self.registers.set_register(
+                    RegisterType::HL,
+                    self.registers.read_register(RegisterType::HL) - 1,
+                );
             }
             AddressMode::R_A8(_r1) => {
                 self.fetched_data = self.bus.read(self.registers.pc) as u16;
@@ -273,18 +284,10 @@ impl Registers {
             RegisterType::E => self.e as u16,
             RegisterType::H => self.h as u16,
             RegisterType::L => self.l as u16,
-            RegisterType::AF => {
-                reverse_u16(((self.a as u16) << 8) | (self.f as u16))
-            }
-            RegisterType::BC => {
-                reverse_u16(((self.b as u16) << 8) | (self.c as u16))
-            }
-            RegisterType::DE => {
-                reverse_u16(((self.d as u16) << 8) | (self.e as u16))
-            }
-            RegisterType::HL => {
-                reverse_u16(((self.h as u16) << 8) | (self.l as u16))
-            }
+            RegisterType::AF => reverse_u16(((self.a as u16) << 8) | (self.f as u16)),
+            RegisterType::BC => reverse_u16(((self.b as u16) << 8) | (self.c as u16)),
+            RegisterType::DE => reverse_u16(((self.d as u16) << 8) | (self.e as u16)),
+            RegisterType::HL => reverse_u16(((self.h as u16) << 8) | (self.l as u16)),
             RegisterType::PC => self.pc,
             RegisterType::SP => self.sp,
         }

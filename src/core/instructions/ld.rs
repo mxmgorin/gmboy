@@ -44,10 +44,14 @@ impl ExecutableInstruction for LdInstruction {
                     return;
                 }
 
-                let h_flag = (cpu.registers.read_register(r2) & 0xF) + (cpu.fetched_data & 0xF) >= 0x10;
-                let c_flag = (cpu.registers.read_register(r2) & 0xFF) + (cpu.fetched_data & 0xFF) >= 0x100;
+                let h_flag =
+                    (cpu.registers.read_register(r2) & 0xF) + (cpu.fetched_data & 0xF) >= 0x10;
+                let c_flag =
+                    (cpu.registers.read_register(r2) & 0xFF) + (cpu.fetched_data & 0xFF) >= 0x100;
                 cpu.registers.set_flags(0, 0, h_flag as i8, c_flag as i8);
-                cpu.registers.set_register(r1, cpu.registers.read_register(r2) + cpu.fetched_data); // todo: cast fetched_data to u8?
+                cpu.registers
+                    .set_register(r1, cpu.registers.read_register(r2) + cpu.fetched_data);
+                // todo: cast fetched_data to u8?
             }
         }
     }
