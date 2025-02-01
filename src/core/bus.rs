@@ -98,7 +98,7 @@ impl Bus {
             AddrLocation::ObjectAttributeMemory => panic!("Can't bus write address {:X}", address),
             AddrLocation::Unusable => (),
             AddrLocation::IoRegisters => {
-                eprint!("Can't bus write IoRegisters address {:X}", address)
+                eprintln!("Can't bus write IoRegisters address {:X}", address)
             } // TODO: impl
             AddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
             AddrLocation::IeRegister => self.ie_register = value,

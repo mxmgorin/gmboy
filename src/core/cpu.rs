@@ -224,11 +224,21 @@ impl Cpu {
             '-'
         });
 
+        const INST_WIDTH: usize = 15; // Adjust this to the desired alignment column
+        let inst_str = instruction.to_string();
+
+        let padding = if inst_str.len() < INST_WIDTH {
+            " ".repeat(INST_WIDTH - inst_str.len())
+        } else {
+            "".to_string()
+        };
+
         println!(
-            "{:08X} - {:04X}: {} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
+            "{:08X} - {:04X}: {}{} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             0,
             pc,
-            instruction,
+            inst_str,
+            padding,
             opcode,
             self.bus.read(pc + 1),
             self.bus.read(pc + 2),
