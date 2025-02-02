@@ -1,7 +1,7 @@
 use crate::core::timer::{Timer, TimerAddress};
 use crate::core::Interrupts;
 
-impl TryFrom<u16> for IoAddress {
+impl TryFrom<u16> for IoAddressLocation {
     type Error = ();
 
     fn try_from(address: u16) -> Result<Self, Self::Error> {
@@ -44,25 +44,30 @@ impl Io {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        let address_type = IoAddress::try_from(address)
-            .unwrap_or_else(|_| panic!("invalid IO address {:X}", address));
+        let location = IoAddressLocation::try_from(address);
 
-        match address_type {
-            IoAddress::SerialSb => self.serial.sb,
-            IoAddress::SerialSc => self.serial.sc,
-            IoAddress::Timer(address) => self.timer.read(address),
-            IoAddress::InterruptFlags => self.interrupts.int_flags,
-            IoAddress::Joypad
-            | IoAddress::Audio
-            | IoAddress::WavePattern
-            | IoAddress::Display
-            | IoAddress::VRAMBankSelect
-            | IoAddress::DisableBootROM
-            | IoAddress::VRAMdma
-            | IoAddress::Background
-            | IoAddress::WRAMBankSelect => {
+        let Ok(location) = location else {
+            // todo: what to do? there is 0xFF03, may be more
+            eprintln!("can't IO read address {:X}", address);
+            return 0;
+        };
+
+        match location {
+            IoAddressLocation::SerialSb => self.serial.sb,
+            IoAddressLocation::SerialSc => self.serial.sc,
+            IoAddressLocation::Timer(address) => self.timer.read(address),
+            IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
+            IoAddressLocation::Joypad
+            | IoAddressLocation::Audio
+            | IoAddressLocation::WavePattern
+            | IoAddressLocation::Display
+            | IoAddressLocation::VRAMBankSelect
+            | IoAddressLocation::DisableBootROM
+            | IoAddressLocation::VRAMdma
+            | IoAddressLocation::Background
+            | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
-                eprintln!("Can't IO read address {:?} {}", address_type, address);
+                eprintln!("Can't IO read address {:?} {:X}", location, address);
 
                 0
             }
@@ -70,25 +75,30 @@ impl Io {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let address_type = IoAddress::try_from(address)
-            .unwrap_or_else(|_| panic!("invalid IO address {:X}", address));
+        let location = IoAddressLocation::try_from(address);
 
-        match address_type {
-            IoAddress::SerialSb => self.serial.sb = value,
-            IoAddress::SerialSc => self.serial.sc = value,
-            IoAddress::Timer(address) => self.timer.write(address, value),
-            IoAddress::InterruptFlags => self.interrupts.int_flags = value,
-            IoAddress::Joypad
-            | IoAddress::Audio
-            | IoAddress::WavePattern
-            | IoAddress::Display
-            | IoAddress::VRAMBankSelect
-            | IoAddress::DisableBootROM
-            | IoAddress::VRAMdma
-            | IoAddress::Background
-            | IoAddress::WRAMBankSelect => {
+        let Ok(location) = location else {
+            // todo: what to do? there is 0xFF03, may be more
+            eprintln!("can't IO write to address {:X}", address);
+            return;
+        };
+
+        match location {
+            IoAddressLocation::SerialSb => self.serial.sb = value,
+            IoAddressLocation::SerialSc => self.serial.sc = value,
+            IoAddressLocation::Timer(address) => self.timer.write(address, value),
+            IoAddressLocation::InterruptFlags => self.interrupts.int_flags = value,
+            IoAddressLocation::Joypad
+            | IoAddressLocation::Audio
+            | IoAddressLocation::WavePattern
+            | IoAddressLocation::Display
+            | IoAddressLocation::VRAMBankSelect
+            | IoAddressLocation::DisableBootROM
+            | IoAddressLocation::VRAMdma
+            | IoAddressLocation::Background
+            | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
-                eprintln!("Can't IO write address {:?} {}", address_type, address);
+                eprintln!("Can't IO write address {:?} {}", location, address);
             }
         }
     }
@@ -121,7 +131,7 @@ impl Serial {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum IoAddress {
+pub enum IoAddressLocation {
     Joypad,
     /// FF01 — SB: Serial transfer data
     SerialSb,
