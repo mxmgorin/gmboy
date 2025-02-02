@@ -8,8 +8,8 @@ impl TryFrom<u16> for IoAddress {
         const TIMER_END: u16 = TimerAddress::get_end();
 
         match address {
-            0xFF01 => Ok(Self::SB),
-            0xFF02 => Ok(Self::SC),
+            0xFF01 => Ok(Self::SerialSc),
+            0xFF02 => Ok(Self::SerialSc),
             TIMER_START..=TIMER_END => Ok(Self::Timer(address.try_into()?)),
             _ => Err(()),
         }
@@ -35,9 +35,9 @@ impl Io {
             .unwrap_or_else(|_| panic!("invalid IO address {:X}", address));
 
         match location {
-            IoAddress::SB => self.serial.sb,
-            IoAddress::SC => self.serial.sc,
-            IoAddress::Timer(address) => self.timer.read(address)
+            IoAddress::SerialSb => self.serial.sb,
+            IoAddress::SerialSc => self.serial.sc,
+            IoAddress::Timer(address) => self.timer.read(address),
         }
     }
 
@@ -46,8 +46,8 @@ impl Io {
             .unwrap_or_else(|_| panic!("invalid IO address {:X}", address));
 
         match location {
-            IoAddress::SB => self.serial.sb = value,
-            IoAddress::SC => self.serial.sc = value,
+            IoAddress::SerialSb => self.serial.sb = value,
+            IoAddress::SerialSc => self.serial.sc = value,
             IoAddress::Timer(address) => self.timer.write(address, value),
         }
     }
@@ -82,8 +82,8 @@ impl Serial {
 #[derive(Debug, PartialEq, Eq)]
 pub enum IoAddress {
     /// FF01 — SB: Serial transfer data
-    SB,
+    SerialSb,
     /// FF02 — SC: Serial transfer control
-    SC,
+    SerialSc,
     Timer(TimerAddress),
 }
