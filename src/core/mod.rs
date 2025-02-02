@@ -9,5 +9,6 @@ mod stack;
 
 mod interrupts;
 mod io;
+mod debugger;
 
 pub use interrupts::*;

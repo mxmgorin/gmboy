@@ -3,6 +3,7 @@ use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ram::Ram;
 use std::thread;
+use crate::core::debugger::Debugger;
 
 #[derive(Debug)]
 pub struct Emu {
@@ -34,6 +35,10 @@ impl Emu {
 
     pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
+        #[cfg(debug_assertions)]
+        let mut debugger = Some(Debugger::new());
+        #[cfg(not(debug_assertions))]
+        let mut debugger = None;
 
         while self.running {
             if self.paused {
@@ -41,7 +46,7 @@ impl Emu {
                 continue;
             }
 
-            self.cpu.step()?;
+            self.cpu.step(&mut debugger)?;
             self.ticks += 1;
         }
 

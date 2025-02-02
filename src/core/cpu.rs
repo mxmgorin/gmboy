@@ -1,4 +1,5 @@
 use crate::core::bus::Bus;
+use crate::core::debugger::Debugger;
 use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
@@ -33,14 +34,14 @@ impl Cpu {
         }
     }
 
-    pub fn step(&mut self) -> Result<(), String> {
+    pub fn step(&mut self, debugger: &mut Option<Debugger>) -> Result<(), String> {
         if self.halted {
             //emu_cycles(1);
 
             if self.int_flags != 0 {
                 self.halted = false;
             }
-            
+
             return Ok(());
         }
 
@@ -53,6 +54,12 @@ impl Cpu {
 
         #[cfg(debug_assertions)]
         self.print_debug_info(pc, instruction, opcode);
+        
+        #[cfg(debug_assertions)]
+        if let Some(debugger) = debugger.as_mut() {
+            debugger.update(self);
+            debugger.print();
+        }
 
         self.fetch_data(instruction);
         self.execute(instruction)?;
