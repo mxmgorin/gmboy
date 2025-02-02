@@ -265,6 +265,11 @@ impl Cpu {
     }
 }
 
+const ZERO_FLAG_BYTE_POSITION: u8 = 7;
+const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
+const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
+const CARRY_FLAG_BYTE_POSITION: u8 = 4;
+
 #[derive(Debug, Clone)]
 pub struct Registers {
     pub a: u8,
@@ -351,36 +356,36 @@ impl Registers {
 
     pub fn set_flags(&mut self, z: i8, n: i8, h: i8, c: i8) {
         if z != -1 {
-            set_bit(&mut self.f, 7, z != 0);
+            set_bit(&mut self.f, ZERO_FLAG_BYTE_POSITION, z != 0);
         }
 
         if n != -1 {
-            set_bit(&mut self.f, 6, n != 0);
+            set_bit(&mut self.f, SUBTRACT_FLAG_BYTE_POSITION, n != 0);
         }
 
         if h != -1 {
-            set_bit(&mut self.f, 5, h != 0);
+            set_bit(&mut self.f, HALF_CARRY_FLAG_BYTE_POSITION, h != 0);
         }
 
         if c != -1 {
-            set_bit(&mut self.f, 4, c != 0);
+            set_bit(&mut self.f, CARRY_FLAG_BYTE_POSITION, c != 0);
         }
     }
 
     pub fn get_flag_z(&self) -> bool {
-        get_bit_flag(self.f, 7)
+        get_bit_flag(self.f, ZERO_FLAG_BYTE_POSITION)
     }
 
     pub fn get_flag_n(&self) -> bool {
-        get_bit_flag(self.f, 6)
+        get_bit_flag(self.f, SUBTRACT_FLAG_BYTE_POSITION)
     }
 
     pub fn get_flag_h(&self) -> bool {
-        get_bit_flag(self.f, 5)
+        get_bit_flag(self.f, HALF_CARRY_FLAG_BYTE_POSITION)
     }
 
     pub fn get_flag_c(&self) -> bool {
-        get_bit_flag(self.f, 4)
+        get_bit_flag(self.f, CARRY_FLAG_BYTE_POSITION)
     }
 
     pub fn flags_to_string(&self) -> String {
