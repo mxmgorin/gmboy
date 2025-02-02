@@ -11,11 +11,15 @@ use crate::core::InterruptType;
 pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,
-    pub mem_dest: u16,
-    pub fetched_data: u16,
-    pub dest_is_mem: bool,
     pub enabling_ime: bool,
     pub ticks: i32,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct FetchedData {
+    pub value: u16,
+    pub mem_dest: u16,
+    pub dest_is_mem: bool,
 }
 
 impl Cpu {
@@ -23,9 +27,6 @@ impl Cpu {
         Self {
             bus,
             registers: Registers::new(),
-            mem_dest: 0,
-            fetched_data: 0,
-            dest_is_mem: false,
             enabling_ime: false,
             ticks: 0,
         }
@@ -49,17 +50,16 @@ impl Cpu {
             return Err(format!("Unknown instruction OPCODE: {opcode:X}",));
         };
 
-        #[cfg(debug_assertions)]
-        self.print_debug_info(pc, instruction, opcode);
+        let fetched_data = self.fetch_data(instruction);
 
         #[cfg(debug_assertions)]
         if let Some(debugger) = debugger.as_mut() {
+            debugger.print_cpu_info(self, pc, instruction, opcode, &fetched_data);
             debugger.update(self);
             debugger.print();
         }
 
-        self.fetch_data(instruction);
-        self.execute(instruction)?;
+        self.execute(instruction, fetched_data)?;
 
         if self.bus.io.interrupts.int_master_enabled {
             if let Some(it) = self.bus.io.interrupts.get_interrupt() {
@@ -103,8 +103,12 @@ impl Cpu {
         self.registers.pc = address;
     }
 
-    fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {
-        instruction.execute(self);
+    fn execute(
+        &mut self,
+        instruction: &Instruction,
+        fetched_data: FetchedData,
+    ) -> Result<(), String> {
+        instruction.execute(self, fetched_data);
 
         Ok(())
     }
@@ -116,17 +120,19 @@ impl Cpu {
         opcode
     }
 
-    fn fetch_data(&mut self, instruction: &Instruction) {
+    fn fetch_data(&mut self, instruction: &Instruction) -> FetchedData {
+        let mut fetched_data = FetchedData::default();
+
         match instruction.get_address_mode() {
             AddressMode::IMP => (),
             AddressMode::R(r1) => {
-                self.fetched_data = self.registers.read_register(r1);
+                fetched_data.value = self.registers.read_register(r1);
             }
             AddressMode::R_R(_r1, r2) => {
-                self.fetched_data = self.registers.read_register(r2);
+                fetched_data.value = self.registers.read_register(r2);
             }
             AddressMode::R_D8(_r1) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                fetched_data.value = self.bus.read(self.registers.pc) as u16;
                 self.update_cycles(1);
                 self.registers.pc += 1;
             }
@@ -135,7 +141,7 @@ impl Cpu {
                 self.update_cycles(1);
                 let hi = self.bus.read(self.registers.pc + 1);
                 self.update_cycles(1);
-                self.fetched_data = (hi as u16) << 8 | (lo as u16);
+                fetched_data.value = (hi as u16) << 8 | (lo as u16);
                 self.registers.pc += 2;
             }
             AddressMode::R_MR(_r1, r2) => {
@@ -144,20 +150,20 @@ impl Cpu {
                 if r2 == RegisterType::C {
                     addr |= 0xFF0;
                 }
-                self.fetched_data = self.bus.read(addr) as u16;
+                fetched_data.value = self.bus.read(addr) as u16;
                 self.update_cycles(1);
             }
             AddressMode::MR_R(r1, r2) => {
-                self.fetched_data = self.registers.read_register(r2);
-                self.mem_dest = self.registers.read_register(r1);
-                self.dest_is_mem = true;
+                fetched_data.value = self.registers.read_register(r2);
+                fetched_data.mem_dest = self.registers.read_register(r1);
+                fetched_data.dest_is_mem = true;
 
                 if r1 == RegisterType::C {
-                    self.mem_dest |= 0xFF00;
+                    fetched_data.mem_dest |= 0xFF00;
                 }
             }
             AddressMode::R_HLI(_r1, r2) => {
-                self.fetched_data = self.bus.read(self.registers.read_register(r2)) as u16;
+                fetched_data.value = self.bus.read(self.registers.read_register(r2)) as u16;
                 self.update_cycles(1);
                 self.registers.set_register(
                     RegisterType::HL,
@@ -165,7 +171,7 @@ impl Cpu {
                 );
             }
             AddressMode::R_HLD(_r1, r2) => {
-                self.fetched_data = self.bus.read(self.registers.read_register(r2)) as u16;
+                fetched_data.value = self.bus.read(self.registers.read_register(r2)) as u16;
                 self.update_cycles(1);
                 self.registers.set_register(
                     RegisterType::HL,
@@ -175,41 +181,41 @@ impl Cpu {
                 );
             }
             AddressMode::HLI_R(r1, r2) => {
-                self.fetched_data = self.registers.read_register(r2);
-                self.mem_dest = self.registers.read_register(r1);
-                self.dest_is_mem = true;
+                fetched_data.value = self.registers.read_register(r2);
+                fetched_data.mem_dest = self.registers.read_register(r1);
+                fetched_data.dest_is_mem = true;
                 self.registers.set_register(
                     RegisterType::HL,
                     self.registers.read_register(RegisterType::HL) + 1,
                 );
             }
             AddressMode::HLD_R(r1, r2) => {
-                self.fetched_data = self.registers.read_register(r2);
-                self.mem_dest = self.registers.read_register(r1);
-                self.dest_is_mem = true;
+                fetched_data.value = self.registers.read_register(r2);
+                fetched_data.mem_dest = self.registers.read_register(r1);
+                fetched_data.dest_is_mem = true;
                 self.registers.set_register(
                     RegisterType::HL,
                     self.registers.read_register(RegisterType::HL) - 1,
                 );
             }
             AddressMode::R_A8(_r1) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                fetched_data.value = self.bus.read(self.registers.pc) as u16;
                 self.update_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::A8_R(_r1) => {
-                self.mem_dest = self.bus.read(self.registers.pc) as u16 | 0xFF00;
-                self.dest_is_mem = true;
+                fetched_data.mem_dest = self.bus.read(self.registers.pc) as u16 | 0xFF00;
+                fetched_data.dest_is_mem = true;
                 self.update_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::HL_SPR(_r1, _r2) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                fetched_data.value = self.bus.read(self.registers.pc) as u16;
                 self.update_cycles(1);
                 self.registers.pc += 1;
             }
             AddressMode::D8 => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                fetched_data.value = self.bus.read(self.registers.pc) as u16;
                 self.update_cycles(1);
                 self.registers.pc += 1;
             }
@@ -220,23 +226,23 @@ impl Cpu {
                 let hi = self.bus.read(self.registers.pc + 1) as u16;
                 self.update_cycles(1);
 
-                self.mem_dest = lo | (hi << 8);
-                self.dest_is_mem = true;
+                fetched_data.mem_dest = lo | (hi << 8);
+                fetched_data.dest_is_mem = true;
 
                 self.registers.pc += 2;
-                self.fetched_data = self.registers.read_register(r1);
+                fetched_data.value = self.registers.read_register(r1);
             }
             AddressMode::MR_D8(r1) => {
-                self.fetched_data = self.bus.read(self.registers.pc) as u16;
+                fetched_data.value = self.bus.read(self.registers.pc) as u16;
                 self.update_cycles(1);
                 self.registers.pc += 1;
-                self.mem_dest = self.registers.read_register(r1);
-                self.dest_is_mem = true;
+                fetched_data.mem_dest = self.registers.read_register(r1);
+                fetched_data.dest_is_mem = true;
             }
             AddressMode::MR(r1) => {
-                self.mem_dest = self.registers.read_register(r1);
-                self.dest_is_mem = true;
-                self.fetched_data = self.bus.read(self.registers.read_register(r1)) as u16;
+                fetched_data.mem_dest = self.registers.read_register(r1);
+                fetched_data.dest_is_mem = true;
+                fetched_data.value = self.bus.read(self.registers.read_register(r1)) as u16;
             }
             AddressMode::R_A16(_r1) => {
                 let lo = self.bus.read(self.registers.pc) as u16;
@@ -248,31 +254,12 @@ impl Cpu {
                 let addr = lo | (hi << 8);
 
                 self.registers.pc += 2;
-                self.fetched_data = self.bus.read(addr) as u16;
+                fetched_data.value = self.bus.read(addr) as u16;
                 self.update_cycles(1);
             }
         }
-    }
 
-    #[cfg(debug_assertions)]
-    fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
-        println!(
-            "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
-            0,
-            pc,
-            instruction.to_asm_string(self),
-            opcode,
-            self.bus.read(pc + 1),
-            self.bus.read(pc + 2),
-            self.registers.a,
-            self.registers.flags_to_string(),
-            self.registers.b,
-            self.registers.c,
-            self.registers.d,
-            self.registers.e,
-            self.registers.h,
-            self.registers.l
-        );
+        fetched_data
     }
 }
 

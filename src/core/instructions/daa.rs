@@ -1,4 +1,4 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
 use crate::core::instructions::common::{AddressMode, ExecutableInstruction};
 
 /// Decimal Adjust Accumulator
@@ -6,7 +6,7 @@ use crate::core::instructions::common::{AddressMode, ExecutableInstruction};
 pub struct DaaInstruction;
 
 impl ExecutableInstruction for DaaInstruction {
-    fn execute(&self, _cpu: &mut Cpu) {
+    fn execute(&self, _cpu: &mut Cpu, fetched_data: FetchedData) {
         unimplemented!("DaaInstruction")
     }
 

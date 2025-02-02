@@ -1,4 +1,4 @@
-use crate::core::cpu::{Cpu, Registers};
+use crate::core::cpu::{Cpu, FetchedData, Registers};
 use crate::core::instructions::call::CallInstruction;
 use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
@@ -18,7 +18,7 @@ use crate::core::stack::Stack;
 use std::fmt::Display;
 
 pub trait ExecutableInstruction {
-    fn execute(&self, cpu: &mut Cpu);
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
     fn get_address_mode(&self) -> AddressMode;
 }
 
@@ -94,11 +94,11 @@ impl Instruction {
         }
     }
 
-    pub fn to_asm_string(&self, cpu: &Cpu) -> String {
+    pub fn to_asm_string(&self, cpu: &Cpu, fetched_data: &FetchedData) -> String {
         match self.get_address_mode() {
             AddressMode::IMP => format!("{:?}", self.get_type()),
             AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
-                format!("{:?} {:?},${:04X}", self.get_type(), r1, cpu.fetched_data)
+                format!("{:?} {:?},${:04X}", self.get_type(), r1, fetched_data.value)
             }
             AddressMode::R(r1) => {
                 format!("{:?} {:?}", self.get_type(), r1)
@@ -120,7 +120,7 @@ impl Instruction {
                     "{:?} {:?},${:02X}",
                     self.get_type(),
                     r1,
-                    cpu.fetched_data & 0xFF
+                    fetched_data.value & 0xFF
                 )
             }
             AddressMode::R_HLI(r1, r2) => {
@@ -148,25 +148,25 @@ impl Instruction {
                     "{:?} ({:?},SP+{:?})",
                     self.get_type(),
                     r1,
-                    cpu.fetched_data & 0xFF
+                    fetched_data.value & 0xFF
                 )
             }
             AddressMode::D8 => {
-                format!("{:?} ${:02X}", self.get_type(), cpu.fetched_data & 0xFF)
+                format!("{:?} ${:02X}", self.get_type(), fetched_data.value & 0xFF)
             }
             AddressMode::D16 => {
-                format!("{:?} ${:04X}", self.get_type(), cpu.fetched_data)
+                format!("{:?} ${:04X}", self.get_type(), fetched_data.value)
             }
             AddressMode::MR_D8(r1) => {
                 format!(
                     "{:?} ({:?}),${:02X}",
                     self.get_type(),
                     r1,
-                    cpu.fetched_data & 0xFF
+                    fetched_data.value & 0xFF
                 )
             }
             AddressMode::A16_R(r2) => {
-                format!("{:?} (${:04X}),{:?}", self.get_type(), cpu.fetched_data, r2)
+                format!("{:?} (${:04X}),{:?}", self.get_type(), fetched_data.value, r2)
             }
             _ => {
                 panic!("INVALID address mode: {:?}", self.get_address_mode());
@@ -176,25 +176,25 @@ impl Instruction {
 }
 
 impl ExecutableInstruction for Instruction {
-    fn execute(&self, cpu: &mut Cpu) {
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self {
             Instruction::Unknown(opcode) => {
                 panic!("Can't execute an unknown instruction {:X}", opcode)
             }
-            Instruction::Nop(inst) => inst.execute(cpu),
-            Instruction::Inc(inst) => inst.execute(cpu),
-            Instruction::Dec(inst) => inst.execute(cpu),
-            Instruction::Ld(inst) => inst.execute(cpu),
-            Instruction::Jr(inst) => inst.execute(cpu),
-            Instruction::Daa(inst) => inst.execute(cpu),
-            Instruction::Cpl(inst) => inst.execute(cpu),
-            Instruction::Ccf(inst) => inst.execute(cpu),
-            Instruction::Halt(inst) => inst.execute(cpu),
-            Instruction::Xor(inst) => inst.execute(cpu),
-            Instruction::Di(inst) => inst.execute(cpu),
-            Instruction::Jp(inst) => inst.execute(cpu),
-            Instruction::Ldh(inst) => inst.execute(cpu),
-            Instruction::Call(inst) => inst.execute(cpu),
+            Instruction::Nop(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Inc(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Dec(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ld(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Jr(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Daa(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Cpl(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ccf(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Halt(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Xor(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Di(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Jp(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ldh(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Call(inst) => inst.execute(cpu, fetched_data),
         }
     }
 

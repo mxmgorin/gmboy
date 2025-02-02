@@ -1,4 +1,4 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
 use crate::core::instructions::common::{AddressMode, ConditionType, ExecutableInstruction, Instruction};
 
 #[derive(Debug, Clone, Copy)]
@@ -7,8 +7,8 @@ pub struct CallInstruction {
 }
 
 impl ExecutableInstruction for CallInstruction {
-    fn execute(&self, cpu: &mut Cpu) {
-        Instruction::goto_addr(cpu, self.condition_type, cpu.fetched_data, true);
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, true);
     }
 
     fn get_address_mode(&self) -> AddressMode {

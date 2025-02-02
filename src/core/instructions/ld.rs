@@ -1,4 +1,4 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
 use crate::core::instructions::common::{AddressMode, ExecutableInstruction, RegisterType};
 
 #[derive(Debug, Clone, Copy)]
@@ -7,7 +7,7 @@ pub struct LdInstruction {
 }
 
 impl ExecutableInstruction for LdInstruction {
-    fn execute(&self, cpu: &mut Cpu) {
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
             AddressMode::D8 | AddressMode::D16 | AddressMode::IMP => {
                 unreachable!("Not used for LD")
@@ -22,9 +22,9 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R_A16(r1)
             | AddressMode::R(r1)
             | AddressMode::R_D16(r1) => {
-                cpu.registers.set_register(r1, cpu.fetched_data);
+                cpu.registers.set_register(r1, fetched_data.value);
             }
-            
+
             AddressMode::R_R(r1, r2)
             | AddressMode::R_MR(r1, r2)
             | AddressMode::MR_R(r1, r2)
@@ -32,26 +32,26 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R_HLD(r1, r2)
             | AddressMode::HLI_R(r1, r2)
             | AddressMode::HLD_R(r1, r2) => {
-                if cpu.dest_is_mem {
-                    write_dest_mem(cpu, r2);
+                if fetched_data.dest_is_mem {
+                    write_dest_mem(cpu, r2, fetched_data);
                     return;
                 }
 
-                cpu.registers.set_register(r1, cpu.fetched_data);
+                cpu.registers.set_register(r1, fetched_data.value);
             }
             AddressMode::HL_SPR(r1, r2) => {
-                if cpu.dest_is_mem {
-                    write_dest_mem(cpu, r2);
+                if fetched_data.dest_is_mem {
+                    write_dest_mem(cpu, r2, fetched_data);
                     return;
                 }
 
                 let h_flag =
-                    (cpu.registers.read_register(r2) & 0xF) + (cpu.fetched_data & 0xF) >= 0x10;
+                    (cpu.registers.read_register(r2) & 0xF) + (fetched_data.value & 0xF) >= 0x10;
                 let c_flag =
-                    (cpu.registers.read_register(r2) & 0xFF) + (cpu.fetched_data & 0xFF) >= 0x100;
+                    (cpu.registers.read_register(r2) & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
                 cpu.registers.set_flags(0, 0, h_flag as i8, c_flag as i8);
                 cpu.registers
-                    .set_register(r1, cpu.registers.read_register(r2) + cpu.fetched_data);
+                    .set_register(r1, cpu.registers.read_register(r2) + fetched_data.value);
                 // todo: cast fetched_data to u8?
             }
         }
@@ -62,13 +62,14 @@ impl ExecutableInstruction for LdInstruction {
     }
 }
 
-fn write_dest_mem(cpu: &mut Cpu, r2: RegisterType) {
+fn write_dest_mem(cpu: &mut Cpu, r2: RegisterType, fetched_data: FetchedData) {
     //LD (BC), A for instance...
     if r2.is_16bit() {
         cpu.update_cycles(1);
-        cpu.bus.write16(cpu.mem_dest, cpu.fetched_data);
+        cpu.bus.write16(fetched_data.mem_dest, fetched_data.value);
     } else {
-        cpu.bus.write(cpu.mem_dest, cpu.fetched_data as u8);
+        cpu.bus
+            .write(fetched_data.mem_dest, fetched_data.value as u8);
     }
 
     cpu.update_cycles(1);

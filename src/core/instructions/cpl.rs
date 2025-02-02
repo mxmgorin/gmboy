@@ -1,11 +1,11 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
 use crate::core::instructions::common::{AddressMode, ExecutableInstruction};
 
 #[derive(Debug, Clone, Copy)]
 pub struct CplInstruction;
 
 impl ExecutableInstruction for CplInstruction {
-    fn execute(&self, _cpu: &mut Cpu) {
+    fn execute(&self, _cpu: &mut Cpu, fetched_data: FetchedData) {
         unimplemented!("CplInstruction")
     }
 

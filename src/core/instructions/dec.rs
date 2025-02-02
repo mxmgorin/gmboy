@@ -1,4 +1,4 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
 use crate::core::instructions::common::{AddressMode, ExecutableInstruction, RegisterType};
 
 #[derive(Debug, Clone, Copy)]
@@ -7,7 +7,7 @@ pub struct DecInstruction {
 }
 
 impl ExecutableInstruction for DecInstruction {
-    fn execute(&self, _cpu: &mut Cpu) {
+    fn execute(&self, _cpu: &mut Cpu, fetched_data: FetchedData) {
         unimplemented!("Execute DecInstruction ")
     }
 

@@ -1,4 +1,4 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
 use crate::core::instructions::common::{
     AddressMode, ConditionType, ExecutableInstruction, Instruction,
 };
@@ -10,8 +10,8 @@ pub struct JpInstruction {
 }
 
 impl ExecutableInstruction for JpInstruction {
-    fn execute(&self, cpu: &mut Cpu) {
-        Instruction::goto_addr(cpu, self.condition_type, cpu.fetched_data, false);
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, false);
     }
 
     fn get_address_mode(&self) -> AddressMode {

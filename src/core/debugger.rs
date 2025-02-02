@@ -1,11 +1,14 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, FetchedData};
+use crate::core::instructions::common::Instruction;
 
+#[cfg(debug_assertions)]
 #[derive(Debug, Clone)]
 pub struct Debugger {
     msg: [u8; 1024],
     size: usize,
 }
 
+#[cfg(debug_assertions)]
 impl Debugger {
     pub fn new() -> Self {
         Debugger {
@@ -26,5 +29,33 @@ impl Debugger {
             let msg_str = String::from_utf8_lossy(&self.msg[..self.size]);
             println!("DBG: {:?}", msg_str);
         }
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn print_cpu_info(
+        &self,
+        cpu: &Cpu,
+        pc: u16,
+        instruction: &Instruction,
+        opcode: u8,
+        fetched_data: &FetchedData,
+    ) {
+        println!(
+            "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
+            0,
+            pc,
+            instruction.to_asm_string(cpu, fetched_data),
+            opcode,
+            cpu.bus.read(pc + 1),
+            cpu.bus.read(pc + 2),
+            cpu.registers.a,
+            cpu.registers.flags_to_string(),
+            cpu.registers.b,
+            cpu.registers.c,
+            cpu.registers.d,
+            cpu.registers.e,
+            cpu.registers.h,
+            cpu.registers.l
+        );
     }
 }
