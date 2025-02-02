@@ -46,14 +46,16 @@ impl Bus {
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
-            BusAddrLocation::ChrRam => panic!("Can't bus read address {:X}", address),
-            BusAddrLocation::BgMap1 => panic!("Can't bus read address {:X}", address),
-            BusAddrLocation::BgMap2 => panic!("Can't bus read address {:X}", address),
-            BusAddrLocation::RamBank0 => panic!("Can't bus read address {:X}", address),
+            BusAddrLocation::ChrRam => panic!("Can't BUS read address {:X}", address),
+            BusAddrLocation::BgMap1 => panic!("Can't BUS read address {:X}", address),
+            BusAddrLocation::BgMap2 => panic!("Can't BUS read address {:X}", address),
+            BusAddrLocation::RamBank0 => panic!("Can't BUS read address {:X}", address),
             BusAddrLocation::RamBank1To7 => self.ram.w_ram_read(address),
             BusAddrLocation::EchoRam => 0,
             BusAddrLocation::ObjectAttributeMemory => {
-                panic!("Can't bus read address {:X}", address)
+                // TODO: Impl
+                eprintln!("Can't BUS read ObjectAttributeMemory address {:X}", address);
+                0
             }
             BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
@@ -69,15 +71,19 @@ impl Bus {
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
             }
-            BusAddrLocation::ChrRam => panic!("Can't bus write ChrRam address {:X}", address),
-            BusAddrLocation::BgMap1 => panic!("Can't bus write BgMap1 address {:X}", address),
-            BusAddrLocation::BgMap2 => panic!("Can't bus write BgMap2 address {:X}", address),
+            BusAddrLocation::ChrRam => panic!("Can't BUS write ChrRam address {:X}", address),
+            BusAddrLocation::BgMap1 => panic!("Can't BUS write BgMap1 address {:X}", address),
+            BusAddrLocation::BgMap2 => panic!("Can't BUS write BgMap2 address {:X}", address),
             BusAddrLocation::RamBank0 | BusAddrLocation::RamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
-            BusAddrLocation::EchoRam => {},
+            BusAddrLocation::EchoRam => {}
             BusAddrLocation::ObjectAttributeMemory => {
-                panic!("Can't bus write ObjectAttributeMemory address {:X}", address)
+                // TODO: Impl
+                eprintln!(
+                    "Can't BUS write ObjectAttributeMemory address {:X}",
+                    address
+                );
             }
             BusAddrLocation::Unusable => (),
             BusAddrLocation::IoRegisters => self.io.write(address, value),
