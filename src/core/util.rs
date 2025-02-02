@@ -17,7 +17,7 @@ pub fn set_bit(a: &mut u8, n: u8, on: bool) {
 }
 
 /// Returns true if `a` is between `b` and `c` (inclusive).
-pub fn between(a: u8, b: u8, c: u8) -> bool {
+pub fn _between(a: u8, b: u8, c: u8) -> bool {
     a >= b && a <= c
 }
 
@@ -53,9 +53,9 @@ mod tests {
 
     #[test]
     fn test_between_1() {
-        assert!(between(5, 3, 7));
-        assert!(!between(2, 3, 7));
-        assert!(between(3, 3, 7));
-        assert!(between(7, 3, 7));
+        assert!(_between(5, 3, 7));
+        assert!(!_between(2, 3, 7));
+        assert!(_between(3, 3, 7));
+        assert!(_between(7, 3, 7));
     }
 }

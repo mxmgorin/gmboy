@@ -65,11 +65,11 @@ impl ExecutableInstruction for LdInstruction {
 fn write_dest_mem(cpu: &mut Cpu, r2: RegisterType) {
     //LD (BC), A for instance...
     if r2.is_16bit() {
-        //emu_cycles(1);
+        cpu.update_cycles(1);
         cpu.bus.write16(cpu.mem_dest, cpu.fetched_data);
     } else {
         cpu.bus.write(cpu.mem_dest, cpu.fetched_data as u8);
     }
 
-    //emu_cycles(1);
+    cpu.update_cycles(1);
 }

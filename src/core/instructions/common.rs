@@ -84,13 +84,13 @@ impl Instruction {
     pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
         if Instruction::check_cond(&cpu.registers, cond) {
             if push_pc {
-                //emu_cycles(2);
+                cpu.update_cycles(2);
                 let pc = cpu.registers.pc;
                 Stack::push16(&mut cpu.registers, &mut cpu.bus,pc);
             }
 
             cpu.registers.pc = addr;
-            //emu_cycles(1);
+            cpu.update_cycles(1);
         }
     }
 
