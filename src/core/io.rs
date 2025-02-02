@@ -10,6 +10,7 @@ impl TryFrom<u16> for IoAddress {
         match address {
             0xFF01 => Ok(Self::SerialSb),
             0xFF02 => Ok(Self::SerialSc),
+            0xFF0F => Ok(Self::InterruptFlags),
             TIMER_START..=TIMER_END => Ok(Self::Timer(address.try_into()?)),
             _ => Err(()),
         }
@@ -20,6 +21,8 @@ impl TryFrom<u16> for IoAddress {
 pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
+    /// Interrupt flags
+    pub int_flags: u8,
 }
 
 impl Io {
@@ -27,28 +30,31 @@ impl Io {
         Io {
             serial: Serial::new(),
             timer: Timer::new(),
+            int_flags: 0,
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        let location = IoAddress::try_from(address)
+        let address = IoAddress::try_from(address)
             .unwrap_or_else(|_| panic!("invalid IO address {:X}", address));
 
-        match location {
+        match address {
             IoAddress::SerialSb => self.serial.sb,
             IoAddress::SerialSc => self.serial.sc,
             IoAddress::Timer(address) => self.timer.read(address),
+            IoAddress::InterruptFlags => self.int_flags,
         }
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let location = IoAddress::try_from(address)
+        let address = IoAddress::try_from(address)
             .unwrap_or_else(|_| panic!("invalid IO address {:X}", address));
 
-        match location {
+        match address {
             IoAddress::SerialSb => self.serial.sb = value,
             IoAddress::SerialSc => self.serial.sc = value,
             IoAddress::Timer(address) => self.timer.write(address, value),
+            IoAddress::InterruptFlags => self.int_flags = value,
         }
     }
 }
@@ -86,4 +92,5 @@ pub enum IoAddress {
     /// FF02 — SC: Serial transfer control
     SerialSc,
     Timer(TimerAddress),
+    InterruptFlags,
 }

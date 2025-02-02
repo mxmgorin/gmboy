@@ -28,9 +28,9 @@ impl Interrupts {
     fn check_interrupt(cpu: &mut Cpu, address: u16, it: InterruptType) -> bool {
         let it = it as u8;
 
-        if (cpu.int_flags & it != 0) && (cpu.bus.ie_register & it != 0) {
+        if (cpu.bus.io.int_flags & it != 0) && (cpu.bus.ie_register & it != 0) {
             Self::handle_interrupt(cpu, address);
-            cpu.int_flags &= !it;
+            cpu.bus.io.int_flags &= !it;
             cpu.halted = false;
             cpu.int_master_enabled = false;
 

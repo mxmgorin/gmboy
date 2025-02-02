@@ -15,7 +15,6 @@ pub struct Cpu {
     pub fetched_data: u16,
     pub dest_is_mem: bool,
     pub int_master_enabled: bool,
-    pub int_flags: u8,
     pub enabling_ime: bool,
 }
 
@@ -29,7 +28,6 @@ impl Cpu {
             fetched_data: 0,
             dest_is_mem: false,
             int_master_enabled: false,
-            int_flags: 0,
             enabling_ime: false,
         }
     }
@@ -38,7 +36,7 @@ impl Cpu {
         if self.halted {
             //emu_cycles(1);
 
-            if self.int_flags != 0 {
+            if self.bus.io.int_flags != 0 {
                 self.halted = false;
             }
 
@@ -77,7 +75,7 @@ impl Cpu {
     }
 
     pub fn request_interrupt(&mut self, it: InterruptType) {
-        self.int_flags |= it as u8;
+        self.bus.io.int_flags |= it as u8;
     }
 
     fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {

@@ -28,6 +28,7 @@ pub struct Bus {
     cart: Cart,
     ram: Ram,
     pub io: Io,
+    /// Interrupt enable register
     pub ie_register: u8,
 }
 
