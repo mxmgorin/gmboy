@@ -16,6 +16,7 @@ pub struct Cpu {
     pub dest_is_mem: bool,
     pub int_master_enabled: bool,
     pub enabling_ime: bool,
+    pub ticks: i32,
 }
 
 impl Cpu {
@@ -29,6 +30,7 @@ impl Cpu {
             dest_is_mem: false,
             int_master_enabled: false,
             enabling_ime: false,
+            ticks: 0,
         }
     }
 
@@ -76,6 +78,18 @@ impl Cpu {
 
     pub fn request_interrupt(&mut self, it: InterruptType) {
         self.bus.io.int_flags |= it as u8;
+    }
+
+    pub fn update_cycles(&mut self, cpu_cycles: i32) {
+        for _ in 0..cpu_cycles {
+            for _ in 0..4 {
+                self.ticks += 1;
+                //self.bus.io.timer.tick(self); // todo
+                //ppu_tick(); todo
+            }
+
+            //dma_tick(); todo
+        }
     }
 
     fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {
