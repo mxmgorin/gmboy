@@ -8,7 +8,7 @@ impl TryFrom<u16> for IoAddress {
         const TIMER_END: u16 = TimerAddress::get_end();
 
         match address {
-            0xFF01 => Ok(Self::SerialSc),
+            0xFF01 => Ok(Self::SerialSb),
             0xFF02 => Ok(Self::SerialSc),
             TIMER_START..=TIMER_END => Ok(Self::Timer(address.try_into()?)),
             _ => Err(()),
