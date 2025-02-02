@@ -3,18 +3,17 @@ use crate::core::debugger::Debugger;
 use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
+use crate::core::stack::Stack;
 use crate::core::util::{get_bit_flag, reverse_u16, set_bit};
-use crate::core::{InterruptType, Interrupts};
+use crate::core::InterruptType;
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,
-    pub halted: bool,
     pub mem_dest: u16,
     pub fetched_data: u16,
     pub dest_is_mem: bool,
-    pub int_master_enabled: bool,
     pub enabling_ime: bool,
     pub ticks: i32,
 }
@@ -24,22 +23,20 @@ impl Cpu {
         Self {
             bus,
             registers: Registers::new(),
-            halted: false,
             mem_dest: 0,
             fetched_data: 0,
             dest_is_mem: false,
-            int_master_enabled: false,
             enabling_ime: false,
             ticks: 0,
         }
     }
 
     pub fn step(&mut self, debugger: &mut Option<Debugger>) -> Result<(), String> {
-        if self.halted {
+        if self.bus.io.interrupts.cpu_halted {
             //emu_cycles(1);
 
-            if self.bus.io.int_flags != 0 {
-                self.halted = false;
+            if self.bus.io.interrupts.int_flags != 0 {
+                self.bus.io.interrupts.cpu_halted = false;
             }
 
             return Ok(());
@@ -64,32 +61,46 @@ impl Cpu {
         self.fetch_data(instruction);
         self.execute(instruction)?;
 
-        if self.int_master_enabled {
-            Interrupts::handle(self);
+        if self.bus.io.interrupts.int_master_enabled {
+            if let Some(it) = self.bus.io.interrupts.get_interrupt() {
+                self.handle_interrupt(it);
+            }
+
             self.enabling_ime = false;
         }
 
         if self.enabling_ime {
-            self.int_master_enabled = true;
+            self.bus.io.interrupts.int_master_enabled = true;
         }
 
         Ok(())
-    }
-
-    pub fn request_interrupt(&mut self, it: InterruptType) {
-        self.bus.io.int_flags |= it as u8;
     }
 
     pub fn update_cycles(&mut self, cpu_cycles: i32) {
         for _ in 0..cpu_cycles {
             for _ in 0..4 {
                 self.ticks += 1;
-                //self.bus.io.timer.tick(self); // todo
+
+                if self.bus.io.timer.tick() {
+                    self.bus
+                        .io
+                        .interrupts
+                        .request_interrupt(InterruptType::Timer);
+                }
+
                 //ppu_tick(); todo
             }
 
             //dma_tick(); todo
         }
+    }
+
+    fn handle_interrupt(&mut self, it: InterruptType) {
+        self.bus.io.interrupts.handle_interrupt(it);
+
+        let address = it.get_address();
+        Stack::push16(&mut self.registers, &mut self.bus, address);
+        self.registers.pc = address;
     }
 
     fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {

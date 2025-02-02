@@ -28,8 +28,6 @@ pub struct Bus {
     cart: Cart,
     ram: Ram,
     pub io: Io,
-    /// Interrupt enable register
-    pub ie_register: u8,
 }
 
 impl Bus {
@@ -38,7 +36,6 @@ impl Bus {
             cart,
             ram,
             io: Io::new(),
-            ie_register: 0,
         }
     }
 
@@ -60,7 +57,7 @@ impl Bus {
             BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
             BusAddrLocation::ZeroPage => self.ram.h_ram_read(address),
-            BusAddrLocation::IeRegister => self.ie_register,
+            BusAddrLocation::IeRegister => self.io.interrupts.ie_register,
         }
     }
 
@@ -84,7 +81,7 @@ impl Bus {
             BusAddrLocation::Unusable => (),
             BusAddrLocation::IoRegisters => self.io.write(address, value),
             BusAddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
-            BusAddrLocation::IeRegister => self.ie_register = value,
+            BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
     }
 

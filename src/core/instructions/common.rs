@@ -1,4 +1,4 @@
-use crate::core::cpu::Cpu;
+use crate::core::cpu::{Cpu, Registers};
 use crate::core::instructions::call::CallInstruction;
 use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
@@ -68,24 +68,25 @@ impl Instruction {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
-    pub fn check_cond(cpu: &Cpu, cond: Option<ConditionType>) -> bool {
+    pub fn check_cond(registers: &Registers, cond: Option<ConditionType>) -> bool {
         let Some(cond) = cond else {
             return true;
         };
 
         match cond {
-            ConditionType::C => cpu.registers.get_flag_c(),
-            ConditionType::NC => !cpu.registers.get_flag_c(),
-            ConditionType::Z => cpu.registers.get_flag_z(),
-            ConditionType::NZ => !cpu.registers.get_flag_z(),
+            ConditionType::C => registers.get_flag_c(),
+            ConditionType::NC => !registers.get_flag_c(),
+            ConditionType::Z => registers.get_flag_z(),
+            ConditionType::NZ => !registers.get_flag_z(),
         }
     }
 
     pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
-        if Instruction::check_cond(cpu, cond) {
+        if Instruction::check_cond(&cpu.registers, cond) {
             if push_pc {
                 //emu_cycles(2);
-                Stack::push16(cpu, cpu.registers.pc);
+                let pc = cpu.registers.pc;
+                Stack::push16(&mut cpu.registers, &mut cpu.bus,pc);
             }
 
             cpu.registers.pc = addr;

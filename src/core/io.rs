@@ -1,3 +1,4 @@
+use crate::core::Interrupts;
 use crate::core::timer::{Timer, TimerAddress};
 
 impl TryFrom<u16> for IoAddress {
@@ -21,8 +22,7 @@ impl TryFrom<u16> for IoAddress {
 pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
-    /// Interrupt flags
-    pub int_flags: u8,
+    pub interrupts: Interrupts,
 }
 
 impl Io {
@@ -30,7 +30,7 @@ impl Io {
         Io {
             serial: Serial::new(),
             timer: Timer::new(),
-            int_flags: 0,
+            interrupts: Interrupts::new(),
         }
     }
 
@@ -42,7 +42,7 @@ impl Io {
             IoAddress::SerialSb => self.serial.sb,
             IoAddress::SerialSc => self.serial.sc,
             IoAddress::Timer(address) => self.timer.read(address),
-            IoAddress::InterruptFlags => self.int_flags,
+            IoAddress::InterruptFlags => self.interrupts.int_flags,
         }
     }
 
@@ -54,7 +54,7 @@ impl Io {
             IoAddress::SerialSb => self.serial.sb = value,
             IoAddress::SerialSc => self.serial.sc = value,
             IoAddress::Timer(address) => self.timer.write(address, value),
-            IoAddress::InterruptFlags => self.int_flags = value,
+            IoAddress::InterruptFlags => self.interrupts.int_flags = value,
         }
     }
 }

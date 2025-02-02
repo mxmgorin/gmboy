@@ -1,6 +1,3 @@
-use crate::core::cpu::Cpu;
-use crate::core::InterruptType;
-
 const DIV_ADDRESS: u16 = 0xFF04;
 const TIMA_ADDRESS: u16 = 0xFF05;
 const TMA_ADDRESS: u16 = 0xFF06;
@@ -24,7 +21,7 @@ impl Timer {
         }
     }
 
-    pub fn tick(&mut self, cpu: &mut Cpu) {
+    pub fn tick(&mut self) -> bool {
         let prev_div = self.div;
         self.div += 1;
 
@@ -51,9 +48,12 @@ impl Timer {
 
             if self.tima == 0xFF {
                 self.tima = self.tma;
-                cpu.request_interrupt(InterruptType::Timer); // todo: encapsulate in cpu?
+                
+                return true;
             }
         }
+        
+        false
     }
 
     pub fn write(&mut self, address: TimerAddress, value: u8) {
