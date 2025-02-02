@@ -27,7 +27,7 @@ impl From<u16> for BusAddrLocation {
 pub struct Bus {
     cart: Cart,
     ram: Ram,
-    io: Io,
+    pub io: Io,
     pub ie_register: u8,
 }
 

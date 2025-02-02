@@ -15,11 +15,9 @@ impl Debugger {
     }
 
     pub fn update(&mut self, cpu: &mut Cpu) {
-        if cpu.bus.read(0xFF02) == 0x81 {
-            let letter = cpu.bus.read(0xFF01);
-            self.msg[self.size] = letter;
+        if cpu.bus.io.serial.has_data() {
+            self.msg[self.size] = cpu.bus.io.serial.take_data();
             self.size += 1;
-            cpu.bus.write(0xFF02, 0);
         }
     }
 
