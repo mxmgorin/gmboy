@@ -21,6 +21,7 @@ impl Timer {
         }
     }
 
+    /// Updates timer if needed and returns is interrupt needed
     pub fn tick(&mut self) -> bool {
         let prev_div = self.div;
         self.div += 1;
