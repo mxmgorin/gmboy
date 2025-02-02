@@ -5,13 +5,13 @@ pub enum Stack {}
 
 impl Stack {
     pub fn push(registers: &mut Registers, bus: &mut Bus, val: u8) {
-        registers.sp -= 1;
+        registers.sp = registers.sp.wrapping_sub(1);
         bus.write(registers.sp, val);
     }
 
     fn pop(registers: &mut Registers, bus: &mut Bus) -> u8 {
         let val = bus.read(registers.sp);
-        registers.sp += 1;
+        registers.sp = registers.sp.wrapping_add(1);
 
         val
     }
