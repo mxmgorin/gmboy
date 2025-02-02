@@ -43,20 +43,19 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
-                self.cart.read(address)
-            }
-            BusAddrLocation::ChrRam => panic!("Can't BUS read address {:X}", address),
-            BusAddrLocation::BgMap1 => panic!("Can't BUS read address {:X}", address),
-            BusAddrLocation::BgMap2 => panic!("Can't BUS read address {:X}", address),
-            BusAddrLocation::RamBank0 => panic!("Can't BUS read address {:X}", address),
-            BusAddrLocation::RamBank1To7 => self.ram.w_ram_read(address),
-            BusAddrLocation::EchoRam => 0,
-            BusAddrLocation::ObjectAttributeMemory => {
+            BusAddrLocation::ObjectAttributeMemory
+            | BusAddrLocation::BgMap1
+            | BusAddrLocation::BgMap2
+            | BusAddrLocation::RamBank0
+            | BusAddrLocation::ChrRam
+            | BusAddrLocation::CartRam => {
                 // TODO: Impl
-                eprintln!("Can't BUS read ObjectAttributeMemory address {:X}", address);
+                eprintln!("Can't BUS read {:?} address {:X}", location, address);
                 0
             }
+            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 => self.cart.read(address),
+            BusAddrLocation::RamBank1To7 => self.ram.w_ram_read(address),
+            BusAddrLocation::EchoRam => 0,
             BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
             BusAddrLocation::ZeroPage => self.ram.h_ram_read(address),
@@ -68,23 +67,21 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
+            BusAddrLocation::ChrRam
+            | BusAddrLocation::BgMap1
+            | BusAddrLocation::BgMap2
+            | BusAddrLocation::CartRam
+            | BusAddrLocation::ObjectAttributeMemory => {
+                // TODO: IMPL
+                eprintln!("Can't BUS write {:?} address {:X}", location, address)
+            }
+            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 => {
                 self.cart.write(address, value)
             }
-            BusAddrLocation::ChrRam => panic!("Can't BUS write ChrRam address {:X}", address),
-            BusAddrLocation::BgMap1 => panic!("Can't BUS write BgMap1 address {:X}", address),
-            BusAddrLocation::BgMap2 => panic!("Can't BUS write BgMap2 address {:X}", address),
             BusAddrLocation::RamBank0 | BusAddrLocation::RamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
             BusAddrLocation::EchoRam => {}
-            BusAddrLocation::ObjectAttributeMemory => {
-                // TODO: Impl
-                eprintln!(
-                    "Can't BUS write ObjectAttributeMemory address {:X}",
-                    address
-                );
-            }
             BusAddrLocation::Unusable => (),
             BusAddrLocation::IoRegisters => self.io.write(address, value),
             BusAddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
