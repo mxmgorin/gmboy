@@ -107,7 +107,7 @@ impl Instruction {
                 format!("{:?} {:?},{:?}", self.get_type(), r1, r2)
             }
             AddressMode::MR_R(r1, r2) => {
-                format!("{:?} ({:?},{:?}", self.get_type(), r1, r2)
+                format!("{:?} {:?},{:?}", self.get_type(), r1, r2)
             }
             AddressMode::MR(r1) => {
                 format!("{:?} ({:?})", self.get_type(), r1)
@@ -159,7 +159,7 @@ impl Instruction {
             }
             AddressMode::MR_D8(r1) => {
                 format!(
-                    "{:?} ({:?}),${:02X}",
+                    "{:?} {:?}),${:02X}",
                     self.get_type(),
                     r1,
                     fetched_data.value & 0xFF
