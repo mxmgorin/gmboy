@@ -86,7 +86,7 @@ impl Instruction {
             if push_pc {
                 cpu.update_cycles(2);
                 let pc = cpu.registers.pc;
-                Stack::push16(&mut cpu.registers, &mut cpu.bus,pc);
+                Stack::push16(&mut cpu.registers, &mut cpu.bus, pc);
             }
 
             cpu.registers.pc = addr;
@@ -166,7 +166,12 @@ impl Instruction {
                 )
             }
             AddressMode::A16_R(r2) => {
-                format!("{:?} (${:04X}),{:?}", self.get_type(), fetched_data.value, r2)
+                format!(
+                    "{:?} (${:04X}),{:?}",
+                    self.get_type(),
+                    fetched_data.value,
+                    r2
+                )
             }
             _ => {
                 panic!("INVALID address mode: {:?}", self.get_address_mode());

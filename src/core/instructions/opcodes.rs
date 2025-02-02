@@ -61,7 +61,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x0C] = Instruction::Inc(IncInstruction {
         address_mode: AddressMode::R(RegisterType::C),
     });
-    instructions[0x0D] = Instruction::Dec( DecInstruction {
+    instructions[0x0D] = Instruction::Dec(DecInstruction {
         address_mode: AddressMode::R(RegisterType::C),
     });
     instructions[0x0E] = Instruction::Ld(LdInstruction {

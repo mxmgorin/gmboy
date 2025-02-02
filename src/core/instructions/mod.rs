@@ -1,3 +1,4 @@
+mod call;
 mod ccf;
 pub mod common;
 mod cpl;
@@ -13,4 +14,3 @@ mod ldh;
 mod nop;
 mod opcodes;
 mod xor;
-mod call;

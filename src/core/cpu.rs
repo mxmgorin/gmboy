@@ -49,7 +49,10 @@ impl Cpu {
         self.current_opcode = self.fetch_opcode();
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
-            return Err(format!("Unknown instruction OPCODE: {:X}", self.current_opcode,));
+            return Err(format!(
+                "Unknown instruction OPCODE: {:X}",
+                self.current_opcode,
+            ));
         };
 
         let fetched_data = self.fetch_data(instruction);

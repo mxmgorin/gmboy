@@ -40,10 +40,7 @@ impl Interrupts {
         self.int_flags |= it as u8;
     }
 
-    pub fn handle_interrupt(
-        &mut self,
-        it: InterruptType,
-    ) {
+    pub fn handle_interrupt(&mut self, it: InterruptType) {
         let it = it as u8;
         self.int_flags &= !it;
         self.cpu_halted = false;

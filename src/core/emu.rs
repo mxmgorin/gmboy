@@ -1,9 +1,9 @@
 use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
+use crate::core::debugger::Debugger;
 use crate::core::ram::Ram;
 use std::thread;
-use crate::core::debugger::Debugger;
 
 #[derive(Debug)]
 pub struct Emu {
