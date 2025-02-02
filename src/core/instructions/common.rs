@@ -1,4 +1,5 @@
 use crate::core::cpu::Cpu;
+use crate::core::instructions::call::CallInstruction;
 use crate::core::instructions::ccf::CcfInstruction;
 use crate::core::instructions::cpl::CplInstruction;
 use crate::core::instructions::daa::DaaInstruction;
@@ -13,9 +14,8 @@ use crate::core::instructions::ldh::LdhInstruction;
 use crate::core::instructions::nop::NopInstruction;
 use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
-use std::fmt::Display;
-use crate::core::instructions::call::CallInstruction;
 use crate::core::stack::Stack;
+use std::fmt::Display;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu);
@@ -61,7 +61,6 @@ impl Instruction {
             Instruction::Jp(_inst) => InstructionType::JP,
             Instruction::Ldh(_inst) => InstructionType::LDH,
             Instruction::Call(_inst) => InstructionType::CALL,
-
         }
     }
 
@@ -91,6 +90,86 @@ impl Instruction {
 
             cpu.registers.pc = addr;
             //emu_cycles(1);
+        }
+    }
+
+    pub fn to_asm_string(&self, cpu: &Cpu) -> String {
+        match self.get_address_mode() {
+            AddressMode::IMP => format!("{:?}", self.get_type()),
+            AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
+                format!("{:?} {:?},${:04X}", self.get_type(), r1, cpu.fetched_data)
+            }
+            AddressMode::R(r1) => {
+                format!("{:?} {:?}", self.get_type(), r1)
+            }
+            AddressMode::R_R(r1, r2) => {
+                format!("{:?} {:?},{:?}", self.get_type(), r1, r2)
+            }
+            AddressMode::MR_R(r1, r2) => {
+                format!("{:?} ({:?},{:?}", self.get_type(), r1, r2)
+            }
+            AddressMode::MR(r1) => {
+                format!("{:?} ({:?})", self.get_type(), r1)
+            }
+            AddressMode::R_MR(r1, r2) => {
+                format!("{:?} {:?},({:?})", self.get_type(), r1, r2)
+            }
+            AddressMode::R_D8(r1) | AddressMode::R_A8(r1) => {
+                format!(
+                    "{:?} {:?},${:02X}",
+                    self.get_type(),
+                    r1,
+                    cpu.fetched_data & 0xFF
+                )
+            }
+            AddressMode::R_HLI(r1, r2) => {
+                format!("{:?} {:?},({:?}+)", self.get_type(), r1, r2)
+            }
+            AddressMode::R_HLD(r1, r2) => {
+                format!("{:?} {:?},({:?}-)", self.get_type(), r1, r2)
+            }
+            AddressMode::HLI_R(r1, r2) => {
+                format!("{:?} ({:?}+),{:?}", self.get_type(), r1, r2)
+            }
+            AddressMode::HLD_R(r1, r2) => {
+                return format!("{:?} ({:?}-),{:?}", self.get_type(), r1, r2);
+            }
+            AddressMode::A8_R(r2) => {
+                format!(
+                    "{:?} ${:02X},{:?}",
+                    self.get_type(),
+                    cpu.bus.read(cpu.registers.pc - 1),
+                    r2
+                )
+            }
+            AddressMode::HL_SPR(r1, _r2) => {
+                format!(
+                    "{:?} ({:?},SP+{:?})",
+                    self.get_type(),
+                    r1,
+                    cpu.fetched_data & 0xFF
+                )
+            }
+            AddressMode::D8 => {
+                format!("{:?} ${:02X}", self.get_type(), cpu.fetched_data & 0xFF)
+            }
+            AddressMode::D16 => {
+                format!("{:?} ${:04X}", self.get_type(), cpu.fetched_data)
+            }
+            AddressMode::MR_D8(r1) => {
+                format!(
+                    "{:?} ({:?}),${:02X}",
+                    self.get_type(),
+                    r1,
+                    cpu.fetched_data & 0xFF
+                )
+            }
+            AddressMode::A16_R(r2) => {
+                format!("{:?} (${:04X}),{:?}", self.get_type(), cpu.fetched_data, r2)
+            }
+            _ => {
+                panic!("INVALID address mode: {:?}", self.get_address_mode());
+            }
         }
     }
 }
@@ -367,7 +446,7 @@ pub enum AddressMode {
 impl Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = format!("{:?} {:?}", self.get_type(), self.get_address_mode());
-        write!(f, "{}", str)
+        write!(f, "{:?}", str)
     }
 }
 
@@ -381,6 +460,6 @@ mod tests {
             address_mode: AddressMode::R_D16(RegisterType::BC),
         });
 
-        println!("{}", inst);
+        println!("{:?}", inst);
     }
 }

@@ -1,3 +1,4 @@
+use std::ops::Add;
 use crate::core::bus::Bus;
 use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
@@ -224,21 +225,11 @@ impl Cpu {
             '-'
         });
 
-        const INST_WIDTH: usize = 15; // Adjust this to the desired alignment column
-        let inst_str = instruction.to_string();
-
-        let padding = if inst_str.len() < INST_WIDTH {
-            " ".repeat(INST_WIDTH - inst_str.len())
-        } else {
-            "".to_string()
-        };
-
         println!(
-            "{:08X} - {:04X}: {}{} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
+            "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             0,
             pc,
-            inst_str,
-            padding,
+            instruction.to_asm_string(self),
             opcode,
             self.bus.read(pc + 1),
             self.bus.read(pc + 2),
