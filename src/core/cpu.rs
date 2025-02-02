@@ -3,7 +3,7 @@ use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
 use crate::core::util::{get_bit_flag, reverse_u16, set_bit};
-use std::ops::Add;
+use crate::core::Interrupts;
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -14,6 +14,8 @@ pub struct Cpu {
     pub fetched_data: u16,
     pub dest_is_mem: bool,
     pub int_master_enabled: bool,
+    pub int_flags: u8,
+    pub enabling_ime: bool,
 }
 
 impl Cpu {
@@ -26,11 +28,19 @@ impl Cpu {
             fetched_data: 0,
             dest_is_mem: false,
             int_master_enabled: false,
+            int_flags: 0,
+            enabling_ime: false,
         }
     }
 
     pub fn step(&mut self) -> Result<(), String> {
         if self.halted {
+            //emu_cycles(1);
+
+            if self.int_flags != 0 {
+                self.halted = false;
+            }
+            
             return Ok(());
         }
 
@@ -46,6 +56,15 @@ impl Cpu {
 
         self.fetch_data(instruction);
         self.execute(instruction)?;
+
+        if self.int_master_enabled {
+            Interrupts::handle(self);
+            self.enabling_ime = false;
+        }
+
+        if self.enabling_ime {
+            self.int_master_enabled = true;
+        }
 
         Ok(())
     }

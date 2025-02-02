@@ -5,7 +5,7 @@ use crate::core::ram::Ram;
 pub struct Bus {
     cart: Cart,
     ram: Ram,
-    ie_register: u8,
+    pub ie_register: u8,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -23,7 +23,8 @@ pub enum AddrLocation {
     Unusable,              // 0xFEA0 - 0xFEFF
     IoRegisters,           // 0xFF00 - 0xFF7F
     /// Aka High RAM (HRAM)
-    ZeroPage, // 0xFF80 - 0xFFFE
+    ZeroPage,              // 0xFF80 - 0xFFFE
+    /// Interrupt enable register
     IeRegister,            // 0xFFFF
 }
 

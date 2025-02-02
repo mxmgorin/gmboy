@@ -6,3 +6,6 @@ pub mod instructions;
 mod ram;
 pub mod util;
 mod stack;
+
+mod interrupts;
+pub use interrupts::*;
