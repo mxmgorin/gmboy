@@ -8,4 +8,6 @@ pub mod util;
 mod stack;
 
 mod interrupts;
+mod io;
+
 pub use interrupts::*;
