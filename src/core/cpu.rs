@@ -117,7 +117,7 @@ impl Cpu {
 
     fn fetch_opcode(&mut self) -> u8 {
         let opcode = self.bus.read(self.registers.pc);
-        self.registers.pc += 1;
+        self.registers.pc = self.registers.pc.wrapping_add(1);
 
         opcode
     }
