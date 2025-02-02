@@ -132,7 +132,7 @@ impl Instruction {
                 format!("{:?} ({:?}+),{:?}", self.get_type(), r1, r2)
             }
             AddressMode::HLD_R(r1, r2) => {
-                return format!("{:?} ({:?}-),{:?}", self.get_type(), r1, r2);
+                format!("{:?} ({:?}-),{:?}", self.get_type(), r1, r2)
             }
             AddressMode::A8_R(r2) => {
                 format!(

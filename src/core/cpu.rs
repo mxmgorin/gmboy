@@ -1,9 +1,9 @@
-use std::ops::Add;
 use crate::core::bus::Bus;
 use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
 use crate::core::util::{get_bit_flag, reverse_u16, set_bit};
+use std::ops::Add;
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -203,28 +203,6 @@ impl Cpu {
 
     #[cfg(debug_assertions)]
     fn print_debug_info(&self, pc: u16, instruction: &Instruction, opcode: u8) {
-        let mut flags = String::new();
-        flags.push(if self.registers.get_flag_z() {
-            'Z'
-        } else {
-            '-'
-        });
-        flags.push(if self.registers.get_flag_n() {
-            'N'
-        } else {
-            '-'
-        });
-        flags.push(if self.registers.get_flag_h() {
-            'H'
-        } else {
-            '-'
-        });
-        flags.push(if self.registers.get_flag_c() {
-            'C'
-        } else {
-            '-'
-        });
-
         println!(
             "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             0,
@@ -234,7 +212,7 @@ impl Cpu {
             self.bus.read(pc + 1),
             self.bus.read(pc + 2),
             self.registers.a,
-            flags,
+            self.registers.flags_to_string(),
             self.registers.b,
             self.registers.c,
             self.registers.d,
@@ -361,6 +339,18 @@ impl Registers {
 
     pub fn get_flag_c(&self) -> bool {
         get_bit_flag(self.f, 4)
+    }
+
+    pub fn flags_to_string(&self) -> String {
+        [
+            (self.get_flag_z(), 'Z'),
+            (self.get_flag_n(), 'N'),
+            (self.get_flag_h(), 'H'),
+            (self.get_flag_c(), 'C'),
+        ]
+        .iter()
+        .map(|&(flag, c)| if flag { c } else { '-' })
+        .collect()
     }
 }
 
