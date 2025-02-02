@@ -10,5 +10,6 @@ mod stack;
 mod interrupts;
 mod io;
 mod debugger;
+mod timer;
 
 pub use interrupts::*;

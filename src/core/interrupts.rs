@@ -43,7 +43,7 @@ impl Interrupts {
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
-enum InterruptType {
+pub enum InterruptType {
     VBlank = 1,
     LCDStat = 2,
     Timer = 3,

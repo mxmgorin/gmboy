@@ -4,7 +4,7 @@ use crate::core::instructions::common::{
     AddressMode, ExecutableInstruction, Instruction, RegisterType,
 };
 use crate::core::util::{get_bit_flag, reverse_u16, set_bit};
-use crate::core::Interrupts;
+use crate::core::{InterruptType, Interrupts};
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -54,7 +54,7 @@ impl Cpu {
 
         #[cfg(debug_assertions)]
         self.print_debug_info(pc, instruction, opcode);
-        
+
         #[cfg(debug_assertions)]
         if let Some(debugger) = debugger.as_mut() {
             debugger.update(self);
@@ -74,6 +74,10 @@ impl Cpu {
         }
 
         Ok(())
+    }
+
+    pub fn request_interrupt(&mut self, it: InterruptType) {
+        self.int_flags |= it as u8;
     }
 
     fn execute(&mut self, instruction: &Instruction) -> Result<(), String> {
