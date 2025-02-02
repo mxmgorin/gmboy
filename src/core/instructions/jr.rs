@@ -8,8 +8,8 @@ pub struct JrInstruction {
 
 impl ExecutableInstruction for JrInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        let rel = fetched_data.value & 0xFF;
-        let addr = cpu.registers.pc + rel;
+        let rel = fetched_data.value as i8;
+        let addr = cpu.registers.pc.wrapping_add(rel as u16);
         Instruction::goto_addr(cpu, self.condition_type, addr, false);
     }
 
