@@ -12,7 +12,7 @@ use crate::core::instructions::jr::JrInstruction;
 use crate::core::instructions::ld::LdInstruction;
 use crate::core::instructions::ldh::LdhInstruction;
 use crate::core::instructions::nop::NopInstruction;
-use crate::core::instructions::table::INSTRUCTIONS_BY_OPCODES;
+use crate::core::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use crate::core::instructions::xor::XorInstruction;
 use crate::core::stack::Stack;
 use std::fmt::Display;

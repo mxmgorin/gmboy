@@ -11,6 +11,6 @@ mod jr;
 mod ld;
 mod ldh;
 mod nop;
-mod table;
+mod opcodes;
 mod xor;
 mod call;

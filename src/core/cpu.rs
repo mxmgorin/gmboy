@@ -13,6 +13,7 @@ pub struct Cpu {
     pub registers: Registers,
     pub enabling_ime: bool,
     pub ticks: i32,
+    pub current_opcode: u8,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -29,6 +30,7 @@ impl Cpu {
             registers: Registers::new(),
             enabling_ime: false,
             ticks: 0,
+            current_opcode: 0,
         }
     }
 
@@ -44,17 +46,17 @@ impl Cpu {
         }
 
         let pc = self.registers.pc;
-        let opcode = self.fetch_opcode();
+        self.current_opcode = self.fetch_opcode();
 
-        let Some(instruction) = Instruction::get_by_opcode(opcode) else {
-            return Err(format!("Unknown instruction OPCODE: {opcode:X}",));
+        let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
+            return Err(format!("Unknown instruction OPCODE: {:X}", self.current_opcode,));
         };
 
         let fetched_data = self.fetch_data(instruction);
 
         #[cfg(debug_assertions)]
         if let Some(debugger) = debugger.as_mut() {
-            debugger.print_cpu_info(self, pc, instruction, opcode, &fetched_data);
+            debugger.print_cpu_info(self, pc, instruction, self.current_opcode, &fetched_data);
             debugger.update(self);
             debugger.print();
         }
