@@ -19,6 +19,7 @@ use crate::core::cpu::stack::Stack;
 use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
 use std::fmt::Display;
 use crate::cpu::instructions::and::AndInstruction;
+use crate::cpu::instructions::cp::CpInstruction;
 use crate::cpu::instructions::ei::EiInstruction;
 use crate::cpu::instructions::or::OrInstruction;
 use crate::cpu::instructions::pop::PopInstruction;
@@ -67,6 +68,7 @@ pub enum Instruction {
     And(AndInstruction),
     Push(PushInstruction),
     Pop(PopInstruction),
+    Cp(CpInstruction)
 }
 
 impl ExecutableInstruction for Instruction {
@@ -102,6 +104,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::And(inst) => inst.execute(cpu, fetched_data),
             Instruction::Push(inst) => inst.execute(cpu, fetched_data),
             Instruction::Pop(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Cp(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -138,6 +141,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::And(inst) => inst.get_address_mode(),
             Instruction::Push(inst) => inst.get_address_mode(),
             Instruction::Pop(inst) => inst.get_address_mode(),
+            Instruction::Cp(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -175,6 +179,7 @@ impl Instruction {
             Instruction::And(_) => InstructionType::AND,
             Instruction::Push(_) => InstructionType::PUSH,
             Instruction::Pop(_) => InstructionType::POP,
+            Instruction::Cp(_) => InstructionType::CP,
         }
     }
 

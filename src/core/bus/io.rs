@@ -34,6 +34,12 @@ pub struct Io {
     pub interrupts: Interrupts,
 }
 
+impl Default for Io {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Io {
     pub fn new() -> Io {
         Io {
