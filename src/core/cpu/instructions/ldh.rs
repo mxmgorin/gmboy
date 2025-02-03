@@ -14,9 +14,7 @@ impl ExecutableInstruction for LdhInstruction {
             | AddressMode::R(_)
             | AddressMode::R_D16(_)
             | AddressMode::R_R(_, _)
-            | AddressMode::MR_R(_, _)
             | AddressMode::R_D8(_)
-            | AddressMode::R_MR(_, _)
             | AddressMode::R_HLI(_)
             | AddressMode::R_HLD(_)
             | AddressMode::HLI_R(_)
@@ -29,14 +27,14 @@ impl ExecutableInstruction for LdhInstruction {
             | AddressMode::MR(_)
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => unreachable!("not used for LDH instruction"),
-            AddressMode::R_A8(_r) => {
+            AddressMode::R_A8(_) | AddressMode::R_MR(_, _) => {
                 let value = cpu.bus.read(0xFF00 | fetched_data.value);
                 cpu.registers.a = value; // uses only A register
             }
-            AddressMode::A8_R(_r) => {
+            AddressMode::A8_R(_) | AddressMode::MR_R(_, _) => {
                 cpu.bus.write(
                     fetched_data.dest_addr.expect("must exist for A8"),
-                    cpu.registers.a,  // uses only A register
+                    cpu.registers.a, // uses only A register
                 );
             }
         }
