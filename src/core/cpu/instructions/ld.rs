@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction, RegisterType};
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::FetchedData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LdInstruction {
@@ -33,16 +33,16 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R_HLD(r1, r2)
             | AddressMode::HLI_R(r1, r2)
             | AddressMode::HLD_R(r1, r2) => {
-                if fetched_data.dest_is_mem {
-                    write_dest_mem(cpu, r2, fetched_data);
+                if let Some(dest_addr) = fetched_data.dest_addr {
+                    write_mem(cpu, r2, dest_addr, fetched_data.value);
                     return;
                 }
 
                 cpu.registers.set_register(r1, fetched_data.value);
             }
             AddressMode::HL_SPR(r1, r2) => {
-                if fetched_data.dest_is_mem {
-                    write_dest_mem(cpu, r2, fetched_data);
+                if let Some(dest_addr) = fetched_data.dest_addr {
+                    write_mem(cpu, r2, dest_addr, fetched_data.value);
                     return;
                 }
 
@@ -63,14 +63,12 @@ impl ExecutableInstruction for LdInstruction {
     }
 }
 
-fn write_dest_mem(cpu: &mut Cpu, r2: RegisterType, fetched_data: FetchedData) {
-    //LD (BC), A for instance...
+fn write_mem(cpu: &mut Cpu, r2: RegisterType, addr: u16, value: u16) {
     if r2.is_16bit() {
         cpu.update_cycles(1);
-        cpu.bus.write16(fetched_data.mem_dest, fetched_data.value);
+        cpu.bus.write16(addr, value);
     } else {
-        cpu.bus
-            .write(fetched_data.mem_dest, fetched_data.value as u8);
+        cpu.bus.write(addr, value as u8);
     }
 
     cpu.update_cycles(1);

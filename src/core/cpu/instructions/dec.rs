@@ -34,7 +34,7 @@ impl ExecutableInstruction for DecInstruction {
 
                 let mut value = fetched_data.value.wrapping_sub(1);
                 value &= 0xFF; // Ensure it fits into 8 bits
-                cpu.bus.write(fetched_data.mem_dest, value as u8);
+                cpu.bus.write(fetched_data.dest_addr.expect("must exist for MR"), value as u8);
                 set_flags(cpu, value);
             }
             AddressMode::R(r1) => {

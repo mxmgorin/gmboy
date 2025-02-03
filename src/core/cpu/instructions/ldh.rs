@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::FetchedData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LdhInstruction {
@@ -29,15 +29,19 @@ impl ExecutableInstruction for LdhInstruction {
             | AddressMode::MR(_)
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => unreachable!("not used for LDH instruction"),
-            // always uses A register
             AddressMode::R_A8(_r) => {
-                let data = cpu.bus.read(0xFF00 | fetched_data.value);
-                cpu.registers.a = data;
+                let value = cpu.bus.read(0xFF00 | fetched_data.value);
+                cpu.registers.a = value; // uses only A register
             }
             AddressMode::A8_R(_r) => {
-                cpu.bus.write(fetched_data.mem_dest, cpu.registers.a);
+                cpu.bus.write(
+                    fetched_data.dest_addr.expect("must exist for A8"),
+                    cpu.registers.a,  // uses only A register
+                );
             }
         }
+
+        cpu.update_cycles(1);
     }
 
     fn get_address_mode(&self) -> AddressMode {

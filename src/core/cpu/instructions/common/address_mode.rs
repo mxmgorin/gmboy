@@ -1,12 +1,11 @@
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::common::ExecutableInstruction;
-use crate::core::cpu::{Cpu};
+use crate::core::cpu::Cpu;
 
 #[derive(Debug, Clone, Default)]
 pub struct FetchedData {
     pub value: u16,
-    pub mem_dest: u16,
-    pub dest_is_mem: bool,
+    pub dest_addr: Option<u16>,
 }
 
 /// Represents the different address modes in the CPU's instruction set.
@@ -96,19 +95,27 @@ impl AddressMode {
                 let mut addr = cpu.registers.read_register(r2);
 
                 if r2 == RegisterType::C {
+                    // LDH A,[C]
+                    // Copy the byte at address $FF00+C into register A.
+                    // This is sometimes written as ‘LD A,[$FF00+C]’.
                     addr |= 0xFF0;
                 }
+
                 fetched_data.value = cpu.bus.read(addr) as u16;
                 cpu.update_cycles(1);
             }
             AddressMode::MR_R(r1, r2) => {
                 fetched_data.value = cpu.registers.read_register(r2);
-                fetched_data.mem_dest = cpu.registers.read_register(r1);
-                fetched_data.dest_is_mem = true;
+                let mut addr = cpu.registers.read_register(r1);
 
                 if r1 == RegisterType::C {
-                    fetched_data.mem_dest |= 0xFF00;
+                    // LDH [C],A
+                    // Copy the value in register A into the byte at address $FF00+C.
+                    // This is sometimes written as ‘LD [$FF00+C],A’.
+                    addr |= 0xFF00;
                 }
+
+                fetched_data.dest_addr = Some(addr);
             }
             AddressMode::R_HLI(_r1, r2) => {
                 fetched_data.value = cpu.bus.read(cpu.registers.read_register(r2)) as u16;
@@ -123,13 +130,14 @@ impl AddressMode {
                 cpu.update_cycles(1);
                 cpu.registers.set_register(
                     RegisterType::HL,
-                    cpu.registers.read_register(RegisterType::HL).wrapping_sub(1),
+                    cpu.registers
+                        .read_register(RegisterType::HL)
+                        .wrapping_sub(1),
                 );
             }
             AddressMode::HLI_R(r1, r2) => {
                 fetched_data.value = cpu.registers.read_register(r2);
-                fetched_data.mem_dest = cpu.registers.read_register(r1);
-                fetched_data.dest_is_mem = true;
+                fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
                 cpu.registers.set_register(
                     RegisterType::HL,
                     cpu.registers.read_register(RegisterType::HL) + 1,
@@ -137,8 +145,7 @@ impl AddressMode {
             }
             AddressMode::HLD_R(r1, r2) => {
                 fetched_data.value = cpu.registers.read_register(r2);
-                fetched_data.mem_dest = cpu.registers.read_register(r1);
-                fetched_data.dest_is_mem = true;
+                fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
                 cpu.registers.set_register(
                     RegisterType::HL,
                     cpu.registers.read_register(RegisterType::HL) - 1,
@@ -150,8 +157,7 @@ impl AddressMode {
                 cpu.registers.pc += 1;
             }
             AddressMode::A8_R(_r1) => {
-                fetched_data.mem_dest = cpu.bus.read(cpu.registers.pc) as u16 | 0xFF00;
-                fetched_data.dest_is_mem = true;
+                fetched_data.dest_addr = Some(cpu.bus.read(cpu.registers.pc) as u16 | 0xFF00);
                 cpu.update_cycles(1);
                 cpu.registers.pc += 1;
             }
@@ -172,9 +178,7 @@ impl AddressMode {
                 let hi = cpu.bus.read(cpu.registers.pc + 1) as u16;
                 cpu.update_cycles(1);
 
-                fetched_data.mem_dest = lo | (hi << 8);
-                fetched_data.dest_is_mem = true;
-
+                fetched_data.dest_addr = Some(lo | (hi << 8));
                 cpu.registers.pc += 2;
                 fetched_data.value = cpu.registers.read_register(r1);
             }
@@ -182,12 +186,10 @@ impl AddressMode {
                 fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
                 cpu.update_cycles(1);
                 cpu.registers.pc += 1;
-                fetched_data.mem_dest = cpu.registers.read_register(r1);
-                fetched_data.dest_is_mem = true;
+                fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
             AddressMode::MR(r1) => {
-                fetched_data.mem_dest = cpu.registers.read_register(r1);
-                fetched_data.dest_is_mem = true;
+                fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
                 fetched_data.value = cpu.bus.read(cpu.registers.read_register(r1)) as u16;
             }
             AddressMode::R_A16(_r1) => {
@@ -198,7 +200,6 @@ impl AddressMode {
                 cpu.update_cycles(1);
 
                 let addr = lo | (hi << 8);
-
                 cpu.registers.pc += 2;
                 fetched_data.value = cpu.bus.read(addr) as u16;
                 cpu.update_cycles(1);
