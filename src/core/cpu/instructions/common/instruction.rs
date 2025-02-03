@@ -18,6 +18,7 @@ use crate::core::cpu::instructions::xor::XorInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
 use std::fmt::Display;
+use crate::cpu::instructions::ei::EiInstruction;
 use crate::cpu::instructions::or::OrInstruction;
 use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::reti::RetiInstruction;
@@ -53,6 +54,68 @@ pub enum Instruction {
     Or(OrInstruction),
     Ret(RetInstruction),
     Reti(RetiInstruction),
+    Ei(EiInstruction)
+}
+
+impl ExecutableInstruction for Instruction {
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        match self {
+            Instruction::Unknown(opcode) => {
+                panic!("Can't execute an unknown instruction {:X}", opcode)
+            }
+            Instruction::Nop(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Inc(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Dec(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ld(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Jr(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Daa(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Cpl(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ccf(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Halt(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Xor(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Di(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Jp(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ldh(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Call(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Rra(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Rrca(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Rlca(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Or(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ret(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Reti(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ei(inst) => inst.execute(cpu, fetched_data),
+        }
+    }
+
+    fn get_address_mode(&self) -> AddressMode {
+        match self {
+            Instruction::Unknown(opcode) => panic!(
+                "Can't get_address_mode for unknown instruction {:X}",
+                opcode
+            ),
+            Instruction::Nop(inst) => inst.get_address_mode(),
+            Instruction::Inc(inst) => inst.get_address_mode(),
+            Instruction::Dec(inst) => inst.get_address_mode(),
+            Instruction::Ld(inst) => inst.get_address_mode(),
+            Instruction::Jr(inst) => inst.get_address_mode(),
+            Instruction::Daa(inst) => inst.get_address_mode(),
+            Instruction::Cpl(inst) => inst.get_address_mode(),
+            Instruction::Ccf(inst) => inst.get_address_mode(),
+            Instruction::Halt(inst) => inst.get_address_mode(),
+            Instruction::Xor(inst) => inst.get_address_mode(),
+            Instruction::Di(inst) => inst.get_address_mode(),
+            Instruction::Jp(inst) => inst.get_address_mode(),
+            Instruction::Ldh(inst) => inst.get_address_mode(),
+            Instruction::Call(inst) => inst.get_address_mode(),
+            Instruction::Rra(inst) => inst.get_address_mode(),
+            Instruction::Rrca(inst) => inst.get_address_mode(),
+            Instruction::Rlca(inst) => inst.get_address_mode(),
+            Instruction::Or(inst) => inst.get_address_mode(),
+            Instruction::Ret(inst) => inst.get_address_mode(),
+            Instruction::Reti(inst) => inst.get_address_mode(),
+            Instruction::Ei(inst) => inst.get_address_mode(),
+        }
+    }
 }
 
 impl Instruction {
@@ -81,6 +144,7 @@ impl Instruction {
             Instruction::Or(_) => InstructionType::OR,
             Instruction::Ret(_) => InstructionType::RET,
             Instruction::Reti(_) => InstructionType::RETI,
+            Instruction::Ei(_) => InstructionType::EI,
         }
     }
 
@@ -183,65 +247,6 @@ impl Instruction {
             _ => {
                 panic!("INVALID address mode: {:?}", self.get_address_mode());
             }
-        }
-    }
-}
-
-impl ExecutableInstruction for Instruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        match self {
-            Instruction::Unknown(opcode) => {
-                panic!("Can't execute an unknown instruction {:X}", opcode)
-            }
-            Instruction::Nop(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Inc(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Dec(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ld(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Jr(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Daa(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Cpl(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ccf(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Halt(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Xor(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Di(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Jp(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ldh(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Call(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rra(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rrca(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rlca(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Or(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ret(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Reti(inst) => inst.execute(cpu, fetched_data),
-        }
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        match self {
-            Instruction::Unknown(opcode) => panic!(
-                "Can't get_address_mode for unknown instruction {:X}",
-                opcode
-            ),
-            Instruction::Nop(inst) => inst.get_address_mode(),
-            Instruction::Inc(inst) => inst.get_address_mode(),
-            Instruction::Dec(inst) => inst.get_address_mode(),
-            Instruction::Ld(inst) => inst.get_address_mode(),
-            Instruction::Jr(inst) => inst.get_address_mode(),
-            Instruction::Daa(inst) => inst.get_address_mode(),
-            Instruction::Cpl(inst) => inst.get_address_mode(),
-            Instruction::Ccf(inst) => inst.get_address_mode(),
-            Instruction::Halt(inst) => inst.get_address_mode(),
-            Instruction::Xor(inst) => inst.get_address_mode(),
-            Instruction::Di(inst) => inst.get_address_mode(),
-            Instruction::Jp(inst) => inst.get_address_mode(),
-            Instruction::Ldh(inst) => inst.get_address_mode(),
-            Instruction::Call(inst) => inst.get_address_mode(),
-            Instruction::Rra(inst) => inst.get_address_mode(),
-            Instruction::Rrca(inst) => inst.get_address_mode(),
-            Instruction::Rlca(inst) => inst.get_address_mode(),
-            Instruction::Or(inst) => inst.get_address_mode(),
-            Instruction::Ret(inst) => inst.get_address_mode(),
-            Instruction::Reti(inst) => inst.get_address_mode(),
         }
     }
 }

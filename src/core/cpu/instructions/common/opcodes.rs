@@ -500,6 +500,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xFA] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_A16(RegisterType::A),
     });
+    instructions[0xFB] = Instruction::Ei(EiInstruction);
+
     instructions[0xF3] = Instruction::Di(DiInstruction);
 
     // todo: Add more instructions here...
