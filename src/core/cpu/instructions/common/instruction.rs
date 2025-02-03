@@ -19,6 +19,7 @@ use crate::core::cpu::stack::Stack;
 use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
 
 use std::fmt::Display;
+use crate::cpu::instructions::rra::RraInstruction;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -42,6 +43,7 @@ pub enum Instruction {
     Jp(JpInstruction),
     Ldh(LdhInstruction),
     Call(CallInstruction),
+    Rra(RraInstruction),
 }
 
 impl Instruction {
@@ -64,6 +66,7 @@ impl Instruction {
             Instruction::Jp(_inst) => InstructionType::JP,
             Instruction::Ldh(_inst) => InstructionType::LDH,
             Instruction::Call(_inst) => InstructionType::CALL,
+            Instruction::Rra(_) => InstructionType::RRA,
         }
     }
 
@@ -190,6 +193,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Jp(inst) => inst.execute(cpu, fetched_data),
             Instruction::Ldh(inst) => inst.execute(cpu, fetched_data),
             Instruction::Call(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Rra(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -213,6 +217,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Jp(inst) => inst.get_address_mode(),
             Instruction::Ldh(inst) => inst.get_address_mode(),
             Instruction::Call(inst) => inst.get_address_mode(),
+            Instruction::Rra(inst) => inst.get_address_mode(),
         }
     }
 }
