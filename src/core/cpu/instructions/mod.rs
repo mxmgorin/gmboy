@@ -18,6 +18,8 @@ mod rra;
 mod rrca;
 mod rlca;
 mod or;
+mod ret;
+mod reti;
 
 pub use call::*;
 pub use ccf::*;
@@ -37,3 +39,5 @@ pub use rra::*;
 pub use rrca::*;
 pub use rlca::*;
 pub use or::*;
+pub use ret::*;
+pub use reti::*;

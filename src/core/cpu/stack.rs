@@ -9,7 +9,7 @@ impl Stack {
         bus.write(registers.sp, val);
     }
 
-    fn pop(registers: &mut Registers, bus: &mut Bus) -> u8 {
+    pub fn pop(registers: &mut Registers, bus: &mut Bus) -> u8 {
         let val = bus.read(registers.sp);
         registers.sp = registers.sp.wrapping_add(1);
 

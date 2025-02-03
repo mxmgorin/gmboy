@@ -17,9 +17,10 @@ use crate::core::cpu::instructions::nop::NopInstruction;
 use crate::core::cpu::instructions::xor::XorInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-
 use std::fmt::Display;
 use crate::cpu::instructions::or::OrInstruction;
+use crate::cpu::instructions::ret::RetInstruction;
+use crate::cpu::instructions::reti::RetiInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
@@ -50,6 +51,8 @@ pub enum Instruction {
     Rrca(RrcaInstruction),
     Rlca(RlcaInstruction),
     Or(OrInstruction),
+    Ret(RetInstruction),
+    Reti(RetiInstruction),
 }
 
 impl Instruction {
@@ -76,6 +79,8 @@ impl Instruction {
             Instruction::Rrca(_) => InstructionType::RRCA,
             Instruction::Rlca(_) => InstructionType::RLCA,
             Instruction::Or(_) => InstructionType::OR,
+            Instruction::Ret(_) => InstructionType::RET,
+            Instruction::Reti(_) => InstructionType::RETI,
         }
     }
 
@@ -206,6 +211,8 @@ impl ExecutableInstruction for Instruction {
             Instruction::Rrca(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rlca(inst) => inst.execute(cpu, fetched_data),
             Instruction::Or(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Ret(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Reti(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -233,6 +240,8 @@ impl ExecutableInstruction for Instruction {
             Instruction::Rrca(inst) => inst.get_address_mode(),
             Instruction::Rlca(inst) => inst.get_address_mode(),
             Instruction::Or(inst) => inst.get_address_mode(),
+            Instruction::Ret(inst) => inst.get_address_mode(),
+            Instruction::Reti(inst) => inst.get_address_mode(),
         }
     }
 }

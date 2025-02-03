@@ -2,6 +2,7 @@ use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
+use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
@@ -409,6 +410,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xB7] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A), });
 
     // 0xCX
+    instructions[0xC0] = Instruction::Ret(RetInstruction {
+        condition_type: Some(ConditionType::NZ),
+    });
     instructions[0xC2] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::NZ),
@@ -419,6 +423,12 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0xC4] = Instruction::Call(CallInstruction {
         condition_type: Some(ConditionType::NZ),
+    });
+    instructions[0xC8] = Instruction::Ret(RetInstruction {
+        condition_type: Some(ConditionType::Z),
+    });
+    instructions[0xC9] = Instruction::Ret(RetInstruction {
+        condition_type: None,
     });
     instructions[0xCC] = Instruction::Call(CallInstruction {
         condition_type: Some(ConditionType::Z),
@@ -432,6 +442,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
 
     // 0xDX
+    instructions[0xD0] = Instruction::Ret(RetInstruction {
+        condition_type: Some(ConditionType::NC),
+    });
     instructions[0xD2] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::NC),
@@ -439,6 +452,10 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xD4] = Instruction::Call(CallInstruction {
         condition_type: Some(ConditionType::NC),
     });
+    instructions[0xD8] = Instruction::Ret(RetInstruction {
+        condition_type: Some(ConditionType::C),
+    });
+    instructions[0xD9] = Instruction::Reti(RetiInstruction::new());
     instructions[0xDC] = Instruction::Call(CallInstruction {
         condition_type: Some(ConditionType::C),
     });
