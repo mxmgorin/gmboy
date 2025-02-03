@@ -15,12 +15,13 @@ impl ExecutableInstruction for RetInstruction {
         }
 
         if ConditionType::check_cond(&cpu.registers, self.condition_type) {
-            let lo: u16 = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
+            let lo = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
             cpu.update_cycles(1);
-            let hi: u16 = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
+            
+            let hi = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
             cpu.update_cycles(1);
 
-            let n: u16 = (hi << 8) | lo;
+            let n = (hi << 8) | lo;
             cpu.registers.pc = n;
 
             cpu.update_cycles(1);

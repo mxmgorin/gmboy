@@ -7,6 +7,11 @@ pub struct PushInstruction {
     pub address_mode: AddressMode,
 }
 
+// C5: PUSH BC
+// D5: PUSH DE
+// E5: PUSH HL
+// F5: PUSH AF
+
 impl ExecutableInstruction for PushInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         match self.address_mode {
@@ -31,11 +36,11 @@ impl ExecutableInstruction for PushInstruction {
             AddressMode::A16_R(_) | 
             AddressMode::R_A16(_) => unreachable!("not used"),
             AddressMode::R(r1) => {
-                let hi: u16 = (cpu.registers.read_register(r1) >> 8) & 0xFF;
+                let hi = (cpu.registers.read_register(r1) >> 8) & 0xFF;
                 cpu.update_cycles(1);
                 Stack::push(&mut cpu.registers, &mut cpu.bus, hi as u8);
 
-                let lo: u16 = cpu.registers.read_register(r1) & 0xFF;
+                let lo = cpu.registers.read_register(r1) & 0xFF;
                 cpu.update_cycles(1);
                 Stack::push(&mut cpu.registers, &mut cpu.bus, lo as u8);
                 

@@ -8,6 +8,11 @@ pub struct PopInstruction {
     pub address_mode: AddressMode,
 }
 
+// C1 POP BC
+// D1 POP DE
+// E1 POP HL
+// F1 POP AF
+
 impl ExecutableInstruction for PopInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         match self.address_mode {
@@ -32,10 +37,10 @@ impl ExecutableInstruction for PopInstruction {
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => unreachable!("not used"),
             AddressMode::R(r1) => {
-                let lo: u16 = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
+                let lo = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
                 cpu.update_cycles(1);
 
-                let hi: u16 = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
+                let hi = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
                 cpu.update_cycles(1);
 
                 let n = (hi << 8) | lo;
