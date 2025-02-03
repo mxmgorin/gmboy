@@ -478,6 +478,27 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xA7] = Instruction::And(AndInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
     });
+    instructions[0xA8] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B),
+    });
+    instructions[0xA9] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::C),
+    });
+    instructions[0xAA] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::D),
+    });
+    instructions[0xAB] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::E),
+    });
+    instructions[0xAC] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::H),
+    });
+    instructions[0xAD] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L),
+    });
+    instructions[0xAE] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::HL),
+    });
     instructions[0xAF] = Instruction::Xor(XorInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
     });
@@ -625,10 +646,12 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xEA] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::A16_R(RegisterType::A),
     });
-
     instructions[0xE9] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::R(RegisterType::HL),
         condition_type: None,
+    });
+    instructions[0xEE] = Instruction::Xor(XorInstruction {
+        address_mode: AddressMode::R_D8(RegisterType::A),
     });
 
     // 0xFX
