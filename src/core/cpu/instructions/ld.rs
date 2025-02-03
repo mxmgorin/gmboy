@@ -54,9 +54,9 @@ impl ExecutableInstruction for LdInstruction {
 
                 cpu.registers
                     .set_flags(0.into(), 0.into(), Some(h_flag as i8), Some(c_flag as i8));
-                let value = fetched_data.value as u8; // truncate to 8 bits (+8e)
+                let offset_e = fetched_data.value as i8; // truncate to 8 bits (+8e)
                 cpu.registers
-                    .set_register(RegisterType::HL, sp + value as u16);
+                    .set_register(RegisterType::HL, sp.wrapping_add(offset_e as u16));
             }
         }
     }
