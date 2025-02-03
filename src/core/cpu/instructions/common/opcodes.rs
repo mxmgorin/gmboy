@@ -399,6 +399,14 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
 
     // 0xBX
+    instructions[0xB0] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B), });
+    instructions[0xB1] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::C), });
+    instructions[0xB2] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::D), });
+    instructions[0xB3] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::E), });
+    instructions[0xB4] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::H), });
+    instructions[0xB5] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L), });
+    instructions[0xB6] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::HL), });
+    instructions[0xB7] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A), });
 
     // 0xCX
     instructions[0xC2] = Instruction::Jp(JpInstruction {
@@ -465,6 +473,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::C),
     });
     instructions[0xF3] = Instruction::Di(DiInstruction {});
+    instructions[0xF6] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_D8(RegisterType::A) });
     instructions[0xF8] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::HL_SPR(RegisterType::HL, RegisterType::SP),
     });

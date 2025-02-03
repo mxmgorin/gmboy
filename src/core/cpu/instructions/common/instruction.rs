@@ -19,6 +19,7 @@ use crate::core::cpu::stack::Stack;
 use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
 
 use std::fmt::Display;
+use crate::cpu::instructions::or::OrInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
@@ -48,6 +49,7 @@ pub enum Instruction {
     Rra(RraInstruction),
     Rrca(RrcaInstruction),
     Rlca(RlcaInstruction),
+    Or(OrInstruction),
 }
 
 impl Instruction {
@@ -73,6 +75,7 @@ impl Instruction {
             Instruction::Rra(_) => InstructionType::RRA,
             Instruction::Rrca(_) => InstructionType::RRCA,
             Instruction::Rlca(_) => InstructionType::RLCA,
+            Instruction::Or(_) => InstructionType::OR,
         }
     }
 
@@ -202,6 +205,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Rra(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rrca(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rlca(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Or(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -228,6 +232,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Rra(inst) => inst.get_address_mode(),
             Instruction::Rrca(inst) => inst.get_address_mode(),
             Instruction::Rlca(inst) => inst.get_address_mode(),
+            Instruction::Or(inst) => inst.get_address_mode(),
         }
     }
 }
