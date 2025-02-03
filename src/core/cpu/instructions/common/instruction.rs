@@ -32,6 +32,7 @@ use crate::cpu::instructions::rla::RlaInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
+use crate::cpu::instructions::rst::RstInstruction;
 use crate::cpu::instructions::scf::ScfInstruction;
 use crate::cpu::instructions::stop::StopInstruction;
 use crate::cpu::instructions::sub::SubInstruction;
@@ -74,7 +75,8 @@ pub enum Instruction {
     Cp(CpInstruction),
     Add(AddInstruction),
     Sub(SubInstruction),
-    Adc(AdcInstruction)
+    Adc(AdcInstruction),
+    Rst(RstInstruction),
 }
 
 impl ExecutableInstruction for Instruction {
@@ -114,6 +116,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Add(inst) => inst.execute(cpu, fetched_data),
             Instruction::Sub(inst) => inst.execute(cpu, fetched_data),
             Instruction::Adc(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Rst(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -154,6 +157,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Add(inst) => inst.get_address_mode(),
             Instruction::Sub(inst) => inst.get_address_mode(),
             Instruction::Adc(inst) => inst.get_address_mode(),
+            Instruction::Rst(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -195,6 +199,7 @@ impl Instruction {
             Instruction::Add(_) => InstructionType::ADD,
             Instruction::Sub(_) => InstructionType::SUB,
             Instruction::Adc(_) => InstructionType::ADC,
+            Instruction::Rst(_) => InstructionType::RST,
         }
     }
 

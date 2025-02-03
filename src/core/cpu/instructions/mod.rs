@@ -31,6 +31,7 @@ mod cp;
 mod add;
 mod sub;
 mod adc;
+mod rst;
 
 pub use call::*;
 pub use ccf::*;
