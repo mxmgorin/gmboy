@@ -13,19 +13,23 @@ impl ExecutableInstruction for LdInstruction {
             AddressMode::D8 | AddressMode::D16 | AddressMode::IMP => {
                 unreachable!("Not used for LD")
             }
+            AddressMode::MR(_r1) | AddressMode::D16_R(_r1) | AddressMode::R(_r1) => {
+                unreachable!("not used for LD")
+            }
             AddressMode::R_D8(r1)
             | AddressMode::R_A8(r1)
-            | AddressMode::A8_R(r1)
-            | AddressMode::D16_R(r1)
-            | AddressMode::MR_D8(r1)
-            | AddressMode::MR(r1)
-            | AddressMode::A16_R(r1)
             | AddressMode::R_A16(r1)
-            | AddressMode::R(r1)
             | AddressMode::R_D16(r1) => {
                 cpu.registers.set_register(r1, fetched_data.value);
             }
-
+            AddressMode::A8_R(r1) | AddressMode::A16_R(r1) | AddressMode::MR_D8(r1) => {
+                write_to_addr(
+                    cpu,
+                    r1,
+                    fetched_data.dest_addr.expect("must be set"),
+                    fetched_data.value,
+                );
+            }
             AddressMode::R_R(r1, r2)
             | AddressMode::R_MR(r1, r2)
             | AddressMode::MR_R(r1, r2)
@@ -34,24 +38,25 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::HLI_R(r1, r2)
             | AddressMode::HLD_R(r1, r2) => {
                 if let Some(dest_addr) = fetched_data.dest_addr {
-                    write_mem(cpu, r2, dest_addr, fetched_data.value);
-                    return;
+                    write_to_addr(cpu, r2, dest_addr, fetched_data.value);
+                } else {
+                    cpu.registers.set_register(r1, fetched_data.value);
                 }
-
-                cpu.registers.set_register(r1, fetched_data.value);
             }
             // LD HL,SP+e8
             // Add the signed value e8 to SP and copy the result in HL.
-            AddressMode::HL_SPR(r1, r2) => {
+            AddressMode::HL_SPR(_r1, _r2) => {
+                let sp = cpu.registers.sp;
                 let h_flag =
-                    (cpu.registers.read_register(r2) & 0xF) + (fetched_data.value & 0xF) >= 0x10;
+                    (sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
                 let c_flag =
-                    (cpu.registers.read_register(r2) & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
-                
-                cpu.registers.set_flags(Some(0), Some(0), Some(h_flag as i8), Some(c_flag as i8));
+                    (sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
+
+                cpu.registers
+                    .set_flags(0.into(), 0.into(), Some(h_flag as i8), Some(c_flag as i8));
                 let value = fetched_data.value as u8; // truncate to 8 bits (+8e)
                 cpu.registers
-                    .set_register(r1, cpu.registers.read_register(r2) + value as u16);
+                    .set_register(RegisterType::HL, sp + value as u16);
             }
         }
     }
@@ -61,7 +66,7 @@ impl ExecutableInstruction for LdInstruction {
     }
 }
 
-fn write_mem(cpu: &mut Cpu, r2: RegisterType, addr: u16, value: u16) {
+fn write_to_addr(cpu: &mut Cpu, r2: RegisterType, addr: u16, value: u16) {
     if r2.is_16bit() {
         cpu.update_cycles(1);
         cpu.bus.write16(addr, value);

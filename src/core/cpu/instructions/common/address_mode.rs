@@ -49,7 +49,7 @@ pub enum AddressMode {
     /// 8-bit address and Register
     /// Fetches value from second register
     A8_R(RegisterType),
-    /// Special case for LD Hl,(SP+8e)
+    /// HL and SP: HL,(SP+8e)
     /// Fetches PC value
     HL_SPR(RegisterType, RegisterType),
     /// 16-bit data
