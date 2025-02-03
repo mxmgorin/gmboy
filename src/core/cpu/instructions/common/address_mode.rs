@@ -108,7 +108,7 @@ impl AddressMode {
                 cpu.update_cycles(1);
                 cpu.registers.set_register(
                     RegisterType::HL,
-                    cpu.registers.read_register(RegisterType::H) + 1,
+                    cpu.registers.read_register(RegisterType::HL) + 1,
                 );
             }
             AddressMode::R_HLD(_r1, r2) => {
@@ -116,7 +116,7 @@ impl AddressMode {
                 cpu.update_cycles(1);
                 cpu.registers.set_register(
                     RegisterType::HL,
-                    cpu.registers.read_register(RegisterType::H).wrapping_sub(1),
+                    cpu.registers.read_register(RegisterType::HL).wrapping_sub(1),
                 );
             }
             AddressMode::HLI_R(r1, r2) => {
