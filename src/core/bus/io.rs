@@ -63,10 +63,11 @@ impl Io {
             IoAddressLocation::SerialSc => self.serial.sc,
             IoAddressLocation::Timer(address) => self.timer.read(address),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
+            IoAddressLocation::Display => 0x90,
+
             IoAddressLocation::Joypad
             | IoAddressLocation::Audio
             | IoAddressLocation::WavePattern
-            | IoAddressLocation::Display
             | IoAddressLocation::VRAMBankSelect
             | IoAddressLocation::DisableBootROM
             | IoAddressLocation::VRAMdma
