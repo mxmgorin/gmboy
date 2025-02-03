@@ -21,6 +21,7 @@ mod or;
 mod ret;
 mod reti;
 mod ei;
+mod scf;
 
 pub use call::*;
 pub use ccf::*;
