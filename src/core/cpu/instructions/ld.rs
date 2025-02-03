@@ -15,12 +15,20 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::IMP
             | AddressMode::MR(_)
             | AddressMode::D16_R(_)
-            | AddressMode::R(_)
-            | AddressMode::R_HLI(_)
-            | AddressMode::R_HLD(_)
-            | AddressMode::HLI_R(_)
-            | AddressMode::HLD_R(_) => {
+            | AddressMode::R(_) => {
                 unreachable!("not used for LD")
+            }
+            AddressMode::R_HLI(r1) | AddressMode::R_HLD(r1) => {
+                cpu.registers.set_register(r1, fetched_data.value)
+            }
+
+            AddressMode::HLI_R(r2) | AddressMode::HLD_R(r2) => {
+                write_to_addr(
+                    cpu,
+                    r2,
+                    fetched_data.dest_addr.expect("must be set for HLI, HLD"),
+                    fetched_data.value,
+                );
             }
             AddressMode::R_D8(r1)
             | AddressMode::R_A8(r1)
