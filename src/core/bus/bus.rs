@@ -48,12 +48,12 @@ impl Bus {
             | BusAddrLocation::BgMap2
             | BusAddrLocation::RamBank0
             | BusAddrLocation::ChrRam
-            | BusAddrLocation::CartRam => {
+             => {
                 // TODO: Impl
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
                 0
             }
-            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 => self.cart.read(address),
+            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => self.cart.read(address),
             BusAddrLocation::RamBank1To7 => self.ram.w_ram_read(address),
             BusAddrLocation::EchoRam => 0,
             BusAddrLocation::Unusable => 0,
@@ -70,12 +70,12 @@ impl Bus {
             BusAddrLocation::ChrRam
             | BusAddrLocation::BgMap1
             | BusAddrLocation::BgMap2
-            | BusAddrLocation::CartRam
+            
             | BusAddrLocation::ObjectAttributeMemory => {
                 // TODO: IMPL
                 eprintln!("Can't BUS write {:?} address {:X}", location, address)
             }
-            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 => {
+            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
             }
             BusAddrLocation::RamBank0 | BusAddrLocation::RamBank1To7 => {
@@ -111,7 +111,9 @@ pub enum BusAddrLocation {
     BgMap2,                // 0x9C00 - 0x9FFF
     CartRam,               // 0xA000 - 0xBFFF
     RamBank0,              // 0xC000 - 0xCFFF
+    // WRAM (Working RAM)
     RamBank1To7,           // 0xD000 - 0xDFFF
+    // Reserved echo RAM
     EchoRam,               // 0xE000 - 0xFDFF
     ObjectAttributeMemory, // 0xFE00 - 0xFE9F
     Unusable,              // 0xFEA0 - 0xFEFF
