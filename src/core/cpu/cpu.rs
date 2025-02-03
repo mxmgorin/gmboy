@@ -14,13 +14,6 @@ pub struct Cpu {
     pub current_opcode: u8,
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct FetchedData {
-    pub value: u16,
-    pub mem_dest: u16,
-    pub dest_is_mem: bool,
-}
-
 impl Cpu {
     pub fn new(bus: Bus) -> Cpu {
         Self {
@@ -62,7 +55,7 @@ impl Cpu {
             debugger.print();
         }
 
-        self.execute(instruction, fetched_data)?;
+        instruction.execute(self, fetched_data);
 
         if self.bus.io.interrupts.int_master_enabled {
             if let Some(it) = self.bus.io.interrupts.get_interrupt() {
@@ -104,16 +97,6 @@ impl Cpu {
         let address = it.get_address();
         Stack::push16(&mut self.registers, &mut self.bus, address);
         self.registers.pc = address;
-    }
-
-    fn execute(
-        &mut self,
-        instruction: &Instruction,
-        fetched_data: FetchedData,
-    ) -> Result<(), String> {
-        instruction.execute(self, fetched_data);
-
-        Ok(())
     }
 
     fn fetch_opcode(&mut self) -> u8 {

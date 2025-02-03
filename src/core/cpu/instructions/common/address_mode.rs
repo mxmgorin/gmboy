@@ -1,6 +1,13 @@
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::common::ExecutableInstruction;
-use crate::core::cpu::{Cpu, FetchedData};
+use crate::core::cpu::{Cpu};
+
+#[derive(Debug, Clone, Default)]
+pub struct FetchedData {
+    pub value: u16,
+    pub mem_dest: u16,
+    pub dest_is_mem: bool,
+}
 
 /// Represents the different address modes in the CPU's instruction set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

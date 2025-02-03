@@ -16,7 +16,8 @@ use crate::core::cpu::instructions::ldh::LdhInstruction;
 use crate::core::cpu::instructions::nop::NopInstruction;
 use crate::core::cpu::instructions::xor::XorInstruction;
 use crate::core::cpu::stack::Stack;
-use crate::core::cpu::{Cpu, FetchedData};
+use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
+
 use std::fmt::Display;
 
 pub trait ExecutableInstruction {

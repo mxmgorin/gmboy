@@ -1,7 +1,8 @@
 use crate::core::cpu::instructions::common::{
     AddressMode, ConditionType, ExecutableInstruction, Instruction,
 };
-use crate::core::cpu::{Cpu, FetchedData};
+use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
+
 
 #[derive(Debug, Clone, Copy)]
 pub struct JrInstruction {
