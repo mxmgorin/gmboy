@@ -28,6 +28,7 @@ mod and;
 mod push;
 mod pop;
 mod cp;
+mod add;
 
 pub use call::*;
 pub use ccf::*;
