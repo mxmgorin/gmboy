@@ -250,17 +250,17 @@ impl Instruction {
                     fetched_data.value & 0xFF
                 )
             }
-            AddressMode::R_HLI(r1, r2) => {
-                format!("{:?} {:?},({:?}+)", self.get_type(), r1, r2)
+            AddressMode::R_HLI(r1) => {
+                format!("{:?} {:?},(HL+)", self.get_type(), r1)
             }
-            AddressMode::R_HLD(r1, r2) => {
-                format!("{:?} {:?},({:?}-)", self.get_type(), r1, r2)
+            AddressMode::R_HLD(r1) => {
+                format!("{:?} {:?},(HL-)", self.get_type(), r1)
             }
-            AddressMode::HLI_R(r1, r2) => {
-                format!("{:?} ({:?}+),{:?}", self.get_type(), r1, r2)
+            AddressMode::HLI_R(r1) => {
+                format!("{:?} (HL+),{:?}", self.get_type(), r1)
             }
-            AddressMode::HLD_R(r1, r2) => {
-                format!("{:?} ({:?}-),{:?}", self.get_type(), r1, r2)
+            AddressMode::HLD_R(r1) => {
+                format!("{:?} (HL-),{:?}", self.get_type(), r1)
             }
             AddressMode::A8_R(r2) => {
                 format!(

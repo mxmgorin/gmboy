@@ -16,10 +16,10 @@ impl ExecutableInstruction for PushInstruction {
             AddressMode::MR_R(_, _) | 
             AddressMode::R_D8(_) | 
             AddressMode::R_MR(_, _) | 
-            AddressMode::R_HLI(_, _) | 
-            AddressMode::R_HLD(_, _) | 
-            AddressMode::HLI_R(_, _) | 
-            AddressMode::HLD_R(_, _) | 
+            AddressMode::R_HLI(_) | 
+            AddressMode::R_HLD(_) | 
+            AddressMode::HLI_R(_) | 
+            AddressMode::HLD_R(_) | 
             AddressMode::R_A8(_) | 
             AddressMode::A8_R(_) | 
             AddressMode::HL_SPe8 | 
@@ -29,7 +29,7 @@ impl ExecutableInstruction for PushInstruction {
             AddressMode::MR_D8(_) | 
             AddressMode::MR(_) | 
             AddressMode::A16_R(_) | 
-            AddressMode::R_A16(_) => unreachable!("doesn't used"),
+            AddressMode::R_A16(_) => unreachable!("not used"),
             AddressMode::R(r1) => {
                 let hi: u16 = (cpu.registers.read_register(r1) >> 8) & 0xFF;
                 cpu.update_cycles(1);

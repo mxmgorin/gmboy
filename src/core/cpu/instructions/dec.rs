@@ -11,24 +11,24 @@ impl ExecutableInstruction for DecInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
             AddressMode::IMP
+            | AddressMode::D16
+            | AddressMode::HL_SPe8
+            | AddressMode::D8
             | AddressMode::R_D16(_)
-            | AddressMode::R_R(_, _)
-            | AddressMode::MR_R(_, _)
             | AddressMode::R_D8(_)
-            | AddressMode::R_MR(_, _)
-            | AddressMode::R_HLI(_, _)
-            | AddressMode::R_HLD(_, _)
-            | AddressMode::HLI_R(_, _)
-            | AddressMode::HLD_R(_, _)
+            | AddressMode::R_HLI(_)
+            | AddressMode::R_HLD(_)
+            | AddressMode::HLI_R(_)
+            | AddressMode::HLD_R(_)
             | AddressMode::R_A8(_)
             | AddressMode::A8_R(_)
-            | AddressMode::HL_SPe8
-            | AddressMode::D16
-            | AddressMode::D8
             | AddressMode::D16_R(_)
             | AddressMode::MR_D8(_)
             | AddressMode::A16_R(_)
-            | AddressMode::R_A16(_) => panic!("not used"),
+            | AddressMode::R_A16(_)
+            | AddressMode::R_R(_, _)
+            | AddressMode::MR_R(_, _)
+            | AddressMode::R_MR(_, _) => panic!("not used"),
             AddressMode::MR(_r1) => {
                 cpu.update_cycles(1); // always needs because uses only HL reg which is 16 bit
 

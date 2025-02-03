@@ -10,10 +10,16 @@ pub struct LdInstruction {
 impl ExecutableInstruction for LdInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
-            AddressMode::D8 | AddressMode::D16 | AddressMode::IMP => {
-                unreachable!("Not used for LD")
-            }
-            AddressMode::MR(_r1) | AddressMode::D16_R(_r1) | AddressMode::R(_r1) => {
+            AddressMode::D8
+            | AddressMode::D16
+            | AddressMode::IMP
+            | AddressMode::MR(_)
+            | AddressMode::D16_R(_)
+            | AddressMode::R(_)
+            | AddressMode::R_HLI(_)
+            | AddressMode::R_HLD(_)
+            | AddressMode::HLI_R(_)
+            | AddressMode::HLD_R(_) => {
                 unreachable!("not used for LD")
             }
             AddressMode::R_D8(r1)
@@ -30,13 +36,7 @@ impl ExecutableInstruction for LdInstruction {
                     fetched_data.value,
                 );
             }
-            AddressMode::R_R(r1, r2)
-            | AddressMode::R_MR(r1, r2)
-            | AddressMode::MR_R(r1, r2)
-            | AddressMode::R_HLI(r1, r2)
-            | AddressMode::R_HLD(r1, r2)
-            | AddressMode::HLI_R(r1, r2)
-            | AddressMode::HLD_R(r1, r2) => {
+            AddressMode::R_R(r1, r2) | AddressMode::R_MR(r1, r2) | AddressMode::MR_R(r1, r2) => {
                 if let Some(dest_addr) = fetched_data.dest_addr {
                     write_to_addr(cpu, r2, dest_addr, fetched_data.value);
                 } else {
@@ -47,10 +47,8 @@ impl ExecutableInstruction for LdInstruction {
             // Add the signed value e8 to SP and copy the result in HL.
             AddressMode::HL_SPe8 => {
                 let sp = cpu.registers.sp;
-                let h_flag =
-                    (sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
-                let c_flag =
-                    (sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
+                let h_flag = (sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
+                let c_flag = (sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
                 cpu.registers
                     .set_flags(0.into(), 0.into(), Some(h_flag as i8), Some(c_flag as i8));
