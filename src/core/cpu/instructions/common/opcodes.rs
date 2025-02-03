@@ -14,6 +14,7 @@ use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
 use crate::cpu::instructions::scf::ScfInstruction;
 use crate::cpu::instructions::stop::StopInstruction;
+use crate::cpu::instructions::sub::SubInstruction;
 
 const INSTRUCTIONS_LEN: usize = 0xFF;
 
@@ -427,6 +428,30 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
 
     // 0x9X
+    instructions[0x90] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B),
+    });
+    instructions[0x91] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::C),
+    });
+    instructions[0x92] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::D),
+    });
+    instructions[0x93] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::E),
+    });
+    instructions[0x94] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::H),
+    });
+    instructions[0x95] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L),
+    });
+    instructions[0x96] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::HL),
+    });
+    instructions[0x97] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
+    });
 
     // 0xAX
     instructions[0xA0] = Instruction::And(AndInstruction {
@@ -565,6 +590,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0xD5] = Instruction::Push(PushInstruction {
         address_mode: AddressMode::R(RegisterType::DE),
+    });
+    instructions[0xD6] = Instruction::Sub(SubInstruction {
+        address_mode: AddressMode::R_D8(RegisterType::A),
     });
     instructions[0xD8] = Instruction::Ret(RetInstruction {
         condition_type: Some(ConditionType::C),
