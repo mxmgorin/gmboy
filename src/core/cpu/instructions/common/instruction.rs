@@ -21,6 +21,7 @@ use std::fmt::Display;
 use crate::cpu::instructions::and::AndInstruction;
 use crate::cpu::instructions::ei::EiInstruction;
 use crate::cpu::instructions::or::OrInstruction;
+use crate::cpu::instructions::push::PushInstruction;
 use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::reti::RetiInstruction;
 use crate::cpu::instructions::rla::RlaInstruction;
@@ -63,6 +64,7 @@ pub enum Instruction {
     Scf(ScfInstruction),
     Stop(StopInstruction),
     And(AndInstruction),
+    Push(PushInstruction),
 }
 
 impl ExecutableInstruction for Instruction {
@@ -96,6 +98,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Scf(inst) => inst.execute(cpu, fetched_data),
             Instruction::Stop(inst) => inst.execute(cpu, fetched_data),
             Instruction::And(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Push(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -130,6 +133,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Scf(inst) => inst.get_address_mode(),
             Instruction::Stop(inst) => inst.get_address_mode(),
             Instruction::And(inst) => inst.get_address_mode(),
+            Instruction::Push(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -165,6 +169,7 @@ impl Instruction {
             Instruction::Scf(_) => InstructionType::SCF,
             Instruction::Stop(_) => InstructionType::STOP,
             Instruction::And(_) => InstructionType::AND,
+            Instruction::Push(_) => InstructionType::PUSH,
         }
     }
 

@@ -3,6 +3,7 @@ use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
 use crate::cpu::instructions::and::AndInstruction;
+use crate::cpu::instructions::push::PushInstruction;
 use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::rla::RlaInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
@@ -446,6 +447,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::D16,
         condition_type: None,
     });
+    instructions[0xC5] = Instruction::Push(PushInstruction {
+        address_mode: AddressMode::R(RegisterType::BC),
+    });
     instructions[0xC4] = Instruction::Call(CallInstruction {
         condition_type: Some(ConditionType::NZ),
     });
@@ -477,6 +481,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xD4] = Instruction::Call(CallInstruction {
         condition_type: Some(ConditionType::NC),
     });
+    instructions[0xD5] = Instruction::Push(PushInstruction {
+        address_mode: AddressMode::R(RegisterType::DE),
+    });
     instructions[0xD8] = Instruction::Ret(RetInstruction {
         condition_type: Some(ConditionType::C),
     });
@@ -495,6 +502,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0xE2] = Instruction::Ldh(LdhInstruction {
         address_mode: AddressMode::MR_R(RegisterType::C, RegisterType::A),
+    });
+    instructions[0xE5] = Instruction::Push(PushInstruction {
+        address_mode: AddressMode::R(RegisterType::HL),
     });
     instructions[0xE6] = Instruction::And(AndInstruction {
         address_mode: AddressMode::R_D8(RegisterType::A),
@@ -518,6 +528,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::C),
     });
     instructions[0xF3] = Instruction::Di(DiInstruction {});
+    instructions[0xF5] = Instruction::Push(PushInstruction {
+        address_mode: AddressMode::R(RegisterType::AF),
+    });
     instructions[0xF6] = Instruction::Or(OrInstruction { address_mode: AddressMode::R_D8(RegisterType::A) });
     instructions[0xF8] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::HL_SPR(RegisterType::HL, RegisterType::SP),
