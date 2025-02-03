@@ -6,8 +6,8 @@ use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
 pub struct HaltInstruction;
 
 impl ExecutableInstruction for HaltInstruction {
-    fn execute(&self, _cpu: &mut Cpu, _fetched_data: FetchedData) {
-        unimplemented!("Execute HaltInstruction")
+    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
+        cpu.bus.io.interrupts.cpu_halted = true;
     }
 
     fn get_address_mode(&self) -> AddressMode {
