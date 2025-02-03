@@ -92,11 +92,13 @@ impl AddressMode {
                 cpu.registers.pc += 1;
             }
             AddressMode::D16 | AddressMode::R_D16(_) => {
-                let lo = cpu.bus.read(cpu.registers.pc);
+                let lo = cpu.bus.read(cpu.registers.pc) as u16;
                 cpu.update_cycles(1);
-                let hi = cpu.bus.read(cpu.registers.pc + 1);
+                
+                let hi = cpu.bus.read(cpu.registers.pc + 1) as u16;
                 cpu.update_cycles(1);
-                fetched_data.value = (hi as u16) << 8 | (lo as u16);
+                
+                fetched_data.value = lo| (hi  << 8);
                 cpu.registers.pc += 2;
             }
             AddressMode::R_MR(_r1, r2) => {
@@ -130,7 +132,7 @@ impl AddressMode {
                 cpu.update_cycles(1);
                 cpu.registers.set_register(
                     RegisterType::HL,
-                    cpu.registers.read_register(RegisterType::HL) + 1,
+                    cpu.registers.read_register(RegisterType::HL).saturating_add(1),
                 );
             }
             AddressMode::R_HLD(_r1, r2) => {
@@ -148,7 +150,7 @@ impl AddressMode {
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
                 cpu.registers.set_register(
                     RegisterType::HL,
-                    cpu.registers.read_register(RegisterType::HL) + 1,
+                    cpu.registers.read_register(RegisterType::HL).wrapping_add(1),
                 );
             }
             AddressMode::HLD_R(r1, r2) => {
@@ -156,7 +158,7 @@ impl AddressMode {
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
                 cpu.registers.set_register(
                     RegisterType::HL,
-                    cpu.registers.read_register(RegisterType::HL) - 1,
+                    cpu.registers.read_register(RegisterType::HL).wrapping_sub(1),
                 );
             }
             AddressMode::R_A8(_r1) => {
