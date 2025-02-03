@@ -47,8 +47,7 @@ pub enum AddressMode {
     /// 8-bit address and Register: The instruction uses a memory address and a register to store
     /// a value from the register to memory.
     A8_R(RegisterType),
-    /// HL and Special Register Pair: This mode uses the `HL` register and other special register pairs
-    /// for specific operations.
+    /// Read PC value
     HL_SPR(RegisterType, RegisterType),
     /// 16-bit immediate data: The instruction involves a 16-bit immediate operand.
     D16,

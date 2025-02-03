@@ -460,8 +460,17 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xF0] = Instruction::Ldh(LdhInstruction {
         address_mode: AddressMode::R_A8(RegisterType::A),
     });
-    instructions[0xF2] = Instruction::Ldh(LdhInstruction {
-        address_mode: AddressMode::MR_R(RegisterType::A, RegisterType::C),
+    // LDH [C],A
+    // This is sometimes written as ‘LD [$FF00+C],A’.
+    instructions[0xF2] = Instruction::Ld(LdInstruction {
+        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::C),
+    });
+    instructions[0xF3] = Instruction::Di(DiInstruction {});
+    instructions[0xF8] = Instruction::Ld(LdInstruction {
+        address_mode: AddressMode::HL_SPR(RegisterType::HL, RegisterType::SP),
+    });
+    instructions[0xF9] = Instruction::Ld(LdInstruction {
+        address_mode: AddressMode::R_R(RegisterType::SP, RegisterType::HL),
     });
     instructions[0xFA] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_A16(RegisterType::A),

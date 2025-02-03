@@ -40,20 +40,18 @@ impl ExecutableInstruction for LdInstruction {
 
                 cpu.registers.set_register(r1, fetched_data.value);
             }
+            // LD HL,SP+e8
+            // Add the signed value e8 to SP and copy the result in HL.
             AddressMode::HL_SPR(r1, r2) => {
-                if let Some(dest_addr) = fetched_data.dest_addr {
-                    write_mem(cpu, r2, dest_addr, fetched_data.value);
-                    return;
-                }
-
                 let h_flag =
                     (cpu.registers.read_register(r2) & 0xF) + (fetched_data.value & 0xF) >= 0x10;
                 let c_flag =
                     (cpu.registers.read_register(r2) & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
+                
                 cpu.registers.set_flags(0, 0, h_flag as i8, c_flag as i8);
+                let value = fetched_data.value as u8; // truncate to 8 bits (+8e)
                 cpu.registers
-                    .set_register(r1, cpu.registers.read_register(r2) + fetched_data.value);
-                // todo: cast fetched_data to u8?
+                    .set_register(r1, cpu.registers.read_register(r2) + value as u16);
             }
         }
     }
