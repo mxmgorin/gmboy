@@ -1,5 +1,4 @@
-use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
-use crate::core::cpu::instructions::common::ExecutableInstruction;
+use crate::core::cpu::instructions::common::instruction::RegisterType;
 use crate::core::cpu::Cpu;
 
 #[derive(Debug, Clone, Default)]
@@ -76,10 +75,10 @@ pub enum AddressMode {
 }
 
 impl AddressMode {
-    pub fn fetch_data(cpu: &mut Cpu, instruction: &Instruction) -> FetchedData {
+    pub fn fetch_data(cpu: &mut Cpu, address_mode: AddressMode) -> FetchedData {
         let mut fetched_data = FetchedData::default();
 
-        match instruction.get_address_mode() {
+        match address_mode {
             AddressMode::IMP => (),
             AddressMode::R(r1) => {
                 fetched_data.value = cpu.registers.read_register(r1);
@@ -216,5 +215,78 @@ impl AddressMode {
         }
 
         fetched_data
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cart::Cart;
+    use crate::core::bus::ram::Ram;
+    use crate::core::bus::Bus;
+    use crate::cpu::instructions::common::{AddressMode, RegisterType};
+    use crate::cpu::Cpu;
+
+    #[test]
+    fn test_fetch_imp() {
+        let cart = Cart::new(vec![0u8; 1000]).unwrap();
+        let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
+        let mode = AddressMode::IMP;
+
+        let data = AddressMode::fetch_data(&mut cpu, mode);
+
+        assert_eq!(data.value, 0);
+        assert_eq!(data.dest_addr, None);
+    }
+
+    #[test]
+    fn test_fetch_r() {
+        let cart = Cart::new(vec![0u8; 1000]).unwrap();
+        let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
+
+        for reg_type in RegisterType::get_all().iter().cloned() {
+            cpu.registers.set_register(reg_type, 23);
+            let mode = AddressMode::R(reg_type);
+
+            let data = AddressMode::fetch_data(&mut cpu, mode);
+
+            assert_eq!(data.value as u8, cpu.registers.a);
+            assert_eq!(data.dest_addr, None);
+        }
+    }
+
+    #[test]
+    fn test_fetch_r_r() {
+        let cart = Cart::new(vec![0u8; 1000]).unwrap();
+        let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
+
+        for reg_type in RegisterType::get_all().iter().cloned() {
+            cpu.registers.set_register(reg_type, 23);
+            let mode = AddressMode::R_R(RegisterType::BC, reg_type);
+
+            let data = AddressMode::fetch_data(&mut cpu, mode);
+
+            assert_eq!(data.value as u8, cpu.registers.a);
+            assert_eq!(data.dest_addr, None);
+        }
+    }
+
+    #[test]
+    fn test_fetch_r_d8() {
+        let pc = 4;
+        let value = 25;
+        let mut bytes = vec![0u8; 1000];
+        bytes[pc] = value;
+        let cart = Cart::new(bytes).unwrap();
+        let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
+        cpu.registers.pc = pc as u16;
+        let mode = AddressMode::R_D8(RegisterType::A);
+        
+        let data = AddressMode::fetch_data(&mut cpu, mode);
+
+        assert_eq!(data.value as u8, value);
+        assert_eq!(data.dest_addr, None);
+        assert_eq!(cpu.registers.pc, pc as u16 + 1);
+        assert_eq!(cpu.ticks, 4);
+
     }
 }

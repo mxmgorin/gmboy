@@ -46,7 +46,7 @@ impl Cpu {
             ));
         };
 
-        let fetched_data = AddressMode::fetch_data(self, instruction);
+        let fetched_data = AddressMode::fetch_data(self, instruction.get_address_mode());
 
         #[cfg(debug_assertions)]
         if let Some(debugger) = debugger.as_mut() {

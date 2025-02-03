@@ -16,11 +16,11 @@ use crate::core::cpu::instructions::ldh::LdhInstruction;
 use crate::core::cpu::instructions::nop::NopInstruction;
 use crate::core::cpu::instructions::xor::XorInstruction;
 use crate::core::cpu::stack::Stack;
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-use std::fmt::Display;
+use crate::core::cpu::Cpu;
 use crate::cpu::instructions::adc::AdcInstruction;
 use crate::cpu::instructions::add::AddInstruction;
 use crate::cpu::instructions::and::AndInstruction;
+use crate::cpu::instructions::common::FetchedData;
 use crate::cpu::instructions::cp::CpInstruction;
 use crate::cpu::instructions::ei::EiInstruction;
 use crate::cpu::instructions::or::OrInstruction;
@@ -36,6 +36,7 @@ use crate::cpu::instructions::rst::RstInstruction;
 use crate::cpu::instructions::scf::ScfInstruction;
 use crate::cpu::instructions::stop::StopInstruction;
 use crate::cpu::instructions::sub::SubInstruction;
+use std::fmt::Display;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -357,6 +358,25 @@ impl RegisterType {
             | RegisterType::SP
             | RegisterType::PC => true,
         }
+    }
+
+    pub const fn get_all() -> &'static [RegisterType] {
+        &[
+            RegisterType::A,
+            RegisterType::F,
+            RegisterType::B,
+            RegisterType::C,
+            RegisterType::D,
+            RegisterType::E,
+            RegisterType::H,
+            RegisterType::L,
+            RegisterType::AF,
+            RegisterType::BC,
+            RegisterType::DE,
+            RegisterType::HL,
+            RegisterType::SP,
+            RegisterType::PC,
+        ]
     }
 }
 
