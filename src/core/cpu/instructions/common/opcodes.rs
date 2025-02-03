@@ -7,6 +7,7 @@ use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
 use crate::cpu::instructions::scf::ScfInstruction;
+use crate::cpu::instructions::stop::StopInstruction;
 
 const INSTRUCTIONS_LEN: usize = 0xFF;
 
@@ -64,9 +65,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x0F] = Instruction::Rrca(RrcaInstruction);
 
     // 0x1X
-    //instructions[0x10] = Instruction::STOP(LdInstruction {
-    //    address_mode: AddressMode::R_D16(RegisterType::DE),
-    //});
+    instructions[0x10] = Instruction::Stop(StopInstruction);
     instructions[0x11] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_D16(RegisterType::DE),
     });

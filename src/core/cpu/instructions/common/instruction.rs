@@ -26,6 +26,7 @@ use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
 use crate::cpu::instructions::scf::ScfInstruction;
+use crate::cpu::instructions::stop::StopInstruction;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -57,6 +58,7 @@ pub enum Instruction {
     Reti(RetiInstruction),
     Ei(EiInstruction),
     Scf(ScfInstruction),
+    Stop(StopInstruction),
 }
 
 impl ExecutableInstruction for Instruction {
@@ -87,6 +89,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Reti(inst) => inst.execute(cpu, fetched_data),
             Instruction::Ei(inst) => inst.execute(cpu, fetched_data),
             Instruction::Scf(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Stop(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -118,6 +121,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Reti(inst) => inst.get_address_mode(),
             Instruction::Ei(inst) => inst.get_address_mode(),
             Instruction::Scf(inst) => inst.get_address_mode(),
+            Instruction::Stop(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -150,6 +154,7 @@ impl Instruction {
             Instruction::Reti(_) => InstructionType::RETI,
             Instruction::Ei(_) => InstructionType::EI,
             Instruction::Scf(_) => InstructionType::SCF,
+            Instruction::Stop(_) => InstructionType::STOP,
         }
     }
 
