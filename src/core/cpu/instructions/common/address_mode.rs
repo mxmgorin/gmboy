@@ -51,7 +51,7 @@ pub enum AddressMode {
     A8_R(RegisterType),
     /// HL and SP: HL,(SP+8e)
     /// Fetches PC value
-    HL_SPR(RegisterType, RegisterType),
+    HL_SPe8,
     /// 16-bit data
     /// Fetches 16-bit value from memory by PC
     D16,
@@ -171,7 +171,7 @@ impl AddressMode {
                 cpu.update_cycles(1);
                 cpu.registers.pc += 1;
             }
-            AddressMode::HL_SPR(_r1, _r2) => {
+            AddressMode::HL_SPe8 => {
                 fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
                 cpu.update_cycles(1);
                 cpu.registers.pc += 1;

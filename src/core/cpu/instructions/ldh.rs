@@ -21,7 +21,7 @@ impl ExecutableInstruction for LdhInstruction {
             | AddressMode::R_HLD(_, _)
             | AddressMode::HLI_R(_, _)
             | AddressMode::HLD_R(_, _)
-            | AddressMode::HL_SPR(_, _)
+            | AddressMode::HL_SPe8
             | AddressMode::D16
             | AddressMode::D8
             | AddressMode::D16_R(_)

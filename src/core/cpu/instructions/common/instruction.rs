@@ -270,11 +270,10 @@ impl Instruction {
                     r2
                 )
             }
-            AddressMode::HL_SPR(r1, _r2) => {
+            AddressMode::HL_SPe8 => {
                 format!(
-                    "{:?} ({:?},SP+{:?})",
+                    "{:?} (HL,SP+{:?})",
                     self.get_type(),
-                    r1,
                     fetched_data.value & 0xFF
                 )
             }

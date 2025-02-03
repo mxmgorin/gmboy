@@ -45,7 +45,7 @@ impl ExecutableInstruction for LdInstruction {
             }
             // LD HL,SP+e8
             // Add the signed value e8 to SP and copy the result in HL.
-            AddressMode::HL_SPR(_r1, _r2) => {
+            AddressMode::HL_SPe8 => {
                 let sp = cpu.registers.sp;
                 let h_flag =
                     (sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;

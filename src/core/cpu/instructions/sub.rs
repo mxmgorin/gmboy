@@ -10,14 +10,13 @@ pub struct SubInstruction {
 impl ExecutableInstruction for SubInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
-            AddressMode::IMP | AddressMode::D16 | AddressMode::D8 => unreachable!("not used"),
+            AddressMode::IMP | AddressMode::D16 | AddressMode::D8 | AddressMode::HL_SPe8 => unreachable!("not used"),
             AddressMode::R_R(r1, _r2)
             | AddressMode::MR_R(r1, _r2)
             | AddressMode::R_MR(r1, _r2)
             | AddressMode::R_HLI(r1, _r2)
             | AddressMode::R_HLD(r1, _r2)
-            | AddressMode::HLI_R(r1, _r2)
-            | AddressMode::HL_SPR(r1, _r2)
+            | AddressMode::HLI_R(r1, _r2)            
             | AddressMode::HLD_R(r1, _r2) => execute_sub(cpu, fetched_data, r1),
             AddressMode::R_D8(r1)
             | AddressMode::R(r1)

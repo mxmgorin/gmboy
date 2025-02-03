@@ -22,7 +22,7 @@ impl ExecutableInstruction for DecInstruction {
             | AddressMode::HLD_R(_, _)
             | AddressMode::R_A8(_)
             | AddressMode::A8_R(_)
-            | AddressMode::HL_SPR(_, _)
+            | AddressMode::HL_SPe8
             | AddressMode::D16
             | AddressMode::D8
             | AddressMode::D16_R(_)
