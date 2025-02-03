@@ -12,23 +12,25 @@ pub struct FetchedData {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum AddressMode {
-    /// Implied: The operand is specified in the instruction itcpu.
+    /// Implied: The operand is specified in the instruction itself
     IMP,
-    /// Register: The operand is a register.
+    /// Register
+    /// Fetches value of register
     R(RegisterType),
-    /// Register and 16-bit Data: The instruction stores direct value into register.
+    /// Register and 16-bit Data
+    /// Fetches the 16-bit data by PC
     R_D16(RegisterType),
-    /// Register to Register: The operand is another register, and the instruction operates
-    /// between two registers.
+    /// Register to Register
+    /// Fetches the data from second register
     R_R(RegisterType, RegisterType),
-    /// Indirect (memory address) Register and Register: The instruction read value from register
-    /// and stores it into memory address
+    /// Memory address Register and Register
+    /// Fetches the data from second register and memory address from first register
     MR_R(RegisterType, RegisterType),
-    /// Register and 8-bit data: The operand is an 8-bit immediate value,
-    /// and the instruction operates with a register.
+    /// Register and 8-bit data
+    /// Fetches value from PC
     R_D8(RegisterType),
-    /// Register and Indirect (memory address) Register: The instruction reads a value from memory and stores
-    /// it into a register.
+    /// Register and Memory address Register
+    /// Fetches address from second register
     R_MR(RegisterType, RegisterType),
     /// Register and HL increment: The instruction uses the `HL` register pair, increments it,
     /// and accesses memory using the updated value of `HL`.
@@ -42,26 +44,34 @@ pub enum AddressMode {
     /// HL decrement and Register: The instruction stores a value from a register to memory and
     /// decrements the `HL` register pair.
     HLD_R(RegisterType, RegisterType),
-    /// Register and 8-bit immediate address
+    /// Register and 8-bit address
+    /// Fetches value from 8-bit address
     R_A8(RegisterType),
-    /// 8-bit address and Register: The instruction uses a memory address and a register to store
-    /// a value from the register to memory.
+    /// 8-bit address and Register
+    /// Fetches value from second register
     A8_R(RegisterType),
-    /// Read PC value
+    /// Special case for LD Hl,(SP+8e)
+    /// Fetches PC value
     HL_SPR(RegisterType, RegisterType),
-    /// 16-bit immediate data: The instruction involves a 16-bit immediate operand.
+    /// 16-bit data
+    /// Fetches 16-bit value from memory by PC
     D16,
-    /// 8-bit immediate data: The instruction involves an 8-bit immediate operand.
+    /// 8-bit data
+    /// Fetches 8-bit value from memory by PC
     D8,
-    /// 16-bit immediate data to Register
+    /// 16-bit data to Register
     D16_R(RegisterType),
-    /// Memory Read and 8-bit immediate data
+    /// Memory Address Register and 8-bit data
+    /// Fetches 8-bit value from memory by PC and memory address from register
     MR_D8(RegisterType),
-    /// Memory Read: The instruction performs a read operation from memory.
+    /// Memory Address Register
+    /// Fetches memory address from register and data by that address
     MR(RegisterType),
     /// 16-bit Address and Register
+    /// Fetches value from register and memory address by PC
     A16_R(RegisterType),
     /// Register and 16-bit Address
+    /// Fetches value from register and memory address by PC
     R_A16(RegisterType),
 }
 
