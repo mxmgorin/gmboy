@@ -18,6 +18,7 @@ use crate::core::cpu::instructions::xor::XorInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
 use std::fmt::Display;
+use crate::cpu::instructions::adc::AdcInstruction;
 use crate::cpu::instructions::add::AddInstruction;
 use crate::cpu::instructions::and::AndInstruction;
 use crate::cpu::instructions::cp::CpInstruction;
@@ -72,7 +73,8 @@ pub enum Instruction {
     Pop(PopInstruction),
     Cp(CpInstruction),
     Add(AddInstruction),
-    Sub(SubInstruction)
+    Sub(SubInstruction),
+    Adc(AdcInstruction)
 }
 
 impl ExecutableInstruction for Instruction {
@@ -111,6 +113,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Cp(inst) => inst.execute(cpu, fetched_data),
             Instruction::Add(inst) => inst.execute(cpu, fetched_data),
             Instruction::Sub(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Adc(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -150,6 +153,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Cp(inst) => inst.get_address_mode(),
             Instruction::Add(inst) => inst.get_address_mode(),
             Instruction::Sub(inst) => inst.get_address_mode(),
+            Instruction::Adc(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -190,6 +194,7 @@ impl Instruction {
             Instruction::Cp(_) => InstructionType::CP,
             Instruction::Add(_) => InstructionType::ADD,
             Instruction::Sub(_) => InstructionType::SUB,
+            Instruction::Adc(_) => InstructionType::ADC,
         }
     }
 

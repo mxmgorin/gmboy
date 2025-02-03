@@ -2,6 +2,7 @@ use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
+use crate::cpu::instructions::adc::AdcInstruction;
 use crate::cpu::instructions::add::AddInstruction;
 use crate::cpu::instructions::and::AndInstruction;
 use crate::cpu::instructions::cp::CpInstruction;
@@ -426,6 +427,30 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x87] = Instruction::Add(AddInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
     });
+    instructions[0x88] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B),
+    });
+    instructions[0x89] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::C),
+    });
+    instructions[0x8A] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::D),
+    });
+    instructions[0x8B] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::E),
+    });
+    instructions[0x8C] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::H),
+    });
+    instructions[0x8D] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L),
+    });
+    instructions[0x8E] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::HL),
+    });
+    instructions[0x8F] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
+    });
 
     // 0x9X
     instructions[0x90] = Instruction::Sub(SubInstruction {
@@ -528,7 +553,6 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xB7] = Instruction::Or(OrInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
     });
-
     instructions[0xB8] = Instruction::Cp(CpInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B),
     });
@@ -593,6 +617,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xCA] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::Z),
+    });
+    instructions[0xCE] = Instruction::Adc(AdcInstruction {
+        address_mode: AddressMode::R_D8(RegisterType::A),
     });
 
     // 0xDX
@@ -661,8 +688,6 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xF1] = Instruction::Pop(PopInstruction {
         address_mode: AddressMode::R(RegisterType::AF),
     });
-    // LDH A,[C]
-    // This is sometimes written as ‘LD A,[$FF00+C]’.
     instructions[0xF2] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::C),
     });
