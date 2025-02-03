@@ -90,20 +90,20 @@ impl Registers {
         }
     }
 
-    pub fn set_flags(&mut self, z: i8, n: i8, h: i8, c: i8) {
-        if z != -1 {
+    pub fn set_flags(&mut self, z: Option<i8>, n: Option<i8>, h: Option<i8>, c: Option<i8>) {
+        if let Some(z) = z {
             set_bit(&mut self.f, ZERO_FLAG_BYTE_POSITION, z != 0);
         }
 
-        if n != -1 {
+        if let Some(n) = n {
             set_bit(&mut self.f, SUBTRACT_FLAG_BYTE_POSITION, n != 0);
         }
 
-        if h != -1 {
+        if let Some(h) = h {
             set_bit(&mut self.f, HALF_CARRY_FLAG_BYTE_POSITION, h != 0);
         }
 
-        if c != -1 {
+        if let Some(c) = c {
             set_bit(&mut self.f, CARRY_FLAG_BYTE_POSITION, c != 0);
         }
     }
@@ -159,5 +159,16 @@ mod tests {
 
         regs.f = 0b00000000;
         assert!(!regs.get_flag_c());
+    }
+
+    #[test]
+    fn test_set_flags() {
+        let mut regs = Registers::new();
+        regs.f = 0b10000000;
+        
+        regs.set_flags(None, None, None, Some(1));
+        
+        assert!(regs.get_flag_z());        
+        println!("{:#b}", regs.f)
     }
 }
