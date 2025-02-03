@@ -41,7 +41,7 @@ fn execute_sub(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let reg_1_val = cpu.registers.read_register(r1);
     let val = reg_1_val + fetched_data.value;
     let z = val == 0;
-    let h = ((reg_1_val & 0xF) - (fetched_data.value & 0xF)) > 0xF;
+    let h = ((reg_1_val & 0xF).wrapping_sub(fetched_data.value & 0xF)) > 0xF;
     let c = (reg_1_val as i16).wrapping_sub(fetched_data.value as i16) < 0;
 
     cpu.registers.set_flags(
