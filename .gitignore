@@ -21,3 +21,5 @@ Cargo.lock
 .idea/
 
 .vscode
+
+/roms/real/*.gb
