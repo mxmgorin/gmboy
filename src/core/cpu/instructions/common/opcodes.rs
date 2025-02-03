@@ -2,6 +2,7 @@ use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
+use crate::cpu::instructions::and::AndInstruction;
 use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::rla::RlaInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
@@ -395,6 +396,30 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0x9X
 
     // 0xAX
+    instructions[0xA0] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B),
+    });
+    instructions[0xA1] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::C),
+    });
+    instructions[0xA2] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::D),
+    });
+    instructions[0xA3] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::E),
+    });
+    instructions[0xA4] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::H),
+    });
+    instructions[0xA5] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L),
+    });
+    instructions[0xA6] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::HL),
+    });
+    instructions[0xA7] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
+    });
     instructions[0xAF] = Instruction::Xor(XorInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
     });
@@ -470,6 +495,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0xE2] = Instruction::Ldh(LdhInstruction {
         address_mode: AddressMode::MR_R(RegisterType::C, RegisterType::A),
+    });
+    instructions[0xE6] = Instruction::And(AndInstruction {
+        address_mode: AddressMode::R_D8(RegisterType::A),
     });
     instructions[0xEA] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::A16_R(RegisterType::A),
