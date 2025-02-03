@@ -1,5 +1,5 @@
+use crate::core::cpu::instructions::common::Instruction;
 use crate::core::cpu::{Cpu, FetchedData};
-use crate::core::instructions::common::Instruction;
 
 #[cfg(debug_assertions)]
 #[derive(Debug, Clone)]

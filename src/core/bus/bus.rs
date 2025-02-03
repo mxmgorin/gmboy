@@ -1,6 +1,6 @@
+use crate::core::bus::io::Io;
+use crate::core::bus::ram::Ram;
 use crate::core::cart::Cart;
-use crate::core::io::Io;
-use crate::core::ram::Ram;
 
 impl From<u16> for BusAddrLocation {
     fn from(address: u16) -> Self {

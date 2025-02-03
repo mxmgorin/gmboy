@@ -2,7 +2,7 @@ use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::debugger::Debugger;
-use crate::core::ram::Ram;
+use crate::core::bus::ram::Ram;
 use std::thread;
 
 #[derive(Debug)]

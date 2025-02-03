@@ -1,5 +1,5 @@
+use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction, RegisterType};
 use crate::core::cpu::{Cpu, FetchedData};
-use crate::core::instructions::common::{AddressMode, ExecutableInstruction, RegisterType};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LdInstruction {

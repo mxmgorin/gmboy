@@ -1,4 +1,4 @@
-use crate::core::timer::{Timer, TimerAddress};
+use crate::core::bus::timer::{Timer, TimerAddress};
 use crate::core::Interrupts;
 
 impl TryFrom<u16> for IoAddressLocation {

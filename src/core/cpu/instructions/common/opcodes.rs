@@ -1,18 +1,7 @@
-use crate::core::instructions::call::CallInstruction;
-use crate::core::instructions::ccf::CcfInstruction;
-use crate::core::instructions::common::{AddressMode, ConditionType, Instruction, RegisterType};
-use crate::core::instructions::cpl::CplInstruction;
-use crate::core::instructions::daa::DaaInstruction;
-use crate::core::instructions::dec::DecInstruction;
-use crate::core::instructions::di::DiInstruction;
-use crate::core::instructions::halt::HaltInstruction;
-use crate::core::instructions::inc::IncInstruction;
-use crate::core::instructions::jp::JpInstruction;
-use crate::core::instructions::jr::JrInstruction;
-use crate::core::instructions::ld::LdInstruction;
-use crate::core::instructions::ldh::LdhInstruction;
-use crate::core::instructions::nop::NopInstruction;
-use crate::core::instructions::xor::XorInstruction;
+use crate::core::cpu::instructions::common::address_mode::AddressMode;
+use crate::core::cpu::instructions::common::condition_type::ConditionType;
+use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
+use crate::core::cpu::instructions::*;
 
 const INSTRUCTIONS_LEN: usize = 0xFF;
 

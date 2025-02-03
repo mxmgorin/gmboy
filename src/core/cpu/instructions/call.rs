@@ -1,7 +1,7 @@
-use crate::core::cpu::{Cpu, FetchedData};
-use crate::core::instructions::common::{
+use crate::core::cpu::instructions::common::{
     AddressMode, ConditionType, ExecutableInstruction, Instruction,
 };
+use crate::core::cpu::{Cpu, FetchedData};
 
 #[derive(Debug, Clone, Copy)]
 pub struct CallInstruction {

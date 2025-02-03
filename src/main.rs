@@ -1,8 +1,6 @@
-use crate::core::emu::Emu;
 use std::path::Path;
 use std::{env, fs};
-
-mod core;
+use rusty_gb_emu::emu::Emu;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

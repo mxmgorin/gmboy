@@ -1,20 +1,22 @@
-use crate::core::cpu::{Cpu, FetchedData, Registers};
-use crate::core::instructions::call::CallInstruction;
-use crate::core::instructions::ccf::CcfInstruction;
-use crate::core::instructions::cpl::CplInstruction;
-use crate::core::instructions::daa::DaaInstruction;
-use crate::core::instructions::dec::DecInstruction;
-use crate::core::instructions::di::DiInstruction;
-use crate::core::instructions::halt::HaltInstruction;
-use crate::core::instructions::inc::IncInstruction;
-use crate::core::instructions::jp::JpInstruction;
-use crate::core::instructions::jr::JrInstruction;
-use crate::core::instructions::ld::LdInstruction;
-use crate::core::instructions::ldh::LdhInstruction;
-use crate::core::instructions::nop::NopInstruction;
-use crate::core::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
-use crate::core::instructions::xor::XorInstruction;
-use crate::core::stack::Stack;
+use crate::core::cpu::instructions::call::CallInstruction;
+use crate::core::cpu::instructions::ccf::CcfInstruction;
+use crate::core::cpu::instructions::common::address_mode::AddressMode;
+use crate::core::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
+use crate::core::cpu::instructions::common::ConditionType;
+use crate::core::cpu::instructions::cpl::CplInstruction;
+use crate::core::cpu::instructions::daa::DaaInstruction;
+use crate::core::cpu::instructions::dec::DecInstruction;
+use crate::core::cpu::instructions::di::DiInstruction;
+use crate::core::cpu::instructions::halt::HaltInstruction;
+use crate::core::cpu::instructions::inc::IncInstruction;
+use crate::core::cpu::instructions::jp::JpInstruction;
+use crate::core::cpu::instructions::jr::JrInstruction;
+use crate::core::cpu::instructions::ld::LdInstruction;
+use crate::core::cpu::instructions::ldh::LdhInstruction;
+use crate::core::cpu::instructions::nop::NopInstruction;
+use crate::core::cpu::instructions::xor::XorInstruction;
+use crate::core::cpu::stack::Stack;
+use crate::core::cpu::{Cpu, FetchedData};
 use std::fmt::Display;
 
 pub trait ExecutableInstruction {
@@ -68,21 +70,8 @@ impl Instruction {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
-    pub fn check_cond(registers: &Registers, cond: Option<ConditionType>) -> bool {
-        let Some(cond) = cond else {
-            return true;
-        };
-
-        match cond {
-            ConditionType::C => registers.get_flag_c(),
-            ConditionType::NC => !registers.get_flag_c(),
-            ConditionType::Z => registers.get_flag_z(),
-            ConditionType::NZ => !registers.get_flag_z(),
-        }
-    }
-
     pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
-        if Instruction::check_cond(&cpu.registers, cond) {
+        if ConditionType::check_cond(&cpu.registers, cond) {
             if push_pc {
                 cpu.update_cycles(2);
                 let pc = cpu.registers.pc;
@@ -377,76 +366,6 @@ pub enum InstructionType {
     RES,
     /// Set bit in register (SET) instruction
     SET,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ConditionType {
-    /// Non-zero: Execute if Z is not set.
-    NZ,
-    /// Zero: Execute if Z is set.
-    Z,
-    /// Non-carry: Execute if C is not set.
-    NC,
-    /// Carry: Execute if C is set.
-    C,
-}
-
-/// Represents the different address modes in the CPU's instruction set.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(non_camel_case_types)]
-pub enum AddressMode {
-    /// Implied: The operand is specified in the instruction itself.
-    IMP,
-    /// Register: The operand is a register.
-    R(RegisterType),
-    /// Register and 16-bit Data: The instruction stores direct value into register.
-    R_D16(RegisterType),
-    /// Register to Register: The operand is another register, and the instruction operates
-    /// between two registers.
-    R_R(RegisterType, RegisterType),
-    /// Indirect (memory address) Register and Register: The instruction read value from register
-    /// and stores it into memory address
-    MR_R(RegisterType, RegisterType),
-    /// Register and 8-bit data: The operand is an 8-bit immediate value,
-    /// and the instruction operates with a register.
-    R_D8(RegisterType),
-    /// Register and Indirect (memory address) Register: The instruction reads a value from memory and stores
-    /// it into a register.
-    R_MR(RegisterType, RegisterType),
-    /// Register and HL increment: The instruction uses the `HL` register pair, increments it,
-    /// and accesses memory using the updated value of `HL`.
-    R_HLI(RegisterType, RegisterType),
-    /// Register and HL decrement: The instruction uses the `HL` register pair, decrements it,
-    /// and accesses memory using the updated value of `HL`.
-    R_HLD(RegisterType, RegisterType),
-    /// HL increment and Register: The instruction stores a value from a register to memory and
-    /// increments the `HL` register pair.
-    HLI_R(RegisterType, RegisterType),
-    /// HL decrement and Register: The instruction stores a value from a register to memory and
-    /// decrements the `HL` register pair.
-    HLD_R(RegisterType, RegisterType),
-    /// Register and 8-bit immediate address
-    R_A8(RegisterType),
-    /// 8-bit address and Register: The instruction uses a memory address and a register to store
-    /// a value from the register to memory.
-    A8_R(RegisterType),
-    /// HL and Special Register Pair: This mode uses the `HL` register and other special register pairs
-    /// for specific operations.
-    HL_SPR(RegisterType, RegisterType),
-    /// 16-bit immediate data: The instruction involves a 16-bit immediate operand.
-    D16,
-    /// 8-bit immediate data: The instruction involves an 8-bit immediate operand.
-    D8,
-    /// 16-bit immediate data to Register
-    D16_R(RegisterType),
-    /// Memory Read and 8-bit immediate data
-    MR_D8(RegisterType),
-    /// Memory Read: The instruction performs a read operation from memory.
-    MR(RegisterType),
-    /// 16-bit Address and Register
-    A16_R(RegisterType),
-    /// Register and 16-bit Address
-    R_A16(RegisterType),
 }
 
 impl Display for Instruction {

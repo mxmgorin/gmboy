@@ -1,11 +1,11 @@
+use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::{Cpu, FetchedData};
-use crate::core::instructions::common::{AddressMode, ExecutableInstruction};
 
 #[derive(Debug, Clone, Copy)]
 pub struct DiInstruction;
 
 impl ExecutableInstruction for DiInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         cpu.bus.io.interrupts.int_master_enabled = false;
     }
 
