@@ -11,6 +11,12 @@ pub struct Timer {
     tac: u8,
 }
 
+impl Default for Timer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Timer {
     pub fn new() -> Self {
         Self {
@@ -24,7 +30,7 @@ impl Timer {
     /// Updates timer if needed and returns is interrupt needed
     pub fn tick(&mut self) -> bool {
         let prev_div = self.div;
-        self.div += 1;
+        self.div = self.div.wrapping_add(1);
 
         let mut timer_update = false;
 
