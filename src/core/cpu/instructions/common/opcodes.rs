@@ -3,6 +3,7 @@ use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
 use crate::cpu::instructions::rra::RraInstruction;
+use crate::cpu::instructions::rrca::RrcaInstruction;
 
 const INSTRUCTIONS_LEN: usize = 0xFF;
 
@@ -57,9 +58,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x0E] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_D8(RegisterType::C),
     });
-    //instructions[0x0F] = Instruction::RRCA(LdInstruction {
-    //    address_mode: AddressMode::R_D8(RegisterType::C),
-    //});
+    instructions[0x0F] = Instruction::Rrca(RrcaInstruction);
 
     // 0x1X
     //instructions[0x10] = Instruction::STOP(LdInstruction {

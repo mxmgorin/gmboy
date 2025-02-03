@@ -15,6 +15,7 @@ mod ldh;
 mod nop;
 mod xor;
 mod rra;
+mod rrca;
 
 pub use call::*;
 pub use ccf::*;
