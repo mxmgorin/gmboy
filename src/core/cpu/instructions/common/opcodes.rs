@@ -3,6 +3,7 @@ use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
 use crate::cpu::instructions::and::AndInstruction;
+use crate::cpu::instructions::pop::PopInstruction;
 use crate::cpu::instructions::push::PushInstruction;
 use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::rla::RlaInstruction;
@@ -439,6 +440,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xC0] = Instruction::Ret(RetInstruction {
         condition_type: Some(ConditionType::NZ),
     });
+    instructions[0xC1] = Instruction::Pop(PopInstruction {
+        address_mode: AddressMode::R(RegisterType::BC),
+    });
     instructions[0xC2] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::NZ),
@@ -474,6 +478,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xD0] = Instruction::Ret(RetInstruction {
         condition_type: Some(ConditionType::NC),
     });
+    instructions[0xD1] = Instruction::Pop(PopInstruction {
+        address_mode: AddressMode::R(RegisterType::DE),
+    });
     instructions[0xD2] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::NC),
@@ -500,6 +507,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xE0] = Instruction::Ldh(LdhInstruction {
         address_mode: AddressMode::A8_R(RegisterType::A),
     });
+    instructions[0xE1] = Instruction::Pop(PopInstruction {
+        address_mode: AddressMode::R(RegisterType::HL),
+    });
     instructions[0xE2] = Instruction::Ldh(LdhInstruction {
         address_mode: AddressMode::MR_R(RegisterType::C, RegisterType::A),
     });
@@ -521,6 +531,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0xFX
     instructions[0xF0] = Instruction::Ldh(LdhInstruction {
         address_mode: AddressMode::R_A8(RegisterType::A),
+    });
+    instructions[0xF1] = Instruction::Pop(PopInstruction {
+        address_mode: AddressMode::R(RegisterType::AF),
     });
     // LDH A,[C]
     // This is sometimes written as ‘LD A,[$FF00+C]’.
