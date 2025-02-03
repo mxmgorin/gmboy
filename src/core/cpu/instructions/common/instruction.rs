@@ -22,6 +22,7 @@ use crate::cpu::instructions::ei::EiInstruction;
 use crate::cpu::instructions::or::OrInstruction;
 use crate::cpu::instructions::ret::RetInstruction;
 use crate::cpu::instructions::reti::RetiInstruction;
+use crate::cpu::instructions::rla::RlaInstruction;
 use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
@@ -51,6 +52,7 @@ pub enum Instruction {
     Ldh(LdhInstruction),
     Call(CallInstruction),
     Rra(RraInstruction),
+    Rla(RlaInstruction),
     Rrca(RrcaInstruction),
     Rlca(RlcaInstruction),
     Or(OrInstruction),
@@ -82,6 +84,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Ldh(inst) => inst.execute(cpu, fetched_data),
             Instruction::Call(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rra(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Rla(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rrca(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rlca(inst) => inst.execute(cpu, fetched_data),
             Instruction::Or(inst) => inst.execute(cpu, fetched_data),
@@ -114,6 +117,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Ldh(inst) => inst.get_address_mode(),
             Instruction::Call(inst) => inst.get_address_mode(),
             Instruction::Rra(inst) => inst.get_address_mode(),
+            Instruction::Rla(inst) => inst.get_address_mode(),
             Instruction::Rrca(inst) => inst.get_address_mode(),
             Instruction::Rlca(inst) => inst.get_address_mode(),
             Instruction::Or(inst) => inst.get_address_mode(),
@@ -147,6 +151,7 @@ impl Instruction {
             Instruction::Ldh(_inst) => InstructionType::LDH,
             Instruction::Call(_inst) => InstructionType::CALL,
             Instruction::Rra(_) => InstructionType::RRA,
+            Instruction::Rla(_) => InstructionType::RLA,
             Instruction::Rrca(_) => InstructionType::RRCA,
             Instruction::Rlca(_) => InstructionType::RLCA,
             Instruction::Or(_) => InstructionType::OR,

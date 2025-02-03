@@ -23,6 +23,7 @@ mod reti;
 mod ei;
 mod scf;
 mod stop;
+mod rla;
 
 pub use call::*;
 pub use ccf::*;
