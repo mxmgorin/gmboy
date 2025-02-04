@@ -1,4 +1,4 @@
-const W_RAM_SIZE: usize = 0x8000;
+const W_RAM_SIZE: usize = 0x2000;
 const H_RAM_SIZE: usize = 0x80;
 const W_RAM_ADDR_OFFSET: usize = 0xC000;
 const H_RAM_ADDR_OFFSET: usize = 0xFF80;
