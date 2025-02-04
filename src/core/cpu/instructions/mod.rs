@@ -33,6 +33,7 @@ mod stop;
 mod sub;
 mod xor;
 mod cb;
+mod sbc;
 
 pub use call::*;
 pub use ccf::*;
