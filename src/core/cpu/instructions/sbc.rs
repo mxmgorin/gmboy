@@ -32,15 +32,15 @@ impl ExecutableInstruction for SbcInstruction {
             AddressMode::R_MR(r1, _) |
             AddressMode::R_D8(r1) => {
                 let c_val = cpu.registers.flags.get_c();
-                let val = fetched_data.value.wrapping_sub(c_val as u16);
+                let val = fetched_data.value.wrapping_add(c_val as u16) as u8;
                 let r_val = cpu.registers.read_register(r1);
-                
+
                 let r_val_i32 = r_val as i32;
                 let retched_val_i32 = fetched_data.value as i32;
                 let c_val_i32 = c_val as i32;
-                
-                let final_val = r_val.wrapping_sub(val);
-                let z = final_val == 0;                
+
+                let final_val = r_val.wrapping_sub(val as u16);
+                let z = final_val == 0;
                 let h = (r_val_i32 & 0xF).wrapping_sub(retched_val_i32 & 0xF).wrapping_sub(c_val_i32) < 0;
                 let c = r_val_i32.wrapping_sub(retched_val_i32).wrapping_sub(c_val_i32) < 0;
 
@@ -54,5 +54,17 @@ impl ExecutableInstruction for SbcInstruction {
 
     fn get_address_mode(&self) -> AddressMode {
         self.address_mode
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cpu::instructions::common::{AddressMode, FetchedData, RegisterType};
+    use crate::cpu::instructions::sbc::SbcInstruction;
+
+    #[test]
+    fn test_1() {
+        let _inst = SbcInstruction { address_mode: AddressMode::R_D8(RegisterType::A) };
+        let _fetched_data = FetchedData { value: 0, dest_addr: None };
     }
 }
