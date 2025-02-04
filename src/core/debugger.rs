@@ -10,6 +10,12 @@ pub struct Debugger {
 }
 
 #[cfg(debug_assertions)]
+impl Default for Debugger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Debugger {
     pub fn new() -> Self {
         Debugger {
