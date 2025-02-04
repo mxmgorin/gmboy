@@ -198,6 +198,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x3B] = Instruction::Dec(DecInstruction {
         address_mode: AddressMode::R(RegisterType::SP),
     });
+    instructions[0x3C] = Instruction::Inc(IncInstruction {
+        address_mode: AddressMode::R(RegisterType::A),
+    });
     instructions[0x3D] = Instruction::Dec(DecInstruction {
         address_mode: AddressMode::R(RegisterType::A),
     });
@@ -359,7 +362,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0x7X
     instructions[0x76] = Instruction::Halt(HaltInstruction);
     instructions[0x70] = Instruction::Ld(LdInstruction {
-        address_mode: AddressMode::MR_R(RegisterType::D, RegisterType::B),
+        address_mode: AddressMode::MR_R(RegisterType::HL, RegisterType::B),
     });
     instructions[0x71] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::MR_R(RegisterType::HL, RegisterType::C),
