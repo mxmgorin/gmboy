@@ -118,7 +118,7 @@ impl Cpu {
     pub fn read_reg8(&self, rt: RegisterType) -> u8 {
         match rt {
             RegisterType::A => self.registers.a,
-            RegisterType::F => self.registers.f.byte,
+            RegisterType::F => self.registers.flags.byte,
             RegisterType::B => self.registers.b,
             RegisterType::C => self.registers.c,
             RegisterType::D => self.registers.d,
@@ -135,7 +135,7 @@ impl Cpu {
     pub fn set_reg8(&mut self, rt: RegisterType, val: u8) {
         match rt {
             RegisterType::A => self.registers.a = val & 0xFF,
-            RegisterType::F => self.registers.f.byte = val & 0xFF,
+            RegisterType::F => self.registers.flags.byte = val & 0xFF,
             RegisterType::B => self.registers.b = val & 0xFF,
             RegisterType::C => self.registers.c = val & 0xFF,
             RegisterType::D => self.registers.d = val & 0xFF,

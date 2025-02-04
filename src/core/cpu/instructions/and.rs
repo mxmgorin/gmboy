@@ -10,7 +10,7 @@ pub struct AndInstruction {
 impl ExecutableInstruction for AndInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         cpu.registers.a &= fetched_data.value as u8;
-        cpu.registers.f.set(
+        cpu.registers.flags.set(
             Some(cpu.registers.a == 0),
             Some(false),
             Some(true),

@@ -51,6 +51,6 @@ fn execute_sub(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
 
     cpu.registers.set_register(r1, new_val);
     cpu.registers
-        .f
+        .flags
         .set(z.into(), true.into(), h.into(), c.into());
 }

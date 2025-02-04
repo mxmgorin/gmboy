@@ -64,7 +64,7 @@ fn set_flags(cpu: &mut Cpu, val: u16) {
         return;
     }
 
-    cpu.registers.f.set(
+    cpu.registers.flags.set(
         Some(val == 0),
         Some(false),
         Some((val & 0x0F) == 0),

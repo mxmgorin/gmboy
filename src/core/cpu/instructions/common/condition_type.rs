@@ -19,10 +19,10 @@ impl ConditionType {
         };
 
         match cond {
-            ConditionType::C => registers.f.get_c(),
-            ConditionType::NC => !registers.f.get_c(),
-            ConditionType::Z => registers.f.get_z(),
-            ConditionType::NZ => !registers.f.get_z(),
+            ConditionType::C => registers.flags.get_c(),
+            ConditionType::NC => !registers.flags.get_c(),
+            ConditionType::Z => registers.flags.get_z(),
+            ConditionType::NZ => !registers.flags.get_z(),
         }
     }
 }

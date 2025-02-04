@@ -10,7 +10,7 @@ pub struct XorInstruction {
 impl ExecutableInstruction for XorInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         cpu.registers.a ^= (fetched_data.value & 0xFF) as u8;
-        cpu.registers.f.set(
+        cpu.registers.flags.set(
             (cpu.registers.a == 0).into(),
             false.into(),
             false.into(),
@@ -48,10 +48,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0);
-        assert!(cpu.registers.f.get_z()); // Zero flag should be set
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(cpu.registers.flags.get_z()); // Zero flag should be set
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -71,10 +71,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0b11111111); // Result should be 0xFF
-        assert!(!cpu.registers.f.get_z()); // Zero flag should be cleared
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(!cpu.registers.flags.get_z()); // Zero flag should be cleared
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -94,10 +94,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0b10101010); // Result should remain unchanged
-        assert!(!cpu.registers.f.get_z()); // Zero flag should be cleared
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(!cpu.registers.flags.get_z()); // Zero flag should be cleared
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -117,10 +117,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0); // Result should be 0
-        assert!(cpu.registers.f.get_z()); // Zero flag should be set
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(cpu.registers.flags.get_z()); // Zero flag should be set
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -140,10 +140,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0xFF); // Result should be maximum value
-        assert!(!cpu.registers.f.get_z()); // Zero flag should be cleared
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(!cpu.registers.flags.get_z()); // Zero flag should be cleared
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -163,10 +163,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0b01111111); // Expected XOR result
-        assert!(!cpu.registers.f.get_z()); // Zero flag should be cleared
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(!cpu.registers.flags.get_z()); // Zero flag should be cleared
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -186,10 +186,10 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0b11110000); // Result should be the fetched value
-        assert!(!cpu.registers.f.get_z()); // Zero flag should be cleared
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(!cpu.registers.flags.get_z()); // Zero flag should be cleared
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 
     #[test]
@@ -209,9 +209,9 @@ mod tests {
         instruction.execute(&mut cpu, fetched_data);
 
         assert_eq!(cpu.registers.a, 0b11111111); // Result should remain unchanged
-        assert!(!cpu.registers.f.get_z()); // Zero flag should be cleared
-        assert!(!cpu.registers.f.get_n()); // N flag should be cleared
-        assert!(!cpu.registers.f.get_h()); // H flag should be cleared
-        assert!(!cpu.registers.f.get_c()); // C flag should be cleared
+        assert!(!cpu.registers.flags.get_z()); // Zero flag should be cleared
+        assert!(!cpu.registers.flags.get_n()); // N flag should be cleared
+        assert!(!cpu.registers.flags.get_h()); // H flag should be cleared
+        assert!(!cpu.registers.flags.get_c()); // C flag should be cleared
     }
 }
