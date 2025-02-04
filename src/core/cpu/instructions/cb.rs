@@ -168,7 +168,7 @@ impl ExecutableInstruction for CbInstruction {
 
                 cpu.set_reg8(reg, u);
                 cpu.registers.flags.set(
-                    (u != 0).into(),
+                    (u == 0).into(),
                     false.into(),
                     false.into(),
                     Some((reg_val & 1) != 0),
