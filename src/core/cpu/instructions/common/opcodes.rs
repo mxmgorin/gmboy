@@ -130,7 +130,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::HLI_R(RegisterType::A),
     });
     instructions[0x23] = Instruction::Inc(IncInstruction {
-        address_mode: AddressMode::MR(RegisterType::HL),
+        address_mode: AddressMode::R(RegisterType::HL),
     });
     instructions[0x24] = Instruction::Inc(IncInstruction {
         address_mode: AddressMode::R(RegisterType::H),
