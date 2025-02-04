@@ -3,7 +3,8 @@ use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction,
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
-use crate::core::{debugger, InterruptType};
+use crate::core::{InterruptType};
+use crate::util::{LittleEndianBytes};
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -23,6 +24,23 @@ impl Cpu {
             ticks: 0,
             current_opcode: 0,
         }
+    }
+
+    pub fn fetch_data(&mut self) -> u8 {
+        let value = self.bus.read(self.registers.pc);
+        self.update_cycles(1);
+        self.registers.pc += 1;
+
+        value
+    }
+
+    pub fn fetch_data16(&mut self) -> u16 {
+        let bytes = LittleEndianBytes {
+            low_byte: self.fetch_data(),
+            high_byte: self.fetch_data(),
+        };
+
+        bytes.into()
     }
 
     pub fn step(&mut self, debugger: &mut Option<Debugger>) -> Result<(), String> {

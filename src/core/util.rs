@@ -3,6 +3,20 @@ pub fn reverse_u16(n: u16) -> u16 {
     n.swap_bytes()
 }
 
+pub struct LittleEndianBytes {
+    pub low_byte: u8,
+    pub high_byte: u8,
+}
+
+impl Into<u16> for LittleEndianBytes {
+    fn into(self) -> u16 {
+        let low_byte = self.low_byte as u16;
+        let high_byte = self.high_byte as u16;
+
+        low_byte | (high_byte << 8)
+    }
+}
+
 /// Returns true if the n-th bit of byte is set, false otherwise.
 pub fn get_bit_flag(byte: u8, pos: u8) -> bool {
     byte & (1 << pos) != 0

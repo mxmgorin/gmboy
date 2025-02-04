@@ -53,48 +53,68 @@ impl Registers {
             RegisterType::E => self.e as u16,
             RegisterType::H => self.h as u16,
             RegisterType::L => self.l as u16,
-            RegisterType::AF => reverse_u16(((self.a as u16) << 8) | (self.f as u16)),
-            RegisterType::BC => reverse_u16(((self.b as u16) << 8) | (self.c as u16)),
-            RegisterType::DE => reverse_u16(((self.d as u16) << 8) | (self.e as u16)),
-            RegisterType::HL => reverse_u16(((self.h as u16) << 8) | (self.l as u16)),
+            RegisterType::AF => self.get_af(),
+            RegisterType::BC => self.get_bc(),
+            RegisterType::DE => self.get_de(),
+            RegisterType::HL => self.get_hl(),
             RegisterType::PC => self.pc,
             RegisterType::SP => self.sp,
         }
     }
 
-    pub fn set_register(&mut self, register_type: RegisterType, val: u16) {
+    pub fn get_af(&self) -> u16 {
+        (self.a as u16) << 8 | self.f as u16
+    }
+
+    pub fn get_bc(&self) -> u16 {
+        (self.b as u16) << 8 | self.c as u16
+    }
+
+    pub fn get_de(&self) -> u16 {
+        (self.d as u16) << 8 | self.e as u16
+    }
+
+    pub fn get_hl(&self) -> u16 {
+        (self.h as u16) << 8 | self.l as u16
+    }
+
+    pub fn set_register(&mut self, register_type: RegisterType, value: u16) {
         match register_type {
-            RegisterType::A => self.a = (val & 0xFF) as u8,
-            RegisterType::F => self.f = (val & 0xFF) as u8,
-            RegisterType::B => self.b = (val & 0xFF) as u8,
-            RegisterType::C => self.c = (val & 0xFF) as u8,
-            RegisterType::D => self.d = (val & 0xFF) as u8,
-            RegisterType::E => self.e = (val & 0xFF) as u8,
-            RegisterType::H => self.h = (val & 0xFF) as u8,
-            RegisterType::L => self.l = (val & 0xFF) as u8,
-            RegisterType::AF => {
-                let reversed = reverse_u16(val);
-                self.a = (reversed >> 8) as u8;
-                self.f = (reversed & 0xFF) as u8;
-            }
-            RegisterType::BC => {
-                let reversed = reverse_u16(val);
-                self.b = (reversed >> 8) as u8;
-                self.c = (reversed & 0xFF) as u8;
-            }
-            RegisterType::DE => {
-                let reversed = reverse_u16(val);
-                self.d = (reversed >> 8) as u8;
-                self.e = (reversed & 0xFF) as u8;
-            }
-            RegisterType::HL => {
-                let reversed = reverse_u16(val);
-                self.h = (reversed >> 8) as u8;
-                self.l = (reversed & 0xFF) as u8;
-            }
-            RegisterType::PC => self.pc = val,
-            RegisterType::SP => self.sp = val,
+            RegisterType::A => self.a = (value & 0xFF) as u8,
+            RegisterType::F => self.f = (value & 0xFF) as u8,
+            RegisterType::B => self.b = (value & 0xFF) as u8,
+            RegisterType::C => self.c = (value & 0xFF) as u8,
+            RegisterType::D => self.d = (value & 0xFF) as u8,
+            RegisterType::E => self.e = (value & 0xFF) as u8,
+            RegisterType::H => self.h = (value & 0xFF) as u8,
+            RegisterType::L => self.l = (value & 0xFF) as u8,
+            RegisterType::AF => self.set_af(value),
+            RegisterType::BC => self.set_bc(value),
+            RegisterType::DE => self.set_de(value),
+            RegisterType::HL => self.set_hl(value),
+            RegisterType::PC => self.pc = value,
+            RegisterType::SP => self.sp = value,
         }
+    }
+
+    pub fn set_af(&mut self, value: u16) {
+        self.a = ((value & 0xFF00) >> 8) as u8;
+        self.f = (value & 0xFF) as u8;
+    }
+
+    pub fn set_bc(&mut self, value: u16) {
+        self.b = ((value & 0xFF00) >> 8) as u8;
+        self.c = (value & 0xFF) as u8;
+    }
+
+    pub fn set_de(&mut self, value: u16) {
+        self.d = ((value & 0xFF00) >> 8) as u8;
+        self.e = (value & 0xFF) as u8;
+    }
+
+    pub fn set_hl(&mut self, value: u16) {
+        self.h = ((value & 0xFF00) >> 8) as u8;
+        self.l = (value & 0xFF) as u8;
     }
 
     pub fn set_flags(&mut self, z: Option<i8>, n: Option<i8>, h: Option<i8>, c: Option<i8>) {

@@ -83,19 +83,10 @@ impl AddressMode {
                 fetched_data.value = cpu.registers.read_register(r2);
             }
             AddressMode::R_D8(_r1) => {
-                fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-                cpu.registers.pc += 1;
+                fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::D16 | AddressMode::R_D16(_) => {
-                let lo = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-
-                let hi = cpu.bus.read(cpu.registers.pc + 1) as u16;
-                cpu.update_cycles(1);
-
-                fetched_data.value = lo | (hi << 8);
-                cpu.registers.pc += 2;
+                fetched_data.value = cpu.fetch_data16();
             }
             AddressMode::R_MR(_r1, r2) => {
                 let mut addr = cpu.registers.read_register(r2);
@@ -125,17 +116,19 @@ impl AddressMode {
             }
             AddressMode::R_HLI(_r1) => {
                 let r2 = RegisterType::HL;
-                fetched_data.value = cpu.bus.read(cpu.registers.read_register(r2)) as u16;
+                let hl_val = cpu.registers.read_register(r2);
+                fetched_data.value = cpu.bus.read(hl_val) as u16;
                 cpu.update_cycles(1);
                 cpu.registers
-                    .set_register(r2, cpu.registers.read_register(r2).saturating_add(1));
+                    .set_register(r2, hl_val.wrapping_add(1));
             }
             AddressMode::R_HLD(_r1) => {
                 let r2 = RegisterType::HL;
-                fetched_data.value = cpu.bus.read(cpu.registers.read_register(r2)) as u16;
+                let hl_val = cpu.registers.read_register(r2);
+                fetched_data.value = cpu.bus.read(hl_val) as u16;
                 cpu.update_cycles(1);
                 cpu.registers
-                    .set_register(r2, cpu.registers.read_register(r2).wrapping_sub(1));
+                    .set_register(r2, hl_val.wrapping_sub(1));
             }
             AddressMode::HLI_R(r2) => {
                 let r1 = RegisterType::HL;
@@ -156,40 +149,25 @@ impl AddressMode {
                 );
             }
             AddressMode::R_A8(_r1) => {
-                fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-                cpu.registers.pc += 1;
+                fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::A8_R(_r1) => {
-                fetched_data.dest_addr = Some(cpu.bus.read(cpu.registers.pc) as u16 | 0xFF00);
-                cpu.update_cycles(1);
-                cpu.registers.pc += 1;
+                let value = cpu.fetch_data() as u16;
+                fetched_data.dest_addr = Some(value | 0xFF00);
             }
             AddressMode::HL_SPe8 => {
-                fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-                cpu.registers.pc += 1;
+                fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::D8 => {
-                fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-                cpu.registers.pc += 1;
+                fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::D16_R(r1) | AddressMode::A16_R(r1) => {
-                let lo = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-
-                let hi = cpu.bus.read(cpu.registers.pc + 1) as u16;
-                cpu.update_cycles(1);
-
-                fetched_data.dest_addr = Some(lo | (hi << 8));
-                cpu.registers.pc += 2;
+                let addr = cpu.fetch_data16();
+                fetched_data.dest_addr = Some(addr);
                 fetched_data.value = cpu.registers.read_register(r1);
             }
             AddressMode::MR_D8(r1) => {
-                fetched_data.value = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-                cpu.registers.pc += 1;
+                fetched_data.value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
             AddressMode::MR(r1) => {
@@ -197,14 +175,7 @@ impl AddressMode {
                 fetched_data.value = cpu.bus.read(cpu.registers.read_register(r1)) as u16;
             }
             AddressMode::R_A16(_r1) => {
-                let lo = cpu.bus.read(cpu.registers.pc) as u16;
-                cpu.update_cycles(1);
-
-                let hi = cpu.bus.read(cpu.registers.pc + 1) as u16;
-                cpu.update_cycles(1);
-
-                let addr = lo | (hi << 8);
-                cpu.registers.pc += 2;
+                let addr = cpu.fetch_data16();
                 fetched_data.value = cpu.bus.read(addr) as u16;
                 cpu.update_cycles(1);
             }
@@ -221,6 +192,7 @@ mod tests {
     use crate::core::bus::Bus;
     use crate::cpu::instructions::common::{AddressMode, RegisterType};
     use crate::cpu::Cpu;
+    use crate::util::{LittleEndianBytes};
 
     #[test]
     fn test_fetch_imp() {
@@ -270,7 +242,7 @@ mod tests {
     fn test_fetch_r_d8() {
         let pc = 4;
         let value = 25;
-        let mut bytes = vec![0u8; 1000];
+        let mut bytes = vec![0u8; 8000];
         bytes[pc] = value;
         let cart = Cart::new(bytes).unwrap();
         let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
@@ -283,5 +255,53 @@ mod tests {
         assert_eq!(data.dest_addr, None);
         assert_eq!(cpu.registers.pc, pc as u16 + 1);
         assert_eq!(cpu.ticks, 4);
+    }
+
+    #[test]
+    fn test_r_hli() {
+        let mode = AddressMode::R_HLI(RegisterType::A);
+        let mut bytes = vec![0u8; 40000];
+        let h_val = 0x40;
+        let l_val = 0x00;
+        let hl_val: u16 = LittleEndianBytes {
+            low_byte: l_val,
+            high_byte: h_val,
+        }.into();
+        let addr_value = 123;
+        bytes[hl_val as usize] = addr_value;
+
+        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes).unwrap(), Ram::new()));
+        cpu.registers.h = h_val;
+        cpu.registers.l = l_val;
+
+        let data = AddressMode::fetch_data(&mut cpu, mode);
+
+        assert_eq!(data.value, addr_value as u16);
+        assert_eq!(data.dest_addr, None);
+        assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_add(1));
+    }
+
+    #[test]
+    fn test_r_hld() {
+        let mode = AddressMode::R_HLD(RegisterType::A);
+        let mut bytes = vec![0u8; 40000];
+        let h_val = 0x40;
+        let l_val = 0x00;
+        let hl_val: u16 = LittleEndianBytes {
+            low_byte: l_val,
+            high_byte: h_val,
+        }.into();
+        let addr_value = 123;
+        bytes[hl_val as usize] = addr_value;
+
+        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes).unwrap(), Ram::new()));
+        cpu.registers.h = h_val;
+        cpu.registers.l = l_val;
+
+        let data = AddressMode::fetch_data(&mut cpu, mode);
+
+        assert_eq!(data.value, addr_value as u16);
+        assert_eq!(data.dest_addr, None);
+        assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_sub(1));
     }
 }
