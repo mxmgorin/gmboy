@@ -30,11 +30,13 @@ impl Cart {
     }
 
     pub fn read(&self, address: u16) -> u8 {
+        // todo: impl ram
         self.bytes[address as usize]
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        self.bytes[address as usize] = value;
+        // self.bytes[address as usize] = value;
+        unimplemented!("cart write")
     }
 }
 
