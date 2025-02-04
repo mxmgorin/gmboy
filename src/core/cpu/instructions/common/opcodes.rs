@@ -15,6 +15,7 @@ use crate::cpu::instructions::rlca::RlcaInstruction;
 use crate::cpu::instructions::rra::RraInstruction;
 use crate::cpu::instructions::rrca::RrcaInstruction;
 use crate::cpu::instructions::rst::RstInstruction;
+use crate::cpu::instructions::sbc::SbcInstruction;
 use crate::cpu::instructions::scf::ScfInstruction;
 use crate::cpu::instructions::stop::StopInstruction;
 use crate::cpu::instructions::sub::SubInstruction;
@@ -482,6 +483,30 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x97] = Instruction::Sub(SubInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
     });
+    instructions[0x98] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::B),
+    });
+    instructions[0x99] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::C),
+    });
+    instructions[0x9A] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::D),
+    });
+    instructions[0x9B] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::E),
+    });
+    instructions[0x9C] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::H),
+    });
+    instructions[0x9D] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L),
+    });
+    instructions[0x9E] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::HL),
+    });
+    instructions[0x9F] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
+    });
 
     // 0xAX
     instructions[0xA0] = Instruction::And(AndInstruction {
@@ -661,6 +686,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xDA] = Instruction::Jp(JpInstruction {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::C),
+    });
+    instructions[0xDE] = Instruction::Sbc(SbcInstruction {
+        address_mode: AddressMode::R_D8(RegisterType::A),
     });
     instructions[0xDF] = Instruction::Rst(RstInstruction { address: 0x18 });
 
