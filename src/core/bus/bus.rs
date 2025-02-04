@@ -80,7 +80,6 @@ impl Bus {
             BusAddrLocation::Oam
             | BusAddrLocation::BgMap1
             | BusAddrLocation::BgMap2
-            | BusAddrLocation::WRamBank0
             | BusAddrLocation::ChrRam => {
                 // TODO: Impl
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
@@ -89,7 +88,7 @@ impl Bus {
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
-            BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
+            BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
             BusAddrLocation::ZeroPage => self.ram.h_ram_read(address),
