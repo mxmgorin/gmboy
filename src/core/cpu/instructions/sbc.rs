@@ -39,11 +39,12 @@ impl ExecutableInstruction for SbcInstruction {
                 let retched_val_i32 = fetched_data.value as i32;
                 let c_val_i32 = c_val as i32;
                 
-                let z = r_val - val == 0;                
+                let final_val = r_val.wrapping_sub(val);
+                let z = final_val == 0;                
                 let h = (r_val_i32 & 0xF).wrapping_sub(retched_val_i32 & 0xF).wrapping_sub(c_val_i32) < 0;
                 let c = r_val_i32.wrapping_sub(retched_val_i32).wrapping_sub(c_val_i32) < 0;
 
-                cpu.registers.set_register(r1, r_val - val);
+                cpu.registers.set_register(r1, final_val);
                 cpu.registers.flags.set(z.into(), true.into(), h.into(), c.into());
             }
 

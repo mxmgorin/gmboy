@@ -17,14 +17,6 @@ impl Emu {
     pub fn new(cart_bytes: Vec<u8>) -> Result<Self, String> {
         let cart = Cart::new(cart_bytes)?;
 
-        println!("Cart Loaded:");
-        println!("\t Title    : {}", cart.header.title);
-        println!("\t Type     : {:?}", cart.header.cart_type);
-        println!("\t ROM Size : {:?}", cart.header.rom_size);
-        println!("\t RAM Size : {:?}", cart.header.ram_size);
-        println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
-        println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
-
         Ok(Self {
             cpu: Cpu::new(Bus::new(cart, Ram::new())),
             running: false,
@@ -51,5 +43,15 @@ impl Emu {
         }
 
         Ok(())
+    }
+    
+    fn _print_cart(&self, cart: &Cart) {
+        println!("Cart Loaded:");
+        println!("\t Title    : {}", cart.header.title);
+        println!("\t Type     : {:?}", cart.header.cart_type);
+        println!("\t ROM Size : {:?}", cart.header.rom_size);
+        println!("\t RAM Size : {:?}", cart.header.ram_size);
+        println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
+        println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
     }
 }

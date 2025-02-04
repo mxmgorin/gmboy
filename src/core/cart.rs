@@ -124,11 +124,6 @@ impl CartHeader {
 
 fn parse_title(bytes: &[u8]) -> Result<String, String> {
     let title_bytes = &bytes[0x0134..0x0144];
-
-    if cfg!(debug_assertions) {
-        println!("Cart title bytes: {:?}", title_bytes);
-    }
-
     let title = String::from_utf8_lossy(title_bytes).to_string();
     let trimmed_title = title.trim_end_matches('\0').to_string();
 
@@ -266,10 +261,6 @@ impl TryFrom<u8> for CgbFlag {
     type Error = String;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
-        if cfg!(debug_assertions) {
-            println!("CGB Flag byte: {value}");
-        }
-
         match value {
             0x80 => Ok(CgbFlag::CGBMode),
             0xC0 => Ok(CgbFlag::NonCGBMode),

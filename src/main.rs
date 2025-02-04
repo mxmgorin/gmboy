@@ -11,7 +11,6 @@ fn main() {
     }
 
     let cart_path = &args[1];
-    println!("Cart path provided: {}", cart_path);
     let result = read_bytes(cart_path);
 
     let Ok(cart_bytes) = result else {
