@@ -1,6 +1,6 @@
-pub mod timer;
 mod io;
 pub mod ram;
+pub mod timer;
 
 pub mod bus;
 

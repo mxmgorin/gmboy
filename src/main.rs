@@ -1,6 +1,6 @@
+use rusty_gb_emu::emu::Emu;
 use std::path::Path;
 use std::{env, fs};
-use rusty_gb_emu::emu::Emu;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

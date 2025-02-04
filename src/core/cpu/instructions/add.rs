@@ -10,15 +10,16 @@ pub struct AddInstruction {
 impl ExecutableInstruction for AddInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
-            AddressMode::IMP | AddressMode::D16 | AddressMode::D8 | AddressMode::HL_SPe8 => unreachable!("not used"),
-            | AddressMode::R_HLI(_r)
+            AddressMode::IMP | AddressMode::D16 | AddressMode::D8 | AddressMode::HL_SPe8 => {
+                unreachable!("not used")
+            }
+            AddressMode::R_HLI(_r)
             | AddressMode::R_HLD(_r)
             | AddressMode::HLI_R(_r)
             | AddressMode::HLD_R(_r) => unreachable!("not used"),
-            AddressMode::R_R(r1, _r2)
-            | AddressMode::MR_R(r1, _r2)
-            | AddressMode::R_MR(r1, _r2)
-        => execute_add(cpu, fetched_data, r1),
+            AddressMode::R_R(r1, _r2) | AddressMode::MR_R(r1, _r2) | AddressMode::R_MR(r1, _r2) => {
+                execute_add(cpu, fetched_data, r1)
+            }
             AddressMode::R_D8(r1)
             | AddressMode::R(r1)
             | AddressMode::R_D16(r1)

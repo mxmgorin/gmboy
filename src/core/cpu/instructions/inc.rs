@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::FetchedData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct IncInstruction {
@@ -34,7 +34,10 @@ impl ExecutableInstruction for IncInstruction {
 
                 let mut value = fetched_data.value.wrapping_add(1);
                 value &= 0xFF; // Ensure it fits into 8 bits
-                cpu.bus.write(fetched_data.dest_addr.expect("must exist for MR"), value as u8);
+                cpu.bus.write(
+                    fetched_data.dest_addr.expect("must exist for MR"),
+                    value as u8,
+                );
                 set_flags(cpu, value);
             }
             AddressMode::R(r1) => {
@@ -61,6 +64,10 @@ fn set_flags(cpu: &mut Cpu, val: u16) {
         return;
     }
 
-    cpu.registers
-        .set_flags(Some((val == 0) as i8), Some(0), Some(((val & 0x0F) == 0) as i8), None);
+    cpu.registers.set_flags(
+        Some((val == 0) as i8),
+        Some(0),
+        Some(((val & 0x0F) == 0) as i8),
+        None,
+    );
 }

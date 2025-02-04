@@ -17,7 +17,7 @@ impl ExecutableInstruction for RetInstruction {
         if ConditionType::check_cond(&cpu.registers, self.condition_type) {
             let lo = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
             cpu.update_cycles(1);
-            
+
             let hi = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
             cpu.update_cycles(1);
 

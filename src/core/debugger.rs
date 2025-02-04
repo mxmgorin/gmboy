@@ -1,26 +1,29 @@
-use crate::core::cpu::instructions::common::Instruction;
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::{FetchedData, Instruction};
 
 #[cfg(debug_assertions)]
 #[derive(Debug, Clone)]
 pub struct Debugger {
     msg: [u8; 1024],
     size: usize,
+    log_type: DebugLogType,
 }
 
 #[cfg(debug_assertions)]
-impl Default for Debugger {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum DebugLogType {
+    Custom,
+    GbDoctor,
 }
 
+#[cfg(debug_assertions)]
+
 impl Debugger {
-    pub fn new() -> Self {
+    pub fn new(log_type: DebugLogType) -> Self {
         Debugger {
             msg: [0; 1024],
             size: 0,
+            log_type,
         }
     }
 
@@ -37,8 +40,34 @@ impl Debugger {
             println!("DBG: {:?}", msg_str);
         }
     }
+    pub fn print_gb_doctor_info(&self, cpu: &Cpu) {
+        if self.log_type != DebugLogType::GbDoctor {
+            return;
+        }
 
-    #[cfg(debug_assertions)]
+        let pc_mem = format!(
+            "PCMEM:{:02X},{:02X},{:02X},{:02X}",
+            cpu.bus.read(cpu.registers.pc),
+            cpu.bus.read(cpu.registers.pc.wrapping_add(1)),
+            cpu.bus.read(cpu.registers.pc.wrapping_add(2)),
+            cpu.bus.read(cpu.registers.pc.wrapping_add(3))
+        );
+        println!(
+            "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} {}",
+            cpu.registers.a,
+            cpu.registers.f,
+            cpu.registers.b,
+            cpu.registers.c,
+            cpu.registers.d,
+            cpu.registers.e,
+            cpu.registers.h,
+            cpu.registers.l,
+            cpu.registers.sp,
+            cpu.registers.pc,
+            pc_mem
+        );
+    }
+
     pub fn print_cpu_info(
         &self,
         cpu: &Cpu,
@@ -47,6 +76,10 @@ impl Debugger {
         opcode: u8,
         fetched_data: &FetchedData,
     ) {
+        if self.log_type != DebugLogType::Custom {
+            return;
+        }
+
         println!(
             "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             cpu.ticks,

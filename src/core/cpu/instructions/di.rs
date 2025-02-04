@@ -1,5 +1,6 @@
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::FetchedData;
 
 /// Disable Interrupts by clearing the IME flag.
 #[derive(Debug, Clone, Copy)]

@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::{Cpu}; use crate::cpu::instructions::common::FetchedData;
-
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::FetchedData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct RlaInstruction;
@@ -12,7 +12,8 @@ impl ExecutableInstruction for RlaInstruction {
         let c: u8 = (u >> 7) & 1;
 
         cpu.registers.a = (u << 1) | cf;
-        cpu.registers.set_flags(0.into(), 0.into(), 0.into(), Some((c != 0) as i8));
+        cpu.registers
+            .set_flags(0.into(), 0.into(), 0.into(), Some((c != 0) as i8));
     }
 
     fn get_address_mode(&self) -> AddressMode {

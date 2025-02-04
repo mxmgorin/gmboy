@@ -13,21 +13,21 @@ pub enum BusAddrLocation {
     /// 0x9800 - 0x9BFF: VRAM
     BgMap1,
     /// 0x9C00 - 0x9FFF: VRAM
-    BgMap2,  
+    BgMap2,
     /// 0xA000 - 0xBFFF: 8 KiB External RAM. From cartridge, switchable bank if any
-    CartRam, 
+    CartRam,
     /// 0xC000 - 0xCFFF
     WRamBank0,
     /// 0xD000 - 0xDFFF: 4 KiB Work RAM (WRAM). In CGB mode, switchable bank 1–7.
     WRamBank1To7,
     /// 0xE000 - 0xFDFF: Echo RAM (mirror of C000–DDFF). Nintendo says use of this area is prohibited.
-    EchoRam,              
+    EchoRam,
     /// 0xFE00 - 0xFE9F: Object attribute memory (OAM)
     Oam,
     /// 0xFEA0 - 0xFEFF: Nintendo says use of this area is prohibited.
-    Unusable,             
+    Unusable,
     /// 0xFF00 - 0xFF7F
-    IoRegisters,          
+    IoRegisters,
     /// 0xFF80 - 0xFFFE: High RAM (HRAM).
     ZeroPage,
     /// 0xFFFF: Interrupt enable register.
@@ -91,8 +91,7 @@ impl Bus {
                 self.cart.read(address)
             }
             BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
-            BusAddrLocation::EchoRam |
-            BusAddrLocation::Unusable => 0,
+            BusAddrLocation::EchoRam | BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
             BusAddrLocation::ZeroPage => self.ram.h_ram_read(address),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register,
@@ -116,8 +115,7 @@ impl Bus {
             BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
-            BusAddrLocation::EchoRam |
-            BusAddrLocation::Unusable => {},
+            BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::IoRegisters => self.io.write(address, value),
             BusAddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,

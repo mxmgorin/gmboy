@@ -27,8 +27,8 @@ impl ExecutableInstruction for XorInstruction {
 mod tests {
     use super::*;
     use crate::cart::Cart;
-    use crate::core::bus::Bus;
     use crate::core::bus::ram::Ram;
+    use crate::core::bus::Bus;
     use crate::cpu::Cpu;
 
     #[test]
@@ -36,7 +36,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0b10101010;
 
-        let fetched_data = FetchedData { value: 0b10101010, dest_addr: None };
+        let fetched_data = FetchedData {
+            value: 0b10101010,
+            dest_addr: None,
+        };
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP,
@@ -56,7 +59,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0b10101010; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0b01010101, dest_addr: None }; // XOR with a different value
+        let fetched_data = FetchedData {
+            value: 0b01010101,
+            dest_addr: None,
+        }; // XOR with a different value
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode
@@ -76,7 +82,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0b10101010; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0, dest_addr: None }; // XOR with 0
+        let fetched_data = FetchedData {
+            value: 0,
+            dest_addr: None,
+        }; // XOR with 0
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode
@@ -96,7 +105,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0xFF; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0xFF, dest_addr: None }; // XOR with maximum value (255)
+        let fetched_data = FetchedData {
+            value: 0xFF,
+            dest_addr: None,
+        }; // XOR with maximum value (255)
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode
@@ -116,7 +128,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0x00; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0xFF, dest_addr: None }; // XOR with maximum value (255)
+        let fetched_data = FetchedData {
+            value: 0xFF,
+            dest_addr: None,
+        }; // XOR with maximum value (255)
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode
@@ -136,7 +151,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0b11001010; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0b10110101, dest_addr: None }; // Random value
+        let fetched_data = FetchedData {
+            value: 0b10110101,
+            dest_addr: None,
+        }; // Random value
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode
@@ -156,7 +174,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0b11110000, dest_addr: None }; // XOR with non-zero value
+        let fetched_data = FetchedData {
+            value: 0b11110000,
+            dest_addr: None,
+        }; // XOR with non-zero value
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode
@@ -176,7 +197,10 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(Cart::new(vec![0u8; 1000]).unwrap(), Ram::new()));
         cpu.registers.a = 0b11111111; // Initial value in the A register
 
-        let fetched_data = FetchedData { value: 0b00000000, dest_addr: None }; // XOR with zero
+        let fetched_data = FetchedData {
+            value: 0b00000000,
+            dest_addr: None,
+        }; // XOR with zero
 
         let instruction = XorInstruction {
             address_mode: AddressMode::IMP, // Implied mode

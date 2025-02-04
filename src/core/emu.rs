@@ -1,8 +1,8 @@
+use crate::core::bus::ram::Ram;
 use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
-use crate::core::debugger::Debugger;
-use crate::core::bus::ram::Ram;
+use crate::core::debugger::{DebugLogType, Debugger};
 use std::thread;
 
 #[derive(Debug)]
@@ -36,7 +36,7 @@ impl Emu {
     pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
         #[cfg(debug_assertions)]
-        let mut debugger = Some(Debugger::new());
+        let mut debugger = Some(Debugger::new(DebugLogType::GbDoctor));
         #[cfg(not(debug_assertions))]
         let mut debugger = None;
 

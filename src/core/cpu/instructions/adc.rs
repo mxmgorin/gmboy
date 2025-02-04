@@ -10,11 +10,10 @@ pub struct AdcInstruction {
 impl ExecutableInstruction for AdcInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
-            AddressMode::IMP
-            | AddressMode::D16
-            | AddressMode::D8
-            | AddressMode::HL_SPe8 => unreachable!("not used"),
-            | AddressMode::R_HLI(_r)
+            AddressMode::IMP | AddressMode::D16 | AddressMode::D8 | AddressMode::HL_SPe8 => {
+                unreachable!("not used")
+            }
+            AddressMode::R_HLI(_r)
             | AddressMode::R_HLD(_r)
             | AddressMode::HLI_R(_r)
             | AddressMode::HLD_R(_r) => unreachable!("not used"),

@@ -31,13 +31,13 @@ impl Registers {
         // values after boot rom
         Self {
             a: 0x01,
-            f: 0,//0xB0,
+            f: 0xB0,
             b: 0x00,
             c: 0x13,
             d: 0x00,
-            e: 0,//0xD8,
+            e: 0xD8,
             h: 0x01,
-            l: 0,//0x4D,
+            l: 0x4D,
             sp: 0xFFFE,
             pc: 0x100,
         }
@@ -172,10 +172,10 @@ mod tests {
     fn test_set_flags() {
         let mut regs = Registers::new();
         regs.f = 0b10000000;
-        
+
         regs.set_flags(None, None, None, Some(1));
-        
-        assert!(regs.get_flag_z());        
+
+        assert!(regs.get_flag_z());
         println!("{:#b}", regs.f)
     }
 }

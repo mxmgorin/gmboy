@@ -3,7 +3,7 @@ use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction,
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
-use crate::core::InterruptType;
+use crate::core::{debugger, InterruptType};
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -26,6 +26,11 @@ impl Cpu {
     }
 
     pub fn step(&mut self, debugger: &mut Option<Debugger>) -> Result<(), String> {
+        #[cfg(debug_assertions)]
+        if let Some(debugger) = debugger {
+            debugger.print_gb_doctor_info(self);
+        }
+
         if self.bus.io.interrupts.cpu_halted {
             self.update_cycles(1);
 
