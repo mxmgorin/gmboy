@@ -91,7 +91,7 @@ impl Bus {
                 self.cart.read(address)
             }
             BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
-            BusAddrLocation::EchoRam => 0,
+            BusAddrLocation::EchoRam |
             BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
             BusAddrLocation::ZeroPage => self.ram.h_ram_read(address),
@@ -116,8 +116,8 @@ impl Bus {
             BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
-            BusAddrLocation::EchoRam => {}
-            BusAddrLocation::Unusable => (),
+            BusAddrLocation::EchoRam |
+            BusAddrLocation::Unusable => {},
             BusAddrLocation::IoRegisters => self.io.write(address, value),
             BusAddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
