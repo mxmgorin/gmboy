@@ -92,8 +92,6 @@ impl AddressMode {
                 let mut addr = cpu.registers.read_register(r2);
 
                 if r2 == RegisterType::C {
-                    // LDH A,[C]. Copy the byte at address $FF00+C into register A.
-                    // This is sometimes written as ‘LD A,[$FF00+C]’.
                     addr |= 0xFF00;
                 }
 
@@ -105,8 +103,6 @@ impl AddressMode {
                 let mut addr = cpu.registers.read_register(r1);
 
                 if r1 == RegisterType::C {
-                    // LDH [C],A. This is sometimes written as ‘LD [$FF00+C],A’.
-                    // Copy the value in register A into the byte at address $FF00+C.
                     addr |= 0xFF00;
                 }
 
