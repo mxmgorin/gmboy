@@ -4,32 +4,34 @@ use crate::core::cart::Cart;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {
-    /// 16 KiB ROM bank 00.From cartridge, usually a fixed bank.
-    RomBank0, // 0x0000 - 0x3FFF
-    /// 16 KiB ROM Bank 01–NN. From cartridge, switchable bank via mapper (if any).
-    RomBank1, // 0x4000 - 0x7FFF
-    /// VRAM
-    ChrRam,   // 0x8000 - 0x97FF
-    /// VRAM
-    BgMap1,   // 0x9800 - 0x9BFF
-    /// VRAM
-    BgMap2,   // 0x9C00 - 0x9FFF
-    /// 8 KiB External RAM. From cartridge, switchable bank if any
-    CartRam,  // 0xA000 - 0xBFFF
-    WRamBank0, // 0xC000 - 0xCFFF
-    /// 4 KiB Work RAM (WRAM). In CGB mode, switchable bank 1–7.
-    WRamBank1To7, // 0xD000 - 0xDFFF
-    /// Echo RAM (mirror of C000–DDFF). Nintendo says use of this area is prohibited.
-    EchoRam,               // 0xE000 - 0xFDFF
-    /// Object attribute memory (OAM)
-    Oam, // 0xFE00 - 0xFE9F
-    /// Nintendo says use of this area is prohibited.
-    Unusable,              // 0xFEA0 - 0xFEFF
-    IoRegisters,           // 0xFF00 - 0xFF7F
-    /// High RAM (HRAM).
-    ZeroPage, // 0xFF80 - 0xFFFE
-    /// Interrupt enable register.
-    IeRegister, // 0xFFFF
+    /// 0x0000 - 0x3FFF: 16 KiB ROM bank 00.From cartridge, usually a fixed bank.
+    RomBank0,
+    /// 0x4000 - 0x7FFF: 16 KiB ROM Bank 01–NN. From cartridge, switchable bank via mapper (if any).
+    RomBank1,
+    /// 0x8000 - 0x97FF: VRAM
+    ChrRam,
+    /// 0x9800 - 0x9BFF: VRAM
+    BgMap1,
+    /// 0x9C00 - 0x9FFF: VRAM
+    BgMap2,  
+    /// 0xA000 - 0xBFFF: 8 KiB External RAM. From cartridge, switchable bank if any
+    CartRam, 
+    /// 0xC000 - 0xCFFF
+    WRamBank0,
+    /// 0xD000 - 0xDFFF: 4 KiB Work RAM (WRAM). In CGB mode, switchable bank 1–7.
+    WRamBank1To7,
+    /// 0xE000 - 0xFDFF: Echo RAM (mirror of C000–DDFF). Nintendo says use of this area is prohibited.
+    EchoRam,              
+    /// 0xFE00 - 0xFE9F: Object attribute memory (OAM)
+    Oam,
+    /// 0xFEA0 - 0xFEFF: Nintendo says use of this area is prohibited.
+    Unusable,             
+    /// 0xFF00 - 0xFF7F
+    IoRegisters,          
+    /// 0xFF80 - 0xFFFE: High RAM (HRAM).
+    ZeroPage,
+    /// 0xFFFF: Interrupt enable register.
+    IeRegister,
 }
 
 impl From<u16> for BusAddrLocation {
