@@ -28,8 +28,8 @@ pub enum BusAddrLocation {
     Unusable,
     /// 0xFF00 - 0xFF7F
     IoRegisters,
-    /// 0xFF80 - 0xFFFE: High RAM (HRAM).
-    ZeroPage,
+    /// 0xFF80 - 0xFFFE: High RAM (HRAM). Aka ZeroPage
+    HRam,
     /// 0xFFFF: Interrupt enable register.
     IeRegister,
 }
@@ -51,7 +51,7 @@ impl From<u16> for BusAddrLocation {
             0xFE00..=0xFE9F => BusAddrLocation::Oam,
             0xFEA0..=0xFEFF => BusAddrLocation::Unusable,
             0xFF00..=0xFF7F => BusAddrLocation::IoRegisters,
-            0xFF80..=0xFFFE => BusAddrLocation::ZeroPage,
+            0xFF80..=0xFFFE => BusAddrLocation::HRam,
             0xFFFF => BusAddrLocation::IeRegister,
         }
     }
@@ -91,7 +91,7 @@ impl Bus {
             BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
-            BusAddrLocation::ZeroPage => self.ram.h_ram_read(address),
+            BusAddrLocation::HRam => self.ram.h_ram_read(address),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register,
         }
     }
@@ -115,7 +115,7 @@ impl Bus {
             }
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::IoRegisters => self.io.write(address, value),
-            BusAddrLocation::ZeroPage => self.ram.h_ram_write(address, value),
+            BusAddrLocation::HRam => self.ram.h_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
     }
