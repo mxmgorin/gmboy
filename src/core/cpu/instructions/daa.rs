@@ -38,7 +38,7 @@ impl ExecutableInstruction for DaaInstruction {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 
-        if cpu.registers.flags.get_n()
+        if cpu.registers.flags.get_h()
             || (!cpu.registers.flags.get_n() && (cpu.registers.a & 0xF) > 9)
         {
             u = 6;

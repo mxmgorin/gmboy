@@ -36,7 +36,7 @@ impl Emu {
     pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
         #[cfg(debug_assertions)]
-        let mut debugger = Some(Debugger::new(DebugLogType::GbDoctor));
+        let mut debugger = Some(Debugger::new(DebugLogType::GbDoctor, false));
         #[cfg(not(debug_assertions))]
         let mut debugger = None;
 

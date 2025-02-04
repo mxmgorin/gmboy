@@ -7,6 +7,7 @@ pub struct Debugger {
     msg: [u8; 1024],
     size: usize,
     log_type: DebugLogType,
+    read_serial: bool,
 }
 
 #[cfg(debug_assertions)]
@@ -19,16 +20,17 @@ pub enum DebugLogType {
 #[cfg(debug_assertions)]
 
 impl Debugger {
-    pub fn new(log_type: DebugLogType) -> Self {
+    pub fn new(log_type: DebugLogType, read_serial: bool) -> Self {
         Debugger {
             msg: [0; 1024],
             size: 0,
             log_type,
+            read_serial,
         }
     }
 
     pub fn update(&mut self, cpu: &mut Cpu) {
-        if cpu.bus.io.serial.has_data() {
+        if self.read_serial && cpu.bus.io.serial.has_data() {
             self.msg[self.size] = cpu.bus.io.serial.take_data();
             self.size += 1;
         }
@@ -40,6 +42,7 @@ impl Debugger {
             println!("DBG: {:?}", msg_str);
         }
     }
+
     pub fn print_gb_doctor_info(&self, cpu: &Cpu) {
         if self.log_type != DebugLogType::GbDoctor {
             return;
