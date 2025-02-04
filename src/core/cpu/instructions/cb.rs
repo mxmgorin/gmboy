@@ -79,7 +79,7 @@ impl ExecutableInstruction for CbInstruction {
                 let mut set_c = false;
                 let mut result: u8 = (reg_val << 1) & 0xFF;
 
-                if ((reg_val & (1 << 7)) != 0) {
+                if (reg_val & (1 << 7)) != 0 {
                     result |= 1;
                     set_c = true;
                 }
@@ -92,8 +92,8 @@ impl ExecutableInstruction for CbInstruction {
                 // RRC
                 let old = reg_val;
                 reg_val = reg_val >> 1 | (old << 7);
-                
-                cpu.set_reg8(reg, reg_val);                
+
+                cpu.set_reg8(reg, reg_val);
                 cpu.registers.flags.set(
                     (reg_val == 0).into(),
                     false.into(),
@@ -105,7 +105,7 @@ impl ExecutableInstruction for CbInstruction {
                 // RL
                 let old = reg_val;
                 reg_val = (reg_val << 1) | (flag_c as u8);
-                
+
                 cpu.set_reg8(reg, reg_val);
                 cpu.registers.flags.set(
                     (reg_val == 0).into(),
@@ -118,7 +118,7 @@ impl ExecutableInstruction for CbInstruction {
                 // RR
                 let old = reg_val;
                 reg_val = (reg_val >> 1) | ((flag_c as u8) << 7);
-                
+
                 cpu.set_reg8(reg, reg_val);
                 cpu.registers.flags.set(
                     (reg_val == 0).into(),
@@ -131,7 +131,7 @@ impl ExecutableInstruction for CbInstruction {
                 // SLA
                 let old = reg_val;
                 reg_val <<= 1;
-                
+
                 cpu.set_reg8(reg, reg_val);
                 cpu.registers.flags.set(
                     (reg_val == 0).into(),
@@ -144,7 +144,7 @@ impl ExecutableInstruction for CbInstruction {
                 // SRA
                 let u: i8 = reg_val as i8;
                 let u = (u >> 1) as u8;
-                
+
                 cpu.set_reg8(reg, u);
                 cpu.registers.flags.set(
                     (u != 0).into(),
@@ -157,7 +157,7 @@ impl ExecutableInstruction for CbInstruction {
                 // SWAP
                 reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
                 cpu.set_reg8(reg, reg_val);
-                
+
                 cpu.registers
                     .flags
                     .set((reg_val == 0).into(), false.into(), false.into(), false.into());
@@ -165,7 +165,7 @@ impl ExecutableInstruction for CbInstruction {
             7 => {
                 // SRL
                 let u = reg_val >> 1;
-                
+
                 cpu.set_reg8(reg, u);
                 cpu.registers.flags.set(
                     (u != 0).into(),
