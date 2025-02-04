@@ -69,7 +69,7 @@ pub fn set_flags(cpu: &mut Cpu, val: u16) {
     cpu.registers.f.set(
         Some(val == 0),
         Some(true),
-        Some((val & 0x0F) == 0),
+        Some((val & 0x0F) == 0x0F),
         None,
     );
 }
