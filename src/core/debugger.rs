@@ -8,6 +8,7 @@ pub struct Debugger {
     size: usize,
     log_type: DebugLogType,
     read_serial: bool,
+    print_cpu: bool,
 }
 
 #[cfg(debug_assertions)]
@@ -20,12 +21,13 @@ pub enum DebugLogType {
 #[cfg(debug_assertions)]
 
 impl Debugger {
-    pub fn new(log_type: DebugLogType, read_serial: bool) -> Self {
+    pub fn new(log_type: DebugLogType, read_serial: bool, print_cpu: bool) -> Self {
         Debugger {
             msg: [0; 1024],
             size: 0,
             log_type,
             read_serial,
+            print_cpu,
         }
     }
 
@@ -79,7 +81,7 @@ impl Debugger {
         opcode: u8,
         fetched_data: &FetchedData,
     ) {
-        if self.log_type != DebugLogType::Custom {
+        if !self.print_cpu || self.log_type != DebugLogType::Custom {
             return;
         }
 
