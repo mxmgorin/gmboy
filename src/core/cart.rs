@@ -3,7 +3,7 @@ use std::fmt::Display;
 #[derive(Debug, Clone)]
 pub struct Cart {
     pub header: CartHeader,
-    pub bytes: Vec<u8>,
+    pub rom_data: Vec<u8>,
     pub checksum_valid: bool,
 }
 
@@ -25,13 +25,13 @@ impl Cart {
         Ok(Self {
             checksum_valid: checksum == header.header_checksum,
             header,
-            bytes,
+            rom_data: bytes,
         })
     }
 
     pub fn read(&self, address: u16) -> u8 {
         // todo: impl ram
-        self.bytes[address as usize]
+        self.rom_data[address as usize]
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
