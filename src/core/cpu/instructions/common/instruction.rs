@@ -37,6 +37,7 @@ use crate::cpu::instructions::scf::ScfInstruction;
 use crate::cpu::instructions::stop::StopInstruction;
 use crate::cpu::instructions::sub::SubInstruction;
 use std::fmt::Display;
+use crate::cpu::instructions::cb::CbInstruction;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -78,6 +79,7 @@ pub enum Instruction {
     Sub(SubInstruction),
     Adc(AdcInstruction),
     Rst(RstInstruction),
+    Cb(CbInstruction),
 }
 
 impl ExecutableInstruction for Instruction {
@@ -118,6 +120,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Sub(inst) => inst.execute(cpu, fetched_data),
             Instruction::Adc(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rst(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Cb(inst) => inst.execute(cpu, fetched_data),
         }
     }
 
@@ -159,6 +162,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Sub(inst) => inst.get_address_mode(),
             Instruction::Adc(inst) => inst.get_address_mode(),
             Instruction::Rst(inst) => inst.get_address_mode(),
+            Instruction::Cb(inst) => inst.get_address_mode(),
         }
     }
 }
@@ -201,6 +205,7 @@ impl Instruction {
             Instruction::Sub(_) => InstructionType::SUB,
             Instruction::Adc(_) => InstructionType::ADC,
             Instruction::Rst(_) => InstructionType::RST,
+            Instruction::Cb(_) => InstructionType::CB,
         }
     }
 

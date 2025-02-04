@@ -5,6 +5,7 @@ use crate::core::cpu::instructions::*;
 use crate::cpu::instructions::adc::AdcInstruction;
 use crate::cpu::instructions::add::AddInstruction;
 use crate::cpu::instructions::and::AndInstruction;
+use crate::cpu::instructions::cb::CbInstruction;
 use crate::cpu::instructions::cp::CpInstruction;
 use crate::cpu::instructions::pop::PopInstruction;
 use crate::cpu::instructions::push::PushInstruction;
@@ -620,6 +621,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::Z),
     });
+    instructions[0xCB] = Instruction::Cb(CbInstruction);
     instructions[0xCE] = Instruction::Adc(AdcInstruction {
         address_mode: AddressMode::R_D8(RegisterType::A),
     });

@@ -4,6 +4,7 @@ use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::core::{InterruptType};
+use crate::cpu::instructions::common::RegisterType;
 use crate::util::{LittleEndianBytes};
 
 #[derive(Debug, Clone)]
@@ -111,6 +112,40 @@ impl Cpu {
             }
 
             //dma_tick(); todo
+        }
+    }
+
+    pub fn read_reg8(&self, rt: RegisterType) -> u8 {
+        match rt {
+            RegisterType::A => self.registers.a,
+            RegisterType::F => self.registers.f.byte,
+            RegisterType::B => self.registers.b,
+            RegisterType::C => self.registers.c,
+            RegisterType::D => self.registers.d,
+            RegisterType::E => self.registers.e,
+            RegisterType::H => self.registers.h,
+            RegisterType::L => self.registers.l,
+            RegisterType::HL => self.bus.read(self.registers.read_register(RegisterType::HL)),
+            _ => {
+                panic!("**ERR INVALID REG8: {:?}", rt);
+            }
+        }
+    }
+
+    pub fn set_reg8(&mut self, rt: RegisterType, val: u8) {
+        match rt {
+            RegisterType::A => self.registers.a = val & 0xFF,
+            RegisterType::F => self.registers.f.byte = val & 0xFF,
+            RegisterType::B => self.registers.b = val & 0xFF,
+            RegisterType::C => self.registers.c = val & 0xFF,
+            RegisterType::D => self.registers.d = val & 0xFF,
+            RegisterType::E => self.registers.e = val & 0xFF,
+            RegisterType::H => self.registers.h = val & 0xFF,
+            RegisterType::L => self.registers.l = val & 0xFF,
+            RegisterType::HL => self.bus.write(self.registers.read_register(RegisterType::HL), val),
+            _ => {
+                panic!("**ERR INVALID REG8: {:?}", rt);
+            }
         }
     }
 
