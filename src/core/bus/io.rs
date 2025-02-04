@@ -113,7 +113,9 @@ impl Io {
 
 #[derive(Debug, Clone)]
 pub struct Serial {
+    /// FF01 — SB: Serial transfer data
     sb: u8,
+    /// FF02 — SC: Serial transfer control
     sc: u8,
 }
 
