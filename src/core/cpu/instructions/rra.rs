@@ -22,14 +22,14 @@ pub struct RraInstruction;
 
 impl ExecutableInstruction for RraInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        let carry: u8 = cpu.registers.get_flag_c() as u8;
+        let carry: u8 = cpu.registers.f.get_c() as u8;
         let new_c: u8 = cpu.registers.a & 1;
 
         cpu.registers.a >>= 1;
         cpu.registers.a |= carry << 7;
 
         cpu.registers
-            .set_flags(0.into(), 0.into(), 0.into(), Some((new_c != 0) as i8));
+            .f.set(0.into(), 0.into(), 0.into(), Some((new_c != 0) as i8));
     }
 
     fn get_address_mode(&self) -> AddressMode {

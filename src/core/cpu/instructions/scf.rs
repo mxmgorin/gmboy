@@ -7,7 +7,7 @@ pub struct ScfInstruction;
 
 impl ExecutableInstruction for ScfInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.registers.set_flags(None, 0.into(), 0.into(), 1.into());
+        cpu.registers.f.set(None, 0.into(), 0.into(), 1.into());
     }
 
     fn get_address_mode(&self) -> AddressMode {

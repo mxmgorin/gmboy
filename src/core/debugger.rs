@@ -55,7 +55,7 @@ impl Debugger {
         println!(
             "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} {}",
             cpu.registers.a,
-            cpu.registers.f,
+            cpu.registers.f.byte,
             cpu.registers.b,
             cpu.registers.c,
             cpu.registers.d,
@@ -89,7 +89,7 @@ impl Debugger {
             cpu.bus.read(pc.wrapping_add(1)),
             cpu.bus.read(pc.wrapping_add(2)),
             cpu.registers.a,
-            cpu.registers.flags_to_string(),
+            cpu.registers.f,
             cpu.registers.b,
             cpu.registers.c,
             cpu.registers.d,

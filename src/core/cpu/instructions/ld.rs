@@ -59,7 +59,7 @@ impl ExecutableInstruction for LdInstruction {
                 let c_flag = (sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
                 cpu.registers
-                    .set_flags(0.into(), 0.into(), Some(h_flag as i8), Some(c_flag as i8));
+                    .f.set(0.into(), 0.into(), Some(h_flag as i8), Some(c_flag as i8));
                 let offset_e = fetched_data.value as i8; // truncate to 8 bits (+8e)
                 cpu.registers
                     .set_register(RegisterType::HL, sp.wrapping_add(offset_e as u16));

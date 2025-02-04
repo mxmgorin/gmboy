@@ -14,7 +14,7 @@ pub struct CplInstruction;
 impl ExecutableInstruction for CplInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         cpu.registers.a = !cpu.registers.a;
-        cpu.registers.set_flags(None, 1.into(), 1.into(), None);
+        cpu.registers.f.set(None, 1.into(), 1.into(), None);
     }
 
     fn get_address_mode(&self) -> AddressMode {

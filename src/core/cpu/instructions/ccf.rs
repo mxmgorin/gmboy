@@ -14,11 +14,11 @@ pub struct CcfInstruction;
 
 impl ExecutableInstruction for CcfInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.registers.set_flags(
+        cpu.registers.f.set(
             None,
             Some(0),
             Some(0),
-            Some(!cpu.registers.get_flag_c() as i8),
+            Some(!cpu.registers.f.get_c() as i8),
         );
     }
 

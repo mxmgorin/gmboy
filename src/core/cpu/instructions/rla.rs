@@ -8,12 +8,12 @@ pub struct RlaInstruction;
 impl ExecutableInstruction for RlaInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         let u: u8 = cpu.registers.a;
-        let cf: u8 = cpu.registers.get_flag_c() as u8;
+        let cf: u8 = cpu.registers.f.get_c() as u8;
         let c: u8 = (u >> 7) & 1;
 
         cpu.registers.a = (u << 1) | cf;
         cpu.registers
-            .set_flags(0.into(), 0.into(), 0.into(), Some((c != 0) as i8));
+            .f.set(0.into(), 0.into(), 0.into(), Some((c != 0) as i8));
     }
 
     fn get_address_mode(&self) -> AddressMode {

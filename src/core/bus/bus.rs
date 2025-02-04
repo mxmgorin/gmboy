@@ -53,7 +53,6 @@ impl From<u16> for BusAddrLocation {
             0xFF00..=0xFF7F => BusAddrLocation::IoRegisters,
             0xFF80..=0xFFFE => BusAddrLocation::ZeroPage,
             0xFFFF => BusAddrLocation::IeRegister,
-            _ => unreachable!("covered full range for u16"),
         }
     }
 }

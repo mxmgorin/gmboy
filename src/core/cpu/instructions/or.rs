@@ -10,7 +10,7 @@ impl ExecutableInstruction for OrInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         let value = fetched_data.value & 0xFF;
         cpu.registers.a |= value as u8;
-        cpu.registers.set_flags(
+        cpu.registers.f.set(
             ((cpu.registers.a == 0) as i8).into(),
             0.into(),
             0.into(),

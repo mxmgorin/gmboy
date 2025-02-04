@@ -34,7 +34,7 @@ impl Cart {
         self.rom_data[address as usize]
     }
 
-    pub fn write(&mut self, address: u16, value: u8) {
+    pub fn write(&mut self, _address: u16, _value: u8) {
         // self.bytes[address as usize] = value;
         unimplemented!("cart write")
     }

@@ -41,11 +41,11 @@ impl ExecutableInstruction for AdcInstruction {
 fn execute_adc(cpu: &mut Cpu, fetched_data: FetchedData, _r1: RegisterType) {
     let u: u16 = fetched_data.value;
     let a: u16 = cpu.registers.a as u16;
-    let c: u16 = cpu.registers.get_flag_c() as u16;
+    let c: u16 = cpu.registers.f.get_c() as u16;
 
     cpu.registers.a = ((a + u + c) & 0xFF) as u8;
 
-    cpu.registers.set_flags(
+    cpu.registers.f.set(
         ((cpu.registers.a == 0) as i8).into(),
         0.into(),
         (((a & 0xF) + (u & 0xF) + c > 0xF) as i8).into(),

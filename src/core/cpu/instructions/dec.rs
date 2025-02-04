@@ -48,6 +48,7 @@ impl ExecutableInstruction for DecInstruction {
                 let value = fetched_data.value.wrapping_sub(1);
                 cpu.registers.set_register(r1, value);
                 let value = cpu.registers.read_register(r1);
+
                 set_flags(cpu, value);
             }
         }
@@ -64,7 +65,7 @@ pub fn set_flags(cpu: &mut Cpu, val: u16) {
         return;
     }
 
-    cpu.registers.set_flags(
+    cpu.registers.f.set(
         Some((val == 0) as i8),
         Some(1),
         Some(((val & 0x0F) == 0) as i8),

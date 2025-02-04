@@ -14,7 +14,7 @@ impl ExecutableInstruction for CpInstruction {
         let n: i32 = reg_a_i32 - fetched_value_i32;
         let reg_value_diff = (reg_a_i32 & 0x0F) - (fetched_value_i32 & 0x0F);
 
-        cpu.registers.set_flags(
+        cpu.registers.f.set(
             ((n == 0) as i8).into(),
             1.into(),
             ((reg_value_diff < 0) as i8).into(),

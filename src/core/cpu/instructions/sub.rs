@@ -49,7 +49,7 @@ fn execute_sub(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let h = ((reg_val_i32 & 0xF).wrapping_sub(val_i32 & 0xF)) < 0;
     let c = reg_val_i32.wrapping_sub(val_i32) < 0;
 
-    cpu.registers.set_flags(
+    cpu.registers.f.set(
         (z as i8).into(),
         1.into(),
         (h as i8).into(),

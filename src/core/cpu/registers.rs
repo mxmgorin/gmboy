@@ -1,5 +1,6 @@
 use crate::core::cpu::instructions::common::RegisterType;
-use crate::core::util::{get_bit_flag, reverse_u16, set_bit};
+use crate::core::util::{get_bit_flag, set_bit};
+use std::fmt::Display;
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
 const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
@@ -9,7 +10,7 @@ const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 #[derive(Debug, Clone)]
 pub struct Registers {
     pub a: u8,
-    pub f: u8,
+    pub f: Flags,
     pub b: u8,
     pub c: u8,
     pub d: u8,
@@ -18,6 +19,66 @@ pub struct Registers {
     pub l: u8,
     pub sp: u16,
     pub pc: u16,
+}
+
+#[derive(Debug, Clone)]
+pub struct Flags {
+    pub byte: u8,
+}
+
+impl Flags {
+    pub fn boot() -> Flags {
+        Self { byte: 0xB0 }
+    }
+    
+    pub fn set(&mut self, z: Option<i8>, n: Option<i8>, h: Option<i8>, c: Option<i8>) {
+        if let Some(z) = z {
+            set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, z != 0);
+        }
+
+        if let Some(n) = n {
+            set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, n != 0);
+        }
+
+        if let Some(h) = h {
+            set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, h != 0);
+        }
+
+        if let Some(c) = c {
+            set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, c != 0);
+        }
+    }
+
+    pub fn get_z(&self) -> bool {
+        get_bit_flag(self.byte, ZERO_FLAG_BYTE_POSITION)
+    }
+
+    pub fn get_n(&self) -> bool {
+        get_bit_flag(self.byte, SUBTRACT_FLAG_BYTE_POSITION)
+    }
+
+    pub fn get_h(&self) -> bool {
+        get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
+    }
+
+    pub fn get_c(&self) -> bool {
+        get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION)
+    }
+}
+
+impl Display for Flags {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str: String = [
+            (self.get_z(), 'Z'),
+            (self.get_n(), 'N'),
+            (self.get_h(), 'H'),
+            (self.get_c(), 'C'),
+        ]
+        .iter()
+        .map(|&(flag, c)| if flag { c } else { '-' })
+        .collect();
+        write!(f, "{}", str)
+    }
 }
 
 impl Default for Registers {
@@ -31,7 +92,7 @@ impl Registers {
         // values after boot rom
         Self {
             a: 0x01,
-            f: 0xB0,
+            f: Flags::boot(),
             b: 0x00,
             c: 0x13,
             d: 0x00,
@@ -46,7 +107,7 @@ impl Registers {
     pub fn read_register(&self, register_type: RegisterType) -> u16 {
         match register_type {
             RegisterType::A => self.a as u16,
-            RegisterType::F => self.f as u16,
+            RegisterType::F => self.f.byte as u16,
             RegisterType::B => self.b as u16,
             RegisterType::C => self.c as u16,
             RegisterType::D => self.d as u16,
@@ -63,7 +124,7 @@ impl Registers {
     }
 
     pub fn get_af(&self) -> u16 {
-        (self.a as u16) << 8 | self.f as u16
+        (self.a as u16) << 8 | self.f.byte as u16
     }
 
     pub fn get_bc(&self) -> u16 {
@@ -81,7 +142,7 @@ impl Registers {
     pub fn set_register(&mut self, register_type: RegisterType, value: u16) {
         match register_type {
             RegisterType::A => self.a = (value & 0xFF) as u8,
-            RegisterType::F => self.f = (value & 0xFF) as u8,
+            RegisterType::F => self.f.byte = (value & 0xFF) as u8,
             RegisterType::B => self.b = (value & 0xFF) as u8,
             RegisterType::C => self.c = (value & 0xFF) as u8,
             RegisterType::D => self.d = (value & 0xFF) as u8,
@@ -99,7 +160,7 @@ impl Registers {
 
     pub fn set_af(&mut self, value: u16) {
         self.a = ((value & 0xFF00) >> 8) as u8;
-        self.f = (value & 0xFF) as u8;
+        self.f.byte = (value & 0xFF) as u8;
     }
 
     pub fn set_bc(&mut self, value: u16) {
@@ -116,52 +177,6 @@ impl Registers {
         self.h = ((value & 0xFF00) >> 8) as u8;
         self.l = (value & 0xFF) as u8;
     }
-
-    pub fn set_flags(&mut self, z: Option<i8>, n: Option<i8>, h: Option<i8>, c: Option<i8>) {
-        if let Some(z) = z {
-            set_bit(&mut self.f, ZERO_FLAG_BYTE_POSITION, z != 0);
-        }
-
-        if let Some(n) = n {
-            set_bit(&mut self.f, SUBTRACT_FLAG_BYTE_POSITION, n != 0);
-        }
-
-        if let Some(h) = h {
-            set_bit(&mut self.f, HALF_CARRY_FLAG_BYTE_POSITION, h != 0);
-        }
-
-        if let Some(c) = c {
-            set_bit(&mut self.f, CARRY_FLAG_BYTE_POSITION, c != 0);
-        }
-    }
-
-    pub fn get_flag_z(&self) -> bool {
-        get_bit_flag(self.f, ZERO_FLAG_BYTE_POSITION)
-    }
-
-    pub fn get_flag_n(&self) -> bool {
-        get_bit_flag(self.f, SUBTRACT_FLAG_BYTE_POSITION)
-    }
-
-    pub fn get_flag_h(&self) -> bool {
-        get_bit_flag(self.f, HALF_CARRY_FLAG_BYTE_POSITION)
-    }
-
-    pub fn get_flag_c(&self) -> bool {
-        get_bit_flag(self.f, CARRY_FLAG_BYTE_POSITION)
-    }
-
-    pub fn flags_to_string(&self) -> String {
-        [
-            (self.get_flag_z(), 'Z'),
-            (self.get_flag_n(), 'N'),
-            (self.get_flag_h(), 'H'),
-            (self.get_flag_c(), 'C'),
-        ]
-        .iter()
-        .map(|&(flag, c)| if flag { c } else { '-' })
-        .collect()
-    }
 }
 
 #[cfg(test)]
@@ -171,31 +186,31 @@ mod tests {
     #[test]
     fn test_get_flag_z() {
         let mut regs = Registers::new();
-        regs.f = 0b10000000;
-        assert!(regs.get_flag_z());
+        regs.f.byte = 0b10000000;
+        assert!(regs.f.get_z());
 
-        regs.f = 0b00000000;
-        assert!(!regs.get_flag_z());
+        regs.f.byte = 0b00000000;
+        assert!(!regs.f.get_z());
     }
 
     #[test]
     fn test_get_flag_c() {
         let mut regs = Registers::new();
-        regs.f = 0b00010000;
-        assert!(regs.get_flag_c());
+        regs.f.byte = 0b00010000;
+        assert!(regs.f.get_c());
 
-        regs.f = 0b00000000;
-        assert!(!regs.get_flag_c());
+        regs.f.byte = 0b00000000;
+        assert!(!regs.f.get_c());
     }
 
     #[test]
     fn test_set_flags() {
         let mut regs = Registers::new();
-        regs.f = 0b10000000;
+        regs.f.byte = 0b10000000;
 
-        regs.set_flags(None, None, None, Some(1));
+        regs.f.set(None, None, None, Some(1));
 
-        assert!(regs.get_flag_z());
-        println!("{:#b}", regs.f)
+        assert!(regs.f.get_z());
+        println!("{:#b}", regs.f.byte)
     }
 }

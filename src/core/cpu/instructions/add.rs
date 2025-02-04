@@ -72,7 +72,7 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
 
     let val = val_u32 & 0xFFFF;
     cpu.registers.set_register(r1, val as u16);
-    cpu.registers.set_flags(
+    cpu.registers.f.set(
         (z as i8).into(),
         0.into(),
         (h as i8).into(),

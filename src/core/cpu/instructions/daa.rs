@@ -38,24 +38,24 @@ impl ExecutableInstruction for DaaInstruction {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 
-        if cpu.registers.get_flag_n()
-            || (!cpu.registers.get_flag_n() && (cpu.registers.a & 0xF) > 9)
+        if cpu.registers.f.get_n()
+            || (!cpu.registers.f.get_n() && (cpu.registers.a & 0xF) > 9)
         {
             u = 6;
         }
 
-        if cpu.registers.get_flag_c() || (!cpu.registers.get_flag_n() && cpu.registers.a > 0x99) {
+        if cpu.registers.f.get_c() || (!cpu.registers.f.get_n() && cpu.registers.a > 0x99) {
             u |= 0x60;
             fc = 1;
         }
 
-        if cpu.registers.get_flag_n() {
+        if cpu.registers.f.get_n() {
             cpu.registers.a = cpu.registers.a.wrapping_sub(u);
         } else {
             cpu.registers.a = cpu.registers.a.wrapping_add(u);
         };
 
-        cpu.registers.set_flags(
+        cpu.registers.f.set(
             ((cpu.registers.a == 0) as i8).into(),
             None,
             0.into(),
