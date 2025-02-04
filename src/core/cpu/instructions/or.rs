@@ -11,10 +11,10 @@ impl ExecutableInstruction for OrInstruction {
         let value = fetched_data.value & 0xFF;
         cpu.registers.a |= value as u8;
         cpu.registers.f.set(
-            ((cpu.registers.a == 0) as i8).into(),
-            0.into(),
-            0.into(),
-            0.into(),
+            (cpu.registers.a == 0).into(),
+            false.into(),
+            false.into(),
+            false.into(),
         );
     }
 

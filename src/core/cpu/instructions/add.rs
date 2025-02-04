@@ -53,19 +53,19 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
         val_u32 = val as u32;
     }
 
-    let mut z = if (val_u32 & 0xFF) == 0 { 1 } else { 0 };
+    let mut z = if (val_u32 & 0xFF) == 0 { Some(true) } else { Some(false) };
     let mut h = (cpu.registers.read_register(r1) & 0xF) + (fetched_data.value & 0xF) >= 0x10;
     let mut c = (cpu.registers.read_register(r1) & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
     if is_16bit {
-        z = -1;
+        z = None;
         h = (cpu.registers.read_register(r1) & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
         let n = (cpu.registers.read_register(r1) as u32) + (fetched_data.value as u32);
         c = n >= 0x10000;
     }
 
     if r1 == RegisterType::SP {
-        z = 0;
+        z = Some(false);
         h = (cpu.registers.read_register(r1) & 0xF) + (fetched_data.value & 0xF) >= 0x10;
         c = (cpu.registers.read_register(r1) & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
     }
@@ -73,9 +73,9 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let val = val_u32 & 0xFFFF;
     cpu.registers.set_register(r1, val as u16);
     cpu.registers.f.set(
-        (z as i8).into(),
-        0.into(),
-        (h as i8).into(),
-        (c as i8).into(),
+        z.into(),
+        false.into(),
+        h.into(),
+        c.into(),
     );
 }

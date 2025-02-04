@@ -31,21 +31,21 @@ impl Flags {
         Self { byte: 0xB0 }
     }
     
-    pub fn set(&mut self, z: Option<i8>, n: Option<i8>, h: Option<i8>, c: Option<i8>) {
+    pub fn set(&mut self, z: Option<bool>, n: Option<bool>, h: Option<bool>, c: Option<bool>) {
         if let Some(z) = z {
-            set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, z != 0);
+            set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, z);
         }
 
         if let Some(n) = n {
-            set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, n != 0);
+            set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, n);
         }
 
         if let Some(h) = h {
-            set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, h != 0);
+            set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, h);
         }
 
         if let Some(c) = c {
-            set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, c != 0);
+            set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, c);
         }
     }
 
@@ -208,7 +208,7 @@ mod tests {
         let mut regs = Registers::new();
         regs.f.byte = 0b10000000;
 
-        regs.f.set(None, None, None, Some(1));
+        regs.f.set(None, None, None, Some(true));
 
         assert!(regs.f.get_z());
         println!("{:#b}", regs.f.byte)

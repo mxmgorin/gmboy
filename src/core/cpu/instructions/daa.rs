@@ -56,10 +56,10 @@ impl ExecutableInstruction for DaaInstruction {
         };
 
         cpu.registers.f.set(
-            ((cpu.registers.a == 0) as i8).into(),
+            (cpu.registers.a == 0).into(),
             None,
-            0.into(),
-            Some(fc as i8),
+            false.into(),
+            Some(fc != 0),
         );
     }
 

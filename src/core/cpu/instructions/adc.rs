@@ -46,9 +46,9 @@ fn execute_adc(cpu: &mut Cpu, fetched_data: FetchedData, _r1: RegisterType) {
     cpu.registers.a = ((a + u + c) & 0xFF) as u8;
 
     cpu.registers.f.set(
-        ((cpu.registers.a == 0) as i8).into(),
-        0.into(),
-        (((a & 0xF) + (u & 0xF) + c > 0xF) as i8).into(),
-        ((a + u + c > 0xFF) as i8).into(),
+        (cpu.registers.a == 0).into(),
+        false.into(),
+        ((a & 0xF) + (u & 0xF) + c > 0xF).into(),
+        (a + u + c > 0xFF).into(),
     );
 }

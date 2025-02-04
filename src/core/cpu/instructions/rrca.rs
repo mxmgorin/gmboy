@@ -11,7 +11,7 @@ impl ExecutableInstruction for RrcaInstruction {
         cpu.registers.a |= b << 7;
 
         cpu.registers
-            .f.set(0.into(), 0.into(), 0.into(), Some((b != 0) as i8));
+            .f.set(false.into(), false.into(), false.into(), Some(b != 0));
     }
 
     fn get_address_mode(&self) -> AddressMode {

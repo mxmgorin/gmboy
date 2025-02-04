@@ -16,9 +16,9 @@ impl ExecutableInstruction for CcfInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         cpu.registers.f.set(
             None,
-            Some(0),
-            Some(0),
-            Some(!cpu.registers.f.get_c() as i8),
+            Some(false),
+            Some(false),
+            Some(!cpu.registers.f.get_c()),
         );
     }
 

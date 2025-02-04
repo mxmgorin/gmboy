@@ -12,7 +12,7 @@ impl ExecutableInstruction for RlcaInstruction {
         cpu.registers.a = u;
 
         cpu.registers
-            .f.set(0.into(), 0.into(), 0.into(), Some(c.into()));
+            .f.set(false.into(), false.into(), false.into(), Some(c.into()));
     }
 
     fn get_address_mode(&self) -> AddressMode {

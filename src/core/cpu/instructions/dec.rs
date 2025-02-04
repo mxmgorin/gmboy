@@ -9,6 +9,8 @@ pub struct DecInstruction {
 
 impl ExecutableInstruction for DecInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        let mut value = fetched_data.value.wrapping_sub(1);
+
         match self.address_mode {
             AddressMode::IMP
             | AddressMode::D16
@@ -32,12 +34,12 @@ impl ExecutableInstruction for DecInstruction {
             AddressMode::MR(_r1) => {
                 cpu.update_cycles(1); // always needs because uses only HL reg which is 16 bit
 
-                let mut value = fetched_data.value.wrapping_sub(1);
                 value &= 0xFF; // Ensure it fits into 8 bits
                 cpu.bus.write(
                     fetched_data.dest_addr.expect("must exist for MR"),
                     value as u8,
                 );
+                
                 set_flags(cpu, value);
             }
             AddressMode::R(r1) => {
@@ -45,7 +47,6 @@ impl ExecutableInstruction for DecInstruction {
                     cpu.update_cycles(1);
                 }
 
-                let value = fetched_data.value.wrapping_sub(1);
                 cpu.registers.set_register(r1, value);
                 let value = cpu.registers.read_register(r1);
 
@@ -66,9 +67,9 @@ pub fn set_flags(cpu: &mut Cpu, val: u16) {
     }
 
     cpu.registers.f.set(
-        Some((val == 0) as i8),
-        Some(1),
-        Some(((val & 0x0F) == 0) as i8),
+        Some(val == 0),
+        Some(true),
+        Some((val & 0x0F) == 0),
         None,
     );
 }

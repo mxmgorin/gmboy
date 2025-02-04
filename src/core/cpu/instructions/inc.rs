@@ -65,9 +65,9 @@ fn set_flags(cpu: &mut Cpu, val: u16) {
     }
 
     cpu.registers.f.set(
-        Some((val == 0) as i8),
-        Some(0),
-        Some(((val & 0x0F) == 0) as i8),
+        Some(val == 0),
+        Some(false),
+        Some((val & 0x0F) == 0),
         None,
     );
 }
