@@ -681,6 +681,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::R_D8(RegisterType::A),
     });
     instructions[0xE7] = Instruction::Rst(RstInstruction { address: 0x20 });
+    instructions[0xE8] = Instruction::Add(AddInstruction {
+        address_mode: AddressMode::HL_SPe8,
+    });
     instructions[0xEA] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::A16_R(RegisterType::A),
     });
