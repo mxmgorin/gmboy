@@ -10,13 +10,14 @@ pub struct AddInstruction {
 impl ExecutableInstruction for AddInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self.address_mode {
-            AddressMode::IMP | AddressMode::D16 | AddressMode::D8 | AddressMode::HL_SPe8 => {
-                unreachable!("not used")
-            }
-            AddressMode::R_HLI(_r)
-            | AddressMode::R_HLD(_r)
-            | AddressMode::HLI_R(_r)
-            | AddressMode::HLD_R(_r) => unreachable!("not used"),
+            AddressMode::IMP
+            | AddressMode::D16
+            | AddressMode::D8
+            | AddressMode::R_HLI(_)
+            | AddressMode::R_HLD(_)
+            | AddressMode::HLI_R(_)
+            | AddressMode::HLD_R(_) => unreachable!("not used"),
+            AddressMode::HL_SPe8 => execute_add(cpu, fetched_data, RegisterType::SP),
             AddressMode::R_R(r1, _r2) | AddressMode::MR_R(r1, _r2) | AddressMode::R_MR(r1, _r2) => {
                 execute_add(cpu, fetched_data, r1)
             }
@@ -49,11 +50,15 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
 
     if r1 == RegisterType::SP {
         let fetched_val_i8 = fetched_data.value as i8;
-        let val = cpu.registers.read_register(r1) + fetched_val_i8 as u16;
+        let val = cpu.registers.read_register(r1).wrapping_add(fetched_val_i8 as u16);
         val_u32 = val as u32;
     }
 
-    let mut z = if (val_u32 & 0xFF) == 0 { Some(true) } else { Some(false) };
+    let mut z = if (val_u32 & 0xFF) == 0 {
+        Some(true)
+    } else {
+        Some(false)
+    };
     let mut h = (cpu.registers.read_register(r1) & 0xF) + (fetched_data.value & 0xF) >= 0x10;
     let mut c = (cpu.registers.read_register(r1) & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
@@ -72,10 +77,7 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
 
     let val = val_u32 & 0xFFFF;
     cpu.registers.set_register(r1, val as u16);
-    cpu.registers.flags.set(
-        z.into(),
-        false.into(),
-        h.into(),
-        c.into(),
-    );
+    cpu.registers
+        .flags
+        .set(z.into(), false.into(), h.into(), c.into());
 }
