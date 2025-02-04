@@ -19,6 +19,7 @@ impl From<u16> for BusAddrLocation {
             0xFF00..=0xFF7F => BusAddrLocation::IoRegisters,
             0xFF80..=0xFFFE => BusAddrLocation::ZeroPage,
             0xFFFF => BusAddrLocation::IeRegister,
+            _ => unreachable!("covered full range for u16"),
         }
     }
 }
@@ -47,13 +48,14 @@ impl Bus {
             | BusAddrLocation::BgMap1
             | BusAddrLocation::BgMap2
             | BusAddrLocation::RamBank0
-            | BusAddrLocation::ChrRam
-             => {
+            | BusAddrLocation::ChrRam => {
                 // TODO: Impl
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
                 0
             }
-            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => self.cart.read(address),
+            BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
+                self.cart.read(address)
+            }
             BusAddrLocation::RamBank1To7 => self.ram.w_ram_read(address),
             BusAddrLocation::EchoRam => 0,
             BusAddrLocation::Unusable => 0,
@@ -70,7 +72,6 @@ impl Bus {
             BusAddrLocation::ChrRam
             | BusAddrLocation::BgMap1
             | BusAddrLocation::BgMap2
-            
             | BusAddrLocation::ObjectAttributeMemory => {
                 // TODO: IMPL
                 eprintln!("Can't BUS write {:?} address {:X}", location, address)
@@ -104,15 +105,15 @@ impl Bus {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {
-    RomBank0,              // 0x0000 - 0x3FFF
-    RomBank1,              // 0x4000 - 0x7FFF
-    ChrRam,                // 0x8000 - 0x97FF
-    BgMap1,                // 0x9800 - 0x9BFF
-    BgMap2,                // 0x9C00 - 0x9FFF
-    CartRam,               // 0xA000 - 0xBFFF
-    RamBank0,              // 0xC000 - 0xCFFF
+    RomBank0, // 0x0000 - 0x3FFF
+    RomBank1, // 0x4000 - 0x7FFF
+    ChrRam,   // 0x8000 - 0x97FF
+    BgMap1,   // 0x9800 - 0x9BFF
+    BgMap2,   // 0x9C00 - 0x9FFF
+    CartRam,  // 0xA000 - 0xBFFF
+    RamBank0, // 0xC000 - 0xCFFF
     // WRAM (Working RAM)
-    RamBank1To7,           // 0xD000 - 0xDFFF
+    RamBank1To7, // 0xD000 - 0xDFFF
     // Reserved echo RAM
     EchoRam,               // 0xE000 - 0xFDFF
     ObjectAttributeMemory, // 0xFE00 - 0xFE9F
