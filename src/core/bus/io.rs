@@ -82,13 +82,7 @@ impl Io {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let location = IoAddressLocation::try_from(address);
-
-        let Ok(location) = location else {
-            // todo: what to do? there is 0xFF03, may be more
-            eprintln!("can't IO write to address {:X}", address);
-            return;
-        };
+        let location = IoAddressLocation::try_from(address).unwrap();
 
         match location {
             IoAddressLocation::SerialSb => self.serial.sb = value,
@@ -105,7 +99,7 @@ impl Io {
             | IoAddressLocation::Background
             | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
-                eprintln!("Can't IO write address {:?} {}", location, address);
+                eprintln!("Can't IO write {:?} address {:X}", location, address);
             }
         }
     }
