@@ -94,7 +94,7 @@ impl AddressMode {
                 if r2 == RegisterType::C {
                     // LDH A,[C]. Copy the byte at address $FF00+C into register A.
                     // This is sometimes written as ‘LD A,[$FF00+C]’.
-                    addr |= 0xFF0;
+                    addr |= 0xFF00;
                 }
 
                 fetched_data.value = cpu.bus.read(addr) as u16;
