@@ -32,7 +32,7 @@ impl ExecutableInstruction for SbcInstruction {
             AddressMode::R_MR(r1, _) |
             AddressMode::R_D8(r1) => {
                 let c_val = cpu.registers.flags.get_c();
-                let val = fetched_data.value.wrapping_add(c_val as u16);
+                let val = fetched_data.value.wrapping_sub(c_val as u16);
                 let r_val = cpu.registers.read_register(r1);
                 
                 let r_val_i32 = r_val as i32;
