@@ -2,19 +2,51 @@ use crate::core::bus::io::Io;
 use crate::core::bus::ram::Ram;
 use crate::core::cart::Cart;
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum BusAddrLocation {
+    /// 16 KiB ROM bank 00.From cartridge, usually a fixed bank.
+    RomBank0, // 0x0000 - 0x3FFF
+    /// 16 KiB ROM Bank 01–NN. From cartridge, switchable bank via mapper (if any).
+    RomBank1, // 0x4000 - 0x7FFF
+    /// VRAM
+    ChrRam,   // 0x8000 - 0x97FF
+    /// VRAM
+    BgMap1,   // 0x9800 - 0x9BFF
+    /// VRAM
+    BgMap2,   // 0x9C00 - 0x9FFF
+    /// 8 KiB External RAM. From cartridge, switchable bank if any
+    CartRam,  // 0xA000 - 0xBFFF
+    WRamBank0, // 0xC000 - 0xCFFF
+    /// 4 KiB Work RAM (WRAM). In CGB mode, switchable bank 1–7.
+    WRamBank1To7, // 0xD000 - 0xDFFF
+    /// Echo RAM (mirror of C000–DDFF). Nintendo says use of this area is prohibited.
+    EchoRam,               // 0xE000 - 0xFDFF
+    /// Object attribute memory (OAM)
+    Oam, // 0xFE00 - 0xFE9F
+    /// Nintendo says use of this area is prohibited.
+    Unusable,              // 0xFEA0 - 0xFEFF
+    IoRegisters,           // 0xFF00 - 0xFF7F
+    /// High RAM (HRAM).
+    ZeroPage, // 0xFF80 - 0xFFFE
+    /// Interrupt enable register.
+    IeRegister, // 0xFFFF
+}
+
 impl From<u16> for BusAddrLocation {
     fn from(address: u16) -> Self {
         match address {
             0x0000..=0x3FFF => BusAddrLocation::RomBank0,
             0x4000..=0x7FFF => BusAddrLocation::RomBank1,
+            // ------------  VRAM  ------------
             0x8000..=0x97FF => BusAddrLocation::ChrRam,
             0x9800..=0x9BFF => BusAddrLocation::BgMap1,
             0x9C00..=0x9FFF => BusAddrLocation::BgMap2,
+            //---------------------------------------
             0xA000..=0xBFFF => BusAddrLocation::CartRam,
-            0xC000..=0xCFFF => BusAddrLocation::RamBank0,
-            0xD000..=0xDFFF => BusAddrLocation::RamBank1To7,
+            0xC000..=0xCFFF => BusAddrLocation::WRamBank0,
+            0xD000..=0xDFFF => BusAddrLocation::WRamBank1To7,
             0xE000..=0xFDFF => BusAddrLocation::EchoRam,
-            0xFE00..=0xFE9F => BusAddrLocation::ObjectAttributeMemory,
+            0xFE00..=0xFE9F => BusAddrLocation::Oam,
             0xFEA0..=0xFEFF => BusAddrLocation::Unusable,
             0xFF00..=0xFF7F => BusAddrLocation::IoRegisters,
             0xFF80..=0xFFFE => BusAddrLocation::ZeroPage,
@@ -44,10 +76,10 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::ObjectAttributeMemory
+            BusAddrLocation::Oam
             | BusAddrLocation::BgMap1
             | BusAddrLocation::BgMap2
-            | BusAddrLocation::RamBank0
+            | BusAddrLocation::WRamBank0
             | BusAddrLocation::ChrRam => {
                 // TODO: Impl
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
@@ -56,7 +88,7 @@ impl Bus {
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
-            BusAddrLocation::RamBank1To7 => self.ram.w_ram_read(address),
+            BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
             BusAddrLocation::EchoRam => 0,
             BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
@@ -72,14 +104,14 @@ impl Bus {
             BusAddrLocation::ChrRam
             | BusAddrLocation::BgMap1
             | BusAddrLocation::BgMap2
-            | BusAddrLocation::ObjectAttributeMemory => {
+            | BusAddrLocation::Oam => {
                 // TODO: IMPL
                 eprintln!("Can't BUS write {:?} address {:X}", location, address)
             }
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
             }
-            BusAddrLocation::RamBank0 | BusAddrLocation::RamBank1To7 => {
+            BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
             BusAddrLocation::EchoRam => {}
@@ -101,28 +133,6 @@ impl Bus {
         self.write(address + 1, ((value >> 8) & 0xFF) as u8);
         self.write(address, (value & 0xFF) as u8);
     }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum BusAddrLocation {
-    RomBank0, // 0x0000 - 0x3FFF
-    RomBank1, // 0x4000 - 0x7FFF
-    ChrRam,   // 0x8000 - 0x97FF
-    BgMap1,   // 0x9800 - 0x9BFF
-    BgMap2,   // 0x9C00 - 0x9FFF
-    CartRam,  // 0xA000 - 0xBFFF
-    RamBank0, // 0xC000 - 0xCFFF
-    // WRAM (Working RAM)
-    RamBank1To7, // 0xD000 - 0xDFFF
-    // Reserved echo RAM
-    EchoRam,               // 0xE000 - 0xFDFF
-    ObjectAttributeMemory, // 0xFE00 - 0xFE9F
-    Unusable,              // 0xFEA0 - 0xFEFF
-    IoRegisters,           // 0xFF00 - 0xFF7F
-    /// Aka High RAM (HRAM)
-    ZeroPage, // 0xFF80 - 0xFFFE
-    /// Interrupt enable register
-    IeRegister, // 0xFFFF
 }
 
 #[cfg(test)]
