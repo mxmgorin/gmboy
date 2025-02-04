@@ -523,7 +523,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::L),
     });
     instructions[0xAE] = Instruction::Xor(XorInstruction {
-        address_mode: AddressMode::R_R(RegisterType::A, RegisterType::HL),
+        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::HL),
     });
     instructions[0xAF] = Instruction::Xor(XorInstruction {
         address_mode: AddressMode::R_R(RegisterType::A, RegisterType::A),
