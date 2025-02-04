@@ -119,17 +119,19 @@ pub struct Serial {
     sc: u8,
 }
 
+impl Default for Serial {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Serial {
     pub fn new() -> Serial {
         Self { sb: 0, sc: 0 }
     }
 
     pub fn has_data(&self) -> bool {
-        if self.sc == 0x81 {
-            return true;
-        }
-
-        false
+        self.sc == 0x81
     }
 
     pub fn take_data(&mut self) -> u8 {
