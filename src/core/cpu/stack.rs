@@ -23,7 +23,7 @@ impl Stack {
         Stack::push(registers, bus, shifted as u8);
     }
 
-    pub fn pop16(registers: &mut Registers, bus: &mut Bus) -> u16 {
+    pub fn _pop16(registers: &mut Registers, bus: &mut Bus) -> u16 {
         let lo = Stack::pop(registers, bus) as u16;
         let hi = Stack::pop(registers, bus) as u16;
 
