@@ -17,20 +17,20 @@ impl ExecutableInstruction for SubInstruction {
             | AddressMode::R_HLI(_)
             | AddressMode::R_HLD(_)
             | AddressMode::HLI_R(_)
+            | AddressMode::MR_D8(_)
+            | AddressMode::MR(_)
+            | AddressMode::A8_R(_)
+            | AddressMode::R(_)
+            | AddressMode::D16_R(_)
+            | AddressMode::A16_R(_)
+            | AddressMode::R_A8(_)
+            | AddressMode::R_D16(_)
+            | AddressMode::R_A16(_)
+            | AddressMode::MR_R(_, _)
             | AddressMode::HLD_R(_) => unreachable!("not used"),
-            AddressMode::R_R(r1, _r2) | AddressMode::MR_R(r1, _r2) | AddressMode::R_MR(r1, _r2) => {
+            AddressMode::R_R(r1, _) | AddressMode::R_MR(r1, _) | AddressMode::R_D8(r1) => {
                 execute_sub(cpu, fetched_data, r1)
             }
-            AddressMode::R_D8(r1)
-            | AddressMode::R(r1)
-            | AddressMode::R_D16(r1)
-            | AddressMode::R_A8(r1)
-            | AddressMode::A8_R(r1)
-            | AddressMode::D16_R(r1)
-            | AddressMode::MR_D8(r1)
-            | AddressMode::MR(r1)
-            | AddressMode::A16_R(r1)
-            | AddressMode::R_A16(r1) => execute_sub(cpu, fetched_data, r1),
         }
     }
 
@@ -41,18 +41,16 @@ impl ExecutableInstruction for SubInstruction {
 
 fn execute_sub(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let reg_val = cpu.registers.read_register(r1);
-    let val = reg_val.wrapping_sub(fetched_data.value);
+    let new_val = reg_val.wrapping_sub(fetched_data.value);
 
-    let z = val == 0;
+    let z = new_val == 0;
     let reg_val_i32 = reg_val as i32;
-    let val_i32 = val as i32;
-    let h = ((reg_val_i32 & 0xF).wrapping_sub(val_i32 & 0xF)) < 0;
-    let c = reg_val_i32.wrapping_sub(val_i32) < 0;
+    let fetched_val_i32 = new_val as i32;
+    let h = ((reg_val_i32 & 0xF).wrapping_sub(fetched_val_i32 & 0xF)) < 0;
+    let c = reg_val_i32.wrapping_sub(fetched_val_i32) < 0;
 
-    cpu.registers.f.set(
-        z.into(),
-        true.into(),
-        h.into(),
-        c.into(),
-    );
+    cpu.registers.set_register(r1, new_val);
+    cpu.registers
+        .f
+        .set(z.into(), true.into(), h.into(), c.into());
 }
