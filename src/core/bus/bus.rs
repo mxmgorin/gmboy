@@ -82,7 +82,6 @@ impl Bus {
 
     pub fn read(&self, address: u16) -> u8 {
         if let Some(test_bytes) = self.test_bytes {
-            println!("Reading {} from {:X}", test_bytes[address as usize], address);
             return test_bytes[address as usize];
         }
 
@@ -110,7 +109,6 @@ impl Bus {
 
     pub fn write(&mut self, address: u16, value: u8) {
         if let Some(test_bytes) = self.test_bytes.as_mut() {
-            println!("Writing {:?} to {:X}", value, address);
             test_bytes[address as usize] = value;
             return;
         }

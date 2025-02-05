@@ -7,15 +7,20 @@ use std::path::PathBuf;
 pub fn run_test_case(test_case: &Sm83TestCase) {
     print_with_dashes(&format!("Running test case: {}", test_case.name));
 
-    println!("{:?}", test_case);
     let mut cpu = setup_cpu(test_case);
-    let mut debugger = Some(Debugger::new(CpuLogType::Assembly, false));
+    let mut debugger = Some(Debugger::new(CpuLogType::None, false));
     cpu.step(&mut debugger).unwrap();
 
-    test_case.assert_final_state(&cpu);
+    let result = test_case.validate_final_state(&cpu);
+
+    if let Err(err) = result {
+        println!("{:?}", test_case);
+        print_with_dashes("Result: FAILED");
+        println!("Error: {err}");
+        panic!("Test case failed {}", test_case.name);
+    }
 
     print_with_dashes("Result: OK");
-    println!();
 }
 
 fn print_with_dashes(content: &str) {
@@ -58,7 +63,7 @@ impl Sm83TestCase {
         serde_json::from_str(json).unwrap()
     }
 
-    pub fn assert_final_state(&self, cpu: &Cpu) {
+    pub fn _assert_final_state(&self, cpu: &Cpu) {
         assert_eq!(cpu.registers.a, self.final_state.a);
         assert_eq!(cpu.registers.b, self.final_state.b);
         assert_eq!(cpu.registers.c, self.final_state.c);
@@ -79,6 +84,55 @@ impl Sm83TestCase {
         for ram in self.final_state.ram.iter() {
             assert_eq!(cpu.bus.read(ram.0), ram.1);
         }
+    }
+
+    pub fn validate_final_state(&self, cpu: &Cpu) -> Result<(), String> {
+        if cpu.registers.a != self.final_state.a {
+            return Err(String::from("Invalid A"));
+        }
+        if cpu.registers.b != self.final_state.b {
+            return Err(String::from("Invalid B"));
+        }
+        if cpu.registers.c != self.final_state.c {
+            return Err(String::from("Invalid C"));
+        }
+        if cpu.registers.d != self.final_state.d {
+            return Err(String::from("Invalid D"));
+        }
+        if cpu.registers.e != self.final_state.e {
+            return Err(String::from("Invalid E"));
+        }
+        if cpu.registers.flags.byte != self.final_state.f {
+            return Err(String::from("Invalid F"));
+        }
+        if cpu.registers.h != self.final_state.h {
+            return Err(String::from("Invalid H"));
+        }
+        if cpu.registers.l != self.final_state.l {
+            return Err(String::from("Invalid L"));
+        }
+        if cpu.registers.sp != self.final_state.sp {
+            return Err(String::from("Invalid SP"));
+        }
+        if cpu.registers.pc != self.final_state.pc {
+            return Err(String::from("Invalid PC"));
+        }
+        if cpu.enabling_ime != (self.final_state.ime != 0) {
+            return Err(String::from("Invalid IME"));
+        }
+
+        // todo: re-search
+        //assert_eq!(cpu.bus.io.interrupts.ie_register, self.final_state.ie {}
+        //assert_eq!(cpu.cycles, self.final_state.cycles {}
+
+        // Assert RAM contents
+        for ram in self.final_state.ram.iter() {
+            if cpu.bus.read(ram.0) != ram.1 {
+                return Err(String::from("Invalid RAM"));
+            }
+        }
+
+        Ok(())
     }
 }
 
