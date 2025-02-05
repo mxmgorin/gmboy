@@ -39,8 +39,8 @@ impl Debugger {
 
     pub fn print(&self) {
         if self.msg[0] != 0 {
-            let msg_str = String::from_utf8_lossy(&self.msg[..=self.size]);
-            println!("DBG: {}", msg_str);
+            let msg_str = String::from_utf8_lossy(&self.msg[..self.size]);
+            println!("{}", msg_str);
         }
     }
 

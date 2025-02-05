@@ -19,6 +19,7 @@ impl Stack {
     pub fn push16(registers: &mut Registers, bus: &mut Bus, val: u16) {
         let shifted = (val >> 8) & 0xFF;
         Stack::push(registers, bus, shifted as u8);
+        
         let shifted = val & 0xFF;
         Stack::push(registers, bus, shifted as u8);
     }

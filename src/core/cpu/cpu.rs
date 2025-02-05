@@ -152,11 +152,11 @@ impl Cpu {
     }
 
     fn handle_interrupt(&mut self, it: InterruptType) {
-        self.bus.io.interrupts.handle_interrupt(it);
-
         let address = it.get_address();
         Stack::push16(&mut self.registers, &mut self.bus, address);
         self.registers.pc = address;
+        
+        self.bus.io.interrupts.handle_interrupt(it);
     }
 
     fn fetch_opcode(&mut self) -> u8 {

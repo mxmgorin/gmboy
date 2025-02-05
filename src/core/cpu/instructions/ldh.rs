@@ -29,9 +29,6 @@ impl ExecutableInstruction for LdhInstruction {
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => unreachable!("not used for LDH instruction"),
             AddressMode::R_A8(_) | AddressMode::R_MR(_, _) => {
-                // FIXME: issue with 0xF2 LD A (C)
-                // MINE:   A:DC F:---- B:56 C:91 D:9A E:BC H:DE L:F0 SP:DF7E PC:DEF9 PCMEM:00,00,C3,82
-                // YOURS:  A:00 F:---- B:56 C:91 D:9A E:BC H:DE L:F0 SP:DF7E PC:DEF9 PCMEM:00,00,C3,82
                 let value = cpu.bus.read(0xFF00 | fetched_data.value);
                 cpu.registers.a = value; // uses only A register
             }

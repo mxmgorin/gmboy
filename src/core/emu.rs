@@ -28,7 +28,7 @@ impl Emu {
     pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
         #[cfg(debug_assertions)]
-        let mut debugger = Some(Debugger::new(CpuLogType::GbDoctor, false));
+        let mut debugger = Some(Debugger::new(CpuLogType::Assembly, true));
         #[cfg(not(debug_assertions))]
         let mut debugger = None;
 
