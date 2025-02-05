@@ -30,7 +30,7 @@ impl Cpu {
     pub fn fetch_data(&mut self) -> u8 {
         let value = self.bus.read(self.registers.pc);
         self.update_cycles(1);
-        self.registers.pc += 1;
+        self.registers.pc = self.registers.pc.wrapping_add(1);
 
         value
     }

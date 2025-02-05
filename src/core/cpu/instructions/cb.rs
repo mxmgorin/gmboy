@@ -32,7 +32,7 @@ impl ExecutableInstruction for CbInstruction {
         let reg = decode_reg(op & 0b111);
 
         let Some(reg) = reg else {
-            return; // todo: is correct?
+            return;
         };
 
         let bit = (op >> 3) & 0b111;
@@ -144,13 +144,15 @@ impl ExecutableInstruction for CbInstruction {
                 // SRA
                 let u: i8 = reg_val as i8;
                 let u = (u >> 1) as u8;
-
-                cpu.set_reg8(reg, u);
+                let result = (reg_val >> 1) | (reg_val & 0x80); // Shift right and preserve MSB
+                let carry = reg_val & 0x01 != 0; // Save LSB as Carry
+                
+                cpu.set_reg8(reg, result);
                 cpu.registers.flags.set(
-                    (u != 0).into(),
+                    (u == 0).into(),
                     false.into(),
                     false.into(),
-                    Some((reg_val & 1) != 0),
+                    carry.into(),
                 );
             }
             6 => {

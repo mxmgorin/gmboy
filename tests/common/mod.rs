@@ -30,6 +30,18 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     }
 }
 
+pub fn run_sb_test_cases(print_result: bool) {
+    for i in 0..=256 {
+        let test_cases = Sm83TestCase::load_file(&format!("cb {:02X}.json", i).to_lowercase());
+
+        for test_case in test_cases.iter() {
+            run_test_case(test_case, print_result);
+        }
+
+        println!("{:02X} passed {} test cases", 0xCB, test_cases.len());
+    }
+}
+
 fn print_with_dashes(content: &str) {
     const TOTAL_LEN: usize = 100;
     let content_length = content.len();
@@ -49,14 +61,14 @@ pub struct Sm83TestCase {
 
 impl Sm83TestCase {
     pub fn load_opcode(opcode: u16) -> Vec<Sm83TestCase> {
-        Sm83TestCase::load_file(format!("{:02X}", opcode))
+        Sm83TestCase::load_file(&format!("{:02X}.json", opcode))
     }
 
-    pub fn load_file(file_name: String) -> Vec<Sm83TestCase> {
+    pub fn load_file(file_name: &str) -> Vec<Sm83TestCase> {
         let json_path = PathBuf::from("tests")
             .join("sm83_data")
             .join("v1")
-            .join(format!("{}.json", file_name));
+            .join(file_name);
         let json_data = fs::read_to_string(&json_path)
             .unwrap_or_else(|e| panic!("Failed to read file at {:?}: {}", json_path, e));
 

@@ -1,12 +1,12 @@
-use rusty_gb_emu::cpu::instructions::common::{Instruction};
+use crate::common::{run_sb_test_cases, run_test_case, Sm83TestCase};
 use rusty_gb_emu::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
-use crate::common::{run_test_case, Sm83TestCase};
+use rusty_gb_emu::cpu::instructions::common::Instruction;
 
 mod common;
 
 #[test]
-fn test_sm83_case_custom() {
-    let test_cases = Sm83TestCase::load_opcode(0xFB);
+fn test_sm83_custom() {
+    let test_cases = Sm83TestCase::load_file("cb 28.json");
 
     for test_case in test_cases.iter() {
         run_test_case(test_case, true);
@@ -14,15 +14,21 @@ fn test_sm83_case_custom() {
 }
 
 #[test]
+fn test_sm83_sb() {
+    run_sb_test_cases(false)
+}
+
+#[test]
 fn test_sm83() {
     let print_result = false;
+    
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
         if let Instruction::Unknown(_) = instruction {
             continue;
         }
         
-        if opcode == 0xCB { // todo: handle file naming
-            continue;
+        if opcode == 0xCB {
+            run_sb_test_cases(print_result);
         }
 
         let test_cases = Sm83TestCase::load_opcode(opcode as u16);
