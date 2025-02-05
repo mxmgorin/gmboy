@@ -118,7 +118,7 @@ impl Sm83TestCase {
         if cpu.registers.pc != self.final_state.pc {
             return Err(String::from("Invalid PC"));
         }
-        if cpu.enabling_ime != (self.final_state.ime != 0) {
+        if cpu.bus.io.interrupts.ime != (self.final_state.ime != 0) {
             return Err(String::from("Invalid IME"));
         }
 
@@ -193,5 +193,5 @@ pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
         pc: test_case.initial_state.pc,
     };
     cpu.bus.io.interrupts.ie_register = test_case.initial_state.ie;
-    cpu.enabling_ime = test_case.initial_state.ime != 0
+    cpu.bus.io.interrupts.ime = test_case.initial_state.ime != 0
 }

@@ -11,7 +11,8 @@ pub struct Interrupts {
     /// Interrupt flags
     pub int_flags: u8,
     pub cpu_halted: bool,
-    pub int_master_enabled: bool,
+    /// Interrupt master enable
+    pub ime: bool,
     /// Interrupt enable register
     pub ie_register: u8,
 }
@@ -21,7 +22,7 @@ impl Interrupts {
         Self {
             int_flags: 0,
             cpu_halted: false,
-            int_master_enabled: false,
+            ime: false,
             ie_register: 0,
         }
     }
@@ -44,7 +45,7 @@ impl Interrupts {
         let it = it as u8;
         self.int_flags &= !it;
         self.cpu_halted = false;
-        self.int_master_enabled = false;
+        self.ime = false;
     }
 
     fn need_interrupt(&self, it: InterruptType) -> bool {

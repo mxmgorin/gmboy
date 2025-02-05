@@ -81,7 +81,7 @@ impl Cpu {
 
         instruction.execute(self, fetched_data);
 
-        if self.bus.io.interrupts.int_master_enabled {
+        if self.bus.io.interrupts.ime {
             if let Some(it) = self.bus.io.interrupts.get_interrupt() {
                 self.handle_interrupt(it);
             }
@@ -90,7 +90,7 @@ impl Cpu {
         }
 
         if self.enabling_ime {
-            self.bus.io.interrupts.int_master_enabled = true;
+            self.bus.io.interrupts.ime = true;
         }
 
         Ok(())

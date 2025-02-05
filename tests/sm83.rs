@@ -30,7 +30,16 @@ fn test_sm83() {
 
 #[test]
 fn test_sm83_case_41() {
-    let test_cases = Sm83TestCase::load_opcode(41);
+    let test_cases = Sm83TestCase::load_opcode(0x41);
+
+    for test_case in test_cases.iter() {
+        run_test_case(test_case, true);
+    }
+}
+
+#[test]
+fn test_sm83_case_d9() {
+    let test_cases = Sm83TestCase::load_opcode(0xD9);
 
     for test_case in test_cases.iter() {
         run_test_case(test_case, true);

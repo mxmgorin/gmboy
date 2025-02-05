@@ -26,7 +26,7 @@ impl RetiInstruction {
 
 impl ExecutableInstruction for RetiInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        cpu.bus.io.interrupts.int_master_enabled = true;
+        cpu.bus.io.interrupts.ime = true;
         self.ret_instruction.execute(cpu, fetched_data);
     }
 
