@@ -56,7 +56,7 @@ pub struct Bus {
     ram: Ram,
     vram: VRam,
     pub io: Io,
-    test_bytes: Option<[u8; 0xFFFF]>, // todo: remove, it is only for testing
+    test_bytes: Option<[u8; 0xFFFF+1]>, // todo: remove, it is only for testing
 }
 
 impl Bus {
@@ -76,7 +76,7 @@ impl Bus {
             ram: Ram::new(),
             vram: VRam::new(),
             io: Io::new(),
-            test_bytes: Some([0; 0xFFFF]),
+            test_bytes: Some([0; 0xFFFF+1]),
         }
     }
 

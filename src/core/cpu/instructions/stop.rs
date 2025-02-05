@@ -7,7 +7,7 @@ pub struct StopInstruction;
 
 impl ExecutableInstruction for StopInstruction {
     fn execute(&self, _cpu: &mut Cpu, _fetched_data: FetchedData) {
-        println!("STOP!");
+        //println!("STOP!"); todo: research
     }
 
     fn get_address_mode(&self) -> AddressMode {

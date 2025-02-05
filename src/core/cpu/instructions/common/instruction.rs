@@ -172,7 +172,7 @@ impl ExecutableInstruction for Instruction {
 }
 
 impl Instruction {
-    fn get_type(&self) -> InstructionType {
+    pub fn get_type(&self) -> InstructionType {
         match self {
             Instruction::Unknown(opcode) => {
                 panic!("Can't get_type for unknown instruction {:X}", opcode)
