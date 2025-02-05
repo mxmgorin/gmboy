@@ -61,9 +61,7 @@ impl Cpu {
         }
 
         let pc = self.registers.pc;
-        println!("PC: {}", pc);
         self.current_opcode = self.fetch_opcode();
-        println!("OPCODE: {}", self.current_opcode);
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
             return Err(format!(
