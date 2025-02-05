@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub fn run_test_case(test_case: &Sm83TestCase) {
-    print_with_dashes(&format!("Running test case: {}", test_case.name));
+    let title = format!("Test case '{}'", test_case.name);
 
     let mut cpu = setup_cpu(test_case);
     let mut debugger = Some(Debugger::new(CpuLogType::None, false));
@@ -14,13 +14,14 @@ pub fn run_test_case(test_case: &Sm83TestCase) {
     let result = test_case.validate_final_state(&cpu);
 
     if let Err(err) = result {
+        print_with_dashes(&title);
         println!("{:?}", test_case);
         print_with_dashes("Result: FAILED");
         println!("Error: {err}");
         panic!("Test case failed {}", test_case.name);
     }
 
-    print_with_dashes("Result: OK");
+    println!("{title}: OK");
 }
 
 fn print_with_dashes(content: &str) {
