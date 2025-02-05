@@ -3,6 +3,28 @@ use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cart::Cart;
 use rusty_gb_emu::cpu::Cpu;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use rusty_gb_emu::debugger::{CpuLogType, Debugger};
+
+pub fn run_test_case(test_case: &Sm83TestCase) {
+    print_with_dashes(&format!("Running test case: {}", test_case.name));
+
+    let mut cpu = set_up_cpu(test_case);
+    let mut debugger = Some(Debugger::new(CpuLogType::Assembly, false));
+    cpu.step(&mut debugger).unwrap();
+
+    test_case.assert_final_state(&cpu);
+    
+    print_with_dashes("Result: OK");
+    println!();
+}
+
+fn print_with_dashes(content: &str) {
+    const TOTAL_LEN: usize = 100;
+    let content_length = content.len();
+    let dashes = "-".repeat(TOTAL_LEN.saturating_sub(content_length));
+    println!("{} {}", content, dashes);
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Sm83TestCase {
@@ -15,10 +37,28 @@ pub struct Sm83TestCase {
 }
 
 impl Sm83TestCase {
+    pub fn load_opcode(opcode: u16) -> Vec<Sm83TestCase> {
+        Sm83TestCase::load_file(opcode.to_string())
+    }
+
+    pub fn load_file(file_name: String) -> Vec<Sm83TestCase> {
+        let json_path = PathBuf::from("tests")
+            .join("sm83_data")
+            .join("v1")
+            .join(format!("{}.json", file_name));
+        println!("Loading test cases from file: {}", json_path.display());
+        println!();
+        
+        let json_data = std::fs::read_to_string(&json_path)
+            .unwrap_or_else(|e| panic!("Failed to read file at {:?}: {}", json_path, e));
+
+        serde_json::from_str(&json_data).unwrap()
+    }
+
     pub fn from_json(json: &str) -> Sm83TestCase {
         serde_json::from_str(json).unwrap()
     }
-    
+
     pub fn assert_final_state(&self, cpu: &Cpu) {
         assert_eq!(cpu.registers.a, self.final_state.a);
         assert_eq!(cpu.registers.b, self.final_state.b);

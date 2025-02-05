@@ -1,10 +1,21 @@
-use rusty_gb_emu::debugger::{CpuLogType, Debugger};
-use crate::common::{set_up_cpu, Sm83TestCase};
+use crate::common::{run_test_case, Sm83TestCase};
 
 mod common;
 
 #[test]
-fn test_sm83_case() {
+fn test_sm83_case_41() {
+    let test_cases = Sm83TestCase::load_opcode(41);
+
+    for test_case in test_cases.iter() {
+        if test_case.name == "41 0001" {
+            println!("{:?}", test_case);
+            run_test_case(test_case);
+        }
+    }
+}
+
+#[test]
+fn test_sm83_case_static() {
     let json_data = r#"
     {
         "name": "41 0000",
@@ -40,10 +51,7 @@ fn test_sm83_case() {
         "cycles": [[9845, 65, "r-m"]]
     }"#;
 
-    let test_case = Sm83TestCase::from_json(json_data);    
-    let mut cpu = set_up_cpu(&test_case);
-    let mut debugger = Some(Debugger::new(CpuLogType::Assembly, false));
-    cpu.step(&mut debugger).unwrap();
+    let test_case = Sm83TestCase::from_json(json_data);
 
-    test_case.assert_final_state(&cpu);
+    run_test_case(&test_case);
 }
