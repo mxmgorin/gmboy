@@ -4,6 +4,8 @@ use rusty_gb_emu::cpu::{Cpu, Flags, Registers};
 use rusty_gb_emu::debugger::{CpuLogType, Debugger};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use rusty_gb_emu::cpu::instructions::common::ExecutableInstruction;
+use rusty_gb_emu::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
 
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
@@ -15,8 +17,9 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let result = test_case.validate_final_state(&cpu);
 
     if let Err(err) = result {
-        print_with_dashes(&title);
-        eprintln!("{:?}", test_case);
+        let inst = INSTRUCTIONS_BY_OPCODES[cpu.current_opcode as usize];
+        print_with_dashes(&format!("{} ({:?} {:?})", title, inst.get_type(), inst.get_address_mode()));
+        eprintln!("{:?} ", test_case);
         print_with_dashes("Result: FAILED");
         eprintln!("Error: {err}");
         panic!("Test case failed {}", test_case.name);

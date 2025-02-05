@@ -4,7 +4,7 @@ use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::core::{InterruptType};
-use crate::cpu::instructions::common::RegisterType;
+use crate::cpu::instructions::common::{RegisterType};
 use crate::util::{LittleEndianBytes};
 
 #[derive(Debug, Clone)]
