@@ -17,11 +17,11 @@ impl Stack {
     }
 
     pub fn push16(registers: &mut Registers, bus: &mut Bus, val: u16) {
-        let shifted = (val >> 8) & 0xFF;
-        Stack::push(registers, bus, shifted as u8);
-        
-        let shifted = val & 0xFF;
-        Stack::push(registers, bus, shifted as u8);
+        let high_byte = (val >> 8) & 0xFF;
+        Stack::push(registers, bus, high_byte as u8);
+
+        let low_byte = val & 0xFF;
+        Stack::push(registers, bus, low_byte as u8);
     }
 
     pub fn _pop16(registers: &mut Registers, bus: &mut Bus) -> u16 {

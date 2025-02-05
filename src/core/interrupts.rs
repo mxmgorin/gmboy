@@ -6,6 +6,16 @@ const INTERRUPTS_BY_ADDRESSES: [(u16, InterruptType); 5] = [
     (0x60, InterruptType::Joypad),
 ];
 
+#[derive(Debug, Clone, Copy)]
+#[repr(u8)]
+pub enum InterruptType {
+    VBlank = 1,
+    LCDStat = 2,
+    Timer = 4,
+    Serial = 8,
+    Joypad = 16,
+}
+
 #[derive(Debug, Clone)]
 pub struct Interrupts {
     /// Interrupt flags
@@ -57,21 +67,9 @@ impl Interrupts {
 
     fn check_interrupt(&self, it: InterruptType) -> bool {
         let it = it as u8;
+        let is_requested = self.int_flags & it != 0;
+        let is_enabled = self.ie_register & it != 0;
 
-        if (self.int_flags & it != 0) && (self.ie_register & it != 0) {
-            return true;
-        }
-
-        false
+        is_requested && is_enabled
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
-pub enum InterruptType {
-    VBlank = 1,
-    LCDStat = 2,
-    Timer = 4,
-    Serial = 8,
-    Joypad = 16,
 }
