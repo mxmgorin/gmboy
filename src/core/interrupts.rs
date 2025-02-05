@@ -17,6 +17,12 @@ pub struct Interrupts {
     pub ie_register: u8,
 }
 
+impl Default for Interrupts {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Interrupts {
     pub fn new() -> Self {
         Self {
@@ -27,10 +33,10 @@ impl Interrupts {
         }
     }
 
-    pub fn get_interrupt(&mut self) -> Option<InterruptType> {
-        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
-            if self.need_interrupt(interrupt_type) {
-                return Some(interrupt_type);
+    pub fn get_interrupt(&mut self) -> Option<(u16, InterruptType)> {
+        for (address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+            if self.check_interrupt(interrupt_type) {
+                return Some((address, interrupt_type));
             }
         }
 
@@ -43,12 +49,13 @@ impl Interrupts {
 
     pub fn handle_interrupt(&mut self, it: InterruptType) {
         let it = it as u8;
+        
         self.int_flags &= !it;
         self.cpu_halted = false;
         self.ime = false;
     }
 
-    fn need_interrupt(&self, it: InterruptType) -> bool {
+    fn check_interrupt(&self, it: InterruptType) -> bool {
         let it = it as u8;
 
         if (self.int_flags & it != 0) && (self.ie_register & it != 0) {
@@ -64,13 +71,7 @@ impl Interrupts {
 pub enum InterruptType {
     VBlank = 1,
     LCDStat = 2,
-    Timer = 3,
-    Serial = 4,
-    Joypad = 5,
-}
-
-impl InterruptType {
-    pub const fn get_address(self) -> u16 {
-        INTERRUPTS_BY_ADDRESSES[self as usize - 1].0
-    }
+    Timer = 4,
+    Serial = 8,
+    Joypad = 16,
 }

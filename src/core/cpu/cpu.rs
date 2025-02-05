@@ -83,8 +83,8 @@ impl Cpu {
         instruction.execute(self, fetched_data);
 
         if self.bus.io.interrupts.ime {
-            if let Some(it) = self.bus.io.interrupts.get_interrupt() {
-                self.handle_interrupt(it);
+            if let Some((addr, it)) = self.bus.io.interrupts.get_interrupt() {
+                self.handle_interrupt(addr, it);
             }
 
             self.enabling_ime = false;
@@ -151,8 +151,7 @@ impl Cpu {
         }
     }
 
-    fn handle_interrupt(&mut self, it: InterruptType) {
-        let address = it.get_address();
+    fn handle_interrupt(&mut self, address: u16, it: InterruptType) {
         Stack::push16(&mut self.registers, &mut self.bus, address);
         self.registers.pc = address;
         
