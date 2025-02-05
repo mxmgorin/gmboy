@@ -6,33 +6,32 @@ use crate::cpu::instructions::common::{FetchedData, Instruction};
 pub struct Debugger {
     msg: [u8; 1024],
     size: usize,
-    log_type: DebugLogType,
-    read_serial: bool,
-    print_cpu: bool,
+    cpu_log_type: CpuLogType,
+    serial_enabled: bool,
 }
 
 #[cfg(debug_assertions)]
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum DebugLogType {
-    Custom,
+pub enum CpuLogType {
+    None,
+    Assembly,
     GbDoctor,
 }
 
 #[cfg(debug_assertions)]
 
 impl Debugger {
-    pub fn new(log_type: DebugLogType, read_serial: bool, print_cpu: bool) -> Self {
+    pub fn new(log_type: CpuLogType, serial_enabled: bool) -> Self {
         Debugger {
             msg: [0; 1024],
             size: 0,
-            log_type,
-            read_serial,
-            print_cpu,
+            cpu_log_type: log_type,
+            serial_enabled,
         }
     }
 
     pub fn update(&mut self, cpu: &mut Cpu) {
-        if self.read_serial && cpu.bus.io.serial.has_data() {
+        if self.serial_enabled && cpu.bus.io.serial.has_data() {
             self.msg[self.size] = cpu.bus.io.serial.take_data();
             self.size += 1;
         }
@@ -46,7 +45,7 @@ impl Debugger {
     }
 
     pub fn print_gb_doctor_info(&self, cpu: &Cpu) {
-        if self.log_type != DebugLogType::GbDoctor {
+        if self.cpu_log_type != CpuLogType::GbDoctor {
             return;
         }
 
@@ -81,7 +80,7 @@ impl Debugger {
         opcode: u8,
         fetched_data: &FetchedData,
     ) {
-        if !self.print_cpu || self.log_type != DebugLogType::Custom {
+        if self.cpu_log_type != CpuLogType::Assembly {
             return;
         }
 

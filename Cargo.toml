@@ -8,3 +8,7 @@ default = []
 cpu_debug = []  # Add a feature to enable CPU_DEBUG
 
 [dependencies]
+
+[dev-dependencies]
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
