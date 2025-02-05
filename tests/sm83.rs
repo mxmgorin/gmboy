@@ -29,6 +29,7 @@ fn test_sm83() {
         
         if opcode == 0xCB {
             run_sb_test_cases(print_result);
+            continue;
         }
 
         let test_cases = Sm83TestCase::load_opcode(opcode as u16);
@@ -44,7 +45,7 @@ fn test_sm83() {
 }
 
 #[test]
-fn test_sm83_case_static() {
+fn test_sm83_json() {
     let json_data = r#"
     {
         "name": "41 0000",
