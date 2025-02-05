@@ -5,6 +5,15 @@ use crate::common::{run_test_case, Sm83TestCase};
 mod common;
 
 #[test]
+fn test_sm83_case_custom() {
+    let test_cases = Sm83TestCase::load_opcode(0xF2);
+
+    for test_case in test_cases.iter() {
+        run_test_case(test_case, true);
+    }
+}
+
+#[test]
 fn test_sm83() {
     let print_result = false;
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
@@ -25,24 +34,6 @@ fn test_sm83() {
         if print_result {
             println!("{:02X} passed {} test cases", opcode, test_cases.len());
         }
-    }
-}
-
-#[test]
-fn test_sm83_case_41() {
-    let test_cases = Sm83TestCase::load_opcode(0xFB);
-
-    for test_case in test_cases.iter() {
-        run_test_case(test_case, true);
-    }
-}
-
-#[test]
-fn test_sm83_case_custom() {
-    let test_cases = Sm83TestCase::load_opcode(0xF2);
-
-    for test_case in test_cases.iter() {
-        run_test_case(test_case, true);
     }
 }
 

@@ -92,37 +92,37 @@ impl Sm83TestCase {
 
     pub fn validate_final_state(&self, cpu: &Cpu) -> Result<(), String> {
         if cpu.registers.a != self.final_state.a {
-            return Err(String::from("Invalid A"));
+            return Err(format!("Invalid A: actual={}, expected={}", cpu.registers.a, self.final_state.a));
         }
         if cpu.registers.b != self.final_state.b {
-            return Err(String::from("Invalid B"));
+            return Err(format!("Invalid B: actual={}, expected={}", cpu.registers.b, self.final_state.b));
         }
         if cpu.registers.c != self.final_state.c {
-            return Err(String::from("Invalid C"));
+            return Err(format!("Invalid C: actual={}, expected={}", cpu.registers.c, self.final_state.c));
         }
         if cpu.registers.d != self.final_state.d {
-            return Err(String::from("Invalid D"));
+            return Err(format!("Invalid D: actual={}, expected={}", cpu.registers.d, self.final_state.d));
         }
         if cpu.registers.e != self.final_state.e {
-            return Err(String::from("Invalid E"));
+            return Err(format!("Invalid E: actual={}, expected={}", cpu.registers.e, self.final_state.e));
         }
         if cpu.registers.flags.byte != self.final_state.f {
-            return Err(String::from("Invalid F"));
+            return Err(format!("Invalid F: actual={}, expected={}", cpu.registers.flags.byte, self.final_state.f));
         }
         if cpu.registers.h != self.final_state.h {
-            return Err(String::from("Invalid H"));
+            return Err(format!("Invalid H: actual={}, expected={}", cpu.registers.h, self.final_state.h));
         }
         if cpu.registers.l != self.final_state.l {
-            return Err(String::from("Invalid L"));
+            return Err(format!("Invalid L: actual={}, expected={}", cpu.registers.l, self.final_state.l));
         }
         if cpu.registers.sp != self.final_state.sp {
-            return Err(String::from("Invalid SP"));
+            return Err(format!("Invalid SP: actual={}, expected={}", cpu.registers.sp, self.final_state.sp));
         }
         if cpu.registers.pc != self.final_state.pc {
-            return Err(String::from("Invalid PC"));
+            return Err(format!("Invalid PC: actual={}, expected={}", cpu.registers.pc, self.final_state.pc));
         }
         if cpu.bus.io.interrupts.ime != (self.final_state.ime != 0) {
-            return Err(String::from("Invalid IME"));
+            return Err(format!("Invalid IME: actual={}, expected={}", cpu.bus.io.interrupts.ime, self.final_state.ime));
         }
 
         // todo: re-search
@@ -132,7 +132,7 @@ impl Sm83TestCase {
         // Assert RAM contents
         for ram in self.final_state.ram.iter() {
             if cpu.bus.read(ram.0) != ram.1 {
-                return Err(String::from("Invalid RAM"));
+                return Err(format!("Invalid RAM: actual={}, expected={}", cpu.bus.read(ram.0), ram.1));
             }
         }
 
