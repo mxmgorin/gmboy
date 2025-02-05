@@ -4,9 +4,14 @@ mod common;
 
 #[test]
 fn test_sm83_case_41() {
+    let target_test = ""; // set for debug
     let test_cases = Sm83TestCase::load_opcode(41);
 
     for test_case in test_cases.iter() {
+        if !target_test.is_empty() && test_case.name != target_test {
+                continue;
+        }
+
         run_test_case(test_case);
     }
 }

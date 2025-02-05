@@ -56,6 +56,7 @@ pub struct Bus {
     ram: Ram,
     vram: VRam,
     pub io: Io,
+    test_bytes: Option<[u8; 0xFFFF]>, // todo: remove, it is only for testing
 }
 
 impl Bus {
@@ -65,14 +66,30 @@ impl Bus {
             ram,
             vram: VRam::new(),
             io: Io::new(),
+            test_bytes: None,
+        }
+    }
+
+    pub fn test() -> Self {
+        Self {
+            cart: Cart::new(vec![0; 0x2000]).unwrap(),
+            ram: Ram::new(),
+            vram: VRam::new(),
+            io: Io::new(),
+            test_bytes: Some([0; 0xFFFF]),
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
+        if let Some(test_bytes) = self.test_bytes {
+            println!("Reading {} from {:X}", test_bytes[address as usize], address);
+            return test_bytes[address as usize];
+        }
+
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::Oam  => {
+            BusAddrLocation::Oam => {
                 // TODO: Impl
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
                 0
@@ -81,7 +98,9 @@ impl Bus {
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
-            BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => self.ram.w_ram_read(address),
+            BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
+                self.ram.w_ram_read(address)
+            }
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => 0,
             BusAddrLocation::IoRegisters => self.io.read(address),
             BusAddrLocation::HRam => self.ram.h_ram_read(address),
@@ -90,13 +109,20 @@ impl Bus {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
+        if let Some(test_bytes) = self.test_bytes.as_mut() {
+            println!("Writing {:?} to {:X}", value, address);
+            test_bytes[address as usize] = value;
+            return;
+        }
+
         let location = BusAddrLocation::from(address);
 
         match location {
             BusAddrLocation::VRAM => self.vram.write(address, value),
+            BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
                 // TODO: IMPL
-                eprintln!("Can't BUS write {:?} address {:X}", location, address)
+                eprintln!("Can't BUS write {:?} address {:X}", location, address);
             }
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
@@ -104,7 +130,6 @@ impl Bus {
             BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
                 self.ram.w_ram_write(address, value)
             }
-            BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::IoRegisters => self.io.write(address, value),
             BusAddrLocation::HRam => self.ram.h_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,

@@ -50,13 +50,7 @@ impl Io {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        let location = IoAddressLocation::try_from(address);
-
-        let Ok(location) = location else {
-            // todo: what to do? there is 0xFF03, may be more
-            eprintln!("can't IO read address {:X}", address);
-            return 0;
-        };
+        let location = IoAddressLocation::try_from(address).unwrap();
 
         match location {
             IoAddressLocation::SerialSb => self.serial.sb,
