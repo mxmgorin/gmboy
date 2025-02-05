@@ -19,10 +19,10 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     if let Err(err) = result {
         let inst = INSTRUCTIONS_BY_OPCODES[cpu.current_opcode as usize];
         print_with_dashes(&format!("{} ({:?} {:?})", title, inst.get_type(), inst.get_address_mode()));
-        eprintln!("{:?} ", test_case);
         print_with_dashes("Result: FAILED");
         eprintln!("Error: {err}");
-        panic!("Test case failed {}", test_case.name);
+        eprintln!("{} ", serde_json::to_string_pretty(test_case).unwrap());
+        panic!("Test case failed {}", test_case.name);        
     }
 
     if print_result {

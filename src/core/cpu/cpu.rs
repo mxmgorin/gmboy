@@ -58,7 +58,7 @@ impl Cpu {
             }
 
             return Ok(());
-        }
+        } 
 
         let pc = self.registers.pc;
         self.current_opcode = self.fetch_opcode();
@@ -79,6 +79,7 @@ impl Cpu {
             debugger.print();
         }
 
+        let prev_enabling_ime = self.enabling_ime;        
         instruction.execute(self, fetched_data);
 
         if self.bus.io.interrupts.ime {
@@ -89,7 +90,8 @@ impl Cpu {
             self.enabling_ime = false;
         }
 
-        if self.enabling_ime {
+        if self.enabling_ime && prev_enabling_ime { // execute after next instruction when flag is changed
+            self.enabling_ime = false;
             self.bus.io.interrupts.ime = true;
         }
 

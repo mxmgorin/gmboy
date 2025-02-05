@@ -6,7 +6,7 @@ mod common;
 
 #[test]
 fn test_sm83_case_custom() {
-    let test_cases = Sm83TestCase::load_opcode(0xF2);
+    let test_cases = Sm83TestCase::load_opcode(0xFB);
 
     for test_case in test_cases.iter() {
         run_test_case(test_case, true);
