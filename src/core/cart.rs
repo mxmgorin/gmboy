@@ -1,10 +1,14 @@
 use std::fmt::Display;
 
+const RAM_ADDRESS_START: usize = 0xA000;
+const RAM_SIZE: usize = 0x4000;
+
 #[derive(Debug, Clone)]
 pub struct Cart {
     pub header: CartHeader,
-    pub rom_data: Vec<u8>,
+    pub rom_bytes: Vec<u8>,
     pub checksum_valid: bool,
+    pub ram_bytes: [u8; RAM_SIZE],
 }
 
 impl Display for Cart {
@@ -25,18 +29,31 @@ impl Cart {
         Ok(Self {
             checksum_valid: checksum == header.header_checksum,
             header,
-            rom_data: bytes,
+            rom_bytes: bytes,
+            ram_bytes: [0; RAM_SIZE],
         })
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        // todo: impl ram
-        self.rom_data[address as usize]
+        let address = address as usize;
+        // todo: Impl ram_bytes banks
+
+        if address >= RAM_ADDRESS_START {
+            self.ram_bytes[address - RAM_ADDRESS_START]
+        } else {
+            self.rom_bytes[address]
+        }
     }
 
-    pub fn write(&mut self, _address: u16, _value: u8) {
-        // self.bytes[address as usize] = value;
-        unimplemented!("cart write")
+    pub fn write(&mut self, address: u16, value: u8) {
+        let address = address as usize;
+
+        // todo: Impl ram banks
+        if address >= RAM_ADDRESS_START {
+            self.ram_bytes[address - RAM_ADDRESS_START] = value;
+        } else {
+            self.rom_bytes[address] = value;
+        }
     }
 }
 
@@ -78,7 +95,7 @@ pub struct CartHeader {
     pub cart_type: CartridgeType,
     /// 0x0148: ROM size
     pub rom_size: RomSize,
-    /// 0x0149: RAM size
+    /// 0x0149: ram_bytes size
     pub ram_size: RamSize,
     /// 0x014A: Destination code (Japan or non-Japan)
     pub destination_code: DestinationCode,
@@ -227,7 +244,7 @@ impl TryFrom<u8> for RamSize {
             0x03 => Ok(RamSize::_32KiB),
             0x04 => Ok(RamSize::_128KiB),
             0x05 => Ok(RamSize::_64KiB),
-            _ => Err("Invalid RAM size code".into()),
+            _ => Err("Invalid ram_bytes size code".into()),
         }
     }
 }

@@ -7,10 +7,7 @@ fn test_sm83_case_41() {
     let test_cases = Sm83TestCase::load_opcode(41);
 
     for test_case in test_cases.iter() {
-        if test_case.name == "41 0001" {
-            println!("{:?}", test_case);
-            run_test_case(test_case);
-        }
+        run_test_case(test_case);
     }
 }
 

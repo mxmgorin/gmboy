@@ -1,7 +1,7 @@
 use rusty_gb_emu::bus::ram::Ram;
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cart::Cart;
-use rusty_gb_emu::cpu::Cpu;
+use rusty_gb_emu::cpu::{Cpu, Flags, Registers};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use rusty_gb_emu::debugger::{CpuLogType, Debugger};
@@ -9,7 +9,7 @@ use rusty_gb_emu::debugger::{CpuLogType, Debugger};
 pub fn run_test_case(test_case: &Sm83TestCase) {
     print_with_dashes(&format!("Running test case: {}", test_case.name));
 
-    let mut cpu = set_up_cpu(test_case);
+    let mut cpu = setup_cpu(test_case);
     let mut debugger = Some(Debugger::new(CpuLogType::Assembly, false));
     cpu.step(&mut debugger).unwrap();
 
@@ -105,33 +105,38 @@ pub struct RamState(pub u16, pub u8);
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cycle(pub u16, pub u8, pub String);
 
-pub fn set_up_cpu(test_case: &Sm83TestCase) -> Cpu {
-    let mut cpu = Cpu::new(set_up_bus(test_case));
+pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
+    let mut cpu = Cpu::new(setup_bus(test_case));
     set_cpu_state(&mut cpu, test_case);
 
     cpu
 }
 
-pub fn set_up_bus(test_case: &Sm83TestCase) -> Bus {
-    let mut bytes = vec![0u8; 40000];
+pub fn setup_bus(test_case: &Sm83TestCase) -> Bus {
+    let mut bus =     Bus::new(Cart::new(vec![0u8; 40000]).unwrap(), Ram::new())
+;
     for ram in test_case.initial_state.ram.iter() {
-        bytes[ram.0 as usize] = ram.1;
+        bus.write(ram.0, ram.1);
     }
 
-    Bus::new(Cart::new(bytes).unwrap(), Ram::new())
+    bus
 }
 
 pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
-    cpu.registers.pc = test_case.initial_state.pc;
-    cpu.registers.sp = test_case.initial_state.sp;
-    cpu.registers.a = test_case.initial_state.a;
-    cpu.registers.b = test_case.initial_state.b;
-    cpu.registers.c = test_case.initial_state.c;
-    cpu.registers.d = test_case.initial_state.d;
-    cpu.registers.e = test_case.initial_state.e;
-    cpu.registers.h = test_case.initial_state.h;
-    cpu.registers.l = test_case.initial_state.l;
-    cpu.registers.flags.byte = test_case.initial_state.f;
+    cpu.registers = Registers {
+        a: test_case.initial_state.a,
+        flags: Flags {
+            byte: test_case.initial_state.f,
+        },
+        b: test_case.initial_state.b,
+        c: test_case.initial_state.c,
+        d: test_case.initial_state.d,
+        e: test_case.initial_state.e,
+        h: test_case.initial_state.h,
+        l: test_case.initial_state.l,
+        sp: test_case.initial_state.sp,
+        pc: test_case.initial_state.pc,
+    };
     cpu.bus.io.interrupts.ie_register = test_case.initial_state.ie;
     cpu.enabling_ime = test_case.initial_state.ime != 0
 }

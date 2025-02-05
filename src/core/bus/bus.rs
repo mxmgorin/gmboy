@@ -1,3 +1,4 @@
+use crate::bus::vram::VRam;
 use crate::core::bus::io::Io;
 use crate::core::bus::ram::Ram;
 use crate::core::cart::Cart;
@@ -8,12 +9,8 @@ pub enum BusAddrLocation {
     RomBank0,
     /// 0x4000 - 0x7FFF: 16 KiB ROM Bank 01–NN. From cartridge, switchable bank via mapper (if any).
     RomBank1,
-    /// 0x8000 - 0x97FF: VRAM
-    ChrRam,
-    /// 0x9800 - 0x9BFF: VRAM
-    BgMap1,
-    /// 0x9C00 - 0x9FFF: VRAM
-    BgMap2,
+    /// 8000 - 9FFF
+    VRAM,
     /// 0xA000 - 0xBFFF: 8 KiB External RAM. From cartridge, switchable bank if any
     CartRam,
     /// 0xC000 - 0xCFFF
@@ -39,11 +36,7 @@ impl From<u16> for BusAddrLocation {
         match address {
             0x0000..=0x3FFF => BusAddrLocation::RomBank0,
             0x4000..=0x7FFF => BusAddrLocation::RomBank1,
-            // ------------  VRAM  ------------
-            0x8000..=0x97FF => BusAddrLocation::ChrRam,
-            0x9800..=0x9BFF => BusAddrLocation::BgMap1,
-            0x9C00..=0x9FFF => BusAddrLocation::BgMap2,
-            //---------------------------------------
+            0x8000..=0x9FFF => BusAddrLocation::VRAM,
             0xA000..=0xBFFF => BusAddrLocation::CartRam,
             0xC000..=0xCFFF => BusAddrLocation::WRamBank0,
             0xD000..=0xDFFF => BusAddrLocation::WRamBank1To7,
@@ -61,6 +54,7 @@ impl From<u16> for BusAddrLocation {
 pub struct Bus {
     cart: Cart,
     ram: Ram,
+    vram: VRam,
     pub io: Io,
 }
 
@@ -69,6 +63,7 @@ impl Bus {
         Self {
             cart,
             ram,
+            vram: VRam::new(),
             io: Io::new(),
         }
     }
@@ -77,14 +72,12 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::Oam
-            | BusAddrLocation::BgMap1
-            | BusAddrLocation::BgMap2
-            | BusAddrLocation::ChrRam => {
+            BusAddrLocation::Oam  => {
                 // TODO: Impl
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
                 0
             }
+            BusAddrLocation::VRAM => self.vram.read(address),
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
@@ -100,10 +93,8 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::ChrRam
-            | BusAddrLocation::BgMap1
-            | BusAddrLocation::BgMap2
-            | BusAddrLocation::Oam => {
+            BusAddrLocation::VRAM => self.vram.write(address, value),
+            BusAddrLocation::Oam => {
                 // TODO: IMPL
                 eprintln!("Can't BUS write {:?} address {:X}", location, address)
             }
