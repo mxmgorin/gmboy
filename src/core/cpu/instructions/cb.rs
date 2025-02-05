@@ -76,17 +76,16 @@ impl ExecutableInstruction for CbInstruction {
         match bit {
             0 => {
                 // RLC
-                let mut set_c = false;
-                let mut result: u8 = (reg_val << 1) & 0xFF;
-
-                if (reg_val & (1 << 7)) != 0 {
-                    result |= 1;
-                    set_c = true;
-                }
-
+                let carry = (reg_val & 0x80) != 0; // Check MSB for carry
+                let result = (reg_val << 1) | (carry as u8); // Rotate left and wrap MSB to LSB
 
                 cpu.set_reg8(reg, result);
-                cpu.registers.flags.set((result == 0).into(), false.into(), false.into(), set_c.into());
+                cpu.registers.flags.set(
+                    (result == 0).into(), // Zero flag (not set for RLCA)
+                    false.into(),       // Subtract flag
+                    false.into(),       // Half-Carry flag
+                    carry.into(),       // Carry flag
+                );
             }
             1 => {
                 // RRC

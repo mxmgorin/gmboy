@@ -31,14 +31,12 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
 }
 
 pub fn run_sb_test_cases(print_result: bool) {
-    for i in 0..=256 {
+    for i in 0..256 {
         let test_cases = Sm83TestCase::load_file(&format!("cb {:02X}.json", i).to_lowercase());
 
         for test_case in test_cases.iter() {
             run_test_case(test_case, print_result);
         }
-
-        println!("{:02X} passed {} test cases", 0xCB, test_cases.len());
     }
 }
 
