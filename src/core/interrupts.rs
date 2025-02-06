@@ -43,7 +43,7 @@ impl Interrupts {
         }
     }
 
-    pub fn get_interrupt(&mut self) -> Option<(u16, InterruptType)> {
+    pub fn check_interrupts(&mut self) -> Option<(u16, InterruptType)> {
         for (address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
             if self.check_interrupt(interrupt_type) {
                 return Some((address, interrupt_type));
@@ -71,5 +71,47 @@ impl Interrupts {
         let is_enabled = self.ie_register & it != 0;
 
         is_requested && is_enabled
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_check_interrupts_enabled() {
+        let mut interrupts = Interrupts::new();
+        interrupts.ie_register = 0xFF;
+
+        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+            interrupts.request_interrupt(interrupt_type);
+            assert!(interrupts.check_interrupt(interrupt_type));
+        }
+    }
+
+    #[test]
+    pub fn test_check_interrupts_disabled() {
+        let interrupts = Interrupts::new();
+
+        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+            assert!(!interrupts.check_interrupt(interrupt_type));
+        }
+    }
+
+    #[test]
+    pub fn test_interrupts() {
+        let mut interrupts = Interrupts::new();
+
+        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+            assert!(!interrupts.check_interrupt(interrupt_type));
+
+            interrupts.ie_register |= interrupt_type as u8;
+            interrupts.request_interrupt(interrupt_type);
+
+            assert!(interrupts.check_interrupt(interrupt_type));
+            interrupts.handle_interrupt(interrupt_type);
+
+            assert!(!interrupts.check_interrupt(interrupt_type));
+        }
     }
 }

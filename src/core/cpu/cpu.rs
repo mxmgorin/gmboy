@@ -83,7 +83,7 @@ impl Cpu {
         instruction.execute(self, fetched_data);
 
         if self.bus.io.interrupts.ime {
-            if let Some((addr, it)) = self.bus.io.interrupts.get_interrupt() {
+            if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
                 self.handle_interrupt(addr, it);
             }
 
