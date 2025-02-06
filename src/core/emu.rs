@@ -3,6 +3,7 @@ use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use std::thread;
+use crate::debugger::{CpuLogType, Debugger};
 
 #[derive(Debug)]
 pub struct Emu {
@@ -27,7 +28,7 @@ impl Emu {
     pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
         #[cfg(debug_assertions)]
-        let mut debugger = Some(crate::core::debugger::Debugger::new(crate::core::debugger::CpuLogType::Assembly, true));
+        let mut debugger = Some(Debugger::new(CpuLogType::Assembly, true));
         #[cfg(not(debug_assertions))]
         let mut debugger = None;
 

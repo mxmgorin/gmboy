@@ -1,6 +1,5 @@
 use crate::core::bus::Bus;
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction, Instruction};
-use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::core::{InterruptType};
@@ -84,7 +83,8 @@ impl Cpu {
 
         if self.bus.io.interrupts.ime {
             if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
-                self.handle_interrupt(addr, it);
+                Instruction::goto_addr(self, None, addr, true);
+                self.bus.io.interrupts.handle_interrupt(it);
             }
 
             self.enabling_ime = false;
@@ -149,13 +149,6 @@ impl Cpu {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }
         }
-    }
-
-    fn handle_interrupt(&mut self, address: u16, it: InterruptType) {
-        Stack::push16(&mut self.registers, &mut self.bus, address);
-        self.registers.pc = address;
-        
-        self.bus.io.interrupts.handle_interrupt(it);
     }
 
     fn fetch_opcode(&mut self) -> u8 {
