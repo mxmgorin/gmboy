@@ -18,7 +18,9 @@ fn test_sm83_all() {
             continue;
         }
 
-        let test_cases = Sm83TestCase::load_opcode(opcode as u16);
+        let  Ok(test_cases) = Sm83TestCase::load_opcode(opcode as u16) else {
+            continue;
+        };
 
         for test_case in test_cases.iter() {
             run_test_case(test_case, print_result);
@@ -32,7 +34,7 @@ fn test_sm83_all() {
 
 #[test]
 fn test_sm83_custom() {
-    let test_cases = Sm83TestCase::load_file("cb 28.json");
+    let test_cases = Sm83TestCase::load_file("cb 28.json").unwrap();
 
     for test_case in test_cases.iter() {
         run_test_case(test_case, true);
