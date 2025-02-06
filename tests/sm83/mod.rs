@@ -191,12 +191,14 @@ impl Sm83TestCase {
                 cpu.registers.pc, self.final_state.pc
             ));
         }
-        if cpu.bus.io.interrupts.ime != (self.final_state.ime.unwrap_or_default() != 0) {
-            return Err(format!(
-                "Invalid IME: actual={}, expected={}",
-                cpu.bus.io.interrupts.ime,
-                self.final_state.ime.unwrap_or_default()
-            ));
+        if let Some(ime) = self.final_state.ime {
+            if cpu.bus.io.interrupts.ime != (ime != 0) {
+                return Err(format!(
+                    "Invalid IME: actual={}, expected={}",
+                    cpu.bus.io.interrupts.ime,
+                    self.final_state.ime.unwrap_or_default()
+                ));
+            }
         }
         if let Some(ie) = self.final_state.ie {
             if cpu.bus.io.interrupts.ie_register != ie {
@@ -282,5 +284,7 @@ pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
     if let Some(ie) = test_case.initial_state.ie {
         cpu.bus.io.interrupts.ie_register = ie;
     }
-    cpu.bus.io.interrupts.ime = test_case.initial_state.ime.unwrap_or_default() != 0
+    if let Some(ime) = test_case.initial_state.ime {
+        cpu.bus.io.interrupts.ime = ime != 0
+    }
 }
