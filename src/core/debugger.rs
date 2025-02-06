@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use crate::core::cpu::Cpu;
 use crate::cpu::instructions::common::{FetchedData, Instruction};
 
@@ -26,18 +27,15 @@ impl Debugger {
             serial_enabled,
         }
     }
+    
+    pub fn get_serial_msg(&self) -> Cow<str> {
+        String::from_utf8_lossy(&self.msg[..self.size])
+    }
 
-    pub fn update(&mut self, cpu: &mut Cpu) {
+    pub fn update_serial(&mut self, cpu: &mut Cpu) {
         if self.serial_enabled && cpu.bus.io.serial.has_data() {
             self.msg[self.size] = cpu.bus.io.serial.take_data();
             self.size += 1;
-        }
-    }
-
-    pub fn print(&self) {
-        if self.msg[0] != 0 {
-            let msg_str = String::from_utf8_lossy(&self.msg[..self.size]);
-            println!("{}", msg_str);
         }
     }
 

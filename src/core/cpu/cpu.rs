@@ -43,9 +43,9 @@ impl Cpu {
         bytes.into()
     }
 
-    pub fn step(&mut self, debugger: &mut Option<Debugger>) -> Result<(), String> {
+    pub fn step(&mut self, debugger: Option<&mut Debugger>) -> Result<(), String> {
         #[cfg(debug_assertions)]
-        if let Some(debugger) = debugger {
+        if let Some(debugger) = debugger.as_ref() {
             debugger.print_gb_doctor_info(self);
         }
 
@@ -72,10 +72,9 @@ impl Cpu {
         let fetched_data = AddressMode::fetch_data(self, instruction.get_address_mode());
 
         #[cfg(debug_assertions)]
-        if let Some(debugger) = debugger.as_mut() {
+        if let Some(debugger) = debugger {
             debugger.print_cpu_info(self, pc, instruction, self.current_opcode, &fetched_data);
-            debugger.update(self);
-            debugger.print();
+            debugger.update_serial(self);
         }
 
         let prev_enabling_ime = self.enabling_ime;        

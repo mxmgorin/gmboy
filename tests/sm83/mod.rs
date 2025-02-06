@@ -11,8 +11,8 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
 
     let mut cpu = setup_cpu(test_case);
-    let mut debugger = Some(Debugger::new(CpuLogType::None, false));
-    cpu.step(&mut debugger).unwrap();
+    let mut debugger = Debugger::new(CpuLogType::None, false);
+    cpu.step(Some(&mut debugger)).unwrap();
 
     let result = test_case.validate_final_state(&cpu);
 
@@ -64,6 +64,14 @@ pub struct Sm83TestCase {
     #[serde(rename = "final")]
     pub final_state: CpuState,
     //pub cycles: Vec<Cycle>,
+}
+
+pub fn get_rom_path(rom_name: &str) -> PathBuf {
+    PathBuf::from("tests")
+        .join("roms")
+        .join("blargg")
+        .join("cpu_instrs")
+        .join(rom_name)
 }
 
 impl Sm83TestCase {

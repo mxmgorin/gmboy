@@ -1,8 +1,41 @@
+use std::time::{Duration, Instant};
+use rusty_gb_emu::bus::Bus;
+use rusty_gb_emu::bus::ram::Ram;
+use rusty_gb_emu::cart::Cart;
+use rusty_gb_emu::cpu::Cpu;
 use rusty_gb_emu::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
 use rusty_gb_emu::cpu::instructions::common::Instruction;
-use crate::sm83::{run_sb_test_cases, run_test_case, Sm83TestCase};
+use rusty_gb_emu::debugger::{CpuLogType, Debugger};
+use rusty_gb_emu::emu::read_bytes;
+use crate::sm83::{get_rom_path, run_sb_test_cases, run_test_case, Sm83TestCase};
 
 mod sm83;
+
+#[test]
+fn test_blargg_6() {
+    let timeout = Duration::from_secs(30);
+    let instant = Instant::now();
+    let path = get_rom_path("06-ld r,r.gb");
+    let mut debugger = Debugger::new(CpuLogType::None, true);
+    let cart = Cart::new(read_bytes(path.to_str().unwrap()).unwrap()).unwrap();
+    let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
+
+    loop {
+        cpu.step(Some(&mut debugger)).unwrap();
+        let serial_msg = debugger.get_serial_msg().to_lowercase();
+        
+        if serial_msg.contains("passed") {
+            println!("{}", serial_msg);
+            break;
+        } else if serial_msg.contains("failed") || serial_msg.contains("error") {
+            println!("Failed {}", serial_msg);
+        }
+        
+        if instant.elapsed() > timeout {
+           panic!("Timed out!");
+        }
+    }
+}
 
 #[test]
 fn test_sm83_all() {

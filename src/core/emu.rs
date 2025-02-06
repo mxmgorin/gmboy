@@ -28,10 +28,8 @@ impl Emu {
 
     pub fn run(&mut self) -> Result<(), String> {
         self.running = true;
-        #[cfg(debug_assertions)]
-        let mut debugger = Some(Debugger::new(CpuLogType::Assembly, true));
-        #[cfg(not(debug_assertions))]
-        let mut debugger = None;
+        let serial_enabled = true;
+        let mut debugger = Debugger::new(CpuLogType::Assembly, serial_enabled);
 
         while self.running {
             if self.paused {
@@ -39,8 +37,12 @@ impl Emu {
                 continue;
             }
 
-            self.cpu.step(&mut debugger)?;
+            self.cpu.step(Some(&mut debugger))?;
             self.ticks += 1;
+
+            if serial_enabled {
+                println!("{}", debugger.get_serial_msg());
+            }
         }
 
         Ok(())
