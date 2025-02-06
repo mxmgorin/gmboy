@@ -16,17 +16,10 @@ fn main() {
         args.remove(1)
     };
 
-    let result = read_bytes(&cart_path);
+    let emu = Emu::load_cart(&cart_path);
 
-    let Ok(cart_bytes) = result else {
-        eprintln!("Failed to read cart: {}", result.unwrap_err());
-        std::process::exit(1);
-    };
-
-    let result = Emu::new(cart_bytes);
-
-    let Ok(mut emu) = result else {
-        eprintln!("Emu failed: {}", result.unwrap_err());
+    let Ok(mut emu) = emu else {
+        eprintln!("Emu load_cart failed: {}", emu.unwrap_err());
         std::process::exit(1);
     };
 
@@ -34,14 +27,4 @@ fn main() {
         eprintln!("Emu run failed: {}", err);
         std::process::exit(1);
     }
-}
-
-fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {
-    // Check if the file exists and is readable
-    if !Path::new(file_path).exists() {
-        return Err(format!("File not found: {}", file_path));
-    }
-
-    // Read the file as bytes
-    fs::read(file_path).map_err(|e| format!("Failed to read file: {}", e))
 }

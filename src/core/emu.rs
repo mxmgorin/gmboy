@@ -2,8 +2,9 @@ use crate::core::bus::ram::Ram;
 use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
-use std::thread;
 use crate::debugger::{CpuLogType, Debugger};
+use std::path::Path;
+use std::{fs, thread};
 
 #[derive(Debug)]
 pub struct Emu {
@@ -44,7 +45,23 @@ impl Emu {
 
         Ok(())
     }
-    
+
+    pub fn load_cart(cart_path: &str) -> Result<Emu, String> {
+        let result = read_bytes(cart_path);
+
+        let Ok(cart_bytes) = result else {
+            return Err(format!("Failed to read cart: {}", result.unwrap_err()));
+        };
+
+        let result = Emu::new(cart_bytes);
+
+        let Ok(emu) = result else {
+            return Err(format!("Emu failed: {}", result.unwrap_err()));
+        };
+
+        Ok(emu)
+    }
+
     fn _print_cart(&self, cart: &Cart) {
         println!("Cart Loaded:");
         println!("\t Title    : {}", cart.header.title);
@@ -54,4 +71,12 @@ impl Emu {
         println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
         println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
     }
+}
+
+pub fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {
+    if !Path::new(file_path).exists() {
+        return Err(format!("File not found: {}", file_path));
+    }
+
+    fs::read(file_path).map_err(|e| format!("Failed to read file: {}", e))
 }
