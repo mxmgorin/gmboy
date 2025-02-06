@@ -5,28 +5,14 @@ use rusty_gb_emu::cpu::instructions::common::Instruction;
 mod common;
 
 #[test]
-fn test_sm83_custom() {
-    let test_cases = Sm83TestCase::load_file("cb 28.json");
-
-    for test_case in test_cases.iter() {
-        run_test_case(test_case, true);
-    }
-}
-
-#[test]
-fn test_sm83_sb() {
-    run_sb_test_cases(false)
-}
-
-#[test]
-fn test_sm83() {
+fn test_sm83_all() {
     let print_result = false;
-    
+
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
         if let Instruction::Unknown(_) = instruction {
             continue;
         }
-        
+
         if opcode == 0xCB {
             run_sb_test_cases(print_result);
             continue;
@@ -42,6 +28,20 @@ fn test_sm83() {
             println!("{:02X} passed {} test cases", opcode, test_cases.len());
         }
     }
+}
+
+#[test]
+fn test_sm83_custom() {
+    let test_cases = Sm83TestCase::load_file("cb 28.json");
+
+    for test_case in test_cases.iter() {
+        run_test_case(test_case, true);
+    }
+}
+
+#[test]
+fn test_sm83_sb() {
+    run_sb_test_cases(false)
 }
 
 #[test]
