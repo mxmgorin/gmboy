@@ -3,15 +3,20 @@ use std::path::Path;
 use std::{env, fs};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
 
-    if args.len() < 2 {
-        eprintln!("Usage: {} <cart_path>", args[0]);
-        std::process::exit(1);
-    }
+    let cart_path = if args.len() < 2 {
+        if let Ok(cart_path) = env::var("CART_PATH") {
+            cart_path
+        } else {
+            eprintln!("Usage: {} <cart_path>", args[0]);
+            std::process::exit(1);
+        }
+    } else {
+        args.remove(1)
+    };
 
-    let cart_path = &args[1];
-    let result = read_bytes(cart_path);
+    let result = read_bytes(&cart_path);
 
     let Ok(cart_bytes) = result else {
         eprintln!("Failed to read cart: {}", result.unwrap_err());
