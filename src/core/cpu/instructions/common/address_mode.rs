@@ -136,35 +136,36 @@ impl AddressMode {
                 fetched_data.dest_addr = Some(hl_val);
                 cpu.registers.set_hl(hl_val.wrapping_sub(1));
             }
-            AddressMode::R_A8(_r1) => {
+            AddressMode::R_A8(_r1) => { // 1cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
-            AddressMode::A8_R(r2) => {
+            AddressMode::A8_R(r2) => { // 1 cycle
                 let value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(value | 0xFF00);
                 fetched_data.value = cpu.registers.read_register(r2);
             }
-            AddressMode::HL_SPe8 => {
+            AddressMode::HL_SPe8 => { // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
-            AddressMode::D8 => {
+            AddressMode::D8 => { // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
-            AddressMode::D16_R(r2) | AddressMode::A16_R(r2) => {
+            AddressMode::D16_R(r2) | AddressMode::A16_R(r2) => { // 2 cycles
                 let addr = cpu.fetch_data16();
                 fetched_data.dest_addr = Some(addr);
                 fetched_data.value = cpu.registers.read_register(r2);
             }
-            AddressMode::MR_D8(r1) => {
+            AddressMode::MR_D8(r1) => { // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
-            AddressMode::MR(r1) => {
+            AddressMode::MR(r1) => { // 1 cycle
                 let r_addr = cpu.registers.read_register(r1);
                 fetched_data.dest_addr = Some(r_addr);
                 fetched_data.value = cpu.bus.read(r_addr) as u16;
+                cpu.update_cycles(1);
             }
-            AddressMode::R_A16(_r1) => {
+            AddressMode::R_A16(_r1) => { // 3 cycles
                 let addr = cpu.fetch_data16();
                 fetched_data.value = cpu.bus.read(addr) as u16;
                 cpu.update_cycles(1);
