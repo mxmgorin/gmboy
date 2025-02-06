@@ -41,16 +41,16 @@ impl ExecutableInstruction for SubInstruction {
 
 fn execute_sub(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let reg_val = cpu.registers.read_register(r1);
-    let new_val = reg_val.wrapping_sub(fetched_data.value);
+    let result = reg_val.wrapping_sub(fetched_data.value);
 
-    let z = new_val == 0;
     let reg_val_i32 = reg_val as i32;
-    let fetched_val_i32 = new_val as i32;
+    let fetched_val_i32 = result as i32;
+
     let h = ((reg_val_i32 & 0xF).wrapping_sub(fetched_val_i32 & 0xF)) < 0;
     let c = reg_val_i32.wrapping_sub(fetched_val_i32) < 0;
 
-    cpu.registers.set_register(r1, new_val);
+    cpu.registers.set_register(r1, result);
     cpu.registers
         .flags
-        .set(z.into(), true.into(), h.into(), c.into());
+        .set((result == 0).into(), true.into(), h.into(), c.into());
 }

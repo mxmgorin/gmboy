@@ -34,12 +34,11 @@ impl ExecutableInstruction for DecInstruction {
             AddressMode::MR(_r1) => {
                 cpu.update_cycles(1); // always needs because uses only HL reg which is 16 bit
 
-                value &= 0xFF; // Ensure it fits into 8 bits
                 cpu.bus.write(
                     fetched_data.dest_addr.expect("must exist for MR"),
                     value as u8,
                 );
-                
+
                 set_flags(cpu, value);
             }
             AddressMode::R(r1) => {
@@ -48,11 +47,11 @@ impl ExecutableInstruction for DecInstruction {
                 }
 
                 cpu.registers.set_register(r1, value);
-                let value = cpu.registers.read_register(r1);
-
-                set_flags(cpu, value);
+                value = cpu.registers.read_register(r1);
             }
         }
+
+        set_flags(cpu, value);
     }
 
     fn get_address_mode(&self) -> AddressMode {
@@ -61,15 +60,11 @@ impl ExecutableInstruction for DecInstruction {
 }
 
 pub fn set_flags(cpu: &mut Cpu, val: u16) {
-    // TODO: move opcode in instruction
-    if (cpu.current_opcode & 0x03) == 0x03 {
+    if (cpu.current_opcode & 0x0B) == 0x0B {
         return;
     }
 
-    cpu.registers.flags.set(
-        Some(val == 0),
-        Some(true),
-        Some((val & 0x0F) == 0x0F),
-        None,
-    );
+    cpu.registers
+        .flags
+        .set((val == 0).into(), true.into(), ((val & 0x0F) == 0x0F).into(), None);
 }

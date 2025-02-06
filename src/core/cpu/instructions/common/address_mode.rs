@@ -160,9 +160,9 @@ impl AddressMode {
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
             AddressMode::MR(r1) => {
-                let r1_value = cpu.registers.read_register(r1);
-                fetched_data.dest_addr = Some(r1_value);
-                fetched_data.value = cpu.bus.read(r1_value) as u16;
+                let r_addr = cpu.registers.read_register(r1);
+                fetched_data.dest_addr = Some(r_addr);
+                fetched_data.value = cpu.bus.read(r_addr) as u16;
             }
             AddressMode::R_A16(_r1) => {
                 let addr = cpu.fetch_data16();
