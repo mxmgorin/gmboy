@@ -2,23 +2,23 @@ use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::*;
-use crate::cpu::instructions::adc::AdcInstruction;
-use crate::cpu::instructions::add::AddInstruction;
-use crate::cpu::instructions::and::AndInstruction;
-use crate::cpu::instructions::cb::CbInstruction;
-use crate::cpu::instructions::cp::CpInstruction;
-use crate::cpu::instructions::pop::PopInstruction;
-use crate::cpu::instructions::push::PushInstruction;
-use crate::cpu::instructions::ret::RetInstruction;
-use crate::cpu::instructions::rla::RlaInstruction;
-use crate::cpu::instructions::rlca::RlcaInstruction;
-use crate::cpu::instructions::rra::RraInstruction;
-use crate::cpu::instructions::rrca::RrcaInstruction;
-use crate::cpu::instructions::rst::RstInstruction;
-use crate::cpu::instructions::sbc::SbcInstruction;
-use crate::cpu::instructions::scf::ScfInstruction;
-use crate::cpu::instructions::stop::StopInstruction;
-use crate::cpu::instructions::sub::SubInstruction;
+use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
+use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
+use crate::core::cpu::instructions::bitwise::and::AndInstruction;
+use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
+use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
+use crate::core::cpu::instructions::load::pop::PopInstruction;
+use crate::core::cpu::instructions::load::push::PushInstruction;
+use crate::core::cpu::instructions::jump::ret::RetInstruction;
+use crate::core::cpu::instructions::rotate::rla::RlaInstruction;
+use crate::core::cpu::instructions::rotate::rlca::RlcaInstruction;
+use crate::core::cpu::instructions::rotate::rra::RraInstruction;
+use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
+use crate::core::cpu::instructions::jump::rst::RstInstruction;
+use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
+use crate::core::cpu::instructions::misc::scf::ScfInstruction;
+use crate::core::cpu::instructions::misc::stop::StopInstruction;
+use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
 
 const INSTRUCTIONS_LEN: usize = 0xFF + 1;
 
@@ -649,7 +649,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         address_mode: AddressMode::D16,
         condition_type: Some(ConditionType::Z),
     });
-    instructions[0xCB] = Instruction::Cb(CbInstruction);
+    instructions[0xCB] = Instruction::Prefix(PrefixInstruction);
     instructions[0xCE] = Instruction::Adc(AdcInstruction {
         address_mode: AddressMode::R_D8(RegisterType::A),
     });

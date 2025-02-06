@@ -1,44 +1,44 @@
-use crate::core::cpu::instructions::call::CallInstruction;
-use crate::core::cpu::instructions::ccf::CcfInstruction;
+use crate::core::cpu::instructions::jump::call::CallInstruction;
+use crate::core::cpu::instructions::misc::ccf::CcfInstruction;
 use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
 use crate::core::cpu::instructions::common::ConditionType;
-use crate::core::cpu::instructions::cpl::CplInstruction;
-use crate::core::cpu::instructions::daa::DaaInstruction;
-use crate::core::cpu::instructions::dec::DecInstruction;
-use crate::core::cpu::instructions::di::DiInstruction;
-use crate::core::cpu::instructions::halt::HaltInstruction;
-use crate::core::cpu::instructions::inc::IncInstruction;
-use crate::core::cpu::instructions::jp::JpInstruction;
-use crate::core::cpu::instructions::jr::JrInstruction;
-use crate::core::cpu::instructions::ld::LdInstruction;
-use crate::core::cpu::instructions::ldh::LdhInstruction;
-use crate::core::cpu::instructions::nop::NopInstruction;
-use crate::core::cpu::instructions::xor::XorInstruction;
+use crate::core::cpu::instructions::bitwise::cpl::CplInstruction;
+use crate::core::cpu::instructions::misc::daa::DaaInstruction;
+use crate::core::cpu::instructions::arithmetic::dec::DecInstruction;
+use crate::core::cpu::instructions::interrupt::di::DiInstruction;
+use crate::core::cpu::instructions::interrupt::halt::HaltInstruction;
+use crate::core::cpu::instructions::arithmetic::inc::IncInstruction;
+use crate::core::cpu::instructions::jump::jp::JpInstruction;
+use crate::core::cpu::instructions::jump::jr::JrInstruction;
+use crate::core::cpu::instructions::load::ld::LdInstruction;
+use crate::core::cpu::instructions::load::ldh::LdhInstruction;
+use crate::core::cpu::instructions::misc::nop::NopInstruction;
+use crate::core::cpu::instructions::bitwise::xor::XorInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::adc::AdcInstruction;
-use crate::cpu::instructions::add::AddInstruction;
-use crate::cpu::instructions::and::AndInstruction;
+use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
+use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
+use crate::core::cpu::instructions::bitwise::and::AndInstruction;
 use crate::cpu::instructions::common::FetchedData;
-use crate::cpu::instructions::cp::CpInstruction;
-use crate::cpu::instructions::ei::EiInstruction;
-use crate::cpu::instructions::or::OrInstruction;
-use crate::cpu::instructions::pop::PopInstruction;
-use crate::cpu::instructions::push::PushInstruction;
-use crate::cpu::instructions::ret::RetInstruction;
-use crate::cpu::instructions::reti::RetiInstruction;
-use crate::cpu::instructions::rla::RlaInstruction;
-use crate::cpu::instructions::rlca::RlcaInstruction;
-use crate::cpu::instructions::rra::RraInstruction;
-use crate::cpu::instructions::rrca::RrcaInstruction;
-use crate::cpu::instructions::rst::RstInstruction;
-use crate::cpu::instructions::scf::ScfInstruction;
-use crate::cpu::instructions::stop::StopInstruction;
-use crate::cpu::instructions::sub::SubInstruction;
+use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
+use crate::core::cpu::instructions::interrupt::ei::EiInstruction;
+use crate::core::cpu::instructions::bitwise::or::OrInstruction;
+use crate::core::cpu::instructions::load::pop::PopInstruction;
+use crate::core::cpu::instructions::load::push::PushInstruction;
+use crate::core::cpu::instructions::jump::ret::RetInstruction;
+use crate::core::cpu::instructions::jump::reti::RetiInstruction;
+use crate::core::cpu::instructions::rotate::rla::RlaInstruction;
+use crate::core::cpu::instructions::rotate::rlca::RlcaInstruction;
+use crate::core::cpu::instructions::rotate::rra::RraInstruction;
+use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
+use crate::core::cpu::instructions::jump::rst::RstInstruction;
+use crate::core::cpu::instructions::misc::scf::ScfInstruction;
+use crate::core::cpu::instructions::misc::stop::StopInstruction;
+use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
 use std::fmt::Display;
-use crate::cpu::instructions::cb::CbInstruction;
-use crate::cpu::instructions::sbc::SbcInstruction;
+use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
+use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -80,7 +80,7 @@ pub enum Instruction {
     Sub(SubInstruction),
     Adc(AdcInstruction),
     Rst(RstInstruction),
-    Cb(CbInstruction),
+    Prefix(PrefixInstruction),
     Sbc(SbcInstruction)
 }
 
@@ -122,7 +122,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Sub(inst) => inst.execute(cpu, fetched_data),
             Instruction::Adc(inst) => inst.execute(cpu, fetched_data),
             Instruction::Rst(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Cb(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Prefix(inst) => inst.execute(cpu, fetched_data),
             Instruction::Sbc(inst) => inst.execute(cpu, fetched_data),
         }
     }
@@ -165,7 +165,7 @@ impl ExecutableInstruction for Instruction {
             Instruction::Sub(inst) => inst.get_address_mode(),
             Instruction::Adc(inst) => inst.get_address_mode(),
             Instruction::Rst(inst) => inst.get_address_mode(),
-            Instruction::Cb(inst) => inst.get_address_mode(),
+            Instruction::Prefix(inst) => inst.get_address_mode(),
             Instruction::Sbc(inst) => inst.get_address_mode(),
         }
     }
@@ -209,7 +209,7 @@ impl Instruction {
             Instruction::Sub(_) => InstructionType::SUB,
             Instruction::Adc(_) => InstructionType::ADC,
             Instruction::Rst(_) => InstructionType::RST,
-            Instruction::Cb(_) => InstructionType::CB,
+            Instruction::Prefix(_) => InstructionType::CB,
             Instruction::Sbc(_) => InstructionType::SBC
             
         }

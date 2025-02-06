@@ -3,9 +3,7 @@ use crate::core::cpu::Cpu;
 use crate::cpu::instructions::common::FetchedData;
 
 /// Decimal Adjust Accumulator.
-///
 /// Designed to be used after performing an arithmetic instruction (ADD, ADC, SUB, SBC) whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.
-///
 /// The exact behavior of this instruction depends on the state of the subtract flag N:
 ///
 /// If the subtract flag N is set:
@@ -21,11 +19,8 @@ use crate::cpu::instructions::common::FetchedData;
 /// Add the adjustment to A.
 /// Set the carry flag if overflow from bit 7.
 /// Cycles: 1
-///
 /// Bytes: 1
-///
 /// Flags:
-///
 /// Z Set if result is 0.
 /// H 0
 /// C Set or reset depending on the operation.

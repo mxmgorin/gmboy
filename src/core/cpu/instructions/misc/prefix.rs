@@ -3,7 +3,7 @@ use crate::core::cpu::Cpu;
 use crate::cpu::instructions::common::{FetchedData, RegisterType};
 
 #[derive(Debug, Clone, Copy)]
-pub struct CbInstruction;
+pub struct PrefixInstruction;
 
 const REG_TYPES_BY_OPS: [RegisterType; 8] = [
     RegisterType::B,
@@ -26,7 +26,7 @@ pub fn decode_reg(reg: u16) -> Option<RegisterType> {
     Some(REG_TYPES_BY_OPS[reg as usize])
 }
 
-impl ExecutableInstruction for CbInstruction {
+impl ExecutableInstruction for PrefixInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         let op = fetched_data.value;
         let reg = decode_reg(op & 0b111);

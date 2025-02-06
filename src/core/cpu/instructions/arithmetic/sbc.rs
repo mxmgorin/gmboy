@@ -60,7 +60,7 @@ impl ExecutableInstruction for SbcInstruction {
 #[cfg(test)]
 mod tests {
     use crate::cpu::instructions::common::{AddressMode, FetchedData, RegisterType};
-    use crate::cpu::instructions::sbc::SbcInstruction;
+    use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
 
     #[test]
     fn test_1() {
