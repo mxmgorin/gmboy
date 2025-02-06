@@ -1,6 +1,5 @@
-use rusty_gb_emu::emu::Emu;
-use std::path::Path;
-use std::{env, fs};
+use rusty_gb_emu::emu::{read_bytes, Emu};
+use std::{env};
 
 fn main() {
     let mut args: Vec<String> = env::args().collect();
@@ -16,10 +15,17 @@ fn main() {
         args.remove(1)
     };
 
-    let emu = Emu::load_cart(&cart_path);
+    let result = read_bytes(&cart_path);
 
-    let Ok(mut emu) = emu else {
-        eprintln!("Emu load_cart failed: {}", emu.unwrap_err());
+    let Ok(cart_bytes) = result else {
+        eprintln!("Failed to read cart: {}", result.unwrap_err());
+        std::process::exit(1);
+    };
+
+    let result = Emu::new(cart_bytes);
+
+    let Ok(mut emu) = result else {
+        eprintln!("Emu failed: {}", result.unwrap_err());
         std::process::exit(1);
     };
 
