@@ -1,7 +1,6 @@
 use crate::core::cpu::Cpu;
 use crate::cpu::instructions::common::{FetchedData, Instruction};
 
-#[cfg(debug_assertions)]
 #[derive(Debug, Clone)]
 pub struct Debugger {
     msg: [u8; 1024],
@@ -10,7 +9,6 @@ pub struct Debugger {
     serial_enabled: bool,
 }
 
-#[cfg(debug_assertions)]
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum CpuLogType {
     None,
@@ -18,7 +16,6 @@ pub enum CpuLogType {
     GbDoctor,
 }
 
-#[cfg(debug_assertions)]
 
 impl Debugger {
     pub fn new(log_type: CpuLogType, serial_enabled: bool) -> Self {
