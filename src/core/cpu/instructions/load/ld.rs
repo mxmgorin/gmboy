@@ -17,38 +17,32 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R(_) => {
                 unreachable!("not used for LD")
             }
-            AddressMode::R_HLI(r1) | AddressMode::R_HLD(r1) => {
-                cpu.registers.set_register(r1, fetched_data.value)
-            }
-
-            AddressMode::HLI_R(r2) | AddressMode::HLD_R(r2) => {
-                write_to_addr(
-                    cpu,
-                    r2,
-                    fetched_data.dest_addr.expect("must be set for HLI, HLD"),
-                    fetched_data.value,
-                );
-            }
             AddressMode::R_D8(r1)
             | AddressMode::R_A8(r1)
             | AddressMode::R_A16(r1)
+            | AddressMode::R_HLI(r1)
+            | AddressMode::R_HLD(r1)
             | AddressMode::R_D16(r1) => {
                 cpu.registers.set_register(r1, fetched_data.value);
             }
-            AddressMode::A8_R(r1) | AddressMode::A16_R(r1) | AddressMode::MR_D8(r1) => {
-                write_to_addr(
-                    cpu,
-                    r1,
-                    fetched_data.dest_addr.expect("must be set"),
-                    fetched_data.value,
-                );
-            }
-            AddressMode::R_R(r1, r2) | AddressMode::R_MR(r1, r2) | AddressMode::MR_R(r1, r2) => {
-                if let Some(dest_addr) = fetched_data.dest_addr {
-                    write_to_addr(cpu, r2, dest_addr, fetched_data.value);
+            AddressMode::A8_R(r1)
+            | AddressMode::A16_R(r1)
+            | AddressMode::MR_D8(r1)
+            | AddressMode::MR_R(_, r1)
+            | AddressMode::HLI_R(r1)
+            | AddressMode::HLD_R(r1) => {
+                let addr = fetched_data.dest_addr.expect("must be set");
+                let value = fetched_data.value;
+
+                if r1.is_16bit() {
+                    cpu.write_to_memory(addr + 1, ((value >> 8) & 0xFF) as u8);
+                    cpu.write_to_memory(addr, (value & 0xFF) as u8);
                 } else {
-                    cpu.registers.set_register(r1, fetched_data.value);
+                    cpu.write_to_memory(addr, value as u8);
                 }
+            }
+            AddressMode::R_R(r1, _) | AddressMode::R_MR(r1, _) => {
+                cpu.registers.set_register(r1, fetched_data.value);
             }
             // LD HL,SP+e8
             // Add the signed value e8 to SP and copy the result in HL.
@@ -60,8 +54,10 @@ impl ExecutableInstruction for LdInstruction {
                     .flags
                     .set(false.into(), false.into(), Some(h_flag), Some(c_flag));
                 let offset_e = fetched_data.value as i8; // truncate to 8 bits (+8e)
-                cpu.registers
-                    .set_register(RegisterType::HL, cpu.registers.sp.wrapping_add(offset_e as u16));
+                cpu.registers.set_register(
+                    RegisterType::HL,
+                    cpu.registers.sp.wrapping_add(offset_e as u16),
+                );
 
                 cpu.update_cycles(1);
             }
@@ -71,15 +67,4 @@ impl ExecutableInstruction for LdInstruction {
     fn get_address_mode(&self) -> AddressMode {
         self.address_mode
     }
-}
-
-fn write_to_addr(cpu: &mut Cpu, r2: RegisterType, addr: u16, value: u16) {
-    if r2.is_16bit() {
-        cpu.update_cycles(1);
-        cpu.bus.write16(addr, value);
-    } else {
-        cpu.bus.write(addr, value as u8);
-    }
-
-    cpu.update_cycles(1);
 }

@@ -136,18 +136,6 @@ impl Bus {
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
     }
-
-    pub fn read16(&self, address: u16) -> u16 {
-        let lo = self.read(address) as u16;
-        let hi = self.read(address + 1) as u16;
-
-        lo | (hi << 8)
-    }
-
-    pub fn write16(&mut self, address: u16, value: u16) {
-        self.write(address + 1, ((value >> 8) & 0xFF) as u8);
-        self.write(address, (value & 0xFF) as u8);
-    }
 }
 
 #[cfg(test)]

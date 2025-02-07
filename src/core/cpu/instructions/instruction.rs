@@ -1,3 +1,4 @@
+use crate::core::cpu::instructions::address_mode::AddressMode;
 use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
 use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
 use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
@@ -9,8 +10,6 @@ use crate::core::cpu::instructions::bitwise::and::AndInstruction;
 use crate::core::cpu::instructions::bitwise::cpl::CplInstruction;
 use crate::core::cpu::instructions::bitwise::or::OrInstruction;
 use crate::core::cpu::instructions::bitwise::xor::XorInstruction;
-use crate::core::cpu::instructions::address_mode::AddressMode;
-use crate::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use crate::core::cpu::instructions::interrupt::di::DiInstruction;
 use crate::core::cpu::instructions::interrupt::ei::EiInstruction;
 use crate::core::cpu::instructions::interrupt::halt::HaltInstruction;
@@ -30,14 +29,15 @@ use crate::core::cpu::instructions::misc::nop::NopInstruction;
 use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
 use crate::core::cpu::instructions::misc::scf::ScfInstruction;
 use crate::core::cpu::instructions::misc::stop::StopInstruction;
+use crate::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use crate::core::cpu::instructions::rotate::rla::RlaInstruction;
 use crate::core::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::core::cpu::instructions::rotate::rra::RraInstruction;
 use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Cpu;
-use std::fmt::Display;
 use crate::cpu::instructions::{ConditionType, FetchedData};
+use std::fmt::Display;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -217,12 +217,11 @@ impl Instruction {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
-    /// Costs 1 M-Cycle without push PC and 2 M-Cycles more with.
+    /// Costs 1 M-Cycle without push PC and additional 2 M-Cycles with push PC .
     pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
         if ConditionType::check_cond(&cpu.registers, cond) {
             if push_pc {
-                let pc = cpu.registers.pc;
-                Stack::push16(cpu, pc);
+                Stack::push16(cpu, cpu.registers.pc);
             }
 
             cpu.set_pc(addr);
