@@ -39,6 +39,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0b10101010,
             dest_addr: None,
+            src_addr: None,
         };
 
         let instruction = XorInstruction {
@@ -62,6 +63,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0b01010101,
             dest_addr: None,
+            src_addr: None,
         }; // XOR with a different value
 
         let instruction = XorInstruction {
@@ -85,6 +87,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0,
             dest_addr: None,
+            src_addr: None,
         }; // XOR with 0
 
         let instruction = XorInstruction {
@@ -108,6 +111,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0xFF,
             dest_addr: None,
+            src_addr: None,
         }; // XOR with maximum value (255)
 
         let instruction = XorInstruction {
@@ -131,6 +135,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0xFF,
             dest_addr: None,
+            src_addr: None,
         }; // XOR with maximum value (255)
 
         let instruction = XorInstruction {
@@ -154,6 +159,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0b10110101,
             dest_addr: None,
+            src_addr: None,
         }; // Random value
 
         let instruction = XorInstruction {
@@ -177,6 +183,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0b11110000,
             dest_addr: None,
+            src_addr: None,
         }; // XOR with non-zero value
 
         let instruction = XorInstruction {
@@ -200,6 +207,7 @@ mod tests {
         let fetched_data = FetchedData {
             value: 0b00000000,
             dest_addr: None,
+            src_addr: None,
         }; // XOR with zero
 
         let instruction = XorInstruction {

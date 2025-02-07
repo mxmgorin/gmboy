@@ -307,9 +307,6 @@ impl Instruction {
                     r2
                 )
             }
-            _ => {
-                panic!("INVALID address mode: {:?}", self.get_address_mode());
-            }
         }
     }
 }

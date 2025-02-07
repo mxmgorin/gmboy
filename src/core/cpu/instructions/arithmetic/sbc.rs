@@ -31,7 +31,6 @@ impl ExecutableInstruction for SbcInstruction {
             | AddressMode::HL_SPe8
             | AddressMode::D16
             | AddressMode::D8
-            | AddressMode::D16_R(_)
             | AddressMode::MR_D8(_)
             | AddressMode::MR(_)
             | AddressMode::A16_R(_)
@@ -66,22 +65,5 @@ impl ExecutableInstruction for SbcInstruction {
 
     fn get_address_mode(&self) -> AddressMode {
         self.address_mode
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
-    use crate::cpu::instructions::{AddressMode, FetchedData, RegisterType};
-
-    #[test]
-    fn test_1() {
-        let _inst = SbcInstruction {
-            address_mode: AddressMode::R_D8(RegisterType::A),
-        };
-        let _fetched_data = FetchedData {
-            value: 0,
-            dest_addr: None,
-        };
     }
 }

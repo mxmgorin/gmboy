@@ -31,7 +31,6 @@ impl ExecutableInstruction for PushInstruction {
             | AddressMode::HL_SPe8
             | AddressMode::D16
             | AddressMode::D8
-            | AddressMode::D16_R(_)
             | AddressMode::MR_D8(_)
             | AddressMode::MR(_)
             | AddressMode::A16_R(_)

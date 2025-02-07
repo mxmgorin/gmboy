@@ -21,7 +21,6 @@ impl ExecutableInstruction for SubInstruction {
             | AddressMode::MR(_)
             | AddressMode::A8_R(_)
             | AddressMode::R(_)
-            | AddressMode::D16_R(_)
             | AddressMode::A16_R(_)
             | AddressMode::R_A8(_)
             | AddressMode::R_D16(_)

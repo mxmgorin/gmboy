@@ -27,7 +27,6 @@ impl ExecutableInstruction for IncInstruction {
             | AddressMode::HL_SPe8
             | AddressMode::D16
             | AddressMode::D8
-            | AddressMode::D16_R(_)
             | AddressMode::MR_D8(_)
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => panic!("Not used"),

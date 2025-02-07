@@ -24,7 +24,6 @@ impl ExecutableInstruction for DecInstruction {
             | AddressMode::HLD_R(_)
             | AddressMode::R_A8(_)
             | AddressMode::A8_R(_)
-            | AddressMode::D16_R(_)
             | AddressMode::MR_D8(_)
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_)

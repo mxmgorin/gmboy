@@ -19,7 +19,6 @@ impl ExecutableInstruction for AdcInstruction {
             | AddressMode::HLI_R(_)
             | AddressMode::MR_R(_, _)
             | AddressMode::A8_R(_)
-            | AddressMode::D16_R(_)
             | AddressMode::MR(_)
             | AddressMode::A16_R(_)
             | AddressMode::MR_D8(_)

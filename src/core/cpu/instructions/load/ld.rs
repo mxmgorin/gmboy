@@ -14,7 +14,6 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::D16
             | AddressMode::IMP
             | AddressMode::MR(_)
-            | AddressMode::D16_R(_)
             | AddressMode::R(_) => {
                 unreachable!("not used for LD")
             }
