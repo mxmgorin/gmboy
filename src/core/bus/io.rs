@@ -68,6 +68,7 @@ impl Io {
             | IoAddressLocation::Background
             | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
+                #[cfg(not(test))]
                 eprintln!("Can't IO read address {:?} {:X}", location, address);
 
                 0
@@ -93,7 +94,7 @@ impl Io {
             | IoAddressLocation::Background
             | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
-                #[cfg(test)]
+                #[cfg(not(test))]
                 eprintln!("Can't IO write {:?} address {:X}", location, address);
             }
         }

@@ -37,6 +37,15 @@ fn test_mem_timing_3() {
 
 #[ignore]
 #[test]
+fn test_interrupt_time() {
+    let name = "interrupt_time";
+    let category = None;
+
+    assert_result(name, category, run_test_rom(name, category, Duration::from_secs(180)));
+}
+
+#[ignore]
+#[test]
 fn test_instr_timing() {
     let name = "instr_timing";
     let category = None;

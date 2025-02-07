@@ -11,7 +11,7 @@ pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,
     pub enabling_ime: bool,
-    pub ticks: i32,
+    pub ticks: u64,
     pub current_opcode: u8,
 }
 
@@ -98,10 +98,11 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn update_cycles(&mut self, cpu_cycles: i32) {
-        for _ in 0..cpu_cycles {
-            for _ in 0..4 {
-                self.ticks += 1;
+    pub fn update_cycles(&mut self, m_cycles: i32) {
+        const CLOCK_CYCLES: usize = 4; // aka t-cycles, t-states
+        for _ in 0..m_cycles {
+            for _ in 0..CLOCK_CYCLES {
+                self.ticks = self.ticks.wrapping_add(1);
 
                 if self.bus.io.timer.tick() {
                     self.bus

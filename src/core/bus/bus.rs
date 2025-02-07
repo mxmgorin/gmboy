@@ -56,7 +56,7 @@ pub struct Bus {
     ram: Ram,
     vram: VRam,
     pub io: Io,
-    test_bytes: Option<[u8; 0xFFFF + 1]>, // todo: remove, it is only for testing
+    flat_mem: Option<Vec<u8>>,
 }
 
 impl Bus {
@@ -66,22 +66,23 @@ impl Bus {
             ram,
             vram: VRam::new(),
             io: Io::new(),
-            test_bytes: None,
+            flat_mem: None,
         }
     }
 
-    pub fn test() -> Self {
+    /// Creates with just array as memory. Use only for tests.
+    pub fn flat_mem(bytes: Vec<u8>) -> Self {
         Self {
             cart: Cart::new(vec![0; 0x2000]).unwrap(),
             ram: Ram::new(),
             vram: VRam::new(),
             io: Io::new(),
-            test_bytes: Some([0; 0xFFFF + 1]),
+            flat_mem: bytes.into(),
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if let Some(test_bytes) = self.test_bytes {
+        if let Some(test_bytes) = self.flat_mem.as_ref() {
             return test_bytes[address as usize];
         }
 
@@ -90,6 +91,7 @@ impl Bus {
         match location {
             BusAddrLocation::Oam => {
                 // TODO: Impl
+                #[cfg(not(test))]
                 eprintln!("Can't BUS read {:?} address {:X}", location, address);
                 0
             }
@@ -108,7 +110,7 @@ impl Bus {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        if let Some(test_bytes) = self.test_bytes.as_mut() {
+        if let Some(test_bytes) = self.flat_mem.as_mut() {
             test_bytes[address as usize] = value;
             return;
         }
@@ -120,6 +122,7 @@ impl Bus {
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
                 // TODO: IMPL
+                #[cfg(not(test))]
                 eprintln!("Can't BUS write {:?} address {:X}", location, address);
             }
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
