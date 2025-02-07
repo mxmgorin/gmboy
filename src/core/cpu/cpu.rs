@@ -28,8 +28,8 @@ impl Cpu {
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
     pub fn fetch_data(&mut self) -> u8 {
-        let value = self.bus.read(self.registers.pc);
         self.update_cycles(1);
+        let value = self.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
 
         value
@@ -46,23 +46,23 @@ impl Cpu {
     }
     
     /// Reads data from memory. Costs 1 M-Cycle.
-    pub fn read_memory(&mut self, address: u16) -> u16 {        
-        let value = self.bus.read(address) as u16;
+    pub fn read_memory(&mut self, address: u16) -> u16 {
         self.update_cycles(1);
+        let value = self.bus.read(address) as u16;
 
         value
     }
 
     /// Writes to memory. Costs 1 M-Cycle.
     pub fn write_to_memory(&mut self, address: u16, value: u8) {
-        self.bus.write(address, value);        
         self.update_cycles(1);
+        self.bus.write(address, value);        
     }
     
     /// Sets PC to specified address. Costs 1 M-Cycle.
     pub fn set_pc(&mut self, address: u16) {
-        self.registers.pc = address;
         self.update_cycles(1);
+        self.registers.pc = address;
     }
 
     pub fn step(&mut self, debugger: Option<&mut Debugger>) -> Result<(), String> {

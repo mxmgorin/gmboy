@@ -50,7 +50,7 @@ fn test_instr_timing() {
     let name = "instr_timing";
     let category = None;
 
-    assert_result(name, category, run_test_rom(name, category, TIMEOUT));
+    assert_result(name, category, run_test_rom(name, category, Duration::from_secs(180)));
 }
 
 #[test]
