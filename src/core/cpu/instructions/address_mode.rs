@@ -12,61 +12,89 @@ pub struct FetchedData {
 #[allow(non_camel_case_types)]
 pub enum AddressMode {
     /// Implied: The operand is specified in the instruction itself
+    ///
+    /// Cycles: 0.
     IMP,
-    /// Register
-    /// Fetches value of register
+    /// Register: Fetches value of register.
+    ///
+    /// Cycles: 0.
     R(RegisterType),
-    /// Register and 16-bit Data
-    /// Fetches the 16-bit data by PC
+    /// Register and 16-bit Data: Fetches the 16-bit data by PC.
+    ///
+    /// Cycles: 2.
     R_D16(RegisterType),
-    /// Register to Register
-    /// Fetches the data from second register
+    /// Register to Register: Fetches the data from second register.
+    ///
+    /// Cycles: 0.
     R_R(RegisterType, RegisterType),
-    /// Memory address Register and Register
-    /// Fetches the data from second register and memory address from first register
+    /// Memory address Register and Register: Fetches the data from second register and memory address from first register.
+    ///
+    /// Cycles: 0.
     MR_R(RegisterType, RegisterType),
-    /// Register and 8-bit data
-    /// Fetches value from PC
+    /// Register and 8-bit data.
+    /// Fetches value from PC.
+    ///
+    /// Cycles: 1.
     R_D8(RegisterType),
-    /// Register and Memory address Register
-    /// Fetches address from second register
+    /// Register and Memory address Register: Fetches address from second register.
+    ///
+    /// Cycles: 1.
     R_MR(RegisterType, RegisterType),
-    /// Register and HL increment
+    /// Register and HL increment.
+    ///
+    /// Cycles: 1.
     R_HLI(RegisterType),
-    /// Register and HL decrement
+    /// Register and HL decrement.
+    ///
+    /// Cycles: 1.
     R_HLD(RegisterType),
-    /// HL increment and Register
+    /// HL increment and Register.
+    ///
+    /// Cycles: 0.
     HLI_R(RegisterType),
-    /// HL decrement and Register
+    /// HL decrement and Register.
+    ///
+    /// Cycles: 0.
     HLD_R(RegisterType),
-    /// Register and 8-bit address
-    /// Fetches value from 8-bit address
+    /// Register and 8-bit address: Fetches value from 8-bit address.
+    ///
+    /// Cycles: 1.
     R_A8(RegisterType),
-    /// 8-bit address and Register
-    /// Fetches value from second register
+    /// 8-bit address and Register: Fetches value from second register.
+    ///
+    /// Cycles: 1.
     A8_R(RegisterType),
-    /// HL and SP: HL,(SP+8e)
-    /// Fetches PC value
+    /// HL and SP: HL,(SP+8e): Fetches PC value.
+    ///
+    /// Cycles: 1.
     HL_SPe8,
-    /// 16-bit data
-    /// Fetches 16-bit value from memory by PC
+    /// 16-bit data: Fetches 16-bit value from memory by PC.
+    ///
+    /// Cycles: 2.
     D16,
-    /// 8-bit data
-    /// Fetches 8-bit value from memory by PC
+    /// 8-bit data: Fetches 8-bit value from memory by PC.
+    ///
+    /// Cycles: 1.
     D8,
-    /// 16-bit data to Register
+    /// 16-bit data to Register.
+    ///
+    /// Cycles: 2.
     D16_R(RegisterType),
-    /// Memory Address Register and 8-bit data
-    /// Fetches 8-bit value from memory by PC and memory address from register
+    /// Memory Address Register and 8-bit data: Fetches 8-bit value from memory by PC and memory address from register.
+    ///
+    /// Cycles: 1.
     MR_D8(RegisterType),
-    /// Memory Address Register
-    /// Fetches memory address from register and data by that address
+    /// Memory Address Register: Fetches memory address from register and data by that address.
+    ///
+    /// Cycles: 1.
     MR(RegisterType),
-    /// 16-bit Address and Register
-    /// Fetches value from register and memory address by PC
+    /// 16-bit Address and Register: Fetches value from register and memory address by PC.
+    ///
+    /// Cycles: 2.
     A16_R(RegisterType),
-    /// Register and 16-bit Address
-    /// Fetches value from register and memory address by PC
+    /// Register and 16-bit Address: Fetches value from register and memory address by PC.
+    ///
+    /// Cycles: 1.
     R_A16(RegisterType),
 }
 
@@ -109,8 +137,7 @@ impl AddressMode {
                 fetched_data.dest_addr = Some(addr);
             }
             AddressMode::R_HLI(_r1) => {
-                let hl = RegisterType::HL;
-                let hl_val = cpu.registers.read_register(hl);
+                let hl_val = cpu.registers.read_register(RegisterType::HL);
                 fetched_data.value = cpu.bus.read(hl_val) as u16;
                 cpu.update_cycles(1);
                 cpu.registers.set_hl(hl_val.wrapping_add(1));
@@ -137,43 +164,35 @@ impl AddressMode {
                 cpu.registers.set_hl(hl_val.wrapping_sub(1));
             }
             AddressMode::R_A8(_r1) => {
-                // 1cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::A8_R(r2) => {
-                // 1 cycle
                 let value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(value | 0xFF00);
                 fetched_data.value = cpu.registers.read_register(r2);
             }
             AddressMode::HL_SPe8 => {
-                // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::D8 => {
-                // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
             AddressMode::D16_R(r2) | AddressMode::A16_R(r2) => {
-                // 2 cycles
                 let addr = cpu.fetch_data16();
                 fetched_data.dest_addr = Some(addr);
                 fetched_data.value = cpu.registers.read_register(r2);
             }
             AddressMode::MR_D8(r1) => {
-                // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
             AddressMode::MR(r1) => {
-                // 1 cycle
                 let r_addr = cpu.registers.read_register(r1);
                 fetched_data.dest_addr = Some(r_addr);
                 fetched_data.value = cpu.bus.read(r_addr) as u16;
                 cpu.update_cycles(1);
             }
             AddressMode::R_A16(_r1) => {
-                // 3 cycles
                 let addr = cpu.fetch_data16();
                 fetched_data.value = cpu.bus.read(addr) as u16;
                 cpu.update_cycles(1);
@@ -189,8 +208,8 @@ mod tests {
     use crate::cart::Cart;
     use crate::core::bus::ram::Ram;
     use crate::core::bus::Bus;
-    use crate::cpu::Cpu;
     use crate::cpu::instructions::{AddressMode, RegisterType};
+    use crate::cpu::Cpu;
     use crate::util::LittleEndianBytes;
 
     #[test]
