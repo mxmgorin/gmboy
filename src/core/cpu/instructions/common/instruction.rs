@@ -1,44 +1,44 @@
-use crate::core::cpu::instructions::jump::call::CallInstruction;
-use crate::core::cpu::instructions::misc::ccf::CcfInstruction;
+use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
+use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
+use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
+use crate::core::cpu::instructions::arithmetic::dec::DecInstruction;
+use crate::core::cpu::instructions::arithmetic::inc::IncInstruction;
+use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
+use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
+use crate::core::cpu::instructions::bitwise::and::AndInstruction;
+use crate::core::cpu::instructions::bitwise::cpl::CplInstruction;
+use crate::core::cpu::instructions::bitwise::or::OrInstruction;
+use crate::core::cpu::instructions::bitwise::xor::XorInstruction;
 use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
 use crate::core::cpu::instructions::common::ConditionType;
-use crate::core::cpu::instructions::bitwise::cpl::CplInstruction;
-use crate::core::cpu::instructions::misc::daa::DaaInstruction;
-use crate::core::cpu::instructions::arithmetic::dec::DecInstruction;
 use crate::core::cpu::instructions::interrupt::di::DiInstruction;
+use crate::core::cpu::instructions::interrupt::ei::EiInstruction;
 use crate::core::cpu::instructions::interrupt::halt::HaltInstruction;
-use crate::core::cpu::instructions::arithmetic::inc::IncInstruction;
+use crate::core::cpu::instructions::jump::call::CallInstruction;
 use crate::core::cpu::instructions::jump::jp::JpInstruction;
 use crate::core::cpu::instructions::jump::jr::JrInstruction;
-use crate::core::cpu::instructions::load::ld::LdInstruction;
-use crate::core::cpu::instructions::load::ldh::LdhInstruction;
-use crate::core::cpu::instructions::misc::nop::NopInstruction;
-use crate::core::cpu::instructions::bitwise::xor::XorInstruction;
-use crate::core::cpu::stack::Stack;
-use crate::core::cpu::Cpu;
-use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
-use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
-use crate::core::cpu::instructions::bitwise::and::AndInstruction;
-use crate::cpu::instructions::common::FetchedData;
-use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
-use crate::core::cpu::instructions::interrupt::ei::EiInstruction;
-use crate::core::cpu::instructions::bitwise::or::OrInstruction;
-use crate::core::cpu::instructions::load::pop::PopInstruction;
-use crate::core::cpu::instructions::load::push::PushInstruction;
 use crate::core::cpu::instructions::jump::ret::RetInstruction;
 use crate::core::cpu::instructions::jump::reti::RetiInstruction;
+use crate::core::cpu::instructions::jump::rst::RstInstruction;
+use crate::core::cpu::instructions::load::ld::LdInstruction;
+use crate::core::cpu::instructions::load::ldh::LdhInstruction;
+use crate::core::cpu::instructions::load::pop::PopInstruction;
+use crate::core::cpu::instructions::load::push::PushInstruction;
+use crate::core::cpu::instructions::misc::ccf::CcfInstruction;
+use crate::core::cpu::instructions::misc::daa::DaaInstruction;
+use crate::core::cpu::instructions::misc::nop::NopInstruction;
+use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
+use crate::core::cpu::instructions::misc::scf::ScfInstruction;
+use crate::core::cpu::instructions::misc::stop::StopInstruction;
 use crate::core::cpu::instructions::rotate::rla::RlaInstruction;
 use crate::core::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::core::cpu::instructions::rotate::rra::RraInstruction;
 use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
-use crate::core::cpu::instructions::jump::rst::RstInstruction;
-use crate::core::cpu::instructions::misc::scf::ScfInstruction;
-use crate::core::cpu::instructions::misc::stop::StopInstruction;
-use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
+use crate::core::cpu::stack::Stack;
+use crate::core::cpu::Cpu;
+use crate::cpu::instructions::common::FetchedData;
 use std::fmt::Display;
-use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
-use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -81,7 +81,7 @@ pub enum Instruction {
     Adc(AdcInstruction),
     Rst(RstInstruction),
     Prefix(PrefixInstruction),
-    Sbc(SbcInstruction)
+    Sbc(SbcInstruction),
 }
 
 impl ExecutableInstruction for Instruction {
@@ -210,8 +210,7 @@ impl Instruction {
             Instruction::Adc(_) => InstructionType::ADC,
             Instruction::Rst(_) => InstructionType::RST,
             Instruction::Prefix(_) => InstructionType::CB,
-            Instruction::Sbc(_) => InstructionType::SBC
-            
+            Instruction::Sbc(_) => InstructionType::SBC,
         }
     }
 

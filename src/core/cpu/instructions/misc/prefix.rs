@@ -82,9 +82,9 @@ impl ExecutableInstruction for PrefixInstruction {
                 cpu.set_reg8(reg, result);
                 cpu.registers.flags.set(
                     (result == 0).into(), // Zero flag (not set for RLCA)
-                    false.into(),       // Subtract flag
-                    false.into(),       // Half-Carry flag
-                    carry.into(),       // Carry flag
+                    false.into(),         // Subtract flag
+                    false.into(),         // Half-Carry flag
+                    carry.into(),         // Carry flag
                 );
             }
             1 => {
@@ -145,23 +145,23 @@ impl ExecutableInstruction for PrefixInstruction {
                 let u = (u >> 1) as u8;
                 let result = (reg_val >> 1) | (reg_val & 0x80); // Shift right and preserve MSB
                 let carry = reg_val & 0x01 != 0; // Save LSB as Carry
-                
+
                 cpu.set_reg8(reg, result);
-                cpu.registers.flags.set(
-                    (u == 0).into(),
-                    false.into(),
-                    false.into(),
-                    carry.into(),
-                );
+                cpu.registers
+                    .flags
+                    .set((u == 0).into(), false.into(), false.into(), carry.into());
             }
             6 => {
                 // SWAP
                 reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
                 cpu.set_reg8(reg, reg_val);
 
-                cpu.registers
-                    .flags
-                    .set((reg_val == 0).into(), false.into(), false.into(), false.into());
+                cpu.registers.flags.set(
+                    (reg_val == 0).into(),
+                    false.into(),
+                    false.into(),
+                    false.into(),
+                );
             }
             7 => {
                 // SRL

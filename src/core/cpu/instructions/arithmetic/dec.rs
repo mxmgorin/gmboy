@@ -64,7 +64,10 @@ pub fn set_flags(cpu: &mut Cpu, val: u16) {
         return;
     }
 
-    cpu.registers
-        .flags
-        .set((val == 0).into(), true.into(), ((val & 0x0F) == 0x0F).into(), None);
+    cpu.registers.flags.set(
+        (val == 0).into(),
+        true.into(),
+        ((val & 0x0F) == 0x0F).into(),
+        None,
+    );
 }

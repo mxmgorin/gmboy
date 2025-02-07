@@ -1,6 +1,6 @@
-use std::borrow::Cow;
 use crate::core::cpu::Cpu;
 use crate::cpu::instructions::common::{FetchedData, Instruction};
+use std::borrow::Cow;
 
 #[derive(Debug, Clone)]
 pub struct Debugger {
@@ -17,7 +17,6 @@ pub enum CpuLogType {
     GbDoctor,
 }
 
-
 impl Debugger {
     pub fn new(log_type: CpuLogType, serial_enabled: bool) -> Self {
         Debugger {
@@ -27,7 +26,7 @@ impl Debugger {
             serial_enabled,
         }
     }
-    
+
     pub fn get_serial_msg(&self) -> Cow<str> {
         String::from_utf8_lossy(&self.msg[..self.size])
     }

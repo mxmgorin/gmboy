@@ -14,7 +14,9 @@ pub struct ScfInstruction;
 
 impl ExecutableInstruction for ScfInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.registers.flags.set(None, false.into(), false.into(), true.into());
+        cpu.registers
+            .flags
+            .set(None, false.into(), false.into(), true.into());
     }
 
     fn get_address_mode(&self) -> AddressMode {

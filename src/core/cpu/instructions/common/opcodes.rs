@@ -1,24 +1,24 @@
+use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
+use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
+use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
+use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
+use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
+use crate::core::cpu::instructions::bitwise::and::AndInstruction;
 use crate::core::cpu::instructions::common::address_mode::AddressMode;
 use crate::core::cpu::instructions::common::condition_type::ConditionType;
 use crate::core::cpu::instructions::common::instruction::{Instruction, RegisterType};
-use crate::core::cpu::instructions::*;
-use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
-use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
-use crate::core::cpu::instructions::bitwise::and::AndInstruction;
-use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
-use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
+use crate::core::cpu::instructions::jump::ret::RetInstruction;
+use crate::core::cpu::instructions::jump::rst::RstInstruction;
 use crate::core::cpu::instructions::load::pop::PopInstruction;
 use crate::core::cpu::instructions::load::push::PushInstruction;
-use crate::core::cpu::instructions::jump::ret::RetInstruction;
+use crate::core::cpu::instructions::misc::prefix::PrefixInstruction;
+use crate::core::cpu::instructions::misc::scf::ScfInstruction;
+use crate::core::cpu::instructions::misc::stop::StopInstruction;
 use crate::core::cpu::instructions::rotate::rla::RlaInstruction;
 use crate::core::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::core::cpu::instructions::rotate::rra::RraInstruction;
 use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
-use crate::core::cpu::instructions::jump::rst::RstInstruction;
-use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
-use crate::core::cpu::instructions::misc::scf::ScfInstruction;
-use crate::core::cpu::instructions::misc::stop::StopInstruction;
-use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
+use crate::core::cpu::instructions::*;
 
 const INSTRUCTIONS_LEN: usize = 0xFF + 1;
 

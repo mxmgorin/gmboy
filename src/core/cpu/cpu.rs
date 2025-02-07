@@ -2,9 +2,9 @@ use crate::core::bus::Bus;
 use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction, Instruction};
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
-use crate::core::{InterruptType};
-use crate::cpu::instructions::common::{RegisterType};
-use crate::util::{LittleEndianBytes};
+use crate::core::InterruptType;
+use crate::cpu::instructions::common::RegisterType;
+use crate::util::LittleEndianBytes;
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -57,7 +57,7 @@ impl Cpu {
             }
 
             return Ok(());
-        } 
+        }
 
         let pc = self.registers.pc;
         self.current_opcode = self.fetch_opcode();
@@ -77,7 +77,7 @@ impl Cpu {
             debugger.update_serial(self);
         }
 
-        let prev_enabling_ime = self.enabling_ime;        
+        let prev_enabling_ime = self.enabling_ime;
         instruction.execute(self, fetched_data);
 
         if self.bus.io.interrupts.ime {
@@ -89,7 +89,8 @@ impl Cpu {
             self.enabling_ime = false;
         }
 
-        if self.enabling_ime && prev_enabling_ime { // execute after next instruction when flag is changed
+        if self.enabling_ime && prev_enabling_ime {
+            // execute after next instruction when flag is changed
             self.enabling_ime = false;
             self.bus.io.interrupts.ime = true;
         }
@@ -126,7 +127,9 @@ impl Cpu {
             RegisterType::E => self.registers.e,
             RegisterType::H => self.registers.h,
             RegisterType::L => self.registers.l,
-            RegisterType::HL => self.bus.read(self.registers.read_register(RegisterType::HL)),
+            RegisterType::HL => self
+                .bus
+                .read(self.registers.read_register(RegisterType::HL)),
             _ => {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }
@@ -143,7 +146,9 @@ impl Cpu {
             RegisterType::E => self.registers.e = val & 0xFF,
             RegisterType::H => self.registers.h = val & 0xFF,
             RegisterType::L => self.registers.l = val & 0xFF,
-            RegisterType::HL => self.bus.write(self.registers.read_register(RegisterType::HL), val),
+            RegisterType::HL => self
+                .bus
+                .write(self.registers.read_register(RegisterType::HL), val),
             _ => {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }

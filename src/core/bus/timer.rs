@@ -149,7 +149,8 @@ mod tests {
         timer.tac = 0b100; // Timer enabled, clock select 0b00
 
         // Simulate enough ticks to trigger an increment
-        for _ in 0..512 { // 2^9 = 512 ticks for a full cycle
+        for _ in 0..512 {
+            // 2^9 = 512 ticks for a full cycle
             timer.tick();
         }
 
@@ -161,7 +162,7 @@ mod tests {
         let mut timer = Timer::new();
         timer.tac = 0b100; // Timer enabled
         timer.tima = 0xFE; // Set TIMA near overflow
-        timer.tma = 0x42;  // Set TMA (reload value)
+        timer.tma = 0x42; // Set TMA (reload value)
 
         // Simulate enough ticks to cause an overflow
         for _ in 0..512 {
@@ -169,8 +170,8 @@ mod tests {
         }
 
         assert_eq!(timer.tima, 0x42); // TIMA should reload from TMA
-        // Check for interrupt flag (if implemented)
-        // assert_eq!(timer.interrupt_flag, 0x04); 
+                                      // Check for interrupt flag (if implemented)
+                                      // assert_eq!(timer.interrupt_flag, 0x04);
     }
 
     #[test]

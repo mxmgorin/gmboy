@@ -1,5 +1,5 @@
 use rusty_gb_emu::emu::{read_bytes, Emu};
-use std::{env};
+use std::env;
 
 fn main() {
     let mut args: Vec<String> = env::args().collect();

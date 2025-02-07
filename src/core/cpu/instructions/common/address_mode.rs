@@ -131,41 +131,49 @@ impl AddressMode {
             }
             AddressMode::HLD_R(r2) => {
                 fetched_data.value = cpu.registers.read_register(r2);
-                
+
                 let hl_val = cpu.registers.read_register(RegisterType::HL);
                 fetched_data.dest_addr = Some(hl_val);
                 cpu.registers.set_hl(hl_val.wrapping_sub(1));
             }
-            AddressMode::R_A8(_r1) => { // 1cycle
+            AddressMode::R_A8(_r1) => {
+                // 1cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
-            AddressMode::A8_R(r2) => { // 1 cycle
+            AddressMode::A8_R(r2) => {
+                // 1 cycle
                 let value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(value | 0xFF00);
                 fetched_data.value = cpu.registers.read_register(r2);
             }
-            AddressMode::HL_SPe8 => { // 1 cycle
+            AddressMode::HL_SPe8 => {
+                // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
-            AddressMode::D8 => { // 1 cycle
+            AddressMode::D8 => {
+                // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
             }
-            AddressMode::D16_R(r2) | AddressMode::A16_R(r2) => { // 2 cycles
+            AddressMode::D16_R(r2) | AddressMode::A16_R(r2) => {
+                // 2 cycles
                 let addr = cpu.fetch_data16();
                 fetched_data.dest_addr = Some(addr);
                 fetched_data.value = cpu.registers.read_register(r2);
             }
-            AddressMode::MR_D8(r1) => { // 1 cycle
+            AddressMode::MR_D8(r1) => {
+                // 1 cycle
                 fetched_data.value = cpu.fetch_data() as u16;
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
-            AddressMode::MR(r1) => { // 1 cycle
+            AddressMode::MR(r1) => {
+                // 1 cycle
                 let r_addr = cpu.registers.read_register(r1);
                 fetched_data.dest_addr = Some(r_addr);
                 fetched_data.value = cpu.bus.read(r_addr) as u16;
                 cpu.update_cycles(1);
             }
-            AddressMode::R_A16(_r1) => { // 3 cycles
+            AddressMode::R_A16(_r1) => {
+                // 3 cycles
                 let addr = cpu.fetch_data16();
                 fetched_data.value = cpu.bus.read(addr) as u16;
                 cpu.update_cycles(1);
@@ -183,7 +191,7 @@ mod tests {
     use crate::core::bus::Bus;
     use crate::cpu::instructions::common::{AddressMode, RegisterType};
     use crate::cpu::Cpu;
-    use crate::util::{LittleEndianBytes};
+    use crate::util::LittleEndianBytes;
 
     #[test]
     fn test_fetch_imp() {
@@ -257,7 +265,8 @@ mod tests {
         let hl_val: u16 = LittleEndianBytes {
             low_byte: l_val,
             high_byte: h_val,
-        }.into();
+        }
+        .into();
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
@@ -281,7 +290,8 @@ mod tests {
         let hl_val: u16 = LittleEndianBytes {
             low_byte: l_val,
             high_byte: h_val,
-        }.into();
+        }
+        .into();
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 

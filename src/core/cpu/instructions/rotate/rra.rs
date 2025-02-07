@@ -29,7 +29,8 @@ impl ExecutableInstruction for RraInstruction {
         cpu.registers.a |= carry << 7;
 
         cpu.registers
-            .flags.set(false.into(), false.into(), false.into(), Some(new_c != 0));
+            .flags
+            .set(false.into(), false.into(), false.into(), Some(new_c != 0));
     }
 
     fn get_address_mode(&self) -> AddressMode {

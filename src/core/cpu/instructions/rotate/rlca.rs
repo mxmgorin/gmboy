@@ -12,7 +12,8 @@ impl ExecutableInstruction for RlcaInstruction {
         cpu.registers.a = u;
 
         cpu.registers
-            .flags.set(false.into(), false.into(), false.into(), Some(c.into()));
+            .flags
+            .set(false.into(), false.into(), false.into(), Some(c.into()));
     }
 
     fn get_address_mode(&self) -> AddressMode {

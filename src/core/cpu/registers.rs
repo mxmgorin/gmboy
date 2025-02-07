@@ -30,7 +30,7 @@ impl Flags {
     pub fn boot() -> Flags {
         Self { byte: 0xB0 }
     }
-    
+
     pub fn set(&mut self, z: Option<bool>, n: Option<bool>, h: Option<bool>, c: Option<bool>) {
         if let Some(z) = z {
             set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, z);

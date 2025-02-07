@@ -30,11 +30,10 @@ mod tests {
         let rel = s as i8;
         println!("{}", rel);
         println!("{}", rel as i32);
-        
+
         let val: u16 = 0xFFFF;
         println!("{}", val);
         println!("{}", val as i32);
         println!("{}", val as u32 as i32);
-
     }
 }
