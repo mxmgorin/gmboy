@@ -1,6 +1,6 @@
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction, Instruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::FetchedData;
+use crate::cpu::instructions::FetchedData;
 
 #[derive(Debug, Clone, Copy)]
 pub struct RstInstruction {

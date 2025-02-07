@@ -1,9 +1,9 @@
 use crate::core::bus::Bus;
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction, Instruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::core::InterruptType;
-use crate::cpu::instructions::common::RegisterType;
+use crate::cpu::instructions::RegisterType;
 use crate::util::LittleEndianBytes;
 
 #[derive(Debug, Clone)]

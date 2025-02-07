@@ -1,4 +1,4 @@
-use crate::cpu::instructions::common::{AddressMode, ExecutableInstruction, FetchedData};
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction, FetchedData};
 use crate::cpu::Cpu;
 
 /// Rotate register A right, through the carry flag.

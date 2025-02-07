@@ -1,7 +1,7 @@
 use crate::print_with_dashes;
 use rusty_gb_emu::bus::Bus;
-use rusty_gb_emu::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
-use rusty_gb_emu::cpu::instructions::common::ExecutableInstruction;
+use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
+use rusty_gb_emu::cpu::instructions::ExecutableInstruction;
 use rusty_gb_emu::cpu::{Cpu, Flags, Registers};
 use rusty_gb_emu::debugger::{CpuLogType, Debugger};
 use serde::{Deserialize, Serialize};

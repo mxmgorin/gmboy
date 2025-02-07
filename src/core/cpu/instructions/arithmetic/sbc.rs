@@ -1,6 +1,6 @@
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::FetchedData;
+use crate::cpu::instructions::FetchedData;
 
 /// Subtract the value in r8 and the carry flag from A.
 /// Cycles: 1
@@ -72,7 +72,7 @@ impl ExecutableInstruction for SbcInstruction {
 #[cfg(test)]
 mod tests {
     use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
-    use crate::cpu::instructions::common::{AddressMode, FetchedData, RegisterType};
+    use crate::cpu::instructions::{AddressMode, FetchedData, RegisterType};
 
     #[test]
     fn test_1() {

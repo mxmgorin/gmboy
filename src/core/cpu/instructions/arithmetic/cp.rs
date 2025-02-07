@@ -1,6 +1,6 @@
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::FetchedData;
+use crate::cpu::instructions::FetchedData;
 
 /// ComPare the value in A with the value in r8.
 /// This subtracts the value in r8 from A and sets flags accordingly, but discards the result.

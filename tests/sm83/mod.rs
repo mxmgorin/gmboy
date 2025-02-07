@@ -1,7 +1,7 @@
 mod util;
 use crate::sm83::util::{run_sb_test_cases, run_test_case, Sm83TestCase};
-use rusty_gb_emu::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
-use rusty_gb_emu::cpu::instructions::common::Instruction;
+use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
+use rusty_gb_emu::cpu::instructions::Instruction;
 
 #[ignore]
 #[test]

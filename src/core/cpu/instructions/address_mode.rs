@@ -1,4 +1,4 @@
-use crate::core::cpu::instructions::common::instruction::RegisterType;
+use crate::core::cpu::instructions::instruction::RegisterType;
 use crate::core::cpu::Cpu;
 
 #[derive(Debug, Clone, Default)]
@@ -189,8 +189,8 @@ mod tests {
     use crate::cart::Cart;
     use crate::core::bus::ram::Ram;
     use crate::core::bus::Bus;
-    use crate::cpu::instructions::common::{AddressMode, RegisterType};
     use crate::cpu::Cpu;
+    use crate::cpu::instructions::{AddressMode, RegisterType};
     use crate::util::LittleEndianBytes;
 
     #[test]

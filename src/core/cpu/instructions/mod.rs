@@ -1,5 +1,3 @@
-pub mod common;
-
 mod arithmetic;
 mod bitwise;
 mod interrupt;
@@ -7,6 +5,10 @@ mod jump;
 mod load;
 mod misc;
 mod rotate;
+pub mod address_mode;
+pub mod condition_type;
+pub mod instruction;
+pub mod opcodes;
 
 pub use arithmetic::dec::*;
 pub use arithmetic::inc::*;
@@ -29,3 +31,7 @@ pub use misc::nop::*;
 pub use rotate::rlca::*;
 pub use rotate::rra::*;
 pub use rotate::rrca::*;
+pub use instruction::*;
+pub use address_mode::*;
+pub use condition_type::*;
+pub use opcodes::*;

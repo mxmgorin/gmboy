@@ -1,6 +1,6 @@
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::FetchedData;
+use crate::cpu::instructions::FetchedData;
 
 /// Decimal Adjust Accumulator.
 /// Designed to be used after performing an arithmetic instruction (ADD, ADC, SUB, SBC) whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.

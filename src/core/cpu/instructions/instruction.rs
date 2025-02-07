@@ -9,9 +9,8 @@ use crate::core::cpu::instructions::bitwise::and::AndInstruction;
 use crate::core::cpu::instructions::bitwise::cpl::CplInstruction;
 use crate::core::cpu::instructions::bitwise::or::OrInstruction;
 use crate::core::cpu::instructions::bitwise::xor::XorInstruction;
-use crate::core::cpu::instructions::common::address_mode::AddressMode;
-use crate::core::cpu::instructions::common::opcodes::INSTRUCTIONS_BY_OPCODES;
-use crate::core::cpu::instructions::common::ConditionType;
+use crate::core::cpu::instructions::address_mode::AddressMode;
+use crate::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use crate::core::cpu::instructions::interrupt::di::DiInstruction;
 use crate::core::cpu::instructions::interrupt::ei::EiInstruction;
 use crate::core::cpu::instructions::interrupt::halt::HaltInstruction;
@@ -37,8 +36,8 @@ use crate::core::cpu::instructions::rotate::rra::RraInstruction;
 use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::FetchedData;
 use std::fmt::Display;
+use crate::cpu::instructions::{ConditionType, FetchedData};
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);

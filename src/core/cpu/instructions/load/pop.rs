@@ -1,6 +1,6 @@
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::{FetchedData, RegisterType};
+use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::stack::Stack;
 
 #[derive(Debug, Clone, Copy)]

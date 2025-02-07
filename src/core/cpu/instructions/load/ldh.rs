@@ -1,6 +1,6 @@
-use crate::core::cpu::instructions::common::{AddressMode, ExecutableInstruction};
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::Cpu;
-use crate::cpu::instructions::common::FetchedData;
+use crate::cpu::instructions::FetchedData;
 
 /// Load High Memory
 #[derive(Debug, Clone, Copy)]

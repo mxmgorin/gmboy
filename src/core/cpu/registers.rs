@@ -1,4 +1,4 @@
-use crate::core::cpu::instructions::common::RegisterType;
+use crate::core::cpu::instructions::RegisterType;
 use crate::core::util::{get_bit_flag, set_bit};
 use std::fmt::Display;
 
