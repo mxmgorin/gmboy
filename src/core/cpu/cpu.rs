@@ -60,7 +60,7 @@ impl Cpu {
         }
 
         let pc = self.registers.pc;
-        self.current_opcode = self.fetch_opcode();
+        self.current_opcode = self.fetch_data();
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
             return Err(format!(
@@ -153,12 +153,5 @@ impl Cpu {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }
         }
-    }
-
-    fn fetch_opcode(&mut self) -> u8 {
-        let opcode = self.bus.read(self.registers.pc);
-        self.registers.pc = self.registers.pc.wrapping_add(1);
-
-        opcode
     }
 }
