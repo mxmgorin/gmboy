@@ -1,32 +1,37 @@
-use crate::core::bus::Bus;
-use crate::core::cpu::Registers;
+use crate::cpu::Cpu;
 
 pub enum Stack {}
 
 impl Stack {
-    pub fn push(registers: &mut Registers, bus: &mut Bus, val: u8) {
-        registers.sp = registers.sp.wrapping_sub(1);
-        bus.write(registers.sp, val);
+    /// Costs 1 M-Cycle.
+    pub fn push(cpu: &mut Cpu, value: u8) {
+        cpu.update_cycles(1);
+        cpu.registers.sp = cpu.registers.sp.wrapping_sub(1);
+        cpu.bus.write(cpu.registers.sp, value);
     }
 
-    pub fn pop(registers: &mut Registers, bus: &mut Bus) -> u8 {
-        let val = bus.read(registers.sp);
-        registers.sp = registers.sp.wrapping_add(1);
+    /// Costs 1 M-Cycle.
+    pub fn pop(cpu: &mut Cpu) -> u8 {
+        cpu.update_cycles(1);
+        let value = cpu.bus.read(cpu.registers.sp);
+        cpu.registers.sp = cpu.registers.sp.wrapping_add(1);
 
-        val
+        value
     }
 
-    pub fn push16(registers: &mut Registers, bus: &mut Bus, val: u16) {
+    /// Costs 2 M-cycles.
+    pub fn push16(cpu: &mut Cpu, val: u16) {
         let high_byte = (val >> 8) & 0xFF;
-        Stack::push(registers, bus, high_byte as u8);
+        Stack::push(cpu, high_byte as u8);
 
         let low_byte = val & 0xFF;
-        Stack::push(registers, bus, low_byte as u8);
+        Stack::push(cpu, low_byte as u8);
     }
 
-    pub fn _pop16(registers: &mut Registers, bus: &mut Bus) -> u16 {
-        let lo = Stack::pop(registers, bus) as u16;
-        let hi = Stack::pop(registers, bus) as u16;
+    /// Costs 2 M-cycles.
+    pub fn _pop16(cpu: &mut Cpu,) -> u16 {
+        let lo = Stack::pop(cpu) as u16;
+        let hi = Stack::pop(cpu) as u16;
 
         (hi << 8) | lo
     }

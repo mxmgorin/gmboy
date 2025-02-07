@@ -32,13 +32,10 @@ impl ExecutableInstruction for DecInstruction {
             | AddressMode::MR_R(_, _)
             | AddressMode::R_MR(_, _) => panic!("not used"),
             AddressMode::MR(_r1) => {
-                cpu.update_cycles(1); // always needs because uses only HL reg which is 16 bit
-
-                cpu.bus.write(
+                cpu.write_to_memory(
                     fetched_data.dest_addr.expect("must exist for MR"),
                     value as u8,
                 );
-
                 set_flags(cpu, value);
             }
             AddressMode::R(r1) => {

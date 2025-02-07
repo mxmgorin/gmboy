@@ -217,16 +217,15 @@ impl Instruction {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
+    /// Costs 1 M-Cycle without push PC and 2 M-Cycles more with.
     pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
         if ConditionType::check_cond(&cpu.registers, cond) {
             if push_pc {
-                cpu.update_cycles(2);
                 let pc = cpu.registers.pc;
-                Stack::push16(&mut cpu.registers, &mut cpu.bus, pc);
+                Stack::push16(cpu, pc);
             }
 
-            cpu.registers.pc = addr;
-            cpu.update_cycles(1);
+            cpu.set_pc(addr);
         }
     }
 

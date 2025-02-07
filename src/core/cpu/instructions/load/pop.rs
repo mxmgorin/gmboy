@@ -37,17 +37,14 @@ impl ExecutableInstruction for PopInstruction {
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => unreachable!("not used"),
             AddressMode::R(r1) => {
-                let lo = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
-                cpu.update_cycles(1);
-
-                let hi = Stack::pop(&mut cpu.registers, &mut cpu.bus) as u16;
-                cpu.update_cycles(1);
-
-                let n = (hi << 8) | lo;
-                cpu.registers.set_register(r1, n);
+                let lo = Stack::pop(cpu) as u16;
+                let hi = Stack::pop(cpu) as u16;
+                let addr = (hi << 8) | lo;
 
                 if r1 == RegisterType::AF {
-                    cpu.registers.set_register(r1, n & 0xFFF0);
+                    cpu.registers.set_register(r1, addr & 0xFFF0);
+                } else {
+                    cpu.registers.set_register(r1, addr);
                 }
             }
         }

@@ -12,7 +12,12 @@ pub struct JpInstruction {
 
 impl ExecutableInstruction for JpInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, false);
+        if self.condition_type.is_none() {
+            // uses only HL and no Cycles
+            cpu.registers.pc = fetched_data.value;
+        } else {
+            Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, false);
+        }
     }
 
     fn get_address_mode(&self) -> AddressMode {

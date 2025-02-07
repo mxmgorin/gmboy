@@ -123,8 +123,7 @@ impl AddressMode {
                     addr |= 0xFF00;
                 }
 
-                fetched_data.value = cpu.bus.read(addr) as u16;
-                cpu.update_cycles(1);
+                fetched_data.value = cpu.read_memory(addr);
             }
             AddressMode::MR_R(r1, r2) => {
                 fetched_data.value = cpu.registers.read_register(r2);
@@ -138,15 +137,13 @@ impl AddressMode {
             }
             AddressMode::R_HLI(_r1) => {
                 let hl_val = cpu.registers.read_register(RegisterType::HL);
-                fetched_data.value = cpu.bus.read(hl_val) as u16;
-                cpu.update_cycles(1);
+                fetched_data.value = cpu.read_memory(hl_val);
                 cpu.registers.set_hl(hl_val.wrapping_add(1));
             }
             AddressMode::R_HLD(_r1) => {
                 let hl = RegisterType::HL;
                 let hl_val = cpu.registers.read_register(hl);
-                fetched_data.value = cpu.bus.read(hl_val) as u16;
-                cpu.update_cycles(1);
+                fetched_data.value = cpu.read_memory(hl_val);
                 cpu.registers.set_hl(hl_val.wrapping_sub(1));
             }
             AddressMode::HLI_R(r2) => {
@@ -187,15 +184,13 @@ impl AddressMode {
                 fetched_data.dest_addr = Some(cpu.registers.read_register(r1));
             }
             AddressMode::MR(r1) => {
-                let r_addr = cpu.registers.read_register(r1);
-                fetched_data.dest_addr = Some(r_addr);
-                fetched_data.value = cpu.bus.read(r_addr) as u16;
-                cpu.update_cycles(1);
+                let addr = cpu.registers.read_register(r1);
+                fetched_data.dest_addr = Some(addr);
+                fetched_data.value = cpu.read_memory(addr);
             }
             AddressMode::R_A16(_r1) => {
                 let addr = cpu.fetch_data16();
-                fetched_data.value = cpu.bus.read(addr) as u16;
-                cpu.update_cycles(1);
+                fetched_data.value = cpu.read_memory(addr);
             }
         }
 

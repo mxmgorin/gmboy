@@ -16,20 +16,20 @@ impl ExecutableInstruction for AddInstruction {
             | AddressMode::R_HLI(_)
             | AddressMode::R_HLD(_)
             | AddressMode::HLI_R(_)
+            | AddressMode::MR_R(_, _)
+            | AddressMode::A8_R(_)
+            | AddressMode::D16_R(_)
+            | AddressMode::MR_D8(_)
+            | AddressMode::MR(_)
+            | AddressMode::A16_R(_)
             | AddressMode::HLD_R(_) => unreachable!("not used"),
             AddressMode::HL_SPe8 => execute_add(cpu, fetched_data, RegisterType::SP),
             AddressMode::R_D8(r1)
             | AddressMode::R(r1)
             | AddressMode::R_D16(r1)
             | AddressMode::R_A8(r1)
-            | AddressMode::A8_R(r1)
-            | AddressMode::D16_R(r1)
-            | AddressMode::MR_D8(r1)
-            | AddressMode::MR(r1)
-            | AddressMode::A16_R(r1)
             | AddressMode::R_A16(r1)
             | AddressMode::R_R(r1, _)
-            | AddressMode::MR_R(r1, _)
             | AddressMode::R_MR(r1, _) => execute_add(cpu, fetched_data, r1),
         }
     }
@@ -50,6 +50,7 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     }
 
     if r1 == RegisterType::SP {
+        cpu.update_cycles(1);
         reg_val_u32 = cpu
             .registers
             .read_register(r1)
@@ -65,6 +66,7 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let mut c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
 
     if is_16bit {
+        cpu.update_cycles(1);
         z = None;
         h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
         let n = (reg_val as u32) + (fetched_data.value as u32);

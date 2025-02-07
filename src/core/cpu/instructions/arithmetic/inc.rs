@@ -32,10 +32,9 @@ impl ExecutableInstruction for IncInstruction {
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => panic!("Not used"),
             AddressMode::MR(_r1) => {
-                cpu.update_cycles(1); // always needs because uses only HL reg which is 16 bit
-
+                // uses only HL
                 value &= 0xFF; // Ensure it fits into 8 bits
-                cpu.bus.write(
+                cpu.write_to_memory(
                     fetched_data.dest_addr.expect("must exist for MR"),
                     value as u8,
                 );

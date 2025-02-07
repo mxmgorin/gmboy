@@ -37,15 +37,13 @@ impl ExecutableInstruction for PushInstruction {
             | AddressMode::A16_R(_)
             | AddressMode::R_A16(_) => unreachable!("not used"),
             AddressMode::R(r1) => {
-                let hi = (cpu.registers.read_register(r1) >> 8) & 0xFF;
                 cpu.update_cycles(1);
-                Stack::push(&mut cpu.registers, &mut cpu.bus, hi as u8);
+
+                let hi = (cpu.registers.read_register(r1) >> 8) & 0xFF;
+                Stack::push(cpu, hi as u8);
 
                 let lo = cpu.registers.read_register(r1) & 0xFF;
-                cpu.update_cycles(1);
-                Stack::push(&mut cpu.registers, &mut cpu.bus, lo as u8);
-
-                cpu.update_cycles(1);
+                Stack::push(cpu, lo as u8);
             }
         }
     }

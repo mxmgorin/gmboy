@@ -54,16 +54,17 @@ impl ExecutableInstruction for LdInstruction {
             // LD HL,SP+e8
             // Add the signed value e8 to SP and copy the result in HL.
             AddressMode::HL_SPe8 => {
-                let sp = cpu.registers.sp;
-                let h_flag = (sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
-                let c_flag = (sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
+                let h_flag = (cpu.registers.sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
+                let c_flag = (cpu.registers.sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
                 cpu.registers
                     .flags
                     .set(false.into(), false.into(), Some(h_flag), Some(c_flag));
                 let offset_e = fetched_data.value as i8; // truncate to 8 bits (+8e)
                 cpu.registers
-                    .set_register(RegisterType::HL, sp.wrapping_add(offset_e as u16));
+                    .set_register(RegisterType::HL, cpu.registers.sp.wrapping_add(offset_e as u16));
+
+                cpu.update_cycles(1);
             }
         }
     }
