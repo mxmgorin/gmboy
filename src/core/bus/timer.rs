@@ -57,7 +57,7 @@ impl Timer {
 
         // Update TIMA if the timer is enabled and a timer update is triggered
         if timer_update && (self.tac & (1 << 2)) != 0 {
-            self.tima += 1;
+            self.tima = self.tima.wrapping_add(1);
 
             let is_overflow = self.tima == 0xFF;
             if is_overflow {

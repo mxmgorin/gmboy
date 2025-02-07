@@ -46,7 +46,7 @@ pub fn assert_result(
     };
 
     if let Err(err) = result {
-        panic!("{name}: FAILED ({err})")
+        panic!("{name}: FAILED\n{err}")
     } else {
         println!("{name}: OK");
     }
@@ -55,15 +55,19 @@ pub fn assert_result(
 #[derive(Debug, Clone, Copy)]
 pub enum TestRomCategory {
     CpuInstructions,
+    MemTiming
 }
 
 pub fn get_test_rom_path(rom_name: &str, category: Option<TestRomCategory>) -> PathBuf {
     let mut root = PathBuf::from("tests").join("blargg").join("roms");
 
     if let Some(category) = category {
-        match category {
-            TestRomCategory::CpuInstructions => root = root.join("cpu_instrs"),
-        }
+        let dir = match category {
+            TestRomCategory::CpuInstructions => "cpu_instrs",
+            TestRomCategory::MemTiming => "mem_timing",
+        };
+
+        root = root.join(dir);
     }
 
     root = root.join(rom_name);

@@ -5,6 +5,45 @@ mod util;
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
+#[ignore]
+#[test]
+fn test_mem_timing_1() {
+    let name = "01-read_timing";
+    let category = Some(TestRomCategory::MemTiming);
+
+    // FIXME
+    assert_result(name, category, run_test_rom(name, category, TIMEOUT));
+}
+
+#[ignore]
+#[test]
+fn test_mem_timing_2() {
+    let name = "02-write_timing";
+    let category = Some(TestRomCategory::MemTiming);
+    
+    // FIXME
+    assert_result(name, category, run_test_rom(name, category, TIMEOUT));
+}
+
+#[ignore]
+#[test]
+fn test_mem_timing_3() {
+    let name = "03-modify_timing";
+    let category = Some(TestRomCategory::MemTiming);
+
+    // FIXME
+    assert_result(name, category, run_test_rom(name, category, TIMEOUT));
+}
+
+#[ignore]
+#[test]
+fn test_instr_timing() {
+    let name = "instr_timing";
+    let category = None;
+
+    assert_result(name, category, run_test_rom(name, category, TIMEOUT));
+}
+
 #[test]
 fn test_cpu_instructs_1() {
     let name = "01-special";
