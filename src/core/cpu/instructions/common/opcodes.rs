@@ -180,6 +180,9 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x33] = Instruction::Inc(IncInstruction {
         address_mode: AddressMode::R(RegisterType::SP),
     });
+    instructions[0x34] = Instruction::Inc(IncInstruction {
+        address_mode: AddressMode::MR(RegisterType::HL),
+    });
     instructions[0x35] = Instruction::Dec(DecInstruction {
         address_mode: AddressMode::MR(RegisterType::HL),
     });
