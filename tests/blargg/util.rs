@@ -25,7 +25,7 @@ pub fn run_test_rom(
         if serial_msg.contains("passed") {
             return Ok(());
         } else if serial_msg.contains("failed") || serial_msg.contains("error") {
-            return Err(format!("{}", serial_msg));
+            return Err(serial_msg);
         }
 
         if instant.elapsed() > timeout {
