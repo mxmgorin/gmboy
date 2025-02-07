@@ -93,6 +93,7 @@ impl Io {
             | IoAddressLocation::Background
             | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
+                #[cfg(test)]
                 eprintln!("Can't IO write {:?} address {:X}", location, address);
             }
         }
