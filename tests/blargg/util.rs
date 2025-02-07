@@ -7,30 +7,48 @@ use rusty_gb_emu::emu::read_bytes;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-pub fn run_test_rom(name: &str, category: Option<TestRomCategory>, timeout: Duration) {
+pub fn run_test_rom(
+    name: &str,
+    category: Option<TestRomCategory>,
+    timeout: Duration,
+) -> Result<(), String> {
     let path = get_test_rom_path(&format!("{}.gb", name), category);
     let mut debugger = Debugger::new(CpuLogType::None, true);
     let cart = Cart::new(read_bytes(path.to_str().unwrap()).unwrap()).unwrap();
     let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
     let instant = Instant::now();
-    let name = if let Some(category) = category { format!("{:?} {}", category, name)} else { name.to_owned() };
 
     loop {
-        cpu.step(Some(&mut debugger)).unwrap();
+        cpu.step(Some(&mut debugger))?;
         let serial_msg = debugger.get_serial_msg().to_lowercase();
 
         if serial_msg.contains("passed") {
-            println!("{}: OK", name);
-            break;
+            return Ok(());
         } else if serial_msg.contains("failed") || serial_msg.contains("error") {
-            println!("{}: FAILED", name);
-            println!("{}", serial_msg);
+            return Err(format!("{}", serial_msg));
         }
 
         if instant.elapsed() > timeout {
-            println!("{}: FAILED", name);
-            panic!("Timed out!");
+            return Err(format!("TIMEOUT: {}", timeout.as_secs()));
         }
+    }
+}
+
+pub fn assert_result(
+    name: &str,
+    category: Option<TestRomCategory>,
+    result: Result<(), String>,
+) {
+    let name = if let Some(category) = category {
+        format!("{:?} {}", category, name)
+    } else {
+        name.to_owned()
+    };
+
+    if let Err(err) = result {
+        panic!("{name}: FAILED ({err})")
+    } else {
+        println!("{name}: OK");
     }
 }
 
