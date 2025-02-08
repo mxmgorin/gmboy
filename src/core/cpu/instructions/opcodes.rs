@@ -729,13 +729,13 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
 
     // 0xFX
     instructions[0xF0] = Instruction::Ldh(LdhInstruction {
-        address_mode: AddressMode::R_A8(RegisterType::A),
+        address_mode: AddressMode::R_HA8(RegisterType::A),
     });
     instructions[0xF1] = Instruction::Pop(PopInstruction {
         address_mode: AddressMode::R(RegisterType::AF),
     });
     instructions[0xF2] = Instruction::Ldh(LdhInstruction {
-        address_mode: AddressMode::R_MR(RegisterType::A, RegisterType::C),
+        address_mode: AddressMode::R_HMR(RegisterType::A, RegisterType::C),
     });
     instructions[0xF3] = Instruction::Di(DiInstruction {});
     instructions[0xF5] = Instruction::Push(PushInstruction {

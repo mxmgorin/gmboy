@@ -42,6 +42,14 @@ impl AddressMode {
                 fetched_data.source = DataSource::MemoryRegister(r2, addr);
                 fetched_data.dest = DataDestination::Register(r1);
             }
+            AddressMode::R_HMR(r1, r2) => {
+                let addr = cpu.registers.read_register(r2);
+                let addr = 0xFF00 | addr;
+
+                fetched_data.value = cpu.read_memory(addr);
+                fetched_data.source = DataSource::MemoryRegister(r2, addr);
+                fetched_data.dest = DataDestination::Register(r1);
+            }
             AddressMode::MR_R(r1, r2) => {
                 fetched_data.value = cpu.registers.read_register(r2);
                 fetched_data.source = DataSource::Register(r2);
@@ -86,6 +94,14 @@ impl AddressMode {
             AddressMode::R_A8(r1) => {
                 let addr = cpu.fetch_data() as u16;
 
+                fetched_data.value = cpu.read_memory(addr);
+                fetched_data.source = DataSource::Memory(addr);
+                fetched_data.dest = DataDestination::Register(r1);
+            }
+            AddressMode::R_HA8(r1) => {
+                let addr = cpu.fetch_data() as u16;
+                let addr = 0xFF00 | addr;
+                
                 fetched_data.value = cpu.read_memory(addr);
                 fetched_data.source = DataSource::Memory(addr);
                 fetched_data.dest = DataDestination::Register(r1);
@@ -170,6 +186,10 @@ pub enum AddressMode {
     ///
     /// Cycles: 1.
     R_MR(RegisterType, RegisterType),
+    /// Register and High Memory address Register: Fetches address from second register.
+    ///
+    /// Cycles: 1.
+    R_HMR(RegisterType, RegisterType),
     /// Register and HL increment.
     ///
     /// Cycles: 1.
@@ -190,6 +210,10 @@ pub enum AddressMode {
     ///
     /// Cycles: 1.
     R_A8(RegisterType),
+    /// Register and 8-bit high address: Fetches value from 8-bit address.
+    ///
+    /// Cycles: 1.
+    R_HA8(RegisterType),
     /// 8-bit address and Register: Fetches value from second register.
     ///
     /// Cycles: 1.

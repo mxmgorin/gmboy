@@ -5,9 +5,8 @@ mod util;
 
 const TIMEOUT: Duration = Duration::from_secs(30);
 
-#[ignore]
 #[test]
-fn test_mem_timing_1() {
+fn test_mem_read_timing() {
     let name = "01-read_timing";
     let category = Some(TestRomCategory::MemTiming);
 
@@ -15,9 +14,8 @@ fn test_mem_timing_1() {
     assert_result(name, category, run_test_rom(name, category, TIMEOUT));
 }
 
-#[ignore]
 #[test]
-fn test_mem_timing_2() {
+fn test_mem_write_timing() {
     let name = "02-write_timing";
     let category = Some(TestRomCategory::MemTiming);
     
@@ -27,7 +25,7 @@ fn test_mem_timing_2() {
 
 #[ignore]
 #[test]
-fn test_mem_timing_3() {
+fn test_mem_modify_timing() {
     let name = "03-modify_timing";
     let category = Some(TestRomCategory::MemTiming);
 

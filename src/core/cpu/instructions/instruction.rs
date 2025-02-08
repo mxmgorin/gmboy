@@ -249,7 +249,10 @@ impl Instruction {
             AddressMode::R_MR(r1, r2) => {
                 format!("{:?} {:?},({:?})", self.get_type(), r1, r2)
             }
-            AddressMode::R_D8(r1) | AddressMode::R_A8(r1) => {
+            AddressMode::R_HMR(r1, r2) => {
+                format!("{:?} {:?},(FF00+{:?})", self.get_type(), r1, r2)
+            }
+            AddressMode::R_D8(r1) | AddressMode::R_A8(r1) | AddressMode::R_HA8(r1) => {
                 format!(
                     "{:?} {:?},${:02X}",
                     self.get_type(),

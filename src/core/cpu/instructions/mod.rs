@@ -39,8 +39,8 @@ pub use rotate::rrca::*;
 #[cfg(test)]
 mod tests {
     use crate::bus::Bus;
-    use crate::cpu::Cpu;
     use crate::cpu::instructions::{Instruction, INSTRUCTIONS_BY_OPCODES};
+    use crate::cpu::Cpu;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -53,6 +53,21 @@ mod tests {
         3, 0, 3, 4, 2, 4, 2, 4, 3, 0, 3, 0, 2, 4, 3, 3, 2, 0, 0, 4, 2, 4, 4, 1, 4, 0, 0, 0, 2, 4,
         3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4,
     ];
+
+    #[test]
+    pub fn test_m_cycles_ldh_f0() {
+        let opcode = 0xF0;
+        let mut cpu = Cpu::new(Bus::flat_mem(vec![0; 100000]));
+        cpu.set_pc(0);
+        cpu.t_cycles = 0;
+        cpu.bus.write(0, opcode as u8);
+        cpu.step(None).unwrap();
+        let expected = M_CYCLES_BY_OPCODES[opcode];
+        let actual = cpu.t_cycles / 4;
+
+        println!("T Cycles: {}", actual);
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     pub fn test_m_cycles() {
@@ -99,7 +114,10 @@ mod tests {
             let actual = cpu.t_cycles / 4;
 
             if actual != expected {
-                let msg = format!("Invalid M-Cycles for 0x{:02X}: actual={}, expected={}", opcode, actual, expected);
+                let msg = format!(
+                    "Invalid M-Cycles for 0x{:02X}: actual={}, expected={}",
+                    opcode, actual, expected
+                );
                 panic!("{}", msg);
             }
         }
