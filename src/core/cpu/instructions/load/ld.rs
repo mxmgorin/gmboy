@@ -25,9 +25,11 @@ impl ExecutableInstruction for LdInstruction {
             | AddressMode::R_D16(r1) => {
                 cpu.registers.set_register(r1, fetched_data.value);
             }
+            AddressMode::MR_D8(_) => {
+                cpu.write_to_memory(fetched_data.dest_addr.expect("must be set"), fetched_data.value as u8);
+            }
             AddressMode::A8_R(r1)
             | AddressMode::A16_R(r1)
-            | AddressMode::MR_D8(r1)
             | AddressMode::MR_R(_, r1)
             | AddressMode::HLI_R(r1)
             | AddressMode::HLD_R(r1) => {

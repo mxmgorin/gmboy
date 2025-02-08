@@ -39,20 +39,15 @@ impl ExecutableInstruction for AddInstruction {
 }
 
 // todo: test or rewrite casting, do they are correct?
-fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
-    let reg_val = cpu.registers.read_register(r1);
+fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r: RegisterType) {
+    let reg_val = cpu.registers.read_register(r);
     let mut reg_val_u32: u32 = reg_val as u32 + fetched_data.value as u32;
-    let is_16bit = r1.is_16bit();
 
-    if is_16bit {
-        cpu.m_cycles(1);
-    }
-
-    if r1 == RegisterType::SP {
+    if r == RegisterType::SP {
         cpu.m_cycles(1);
         reg_val_u32 = cpu
             .registers
-            .read_register(r1)
+            .read_register(r)
             .wrapping_add(fetched_data.value as i8 as u16) as u32;
     }
 
@@ -64,7 +59,7 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let mut h = (reg_val & 0xF) + (fetched_data.value & 0xF) >= 0x10;
     let mut c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
 
-    if is_16bit {
+    if r.is_16bit() {
         cpu.m_cycles(1);
         z = None;
         h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
@@ -72,13 +67,13 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
         c = n >= 0x10000;
     }
 
-    if r1 == RegisterType::SP {
+    if r == RegisterType::SP {
         z = Some(false);
         h = (reg_val & 0xF) + (fetched_data.value & 0xF) >= 0x10;
         c = (reg_val & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
     }
 
     cpu.registers
-        .set_register(r1, (reg_val_u32 & 0xFFFF) as u16);
+        .set_register(r, (reg_val_u32 & 0xFFFF) as u16);
     cpu.registers.flags.set(z, false.into(), h.into(), c.into());
 }
