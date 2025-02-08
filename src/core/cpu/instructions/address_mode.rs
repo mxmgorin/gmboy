@@ -93,10 +93,10 @@ impl AddressMode {
                 fetched_data.source = DataSource::Register(r2);
                 fetched_data.dest = DataDestination::Memory(addr);
             }
-            AddressMode::HL_SPe8 => {
+            AddressMode::SPe8 => {
                 fetched_data.value = cpu.fetch_data() as u16;
                 fetched_data.source = DataSource::Immediate;
-                fetched_data.dest = DataDestination::Register(RegisterType::HL);
+                fetched_data.dest = DataDestination::Register(RegisterType::SP);
             }
             AddressMode::D8 => {
                 fetched_data.value = cpu.fetch_data() as u16;
@@ -193,7 +193,7 @@ pub enum AddressMode {
     /// HL and SP: HL,(SP+8e): Fetches PC value.
     ///
     /// Cycles: 1.
-    HL_SPe8,
+    SPe8,
     /// 16-bit data: Fetches 16-bit value from memory by PC.
     ///
     /// Cycles: 2.
