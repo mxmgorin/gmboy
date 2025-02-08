@@ -2,6 +2,10 @@ use crate::core::cpu::instructions::instruction::RegisterType;
 use crate::core::cpu::Cpu;
 
 impl AddressMode {
+    pub fn is_hl_sp(self) -> bool {
+        self == AddressMode::LH_SPi8
+    }
+
     pub fn fetch_data(cpu: &mut Cpu, address_mode: AddressMode) -> FetchedData {
         let mut fetched_data = FetchedData::empty();
 
@@ -93,10 +97,10 @@ impl AddressMode {
                 fetched_data.source = DataSource::Register(r2);
                 fetched_data.dest = DataDestination::Memory(addr);
             }
-            AddressMode::SPe8 => {
+            AddressMode::LH_SPi8 => {
                 fetched_data.value = cpu.fetch_data() as u16;
                 fetched_data.source = DataSource::Immediate;
-                fetched_data.dest = DataDestination::Register(RegisterType::SP);
+                fetched_data.dest = DataDestination::Register(RegisterType::HL);
             }
             AddressMode::D8 => {
                 fetched_data.value = cpu.fetch_data() as u16;
@@ -193,7 +197,7 @@ pub enum AddressMode {
     /// HL and SP: HL,(SP+8e): Fetches PC value.
     ///
     /// Cycles: 1.
-    SPe8,
+    LH_SPi8,
     /// 16-bit data: Fetches 16-bit value from memory by PC.
     ///
     /// Cycles: 2.
@@ -266,6 +270,15 @@ impl DataSource {
             DataSource::MemoryRegister(_, addr) => Some(addr),
             DataSource::Register(_) => None,
             DataSource::Memory(addr) => Some(addr),
+            DataSource::Immediate => None,
+        }
+    }
+
+    pub fn get_register(self) -> Option<RegisterType> {
+        match self {
+            DataSource::MemoryRegister(r, _) => Some(r),
+            DataSource::Register(r) => Some(r),
+            DataSource::Memory(_) => None,
             DataSource::Immediate => None,
         }
     }

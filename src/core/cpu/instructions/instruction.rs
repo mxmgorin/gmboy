@@ -277,7 +277,7 @@ impl Instruction {
                     r2
                 )
             }
-            AddressMode::SPe8 => {
+            AddressMode::LH_SPi8 => {
                 format!(
                     "{:?} (HL,SP+{:?})",
                     self.get_type(),

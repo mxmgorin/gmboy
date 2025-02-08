@@ -713,7 +713,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0xE7] = Instruction::Rst(RstInstruction { address: 0x20 });
     instructions[0xE8] = Instruction::Add(AddInstruction {
-        address_mode: AddressMode::SPe8,
+        address_mode: AddressMode::R_D8(RegisterType::SP),
     });
     instructions[0xEA] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::A16_R(RegisterType::A),
@@ -746,7 +746,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     });
     instructions[0xF7] = Instruction::Rst(RstInstruction { address: 0x30 });
     instructions[0xF8] = Instruction::Ld(LdInstruction {
-        address_mode: AddressMode::SPe8,
+        address_mode: AddressMode::LH_SPi8,
     });
     instructions[0xF9] = Instruction::Ld(LdInstruction {
         address_mode: AddressMode::R_R(RegisterType::SP, RegisterType::HL),
