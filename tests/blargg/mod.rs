@@ -10,7 +10,6 @@ fn test_mem_read_timing() {
     let name = "01-read_timing";
     let category = Some(TestRomCategory::MemTiming);
 
-    // FIXME
     assert_result(name, category, run_test_rom(name, category, TIMEOUT));
 }
 
@@ -19,7 +18,6 @@ fn test_mem_write_timing() {
     let name = "02-write_timing";
     let category = Some(TestRomCategory::MemTiming);
     
-    // FIXME
     assert_result(name, category, run_test_rom(name, category, TIMEOUT));
 }
 
