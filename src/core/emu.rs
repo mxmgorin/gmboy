@@ -2,6 +2,7 @@ use crate::core::bus::ram::Ram;
 use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
+use crate::core::ui::{EventHandler, Ui};
 use crate::debugger::{CpuLogType, Debugger};
 use std::path::Path;
 use std::{fs, thread};
@@ -11,7 +12,12 @@ pub struct Emu {
     cpu: Cpu,
     running: bool,
     paused: bool,
-    ticks: usize,
+}
+
+impl EventHandler for Emu {
+    fn on_quit(&mut self) {
+        self.running = false;
+    }
 }
 
 impl Emu {
@@ -22,11 +28,11 @@ impl Emu {
             cpu: Cpu::new(Bus::new(cart, Ram::new())),
             running: false,
             paused: false,
-            ticks: 0,
         })
     }
 
     pub fn run(&mut self) -> Result<(), String> {
+        let mut ui = Ui::new()?;
         self.running = true;
         let serial_enabled = true;
         let mut debugger = Debugger::new(CpuLogType::Assembly, serial_enabled);
@@ -38,11 +44,13 @@ impl Emu {
             }
 
             self.cpu.step(Some(&mut debugger))?;
-            self.ticks += 1;
 
             if serial_enabled {
                 println!("{}", debugger.get_serial_msg());
             }
+
+            ui.handle_events(self);
+            ui.update();
         }
 
         Ok(())

@@ -2,13 +2,18 @@
 name = "rusty-gb-emu"
 version = "0.1.0"
 edition = "2021"
-
+authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
 default = []
-cpu_debug = []  # Add a feature to enable CPU_DEBUG
+
+[dependencies.sdl2]
+version = "0.37"
+default-features = false
+features = ["bundled"]
 
 [dependencies]
+
 
 [dev-dependencies]
 serde = { version = "*", features = ["derive"] }
