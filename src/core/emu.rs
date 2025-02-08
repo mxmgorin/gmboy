@@ -2,16 +2,21 @@ use crate::core::bus::ram::Ram;
 use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
-use crate::core::ui::{EventHandler, Ui};
+use crate::core::ui::{Ui};
 use crate::debugger::{CpuLogType, Debugger};
 use std::path::Path;
 use std::{fs, thread};
+use sdl2::event::Event;
 
 #[derive(Debug)]
 pub struct Emu {
     cpu: Cpu,
     running: bool,
     paused: bool,
+}
+
+pub trait EventHandler {
+    fn on_quit(&mut self);
 }
 
 impl EventHandler for Emu {

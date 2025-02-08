@@ -10,7 +10,7 @@ default = []
 [dependencies.sdl2]
 version = "0.37"
 default-features = false
-features = ["bundled"]
+features = ["bundled", "unsafe_textures"]
 
 [dependencies]
 
