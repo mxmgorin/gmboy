@@ -59,7 +59,7 @@ impl ExecutableInstruction for LdInstruction {
                     cpu.registers.sp.wrapping_add(offset_e as u16),
                 );
 
-                cpu.update_cycles(1);
+                cpu.m_cycles(1);
             }
         }
     }

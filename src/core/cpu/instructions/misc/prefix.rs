@@ -39,10 +39,8 @@ impl ExecutableInstruction for PrefixInstruction {
         let bit_op = (op >> 6) & 0b11;
         let mut reg_val = cpu.read_reg8(reg);
 
-        cpu.update_cycles(1);
-
         if reg == RegisterType::HL {
-            cpu.update_cycles(2);
+            cpu.m_cycles(2);
         }
 
         match bit_op {
@@ -180,6 +178,8 @@ impl ExecutableInstruction for PrefixInstruction {
                 unimplemented!();
             }
         }
+
+        cpu.m_cycles(1);
     }
 
     fn get_address_mode(&self) -> AddressMode {

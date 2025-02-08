@@ -256,7 +256,7 @@ mod tests {
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest_addr, None);
         assert_eq!(cpu.registers.pc, pc as u16 + 1);
-        assert_eq!(cpu.ticks, 4);
+        assert_eq!(cpu.t_cycles, 4);
     }
 
     #[test]

@@ -11,7 +11,7 @@ pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,
     pub enabling_ime: bool,
-    pub ticks: u64,
+    pub t_cycles: usize,
     pub current_opcode: u8,
 }
 
@@ -21,16 +21,17 @@ impl Cpu {
             bus,
             registers: Registers::new(),
             enabling_ime: false,
-            ticks: 0,
+            t_cycles: 0,
             current_opcode: 0,
         }
     }
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
     pub fn fetch_data(&mut self) -> u8 {
-        self.update_cycles(1);
+        self.t_cycles(2);
         let value = self.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
+        self.t_cycles(2);
 
         value
     }
@@ -44,25 +45,28 @@ impl Cpu {
 
         bytes.into()
     }
-    
+
     /// Reads data from memory. Costs 1 M-Cycle.
     pub fn read_memory(&mut self, address: u16) -> u16 {
-        self.update_cycles(1);
+        self.t_cycles(2);
         let value = self.bus.read(address) as u16;
+        self.t_cycles(2);
 
         value
     }
 
     /// Writes to memory. Costs 1 M-Cycle.
     pub fn write_to_memory(&mut self, address: u16, value: u8) {
-        self.update_cycles(1);
-        self.bus.write(address, value);        
+        self.t_cycles(2);
+        self.bus.write(address, value);
+        self.t_cycles(2);
     }
-    
+
     /// Sets PC to specified address. Costs 1 M-Cycle.
     pub fn set_pc(&mut self, address: u16) {
-        self.update_cycles(1);
+        self.t_cycles(2);
         self.registers.pc = address;
+        self.t_cycles(2);
     }
 
     pub fn step(&mut self, debugger: Option<&mut Debugger>) -> Result<(), String> {
@@ -72,7 +76,7 @@ impl Cpu {
         }
 
         if self.bus.io.interrupts.cpu_halted {
-            self.update_cycles(1);
+            self.m_cycles(1);
 
             if self.bus.io.interrupts.int_flags != 0 {
                 self.bus.io.interrupts.cpu_halted = false;
@@ -120,23 +124,25 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn update_cycles(&mut self, m_cycles: i32) {
-        const CLOCK_CYCLES: usize = 4; // aka t-cycles, t-states
+    pub fn m_cycles(&mut self, m_cycles: i32) {
         for _ in 0..m_cycles {
-            for _ in 0..CLOCK_CYCLES {
-                self.ticks = self.ticks.wrapping_add(1);
+            self.t_cycles(4);
+            //dma_tick(); todo
+        }
+    }
 
-                if self.bus.io.timer.tick() {
-                    self.bus
-                        .io
-                        .interrupts
-                        .request_interrupt(InterruptType::Timer);
-                }
+    fn t_cycles(&mut self, t_cycles: i32) {
+        for _ in 0..t_cycles {
+            self.t_cycles = self.t_cycles.wrapping_add(1);
 
-                //ppu_tick(); todo
+            if self.bus.io.timer.tick() {
+                self.bus
+                    .io
+                    .interrupts
+                    .request_interrupt(InterruptType::Timer);
             }
 
-            //dma_tick(); todo
+            //ppu_tick(); todo
         }
     }
 

@@ -45,11 +45,11 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let is_16bit = r1.is_16bit();
 
     if is_16bit {
-        cpu.update_cycles(1);
+        cpu.m_cycles(1);
     }
 
     if r1 == RegisterType::SP {
-        cpu.update_cycles(1);
+        cpu.m_cycles(1);
         reg_val_u32 = cpu
             .registers
             .read_register(r1)
@@ -65,7 +65,7 @@ fn execute_add(cpu: &mut Cpu, fetched_data: FetchedData, r1: RegisterType) {
     let mut c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
 
     if is_16bit {
-        cpu.update_cycles(1);
+        cpu.m_cycles(1);
         z = None;
         h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
         let n = (reg_val as u32) + (fetched_data.value as u32);

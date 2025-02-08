@@ -5,14 +5,14 @@ pub enum Stack {}
 impl Stack {
     /// Costs 1 M-Cycle.
     pub fn push(cpu: &mut Cpu, value: u8) {
-        cpu.update_cycles(1);
+        cpu.m_cycles(1);
         cpu.registers.sp = cpu.registers.sp.wrapping_sub(1);
         cpu.bus.write(cpu.registers.sp, value);
     }
 
     /// Costs 1 M-Cycle.
     pub fn pop(cpu: &mut Cpu) -> u8 {
-        cpu.update_cycles(1);
+        cpu.m_cycles(1);
         let value = cpu.bus.read(cpu.registers.sp);
         cpu.registers.sp = cpu.registers.sp.wrapping_add(1);
 

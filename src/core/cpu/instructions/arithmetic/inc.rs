@@ -40,7 +40,7 @@ impl ExecutableInstruction for IncInstruction {
             }
             AddressMode::R(r1) => {
                 if r1.is_16bit() {
-                    cpu.update_cycles(1);
+                    cpu.m_cycles(1);
                 }
 
                 cpu.registers.set_register(r1, value);

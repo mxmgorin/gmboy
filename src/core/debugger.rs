@@ -80,7 +80,7 @@ impl Debugger {
 
         println!(
             "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
-            cpu.ticks,
+            cpu.t_cycles,
             pc,
             instruction.to_asm_string(cpu, fetched_data),
             opcode,

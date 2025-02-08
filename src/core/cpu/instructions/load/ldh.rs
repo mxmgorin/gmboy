@@ -16,7 +16,7 @@ impl ExecutableInstruction for LdhInstruction {
             cpu.registers.a = cpu.bus.read(0xFF00 | fetched_data.src_addr.unwrap_or(0xFF));
         }
 
-        cpu.update_cycles(1);
+        cpu.m_cycles(1);
     }
 
     fn get_address_mode(&self) -> AddressMode {
