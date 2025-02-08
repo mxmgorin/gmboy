@@ -11,7 +11,7 @@ impl ExecutableInstruction for LdInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match fetched_data.dest {
             DataDestination::Register(r) => {
-                if self.address_mode.is_hl_sp() {
+                if self.address_mode.is_hl_spi8() {
                     let h_flag = (cpu.registers.sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
                     let c_flag = (cpu.registers.sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
@@ -27,6 +27,12 @@ impl ExecutableInstruction for LdInstruction {
 
                     cpu.m_cycles(1);
                 } else {
+                    if let DataSource::Register(src_r) = fetched_data.source {
+                        if r.is_16bit() && src_r.is_16bit() {
+                            cpu.m_cycles(1);
+                        }
+                    }
+
                     cpu.registers.set_register(r, fetched_data.value);
                 }
             }

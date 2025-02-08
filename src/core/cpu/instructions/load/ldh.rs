@@ -20,8 +20,6 @@ impl ExecutableInstruction for LdhInstruction {
                 cpu.write_to_memory(addr | 0xFF00, fetched_data.value as u8)
             }
         }
-
-        cpu.m_cycles(1);
     }
 
     fn get_address_mode(&self) -> AddressMode {

@@ -2,7 +2,7 @@ use crate::core::cpu::instructions::instruction::RegisterType;
 use crate::core::cpu::Cpu;
 
 impl AddressMode {
-    pub fn is_hl_sp(self) -> bool {
+    pub fn is_hl_spi8(self) -> bool {
         self == AddressMode::LH_SPi8
     }
 
