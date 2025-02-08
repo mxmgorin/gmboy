@@ -34,7 +34,7 @@ impl ExecutableInstruction for IncInstruction {
                 // uses only HL
                 value &= 0xFF; // Ensure it fits into 8 bits
                 cpu.write_to_memory(
-                    fetched_data.dest_addr.expect("must exist for MR"),
+                    fetched_data.dest.get_addr().expect("must exist for MR"),
                     value as u8,
                 );
             }

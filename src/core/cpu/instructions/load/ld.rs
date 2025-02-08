@@ -26,14 +26,14 @@ impl ExecutableInstruction for LdInstruction {
                 cpu.registers.set_register(r1, fetched_data.value);
             }
             AddressMode::MR_D8(_) => {
-                cpu.write_to_memory(fetched_data.dest_addr.expect("must be set"), fetched_data.value as u8);
+                cpu.write_to_memory(fetched_data.dest.get_addr().expect("must be set"), fetched_data.value as u8);
             }
             AddressMode::A8_R(r1)
             | AddressMode::A16_R(r1)
             | AddressMode::MR_R(_, r1)
             | AddressMode::HLI_R(r1)
             | AddressMode::HLD_R(r1) => {
-                let addr = fetched_data.dest_addr.expect("must be set");
+                let addr = fetched_data.dest.get_addr().expect("must be set");
                 let value = fetched_data.value;
 
                 if r1.is_16bit() {

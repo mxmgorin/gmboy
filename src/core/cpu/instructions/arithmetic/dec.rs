@@ -32,7 +32,7 @@ impl ExecutableInstruction for DecInstruction {
             | AddressMode::R_MR(_, _) => panic!("not used"),
             AddressMode::MR(_r1) => {
                 cpu.write_to_memory(
-                    fetched_data.dest_addr.expect("must exist for MR"),
+                    fetched_data.dest.get_addr().expect("must exist for MR"),
                     value as u8,
                 );
                 set_flags(cpu, value);
