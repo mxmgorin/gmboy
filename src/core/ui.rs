@@ -1,8 +1,7 @@
 use crate::bus::Bus;
 use crate::emu::EventHandler;
-use crate::ppu::vram::{
-    VRAM_ADDR_START, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS,
-};
+use crate::ppu::tile::{TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS, TILE_BITS_COUNT};
+use crate::ppu::vram::VRAM_ADDR_START;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::{Color, PixelFormatEnum};
@@ -15,13 +14,6 @@ use sdl2::EventPump;
 const SCREEN_WIDTH: u32 = 640;
 const SCREEN_HEIGHT: u32 = 480;
 const SCALE: u32 = 4;
-
-static _TILE_COLORS: [u32; 4] = [
-    0xFFFFFFFF, // White
-    0xFFAAAAAA, // Light Gray
-    0xFF555555, // Dark Gray
-    0xFF000000, // Black
-];
 
 const TILE_SDL_COLORS: [Color; 4] = [
     Color::WHITE,
@@ -91,37 +83,24 @@ impl Ui {
         })
     }
 
-    pub fn display_tile(
-        surface: &mut Surface,
-        bus: &Bus,
-        addr: u16,
-        tile_num: u16,
-        x: i32,
-        y: i32,
-    ) {
+    pub fn draw_tiles_row(surface: &mut Surface, bus: &Bus, start_addr: u16, x: i32, y: i32) {
         let mut rect = Rect::new(0, 0, SCALE, SCALE);
-        const BITS: i32 = 8;
 
         for tile_y in (0..TILE_HEIGHT).step_by(2) {
-            let b1 = bus.read(addr + (tile_num * TILE_BYTE_SIZE) + tile_y as u16);
-            let b2 = bus.read(addr + (tile_num * TILE_BYTE_SIZE) + tile_y as u16 + 1);
+            let tile_addr = start_addr + tile_y as u16;
+            let tile = bus.ppu.get_tile(tile_addr);
 
-            for bit in (0..BITS).rev() {
-                let hi = !!(b1 & (1 << bit)) << 1;
-                let lo = !!(b2 & (1 << bit));
-                let color = TILE_SDL_COLORS[(hi | lo) as usize];
-
-                let x = x + (7 - bit) * SCALE as i32;
-                let y = y + (tile_y / 2 * SCALE as i32);
-                rect.set_x(x);
-                rect.set_y(y);
-
-                surface.fill_rect(rect, color).unwrap();
+            for bit in 0..TILE_BITS_COUNT {
+                rect.set_x(x + bit * SCALE as i32);
+                rect.set_y(y + (tile_y / 2 * SCALE as i32));
+                surface
+                    .fill_rect(rect, TILE_SDL_COLORS[tile.get_color_index(bit)])
+                    .unwrap();
             }
         }
     }
 
-    pub fn update_debug(&mut self, bus: &Bus) {
+    pub fn draw_debug(&mut self, bus: &Bus) {
         const SPACER: i32 = (8 * SCALE) as i32;
         const Y_SPACER: i32 = SCALE as i32;
         const X_DRAW_START: i32 = (SCALE / 2) as i32;
@@ -136,11 +115,11 @@ impl Ui {
 
         for y in 0..TILE_ROWS {
             for x in 0..TILE_COLS {
-                Ui::display_tile(
+                let row_start_addr = VRAM_ADDR_START + (tile_num * TILE_BYTE_SIZE);
+                Ui::draw_tiles_row(
                     &mut self.debug_surface,
                     bus,
-                    VRAM_ADDR_START,
-                    tile_num,
+                    row_start_addr,
                     x_draw + (x * SCALE as i32),
                     y_draw + (y + SCALE as i32),
                 );
@@ -166,12 +145,12 @@ impl Ui {
         self.debug_canvas.present();
     }
 
-    pub fn update(&mut self, bus: &Bus) {
-        self.update_main();
-        self.update_debug(bus);
+    pub fn draw(&mut self, bus: &Bus) {
+        self.draw_main();
+        self.draw_debug(bus);
     }
 
-    pub fn update_main(&mut self) {
+    pub fn draw_main(&mut self) {
         self.main_canvas.clear();
         self.main_canvas.present();
     }

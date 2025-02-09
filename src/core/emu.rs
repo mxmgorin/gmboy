@@ -46,24 +46,21 @@ impl Emu {
                 continue;
             }
 
+            ui.handle_events(self);
             self.cpu.step(Some(&mut debugger))?;
-            let mut ui_update = false;
+            let mut is_draw = false;
 
             if serial_enabled {
                 let msg = debugger.get_serial_msg();
-                
+
                 if !msg.is_empty() {
-                    ui_update = true;
-                    println!("{msg}");
+                    is_draw = true; // todo: update only when needed
+                    println!("Serial: {msg}");
                 }
             }
 
-            ui.handle_events(self);
-            
-            if ui_update {
-                let tiles = self.cpu.bus.ppu.get_tiles();
-                println!("{:?}", tiles);
-                ui.update(&self.cpu.bus);
+            if is_draw {
+                ui.draw(&self.cpu.bus); 
             }
         }
 
