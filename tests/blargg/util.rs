@@ -33,11 +33,7 @@ pub fn run_test_rom(
     }
 }
 
-pub fn assert_result(
-    name: &str,
-    category: Option<TestRomCategory>,
-    result: Result<(), String>,
-) {
+pub fn assert_result(name: &str, category: Option<TestRomCategory>, result: Result<(), String>) {
     let name = if let Some(category) = category {
         format!("{:?} {}", category, name)
     } else {
@@ -54,7 +50,7 @@ pub fn assert_result(
 #[derive(Debug, Clone, Copy)]
 pub enum TestRomCategory {
     CpuInstructions,
-    MemTiming
+    MemTiming,
 }
 
 pub fn get_test_rom_path(rom_name: &str, category: Option<TestRomCategory>) -> PathBuf {

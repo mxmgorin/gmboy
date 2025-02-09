@@ -65,7 +65,6 @@ mod tests {
         let expected = M_CYCLES_BY_OPCODES[opcode];
         let actual = cpu.t_cycles / 4;
 
-        println!("T Cycles: {}", actual);
         assert_eq!(expected, actual);
     }
 

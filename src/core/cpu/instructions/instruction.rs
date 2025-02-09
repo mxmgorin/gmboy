@@ -490,17 +490,3 @@ impl Display for Instruction {
         write!(f, "{:?}", str)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn print_instruction() {
-        let inst = Instruction::Ld(LdInstruction {
-            address_mode: AddressMode::R_D16(RegisterType::BC),
-        });
-
-        println!("{:?}", inst);
-    }
-}

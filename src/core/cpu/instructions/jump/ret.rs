@@ -17,9 +17,9 @@ impl ExecutableInstruction for RetInstruction {
         if ConditionType::check_cond(&cpu.registers, self.condition_type) {
             let lo = Stack::pop(cpu) as u16;
             let hi = Stack::pop(cpu) as u16;
-            
+
             let addr = (hi << 8) | lo;
-            
+
             cpu.set_pc(addr);
         }
     }

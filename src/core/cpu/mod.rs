@@ -1,8 +1,8 @@
 mod cpu;
 pub mod instructions;
+pub mod interrupts;
 mod registers;
 mod stack;
-pub mod interrupts;
 
 pub use cpu::*;
 pub use registers::*;

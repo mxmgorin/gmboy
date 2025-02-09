@@ -1,4 +1,7 @@
-use crate::{cpu::interrupts::Interrupts, hardware::timer::{Timer, TimerAddress}};
+use crate::{
+    cpu::interrupts::Interrupts,
+    hardware::timer::{Timer, TimerAddress},
+};
 
 impl TryFrom<u16> for IoAddressLocation {
     type Error = ();
@@ -49,6 +52,11 @@ impl Io {
     }
 
     pub fn read(&self, address: u16) -> u8 {
+        if address == 0xFF44 {
+            
+            return 10;
+        }
+        
         let location = IoAddressLocation::try_from(address).unwrap();
 
         match location {
@@ -57,7 +65,6 @@ impl Io {
             IoAddressLocation::Timer(address) => self.timer.read(address),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
             IoAddressLocation::Display => 0x90,
-
             IoAddressLocation::Joypad
             | IoAddressLocation::Audio
             | IoAddressLocation::WavePattern

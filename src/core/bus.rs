@@ -2,6 +2,7 @@ use crate::core::cart::Cart;
 use crate::hardware::io::Io;
 use crate::hardware::ram::Ram;
 use crate::ppu::ppu::Ppu;
+use crate::ppu::vram::VRAM_ADDR_START;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {
@@ -36,7 +37,7 @@ impl From<u16> for BusAddrLocation {
         match address {
             0x0000..=0x3FFF => BusAddrLocation::RomBank0,
             0x4000..=0x7FFF => BusAddrLocation::RomBank1,
-            0x8000..=0x9FFF => BusAddrLocation::VRAM,
+            VRAM_ADDR_START..=0x9FFF => BusAddrLocation::VRAM,
             0xA000..=0xBFFF => BusAddrLocation::CartRam,
             0xC000..=0xCFFF => BusAddrLocation::WRamBank0,
             0xD000..=0xDFFF => BusAddrLocation::WRamBank1To7,
@@ -112,6 +113,7 @@ impl Bus {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
+        #[cfg(debug_assertions)]
         if let Some(test_bytes) = self.flat_mem.as_mut() {
             test_bytes[address as usize] = value;
             return;
@@ -140,7 +142,7 @@ impl Bus {
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
     }
-    
+
     pub fn dma_tick(&mut self) {
         self.dma.tick(&self.ram, &mut self.ppu);
     }

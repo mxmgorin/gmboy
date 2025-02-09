@@ -1,10 +1,10 @@
+use crate::core::cpu::instructions::address_mode::AddressMode;
 use crate::core::cpu::instructions::arithmetic::adc::AdcInstruction;
 use crate::core::cpu::instructions::arithmetic::add::AddInstruction;
 use crate::core::cpu::instructions::arithmetic::cp::CpInstruction;
 use crate::core::cpu::instructions::arithmetic::sbc::SbcInstruction;
 use crate::core::cpu::instructions::arithmetic::sub::SubInstruction;
 use crate::core::cpu::instructions::bitwise::and::AndInstruction;
-use crate::core::cpu::instructions::address_mode::AddressMode;
 use crate::core::cpu::instructions::condition_type::ConditionType;
 use crate::core::cpu::instructions::instruction::{Instruction, RegisterType};
 use crate::core::cpu::instructions::jump::ret::RetInstruction;

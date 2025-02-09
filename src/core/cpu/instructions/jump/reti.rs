@@ -1,5 +1,5 @@
-use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::instructions::jump::ret::RetInstruction;
+use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::core::cpu::Cpu;
 use crate::cpu::instructions::FetchedData;
 

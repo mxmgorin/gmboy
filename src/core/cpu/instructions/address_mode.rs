@@ -101,7 +101,7 @@ impl AddressMode {
             AddressMode::R_HA8(r1) => {
                 let addr = cpu.fetch_data() as u16;
                 let addr = 0xFF00 | addr;
-                
+
                 fetched_data.value = cpu.read_memory(addr);
                 fetched_data.source = DataSource::Memory(addr);
                 fetched_data.dest = DataDestination::Register(r1);
@@ -310,8 +310,8 @@ impl DataSource {
 
 #[cfg(test)]
 mod tests {
-    use crate::cart::Cart;
     use crate::bus::Bus;
+    use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
     use crate::cpu::Cpu;
     use crate::LittleEndianBytes;

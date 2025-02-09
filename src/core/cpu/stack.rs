@@ -31,7 +31,7 @@ impl Stack {
     }
 
     /// Costs 2 M-cycles.
-    pub fn _pop16(cpu: &mut Cpu,) -> u16 {
+    pub fn _pop16(cpu: &mut Cpu) -> u16 {
         let lo = Stack::pop(cpu) as u16;
         let hi = Stack::pop(cpu) as u16;
 

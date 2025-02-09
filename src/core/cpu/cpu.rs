@@ -141,7 +141,7 @@ impl Cpu {
                     .interrupts
                     .request_interrupt(InterruptType::Timer);
                 self.bus.ppu.tick();
-            }            
+            }
         }
     }
 

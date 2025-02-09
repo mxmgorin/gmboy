@@ -1,10 +1,10 @@
+use crate::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
-use crate::core::ui::{Ui};
+use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
 use std::path::Path;
 use std::{fs, thread};
-use crate::bus::Bus;
 
 #[derive(Debug)]
 pub struct Emu {
@@ -38,7 +38,7 @@ impl Emu {
         let mut ui = Ui::new()?;
         self.running = true;
         let serial_enabled = true;
-        let mut debugger = Debugger::new(CpuLogType::Assembly, serial_enabled);
+        let mut debugger = Debugger::new(CpuLogType::None, serial_enabled);
 
         while self.running {
             if self.paused {
@@ -47,13 +47,24 @@ impl Emu {
             }
 
             self.cpu.step(Some(&mut debugger))?;
+            let mut ui_update = false;
 
             if serial_enabled {
-                println!("{}", debugger.get_serial_msg());
+                let msg = debugger.get_serial_msg();
+                
+                if !msg.is_empty() {
+                    ui_update = true;
+                    println!("{msg}");
+                }
             }
 
             ui.handle_events(self);
-            ui.update();
+            
+            if ui_update {
+                let tiles = self.cpu.bus.ppu.get_tiles();
+                println!("{:?}", tiles);
+                ui.update(&self.cpu.bus);
+            }
         }
 
         Ok(())

@@ -17,7 +17,7 @@ fn test_mem_read_timing() {
 fn test_mem_write_timing() {
     let name = "02-write_timing";
     let category = Some(TestRomCategory::MemTiming);
-    
+
     assert_result(name, category, run_test_rom(name, category, TIMEOUT));
 }
 
@@ -37,7 +37,11 @@ fn test_interrupt_time() {
     let name = "interrupt_time";
     let category = None;
 
-    assert_result(name, category, run_test_rom(name, category, Duration::from_secs(180)));
+    assert_result(
+        name,
+        category,
+        run_test_rom(name, category, Duration::from_secs(180)),
+    );
 }
 
 #[ignore]
@@ -46,7 +50,11 @@ fn test_instr_timing() {
     let name = "instr_timing";
     let category = None;
 
-    assert_result(name, category, run_test_rom(name, category, Duration::from_secs(180)));
+    assert_result(
+        name,
+        category,
+        run_test_rom(name, category, Duration::from_secs(180)),
+    );
 }
 
 #[test]

@@ -43,7 +43,7 @@ impl ExecutableInstruction for SbcInstruction {
         cpu.registers.set_register(r, result);
         cpu.registers
             .flags
-            .set((result == 0).into(), true.into(), h.into(), c.into()); 
+            .set((result == 0).into(), true.into(), h.into(), c.into());
     }
 
     fn get_address_mode(&self) -> AddressMode {

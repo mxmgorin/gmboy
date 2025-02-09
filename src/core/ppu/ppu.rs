@@ -1,5 +1,5 @@
 use crate::core::ppu::oam::OamRam;
-use crate::ppu::vram::VideoRam;
+use crate::ppu::vram::{Colors, Tile, VideoRam, TILE_TABLE_END, TILE_TABLE_START};
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
@@ -39,5 +39,14 @@ impl Ppu {
 
     pub fn oam_write(&mut self, addr: u16, value: u8) {
         self.oam_ram.write_byte(addr, value);
+    }
+
+    pub fn get_tiles(&self) -> Vec<Tile> {
+        (TILE_TABLE_START..=TILE_TABLE_END)
+            .map(|addr| self.vram_read(addr))
+            .collect::<Vec<u8>>()
+            .chunks_exact(16)
+            .map(|chunk| Tile::new(chunk, Colors::new()))
+            .collect::<Vec<Tile>>()
     }
 }

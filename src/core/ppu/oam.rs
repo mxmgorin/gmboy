@@ -9,6 +9,12 @@ pub struct OamRam {
     pub items: [OamItem; OAM_RAM_SIZE],
 }
 
+impl Default for OamRam {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OamRam {
     pub fn new() -> OamRam {
         Self {
@@ -18,17 +24,15 @@ impl OamRam {
 
     pub fn read_byte(&self, addr: u16) -> u8 {
         let addr = addr as usize;
-        let address = if addr >= OAM_ADDR_START {
+        let addr = if addr >= OAM_ADDR_START {
             addr - OAM_ADDR_START
         } else {
             addr
         };
 
-        // Determine the index in the oam_ram array and the specific byte to read
-        let entry_index = (address / 4) as usize; // Each `oam_entry` is 4 bytes
-        let byte_offset = (address % 4) as usize;
+        let (index, offset) = self.get_index_and_offset(addr as u16);
 
-        self.items[entry_index].as_bytes()[byte_offset]
+        self.items[index].as_bytes()[offset]
     }
 
     pub fn write_byte(&mut self, addr: u16, value: u8) {
