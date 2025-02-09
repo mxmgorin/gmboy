@@ -1,12 +1,10 @@
-use crate::core::bus::ram::Ram;
-use crate::core::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::{Ui};
 use crate::debugger::{CpuLogType, Debugger};
 use std::path::Path;
 use std::{fs, thread};
-use sdl2::event::Event;
+use crate::bus::Bus;
 
 #[derive(Debug)]
 pub struct Emu {
@@ -30,7 +28,7 @@ impl Emu {
         let cart = Cart::new(cart_bytes)?;
 
         Ok(Self {
-            cpu: Cpu::new(Bus::new(cart, Ram::new())),
+            cpu: Cpu::new(Bus::new(cart)),
             running: false,
             paused: false,
         })

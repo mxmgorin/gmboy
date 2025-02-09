@@ -1,5 +1,9 @@
-const VRAM_SIZE: usize = 0x2000;
-const VRAM_ADDR_OFFSET: usize = 0x8000;
+// Tile data is stored in VRAM in the memory area at $8000-$97FF.
+
+pub const VRAM_TILE_SIZE: usize = 16;
+pub const VRAM_TILES_COUNT: usize = 256;
+pub const VRAM_SIZE: usize = 0x2000;
+pub const VRAM_ADDR_START: usize = 0x8000;
 
 pub enum VRamAddressLocation {
     /// 0x8000 - 0x97FF
@@ -22,11 +26,17 @@ impl From<u16> for VRamAddressLocation {
 }
 
 #[derive(Debug, Clone)]
-pub struct VRam {
+pub struct VideoRam {
     pub bytes: [u8; VRAM_SIZE],
 }
 
-impl VRam {
+impl Default for VideoRam {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl VideoRam {
     pub fn new() -> Self {
         Self {
             bytes: [0; VRAM_SIZE],
@@ -34,10 +44,10 @@ impl VRam {
     }
 
     pub fn read(&self, addr: u16) -> u8 {
-        self.bytes[addr as usize - VRAM_ADDR_OFFSET]
+        self.bytes[addr as usize - VRAM_ADDR_START]
     }
 
     pub fn write(&mut self, addr: u16, val: u8) {
-        self.bytes[addr as usize - VRAM_ADDR_OFFSET] = val;
+        self.bytes[addr as usize - VRAM_ADDR_START] = val;
     }
 }

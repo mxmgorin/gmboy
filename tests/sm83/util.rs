@@ -115,7 +115,7 @@ impl Sm83TestCase {
         );
 
         // todo: re-search
-        //assert_eq!(cpu.bus.io.interrupts.ie_register, self.final_state.ie);
+        //assert_eq!(cpu.hardware.io.interrupts.ie_register, self.final_state.ie);
         //assert_eq!(cpu.cycles, self.final_state.cycles);
 
         // Assert RAM contents

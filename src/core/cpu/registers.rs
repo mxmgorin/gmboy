@@ -1,5 +1,5 @@
 use crate::core::cpu::instructions::RegisterType;
-use crate::core::util::{get_bit_flag, set_bit};
+use crate::core::{get_bit_flag, set_bit};
 use std::fmt::Display;
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;

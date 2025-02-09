@@ -1,7 +1,7 @@
-use crate::bus::vram::VRam;
-use crate::core::bus::io::Io;
-use crate::core::bus::ram::Ram;
 use crate::core::cart::Cart;
+use crate::hardware::io::Io;
+use crate::hardware::ram::Ram;
+use crate::ppu::ppu::Ppu;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {
@@ -54,18 +54,18 @@ impl From<u16> for BusAddrLocation {
 pub struct Bus {
     cart: Cart,
     ram: Ram,
-    vram: VRam,
     pub io: Io,
+    pub ppu: Ppu,
     flat_mem: Option<Vec<u8>>,
 }
 
 impl Bus {
-    pub fn new(cart: Cart, ram: Ram) -> Self {
+    pub fn new(cart: Cart) -> Self {
         Self {
             cart,
-            ram,
-            vram: VRam::new(),
+            ram: Ram::new(),
             io: Io::new(),
+            ppu: Ppu::new(),
             flat_mem: None,
         }
     }
@@ -75,8 +75,8 @@ impl Bus {
         Self {
             cart: Cart::new(vec![0; 0x2000]).unwrap(),
             ram: Ram::new(),
-            vram: VRam::new(),
             io: Io::new(),
+            ppu: Default::default(),
             flat_mem: bytes.into(),
         }
     }
@@ -89,13 +89,8 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::Oam => {
-                // TODO: Impl
-                #[cfg(not(test))]
-                eprintln!("Can't BUS read {:?} address {:X}", location, address);
-                0
-            }
-            BusAddrLocation::VRAM => self.vram.read(address),
+            BusAddrLocation::Oam => self.ppu.oam_read(address),
+            BusAddrLocation::VRAM => self.ppu.vram_read(address),
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
@@ -118,13 +113,9 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::VRAM => self.vram.write(address, value),
+            BusAddrLocation::VRAM => self.ppu.vram_write(address, value),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
-            BusAddrLocation::Oam => {
-                // TODO: IMPL
-                #[cfg(not(test))]
-                eprintln!("Can't BUS write {:?} address {:X}", location, address);
-            }
+            BusAddrLocation::Oam => self.ppu.oam_write(address, value),
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
             }

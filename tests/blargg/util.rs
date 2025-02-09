@@ -1,4 +1,3 @@
-use rusty_gb_emu::bus::ram::Ram;
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cart::Cart;
 use rusty_gb_emu::cpu::Cpu;
@@ -14,8 +13,8 @@ pub fn run_test_rom(
 ) -> Result<(), String> {
     let path = get_test_rom_path(&format!("{}.gb", name), category);
     let mut debugger = Debugger::new(CpuLogType::None, true);
-    let cart = Cart::new(read_bytes(path.to_str().unwrap()).unwrap()).unwrap();
-    let mut cpu = Cpu::new(Bus::new(cart, Ram::new()));
+    let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
+    let mut cpu = Cpu::new(Bus::new(cart));
     let instant = Instant::now();
 
     loop {

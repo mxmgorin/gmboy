@@ -1,10 +1,10 @@
-use crate::core::bus::Bus;
+use crate::bus::Bus;
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::core::InterruptType;
 use crate::cpu::instructions::RegisterType;
-use crate::util::LittleEndianBytes;
+use crate::LittleEndianBytes;
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
