@@ -3,6 +3,7 @@ use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruc
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::cpu::instructions::RegisterType;
+use crate::cpu::interrupts::InterruptType;
 use crate::LittleEndianBytes;
 
 #[derive(Debug, Clone)]

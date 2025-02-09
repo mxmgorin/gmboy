@@ -20,14 +20,14 @@ static TILE_COLORS: [u32; 4] = [
 ];
 
 pub struct Ui {
-    sdl_context: sdl2::Sdl,
+    _sdl_context: sdl2::Sdl,
     //ttf_context: sdl2::ttf::Sdl2TtfContext,
     main_canvas: Canvas<Window>,
     event_pump: EventPump,
 
     debug_canvas: Canvas<Window>,
-    debug_texture: Texture,
-    debug_surface: Surface<'static>,
+    //debug_texture: Texture,
+    //debug_surface: Surface<'static>,
 }
 
 impl Ui {
@@ -71,12 +71,12 @@ impl Ui {
 
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
-            sdl_context,
+            _sdl_context: sdl_context,
             //ttf_context,
             main_canvas,
             debug_canvas,
-            debug_texture,
-            debug_surface,
+            //debug_texture,
+            //debug_surface,
         })
     }
 
@@ -94,20 +94,23 @@ impl Ui {
                 let color = TILE_COLORS[(hi | lo) as usize];
                 rect.set_x(x + (7 - bit) * SCALE as i32);
                 rect.set_y(y + tile_y as i32 / 2 * SCALE as i32);
-                self.debug_surface
-                    .fill_rect(rect, into_sdl_color(color))
-                    .unwrap();
+                self.debug_canvas.fill_rect(rect).unwrap();
+                //self.debug_surface
+                //    .fill_rect(rect, into_sdl_color(color))
+                //    .unwrap();
             }
         }
     }
 
-    pub fn update_debug_window(&mut self) {
+    pub fn update_debug(&mut self) {
+        self.debug_canvas.clear();
+
         let mut x_draw = 0;
         let mut y_draw = 0;
         let mut tile_num = 0;
-        self.debug_surface
-            .fill_rect(None, into_sdl_color(0xFF111111))
-            .unwrap();
+        //self.debug_surface
+        //    .fill_rect(None, into_sdl_color(0xFF111111))
+        //    .unwrap();
 
         let addr: u16 = 0x8000;
 
@@ -121,7 +124,7 @@ impl Ui {
             x_draw = 0;
         }
 
-        self.debug_texture
+/*        self.debug_texture
             .update(
                 None,
                 self.debug_surface.without_lock().unwrap(),
@@ -129,15 +132,20 @@ impl Ui {
             )
             .unwrap();
 
-        self.debug_canvas.clear();
         self.debug_canvas
             .copy(&self.debug_texture, None, None)
-            .unwrap();
+            .unwrap();*/
         self.debug_canvas.present();
     }
 
     pub fn update(&mut self) {
-        self.update_debug_window();
+        self.update_main();
+        self.update_debug();
+    }
+    
+    pub fn update_main(&mut self) {
+        self.main_canvas.clear();
+        self.main_canvas.present();
     }
 
     pub fn handle_events(&mut self, event_handler: &mut impl EventHandler) {
