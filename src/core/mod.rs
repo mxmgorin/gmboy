@@ -6,7 +6,6 @@ pub mod emu;
 pub mod ui;
 pub mod ppu;
 pub mod bus;
-pub use cpu::interrupts::*;
 
 pub struct LittleEndianBytes {
     pub low_byte: u8,
@@ -37,7 +36,7 @@ pub fn set_bit(a: &mut u8, n: u8, on: bool) {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
     #[test]

@@ -82,6 +82,7 @@ impl Bus {
     }
 
     pub fn read(&self, address: u16) -> u8 {
+        #[cfg(debug_assertions)]
         if let Some(test_bytes) = self.flat_mem.as_ref() {
             return test_bytes[address as usize];
         }
