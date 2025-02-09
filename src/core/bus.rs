@@ -56,6 +56,7 @@ pub struct Bus {
     ram: Ram,
     pub io: Io,
     pub ppu: Ppu,
+    pub dma: Dma,
     flat_mem: Option<Vec<u8>>,
 }
 
@@ -66,19 +67,18 @@ impl Bus {
             ram: Ram::new(),
             io: Io::new(),
             ppu: Ppu::new(),
+            dma: Default::default(),
             flat_mem: None,
         }
     }
 
     /// Creates with just array as memory. Use only for tests.
     pub fn flat_mem(bytes: Vec<u8>) -> Self {
-        Self {
-            cart: Cart::new(vec![0; 0x2000]).unwrap(),
-            ram: Ram::new(),
-            io: Io::new(),
-            ppu: Default::default(),
-            flat_mem: bytes.into(),
-        }
+        let cart = Cart::new(vec![0; 0x2000]).unwrap();
+        let mut obj = Self::new(cart);
+        obj.flat_mem = Some(bytes);
+
+        obj
     }
 
     pub fn read(&self, address: u16) -> u8 {
@@ -89,7 +89,13 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::Oam => self.ppu.oam_read(address),
+            BusAddrLocation::Oam => {
+                if self.dma.is_transferring {
+                    return 0xFF;
+                }
+
+                self.ppu.oam_read(address)
+            }
             BusAddrLocation::VRAM => self.ppu.vram_read(address),
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
@@ -115,7 +121,13 @@ impl Bus {
         match location {
             BusAddrLocation::VRAM => self.ppu.vram_write(address, value),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
-            BusAddrLocation::Oam => self.ppu.oam_write(address, value),
+            BusAddrLocation::Oam => {
+                if self.dma.is_transferring {
+                    return;
+                }
+
+                self.ppu.oam_write(address, value)
+            }
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
             }
@@ -126,6 +138,43 @@ impl Bus {
             BusAddrLocation::HRam => self.ram.h_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
+    }
+    
+    pub fn dma_tick(&mut self) {
+        self.dma.tick(&self.ram, &mut self.ppu);
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Dma {
+    is_transferring: bool,
+    byte: u8,
+    value: u8,
+    start_delay: u8,
+}
+
+impl Dma {
+    pub fn start(&mut self, value: u8) {
+        self.is_transferring = true;
+        self.start_delay = 2;
+        self.byte = 0x00;
+        self.value = value;
+    }
+
+    pub fn tick(&mut self, ram: &Ram, ppu: &mut Ppu) {
+        if !self.is_transferring {
+            return;
+        }
+
+        if self.start_delay > 0 {
+            self.start_delay -= 1;
+            return;
+        }
+
+        let value = ram.h_ram_read(self.value as u16 * 0x100) + self.byte;
+        ppu.oam_write(self.byte as u16, value);
+        self.byte += 1;
+        self.is_transferring = self.byte < 0xA0;
     }
 }
 

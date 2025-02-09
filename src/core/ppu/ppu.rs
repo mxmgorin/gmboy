@@ -21,7 +21,7 @@ impl Ppu {
         }
     }
 
-    pub fn tick() {
+    pub fn tick(&self) {
         // todo: Impl
     }
 

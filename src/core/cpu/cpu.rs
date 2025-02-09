@@ -127,7 +127,7 @@ impl Cpu {
     pub fn m_cycles(&mut self, m_cycles: i32) {
         for _ in 0..m_cycles {
             self.t_cycles(4);
-            //dma_tick(); todo
+            self.bus.dma_tick();
         }
     }
 
@@ -140,9 +140,8 @@ impl Cpu {
                     .io
                     .interrupts
                     .request_interrupt(InterruptType::Timer);
-            }
-
-            //ppu_tick(); todo
+                self.bus.ppu.tick();
+            }            
         }
     }
 
