@@ -21,7 +21,6 @@ fn test_mem_write_timing() {
     assert_result(name, category, run_test_rom(name, category, TIMEOUT));
 }
 
-#[ignore]
 #[test]
 fn test_mem_modify_timing() {
     let name = "03-modify_timing";
