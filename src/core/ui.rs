@@ -4,10 +4,9 @@ use crate::ppu::tile::{TILE_BITS_COUNT, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, 
 use crate::ppu::vram::VRAM_ADDR_START;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{Color, PixelFormatEnum};
+use sdl2::pixels::{Color};
 use sdl2::rect::Rect;
-use sdl2::render::{Canvas, Texture};
-use sdl2::surface::Surface;
+use sdl2::render::{Canvas};
 use sdl2::video::{Window, WindowPos};
 use sdl2::EventPump;
 
