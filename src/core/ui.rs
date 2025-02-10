@@ -29,8 +29,6 @@ pub struct Ui {
     event_pump: EventPump,
 
     debug_canvas: Canvas<Window>,
-    debug_texture: Texture,
-    debug_surface: Surface<'static>,
 }
 
 impl Ui {
@@ -54,18 +52,7 @@ impl Ui {
             .build()
             .unwrap();
         let mut debug_canvas = debug_window.into_canvas().build().unwrap();
-        let debug_surface = Surface::new(
-            width + 16 * SCALE,
-            height + 64 * SCALE,
-            PixelFormatEnum::ARGB8888,
-        )?;
-        let debug_texture = debug_canvas
-            .create_texture_streaming(
-                PixelFormatEnum::ARGB8888,
-                width + 16 * SCALE,
-                height + 64 * SCALE,
-            )
-            .map_err(|e| e.to_string())?;
+
         let (x, y) = main_canvas.window().position();
         debug_canvas.window_mut().set_position(
             WindowPos::Positioned(x + SCREEN_WIDTH as i32 + 10),
@@ -78,12 +65,10 @@ impl Ui {
             //ttf_context,
             main_canvas,
             debug_canvas,
-            debug_texture,
-            debug_surface,
         })
     }
 
-    pub fn draw_tile(surface: &mut Surface, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
+    pub fn draw_tile(canvas: &mut Canvas<Window>, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
         let mut rect = Rect::new(0, 0, SCALE, SCALE);
 
         for tile_y in (0..TILE_HEIGHT).step_by(2) {
@@ -93,11 +78,8 @@ impl Ui {
             for bit in 0..TILE_BITS_COUNT {
                 rect.set_x(x + bit * SCALE as i32);
                 rect.set_y(y + (tile_y as i32 / 2 * SCALE as i32));
-                //self.debug_canvas.set_draw_color(TILE_SDL_COLORS[tile.get_color_index(bit)]);
-                //self.debug_canvas.fill_rect(rect).unwrap();
-                surface
-                    .fill_rect(rect, TILE_SDL_COLORS[tile.get_color_index(bit)])
-                    .unwrap();
+                canvas.set_draw_color(TILE_SDL_COLORS[tile.get_color_index(bit)]);
+                canvas.fill_rect(rect).unwrap();
             }
         }
     }
@@ -111,15 +93,16 @@ impl Ui {
         let mut y_draw: i32 = 0;
         let mut tile_num = 0;
 
-        self.debug_surface
-            .fill_rect(None, Color::RGB(17, 17, 17))
+        self.debug_canvas.set_draw_color(Color::RGB(21, 21, 21));
+        self.debug_canvas
+            .fill_rect(None)
             .unwrap();
 
         for y in 0..TILE_ROWS {
             for x in 0..TILE_COLS {
                 let row_start_addr = VRAM_ADDR_START + (tile_num * TILE_BYTE_SIZE);
                 Ui::draw_tile(
-                    &mut self.debug_surface,
+                    &mut self.debug_canvas,
                     bus,
                     row_start_addr,
                     x_draw + (x * SCALE as i32),
@@ -133,17 +116,6 @@ impl Ui {
             x_draw = X_DRAW_START;
         }
 
-        self.debug_texture
-            .update(
-                None,
-                self.debug_surface.without_lock().unwrap(),
-                self.debug_surface.pitch() as usize,
-            )
-            .unwrap();
-        self.debug_canvas.clear();
-        self.debug_canvas
-            .copy(&self.debug_texture, None, None)
-            .unwrap();
         self.debug_canvas.present();
     }
 
