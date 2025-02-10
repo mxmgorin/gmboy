@@ -78,7 +78,7 @@ impl Lcd {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let offset = (address - 0xFF40) as usize;
+        let offset = (address - LCD_ADDRESS_START) as usize;
 
         let self_bytes = unsafe {
             std::slice::from_raw_parts_mut(self as *mut _ as *mut u8, size_of_val(self))
