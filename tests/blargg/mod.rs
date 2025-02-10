@@ -26,7 +26,6 @@ fn test_mem_modify_timing() {
     let name = "03-modify_timing";
     let category = Some(TestRomCategory::MemTiming);
 
-    // FIXME
     assert_result(name, category, run_test_rom(name, category, TIMEOUT));
 }
 

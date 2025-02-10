@@ -123,7 +123,7 @@ impl Cpu {
         Ok(())
     }
 
-    pub fn read_reg8(&self, rt: RegisterType) -> u8 {
+    pub fn read_reg8(&mut self, rt: RegisterType) -> u8 {
         match rt {
             RegisterType::A => self.registers.a,
             RegisterType::F => self.registers.flags.byte,
@@ -133,9 +133,9 @@ impl Cpu {
             RegisterType::E => self.registers.e,
             RegisterType::H => self.registers.h,
             RegisterType::L => self.registers.l,
-            RegisterType::HL => self
-                .bus
-                .read(self.registers.read_register(RegisterType::HL)),
+            RegisterType::HL => {
+                self.read_memory(self.registers.read_register(RegisterType::HL)) as u8
+            }
             _ => {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }
@@ -152,9 +152,9 @@ impl Cpu {
             RegisterType::E => self.registers.e = val & 0xFF,
             RegisterType::H => self.registers.h = val & 0xFF,
             RegisterType::L => self.registers.l = val & 0xFF,
-            RegisterType::HL => self
-                .bus
-                .write(self.registers.read_register(RegisterType::HL), val),
+            RegisterType::HL => {
+                self.write_to_memory(self.registers.read_register(RegisterType::HL), val)
+            }
             _ => {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }

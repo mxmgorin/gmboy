@@ -39,10 +39,6 @@ impl ExecutableInstruction for PrefixInstruction {
         let bit_op = (op >> 6) & 0b11;
         let mut reg_val = cpu.read_reg8(reg);
 
-        if reg == RegisterType::HL {
-            cpu.clock.m_cycles(1, &mut cpu.bus);
-        }
-
         match bit_op {
             1 => {
                 // BIT
