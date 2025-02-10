@@ -35,6 +35,24 @@ pub fn set_bit(a: &mut u8, n: u8, on: bool) {
     }
 }
 
+pub fn struct_to_bytes<T>(s: &T) -> &[u8] {
+    // Convert the reference to a raw pointer
+    let ptr = s as *const T as *const u8;
+    let size = size_of::<T>();
+
+    // Convert the raw pointer to a byte slice
+    unsafe { std::slice::from_raw_parts(ptr, size) }
+}
+
+pub fn struct_to_bytes_mut<T>(s: &mut T) -> &mut [u8] {
+    // Convert the mutable reference to a mutable raw pointer
+    let ptr = s as *mut T as *mut u8;
+    let size = size_of::<T>();
+
+    // Convert the raw pointer to a mutable byte slice
+    unsafe { std::slice::from_raw_parts_mut(ptr, size) }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

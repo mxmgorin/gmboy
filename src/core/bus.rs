@@ -93,7 +93,7 @@ impl Bus {
 
         match location {
             BusAddrLocation::Oam => {
-                if self.io.lcd.dma.is_active {
+                if self.dma.is_active {
                     return 0xFF;
                 }
 
@@ -131,7 +131,7 @@ impl Bus {
             BusAddrLocation::VRAM => self.ppu.vram_write(address, value),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
-                if self.io.lcd.dma.is_active {
+                if self.dma.is_active {
                     return;
                 }
 

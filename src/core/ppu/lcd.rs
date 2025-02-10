@@ -1,6 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::core::hardware::dma::{Dma, DMA_ADDRESS};
-use crate::{get_bit_flag, set_bit};
+use crate::{get_bit_flag, set_bit, struct_to_bytes, struct_to_bytes_mut};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
 pub const LCD_ADDRESS_END: u16 = 0xFF4B;
@@ -8,6 +7,7 @@ pub const LCD_ADDRESS_END: u16 = 0xFF4B;
 pub const COLORS_DEFAULT: [u32; 4] = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000];
 
 #[derive(Debug, Clone)]
+#[repr(C)]
 pub struct Lcd {
     // Registers
     pub lcdc: u8,
@@ -26,8 +26,6 @@ pub struct Lcd {
     pub bg_colors: [u32; 4],
     pub sp1_colors: [u32; 4],
     pub sp2_colors: [u32; 4],
-
-    pub dma: Dma,
 }
 
 impl Default for Lcd {
@@ -53,15 +51,14 @@ impl Lcd {
             bg_colors: COLORS_DEFAULT,
             sp1_colors: COLORS_DEFAULT,
             sp2_colors: COLORS_DEFAULT,
-            dma: Default::default(),
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
         let offset = (address - LCD_ADDRESS_START) as usize;
-        let ptr = self as *const Lcd as *const u8;
+        let bytes = struct_to_bytes(self);
 
-        unsafe { *ptr.add(offset) }
+        bytes[offset]
     }
 
     pub fn update_palette(&mut self, palette_data: u8, pal: u8) {
@@ -80,14 +77,8 @@ impl Lcd {
     pub fn write(&mut self, address: u16, value: u8) {
         let offset = (address - LCD_ADDRESS_START) as usize;
 
-        let self_bytes = unsafe {
-            std::slice::from_raw_parts_mut(self as *mut _ as *mut u8, size_of_val(self))
-        };
+        let self_bytes = struct_to_bytes_mut(self);
         self_bytes[offset] = value;
-
-        if address == DMA_ADDRESS {
-            self.dma.start(value);
-        }
 
         match address {
             0xFF47 => self.update_palette(value, 0),
