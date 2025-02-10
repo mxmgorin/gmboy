@@ -89,8 +89,10 @@ impl Emu {
             let mut is_draw = false;
 
             if let Some(msg) = self.ctx.get_serial_msg() {
-                is_draw = true; // todo: update only when needed
-                println!("Serial: {msg}");
+                if !msg.is_empty() {
+                    is_draw = true; // todo: update only when needed
+                    println!("Serial: {msg}");
+                }
             }
 
             if is_draw {

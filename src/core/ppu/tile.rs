@@ -6,7 +6,8 @@ pub const TILE_TABLE_END: u16 = 0x97FF;
 pub const TILE_LINE_BYTE_SIZE: u16 = 2;
 pub const TILE_BYTE_SIZE: u16 = 16;
 pub const TILE_WIDTH: u16 = 8;
-pub const TILE_HEIGHT: usize = 16;
+pub const TILE_HEIGHT: u16 = 8;
+pub const TILE_BYTES_COUNT: usize = 16;
 pub const TILE_ROWS: i32 = 24;
 pub const TILE_COLS: i32 = 16;
 

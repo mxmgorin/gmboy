@@ -1,17 +1,21 @@
 use crate::bus::Bus;
-use crate::ppu::tile::{TILE_BITS_COUNT, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS};
+use crate::ppu::tile::{
+    TILE_BITS_COUNT, TILE_BYTES_COUNT, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS,
+    TILE_WIDTH,
+};
 use crate::ppu::vram::VRAM_ADDR_START;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{Color};
+use sdl2::pixels::Color;
 use sdl2::rect::Rect;
-use sdl2::render::{Canvas};
+use sdl2::render::Canvas;
 use sdl2::video::{Window, WindowPos};
 use sdl2::EventPump;
 
 const SCREEN_WIDTH: u32 = 640;
 const SCREEN_HEIGHT: u32 = 480;
 const SCALE: u32 = 4;
+const SPACER: i32 = (8 * SCALE) as i32;
 
 const TILE_SDL_COLORS: [Color; 4] = [
     Color::WHITE,
@@ -34,8 +38,9 @@ impl Ui {
         let sdl_context = sdl2::init()?;
         // let ttf_context = sdl2::ttf::init().unwrap();
         let video_subsystem = sdl_context.video()?;
-        let width = 16 * 8 * SCALE;
-        let height = 32 * 8 * SCALE;
+        let tile_grid_width =
+            TILE_COLS as u32 * TILE_WIDTH as u32 * SCALE + (TILE_COLS as u32 * SCALE);
+        let tile_grid_height = TILE_ROWS as u32 * TILE_HEIGHT as u32 * SCALE + 122;
 
         let main_window = video_subsystem
             .window("Main Window", SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -45,7 +50,7 @@ impl Ui {
         let main_canvas = main_window.into_canvas().build().unwrap();
 
         let debug_window = video_subsystem
-            .window("Debug Window", width, height)
+            .window("Debug Window", tile_grid_width, tile_grid_height)
             .position_centered()
             .build()
             .unwrap();
@@ -69,7 +74,7 @@ impl Ui {
     pub fn draw_tile(canvas: &mut Canvas<Window>, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
         let mut rect = Rect::new(0, 0, SCALE, SCALE);
 
-        for tile_y in (0..TILE_HEIGHT).step_by(2) {
+        for tile_y in (0..TILE_BYTES_COUNT).step_by(2) {
             let tile_addr = tile_addr + tile_y as u16;
             let tile = bus.ppu.video_ram.get_tile_pixel(tile_addr);
 
@@ -83,7 +88,6 @@ impl Ui {
     }
 
     pub fn draw_debug(&mut self, bus: &Bus) {
-        const SPACER: i32 = (8 * SCALE) as i32;
         const Y_SPACER: i32 = SCALE as i32;
         const X_DRAW_START: i32 = (SCALE / 2) as i32;
 
@@ -92,9 +96,7 @@ impl Ui {
         let mut tile_num = 0;
 
         self.debug_canvas.set_draw_color(Color::RGB(21, 21, 21));
-        self.debug_canvas
-            .fill_rect(None)
-            .unwrap();
+        self.debug_canvas.fill_rect(None).unwrap();
 
         for y in 0..TILE_ROWS {
             for x in 0..TILE_COLS {
@@ -153,7 +155,6 @@ pub fn into_sdl_color(color: u32) -> Color {
         (color & 0xFF) as u8,
     )
 }
-
 
 pub trait UiEventHandler {
     fn on_event(&mut self, event: UiEvent);
