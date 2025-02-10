@@ -1,5 +1,4 @@
 use crate::bus::Bus;
-use crate::emu::EventHandler;
 use crate::ppu::tile::{TILE_BITS_COUNT, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS};
 use crate::ppu::vram::VRAM_ADDR_START;
 use sdl2::event::Event;
@@ -128,7 +127,7 @@ impl Ui {
         self.main_canvas.present();
     }
 
-    pub fn handle_events(&mut self, event_handler: &mut impl EventHandler) {
+    pub fn handle_events(&mut self, event_handler: &mut impl UiEventHandler) {
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -139,7 +138,7 @@ impl Ui {
                 | Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     ..
-                } => event_handler.on_quit(),
+                } => event_handler.on_event(UiEvent::Quit),
                 _ => {}
             }
         }
@@ -153,4 +152,13 @@ pub fn into_sdl_color(color: u32) -> Color {
         ((color >> 8) & 0xFF) as u8,
         (color & 0xFF) as u8,
     )
+}
+
+
+pub trait UiEventHandler {
+    fn on_event(&mut self, event: UiEvent);
+}
+
+pub enum UiEvent {
+    Quit,
 }

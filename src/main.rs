@@ -22,14 +22,14 @@ fn main() {
         std::process::exit(1);
     };
 
-    let result = Emu::new(cart_bytes);
+    let result = Emu::new();
 
     let Ok(mut emu) = result else {
         eprintln!("Emu failed: {}", result.unwrap_err());
         std::process::exit(1);
     };
 
-    if let Err(err) = emu.run() {
+    if let Err(err) = emu.run(cart_bytes) {
         eprintln!("Emu run failed: {}", err);
         std::process::exit(1);
     }

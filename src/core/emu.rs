@@ -3,42 +3,80 @@ use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
+use crate::hardware::clock::Clock;
+use crate::ui::{UiEvent, UiEventHandler};
+use std::borrow::Cow;
 use std::path::Path;
 use std::{fs, thread};
 
 #[derive(Debug)]
 pub struct Emu {
-    cpu: Cpu,
     running: bool,
     paused: bool,
+    ctx: EmuCtx,
 }
 
-pub trait EventHandler {
-    fn on_quit(&mut self);
+#[derive(Debug, Clone)]
+pub struct EmuCtx {
+    pub clock: Clock,
+    pub debugger: Option<Debugger>,
 }
 
-impl EventHandler for Emu {
-    fn on_quit(&mut self) {
-        self.running = false;
+impl Default for EmuCtx {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl EmuCtx {
+    pub fn new() -> EmuCtx {
+        Self {
+            clock: Default::default(),
+            debugger: None,
+        }
+    }
+
+    pub fn with_debugger(debugger: Debugger) -> EmuCtx {
+        Self {
+            clock: Default::default(),
+            debugger: Some(debugger),
+        }
+    }
+
+    pub fn get_serial_msg(&self) -> Option<Cow<str>> {
+        if let Some(debugger) = &self.debugger {
+            return Some(debugger.get_serial_msg());
+        };
+
+        None
+    }
+}
+
+impl UiEventHandler for Emu {
+    fn on_event(&mut self, event: UiEvent) {
+        match event {
+            UiEvent::Quit => self.running = false,
+        }
     }
 }
 
 impl Emu {
-    pub fn new(cart_bytes: Vec<u8>) -> Result<Self, String> {
-        let cart = Cart::new(cart_bytes)?;
-
+    pub fn new() -> Result<Self, String> {
         Ok(Self {
-            cpu: Cpu::new(Bus::new(cart)),
             running: false,
             paused: false,
+            ctx: EmuCtx {
+                clock: Default::default(),
+                debugger: Some(Debugger::new(CpuLogType::None, true)),
+            },
         })
     }
 
-    pub fn run(&mut self) -> Result<(), String> {
+    pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
+        let cart = Cart::new(cart_bytes)?;
+        let mut cpu = Cpu::new(Bus::new(cart));
         let mut ui = Ui::new()?;
         self.running = true;
-        let serial_enabled = true;
-        let mut debugger = Debugger::new(CpuLogType::None, serial_enabled);
 
         while self.running {
             if self.paused {
@@ -47,40 +85,20 @@ impl Emu {
             }
 
             ui.handle_events(self);
-            self.cpu.step(Some(&mut debugger))?;
+            cpu.step(&mut self.ctx)?;
             let mut is_draw = false;
 
-            if serial_enabled {
-                let msg = debugger.get_serial_msg();
-
-                if !msg.is_empty() {
-                    is_draw = true; // todo: update only when needed
-                    println!("Serial: {msg}");
-                }
+            if let Some(msg) = self.ctx.get_serial_msg() {
+                is_draw = true; // todo: update only when needed
+                println!("Serial: {msg}");
             }
 
             if is_draw {
-                ui.draw(&self.cpu.bus); 
+                ui.draw(&cpu.bus);
             }
         }
 
         Ok(())
-    }
-
-    pub fn load_cart(cart_path: &str) -> Result<Emu, String> {
-        let result = read_bytes(cart_path);
-
-        let Ok(cart_bytes) = result else {
-            return Err(format!("Failed to read cart: {}", result.unwrap_err()));
-        };
-
-        let result = Emu::new(cart_bytes);
-
-        let Ok(emu) = result else {
-            return Err(format!("Emu failed: {}", result.unwrap_err()));
-        };
-
-        Ok(emu)
     }
 
     fn _print_cart(&self, cart: &Cart) {

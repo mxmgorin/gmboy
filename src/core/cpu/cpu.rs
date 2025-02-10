@@ -1,8 +1,8 @@
 use crate::bus::Bus;
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::core::cpu::Registers;
-use crate::core::debugger::Debugger;
 use crate::cpu::instructions::RegisterType;
+use crate::emu::EmuCtx;
 use crate::hardware::clock::Clock;
 use crate::LittleEndianBytes;
 
@@ -13,6 +13,7 @@ pub struct Cpu {
     pub enabling_ime: bool,
     pub current_opcode: u8,
     pub clock: Clock,
+    pub is_halted: bool,
 }
 
 impl Cpu {
@@ -23,6 +24,7 @@ impl Cpu {
             enabling_ime: false,
             current_opcode: 0,
             clock: Default::default(),
+            is_halted: false,
         }
     }
 
@@ -65,17 +67,17 @@ impl Cpu {
         self.clock.m_cycles(1, &mut self.bus);
     }
 
-    pub fn step(&mut self, debugger: Option<&mut Debugger>) -> Result<(), String> {
+    pub fn step(&mut self, emu_ctx: &mut EmuCtx) -> Result<(), String> {
         #[cfg(debug_assertions)]
-        if let Some(debugger) = debugger.as_ref() {
+        if let Some(debugger) = emu_ctx.debugger.as_ref() {
             debugger.print_gb_doctor_info(self);
         }
 
-        if self.bus.io.interrupts.cpu_halted {
+        if self.is_halted {
             self.clock.m_cycles(1, &mut self.bus);
 
             if self.bus.io.interrupts.int_flags != 0 {
-                self.bus.io.interrupts.cpu_halted = false;
+                self.is_halted = false;
             }
 
             return Ok(());
@@ -94,7 +96,7 @@ impl Cpu {
         let fetched_data = AddressMode::fetch_data(self, instruction.get_address_mode());
 
         #[cfg(debug_assertions)]
-        if let Some(debugger) = debugger {
+        if let Some(debugger) = emu_ctx.debugger.as_mut() {
             debugger.print_cpu_info(self, pc, instruction, self.current_opcode, &fetched_data);
             debugger.update_serial(self);
         }
@@ -106,6 +108,7 @@ impl Cpu {
             if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
                 Instruction::goto_addr(self, None, addr, true);
                 self.bus.io.interrupts.handle_interrupt(it);
+                self.is_halted = false;
             }
 
             self.enabling_ime = false;

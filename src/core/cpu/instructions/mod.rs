@@ -41,6 +41,7 @@ mod tests {
     use crate::bus::Bus;
     use crate::cpu::instructions::{Instruction, INSTRUCTIONS_BY_OPCODES};
     use crate::cpu::Cpu;
+    use crate::emu::EmuCtx;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -61,7 +62,7 @@ mod tests {
         cpu.set_pc(0);
         cpu.clock.ticks = 0;
         cpu.bus.write(0, opcode as u8);
-        cpu.step(None).unwrap();
+        cpu.step(&mut EmuCtx::new()).unwrap();
         let expected = M_CYCLES_BY_OPCODES[opcode];
         let actual = cpu.clock.ticks / 4;
 
@@ -108,7 +109,7 @@ mod tests {
             cpu.set_pc(0);
             cpu.clock.ticks = 0;
             cpu.bus.write(0, opcode as u8);
-            cpu.step(None).unwrap();
+            cpu.step(&mut EmuCtx::new()).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
             let actual = cpu.clock.ticks / 4;
 

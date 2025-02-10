@@ -7,7 +7,7 @@ pub struct HaltInstruction;
 
 impl ExecutableInstruction for HaltInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.bus.io.interrupts.cpu_halted = true;
+        cpu.is_halted = true;
     }
 
     fn get_address_mode(&self) -> AddressMode {

@@ -7,13 +7,14 @@ use rusty_gb_emu::debugger::{CpuLogType, Debugger};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use rusty_gb_emu::emu::EmuCtx;
 
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
 
     let mut cpu = setup_cpu(test_case);
-    let mut debugger = Debugger::new(CpuLogType::None, false);
-    cpu.step(Some(&mut debugger)).unwrap();
+    let debugger = Debugger::new(CpuLogType::None, false);
+    cpu.step(&mut EmuCtx::with_debugger(debugger)).unwrap();
 
     let result = test_case.validate_final_state(&cpu);
 

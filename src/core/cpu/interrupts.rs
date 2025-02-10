@@ -20,7 +20,6 @@ pub enum InterruptType {
 pub struct Interrupts {
     /// Interrupt flags
     pub int_flags: u8,
-    pub cpu_halted: bool,
     /// Interrupt master enable
     pub ime: bool,
     /// Interrupt enable register
@@ -37,7 +36,6 @@ impl Interrupts {
     pub fn new() -> Self {
         Self {
             int_flags: 0,
-            cpu_halted: false,
             ime: false,
             ie_register: 0,
         }
@@ -61,7 +59,6 @@ impl Interrupts {
         let it = it as u8;
 
         self.int_flags &= !it;
-        self.cpu_halted = false;
         self.ime = false;
     }
 
