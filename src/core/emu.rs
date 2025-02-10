@@ -77,6 +77,7 @@ impl Emu {
         let mut cpu = Cpu::new(Bus::new(cart));
         let mut ui = Ui::new()?;
         self.running = true;
+        let mut prev_frame = 0;
 
         while self.running {
             if self.paused {
@@ -86,18 +87,18 @@ impl Emu {
 
             ui.handle_events(self);
             cpu.step(&mut self.ctx)?;
-            let mut is_draw = false;
 
             if let Some(msg) = self.ctx.get_serial_msg() {
                 if !msg.is_empty() {
-                    is_draw = true; // todo: update only when needed
                     println!("Serial: {msg}");
                 }
             }
 
-            if is_draw {
+            if prev_frame != cpu.bus.ppu.current_frame {
                 ui.draw(&cpu.bus);
             }
+            
+            prev_frame = cpu.bus.ppu.current_frame;
         }
 
         Ok(())
