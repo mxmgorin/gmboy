@@ -17,7 +17,7 @@ impl ExecutableInstruction for AddInstruction {
         let mut reg_val_u32: u32 = reg_val as u32 + fetched_data.value as u32;
 
         if r == RegisterType::SP {
-            cpu.m_cycles(1);
+            cpu.clock.m_cycles(1, &mut cpu.bus);
             reg_val_u32 = cpu
                 .registers
                 .read_register(r)
@@ -33,7 +33,7 @@ impl ExecutableInstruction for AddInstruction {
         let mut c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
 
         if r.is_16bit() {
-            cpu.m_cycles(1);
+            cpu.clock.m_cycles(1, &mut cpu.bus);
             z = None;
             h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
             let n = (reg_val as u32) + (fetched_data.value as u32);

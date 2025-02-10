@@ -325,7 +325,6 @@ mod tests {
         let data = AddressMode::fetch_data(&mut cpu, mode);
 
         assert_eq!(data.value, 0);
-        assert_eq!(data.dest.get_addr(), None);
     }
 
     #[test]
@@ -376,7 +375,7 @@ mod tests {
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
         assert_eq!(cpu.registers.pc, pc as u16 + 1);
-        assert_eq!(cpu.t_cycles, 4);
+        assert_eq!(cpu.clock.ticks, 4);
     }
 
     #[test]

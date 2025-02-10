@@ -40,7 +40,7 @@ impl ExecutableInstruction for PrefixInstruction {
         let mut reg_val = cpu.read_reg8(reg);
 
         if reg == RegisterType::HL {
-            cpu.m_cycles(2);
+            cpu.clock.m_cycles(2, &mut cpu.bus);
         }
 
         match bit_op {
@@ -179,7 +179,7 @@ impl ExecutableInstruction for PrefixInstruction {
             }
         }
 
-        cpu.m_cycles(1);
+        cpu.clock.m_cycles(1, &mut cpu.bus);
     }
 
     fn get_address_mode(&self) -> AddressMode {

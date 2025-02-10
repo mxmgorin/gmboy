@@ -14,7 +14,7 @@ impl ExecutableInstruction for DecInstruction {
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if r.is_16bit() {
-                    cpu.m_cycles(1);
+                    cpu.clock.m_cycles(1, &mut cpu.bus);
                 }
 
                 cpu.registers.set_register(r, value);

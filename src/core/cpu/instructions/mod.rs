@@ -59,11 +59,11 @@ mod tests {
         let opcode = 0xF0;
         let mut cpu = Cpu::new(Bus::flat_mem(vec![0; 100000]));
         cpu.set_pc(0);
-        cpu.t_cycles = 0;
+        cpu.clock.ticks = 0;
         cpu.bus.write(0, opcode as u8);
         cpu.step(None).unwrap();
         let expected = M_CYCLES_BY_OPCODES[opcode];
-        let actual = cpu.t_cycles / 4;
+        let actual = cpu.clock.ticks / 4;
 
         assert_eq!(expected, actual);
     }
@@ -106,11 +106,11 @@ mod tests {
             }
 
             cpu.set_pc(0);
-            cpu.t_cycles = 0;
+            cpu.clock.ticks = 0;
             cpu.bus.write(0, opcode as u8);
             cpu.step(None).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
-            let actual = cpu.t_cycles / 4;
+            let actual = cpu.clock.ticks / 4;
 
             if actual != expected {
                 let msg = format!(

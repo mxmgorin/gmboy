@@ -3,7 +3,7 @@ use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruc
 use crate::core::cpu::Registers;
 use crate::core::debugger::Debugger;
 use crate::cpu::instructions::RegisterType;
-use crate::cpu::interrupts::InterruptType;
+use crate::hardware::clock::Clock;
 use crate::LittleEndianBytes;
 
 #[derive(Debug, Clone)]
@@ -11,8 +11,8 @@ pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,
     pub enabling_ime: bool,
-    pub t_cycles: usize,
     pub current_opcode: u8,
+    pub clock: Clock,
 }
 
 impl Cpu {
@@ -21,17 +21,16 @@ impl Cpu {
             bus,
             registers: Registers::new(),
             enabling_ime: false,
-            t_cycles: 0,
             current_opcode: 0,
+            clock: Default::default(),
         }
     }
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
     pub fn fetch_data(&mut self) -> u8 {
-        self.t_cycles(1);
         let value = self.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
-        self.t_cycles(3);
+        self.clock.m_cycles(1, &mut self.bus);
 
         value
     }
@@ -48,25 +47,22 @@ impl Cpu {
 
     /// Reads data from memory. Costs 1 M-Cycle.
     pub fn read_memory(&mut self, address: u16) -> u16 {
-        //self.t_cycles(1);
         let value = self.bus.read(address) as u16;
-        self.t_cycles(4);
+        self.clock.m_cycles(1, &mut self.bus);
 
         value
     }
 
     /// Writes to memory. Costs 1 M-Cycle.
     pub fn write_to_memory(&mut self, address: u16, value: u8) {
-        self.t_cycles(1);
         self.bus.write(address, value);
-        self.t_cycles(3);
+        self.clock.m_cycles(1, &mut self.bus);
     }
 
     /// Sets PC to specified address. Costs 1 M-Cycle.
     pub fn set_pc(&mut self, address: u16) {
-        self.t_cycles(1);
         self.registers.pc = address;
-        self.t_cycles(3);
+        self.clock.m_cycles(1, &mut self.bus);
     }
 
     pub fn step(&mut self, debugger: Option<&mut Debugger>) -> Result<(), String> {
@@ -76,7 +72,7 @@ impl Cpu {
         }
 
         if self.bus.io.interrupts.cpu_halted {
-            self.m_cycles(1);
+            self.clock.m_cycles(1, &mut self.bus);
 
             if self.bus.io.interrupts.int_flags != 0 {
                 self.bus.io.interrupts.cpu_halted = false;
@@ -122,27 +118,6 @@ impl Cpu {
         }
 
         Ok(())
-    }
-
-    pub fn m_cycles(&mut self, m_cycles: i32) {
-        for _ in 0..m_cycles {
-            self.t_cycles(4);
-            self.bus.dma_tick();
-        }
-    }
-
-    pub fn t_cycles(&mut self, t_cycles: i32) {
-        for _ in 0..t_cycles {
-            self.t_cycles = self.t_cycles.wrapping_add(1);
-
-            if self.bus.io.timer.tick() {
-                self.bus
-                    .io
-                    .interrupts
-                    .request_interrupt(InterruptType::Timer);
-                self.bus.ppu.tick();
-            }
-        }
     }
 
     pub fn read_reg8(&self, rt: RegisterType) -> u8 {

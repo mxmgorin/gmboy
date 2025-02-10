@@ -25,11 +25,11 @@ impl ExecutableInstruction for LdInstruction {
                         cpu.registers.sp.wrapping_add(offset_e as u16),
                     );
 
-                    cpu.m_cycles(1);
+                    cpu.clock.m_cycles(1, &mut cpu.bus);
                 } else {
                     if let DataSource::Register(src_r) = fetched_data.source {
                         if r.is_16bit() && src_r.is_16bit() {
-                            cpu.m_cycles(1);
+                            cpu.clock.m_cycles(1, &mut cpu.bus);
                         }
                     }
 

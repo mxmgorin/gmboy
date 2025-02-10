@@ -11,7 +11,7 @@ pub struct RetInstruction {
 impl ExecutableInstruction for RetInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         if self.condition_type.is_some() {
-            cpu.m_cycles(1);
+            cpu.clock.m_cycles(1, &mut cpu.bus);
         }
 
         if ConditionType::check_cond(&cpu.registers, self.condition_type) {
