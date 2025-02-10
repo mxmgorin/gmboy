@@ -1,10 +1,9 @@
 use crate::core::ppu::oam::OamRam;
-use crate::ppu::tile::Tile;
 use crate::ppu::vram::VideoRam;
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
-    video_ram: VideoRam,
+    pub video_ram: VideoRam,
     oam_ram: OamRam,
 }
 
@@ -40,12 +39,5 @@ impl Ppu {
 
     pub fn oam_write(&mut self, addr: u16, value: u8) {
         self.oam_ram.write_byte(addr, value);
-    }
-
-    pub fn get_tile(&self, addr: u16) -> Tile {
-        let byte_one = self.video_ram.read(addr);
-        let byte_two = self.video_ram.read(addr + 1);
-
-        Tile::new(byte_one, byte_two)
     }
 }

@@ -1,6 +1,6 @@
 use crate::bus::Bus;
 use crate::emu::EventHandler;
-use crate::ppu::tile::{TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS, TILE_BITS_COUNT};
+use crate::ppu::tile::{TILE_BITS_COUNT, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS};
 use crate::ppu::vram::VRAM_ADDR_START;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -83,16 +83,18 @@ impl Ui {
         })
     }
 
-    pub fn draw_tiles_row(surface: &mut Surface, bus: &Bus, start_addr: u16, x: i32, y: i32) {
+    pub fn draw_tile(surface: &mut Surface, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
         let mut rect = Rect::new(0, 0, SCALE, SCALE);
 
         for tile_y in (0..TILE_HEIGHT).step_by(2) {
-            let tile_addr = start_addr + tile_y as u16;
-            let tile = bus.ppu.get_tile(tile_addr);
+            let tile_addr = tile_addr + tile_y as u16;
+            let tile = bus.ppu.video_ram.get_tile_pixel(tile_addr);
 
             for bit in 0..TILE_BITS_COUNT {
                 rect.set_x(x + bit * SCALE as i32);
-                rect.set_y(y + (tile_y / 2 * SCALE as i32));
+                rect.set_y(y + (tile_y as i32 / 2 * SCALE as i32));
+                //self.debug_canvas.set_draw_color(TILE_SDL_COLORS[tile.get_color_index(bit)]);
+                //self.debug_canvas.fill_rect(rect).unwrap();
                 surface
                     .fill_rect(rect, TILE_SDL_COLORS[tile.get_color_index(bit)])
                     .unwrap();
@@ -116,7 +118,7 @@ impl Ui {
         for y in 0..TILE_ROWS {
             for x in 0..TILE_COLS {
                 let row_start_addr = VRAM_ADDR_START + (tile_num * TILE_BYTE_SIZE);
-                Ui::draw_tiles_row(
+                Ui::draw_tile(
                     &mut self.debug_surface,
                     bus,
                     row_start_addr,

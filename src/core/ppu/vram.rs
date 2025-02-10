@@ -1,5 +1,6 @@
+use crate::ppu::tile::{TilePixel};
+
 // Tile data is stored in VRAM in the memory area at $8000-$97FF;
-// with each tile taking 16 bytes, this area defines data for 384 tiles.
 
 pub const VRAM_SIZE: usize = 0x2000;
 pub const VRAM_ADDR_START: u16 = 0x8000;
@@ -49,4 +50,11 @@ impl VideoRam {
     pub fn write(&mut self, addr: u16, val: u8) {
         self.bytes[(addr - VRAM_ADDR_START) as usize] = val;
     }
+
+    pub fn get_tile_pixel(&self, addr: u16) -> TilePixel {
+        let byte_one = self.read(addr);
+        let byte_two = self.read(addr + 1);
+
+        TilePixel::new(byte_one, byte_two)
+    } 
 }
