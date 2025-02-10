@@ -74,13 +74,13 @@ pub struct OamItem {
 
 impl OamItem {
     pub fn as_bytes_mut(&mut self) -> &mut [u8; 4] {
-        let ptr = self as *mut OamItem as *mut [u8; 4];
-        unsafe { &mut *ptr }
+        let ptr = self as *mut OamItem as *mut u8; // Pointer to u8
+        unsafe { &mut *(ptr as *mut [u8; 4]) } // Cast to mutable reference to [u8; 4]
     }
 
     pub fn as_bytes(&self) -> &[u8; 4] {
-        let ptr = self as *const OamItem as *const [u8; 4];
-        unsafe { &*ptr }
+        let ptr = self as *const OamItem as *const u8; // Pointer to u8
+        unsafe { &*(ptr as *const [u8; 4]) } // Cast to immutable reference to [u8; 4]
     }
 
     pub fn f_cgb_pn(&self) -> u8 {
