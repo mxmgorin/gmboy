@@ -13,7 +13,6 @@ pub struct JpInstruction {
 impl ExecutableInstruction for JpInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         if self.condition_type.is_none() {
-            // FIXME: 0xC3
             // uses only HL and no Cycles
             cpu.registers.pc = fetched_data.value;
         } else {

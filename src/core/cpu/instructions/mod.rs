@@ -87,7 +87,9 @@ mod tests {
             }
 
             if let Instruction::Jp(_) = instr {
-                continue; // todo: handle branching
+                if opcode != 0xE9 {
+                    continue; // todo: handle branching
+                }
             }
 
             if let Instruction::Jr(_) = instr {
@@ -95,7 +97,9 @@ mod tests {
             }
 
             if let Instruction::Ret(_) = instr {
-                continue; // todo: handle branching
+                if opcode != 0xC9 && opcode != 0xD9 {
+                    continue; // todo: handle branching
+                }
             }
 
             if let Instruction::Call(_) = instr {
