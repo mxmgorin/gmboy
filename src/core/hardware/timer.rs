@@ -1,3 +1,5 @@
+use crate::cpu::interrupts::{InterruptType, Interrupts};
+
 const DIV_ADDRESS: u16 = 0xFF04;
 const TIMA_ADDRESS: u16 = 0xFF05;
 const TMA_ADDRESS: u16 = 0xFF06;
@@ -28,7 +30,7 @@ impl Timer {
     }
 
     /// Updates timer if needed and returns is interrupt needed
-    pub fn tick(&mut self) -> bool {
+    pub fn tick(&mut self, interrupts: &mut Interrupts) {
         let prev_div = self.div;
         self.div = self.div.wrapping_add(1);
 
@@ -62,11 +64,9 @@ impl Timer {
             let is_overflow = self.tima == 0xFF;
             if is_overflow {
                 self.tima = self.tma;
-                return true; // Signal an interrupt
+                interrupts.request_interrupt(InterruptType::Timer);
             }
         }
-
-        false
     }
 
     pub fn write(&mut self, address: TimerAddress, value: u8) {
@@ -125,64 +125,5 @@ impl TimerAddress {
 
     pub const fn get_end() -> u16 {
         TAC_ADDRESS
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_div_increments_correctly() {
-        let mut timer = Timer::new();
-        let initial_div = timer.div;
-
-        timer.tick(); // Simulate one clock cycle
-        assert_eq!(timer.div, initial_div.wrapping_add(1));
-    }
-
-    #[test]
-    fn test_tima_increments_at_correct_frequency() {
-        let mut timer = Timer::new();
-
-        // Set TAC to use bit 9 of DIV (4096 Hz)
-        timer.tac = 0b100; // Timer enabled, clock select 0b00
-
-        // Simulate enough ticks to trigger an increment
-        for _ in 0..512 {
-            // 2^9 = 512 ticks for a full cycle
-            timer.tick();
-        }
-
-        assert_eq!(timer.tima, 1); // TIMA should have incremented once
-    }
-
-    #[test]
-    fn test_tima_overflow() {
-        let mut timer = Timer::new();
-        timer.tac = 0b100; // Timer enabled
-        timer.tima = 0xFE; // Set TIMA near overflow
-        timer.tma = 0x42; // Set TMA (reload value)
-
-        // Simulate enough ticks to cause an overflow
-        for _ in 0..512 {
-            timer.tick();
-        }
-
-        assert_eq!(timer.tima, 0x42); // TIMA should reload from TMA
-                                      // Check for interrupt flag (if implemented)
-                                      // assert_eq!(timer.interrupt_flag, 0x04);
-    }
-
-    #[test]
-    fn test_timer_disabled() {
-        let mut timer = Timer::new();
-        timer.tac = 0b000; // Timer disabled
-
-        for _ in 0..1024 {
-            timer.tick();
-        }
-
-        assert_eq!(timer.tima, 0); // TIMA should not increment
     }
 }

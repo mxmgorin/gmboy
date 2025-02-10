@@ -1,3 +1,4 @@
+use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
 use crate::{
     cpu::interrupts::Interrupts,
     hardware::timer::{Timer, TimerAddress},
@@ -17,7 +18,7 @@ impl TryFrom<u16> for IoAddressLocation {
             TIMER_START..=TIMER_END => Ok(Self::Timer(address.try_into()?)),
             0xFF10..=0xFF26 => Ok(Self::Audio),
             0xFF30..=0xFF3F => Ok(Self::WavePattern),
-            0xFF40..=0xFF4B => Ok(Self::Display),
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => Ok(Self::Display),
             0xFF4F => Ok(Self::VRAMBankSelect),
             0xFF50 => Ok(Self::DisableBootROM),
             0xFF51..=0xFF55 => Ok(Self::VRAMdma),
@@ -34,6 +35,7 @@ pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
     pub interrupts: Interrupts,
+    pub lcd: Lcd,
 }
 
 impl Default for Io {
@@ -48,15 +50,11 @@ impl Io {
             serial: Serial::new(),
             timer: Timer::new(),
             interrupts: Interrupts::new(),
+            lcd: Lcd::new(),
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if address == 0xFF44 {
-            
-            return 10;
-        }
-        
         let location = IoAddressLocation::try_from(address).unwrap();
 
         match location {
@@ -64,7 +62,7 @@ impl Io {
             IoAddressLocation::SerialSc => self.serial.sc,
             IoAddressLocation::Timer(address) => self.timer.read(address),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
-            IoAddressLocation::Display => 0x90,
+            IoAddressLocation::Display => self.lcd.read(address),
             IoAddressLocation::Joypad
             | IoAddressLocation::Audio
             | IoAddressLocation::WavePattern
@@ -90,10 +88,10 @@ impl Io {
             IoAddressLocation::SerialSc => self.serial.sc = value,
             IoAddressLocation::Timer(address) => self.timer.write(address, value),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags = value,
+            IoAddressLocation::Display => self.lcd.write(address, value),
             IoAddressLocation::Joypad
             | IoAddressLocation::Audio
             | IoAddressLocation::WavePattern
-            | IoAddressLocation::Display
             | IoAddressLocation::VRAMBankSelect
             | IoAddressLocation::DisableBootROM
             | IoAddressLocation::VRAMdma

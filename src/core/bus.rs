@@ -57,7 +57,6 @@ pub struct Bus {
     ram: Ram,
     pub io: Io,
     pub ppu: Ppu,
-    pub dma: Dma,
     flat_mem: Option<Vec<u8>>,
 }
 
@@ -68,7 +67,6 @@ impl Bus {
             ram: Ram::new(),
             io: Io::new(),
             ppu: Ppu::new(),
-            dma: Default::default(),
             flat_mem: None,
         }
     }
@@ -92,7 +90,7 @@ impl Bus {
 
         match location {
             BusAddrLocation::Oam => {
-                if self.dma.is_transferring {
+                if self.io.lcd.dma.is_started {
                     return 0xFF;
                 }
 
@@ -125,7 +123,7 @@ impl Bus {
             BusAddrLocation::VRAM => self.ppu.vram_write(address, value),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
-                if self.dma.is_transferring {
+                if self.io.lcd.dma.is_started {
                     return;
                 }
 
@@ -144,42 +142,11 @@ impl Bus {
     }
 
     pub fn dma_tick(&mut self) {
-        self.dma.tick(&self.ram, &mut self.ppu);
+        self.io.lcd.dma.tick(&self.ram, &mut self.ppu);
     }
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct Dma {
-    is_transferring: bool,
-    byte: u8,
-    value: u8,
-    start_delay: u8,
-}
 
-impl Dma {
-    pub fn start(&mut self, value: u8) {
-        self.is_transferring = true;
-        self.start_delay = 2;
-        self.byte = 0x00;
-        self.value = value;
-    }
-
-    pub fn tick(&mut self, ram: &Ram, ppu: &mut Ppu) {
-        if !self.is_transferring {
-            return;
-        }
-
-        if self.start_delay > 0 {
-            self.start_delay -= 1;
-            return;
-        }
-
-        let value = ram.h_ram_read(self.value as u16 * 0x100) + self.byte;
-        ppu.oam_write(self.byte as u16, value);
-        self.byte += 1;
-        self.is_transferring = self.byte < 0xA0;
-    }
-}
 
 #[cfg(test)]
 mod tests {
