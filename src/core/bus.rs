@@ -1,4 +1,5 @@
 use crate::core::cart::Cart;
+use crate::hardware::dma::{Dma, DMA_ADDRESS};
 use crate::hardware::io::Io;
 use crate::hardware::ram::Ram;
 use crate::ppu::ppu::Ppu;
@@ -58,6 +59,7 @@ pub struct Bus {
     pub io: Io,
     pub ppu: Ppu,
     flat_mem: Option<Vec<u8>>,
+    dma: Dma,
 }
 
 impl Bus {
@@ -68,6 +70,7 @@ impl Bus {
             io: Io::new(),
             ppu: Ppu::new(),
             flat_mem: None,
+            dma: Default::default(),
         }
     }
 
@@ -90,7 +93,7 @@ impl Bus {
 
         match location {
             BusAddrLocation::Oam => {
-                if self.io.lcd.dma.is_started {
+                if self.io.lcd.dma.is_active {
                     return 0xFF;
                 }
 
@@ -117,13 +120,18 @@ impl Bus {
             return;
         }
 
+        if address == DMA_ADDRESS {
+            self.dma.start(value);
+            return;
+        }
+
         let location = BusAddrLocation::from(address);
 
         match location {
             BusAddrLocation::VRAM => self.ppu.vram_write(address, value),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
-                if self.io.lcd.dma.is_started {
+                if self.io.lcd.dma.is_active {
                     return;
                 }
 
@@ -142,11 +150,21 @@ impl Bus {
     }
 
     pub fn dma_tick(&mut self) {
-        self.io.lcd.dma.tick(&self.ram, &mut self.ppu);
+        if !self.dma.is_active {
+            return;
+        }
+
+        if self.dma.start_delay > 0 {
+            self.dma.start_delay -= 1;
+            return;
+        }
+
+        let value = self.read(self.dma.address as u16 * 0x100) + self.dma.current_byte;
+        self.ppu.oam_write(self.dma.current_byte as u16, value);
+        self.dma.current_byte += 1;
+        self.dma.is_active = self.dma.current_byte < 0xA0; // 160
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {

@@ -1,5 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::ppu::dma::{Dma, DMA_ADDRESS};
+use crate::core::hardware::dma::{Dma, DMA_ADDRESS};
 use crate::{get_bit_flag, set_bit};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
@@ -28,6 +28,12 @@ pub struct Lcd {
     pub sp2_colors: [u32; 4],
 
     pub dma: Dma,
+}
+
+impl Default for Lcd {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Lcd {
@@ -75,7 +81,7 @@ impl Lcd {
         let offset = (address - 0xFF40) as usize;
 
         let self_bytes = unsafe {
-            std::slice::from_raw_parts_mut(self as *mut _ as *mut u8, size_of_val(&self))
+            std::slice::from_raw_parts_mut(self as *mut _ as *mut u8, size_of_val(self))
         };
         self_bytes[offset] = value;
 

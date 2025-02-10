@@ -1,12 +1,18 @@
 const W_RAM_SIZE: usize = 0x2000;
 const H_RAM_SIZE: usize = 0x80;
-const W_RAM_ADDR_OFFSET: usize = 0xC000;
-const H_RAM_ADDR_OFFSET: usize = 0xFF80;
+const W_RAM_ADDR_START: usize = 0xC000;
+const H_RAM_ADDR_START: usize = 0xFF80;
 
 #[derive(Debug, Clone)]
 pub struct Ram {
     w_ram: [u8; W_RAM_SIZE],
     h_ram: [u8; H_RAM_SIZE],
+}
+
+impl Default for Ram {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Ram {
@@ -35,9 +41,9 @@ impl Ram {
 }
 
 fn normalize_w_addr(addr: u16) -> usize {
-    addr as usize - W_RAM_ADDR_OFFSET
+    addr as usize - W_RAM_ADDR_START
 }
 
 fn normalize_h_addr(addr: u16) -> usize {
-    addr as usize - H_RAM_ADDR_OFFSET
+    addr as usize - H_RAM_ADDR_START
 }
