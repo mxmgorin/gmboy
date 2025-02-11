@@ -171,8 +171,8 @@ mod tests {
                 | Instruction::Jr(_) // has tests
                 | Instruction::Ret(_) // has tests
                 | Instruction::Call(_) // has tests
-                | Instruction::Stop(_)
-                | Instruction::Halt(_)
+                | Instruction::Stop(_) // has 0 in matrix, invalid? 
+                | Instruction::Halt(_) // has 0 in matrix, invalid? 
                 | Instruction::Unknown(_) => continue,
                 _ => {}
             }
