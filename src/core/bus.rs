@@ -76,7 +76,7 @@ impl Bus {
     }
 
     /// Creates with just array as memory. Use only for tests.
-    pub fn flat_mem(bytes: Vec<u8>) -> Self {
+    pub fn with_bytes(bytes: Vec<u8>) -> Self {
         let cart = Cart::new(vec![0; 0x2000]).unwrap();
         let mut obj = Self::new(cart);
         obj.flat_mem = Some(bytes);

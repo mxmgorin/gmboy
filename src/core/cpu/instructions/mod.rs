@@ -58,7 +58,7 @@ mod tests {
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let mut cpu = Cpu::new(Bus::flat_mem(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
         cpu.set_pc(0);
         cpu.clock.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles() {
-        let mut cpu = Cpu::new(Bus::flat_mem(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             if let Instruction::Unknown(_) = instr {
