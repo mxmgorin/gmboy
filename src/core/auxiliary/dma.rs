@@ -1,5 +1,3 @@
-pub const DMA_ADDRESS: u16 = 0xFF46;
-
 #[derive(Debug, Clone, Default)]
 pub struct Dma {
     pub is_active: bool,

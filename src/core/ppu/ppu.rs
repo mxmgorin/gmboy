@@ -1,6 +1,6 @@
+use crate::auxiliary::io::Io;
 use crate::core::ppu::oam::OamRam;
 use crate::cpu::interrupts::InterruptType;
-use crate::auxiliary::io::Io;
 use crate::ppu::lcd::{Lcd, LcdMode, LcdStatSrc};
 use crate::ppu::vram::VideoRam;
 use std::thread;
@@ -50,7 +50,7 @@ impl Ppu {
     pub fn tick(&mut self, io: &mut Io) {
         self.line_ticks += 1;
 
-        match io.lcd.lcds_mode() {
+        match io.lcd.status.mode() {
             LcdMode::Oam => self.mode_oam(&mut io.lcd),
             LcdMode::Xfer => self.mode_xfer(&mut io.lcd),
             LcdMode::HBlank => self.mode_hblank(io),
@@ -76,13 +76,13 @@ impl Ppu {
 
     pub fn mode_oam(&mut self, lcd: &mut Lcd) {
         if self.line_ticks >= 80 {
-            lcd.lcds_mode_set(LcdMode::Xfer);
+            lcd.status.mode_set(LcdMode::Xfer);
         }
     }
 
     fn mode_xfer(&mut self, lcd: &mut Lcd) {
         if self.line_ticks >= 80 + 172 {
-            lcd.lcds_mode_set(LcdMode::HBlank);
+            lcd.status.mode_set(LcdMode::HBlank);
         }
     }
 
@@ -91,7 +91,7 @@ impl Ppu {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly as usize >= LINES_PER_FRAME {
-                io.lcd.lcds_mode_set(LcdMode::Oam);
+                io.lcd.status.mode_set(LcdMode::Oam);
                 io.lcd.ly = 0;
             }
 
@@ -104,10 +104,10 @@ impl Ppu {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly as usize >= Y_RES {
-                io.lcd.lcds_mode_set(LcdMode::VBlank);
+                io.lcd.status.mode_set(LcdMode::VBlank);
                 io.interrupts.request_interrupt(InterruptType::VBlank);
 
-                if io.lcd.lcds_stat_int(LcdStatSrc::HBlank) {
+                if io.lcd.status.stat_int(LcdStatSrc::HBlank) {
                     io.interrupts.request_interrupt(InterruptType::LCDStat);
                 }
 
@@ -115,6 +115,7 @@ impl Ppu {
 
                 // calc FPS
                 let end = self.instant.elapsed().as_millis() as usize;
+                println!("HBLANK TIME: {}ms", end);
                 let frame_time = end - self.prev_frame_time;
 
                 if frame_time < TARGET_FRAME_TIME {
@@ -131,11 +132,11 @@ impl Ppu {
 
                 self.frame_count += 1;
                 self.prev_frame_time = self.instant.elapsed().as_millis() as usize;
+            } else {
+                io.lcd.status.mode_set(LcdMode::Oam);
             }
-        } else {
-            io.lcd.lcds_mode_set(LcdMode::Oam);
+            
+            self.line_ticks = 0;
         }
-
-        self.line_ticks = 0;
     }
 }

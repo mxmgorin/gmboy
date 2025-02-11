@@ -4,14 +4,28 @@ use crate::{get_bit_flag, set_bit, struct_to_bytes, struct_to_bytes_mut};
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
 pub const LCD_ADDRESS_END: u16 = 0xFF4B;
 
+// Register addresses
+pub const LCD_CONTROL_ADDRESS: u16 = 0xFF40;
+pub const LCD_STATUS_ADDRESS: u16 = 0xFF41;
+pub const LCD_SCROLL_Y_ADDRESS: u16 = 0xFF42;
+pub const LCD_SCROLL_X_ADDRESS: u16 = 0xFF42;
+pub const LCD_LY_ADDRESS: u16 = 0xFF44;
+pub const LCD_LY_COMPARE_ADDRESS: u16 = 0xFF45;
+pub const LCD_DMA_ADDRESS: u16 = 0xFF46;
+pub const LCD_BG_PALETTE_ADDRESS: u16 = 0xFF47;
+pub const LCD_TILE_PALETTE_0_ADDRESS: u16 = 0xFF48;
+pub const LCD_TILE_PALETTE_1_ADDRESS: u16 = 0xFF49;
+pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
+pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
+//
 pub const COLORS_DEFAULT: [u32; 4] = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000];
 
 #[derive(Debug, Clone)]
 #[repr(C)]
 pub struct Lcd {
     // Registers
-    pub lcdc: u8,
-    pub lcds: u8,
+    pub control: LcdControl,
+    pub status: LcdStatus,
     pub scroll_y: u8,
     pub scroll_x: u8,
     pub ly: u8,
@@ -37,8 +51,8 @@ impl Default for Lcd {
 impl Lcd {
     pub fn new() -> Lcd {
         Self {
-            lcdc: 0x91,
-            lcds: 0,
+            control: LcdControl::default(),
+            status: LcdStatus::default(),
             scroll_y: 0,
             scroll_x: 0,
             ly: 0,
@@ -92,79 +106,102 @@ impl Lcd {
         self.ly += 1;
 
         if self.ly == self.ly_compare {
-            self.lcds_lyc_set(true);
+            self.status.lyc_set(true);
 
-            if self.lcds_stat_int(LcdStatSrc::Lyc) {
+            if self.status.stat_int(LcdStatSrc::Lyc) {
                 interrupts.request_interrupt(InterruptType::LCDStat);
             } else {
-                self.lcds_lyc_set(false);
+                self.status.lyc_set(false);
             }
         }
     }
+}
 
-    pub fn lcdc_obj_enable(&self) -> bool {
-        get_bit_flag(self.lcdc, 1)
+
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+pub struct LcdControl {
+    pub byte: u8,
+}
+
+impl Default for LcdControl {
+    fn default() -> Self {
+        Self { byte: 0x91 }
+    }
+}
+
+impl LcdControl {
+    pub fn obj_enable(&self) -> bool {
+        get_bit_flag(self.byte, 1)
     }
 
-    pub fn lcdc_obj_height(&self) -> u8 {
-        if get_bit_flag(self.lcdc, 2) {
+    pub fn obj_height(&self) -> u8 {
+        if get_bit_flag(self.byte, 2) {
             16
         } else {
             8
         }
     }
 
-    pub fn lcdc_bg_map_area(&self) -> u16 {
-        if get_bit_flag(self.lcdc, 3) {
+    pub fn bg_map_area(&self) -> u16 {
+        if get_bit_flag(self.byte, 3) {
             0x9C00
         } else {
             0x9800
         }
     }
 
-    pub fn lcdc_bgw_data_area(&self) -> u16 {
-        if get_bit_flag(self.lcdc, 4) {
+    pub fn bgw_data_area(&self) -> u16 {
+        if get_bit_flag(self.byte, 4) {
             0x8000
         } else {
             0x8800
         }
     }
 
-    pub fn lcdc_win_enable(&self) -> bool {
-        get_bit_flag(self.lcdc, 5)
+    pub fn win_enable(&self) -> bool {
+        get_bit_flag(self.byte, 5)
     }
 
-    pub fn lcdc_win_map_area(&self) -> u16 {
-        if get_bit_flag(self.lcdc, 6) {
+    pub fn win_map_area(&self) -> u16 {
+        if get_bit_flag(self.byte, 6) {
             0x9C00
         } else {
             0x9800
         }
     }
 
-    pub fn lcdc_lcd_enable(&self) -> bool {
-        get_bit_flag(self.lcdc, 7)
+    pub fn lcd_enable(&self) -> bool {
+        get_bit_flag(self.byte, 7)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+#[repr(C)]
+pub struct LcdStatus {
+    pub byte: u8,
+}
+
+impl LcdStatus {
+    pub fn mode(&self) -> LcdMode {
+        LcdMode::from(self.byte)
     }
 
-    pub fn lcds_mode(&self) -> LcdMode {
-        LcdMode::from(self.lcds)
+    pub fn mode_set(&mut self, mode: LcdMode) {
+        self.byte &= !0b11;
+        self.byte |= mode as u8;
     }
 
-    pub fn lcds_mode_set(&mut self, mode: LcdMode) {
-        self.lcds &= !0b11;
-        self.lcds |= mode as u8;
+    pub fn lyc(&self) -> bool {
+        get_bit_flag(self.byte, 2)
     }
 
-    pub fn lcds_lyc(&self) -> bool {
-        get_bit_flag(self.lcds, 2)
+    pub fn lyc_set(&mut self, b: bool) {
+        set_bit(&mut self.byte, 2, b);
     }
 
-    pub fn lcds_lyc_set(&mut self, b: bool) {
-        set_bit(&mut self.lcds, 2, b);
-    }
-
-    pub fn lcds_stat_int(&self, src: LcdStatSrc) -> bool {
-        self.lcds & (src as u8) != 0
+    pub fn stat_int(&self, src: LcdStatSrc) -> bool {
+        self.byte & (src as u8) != 0
     }
 }
 

@@ -1,9 +1,10 @@
 use crate::core::cart::Cart;
-use crate::auxiliary::dma::{Dma, DMA_ADDRESS};
+use crate::auxiliary::dma::{Dma};
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::Ram;
+use crate::ppu::lcd::LCD_DMA_ADDRESS;
 use crate::ppu::ppu::Ppu;
-use crate::ppu::vram::VRAM_ADDR_START;
+use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {
@@ -38,7 +39,7 @@ impl From<u16> for BusAddrLocation {
         match address {
             0x0000..=0x3FFF => BusAddrLocation::RomBank0,
             0x4000..=0x7FFF => BusAddrLocation::RomBank1,
-            VRAM_ADDR_START..=0x9FFF => BusAddrLocation::VRAM,
+            VRAM_ADDR_START..=VRAM_ADDR_END => BusAddrLocation::VRAM,
             0xA000..=0xBFFF => BusAddrLocation::CartRam,
             0xC000..=0xCFFF => BusAddrLocation::WRamBank0,
             0xD000..=0xDFFF => BusAddrLocation::WRamBank1To7,
@@ -120,9 +121,8 @@ impl Bus {
             return;
         }
 
-        if address == DMA_ADDRESS {
+        if address == LCD_DMA_ADDRESS {
             self.dma.start(value);
-            return;
         }
 
         let location = BusAddrLocation::from(address);

@@ -81,7 +81,7 @@ impl Io {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let location = IoAddressLocation::try_from(address).unwrap();
+        let location = IoAddressLocation::try_from(address).unwrap_or_else(|_| panic!("Invalid IO address {:X}", address));
 
         match location {
             IoAddressLocation::SerialSb => self.serial.sb = value,
