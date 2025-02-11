@@ -39,7 +39,7 @@ pub use rotate::rrca::*;
 #[cfg(test)]
 mod tests {
     use crate::bus::Bus;
-    use crate::cpu::instructions::{Instruction, INSTRUCTIONS_BY_OPCODES};
+    use crate::cpu::instructions::{ConditionType, Instruction, INSTRUCTIONS_BY_OPCODES};
     use crate::cpu::Cpu;
     use crate::emu::EmuCtx;
 
@@ -70,20 +70,86 @@ mod tests {
     }
 
     #[test]
+    pub fn test_m_cycles_call() {
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+            let Instruction::Call(instr) = *instr else {
+                continue;
+            };
+
+            cpu.set_pc(0);
+            cpu.clock.t_cycles = 0;
+            cpu.bus.write(0, opcode as u8);
+
+            if let Some(condition_type) = instr.condition_type {
+                match condition_type {
+                    ConditionType::NC => {
+                        cpu.registers.flags.set(None, None, None, false.into());
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(6, cpu.clock.t_cycles / 4);
+
+                        cpu.set_pc(0);
+                        cpu.clock.t_cycles = 0;
+
+                        cpu.registers.flags.set(None, None, None, true.into());
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(3, cpu.clock.t_cycles / 4);
+                    }
+                    ConditionType::C => {
+                        cpu.registers.flags.set(None, None, None, false.into());
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(3, cpu.clock.t_cycles / 4);
+
+                        cpu.set_pc(0);
+                        cpu.clock.t_cycles = 0;
+
+                        cpu.registers.flags.set(None, None, None, true.into());
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(6, cpu.clock.t_cycles / 4);
+                    }
+                    ConditionType::NZ => {
+                        cpu.registers.flags.set(false.into(), None, None, None);
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(6, cpu.clock.t_cycles / 4);
+
+                        cpu.set_pc(0);
+                        cpu.clock.t_cycles = 0;
+
+                        cpu.registers.flags.set(true.into(), None, None, None);
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(3, cpu.clock.t_cycles / 4);
+                    }
+                    ConditionType::Z => {
+                        cpu.registers.flags.set(false.into(), None, None, None);
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(3, cpu.clock.t_cycles / 4);
+
+                        cpu.set_pc(0);
+                        cpu.clock.t_cycles = 0;
+
+                        cpu.registers.flags.set(true.into(), None, None, None);
+                        cpu.step(&mut EmuCtx::new()).unwrap();
+                        assert_eq!(6, cpu.clock.t_cycles / 4);
+                    }
+                }
+            } else {
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(6, cpu.clock.t_cycles / 4);
+            };
+        }
+    }
+
+    #[test]
     pub fn test_m_cycles() {
         let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            if let Instruction::Unknown(_) = instr {
-                continue;
-            }
-
-            if let Instruction::Stop(_) = instr {
-                continue; // is incorrect in matrix?
-            }
-
-            if let Instruction::Halt(_) = instr {
-                continue; // is incorrect in matrix?
+            match instr {
+                Instruction::Stop(_)
+                | Instruction::Unknown(_)
+                | Instruction::Halt(_)
+                | Instruction::Call(_) => continue,
+                _ => {}
             }
 
             if let Instruction::Jp(_) = instr {
@@ -100,10 +166,6 @@ mod tests {
                 if opcode != 0xC9 && opcode != 0xD9 {
                     continue; // todo: handle branching
                 }
-            }
-
-            if let Instruction::Call(_) = instr {
-                continue; // todo: handle branching
             }
 
             if 0xCB == opcode {
