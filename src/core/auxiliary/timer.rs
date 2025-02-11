@@ -6,6 +6,8 @@ const TIMA_ADDRESS: u16 = 0xFF05;
 const TMA_ADDRESS: u16 = 0xFF06;
 const TAC_ADDRESS: u16 = 0xFF07;
 
+pub const M_CYCLES: [usize; 4] = [256, 4, 16, 64];
+
 #[derive(Debug, Clone)]
 pub struct Timer {
     div: u16,
@@ -25,7 +27,8 @@ impl Default for Timer {
 impl Timer {
     pub fn new() -> Self {
         Self {
-            div: 0xABBC,
+            // This value depends on the model. For the original Game Boy (DMG) it is 0xABCC.
+            div: 0xABCC,
             tima: 0,
             tma: 0,
             tac: 0,
@@ -34,7 +37,6 @@ impl Timer {
         }
     }
 
-    /// Updates timer if needed and returns is interrupt needed
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         let prev_div = self.div;
         self.div = self.div.wrapping_add(1);
@@ -100,7 +102,7 @@ impl Timer {
 
     pub fn read(&self, address: TimerAddress) -> u8 {
         match address {
-            TimerAddress::Div => (self.div >> 8) as u8,
+            TimerAddress::Div => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
             TimerAddress::Tima => self.tima,
             TimerAddress::Tma => self.tma,
             TimerAddress::Tac => self.tac,
@@ -173,6 +175,33 @@ mod tests {
     }
 
     #[test]
+    pub fn test_timer_tac_4_tima_not_inc_3() {
+        let mut timer = Timer::new();
+        timer.tac = 0b101;
+        let mut interrupts = Interrupts::default();
+
+        for _ in 0..3 {
+            println!("1");
+            timer.tick(&mut interrupts)
+        }
+
+        assert_eq!(timer.tima, 0);
+    }
+
+    #[test]
+    pub fn test_timer_tac_4_tima_not_inc_2() {
+        let mut timer = Timer::new();
+        timer.tac = 0b101;
+        let mut interrupts = Interrupts::default();
+
+        for _ in 0..1 {
+            timer.tick(&mut interrupts)
+        }
+
+        assert_eq!(timer.tima, 0);
+    }
+
+    #[test]
     pub fn test_timer_tima_inc_16() {
         let mut timer = Timer::new();
         timer.tac = 0b110;
@@ -183,6 +212,19 @@ mod tests {
         }
 
         assert_eq!(timer.tima, 1);
+    }
+
+    #[test]
+    pub fn test_timer_tima_not_inc_16() {
+        let mut timer = Timer::new();
+        timer.tac = 0b110;
+        let mut interrupts = Interrupts::default();
+
+        for _ in 0..15 {
+            timer.tick(&mut interrupts)
+        }
+
+        assert_eq!(timer.tima, 0);
     }
 
     #[test]
