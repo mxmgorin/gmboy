@@ -161,7 +161,7 @@ impl Bus {
 
         let value = self.read(self.dma.address as u16 * 0x100) + self.dma.current_byte;
         self.ppu.oam_write(self.dma.current_byte as u16, value);
-        self.dma.current_byte += 1;
+        self.dma.current_byte += self.dma.current_byte.wrapping_add(1);
         self.dma.is_active = self.dma.current_byte < 0xA0; // 160
     }
 }

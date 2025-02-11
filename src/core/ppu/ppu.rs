@@ -115,7 +115,6 @@ impl Ppu {
 
                 // calc FPS
                 let end = self.instant.elapsed().as_millis() as usize;
-                println!("HBLANK TIME: {}ms", end);
                 let frame_time = end - self.prev_frame_time;
 
                 if frame_time < TARGET_FRAME_TIME {

@@ -1,7 +1,7 @@
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
 use crate::{
-    cpu::interrupts::Interrupts,
     auxiliary::timer::{Timer, TimerAddress},
+    cpu::interrupts::Interrupts,
 };
 
 impl TryFrom<u16> for IoAddressLocation {
@@ -55,7 +55,13 @@ impl Io {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        let location = IoAddressLocation::try_from(address).unwrap();
+        let location = IoAddressLocation::try_from(address);
+
+        let Ok(location) = location else {
+            #[cfg(not(test))]
+            eprintln!("Can't IO read address {:X}", address);
+            return 0;
+        };
 
         match location {
             IoAddressLocation::SerialSb => self.serial.sb,
@@ -81,7 +87,13 @@ impl Io {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let location = IoAddressLocation::try_from(address).unwrap_or_else(|_| panic!("Invalid IO address {:X}", address));
+        let location = IoAddressLocation::try_from(address);
+
+        let Ok(location) = location else {
+            #[cfg(not(test))]
+            eprintln!("Can't IO write address {:X}", address);
+            return;
+        };
 
         match location {
             IoAddressLocation::SerialSb => self.serial.sb = value,
