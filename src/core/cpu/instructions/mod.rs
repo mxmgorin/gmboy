@@ -98,7 +98,7 @@ mod tests {
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jp(instr) = *instr else {
                 continue;
-            };            
+            };
 
             cpu.set_pc(0);
             cpu.clock.t_cycles = 0;
@@ -117,32 +117,63 @@ mod tests {
     }
 
     #[test]
+    pub fn test_m_cycles_jr() {
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+            let Instruction::Jr(instr) = *instr else {
+                continue;
+            };
+
+            cpu.set_pc(0);
+            cpu.clock.t_cycles = 0;
+            cpu.bus.write(0, opcode as u8);
+
+            if let Some(condition_type) = instr.condition_type {
+                assert_for_condition(&mut cpu, condition_type, 3, 2);
+            } else {
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                // 3
+            };
+        }
+    }
+
+    #[test]
+    pub fn test_m_cycles_ret() {
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+            let Instruction::Ret(instr) = *instr else {
+                continue;
+            };
+
+            cpu.set_pc(0);
+            cpu.clock.t_cycles = 0;
+            cpu.bus.write(0, opcode as u8);
+
+            if let Some(condition_type) = instr.condition_type {
+                assert_for_condition(&mut cpu, condition_type, 5, 2);
+            } else {
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                // 4
+            };
+        }
+    }
+
+    #[test]
     pub fn test_m_cycles() {
         let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             match instr {
-                Instruction::Stop(_)
-                | Instruction::Unknown(_)
+                Instruction::Jp(_) // has tests
+                | Instruction::Jr(_) // has tests
+                | Instruction::Ret(_) // has tests
+                | Instruction::Call(_) // has tests
+                | Instruction::Stop(_)
                 | Instruction::Halt(_)
-                | Instruction::Call(_) => continue,
+                | Instruction::Unknown(_) => continue,
                 _ => {}
-            }
-
-            if let Instruction::Jp(_) = instr {
-                if opcode != 0xE9 {
-                    continue; // todo: handle branching
-                }
-            }
-
-            if let Instruction::Jr(_) = instr {
-                continue; // todo: handle branching
-            }
-
-            if let Instruction::Ret(_) = instr {
-                if opcode != 0xC9 && opcode != 0xD9 {
-                    continue; // todo: handle branching
-                }
             }
 
             if 0xCB == opcode {

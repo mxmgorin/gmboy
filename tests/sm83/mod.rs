@@ -3,16 +3,6 @@ use crate::sm83::util::{run_sb_test_cases, run_test_case, Sm83TestCase};
 use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use rusty_gb_emu::cpu::instructions::Instruction;
 
-#[ignore]
-#[test]
-fn test_sm83_manual() {
-    let test_cases = Sm83TestCase::load_file("cb 28.json").unwrap();
-
-    for test_case in test_cases.iter() {
-        run_test_case(test_case, true);
-    }
-}
-
 #[test]
 fn test_sm83_all() {
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {

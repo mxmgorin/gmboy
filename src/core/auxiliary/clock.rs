@@ -14,6 +14,10 @@ impl Clock {
             bus.dma_tick();
         }
     }
+    
+    pub fn get_m_cycles(&self) -> usize {
+        self.t_cycles / T_CYCLES_PER_M_CYCLE
+    }
 
     fn t_cycles(&mut self, t_cycles: usize, bus: &mut Bus) {
         for _ in 0..t_cycles {
