@@ -39,7 +39,9 @@ pub use rotate::rrca::*;
 #[cfg(test)]
 mod tests {
     use crate::bus::Bus;
-    use crate::cpu::instructions::{ConditionType, Instruction, INSTRUCTIONS_BY_OPCODES};
+    use crate::cpu::instructions::{
+        AddressMode, ConditionType, Instruction, RegisterType, INSTRUCTIONS_BY_OPCODES,
+    };
     use crate::cpu::Cpu;
     use crate::emu::EmuCtx;
 
@@ -82,59 +84,34 @@ mod tests {
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                match condition_type {
-                    ConditionType::NC => {
-                        cpu.registers.flags.set(None, None, None, false.into());
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(6, cpu.clock.t_cycles / 4);
-
-                        cpu.set_pc(0);
-                        cpu.clock.t_cycles = 0;
-
-                        cpu.registers.flags.set(None, None, None, true.into());
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(3, cpu.clock.t_cycles / 4);
-                    }
-                    ConditionType::C => {
-                        cpu.registers.flags.set(None, None, None, false.into());
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(3, cpu.clock.t_cycles / 4);
-
-                        cpu.set_pc(0);
-                        cpu.clock.t_cycles = 0;
-
-                        cpu.registers.flags.set(None, None, None, true.into());
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(6, cpu.clock.t_cycles / 4);
-                    }
-                    ConditionType::NZ => {
-                        cpu.registers.flags.set(false.into(), None, None, None);
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(6, cpu.clock.t_cycles / 4);
-
-                        cpu.set_pc(0);
-                        cpu.clock.t_cycles = 0;
-
-                        cpu.registers.flags.set(true.into(), None, None, None);
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(3, cpu.clock.t_cycles / 4);
-                    }
-                    ConditionType::Z => {
-                        cpu.registers.flags.set(false.into(), None, None, None);
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(3, cpu.clock.t_cycles / 4);
-
-                        cpu.set_pc(0);
-                        cpu.clock.t_cycles = 0;
-
-                        cpu.registers.flags.set(true.into(), None, None, None);
-                        cpu.step(&mut EmuCtx::new()).unwrap();
-                        assert_eq!(6, cpu.clock.t_cycles / 4);
-                    }
-                }
+                assert_for_condition(&mut cpu, condition_type, 6, 3);
             } else {
                 cpu.step(&mut EmuCtx::new()).unwrap();
                 assert_eq!(6, cpu.clock.t_cycles / 4);
+            };
+        }
+    }
+
+    #[test]
+    pub fn test_m_cycles_jp() {
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+            let Instruction::Jp(instr) = *instr else {
+                continue;
+            };            
+
+            cpu.set_pc(0);
+            cpu.clock.t_cycles = 0;
+            cpu.bus.write(0, opcode as u8);
+
+            if let Some(condition_type) = instr.condition_type {
+                assert_for_condition(&mut cpu, condition_type, 4, 3);
+            } else if instr.address_mode == AddressMode::D16 {
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(4, cpu.clock.t_cycles / 4);
+            } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(1, cpu.clock.t_cycles / 4);
             };
         }
     }
@@ -185,6 +162,64 @@ mod tests {
                     opcode, actual, expected
                 );
                 panic!("{}", msg);
+            }
+        }
+    }
+
+    pub fn assert_for_condition(
+        cpu: &mut Cpu,
+        condition_type: ConditionType,
+        m_cycles_set: usize,
+        m_cycles_not: usize,
+    ) {
+        match condition_type {
+            ConditionType::NC => {
+                cpu.registers.flags.set(None, None, None, false.into());
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+
+                cpu.set_pc(0);
+                cpu.clock.t_cycles = 0;
+
+                cpu.registers.flags.set(None, None, None, true.into());
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+            }
+            ConditionType::C => {
+                cpu.registers.flags.set(None, None, None, false.into());
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+
+                cpu.set_pc(0);
+                cpu.clock.t_cycles = 0;
+
+                cpu.registers.flags.set(None, None, None, true.into());
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+            }
+            ConditionType::NZ => {
+                cpu.registers.flags.set(false.into(), None, None, None);
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+
+                cpu.set_pc(0);
+                cpu.clock.t_cycles = 0;
+
+                cpu.registers.flags.set(true.into(), None, None, None);
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+            }
+            ConditionType::Z => {
+                cpu.registers.flags.set(false.into(), None, None, None);
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+
+                cpu.set_pc(0);
+                cpu.clock.t_cycles = 0;
+
+                cpu.registers.flags.set(true.into(), None, None, None);
+                cpu.step(&mut EmuCtx::new()).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
             }
         }
     }
