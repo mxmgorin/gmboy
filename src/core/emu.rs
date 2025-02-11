@@ -3,7 +3,7 @@ use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
-use crate::hardware::clock::Clock;
+use crate::auxiliary::clock::Clock;
 use crate::ui::{UiEvent, UiEventHandler};
 use std::borrow::Cow;
 use std::path::Path;

@@ -1,6 +1,6 @@
 use crate::core::ppu::oam::OamRam;
 use crate::cpu::interrupts::InterruptType;
-use crate::hardware::io::Io;
+use crate::auxiliary::io::Io;
 use crate::ppu::lcd::{Lcd, LcdMode, LcdStatSrc};
 use crate::ppu::vram::VideoRam;
 use std::thread;

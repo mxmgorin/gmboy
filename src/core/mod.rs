@@ -3,7 +3,7 @@ pub mod cart;
 pub mod cpu;
 pub mod debugger;
 pub mod emu;
-pub mod hardware;
+pub mod auxiliary;
 pub mod ppu;
 pub mod ui;
 

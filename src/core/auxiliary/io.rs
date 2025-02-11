@@ -1,7 +1,7 @@
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
 use crate::{
     cpu::interrupts::Interrupts,
-    hardware::timer::{Timer, TimerAddress},
+    auxiliary::timer::{Timer, TimerAddress},
 };
 
 impl TryFrom<u16> for IoAddressLocation {

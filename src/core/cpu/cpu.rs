@@ -3,7 +3,7 @@ use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruc
 use crate::core::cpu::Registers;
 use crate::cpu::instructions::RegisterType;
 use crate::emu::EmuCtx;
-use crate::hardware::clock::Clock;
+use crate::auxiliary::clock::Clock;
 use crate::LittleEndianBytes;
 
 #[derive(Debug, Clone)]

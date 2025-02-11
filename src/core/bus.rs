@@ -1,7 +1,7 @@
 use crate::core::cart::Cart;
-use crate::hardware::dma::{Dma, DMA_ADDRESS};
-use crate::hardware::io::Io;
-use crate::hardware::ram::Ram;
+use crate::auxiliary::dma::{Dma, DMA_ADDRESS};
+use crate::auxiliary::io::Io;
+use crate::auxiliary::ram::Ram;
 use crate::ppu::ppu::Ppu;
 use crate::ppu::vram::VRAM_ADDR_START;
 
