@@ -90,12 +90,13 @@ impl Emu {
 
             if let Some(msg) = self.ctx.get_serial_msg() {
                 if !msg.is_empty() {
+                    ui.draw(&cpu.bus);
                     println!("Serial: {msg}");
                 }
             }
 
             if prev_frame != cpu.bus.ppu.current_frame {
-                ui.draw(&cpu.bus);
+                //ui.draw(&cpu.bus);
             }
             
             prev_frame = cpu.bus.ppu.current_frame;

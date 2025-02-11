@@ -1,9 +1,5 @@
 use crate::bus::Bus;
-use crate::ppu::tile::{
-    TILE_BITS_COUNT, TILE_BYTES_COUNT, TILE_BYTE_SIZE, TILE_COLS, TILE_HEIGHT, TILE_ROWS,
-    TILE_WIDTH,
-};
-use crate::ppu::vram::VRAM_ADDR_START;
+use crate::ppu::tile::{TILE_HEIGHT, TILE_TABLE_START, TILE_WIDTH};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -16,6 +12,8 @@ const SCREEN_WIDTH: u32 = 640;
 const SCREEN_HEIGHT: u32 = 480;
 const SCALE: u32 = 4;
 const SPACER: i32 = (8 * SCALE) as i32;
+pub const TILE_ROWS: i32 = 24;
+pub const TILE_COLS: i32 = 16;
 
 const TILE_SDL_COLORS: [Color; 4] = [
     Color::WHITE,
@@ -73,15 +71,13 @@ impl Ui {
 
     pub fn draw_tile(canvas: &mut Canvas<Window>, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
         let mut rect = Rect::new(0, 0, SCALE, SCALE);
+        let tile = bus.ppu.video_ram.get_tile(tile_addr);
 
-        for tile_y in (0..TILE_BYTES_COUNT).step_by(2) {
-            let tile_addr = tile_addr + tile_y as u16;
-            let tile = bus.ppu.video_ram.get_tile_pixel(tile_addr);
-
-            for bit in 0..TILE_BITS_COUNT {
-                rect.set_x(x + bit * SCALE as i32);
-                rect.set_y(y + (tile_y as i32 / 2 * SCALE as i32));
-                canvas.set_draw_color(TILE_SDL_COLORS[tile.get_color_index(bit)]);
+        for (line_y, lines) in tile.lines.iter().enumerate() {
+            for (bit, color_id) in lines.iter_color_ids().enumerate() {
+                rect.set_x(x + bit as i32 * SCALE as i32);
+                rect.set_y(y + (line_y as i32 * SCALE as i32));
+                canvas.set_draw_color(TILE_SDL_COLORS[color_id]);
                 canvas.fill_rect(rect).unwrap();
             }
         }
@@ -95,16 +91,15 @@ impl Ui {
         let mut y_draw: i32 = 0;
         let mut tile_num = 0;
 
-        self.debug_canvas.set_draw_color(Color::RGB(21, 21, 21));
+        self.debug_canvas.set_draw_color(Color::RGB(18, 18, 18));
         self.debug_canvas.fill_rect(None).unwrap();
 
         for y in 0..TILE_ROWS {
             for x in 0..TILE_COLS {
-                let row_start_addr = VRAM_ADDR_START + (tile_num * TILE_BYTE_SIZE);
                 Ui::draw_tile(
                     &mut self.debug_canvas,
                     bus,
-                    row_start_addr,
+                    TILE_TABLE_START + (tile_num * TILE_COLS as u16),
                     x_draw + (x * SCALE as i32),
                     y_draw + (y + SCALE as i32),
                 );
