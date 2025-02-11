@@ -8,6 +8,7 @@ use crate::ui::{UiEvent, UiEventHandler};
 use std::borrow::Cow;
 use std::path::Path;
 use std::{fs, thread};
+use std::time::{Duration, Instant};
 
 #[derive(Debug)]
 pub struct Emu {
@@ -78,10 +79,12 @@ impl Emu {
         let mut ui = Ui::new()?;
         self.running = true;
         let mut prev_frame = 0;
+        let instant = Instant::now();
+        let mut last_fps_timestamp = Duration::new(0, 0);
 
         while self.running {
             if self.paused {
-                thread::sleep(std::time::Duration::from_millis(50));
+                thread::sleep(Duration::from_millis(50));
                 continue;
             }
 
@@ -90,13 +93,17 @@ impl Emu {
 
             if let Some(msg) = self.ctx.get_serial_msg() {
                 if !msg.is_empty() {
-                    //ui.draw(&cpu.bus);
                     println!("Serial: {msg}");
                 }
             }
 
             if prev_frame != cpu.bus.ppu.current_frame {
                 ui.draw(&cpu.bus);
+            }
+
+            if (instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
+                println!("FPS: {}", cpu.bus.ppu.fps);
+                last_fps_timestamp = instant.elapsed();
             }
             
             prev_frame = cpu.bus.ppu.current_frame;

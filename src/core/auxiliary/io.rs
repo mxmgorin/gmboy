@@ -58,8 +58,8 @@ impl Io {
         let location = IoAddressLocation::try_from(address);
 
         let Ok(location) = location else {
-            #[cfg(not(test))]
-            eprintln!("Can't IO read address {:X}", address);
+            //#[cfg(not(test))]
+            //eprintln!("Can't IO read address {:X}", address);
             return 0;
         };
 
@@ -78,8 +78,8 @@ impl Io {
             | IoAddressLocation::Background
             | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
-                #[cfg(not(test))]
-                eprintln!("Can't IO read address {:?} {:X}", location, address);
+                //#[cfg(not(test))]
+                //eprintln!("Can't IO read address {:?} {:X}", location, address);
 
                 0
             }
@@ -90,8 +90,8 @@ impl Io {
         let location = IoAddressLocation::try_from(address);
 
         let Ok(location) = location else {
-            #[cfg(not(test))]
-            eprintln!("Can't IO write address {:X}", address);
+            //#[cfg(not(test))]
+            //eprintln!("Can't IO write address {:X}", address);
             return;
         };
 
@@ -110,8 +110,8 @@ impl Io {
             | IoAddressLocation::Background
             | IoAddressLocation::WRAMBankSelect => {
                 // TODO: Impl
-                #[cfg(not(test))]
-                eprintln!("Can't IO write {:?} address {:X}", location, address);
+                //#[cfg(not(test))]
+                //eprintln!("Can't IO write {:?} address {:X}", location, address);
             }
         }
     }

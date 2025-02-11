@@ -10,15 +10,17 @@ pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
 pub const Y_RES: usize = 144;
 pub const X_RES: usize = 160;
-pub const TARGET_FRAME_TIME: usize = 1000 / 60;
+pub const TARGET_FRAME_TIME_MILLIS: u64 = 1000 / 60;
+pub const TARGET_FRAME_DURATION: Duration = Duration::from_millis(TARGET_FRAME_TIME_MILLIS);
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
     pub current_frame: usize,
     pub line_ticks: usize,
-    pub prev_frame_time: usize,
-    pub start_timer: usize,
+    pub prev_frame_duration: Duration,
+    pub start_duration: Duration,
     pub frame_count: usize,
+    pub fps: usize,
     pub instant: Instant,
 
     pub video_buffer: Vec<u32>,
@@ -37,9 +39,10 @@ impl Ppu {
         Self {
             current_frame: 0,
             line_ticks: 0,
-            prev_frame_time: 0,
-            start_timer: 0,
+            prev_frame_duration: Duration::new(0, 0),
+            start_duration: Duration::new(0, 0),
             frame_count: 0,
+            fps: 0,
             instant: Instant::now(),
             video_buffer: vec![0; Y_RES * X_RES],
             video_ram: VideoRam::new(),
@@ -112,30 +115,30 @@ impl Ppu {
                 }
 
                 self.current_frame += 1;
-
-                // calc FPS
-                let end = self.instant.elapsed().as_millis() as usize;
-                let frame_time = end - self.prev_frame_time;
-
-                if frame_time < TARGET_FRAME_TIME {
-                    thread::sleep(Duration::from_millis(
-                        (TARGET_FRAME_TIME - frame_time) as u64,
-                    ));
-                }
-
-                if end - self.start_timer >= 1000 {
-                    println!("FPS: {}", self.frame_count);
-                    self.frame_count = 0;
-                    self.start_timer = 0;
-                }
-
-                self.frame_count += 1;
-                self.prev_frame_time = self.instant.elapsed().as_millis() as usize;
+                self.update_fps();
+                self.prev_frame_duration = self.instant.elapsed();
             } else {
                 io.lcd.status.mode_set(LcdMode::Oam);
             }
-            
+
             self.line_ticks = 0;
         }
+    }
+    
+    pub fn update_fps(&mut self) {
+        let end = self.instant.elapsed();
+        let frame_duration = end - self.prev_frame_duration;
+
+        if frame_duration < TARGET_FRAME_DURATION {
+            thread::sleep(TARGET_FRAME_DURATION - frame_duration);
+        }
+
+        if (end - self.start_duration).as_millis() >= 1000 {
+            self.fps = self.frame_count;
+            self.start_duration = end;
+            self.frame_count = 0;
+        }
+
+        self.frame_count += 1;
     }
 }
