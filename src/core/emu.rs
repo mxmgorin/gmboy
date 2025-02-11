@@ -1,14 +1,14 @@
+use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
-use crate::auxiliary::clock::Clock;
 use crate::ui::{UiEvent, UiEventHandler};
 use std::borrow::Cow;
 use std::path::Path;
+use std::time::Duration;
 use std::{fs, thread};
-use std::time::{Duration, Instant};
 
 #[derive(Debug)]
 pub struct Emu {
@@ -77,10 +77,9 @@ impl Emu {
         let cart = Cart::new(cart_bytes)?;
         let mut cpu = Cpu::new(Bus::new(cart));
         let mut ui = Ui::new()?;
-        self.running = true;
         let mut prev_frame = 0;
-        let instant = Instant::now();
         let mut last_fps_timestamp = Duration::new(0, 0);
+        self.running = true;
 
         while self.running {
             if self.paused {
@@ -101,11 +100,11 @@ impl Emu {
                 ui.draw(&cpu.bus);
             }
 
-            if (instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
+            if (cpu.bus.ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
                 println!("FPS: {}", cpu.bus.ppu.fps);
-                last_fps_timestamp = instant.elapsed();
+                last_fps_timestamp = cpu.bus.ppu.instant.elapsed();
             }
-            
+
             prev_frame = cpu.bus.ppu.current_frame;
         }
 
