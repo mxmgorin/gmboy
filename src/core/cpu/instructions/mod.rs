@@ -65,10 +65,8 @@ mod tests {
         cpu.clock.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
         cpu.step(&mut EmuCtx::new()).unwrap();
-        let expected = M_CYCLES_BY_OPCODES[opcode];
-        let actual = cpu.clock.t_cycles / 4;
 
-        assert_eq!(expected, actual);
+        assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
     }
 
     #[test]
@@ -84,10 +82,11 @@ mod tests {
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, condition_type, 6, 3);
+                assert_for_condition(&mut cpu, condition_type, 6, M_CYCLES_BY_OPCODES[opcode]);
             } else {
                 cpu.step(&mut EmuCtx::new()).unwrap();
-                assert_eq!(6, cpu.clock.t_cycles / 4);
+                // 6
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
@@ -105,13 +104,15 @@ mod tests {
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, condition_type, 4, 3);
+                assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
             } else if instr.address_mode == AddressMode::D16 {
                 cpu.step(&mut EmuCtx::new()).unwrap();
-                assert_eq!(4, cpu.clock.t_cycles / 4);
+                // 4
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
                 cpu.step(&mut EmuCtx::new()).unwrap();
-                assert_eq!(1, cpu.clock.t_cycles / 4);
+                // 1
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
@@ -132,8 +133,8 @@ mod tests {
                 assert_for_condition(&mut cpu, condition_type, 3, 2);
             } else {
                 cpu.step(&mut EmuCtx::new()).unwrap();
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
                 // 3
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
@@ -154,8 +155,8 @@ mod tests {
                 assert_for_condition(&mut cpu, condition_type, 5, 2);
             } else {
                 cpu.step(&mut EmuCtx::new()).unwrap();
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
                 // 4
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
