@@ -118,7 +118,7 @@ impl Pipeline {
         let x: i32 = self.fetch_x.wrapping_sub(8 - (bus.io.lcd.scroll_x % 8)) as i32;
 
         for bit in 0..TILE_BITS_COUNT {
-            let color_id = get_color_id(self.bgw_fetch_data[0], self.bgw_fetch_data[1], bit);
+            let color_id = get_color_id(self.bgw_fetch_data[1], self.bgw_fetch_data[2], bit);
             let color = bus.io.lcd.bg_colors[color_id];
 
             if x >= 0 {
