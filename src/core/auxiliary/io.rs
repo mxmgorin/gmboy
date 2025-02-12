@@ -1,21 +1,16 @@
+use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
+use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
-use crate::{
-    auxiliary::timer::{Timer, TimerAddress},
-    cpu::interrupts::Interrupts,
-};
 
 impl TryFrom<u16> for IoAddressLocation {
     type Error = ();
 
     fn try_from(address: u16) -> Result<Self, Self::Error> {
-        const TIMER_START: u16 = TimerAddress::get_start();
-        const TIMER_END: u16 = TimerAddress::get_end();
-
         match address {
             0xFF00 => Ok(Self::Joypad),
             0xFF01 => Ok(Self::SerialSb),
             0xFF02 => Ok(Self::SerialSc),
-            TIMER_START..=TIMER_END => Ok(Self::Timer(address.try_into()?)),
+            TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => Ok(Self::Timer),
             0xFF10..=0xFF26 => Ok(Self::Audio),
             0xFF30..=0xFF3F => Ok(Self::WavePattern),
             LCD_ADDRESS_START..=LCD_ADDRESS_END => Ok(Self::Display),
@@ -48,7 +43,7 @@ impl Io {
     pub fn new() -> Io {
         Io {
             serial: Serial::new(),
-            timer: Timer::new(),
+            timer: Timer::default(),
             interrupts: Interrupts::new(),
             lcd: Lcd::new(),
         }
@@ -66,7 +61,7 @@ impl Io {
         match location {
             IoAddressLocation::SerialSb => self.serial.sb,
             IoAddressLocation::SerialSc => self.serial.sc,
-            IoAddressLocation::Timer(address) => self.timer.read(address),
+            IoAddressLocation::Timer => self.timer.read(address),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
             IoAddressLocation::Display => self.lcd.read(address),
             IoAddressLocation::Joypad
@@ -98,7 +93,7 @@ impl Io {
         match location {
             IoAddressLocation::SerialSb => self.serial.sb = value,
             IoAddressLocation::SerialSc => self.serial.sc = value,
-            IoAddressLocation::Timer(address) => self.timer.write(address, value),
+            IoAddressLocation::Timer => self.timer.write(address, value),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags = value,
             IoAddressLocation::Display => self.lcd.write(address, value),
             IoAddressLocation::Joypad
@@ -154,7 +149,7 @@ pub enum IoAddressLocation {
     SerialSb,
     /// FF02 — SC: Serial transfer control
     SerialSc,
-    Timer(TimerAddress),
+    Timer,
     InterruptFlags,
     Audio,
     WavePattern,

@@ -1,12 +1,11 @@
 use crate::auxiliary::clock::T_CYCLES_PER_M_CYCLE;
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 
-const DIV_ADDRESS: u16 = 0xFF04;
-const TIMA_ADDRESS: u16 = 0xFF05;
-const TMA_ADDRESS: u16 = 0xFF06;
-const TAC_ADDRESS: u16 = 0xFF07;
-
-pub const M_CYCLES: [usize; 4] = [256, 4, 16, 64];
+pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
+pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;
+pub const TIMER_TMA_ADDRESS: u16 = 0xFF06;
+pub const TIMER_TAC_ADDRESS: u16 = 0xFF07;
+pub const TACK_CYCLES: [usize; 4] = [256, 4, 16, 64];
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -20,12 +19,6 @@ pub struct Timer {
 
 impl Default for Timer {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Timer {
-    pub fn new() -> Self {
         Self {
             // This value depends on the model. For the original Game Boy (DMG) it is 0xABCC.
             div: 0xABCC,
@@ -36,7 +29,9 @@ impl Timer {
             interrupt_delay: 0,
         }
     }
+}
 
+impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         let prev_div = self.div;
         self.div = self.div.wrapping_add(1);
@@ -83,62 +78,32 @@ impl Timer {
         }
     }
 
-    pub fn write(&mut self, address: TimerAddress, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8) {
         match address {
-            TimerAddress::Div => {
+            TIMER_DIV_ADDRESS => {
                 self.div = 0;
             }
-            TimerAddress::Tima => {
+            TIMER_TIMA_ADDRESS => {
                 self.tima = value;
             }
-            TimerAddress::Tma => {
+            TIMER_TMA_ADDRESS => {
                 self.tma = value;
             }
-            TimerAddress::Tac => {
+            TIMER_TAC_ADDRESS => {
                 self.tac = value;
             }
+            _ => panic!("Invalid Timer address: {:02X}", address),
         }
     }
 
-    pub fn read(&self, address: TimerAddress) -> u8 {
+    pub fn read(&self, address: u16) -> u8 {
         match address {
-            TimerAddress::Div => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
-            TimerAddress::Tima => self.tima,
-            TimerAddress::Tma => self.tma,
-            TimerAddress::Tac => self.tac,
+            TIMER_DIV_ADDRESS => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
+            TIMER_TIMA_ADDRESS => self.tima,
+            TIMER_TMA_ADDRESS => self.tma,
+            TIMER_TAC_ADDRESS => self.tac,
+            _ => panic!("Invalid Timer address: {:02X}", address),
         }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum TimerAddress {
-    Div,
-    Tima,
-    Tma,
-    Tac,
-}
-
-impl TryFrom<u16> for TimerAddress {
-    type Error = ();
-
-    fn try_from(address: u16) -> Result<Self, Self::Error> {
-        match address {
-            DIV_ADDRESS => Ok(Self::Div),
-            TIMA_ADDRESS => Ok(Self::Tima),
-            TMA_ADDRESS => Ok(Self::Tma),
-            TAC_ADDRESS => Ok(Self::Tac),
-            _ => Err(()),
-        }
-    }
-}
-
-impl TimerAddress {
-    pub const fn get_start() -> u16 {
-        DIV_ADDRESS
-    }
-
-    pub const fn get_end() -> u16 {
-        TAC_ADDRESS
     }
 }
 
@@ -150,7 +115,7 @@ mod tests {
 
     #[test]
     pub fn test_timer_tima_inc_256() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b100;
         let mut interrupts = Interrupts::default();
 
@@ -163,11 +128,11 @@ mod tests {
 
     #[test]
     pub fn test_timer_tima_inc_4() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b101;
         let mut interrupts = Interrupts::default();
 
-        for _ in 0..T_CYCLES_PER_M_CYCLE {
+        for _ in 1..=17 {
             timer.tick(&mut interrupts)
         }
 
@@ -176,7 +141,7 @@ mod tests {
 
     #[test]
     pub fn test_timer_tac_4_tima_not_inc_3() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b101;
         let mut interrupts = Interrupts::default();
 
@@ -190,7 +155,7 @@ mod tests {
 
     #[test]
     pub fn test_timer_tac_4_tima_not_inc_2() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b101;
         let mut interrupts = Interrupts::default();
 
@@ -203,7 +168,7 @@ mod tests {
 
     #[test]
     pub fn test_timer_tima_inc_16() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b110;
         let mut interrupts = Interrupts::default();
 
@@ -216,7 +181,7 @@ mod tests {
 
     #[test]
     pub fn test_timer_tima_not_inc_16() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b110;
         let mut interrupts = Interrupts::default();
 
@@ -229,7 +194,7 @@ mod tests {
 
     #[test]
     pub fn test_timer_tima_inc_64() {
-        let mut timer = Timer::new();
+        let mut timer = Timer::default();
         timer.tac = 0b111;
         let mut interrupts = Interrupts::default();
 
