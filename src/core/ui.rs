@@ -128,7 +128,7 @@ impl Ui {
             for x in 0..(X_RES as usize) {
                 rect.set_x(x as i32 * SCALE as i32);
                 rect.set_y(y as i32 * SCALE as i32);
-                let color = ppu.pixel_fifo.buffer[x + (y * X_RES as usize)];
+                let color = ppu.pipeline.buffer[x + (y * X_RES as usize)];
                 self.main_canvas.set_draw_color(into_sdl_color(color));
                 self.main_canvas.fill_rect(rect).unwrap();
             }

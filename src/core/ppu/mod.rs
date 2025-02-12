@@ -3,6 +3,6 @@ pub mod ppu;
 pub mod vram;
 pub mod tile;
 pub mod lcd;
-mod pixel_fifo;
+mod pipeline;
 
 pub use ppu::*;

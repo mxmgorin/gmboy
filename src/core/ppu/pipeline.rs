@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 pub const FIFO_MAX_SIZE: usize = 8;
 
 #[derive(Debug, Clone)]
-pub struct PixelFifo {
+pub struct Pipeline {
     pub state: PixelFifoState,
     pub fifo: VecDeque<u32>,
     pub line_x: u8,
@@ -24,8 +24,8 @@ pub struct PixelFifo {
     pub buffer: Vec<u32>,
 }
 
-impl Default for PixelFifo {
-    fn default() -> PixelFifo {
+impl Default for Pipeline {
+    fn default() -> Pipeline {
         Self {
             state: PixelFifoState::Tile,
             fifo: Default::default(),
@@ -44,17 +44,17 @@ impl Default for PixelFifo {
     }
 }
 
-impl PixelFifo {
+impl Pipeline {
     pub fn reset(&mut self) {
         self.fifo.clear();
     }
 
     pub fn process(&mut self, bus: &Bus) {
         self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
-        self.map_y = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
-        self.tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
+        self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
+        self.tile_y = ((self.map_y % TILE_HEIGHT as u8) % 8) * 2;
 
-        if self.line_ticks & 1 != 0 {
+        if self.line_ticks % 2 != 0 {
             self.fetch(bus);
         }
 
@@ -94,33 +94,30 @@ impl PixelFifo {
                 self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
             }
             PixelFifoState::Data0 => {
-                let addr = self.get_bgw_data_addr(&bus.io.lcd);
-                self.bgw_fetch_data[1] = bus.read(addr);
+                self.bgw_fetch_data[1] = bus.read(self.get_bgw_data_addr(&bus.io.lcd));
                 self.state = PixelFifoState::Data1;
             }
             PixelFifoState::Data1 => {
-                let addr = self.get_bgw_data_addr(&bus.io.lcd) + 1;
-                self.bgw_fetch_data[2] = bus.read(addr);
+                self.bgw_fetch_data[2] = bus.read(self.get_bgw_data_addr(&bus.io.lcd) + 1);
                 self.state = PixelFifoState::Idle;
             }
             PixelFifoState::Idle => self.state = PixelFifoState::Push,
             PixelFifoState::Push => {
-                if self.try_queue_add(bus) {
+                if self.try_fifo_push(bus) {
                     self.state = PixelFifoState::Tile;
                 }
             }
         }
     }
 
-    fn try_queue_add(&mut self, bus: &Bus) -> bool {
+    fn try_fifo_push(&mut self, bus: &Bus) -> bool {
         if self.fifo.len() > FIFO_MAX_SIZE {
             return false;
         }
 
         let x: i32 = self.fetch_x.wrapping_sub(8 - (bus.io.lcd.scroll_x % 8)) as i32;
 
-        for i in 0..TILE_BITS_COUNT {
-            let bit: i32 = 7 - i;
+        for bit in 0..TILE_BITS_COUNT {
             let color_id = get_color_id(self.bgw_fetch_data[0], self.bgw_fetch_data[1], bit);
             let color = bus.io.lcd.bg_colors[color_id];
 
@@ -134,7 +131,10 @@ impl PixelFifo {
     }
 
     fn get_bgw_data_addr(&self, lcd: &Lcd) -> u16 {
-        lcd.control.bgw_data_area() + (self.bgw_fetch_data[0] as u16 * 16) + self.tile_y as u16
+        lcd.control
+            .bgw_data_area()
+            .wrapping_add(self.bgw_fetch_data[0] as u16 * 16)
+            .wrapping_add(self.tile_y as u16)
     }
 }
 

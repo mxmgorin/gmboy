@@ -2,7 +2,7 @@ use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{Lcd, LcdMode, LcdStatSrc};
-use crate::ppu::pixel_fifo::{PixelFifo, PixelFifoState};
+use crate::ppu::pipeline::{Pipeline, PixelFifoState};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -21,15 +21,14 @@ pub struct Ppu {
     pub frame_count: usize,
     pub fps: usize,
     pub instant: Instant,
-
-    pub pixel_fifo: PixelFifo,
+    pub pipeline: Pipeline,
 }
 
 impl Default for Ppu {
     fn default() -> Self {
         Self {
             current_frame: 0,
-            pixel_fifo: PixelFifo::default(),
+            pipeline: Pipeline::default(),
             prev_frame_duration: Duration::new(0, 0),
             start_duration: Duration::new(0, 0),
             frame_count: 0,
@@ -41,7 +40,7 @@ impl Default for Ppu {
 
 impl Ppu {
     pub fn tick(&mut self, bus: &mut Bus) {
-        self.pixel_fifo.line_ticks += 1;
+        self.pipeline.line_ticks += 1;
 
         match bus.io.lcd.status.mode() {
             LcdMode::Oam => self.mode_oam(&mut bus.io.lcd),
@@ -52,21 +51,21 @@ impl Ppu {
     }
 
     pub fn mode_oam(&mut self, lcd: &mut Lcd) {
-        if self.pixel_fifo.line_ticks >= 80 {
+        if self.pipeline.line_ticks >= 80 {
             lcd.status.mode_set(LcdMode::Xfer);
-            self.pixel_fifo.state = PixelFifoState::Tile;
-            self.pixel_fifo.line_x = 0;
-            self.pixel_fifo.fetch_x = 0;
-            self.pixel_fifo.pushed_x = 0;
-            self.pixel_fifo.fifo_x = 0;
+            self.pipeline.state = PixelFifoState::Tile;
+            self.pipeline.line_x = 0;
+            self.pipeline.fetch_x = 0;
+            self.pipeline.pushed_x = 0;
+            self.pipeline.fifo_x = 0;
         }
     }
 
     fn mode_xfer(&mut self, bus: &mut Bus) {
-        self.pixel_fifo.process(bus);
+        self.pipeline.process(bus);
 
-        if self.pixel_fifo.pushed_x >= X_RES {
-            self.pixel_fifo.reset();
+        if self.pipeline.pushed_x >= X_RES {
+            self.pipeline.reset();
             bus.io.lcd.status.mode_set(LcdMode::HBlank);
 
             if bus.io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
@@ -76,7 +75,7 @@ impl Ppu {
     }
 
     fn mode_vblank(&mut self, io: &mut Io) {
-        if self.pixel_fifo.line_ticks >= TICKS_PER_LINE {
+        if self.pipeline.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly as usize >= LINES_PER_FRAME {
@@ -84,12 +83,12 @@ impl Ppu {
                 io.lcd.ly = 0;
             }
 
-            self.pixel_fifo.line_ticks = 0;
+            self.pipeline.line_ticks = 0;
         }
     }
 
     fn mode_hblank(&mut self, io: &mut Io) {
-        if self.pixel_fifo.line_ticks >= TICKS_PER_LINE {
+        if self.pipeline.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly >= Y_RES {
@@ -107,7 +106,7 @@ impl Ppu {
                 io.lcd.status.mode_set(LcdMode::Oam);
             }
 
-            self.pixel_fifo.line_ticks = 0;
+            self.pipeline.line_ticks = 0;
         }
     }
 
