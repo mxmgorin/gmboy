@@ -55,18 +55,14 @@ impl VideoRam {
     }
 
     pub fn get_tile_line(&self, addr: u16) -> TileLine {
-        let byte_one = self.read(addr);
-        let byte_two = self.read(addr + 1);
-
-        TileLine::new(byte_one, byte_two)
+        TileLine::new(self.read(addr), self.read(addr + 1))
     }
 
     pub fn get_tile(&self, addr: u16) -> Tile {
         let mut tile = Tile::default();
 
         for line_y in 0..TILE_HEIGHT as usize {
-            let tile_line = self.get_tile_line(addr + (line_y * TILE_LINE_BYTE_SIZE) as u16);
-            tile.lines[line_y] = tile_line;
+            tile.lines[line_y] = self.get_tile_line(addr + (line_y * TILE_LINE_BYTE_SIZE) as u16);
         }
 
         tile
@@ -74,7 +70,7 @@ impl VideoRam {
 }
 
 pub struct TilesIterator<'a> {
-    pub vram: &'a VideoRam,
+    pub video_ram: &'a VideoRam,
     pub current_address: u16,
 }
 
@@ -83,7 +79,7 @@ impl Iterator for TilesIterator<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_address < TILE_TABLE_END {
-            let tile = self.vram.get_tile(self.current_address);
+            let tile = self.video_ram.get_tile(self.current_address);
             self.current_address += TILE_BYTE_SIZE;
 
             return Some(tile);
