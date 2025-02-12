@@ -1,10 +1,9 @@
 use crate::bus::Bus;
 use crate::ppu::tile::{Tile, TILE_HEIGHT, TILE_TABLE_START, TILE_WIDTH};
-use crate::ppu::{Ppu, X_RES, Y_RES};
+use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::sys::{SDL_Rect, SDL_RenderFillRects};
 use sdl2::video::{Window, WindowPos};
@@ -17,7 +16,7 @@ const SPACER: i32 = (8 * SCALE) as i32;
 pub const TILE_ROWS: i32 = 24;
 pub const TILE_COLS: i32 = 16;
 
-const SDL_TILE_COLORS: [Color; 4] = [
+const SDL_COLORS: [Color; 4] = [
     Color::WHITE,
     Color::RGB(170, 170, 170), // Light Gray
     Color::RGB(85, 85, 85),    // Dark Gray
@@ -31,11 +30,14 @@ pub struct Ui {
     event_pump: EventPump,
 
     debug_canvas: Canvas<Window>,
+    // pre-allocated for use in draw function
     tile_rects: [Vec<SDL_Rect>; 4],
+    frame_rects: [Vec<SDL_Rect>; 4],
+    debug: bool,
 }
 
 impl Ui {
-    pub fn new() -> Result<Self, String> {
+    pub fn new(debug: bool) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         // let ttf_context = sdl2::ttf::init().unwrap();
         let video_subsystem = sdl_context.video()?;
@@ -64,32 +66,22 @@ impl Ui {
         );
 
         Ok(Ui {
+            debug,
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
             //ttf_context,
             main_canvas,
             debug_canvas,
             tile_rects: allocate_rects_group(TILE_WIDTH as usize * TILE_HEIGHT as usize),
+            frame_rects: allocate_rects_group(LCD_Y_RES as usize * LCD_X_RES as usize),
         })
     }
 
-    pub fn draw_tile(&mut self, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
-        let tile = bus.video_ram.get_tile(tile_addr);
-        let rects_count = fill_tile_recs(&mut self.tile_rects, tile, x, y);
+    pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
+        self.draw_main(ppu);
 
-        for (color_id, rects) in self.tile_rects.iter().enumerate() {
-            self.debug_canvas.set_draw_color(SDL_TILE_COLORS[color_id]);
-            unsafe {
-                let result = SDL_RenderFillRects(
-                    self.debug_canvas.raw(),
-                    rects.as_ptr(),
-                    rects_count[color_id] as i32,
-                );
-
-                if result != 0 {
-                    eprintln!("Error rendering tile: {:?}", result);
-                }
-            }
+        if self.debug {
+            self.draw_debug(bus);
         }
     }
 
@@ -123,26 +115,29 @@ impl Ui {
         self.debug_canvas.present();
     }
 
-    pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
-        self.draw_main(ppu);
-        self.draw_debug(bus);
-    }
-
     pub fn draw_main(&mut self, ppu: &Ppu) {
-        self.main_canvas.clear();
-        let mut rect = Rect::new(0, 0, SCALE, SCALE);
+        let mut rects_count: [usize; 4] = [0; 4];
 
-        for y in 0..(Y_RES as usize) {
-            for x in 0..(X_RES as usize) {
-                rect.set_x(x as i32 * SCALE as i32);
-                rect.set_y(y as i32 * SCALE as i32);
-                let color = ppu.pipeline.buffer[x + (y * X_RES as usize)];
-                self.main_canvas.set_draw_color(into_sdl_color(color));
-                self.main_canvas.fill_rect(rect).unwrap();
+        for y in 0..(LCD_Y_RES as usize) {
+            for x in 0..(LCD_X_RES as usize) {
+                let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
+                let color_index = pixel.into_color_index();
+                let rect = &mut self.frame_rects[color_index][rects_count[color_index]];
+                rect.x = x as i32 * SCALE as i32;
+                rect.y = y as i32 * SCALE as i32;
+                rects_count[color_index] += 1;
             }
         }
 
+        self.main_canvas.clear();
+        draw_rects(&mut self.main_canvas, &self.frame_rects, rects_count);
         self.main_canvas.present();
+    }
+
+    pub fn draw_tile(&mut self, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
+        let tile = bus.video_ram.get_tile(tile_addr);
+        let rects_count = fill_tile_recs(&mut self.tile_rects, tile, x, y);
+        draw_rects(&mut self.debug_canvas, &self.tile_rects, rects_count);
     }
 
     pub fn handle_events(&mut self, event_handler: &mut impl UiEventHandler) {
@@ -162,6 +157,7 @@ impl Ui {
         }
     }
 }
+
 fn allocate_rects_group(len: usize) -> [Vec<SDL_Rect>; 4] {
     let mut recs = Vec::with_capacity(len);
     for _ in 0..recs.capacity() {
@@ -181,14 +177,29 @@ pub fn fill_tile_recs(recs: &mut [Vec<SDL_Rect>; 4], tile: Tile, x: i32, y: i32)
 
     for (line_y, lines) in tile.lines.iter().enumerate() {
         for (bit, color_id) in lines.iter_color_ids().enumerate() {
-            let rect = &mut recs[color_id][rects_count[color_id]];
+            let rect = &mut recs[color_id as usize][rects_count[color_id as usize]];
             rect.x = x + (bit as i32 * SCALE as i32);
             rect.y = y + (line_y as i32 * SCALE as i32);
-            rects_count[color_id] += 1;
+            rects_count[color_id as usize] += 1;
         }
     }
 
     rects_count
+}
+
+fn draw_rects(canvas: &mut Canvas<Window>, recs: &[Vec<SDL_Rect>; 4], rects_count: [usize; 4]) {
+    for (color_id, rects) in recs.iter().enumerate() {
+        canvas.set_draw_color(SDL_COLORS[color_id]);
+
+        unsafe {
+            let result =
+                SDL_RenderFillRects(canvas.raw(), rects.as_ptr(), rects_count[color_id] as i32);
+
+            if result != 0 {
+                eprintln!("Error draw_rects: {:?}", result);
+            }
+        }
+    }
 }
 
 pub fn into_sdl_color(color: u32) -> Color {

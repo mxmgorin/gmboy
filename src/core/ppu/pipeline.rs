@@ -1,7 +1,7 @@
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
-use crate::ppu::tile::{get_color_id, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
-use crate::ppu::{X_RES, Y_RES};
+use crate::ppu::tile::{Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::collections::VecDeque;
 
 pub const FIFO_MAX_SIZE: usize = 8;
@@ -9,7 +9,7 @@ pub const FIFO_MAX_SIZE: usize = 8;
 #[derive(Debug, Clone)]
 pub struct Pipeline {
     pub state: PipelineState,
-    pub fifo: VecDeque<u32>,
+    pub fifo: VecDeque<Pixel>,
     pub line_x: u8,
     pub pushed_x: u8,
     pub fetch_x: u8,
@@ -21,7 +21,7 @@ pub struct Pipeline {
     pub fifo_x: u8,
 
     pub line_ticks: usize,
-    pub buffer: Vec<u32>,
+    pub buffer: Vec<Pixel>,
 }
 
 impl Default for Pipeline {
@@ -39,7 +39,7 @@ impl Default for Pipeline {
             tile_y: 0,
             fifo_x: 0,
             line_ticks: 0,
-            buffer: vec![0; Y_RES as usize * X_RES as usize],
+            buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize],
         }
     }
 }
@@ -58,16 +58,16 @@ impl Pipeline {
             self.fetch(bus);
         }
 
-        self.push_pixel(bus);
+        self.buffer_pixel(bus);
     }
 
-    fn push_pixel(&mut self, bus: &Bus) {
+    fn buffer_pixel(&mut self, bus: &Bus) {
         if self.fifo.len() > FIFO_MAX_SIZE {
             let pixel = self.fifo.pop_front().unwrap();
 
             if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
                 let index =
-                    (self.pushed_x as usize).wrapping_add(bus.io.lcd.ly as usize * X_RES as usize);
+                    (self.pushed_x as usize).wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
                 self.buffer[index] = pixel;
                 self.pushed_x += 1;
             }
@@ -103,14 +103,14 @@ impl Pipeline {
             }
             PipelineState::Idle => self.state = PipelineState::Push,
             PipelineState::Push => {
-                if self.try_fifo_push(bus) {
+                if self.try_push_pixels(bus) {
                     self.state = PipelineState::Tile;
                 }
             }
         }
     }
 
-    fn try_fifo_push(&mut self, bus: &Bus) -> bool {
+    fn try_push_pixels(&mut self, bus: &Bus) -> bool {
         if self.fifo.len() > FIFO_MAX_SIZE {
             return false;
         }
@@ -118,11 +118,10 @@ impl Pipeline {
         let x: i32 = self.fetch_x.wrapping_sub(8 - (bus.io.lcd.scroll_x % 8)) as i32;
 
         for bit in 0..TILE_BITS_COUNT {
-            let color_id = get_color_id(self.bgw_fetch_data[1], self.bgw_fetch_data[2], bit);
-            let color = bus.io.lcd.bg_colors[color_id];
+            let pixel = Pixel::new(self.bgw_fetch_data[1], self.bgw_fetch_data[2], bit);
 
             if x >= 0 {
-                self.fifo.push_back(color);
+                self.fifo.push_back(pixel);
                 self.fifo_x += 1;
             }
         }

@@ -8,8 +8,8 @@ use std::time::{Duration, Instant};
 
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
-pub const Y_RES: u8 = 144;
-pub const X_RES: u8 = 160;
+pub const LCD_Y_RES: u8 = 144;
+pub const LCD_X_RES: u8 = 160;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = 1000 / 60;
 pub const TARGET_FRAME_DURATION: Duration = Duration::from_millis(TARGET_FRAME_TIME_MILLIS);
 
@@ -64,7 +64,7 @@ impl Ppu {
     fn mode_xfer(&mut self, bus: &mut Bus) {
         self.pipeline.process(bus);
 
-        if self.pipeline.pushed_x >= X_RES {
+        if self.pipeline.pushed_x >= LCD_X_RES {
             self.pipeline.reset();
             bus.io.lcd.status.mode_set(LcdMode::HBlank);
 
@@ -91,7 +91,7 @@ impl Ppu {
         if self.pipeline.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);
 
-            if io.lcd.ly >= Y_RES {
+            if io.lcd.ly >= LCD_Y_RES {
                 io.lcd.status.mode_set(LcdMode::VBlank);
                 io.interrupts.request_interrupt(InterruptType::VBlank);
 

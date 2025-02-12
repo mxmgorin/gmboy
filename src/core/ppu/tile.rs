@@ -6,7 +6,7 @@ pub const TILE_LINE_BYTE_SIZE: usize = 2;
 pub const TILE_BYTE_SIZE: u16 = 16;
 pub const TILE_WIDTH: u16 = 8;
 pub const TILE_HEIGHT: u16 = 8;
-pub const TILE_BITS_COUNT: i32 = 8;
+pub const TILE_BITS_COUNT: u8 = 8;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Tile {
@@ -20,7 +20,23 @@ pub struct TileLine {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub enum PixelColor {
+pub struct Pixel {
+    pub byte1: u8,
+    pub byte2: u8,
+    pub bit: u8,
+}
+
+impl Pixel {
+    pub fn new(byte1: u8, byte2: u8, bit: u8) -> Pixel {
+        Self { byte1, byte2, bit }
+    }
+    pub fn into_color_index(self) -> usize {
+        get_color_index(self.byte1, self.byte2, self.bit)
+    }
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub enum ColorId {
     #[default]
     White,
     Light,
@@ -28,15 +44,27 @@ pub enum PixelColor {
     Black,
 }
 
-impl PixelColor {
-    pub fn into_id(self) -> usize {
-        match self {
-            PixelColor::White => 0,
-            PixelColor::Light => 1,
-            PixelColor::Dark => 2,
-            PixelColor::Black => 3,
+impl From<usize> for ColorId {
+    fn from(value: usize) -> Self {
+        match value {
+            0 => ColorId::White,
+            1 => ColorId::Light,
+            2 => ColorId::Dark,
+            3 => ColorId::Black,
+            _ => panic!("Invalid value for ColorId {}", value),
         }
     }
+}
+
+pub fn get_color_id(byte1: u8, byte2: u8, bit: u8) -> ColorId {
+    get_color_index(byte1, byte2, bit).into()
+}
+
+pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
+    let bit1 = (byte1 >> (7 - bit)) & 0x01;
+    let bit2 = (byte2 >> (7 - bit)) & 0x01;
+
+    (bit2 << 1 | bit1) as usize
 }
 
 impl TileLine {
@@ -47,23 +75,16 @@ impl TileLine {
         }
     }
 
-    pub fn get_color_id(&self, bit: i32) -> usize {
+    pub fn get_color_id(&self, bit: u8) -> ColorId {
         get_color_id(self.byte1, self.byte2, bit)
     }
 
-    pub fn iter_color_ids(&self) -> impl Iterator<Item = usize> {
+    pub fn iter_color_ids(&self) -> impl Iterator<Item = ColorId> {
         TileLineIterator {
             bit: 0,
             line: *self,
         }
     }
-}
-
-pub fn get_color_id(byte1: u8, byte2: u8, bit: i32) -> usize {
-    let bit1 = (byte1 >> (7 - bit)) & 0x01;
-    let bit2 = (byte2 >> (7 - bit)) & 0x01;
-
-    (bit2 << 1 | bit1) as usize
 }
 
 pub struct TileLineIterator {
@@ -72,14 +93,14 @@ pub struct TileLineIterator {
 }
 
 impl Iterator for TileLineIterator {
-    type Item = usize;
+    type Item = ColorId;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.bit < TILE_BITS_COUNT as u8 {
             let bit = self.bit;
             self.bit += 1;
 
-            Some(self.line.get_color_id(bit as i32))
+            Some(self.line.get_color_id(bit))
         } else {
             None
         }
