@@ -20,9 +20,6 @@ pub struct TileLine {
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct Pixel(PixelColor);
-
-#[derive(Copy, Clone, Debug, Default)]
 pub enum PixelColor {
     #[default]
     White,
