@@ -23,9 +23,20 @@ pub struct TileLine {
 pub enum PixelColor {
     #[default]
     White,
-    LightGray,
-    DarkGray,
+    Light,
+    Dark,
     Black,
+}
+
+impl PixelColor {
+    pub fn into_id(self) -> usize {
+        match self {
+            PixelColor::White => 0,
+            PixelColor::Light => 1,
+            PixelColor::Dark => 2,
+            PixelColor::Black => 3,
+        }
+    }
 }
 
 impl TileLine {

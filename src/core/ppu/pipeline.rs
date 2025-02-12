@@ -8,7 +8,7 @@ pub const FIFO_MAX_SIZE: usize = 8;
 
 #[derive(Debug, Clone)]
 pub struct Pipeline {
-    pub state: PixelFifoState,
+    pub state: PipelineState,
     pub fifo: VecDeque<u32>,
     pub line_x: u8,
     pub pushed_x: u8,
@@ -27,7 +27,7 @@ pub struct Pipeline {
 impl Default for Pipeline {
     fn default() -> Pipeline {
         Self {
-            state: PixelFifoState::Tile,
+            state: PipelineState::Tile,
             fifo: Default::default(),
             line_x: 0,
             pushed_x: 0,
@@ -78,7 +78,7 @@ impl Pipeline {
 
     fn fetch(&mut self, bus: &Bus) {
         match self.state {
-            PixelFifoState::Tile => {
+            PipelineState::Tile => {
                 if bus.io.lcd.control.lcd_enable() {
                     let addr = bus.io.lcd.control.bg_map_area()
                         + (self.map_x as u16 / TILE_WIDTH)
@@ -90,21 +90,21 @@ impl Pipeline {
                     }
                 }
 
-                self.state = PixelFifoState::Data0;
+                self.state = PipelineState::Data0;
                 self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
             }
-            PixelFifoState::Data0 => {
+            PipelineState::Data0 => {
                 self.bgw_fetch_data[1] = bus.read(self.get_bgw_data_addr(&bus.io.lcd));
-                self.state = PixelFifoState::Data1;
+                self.state = PipelineState::Data1;
             }
-            PixelFifoState::Data1 => {
+            PipelineState::Data1 => {
                 self.bgw_fetch_data[2] = bus.read(self.get_bgw_data_addr(&bus.io.lcd) + 1);
-                self.state = PixelFifoState::Idle;
+                self.state = PipelineState::Idle;
             }
-            PixelFifoState::Idle => self.state = PixelFifoState::Push,
-            PixelFifoState::Push => {
+            PipelineState::Idle => self.state = PipelineState::Push,
+            PipelineState::Push => {
                 if self.try_fifo_push(bus) {
-                    self.state = PixelFifoState::Tile;
+                    self.state = PipelineState::Tile;
                 }
             }
         }
@@ -139,7 +139,7 @@ impl Pipeline {
 }
 
 #[derive(Debug, Clone)]
-pub enum PixelFifoState {
+pub enum PipelineState {
     Tile,
     Data0,
     Data1,

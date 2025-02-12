@@ -2,7 +2,7 @@ use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{Lcd, LcdMode, LcdStatSrc};
-use crate::ppu::pipeline::{Pipeline, PixelFifoState};
+use crate::ppu::pipeline::{Pipeline, PipelineState};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -53,7 +53,7 @@ impl Ppu {
     pub fn mode_oam(&mut self, lcd: &mut Lcd) {
         if self.pipeline.line_ticks >= 80 {
             lcd.status.mode_set(LcdMode::Xfer);
-            self.pipeline.state = PixelFifoState::Tile;
+            self.pipeline.state = PipelineState::Tile;
             self.pipeline.line_x = 0;
             self.pipeline.fetch_x = 0;
             self.pipeline.pushed_x = 0;
