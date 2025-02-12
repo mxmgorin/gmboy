@@ -45,7 +45,7 @@ impl Io {
             serial: Serial::new(),
             timer: Timer::default(),
             interrupts: Interrupts::new(),
-            lcd: Lcd::new(),
+            lcd: Lcd::default(),
         }
     }
 

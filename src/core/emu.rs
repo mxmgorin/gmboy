@@ -96,16 +96,16 @@ impl Emu {
                 }
             }
 
-            if prev_frame != cpu.bus.ppu.current_frame {
+            if prev_frame != cpu.clock.ppu.current_frame {
                 ui.draw(&cpu.bus);
             }
 
-            if (cpu.bus.ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
-                println!("FPS: {}", cpu.bus.ppu.fps);
-                last_fps_timestamp = cpu.bus.ppu.instant.elapsed();
+            if (cpu.clock.ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
+                println!("FPS: {}", cpu.clock.ppu.fps);
+                last_fps_timestamp = cpu.clock.ppu.instant.elapsed();
             }
 
-            prev_frame = cpu.bus.ppu.current_frame;
+            prev_frame = cpu.clock.ppu.current_frame;
         }
 
         Ok(())

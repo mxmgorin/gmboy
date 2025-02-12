@@ -53,6 +53,15 @@ pub fn struct_to_bytes_mut<T>(s: &mut T) -> &mut [u8] {
     unsafe { std::slice::from_raw_parts_mut(ptr, size) }
 }
 
+fn hex_to_rgba(color: u32) -> (u8, u8, u8, u8) {
+    let alpha = ((color >> 24) & 0xFF) as u8; // Extract alpha
+    let red = ((color >> 16) & 0xFF) as u8;   // Extract red
+    let green = ((color >> 8) & 0xFF) as u8;  // Extract green
+    let blue = (color & 0xFF) as u8;          // Extract blue
+
+    (red, green, blue, alpha)
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

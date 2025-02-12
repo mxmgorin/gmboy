@@ -1,4 +1,4 @@
-use crate::ppu::vram::{VRAM_ADDR_START};
+use crate::ppu::vram::VRAM_ADDR_START;
 
 pub const TILE_TABLE_START: u16 = VRAM_ADDR_START;
 pub const TILE_TABLE_END: u16 = 0x97FF;
@@ -15,20 +15,32 @@ pub struct Tile {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TileLine {
-    pub byte_one: u8,
-    pub byte_two: u8,
+    pub byte1: u8,
+    pub byte2: u8,
+}
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct Pixel(PixelColor);
+
+#[derive(Copy, Clone, Debug, Default)]
+pub enum PixelColor {
+    #[default]
+    White,
+    LightGray,
+    DarkGray,
+    Black,
 }
 
 impl TileLine {
     pub fn new(byte_one: u8, byte_two: u8) -> TileLine {
-        Self { byte_one, byte_two }
+        Self {
+            byte1: byte_one,
+            byte2: byte_two,
+        }
     }
 
     pub fn get_color_id(&self, bit: i32) -> usize {
-        let bit1 = (self.byte_one >> (7 - bit)) & 0x01;
-        let bit2 = (self.byte_two >> (7 - bit)) & 0x01;
-
-        (bit2 << 1 | bit1) as usize
+        get_color_id(self.byte1, self.byte2, bit)
     }
 
     pub fn iter_color_ids(&self) -> impl Iterator<Item = usize> {
@@ -39,12 +51,19 @@ impl TileLine {
     }
 }
 
-pub struct  TileLineIterator {
+pub fn get_color_id(byte1: u8, byte2: u8, bit: i32) -> usize {
+    let bit1 = (byte1 >> (7 - bit)) & 0x01;
+    let bit2 = (byte2 >> (7 - bit)) & 0x01;
+
+    (bit2 << 1 | bit1) as usize
+}
+
+pub struct TileLineIterator {
     pub bit: u8,
     pub line: TileLine,
 }
 
-impl Iterator for  TileLineIterator {
+impl Iterator for TileLineIterator {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -57,5 +76,4 @@ impl Iterator for  TileLineIterator {
             None
         }
     }
-
 }

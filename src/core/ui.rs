@@ -71,7 +71,7 @@ impl Ui {
 
     pub fn draw_tile(canvas: &mut Canvas<Window>, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
         let mut rect = Rect::new(0, 0, SCALE, SCALE);
-        let tile = bus.ppu.video_ram.get_tile(tile_addr);
+        let tile = bus.video_ram.get_tile(tile_addr);
 
         for (line_y, lines) in tile.lines.iter().enumerate() {
             for (bit, color_id) in lines.iter_color_ids().enumerate() {

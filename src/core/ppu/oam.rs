@@ -22,7 +22,7 @@ impl OamRam {
         }
     }
 
-    pub fn read_byte(&self, addr: u16) -> u8 {
+    pub fn read(&self, addr: u16) -> u8 {
         let addr = addr as usize;
         let addr = if addr >= OAM_ADDR_START {
             addr - OAM_ADDR_START
@@ -35,7 +35,7 @@ impl OamRam {
         self.items[index].as_bytes()[offset]
     }
 
-    pub fn write_byte(&mut self, addr: u16, value: u8) {
+    pub fn write(&mut self, addr: u16, value: u8) {
         let addr = addr as usize;
         let addr = if addr >= OAM_ADDR_START {
             addr - OAM_ADDR_START

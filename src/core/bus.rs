@@ -1,10 +1,10 @@
-use crate::core::cart::Cart;
-use crate::auxiliary::dma::{Dma};
+use crate::auxiliary::dma::Dma;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::Ram;
+use crate::core::cart::Cart;
 use crate::ppu::lcd::LCD_DMA_ADDRESS;
-use crate::ppu::ppu::Ppu;
-use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
+use crate::ppu::oam::OamRam;
+use crate::ppu::vram::{VideoRam, VRAM_ADDR_END, VRAM_ADDR_START};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {
@@ -58,9 +58,10 @@ pub struct Bus {
     cart: Cart,
     ram: Ram,
     pub io: Io,
-    pub ppu: Ppu,
     flat_mem: Option<Vec<u8>>,
     dma: Dma,
+    pub video_ram: VideoRam,
+    oam_ram: OamRam,
 }
 
 impl Bus {
@@ -69,9 +70,10 @@ impl Bus {
             cart,
             ram: Ram::new(),
             io: Io::new(),
-            ppu: Ppu::new(),
             flat_mem: None,
             dma: Default::default(),
+            video_ram: Default::default(),
+            oam_ram: Default::default(),
         }
     }
 
@@ -98,9 +100,9 @@ impl Bus {
                     return 0xFF;
                 }
 
-                self.ppu.oam_read(address)
+                self.oam_ram.read(address)
             }
-            BusAddrLocation::VRAM => self.ppu.vram_read(address),
+            BusAddrLocation::VRAM => self.video_ram.read(address),
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.read(address)
             }
@@ -128,14 +130,14 @@ impl Bus {
         let location = BusAddrLocation::from(address);
 
         match location {
-            BusAddrLocation::VRAM => self.ppu.vram_write(address, value),
+            BusAddrLocation::VRAM => self.video_ram.write(address, value),
             BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
                 if self.dma.is_active {
                     return;
                 }
 
-                self.ppu.oam_write(address, value)
+                self.oam_ram.write(address, value)
             }
             BusAddrLocation::RomBank0 | BusAddrLocation::RomBank1 | BusAddrLocation::CartRam => {
                 self.cart.write(address, value)
@@ -161,8 +163,7 @@ impl Bus {
 
         let addr = (self.dma.address as u16 * 0x100).wrapping_add(self.dma.current_byte as u16);
         let value = self.read(addr);
-        self.ppu.oam_write(self.dma.current_byte as u16, value);
-        
+        self.oam_ram.write(self.dma.current_byte as u16, value);
         self.dma.current_byte += self.dma.current_byte.wrapping_add(1);
         self.dma.is_active = self.dma.current_byte < 0xA0; // 160
     }

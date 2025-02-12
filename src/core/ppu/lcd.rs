@@ -17,7 +17,7 @@ pub const LCD_TILE_PALETTE_0_ADDRESS: u16 = 0xFF48;
 pub const LCD_TILE_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
-//
+
 pub const COLORS_DEFAULT: [u32; 4] = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000];
 
 #[derive(Debug, Clone)]
@@ -44,12 +44,6 @@ pub struct Lcd {
 
 impl Default for Lcd {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Lcd {
-    pub fn new() -> Lcd {
         Self {
             control: LcdControl::default(),
             status: LcdStatus::default(),
@@ -67,7 +61,9 @@ impl Lcd {
             sp2_colors: COLORS_DEFAULT,
         }
     }
+}
 
+impl Lcd {
     pub fn read(&self, address: u16) -> u8 {
         let offset = (address - LCD_ADDRESS_START) as usize;
         let bytes = struct_to_bytes(self);
@@ -108,7 +104,7 @@ impl Lcd {
         if self.ly == self.ly_compare {
             self.status.lyc_set(true);
 
-            if self.status.stat_int(LcdStatSrc::Lyc) {
+            if self.status.is_stat_interrupt(LcdStatSrc::Lyc) {
                 interrupts.request_interrupt(InterruptType::LCDStat);
             } else {
                 self.status.lyc_set(false);
@@ -116,7 +112,6 @@ impl Lcd {
         }
     }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
@@ -200,7 +195,7 @@ impl LcdStatus {
         set_bit(&mut self.byte, 2, b);
     }
 
-    pub fn stat_int(&self, src: LcdStatSrc) -> bool {
+    pub fn is_stat_interrupt(&self, src: LcdStatSrc) -> bool {
         self.byte & (src as u8) != 0
     }
 }
