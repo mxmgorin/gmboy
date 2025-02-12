@@ -8,6 +8,7 @@ use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::{Window, WindowPos};
 use sdl2::EventPump;
+use crate::ppu::lcd::DEFAULT_COLORS;
 
 const SCREEN_WIDTH: u32 = 640;
 const SCREEN_HEIGHT: u32 = 480;

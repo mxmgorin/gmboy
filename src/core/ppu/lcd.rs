@@ -18,7 +18,7 @@ pub const LCD_TILE_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
-pub const COLORS_DEFAULT: [u32; 4] = [0xFFFFFFFF, 0xFFAAAAAA, 0xFF555555, 0xFF000000];
+pub const DEFAULT_COLORS: [u32; 4] = [0xFFFFFFFF, 0xC0C0C0FF, 0x444444FF, 0x000000FF];
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -56,9 +56,9 @@ impl Default for Lcd {
             obj_palette: [0xFF, 0xFF],
             win_y: 0,
             win_x: 0,
-            bg_colors: COLORS_DEFAULT,
-            sp1_colors: COLORS_DEFAULT,
-            sp2_colors: COLORS_DEFAULT,
+            bg_colors: DEFAULT_COLORS,
+            sp1_colors: DEFAULT_COLORS,
+            sp2_colors: DEFAULT_COLORS,
         }
     }
 }
@@ -78,10 +78,10 @@ impl Lcd {
             _ => &mut self.bg_colors,
         };
 
-        p_colors[0] = COLORS_DEFAULT[(palette_data & 0b11) as usize];
-        p_colors[1] = COLORS_DEFAULT[((palette_data >> 2) & 0b11) as usize];
-        p_colors[2] = COLORS_DEFAULT[((palette_data >> 4) & 0b11) as usize];
-        p_colors[3] = COLORS_DEFAULT[((palette_data >> 6) & 0b11) as usize];
+        p_colors[0] = DEFAULT_COLORS[(palette_data & 0b11) as usize];
+        p_colors[1] = DEFAULT_COLORS[((palette_data >> 2) & 0b11) as usize];
+        p_colors[2] = DEFAULT_COLORS[((palette_data >> 4) & 0b11) as usize];
+        p_colors[3] = DEFAULT_COLORS[((palette_data >> 6) & 0b11) as usize];
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
