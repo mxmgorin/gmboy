@@ -69,7 +69,7 @@ impl Ui {
             //ttf_context,
             main_canvas,
             debug_canvas,
-            tile_rects: allocate_tile_rects(),
+            tile_rects: allocate_rects_group(TILE_WIDTH as usize * TILE_HEIGHT as usize),
         })
     }
 
@@ -162,8 +162,8 @@ impl Ui {
         }
     }
 }
-fn allocate_tile_rects() -> [Vec<SDL_Rect>; 4] {
-    let mut recs = Vec::with_capacity(64);
+fn allocate_rects_group(len: usize) -> [Vec<SDL_Rect>; 4] {
+    let mut recs = Vec::with_capacity(len);
     for _ in 0..recs.capacity() {
         recs.push(SDL_Rect {
             x: 0,
