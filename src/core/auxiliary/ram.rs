@@ -11,18 +11,14 @@ pub struct Ram {
 
 impl Default for Ram {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Ram {
-    pub fn new() -> Self {
         Self {
             w_ram: [0; W_RAM_SIZE],
             h_ram: [0; H_RAM_SIZE],
         }
     }
+}
 
+impl Ram {
     pub fn w_ram_read(&self, addr: u16) -> u8 {
         self.w_ram[normalize_w_addr(addr)]
     }

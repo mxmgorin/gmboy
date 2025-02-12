@@ -35,12 +35,6 @@ pub struct Io {
 
 impl Default for Io {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Io {
-    pub fn new() -> Io {
         Io {
             serial: Serial::new(),
             timer: Timer::default(),
@@ -48,7 +42,9 @@ impl Io {
             lcd: Lcd::default(),
         }
     }
+}
 
+impl Io {
     pub fn read(&self, address: u16) -> u8 {
         let location = IoAddressLocation::try_from(address);
 

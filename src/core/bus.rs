@@ -59,17 +59,17 @@ pub struct Bus {
     ram: Ram,
     pub io: Io,
     flat_mem: Option<Vec<u8>>,
-    dma: Dma,
+    pub dma: Dma,
     pub video_ram: VideoRam,
-    oam_ram: OamRam,
+    pub oam_ram: OamRam,
 }
 
 impl Bus {
     pub fn new(cart: Cart) -> Self {
         Self {
             cart,
-            ram: Ram::new(),
-            io: Io::new(),
+            ram: Ram::default(),
+            io: Io::default(),
             flat_mem: None,
             dma: Default::default(),
             video_ram: Default::default(),
@@ -149,23 +149,6 @@ impl Bus {
             BusAddrLocation::HRam => self.ram.h_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
-    }
-
-    pub fn dma_tick(&mut self) {
-        if !self.dma.is_active {
-            return;
-        }
-
-        if self.dma.start_delay > 0 {
-            self.dma.start_delay -= 1;
-            return;
-        }
-
-        let addr = (self.dma.address as u16 * 0x100).wrapping_add(self.dma.current_byte as u16);
-        let value = self.read(addr);
-        self.oam_ram.write(self.dma.current_byte as u16, value);
-        self.dma.current_byte += self.dma.current_byte.wrapping_add(1);
-        self.dma.is_active = self.dma.current_byte < 0xA0; // 160
     }
 }
 
