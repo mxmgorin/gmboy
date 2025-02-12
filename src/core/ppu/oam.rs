@@ -11,17 +11,13 @@ pub struct OamRam {
 
 impl Default for OamRam {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl OamRam {
-    pub fn new() -> OamRam {
         Self {
             items: [OamItem::default(); OAM_RAM_SIZE],
         }
     }
+}
 
+impl OamRam {
     pub fn read(&self, addr: u16) -> u8 {
         let addr = addr as usize;
         let addr = if addr >= OAM_ADDR_START {

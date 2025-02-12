@@ -97,7 +97,7 @@ impl Emu {
             }
 
             if prev_frame != cpu.clock.ppu.current_frame {
-                ui.draw(&cpu.bus);
+                ui.draw(&cpu.clock.ppu, &cpu.bus);
             }
 
             if (cpu.clock.ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {

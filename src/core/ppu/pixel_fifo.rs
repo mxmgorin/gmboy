@@ -1,6 +1,6 @@
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
-use crate::ppu::tile::{get_color_id, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::tile::{get_color_id, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{X_RES, Y_RES};
 use std::collections::VecDeque;
 
@@ -8,7 +8,7 @@ pub const FIFO_MAX_SIZE: usize = 8;
 
 #[derive(Debug, Clone)]
 pub struct PixelFifo {
-    pub current_state: PixelFifoState,
+    pub state: PixelFifoState,
     pub fifo: VecDeque<u32>,
     pub line_x: u8,
     pub pushed_x: u8,
@@ -21,13 +21,13 @@ pub struct PixelFifo {
     pub fifo_x: u8,
 
     pub line_ticks: usize,
-    pub video_buffer: Vec<u32>,
+    pub buffer: Vec<u32>,
 }
 
 impl Default for PixelFifo {
     fn default() -> PixelFifo {
         Self {
-            current_state: PixelFifoState::Tile,
+            state: PixelFifoState::Tile,
             fifo: Default::default(),
             line_x: 0,
             pushed_x: 0,
@@ -39,7 +39,7 @@ impl Default for PixelFifo {
             tile_y: 0,
             fifo_x: 0,
             line_ticks: 0,
-            video_buffer: vec![0; Y_RES as usize * X_RES as usize],
+            buffer: vec![0; Y_RES as usize * X_RES as usize],
         }
     }
 }
@@ -68,7 +68,7 @@ impl PixelFifo {
             if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
                 let index =
                     (self.pushed_x as usize).wrapping_add(bus.io.lcd.ly as usize * X_RES as usize);
-                self.video_buffer[index] = pixel;
+                self.buffer[index] = pixel;
                 self.pushed_x += 1;
             }
 
@@ -77,7 +77,7 @@ impl PixelFifo {
     }
 
     fn fetch(&mut self, bus: &Bus) {
-        match self.current_state {
+        match self.state {
             PixelFifoState::Tile => {
                 if bus.io.lcd.control.lcd_enable() {
                     let addr = bus.io.lcd.control.bg_map_area()
@@ -90,23 +90,23 @@ impl PixelFifo {
                     }
                 }
 
-                self.current_state = PixelFifoState::Data0;
+                self.state = PixelFifoState::Data0;
                 self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
             }
             PixelFifoState::Data0 => {
                 let addr = self.get_bgw_data_addr(&bus.io.lcd);
                 self.bgw_fetch_data[1] = bus.read(addr);
-                self.current_state = PixelFifoState::Data1;
+                self.state = PixelFifoState::Data1;
             }
             PixelFifoState::Data1 => {
                 let addr = self.get_bgw_data_addr(&bus.io.lcd) + 1;
                 self.bgw_fetch_data[2] = bus.read(addr);
-                self.current_state = PixelFifoState::Idle;
+                self.state = PixelFifoState::Idle;
             }
-            PixelFifoState::Idle => self.current_state = PixelFifoState::Push,
+            PixelFifoState::Idle => self.state = PixelFifoState::Push,
             PixelFifoState::Push => {
                 if self.try_queue_add(bus) {
-                    self.current_state = PixelFifoState::Tile;
+                    self.state = PixelFifoState::Tile;
                 }
             }
         }

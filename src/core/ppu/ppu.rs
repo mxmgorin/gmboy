@@ -22,7 +22,7 @@ pub struct Ppu {
     pub fps: usize,
     pub instant: Instant,
 
-    pixel_fifo: PixelFifo,
+    pub pixel_fifo: PixelFifo,
 }
 
 impl Default for Ppu {
@@ -54,7 +54,7 @@ impl Ppu {
     pub fn mode_oam(&mut self, lcd: &mut Lcd) {
         if self.pixel_fifo.line_ticks >= 80 {
             lcd.status.mode_set(LcdMode::Xfer);
-            self.pixel_fifo.current_state = PixelFifoState::Tile;
+            self.pixel_fifo.state = PixelFifoState::Tile;
             self.pixel_fifo.line_x = 0;
             self.pixel_fifo.fetch_x = 0;
             self.pixel_fifo.pushed_x = 0;

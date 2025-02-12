@@ -1,5 +1,6 @@
 use crate::bus::Bus;
 use crate::ppu::tile::{TILE_HEIGHT, TILE_TABLE_START, TILE_WIDTH};
+use crate::ppu::{Ppu, X_RES, Y_RES};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -114,13 +115,25 @@ impl Ui {
         self.debug_canvas.present();
     }
 
-    pub fn draw(&mut self, bus: &Bus) {
-        self.draw_main();
+    pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
+        self.draw_main(ppu);
         self.draw_debug(bus);
     }
 
-    pub fn draw_main(&mut self) {
+    pub fn draw_main(&mut self, ppu: &Ppu) {
         self.main_canvas.clear();
+        let mut rect = Rect::new(0, 0, SCALE, SCALE);
+
+        for y in 0..(Y_RES as usize) {
+            for x in 0..(X_RES as usize) {
+                rect.set_x(x as i32 * SCALE as i32);
+                rect.set_y(y as i32 * SCALE as i32);
+                let color = ppu.pixel_fifo.buffer[x + (y * X_RES as usize)];
+                self.main_canvas.set_draw_color(into_sdl_color(color));
+                self.main_canvas.fill_rect(rect).unwrap();
+            }
+        }
+
         self.main_canvas.present();
     }
 
