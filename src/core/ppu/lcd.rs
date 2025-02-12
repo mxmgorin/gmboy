@@ -227,14 +227,3 @@ impl From<u8> for LcdMode {
         }
     }
 }
-
-impl Into<u8> for LcdMode {
-    fn into(self) -> u8 {
-        match self {
-            LcdMode::HBlank => 0,
-            LcdMode::VBlank => 1,
-            LcdMode::Oam => 2,
-            LcdMode::Xfer => 3,
-        }
-    }
-}
