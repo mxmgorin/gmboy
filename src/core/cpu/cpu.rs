@@ -23,7 +23,7 @@ impl Cpu {
             registers: Registers::new(),
             enabling_ime: false,
             current_opcode: 0,
-            clock: Default::default(),
+            clock: Clock::default(),
             is_halted: false,
         }
     }

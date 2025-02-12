@@ -1,8 +1,10 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use rusty_gb_emu::auxiliary::timer::Timer;
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cpu::instructions::{
     AddressMode, ExecutableInstruction, Instruction, INSTRUCTIONS_BY_OPCODES,
 };
+use rusty_gb_emu::cpu::interrupts::Interrupts;
 use rusty_gb_emu::cpu::Cpu;
 use rusty_gb_emu::emu::EmuCtx;
 
@@ -45,10 +47,20 @@ pub fn execute(cpu: &mut Cpu) {
     }
 }
 
+pub fn timer_tick(timer: &mut Timer, interrupts: &mut Interrupts) {
+    for _ in 0..1000 {
+        timer.tick(interrupts);
+    }
+}
+
 fn criterion_benchmark(c: &mut Criterion) {
     let mut ctx = EmuCtx::new();
     let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000])); // Pre-allocate memory
+    let mut timer = Timer::default();
 
+    c.bench_function("timer tick", |b| {
+        b.iter(|| timer_tick(&mut timer, &mut cpu.bus.io.interrupts))
+    });
     c.bench_function("fetch data", |b| b.iter(|| fetch_data(&mut cpu)));
     c.bench_function("execute", |b| b.iter(|| execute(&mut cpu)));
     c.bench_function("cpu step", |b| b.iter(|| instructions(&mut cpu, &mut ctx)));
