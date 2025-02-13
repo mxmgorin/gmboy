@@ -6,7 +6,6 @@ use crate::ui::events::{SdlEventHandler, UiEvent, UiEventHandler};
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
-use sdl2::sys::{SDL_Rect, SDL_RenderFillRects};
 use sdl2::video::Window;
 
 pub const SCREEN_WIDTH: u32 = 640;
@@ -30,7 +29,7 @@ pub struct Ui {
     main_canvas: Canvas<Window>,
     event_handler: SdlEventHandler,
     // pre-allocated for use in draw function
-    frame_rects: [Vec<SDL_Rect>; 4],
+    frame_rects: [Vec<Rect>; 4],
     debug_window: Option<DebugWindow>,
 }
 
@@ -68,7 +67,7 @@ impl Ui {
         }
     }
 
-    pub fn draw_main(&mut self, ppu: &Ppu) {
+    fn draw_main(&mut self, ppu: &Ppu) {
         let mut rects_count: [usize; 4] = [0; 4];
 
         for y in 0..(LCD_Y_RES as usize) {
@@ -83,7 +82,7 @@ impl Ui {
         }
 
         self.main_canvas.clear();
-        draw_rects(&mut self.main_canvas, &self.frame_rects, rects_count);
+        fill_rects(&mut self.main_canvas, &self.frame_rects, rects_count);
         self.main_canvas.present();
     }
 
@@ -100,21 +99,16 @@ impl Ui {
     }
 }
 
-pub fn allocate_rects_group(len: usize) -> [Vec<SDL_Rect>; 4] {
+pub fn allocate_rects_group(len: usize) -> [Vec<Rect>; 4] {
     let mut recs = Vec::with_capacity(len);
     for _ in 0..recs.capacity() {
-        recs.push(SDL_Rect {
-            x: 0,
-            y: 0,
-            w: SCALE as i32,
-            h: SCALE as i32,
-        });
+        recs.push(Rect::new(0, 0, SCALE, SCALE));
     }
 
     [recs.clone(), recs.clone(), recs.clone(), recs]
 }
 
-pub fn fill_tile_recs(recs: &mut [Vec<SDL_Rect>; 4], tile: Tile, x: i32, y: i32) -> [usize; 4] {
+pub fn set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: Tile, x: i32, y: i32) -> [usize; 4] {
     let mut rects_count: [usize; 4] = [0; 4];
 
     for (line_y, lines) in tile.lines.iter().enumerate() {
@@ -129,17 +123,9 @@ pub fn fill_tile_recs(recs: &mut [Vec<SDL_Rect>; 4], tile: Tile, x: i32, y: i32)
     rects_count
 }
 
-pub fn draw_rects(canvas: &mut Canvas<Window>, recs: &[Vec<SDL_Rect>; 4], rects_count: [usize; 4]) {
+pub fn fill_rects(canvas: &mut Canvas<Window>, recs: &[Vec<Rect>; 4], rects_count: [usize; 4]) {
     for (color_id, rects) in recs.iter().enumerate() {
         canvas.set_draw_color(SDL_COLORS[color_id]);
-
-        unsafe {
-            let result =
-                SDL_RenderFillRects(canvas.raw(), rects.as_ptr(), rects_count[color_id] as i32);
-
-            if result != 0 {
-                eprintln!("Error draw_rects: {:?}", result);
-            }
-        }
+        canvas.fill_rects(&rects[..rects_count[color_id]]).unwrap();
     }
 }

@@ -3,18 +3,18 @@ use crate::ppu::tile::{
     Tile, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTE_SIZE, TILE_WIDTH,
 };
 use crate::ui::{
-    allocate_rects_group, draw_rects, SCALE, SPACER, TILE_COLS, TILE_ROWS,
+    allocate_rects_group, fill_rects, SCALE, SPACER, TILE_COLS, TILE_ROWS,
     X_DRAW_START, Y_SPACER,
 };
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2::render::Canvas;
-use sdl2::sys::SDL_Rect;
 use sdl2::video::{Window, WindowPos};
 use sdl2::VideoSubsystem;
 
 pub struct DebugWindow {
     pub canvas: Canvas<Window>,
-    tiles_map_rects: [Vec<SDL_Rect>; 4],
+    tiles_map_rects: [Vec<Rect>; 4],
     tiles: [Tile; TILES_COUNT],
 }
 
@@ -82,7 +82,7 @@ impl DebugWindow {
             col_x_draw = X_DRAW_START;
         }
 
-        draw_rects(&mut self.canvas, &self.tiles_map_rects, rects_count);
+        fill_rects(&mut self.canvas, &self.tiles_map_rects, rects_count);
         self.canvas.present();
     }
 }
