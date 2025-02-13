@@ -3,7 +3,7 @@ use crate::ppu::tile::{
     Tile, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTE_SIZE, TILE_WIDTH,
 };
 use crate::ui::{
-    allocate_rects_group, draw_rects, SCALE, SCREEN_WIDTH, SPACER, TILE_COLS, TILE_ROWS,
+    allocate_rects_group, draw_rects, SCALE, SPACER, TILE_COLS, TILE_ROWS,
     X_DRAW_START, Y_SPACER,
 };
 use sdl2::pixels::Color;
@@ -41,7 +41,7 @@ impl DebugWindow {
 
     pub fn set_position(&mut self, x: i32, y: i32) {
         self.canvas.window_mut().set_position(
-            WindowPos::Positioned(x + SCREEN_WIDTH as i32 + 10),
+            WindowPos::Positioned(x),
             WindowPos::Positioned(y),
         );
     }
