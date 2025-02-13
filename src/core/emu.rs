@@ -57,6 +57,7 @@ impl UiEventHandler for Emu {
     fn on_event(&mut self, event: UiEvent) {
         match event {
             UiEvent::Quit => self.running = false,
+            _ => {},
         }
     }
 }

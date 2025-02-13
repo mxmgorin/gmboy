@@ -8,6 +8,7 @@ pub trait UiEventHandler {
 
 pub enum UiEvent {
     Quit,
+    KeyDown(Keycode),
 }
 
 pub struct SdlEventHandler {
@@ -21,20 +22,23 @@ impl SdlEventHandler {
         }
     }
 
-    pub fn handle(&mut self, event_handler: &mut impl UiEventHandler) {
+    pub fn handle(&mut self, event_handler: &mut impl UiEventHandler) -> Option<u32> {
         for event in self.event_pump.poll_iter() {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
+                Event::Quit { .. } => event_handler.on_event(UiEvent::Quit),
+                Event::KeyDown {
+                    keycode: Some(keycode),
                     ..
-                }
-                | Event::Window {
+                } => event_handler.on_event(UiEvent::KeyDown(keycode)),
+                Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
+                    window_id,
                     ..
-                } => event_handler.on_event(UiEvent::Quit),
+                } => return Some(window_id),
                 _ => {}
             }
         }
+
+        None
     }
 }

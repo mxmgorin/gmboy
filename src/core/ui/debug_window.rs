@@ -13,7 +13,7 @@ use sdl2::video::{Window, WindowPos};
 use sdl2::VideoSubsystem;
 
 pub struct DebugWindow {
-    canvas: Canvas<Window>,
+    pub canvas: Canvas<Window>,
     tiles_map_rects: [Vec<SDL_Rect>; 4],
     tiles: [Tile; TILES_COUNT],
 }

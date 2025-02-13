@@ -2,8 +2,9 @@ use crate::bus::Bus;
 use crate::ppu::tile::Tile;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::ui::debug_window::DebugWindow;
-use crate::ui::events::{SdlEventHandler, UiEventHandler};
+use crate::ui::events::{SdlEventHandler, UiEvent, UiEventHandler};
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::sys::{SDL_Rect, SDL_RenderFillRects};
 use sdl2::video::Window;
@@ -87,7 +88,15 @@ impl Ui {
     }
 
     pub fn handle_events(&mut self, event_handler: &mut impl UiEventHandler) {
-        self.event_handler.handle(event_handler)
+        if let Some(window_id) = self.event_handler.handle(event_handler) {
+            if let Some(window) = self.debug_window.as_mut() {
+                if window.canvas.window().id() == window_id {
+                    self.debug_window = None;
+                } else {
+                    event_handler.on_event(UiEvent::Quit);
+                }
+            }
+        }
     }
 }
 
