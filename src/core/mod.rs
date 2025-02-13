@@ -1,9 +1,9 @@
+pub mod auxiliary;
 pub mod bus;
 pub mod cart;
 pub mod cpu;
 pub mod debugger;
 pub mod emu;
-pub mod auxiliary;
 pub mod ppu;
 pub mod ui;
 
@@ -55,9 +55,9 @@ pub fn struct_to_bytes_mut<T>(s: &mut T) -> &mut [u8] {
 
 pub fn hex_to_rgba(color: u32) -> (u8, u8, u8, u8) {
     let alpha = ((color >> 24) & 0xFF) as u8; // Extract alpha
-    let red = ((color >> 16) & 0xFF) as u8;   // Extract red
-    let green = ((color >> 8) & 0xFF) as u8;  // Extract green
-    let blue = (color & 0xFF) as u8;          // Extract blue
+    let red = ((color >> 16) & 0xFF) as u8; // Extract red
+    let green = ((color >> 8) & 0xFF) as u8; // Extract green
+    let blue = (color & 0xFF) as u8; // Extract blue
 
     (red, green, blue, alpha)
 }

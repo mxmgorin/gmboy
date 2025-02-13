@@ -4,11 +4,11 @@ use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
-use crate::ui::{UiEvent, UiEventHandler};
 use std::borrow::Cow;
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
+use crate::ui::events::{UiEvent, UiEventHandler};
 
 #[derive(Debug)]
 pub struct Emu {
