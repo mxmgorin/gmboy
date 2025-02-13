@@ -1,5 +1,7 @@
 use crate::bus::Bus;
-use crate::ppu::tile::{Tile, TILE_HEIGHT, TILE_TABLE_START, TILE_WIDTH};
+use crate::ppu::tile::{
+    Tile, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTE_SIZE, TILE_WIDTH,
+};
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -15,6 +17,8 @@ const SCALE: u32 = 4;
 const SPACER: i32 = (8 * SCALE) as i32;
 pub const TILE_ROWS: i32 = 24;
 pub const TILE_COLS: i32 = 16;
+const Y_SPACER: i32 = SCALE as i32;
+const X_DRAW_START: i32 = (SCALE / 2) as i32;
 
 const SDL_COLORS: [Color; 4] = [
     Color::WHITE,
@@ -29,11 +33,14 @@ pub struct Ui {
     main_canvas: Canvas<Window>,
     event_pump: EventPump,
 
-    debug_canvas: Canvas<Window>,
     // pre-allocated for use in draw function
-    tile_rects: [Vec<SDL_Rect>; 4],
     frame_rects: [Vec<SDL_Rect>; 4],
+    // debug
     debug: bool,
+    debug_canvas: Canvas<Window>,
+    tiles_map_rects: [Vec<SDL_Rect>; 4],
+    tile_rects: [Vec<SDL_Rect>; 4],
+    tiles: [Tile; TILES_COUNT],
 }
 
 impl Ui {
@@ -74,6 +81,10 @@ impl Ui {
             debug_canvas,
             tile_rects: allocate_rects_group(TILE_WIDTH as usize * TILE_HEIGHT as usize),
             frame_rects: allocate_rects_group(LCD_Y_RES as usize * LCD_X_RES as usize),
+            tiles_map_rects: allocate_rects_group(
+                TILES_COUNT * TILE_LINE_BYTE_SIZE * TILE_BITS_COUNT as usize * 4,
+            ),
+            tiles: [Tile::default(); TILES_COUNT],
         })
     }
 
@@ -81,39 +92,43 @@ impl Ui {
         self.draw_main(ppu);
 
         if self.debug {
-            self.draw_debug(bus);
+            bus.video_ram.fill_tiles(&mut self.tiles);
+            self.draw_tiles();
         }
     }
 
-    pub fn draw_debug(&mut self, bus: &Bus) {
-        const Y_SPACER: i32 = SCALE as i32;
-        const X_DRAW_START: i32 = (SCALE / 2) as i32;
-
-        let mut x_draw = X_DRAW_START;
-        let mut y_draw: i32 = 0;
+    fn draw_tiles(&mut self) {
+        let mut col_x_draw = X_DRAW_START;
+        let mut row_y_draw: i32 = 0;
         let mut tile_num = 0;
-
+        let mut rects_count: [usize; 4] = [0; 4];
         self.debug_canvas.set_draw_color(Color::RGB(18, 18, 18));
         self.debug_canvas.fill_rect(None).unwrap();
 
-        for y in 0..TILE_ROWS {
-            for x in 0..TILE_COLS {
-                let tile = bus
-                    .video_ram
-                    .get_tile(TILE_TABLE_START + (tile_num * TILE_COLS as u16));
-                self.draw_tile(
-                    tile,
-                    x_draw + (x * SCALE as i32),
-                    y_draw + (y + SCALE as i32),
-                );
-                x_draw += SPACER;
+        for row in 0..TILE_ROWS {
+            for col in 0..TILE_COLS {
+                let tile = self.tiles[tile_num as usize];
+
+                for (line_y, line) in tile.lines.iter().enumerate() {
+                    for (color_x, color_id) in line.iter_color_ids().enumerate() {
+                        let color_index = color_id as usize;
+                        let rect = &mut self.tiles_map_rects[color_index][rects_count[color_index]];
+                        rect.x =
+                            col_x_draw + (col * SCALE as i32) + (color_x as i32 * SCALE as i32);
+                        rect.y = row_y_draw + (row + SCALE as i32) + (line_y as i32 * SCALE as i32);
+                        rects_count[color_index] += 1;
+                    }
+                }
+
+                col_x_draw += SPACER;
                 tile_num += 1;
             }
 
-            y_draw += SPACER + Y_SPACER;
-            x_draw = X_DRAW_START;
+            row_y_draw += SPACER + Y_SPACER;
+            col_x_draw = X_DRAW_START;
         }
 
+        draw_rects(&mut self.debug_canvas, &self.tiles_map_rects, rects_count);
         self.debug_canvas.present();
     }
 
