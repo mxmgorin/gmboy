@@ -98,9 +98,11 @@ impl Ui {
 
         for y in 0..TILE_ROWS {
             for x in 0..TILE_COLS {
+                let tile = bus
+                    .video_ram
+                    .get_tile(TILE_TABLE_START + (tile_num * TILE_COLS as u16));
                 self.draw_tile(
-                    bus,
-                    TILE_TABLE_START + (tile_num * TILE_COLS as u16),
+                    tile,
                     x_draw + (x * SCALE as i32),
                     y_draw + (y + SCALE as i32),
                 );
@@ -134,8 +136,7 @@ impl Ui {
         self.main_canvas.present();
     }
 
-    pub fn draw_tile(&mut self, bus: &Bus, tile_addr: u16, x: i32, y: i32) {
-        let tile = bus.video_ram.get_tile(tile_addr);
+    pub fn draw_tile(&mut self, tile: Tile, x: i32, y: i32) {
         let rects_count = fill_tile_recs(&mut self.tile_rects, tile, x, y);
         draw_rects(&mut self.debug_canvas, &self.tile_rects, rects_count);
     }

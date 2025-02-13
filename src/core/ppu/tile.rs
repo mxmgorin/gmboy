@@ -7,6 +7,7 @@ pub const TILE_BYTE_SIZE: u16 = 16;
 pub const TILE_WIDTH: u16 = 8;
 pub const TILE_HEIGHT: u16 = 8;
 pub const TILE_BITS_COUNT: u8 = 8;
+pub const TILES_COUNT: usize = 384;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Tile {

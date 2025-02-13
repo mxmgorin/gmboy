@@ -1,9 +1,9 @@
 use crate::ppu::tile::{
-    Tile, TileLine, TILE_BYTE_SIZE, TILE_HEIGHT, TILE_LINE_BYTE_SIZE, TILE_TABLE_END,
+    Tile, TileLine, TILES_COUNT, TILE_BYTE_SIZE, TILE_HEIGHT, TILE_LINE_BYTE_SIZE,
+    TILE_TABLE_END, TILE_TABLE_START,
 };
 
 // Tile data is stored in VRAM in the memory area at $8000-$97FF;
-
 pub const VRAM_SIZE: usize = 0x2000;
 pub const VRAM_ADDR_START: u16 = 0x8000;
 pub const VRAM_ADDR_END: u16 = 0x9FFF;
@@ -66,6 +66,17 @@ impl VideoRam {
         }
 
         tile
+    }
+
+    pub fn get_tiles(&self) -> Vec<Tile> {
+        let mut tiles = Vec::with_capacity(TILES_COUNT);
+
+        for tile_num in 0..TILES_COUNT {
+            let addr = TILE_TABLE_START + (tile_num as u16 * TILE_BYTE_SIZE);
+            tiles.push(self.get_tile(addr));
+        }
+
+        tiles
     }
 }
 
