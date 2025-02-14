@@ -1,8 +1,8 @@
 use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
-use crate::ppu::lcd::{Lcd, LcdMode, LcdStatSrc};
-use crate::ppu::pipeline::{Pipeline, PipelineState};
+use crate::ppu::lcd::{LcdMode, LcdStatSrc};
+use crate::ppu::pipeline::{Pipeline, PipelineState, MAX_FIFO_SPRITES_SIZE};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -43,21 +43,74 @@ impl Ppu {
         self.pipeline.line_ticks += 1;
 
         match bus.io.lcd.status.mode() {
-            LcdMode::Oam => self.mode_oam(&mut bus.io.lcd),
+            LcdMode::Oam => self.mode_oam(bus),
             LcdMode::Xfer => self.mode_xfer(bus),
             LcdMode::HBlank => self.mode_hblank(&mut bus.io),
             LcdMode::VBlank => self.mode_vblank(&mut bus.io),
         }
     }
 
-    pub fn mode_oam(&mut self, lcd: &mut Lcd) {
+    pub fn mode_oam(&mut self, bus: &mut Bus) {
         if self.pipeline.line_ticks >= 80 {
-            lcd.status.mode_set(LcdMode::Xfer);
+            bus.io.lcd.status.mode_set(LcdMode::Xfer);
             self.pipeline.state = PipelineState::Tile;
             self.pipeline.line_x = 0;
             self.pipeline.fetch_x = 0;
             self.pipeline.pushed_x = 0;
             self.pipeline.fifo_x = 0;
+        }
+
+        if self.pipeline.line_ticks == 1 {
+            // read oam on the first tick only
+            self.pipeline.line_sprites.clear();
+            self.load_line_sprites(bus);
+        }
+    }
+
+    fn load_line_sprites(&mut self, bus: &mut Bus) {
+        let cur_y = bus.io.lcd.ly;
+        let sprite_height = bus.io.lcd.control.obj_height();
+
+        for ram_sprite in bus.oam_ram.items.iter() {
+            if ram_sprite.x == 0 {
+                // not visible
+                continue;
+            }
+
+            if self.pipeline.line_sprites.len() >= MAX_FIFO_SPRITES_SIZE {
+                // max sprites per line
+                break;
+            }
+
+            if ram_sprite.y <= cur_y + 16 && ram_sprite.y + sprite_height >= cur_y + 16 {
+                // this sprite is on the current line
+                if let Some(line_sprite) = self.pipeline.line_sprites.front() {
+                    if line_sprite.x > ram_sprite.x {
+                        self.pipeline.line_sprites.push_front(ram_sprite.to_owned());
+                        continue;
+                    }
+                } else {
+                    self.pipeline.line_sprites.push_back(ram_sprite.to_owned());
+                }
+
+                let Some(line_sprite) = self.pipeline.line_sprites.front() else {
+                    self.pipeline.line_sprites.push_back(ram_sprite.to_owned());
+                    continue;
+                };
+
+                if line_sprite.x > ram_sprite.x {
+                    self.pipeline.line_sprites.push_front(ram_sprite.to_owned());
+                    continue;
+                }
+
+                // do sorting
+                for i in 0..self.pipeline.line_sprites.len() {
+                    if self.pipeline.line_sprites[i].x > ram_sprite.x {
+                        self.pipeline.line_sprites.insert(i, ram_sprite.to_owned());
+                        break;
+                    }
+                }
+            }
         }
     }
 

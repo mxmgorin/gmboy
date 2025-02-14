@@ -1,18 +1,18 @@
 // Object attributes reside in the object attribute memory (OAM) at $FE00-FE9F.
 // Has 40 movable objects.
 
-const OAM_RAM_SIZE: usize = 40;
-const OAM_ADDR_START: usize = 0xFE00;
+pub const OAM_ITEMS_COUNT: usize = 40;
+pub const OAM_ADDR_START: usize = 0xFE00;
 
 #[derive(Debug, Clone)]
 pub struct OamRam {
-    pub items: [OamItem; OAM_RAM_SIZE],
+    pub items: [OamItem; OAM_ITEMS_COUNT],
 }
 
 impl Default for OamRam {
     fn default() -> Self {
         Self {
-            items: [OamItem::default(); OAM_RAM_SIZE],
+            items: [OamItem::default(); OAM_ITEMS_COUNT],
         }
     }
 }
