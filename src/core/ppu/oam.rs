@@ -26,9 +26,15 @@ impl OamRam {
             addr
         };
 
-        let (index, offset) = self.get_index_and_offset(addr as u16);
+        let (item_index, byte_offset) = self.get_index_and_offset(addr as u16);
 
-        self.items[index].as_bytes()[offset]
+        match byte_offset {
+            0 => self.items[item_index].y,
+            1 => self.items[item_index].x,
+            2 => self.items[item_index].tile_index,
+            3 => self.items[item_index].flags,
+            _ => unreachable!(),
+        }
     }
 
     pub fn write(&mut self, addr: u16, value: u8) {
@@ -39,9 +45,15 @@ impl OamRam {
             addr
         };
 
-        let (index, offset) = self.get_index_and_offset(addr as u16);
+        let (item_index, byte_offset) = self.get_index_and_offset(addr as u16);
 
-        self.items[index].as_bytes_mut()[offset] = value;
+        match byte_offset {
+            0 => self.items[item_index].y = value,
+            1 => self.items[item_index].x = value,
+            2 => self.items[item_index].tile_index = value,
+            3 => self.items[item_index].flags = value,
+            _ => unreachable!(),
+        };
     }
 
     /// Determine the index in the oam_ram array and the specific byte to update
