@@ -220,7 +220,7 @@ impl Pipeline {
         let sprite_height = bus.io.lcd.control.obj_height();
 
         for (i, sprite) in self.fetched_sprites.iter().enumerate() {
-            let mut tile_y = (cur_y + TILE_BIT_SIZE as u8) - sprite.y * TILE_LINE_BYTES_COUNT as u8;
+            let mut tile_y = ((cur_y + TILE_BIT_SIZE as u8) - sprite.y) * TILE_LINE_BYTES_COUNT as u8;
 
             if sprite.f_y_flip() {
                 tile_y = ((sprite_height * 2) - 2) - tile_y;
