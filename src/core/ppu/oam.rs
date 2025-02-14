@@ -64,7 +64,7 @@ impl OamRam {
 pub struct OamItem {
     pub y: u8,
     pub x: u8,
-    pub title: u8,
+    pub tile_index: u8,
     pub flags: u8,
 }
 

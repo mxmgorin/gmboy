@@ -1,6 +1,6 @@
 use crate::bus::Bus;
 use crate::ppu::tile::{
-    Tile, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTE_SIZE, TILE_WIDTH,
+    TileData, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_WIDTH,
 };
 use crate::ui::{
     allocate_rects_group, fill_rects, SCALE, SPACER, TILE_COLS, TILE_ROWS,
@@ -15,7 +15,7 @@ use sdl2::VideoSubsystem;
 pub struct DebugWindow {
     pub canvas: Canvas<Window>,
     tiles_map_rects: [Vec<Rect>; 4],
-    tiles: [Tile; TILES_COUNT],
+    tiles: [TileData; TILES_COUNT],
 }
 
 impl DebugWindow {
@@ -33,9 +33,9 @@ impl DebugWindow {
         Self {
             canvas: debug_window.into_canvas().build().unwrap(),
             tiles_map_rects: allocate_rects_group(
-                TILES_COUNT * TILE_LINE_BYTE_SIZE * TILE_BITS_COUNT as usize * 4,
+                TILES_COUNT * TILE_LINE_BYTES_COUNT * TILE_BITS_COUNT as usize * 4,
             ),
-            tiles: [Tile::default(); TILES_COUNT],
+            tiles: [TileData::default(); TILES_COUNT],
         }
     }
 

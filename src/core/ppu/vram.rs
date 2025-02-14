@@ -1,5 +1,5 @@
 use crate::ppu::tile::{
-    Tile, TileLine, TILE_BYTE_SIZE, TILE_HEIGHT, TILE_LINE_BYTE_SIZE, TILE_TABLE_END,
+    TileData, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_TABLE_END,
     TILE_TABLE_START,
 };
 
@@ -54,23 +54,23 @@ impl VideoRam {
         self.bytes[(addr - VRAM_ADDR_START) as usize] = val;
     }
 
-    pub fn get_tile_line(&self, addr: u16) -> TileLine {
-        TileLine::new(self.read(addr), self.read(addr + 1))
+    pub fn get_tile_line(&self, addr: u16) -> TileLineData {
+        TileLineData::new(self.read(addr), self.read(addr + 1))
     }
 
-    pub fn get_tile(&self, addr: u16) -> Tile {
-        let mut tile = Tile::default();
+    pub fn get_tile(&self, addr: u16) -> TileData {
+        let mut tile = TileData::default();
 
         for line_y in 0..TILE_HEIGHT as usize {
-            tile.lines[line_y] = self.get_tile_line(addr + (line_y * TILE_LINE_BYTE_SIZE) as u16);
+            tile.lines[line_y] = self.get_tile_line(addr + (line_y * TILE_LINE_BYTES_COUNT) as u16);
         }
 
         tile
     }
 
-    pub fn fill_tiles(&self, tiles: &mut [Tile; 384]) {
+    pub fn fill_tiles(&self, tiles: &mut [TileData; 384]) {
         for (i, tile) in tiles.iter_mut().enumerate() {
-            let addr = TILE_TABLE_START + (i as u16 * TILE_BYTE_SIZE);
+            let addr = TILE_TABLE_START + (i as u16 * TILE_BIT_SIZE);
             *tile = self.get_tile(addr);
         }
     }
@@ -82,12 +82,12 @@ pub struct TilesIterator<'a> {
 }
 
 impl Iterator for TilesIterator<'_> {
-    type Item = Tile;
+    type Item = TileData;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_address < TILE_TABLE_END {
             let tile = self.video_ram.get_tile(self.current_address);
-            self.current_address += TILE_BYTE_SIZE;
+            self.current_address += TILE_BIT_SIZE;
 
             return Some(tile);
         }

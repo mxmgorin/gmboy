@@ -1,4 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
+use crate::ppu::tile::PixelColor;
 use crate::{get_bit_flag, set_bit, struct_to_bytes, struct_to_bytes_mut};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
@@ -18,7 +19,12 @@ pub const LCD_TILE_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
-pub const DEFAULT_COLORS: [u32; 4] = [0xFFFFFFFF, 0xC0C0C0FF, 0x444444FF, 0x000000FF];
+pub const DEFAULT_COLORS: [PixelColor; 4] = [
+    PixelColor::from_hex(0xFFFFFFFF),
+    PixelColor::from_hex(0xC0C0C0FF),
+    PixelColor::from_hex(0x444444FF),
+    PixelColor::from_hex(0x000000FF),
+];
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -37,9 +43,9 @@ pub struct Lcd {
     pub win_x: u8,
 
     // Other data
-    pub bg_colors: [u32; 4],
-    pub sp1_colors: [u32; 4],
-    pub sp2_colors: [u32; 4],
+    pub bg_colors: [PixelColor; 4],
+    pub sp1_colors: [PixelColor; 4],
+    pub sp2_colors: [PixelColor; 4],
 }
 
 impl Default for Lcd {
@@ -72,7 +78,7 @@ impl Lcd {
     }
 
     pub fn update_palette(&mut self, palette_data: u8, pal: u8) {
-        let p_colors: &mut [u32; 4] = match pal {
+        let p_colors: &mut [PixelColor; 4] = match pal {
             1 => &mut self.sp1_colors,
             2 => &mut self.sp2_colors,
             _ => &mut self.bg_colors,
@@ -126,7 +132,10 @@ impl Default for LcdControl {
 }
 
 impl LcdControl {
-    pub fn obj_enable(&self) -> bool {
+    pub fn bgw_enabled(&self) -> bool {
+        get_bit_flag(self.byte, 0)
+    }
+    pub fn obj_enabled(&self) -> bool {
         get_bit_flag(self.byte, 1)
     }
 

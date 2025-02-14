@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::ppu::tile::Tile;
+use crate::ppu::tile::TileData;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{SdlEventHandler, UiEvent, UiEventHandler};
@@ -73,7 +73,7 @@ impl Ui {
         for y in 0..(LCD_Y_RES as usize) {
             for x in 0..(LCD_X_RES as usize) {
                 let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
-                let color_index = pixel.into_color_index();
+                let color_index = pixel.color_id as usize;
                 let rect = &mut self.frame_rects[color_index][rects_count[color_index]];
                 rect.x = x as i32 * SCALE as i32;
                 rect.y = y as i32 * SCALE as i32;
@@ -108,7 +108,7 @@ pub fn allocate_rects_group(len: usize) -> [Vec<Rect>; 4] {
     [recs.clone(), recs.clone(), recs.clone(), recs]
 }
 
-pub fn set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: Tile, x: i32, y: i32) -> [usize; 4] {
+pub fn set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: TileData, x: i32, y: i32) -> [usize; 4] {
     let mut rects_count: [usize; 4] = [0; 4];
 
     for (line_y, lines) in tile.lines.iter().enumerate() {
