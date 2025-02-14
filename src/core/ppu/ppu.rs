@@ -89,19 +89,9 @@ impl Ppu {
                         self.pipeline.line_sprites.push_front(ram_sprite.to_owned());
                         continue;
                     }
-                } else {
-                    self.pipeline.line_sprites.push_back(ram_sprite.to_owned());
                 }
 
-                let Some(line_sprite) = self.pipeline.line_sprites.front() else {
-                    self.pipeline.line_sprites.push_back(ram_sprite.to_owned());
-                    continue;
-                };
-
-                if line_sprite.x > ram_sprite.x {
-                    self.pipeline.line_sprites.push_front(ram_sprite.to_owned());
-                    continue;
-                }
+                self.pipeline.line_sprites.push_back(ram_sprite.to_owned());
 
                 // do sorting
                 for i in 0..self.pipeline.line_sprites.len() {
