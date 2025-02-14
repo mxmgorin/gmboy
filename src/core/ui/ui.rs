@@ -39,7 +39,7 @@ impl Ui {
         let video_subsystem = sdl_context.video()?;
 
         let main_window = video_subsystem
-            .window("Main Window", SCREEN_WIDTH, SCREEN_HEIGHT)
+            .window("Main Window", LCD_X_RES as u32 * SCALE, LCD_Y_RES as u32 * SCALE)
             .position_centered()
             .build()
             .unwrap();
