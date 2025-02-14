@@ -55,6 +55,8 @@ impl SpriteFetcher {
     }
 
     pub fn fetch_sprite_tiles(&mut self, lcd: &Lcd, fetch_x: u8) {
+        self.fetched_sprites_count = 0;
+
         for sprite in self.line_sprites.iter() {
             let sp_x = (sprite.x - 8) + (lcd.scroll_x % 8);
 
@@ -73,7 +75,7 @@ impl SpriteFetcher {
         }
     }
 
-    pub fn fetch_sprite_data(&mut self, bus: &Bus, offset: u8) {
+    pub fn fetch_sprite_data(&mut self, bus: &Bus, byte_offset: u16) {
         let cur_y = bus.io.lcd.ly as usize;
         let sprite_height = bus.io.lcd.control.obj_height() as usize;
 
@@ -95,11 +97,12 @@ impl SpriteFetcher {
                 sprite.tile_index
             };
 
-            let tile_start_addr = TILE_TABLE_START.wrapping_add(tile_index as u16 * TILE_BIT_SIZE);
-            let addr = tile_start_addr
+            let addr = TILE_TABLE_START
+                .wrapping_add(tile_index as u16 * TILE_BIT_SIZE)
                 .wrapping_add(tile_y as u16)
-                .wrapping_add(offset as u16);
-            self.fetched_sprite_data[(i * 2) + offset as usize] = bus.read(addr);
+                .wrapping_add(byte_offset);
+
+            self.fetched_sprite_data[(i * 2) + byte_offset as usize] = bus.read(addr);
         }
     }
 
@@ -124,11 +127,11 @@ impl SpriteFetcher {
                 continue;
             }
 
-            let mut bit = 7 - offset;
-
-            if self.fetched_sprites[i].f_x_flip() {
-                bit = offset
-            }
+            let bit = if self.fetched_sprites[i].f_x_flip() {
+                7 - offset
+            } else {
+                offset
+            };
 
             let byte1 = self.fetched_sprite_data[i * 2];
             let byte2 = self.fetched_sprite_data[(i * 2) + 1];

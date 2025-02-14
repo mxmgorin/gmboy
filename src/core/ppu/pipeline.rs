@@ -5,7 +5,7 @@ use crate::ppu::tile::{get_color_index, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TIL
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::collections::VecDeque;
 
-pub const MAX_FIFO_BG_SIZE: usize = 8;
+pub const MAX_FIFO_SIZE: usize = 8;
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
 #[derive(Debug, Clone)]
@@ -65,7 +65,7 @@ impl Pipeline {
     }
 
     fn push_pixel(&mut self, bus: &Bus) {
-        if self.fifo.len() > MAX_FIFO_BG_SIZE {
+        if self.fifo.len() > MAX_FIFO_SIZE {
             let pixel = self.fifo.pop_front().unwrap();
 
             if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
@@ -82,8 +82,6 @@ impl Pipeline {
     fn fetch(&mut self, bus: &Bus) {
         match self.state {
             PipelineState::Tile => {
-                self.sprite_fetcher.fetched_sprites_count = 0;
-
                 if bus.io.lcd.control.bgw_enabled() {
                     let addr = bus.io.lcd.control.bg_map_area()
                         + (self.map_x as u16 / TILE_WIDTH)
@@ -95,8 +93,7 @@ impl Pipeline {
                     }
                 }
 
-                if bus.io.lcd.control.obj_enabled() && !self.sprite_fetcher.line_sprites.is_empty()
-                {
+                if bus.io.lcd.control.obj_enabled() {
                     self.sprite_fetcher
                         .fetch_sprite_tiles(&bus.io.lcd, self.fetch_x);
                 }
@@ -124,7 +121,7 @@ impl Pipeline {
     }
 
     fn try_fifo_add(&mut self, bus: &Bus) -> bool {
-        if self.fifo.len() > MAX_FIFO_BG_SIZE {
+        if self.fifo.len() > MAX_FIFO_SIZE {
             return false;
         }
 
