@@ -120,14 +120,14 @@ impl Pipeline {
             }
             PipelineState::Idle => self.state = PipelineState::Push,
             PipelineState::Push => {
-                if self.try_push_pixels(bus) {
+                if self.try_fifo_add(bus) {
                     self.state = PipelineState::Tile;
                 }
             }
         }
     }
 
-    fn try_push_pixels(&mut self, bus: &Bus) -> bool {
+    fn try_fifo_add(&mut self, bus: &Bus) -> bool {
         if self.fifo.len() > MAX_FIFO_BG_SIZE {
             return false;
         }
