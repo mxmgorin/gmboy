@@ -146,10 +146,6 @@ impl SpriteFetcher {
                     lcd.sp1_colors[color_index]
                 };
 
-                if color_index != 0 {
-                    break;
-                }
-
                 return Some(Pixel::new(color, color_index.into()));
             }
         }
