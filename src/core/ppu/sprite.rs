@@ -54,11 +54,11 @@ impl SpriteFetcher {
         }
     }
 
-    pub fn fetch_sprite_tiles(&mut self, lcd: &Lcd, fetch_x: u8) {
+    pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
 
         for sprite in self.line_sprites.iter() {
-            let sp_x = (sprite.x - 8) + (lcd.scroll_x % 8);
+            let sp_x = (sprite.x - 8) + (scroll_x % 8);
 
             if (sp_x >= fetch_x && sp_x < fetch_x + 8)
                 || (sp_x + 8 >= fetch_x && sp_x + 8 < fetch_x + 8)

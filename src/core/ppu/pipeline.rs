@@ -95,7 +95,7 @@ impl Pipeline {
 
                 if bus.io.lcd.control.obj_enabled() {
                     self.sprite_fetcher
-                        .fetch_sprite_tiles(&bus.io.lcd, self.fetch_x);
+                        .fetch_sprite_tiles(bus.io.lcd.scroll_x, self.fetch_x);
                 }
 
                 self.state = PipelineState::Data0;
