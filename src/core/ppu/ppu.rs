@@ -44,7 +44,7 @@ impl Ppu {
 
         match bus.io.lcd.status.mode() {
             LcdMode::Oam => self.mode_oam(bus),
-            LcdMode::Xfer => self.mode_xfer(bus),
+            LcdMode::Transfer => self.mode_transfer(bus),
             LcdMode::HBlank => self.mode_hblank(&mut bus.io),
             LcdMode::VBlank => self.mode_vblank(&mut bus.io),
         }
@@ -52,7 +52,7 @@ impl Ppu {
 
     pub fn mode_oam(&mut self, bus: &mut Bus) {
         if self.pipeline.line_ticks >= 80 {
-            bus.io.lcd.status.mode_set(LcdMode::Xfer);
+            bus.io.lcd.status.mode_set(LcdMode::Transfer);
             self.pipeline.state = PipelineState::Tile;
             self.pipeline.line_x = 0;
             self.pipeline.fetch_x = 0;
@@ -104,7 +104,7 @@ impl Ppu {
         }
     }
 
-    fn mode_xfer(&mut self, bus: &mut Bus) {
+    fn mode_transfer(&mut self, bus: &mut Bus) {
         self.pipeline.process(bus);
 
         if self.pipeline.pushed_x >= LCD_X_RES {

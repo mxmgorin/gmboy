@@ -1,7 +1,7 @@
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::oam::OamItem;
-use crate::ppu::tile::{get_color_index, Pixel, PixelColor, TILE_BITS_COUNT, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_WIDTH};
+use crate::ppu::tile::{get_color_index, Pixel, PixelColor, TILE_BITS_COUNT, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_TABLE_START, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::collections::VecDeque;
 
@@ -16,7 +16,7 @@ pub struct Pipeline {
     pub pushed_x: u8,
     pub fetch_x: u8,
     pub bgw_fetch_data: [u8; 3],
-    pub fetch_entry_data: [u8; 6],
+    pub obj_fetch_data: [u8; 6],
     pub map_y: u8,
     pub map_x: u8,
     pub tile_y: u8,
@@ -39,7 +39,7 @@ impl Default for Pipeline {
             pushed_x: 0,
             fetch_x: 0,
             bgw_fetch_data: [0; 3],
-            fetch_entry_data: [0; 6],
+            obj_fetch_data: [0; 6],
             map_y: 0,
             map_x: 0,
             tile_y: 0,
@@ -67,10 +67,10 @@ impl Pipeline {
             self.fetch(bus);
         }
 
-        self.buffer_pixel(bus);
+        self.push_pixel(bus);
     }
 
-    fn buffer_pixel(&mut self, bus: &Bus) {
+    fn push_pixel(&mut self, bus: &Bus) {
         if self.fifo.len() > MAX_FIFO_BG_SIZE {
             let pixel = self.fifo.pop_front().unwrap();
 
@@ -190,8 +190,8 @@ impl Pipeline {
                 bit = offset
             }
 
-            let byte1 = self.fetch_entry_data[i * 2];
-            let byte2 = self.fetch_entry_data[i * 2 + 1];
+            let byte1 = self.obj_fetch_data[i * 2];
+            let byte2 = self.obj_fetch_data[(i * 2) + 1];
             let color_index = get_color_index(byte1, byte2, bit as u8);
 
             if color_index == 0 {
@@ -216,11 +216,11 @@ impl Pipeline {
     }
 
     fn load_sprite_data(&mut self, bus: &Bus, offset: u8) {
-        let cur_y = bus.io.lcd.ly;
-        let sprite_height = bus.io.lcd.control.obj_height();
+        let cur_y = bus.io.lcd.ly as usize;
+        let sprite_height = bus.io.lcd.control.obj_height() as usize;
 
         for (i, sprite) in self.fetched_sprites.iter().enumerate() {
-            let mut tile_y = ((cur_y + TILE_BIT_SIZE as u8) - sprite.y) * TILE_LINE_BYTES_COUNT as u8;
+            let mut tile_y = cur_y.wrapping_add(TILE_BIT_SIZE as usize).wrapping_sub(sprite.y as usize).wrapping_mul(TILE_LINE_BYTES_COUNT);
 
             if sprite.f_y_flip() {
                 tile_y = ((sprite_height * 2) - 2) - tile_y;
@@ -233,8 +233,9 @@ impl Pipeline {
                 sprite.tile_index
             };
 
-            let addr = 0x8000 + (tile_index as u16 * 16) + tile_y as u16 + offset as u16;
-            self.fetch_entry_data[(i * 2) + offset as usize] = bus.read(addr);
+            let tile_start_addr = TILE_TABLE_START.wrapping_add(tile_index as u16 * TILE_BIT_SIZE);
+            let addr = tile_start_addr.wrapping_add(tile_y as u16).wrapping_add(offset as u16);
+            self.obj_fetch_data[(i * 2) + offset as usize] = bus.read(addr);
         }
     }
 

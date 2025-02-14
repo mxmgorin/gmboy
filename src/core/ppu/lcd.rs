@@ -214,7 +214,7 @@ pub enum LcdMode {
     HBlank,
     VBlank,
     Oam,
-    Xfer,
+    Transfer,
 }
 
 #[derive(Copy, Clone)]
@@ -231,7 +231,7 @@ impl From<u8> for LcdMode {
             0 => LcdMode::HBlank,
             1 => LcdMode::VBlank,
             2 => LcdMode::Oam,
-            3 => LcdMode::Xfer,
+            3 => LcdMode::Transfer,
             _ => unreachable!(),
         }
     }
