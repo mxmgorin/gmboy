@@ -1,6 +1,6 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::tile::PixelColor;
-use crate::{get_bit_flag, set_bit, struct_to_bytes, struct_to_bytes_mut};
+use crate::{get_bit_flag, set_bit};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
 pub const LCD_ADDRESS_END: u16 = 0xFF4B;
@@ -9,7 +9,7 @@ pub const LCD_ADDRESS_END: u16 = 0xFF4B;
 pub const LCD_CONTROL_ADDRESS: u16 = 0xFF40;
 pub const LCD_STATUS_ADDRESS: u16 = 0xFF41;
 pub const LCD_SCROLL_Y_ADDRESS: u16 = 0xFF42;
-pub const LCD_SCROLL_X_ADDRESS: u16 = 0xFF42;
+pub const LCD_SCROLL_X_ADDRESS: u16 = 0xFF43;
 pub const LCD_LY_ADDRESS: u16 = 0xFF44;
 pub const LCD_LY_COMPARE_ADDRESS: u16 = 0xFF45;
 pub const LCD_DMA_ADDRESS: u16 = 0xFF46;
@@ -71,10 +71,21 @@ impl Default for Lcd {
 
 impl Lcd {
     pub fn read(&self, address: u16) -> u8 {
-        let offset = (address - LCD_ADDRESS_START) as usize;
-        let bytes = struct_to_bytes(self);
-
-        bytes[offset]
+        match address {
+            LCD_CONTROL_ADDRESS => self.control.byte,
+            LCD_STATUS_ADDRESS => self.status.byte,
+            LCD_SCROLL_Y_ADDRESS => self.scroll_y,
+            LCD_SCROLL_X_ADDRESS => self.scroll_x,
+            LCD_LY_ADDRESS => self.ly,
+            LCD_LY_COMPARE_ADDRESS => self.ly_compare,
+            LCD_DMA_ADDRESS => self.dma_byte,
+            LCD_BG_PALETTE_ADDRESS => self.bg_palette,
+            LCD_TILE_PALETTE_0_ADDRESS => self.obj_palette[0],
+            LCD_TILE_PALETTE_1_ADDRESS => self.obj_palette[1],
+            LCD_WINDOW_Y_ADDRESS => self.win_y,
+            LCD_WINDOW_X_ADDRESS => self.win_x,
+            _ => unreachable!(),
+        }
     }
 
     pub fn update_palette(&mut self, palette_data: u8, pal: u8) {
@@ -91,16 +102,20 @@ impl Lcd {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let offset = (address - LCD_ADDRESS_START) as usize;
-
-        let self_bytes = struct_to_bytes_mut(self);
-        self_bytes[offset] = value;
-
         match address {
-            0xFF47 => self.update_palette(value, 0),
-            0xFF48 => self.update_palette(value & 0b11111100, 1),
-            0xFF49 => self.update_palette(value & 0b11111100, 2),
-            _ => {}
+            LCD_CONTROL_ADDRESS => self.control.byte = value,
+            LCD_STATUS_ADDRESS => self.status.byte = value,
+            LCD_SCROLL_Y_ADDRESS => self.scroll_y = value,
+            LCD_SCROLL_X_ADDRESS => self.scroll_x = value,
+            LCD_LY_ADDRESS => self.ly = value,
+            LCD_LY_COMPARE_ADDRESS => self.ly_compare = value,
+            LCD_DMA_ADDRESS => self.dma_byte = value,
+            LCD_BG_PALETTE_ADDRESS => self.bg_palette = value,
+            LCD_TILE_PALETTE_0_ADDRESS => self.obj_palette[0] = value,
+            LCD_TILE_PALETTE_1_ADDRESS => self.obj_palette[1] = value,
+            LCD_WINDOW_Y_ADDRESS => self.win_y = value,
+            LCD_WINDOW_X_ADDRESS => self.win_x = value,
+            _ => unreachable!(),
         }
     }
 
