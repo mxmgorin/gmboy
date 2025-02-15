@@ -1,11 +1,9 @@
 use crate::bus::Bus;
-use crate::ppu::tile::{PixelColor, TileData};
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
-use ahash::AHashMap;
 use sdl2::event::Event;
-use sdl2::pixels::{Color, PixelFormat};
+use sdl2::pixels::{Color};
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;

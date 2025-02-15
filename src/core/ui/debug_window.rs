@@ -92,7 +92,7 @@ pub fn allocate_rects_group(len: usize) -> [Vec<Rect>; 4] {
     [recs.clone(), recs.clone(), recs.clone(), recs]
 }
 
-pub fn set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: TileData, x: i32, y: i32) -> [usize; 4] {
+pub fn _set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: TileData, x: i32, y: i32) -> [usize; 4] {
     let mut rects_count: [usize; 4] = [0; 4];
 
     for (line_y, lines) in tile.lines.iter().enumerate() {

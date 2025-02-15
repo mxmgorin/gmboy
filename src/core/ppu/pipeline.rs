@@ -2,7 +2,6 @@ use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
-use crate::ppu::window::Window;
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::collections::VecDeque;
 

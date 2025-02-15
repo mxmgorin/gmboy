@@ -24,14 +24,20 @@ impl Window {
             return None;
         }
 
-        if fetch_x + 7 >= self.x as u16
-            && fetch_x + 7 < self.x as u16 + LCD_Y_RES as u16 + 14
+        let fetch_x = fetch_x + 7;
+
+        if fetch_x >= self.x as u16
+            && fetch_x < self.x as u16 + LCD_Y_RES as u16 + 14
             && bus.io.lcd.ly as u16 >= self.y as u16
             && (bus.io.lcd.ly as u16) < self.y as u16 + LCD_X_RES as u16
         {
             let w_tile_y = self.line_number.wrapping_div(8) as u16;
-            let addr = (bus.io.lcd.control.win_map_area() + fetch_x + 7 - self.x as u16) / 8
-                + (w_tile_y * 32);
+            let area = bus.io.lcd.control.win_map_area();
+            let addr = area
+                .wrapping_add(fetch_x)
+                .wrapping_sub(self.x as u16)
+                .wrapping_div(8)
+                .wrapping_add(w_tile_y * 32);
 
             return Some(bus.read(addr));
         }
