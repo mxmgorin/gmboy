@@ -101,7 +101,7 @@ impl Ppu {
                 io.lcd.status.mode_set(LcdMode::VBlank);
                 io.interrupts.request_interrupt(InterruptType::VBlank);
 
-                if io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
+                if io.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
                     io.interrupts.request_interrupt(InterruptType::LCDStat);
                 }
 

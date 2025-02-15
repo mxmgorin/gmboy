@@ -136,14 +136,14 @@ impl Pipeline {
         let x: i32 = self.fetch_x.wrapping_sub(8 - (bus.io.lcd.scroll_x % 8)) as i32;
 
         for bit in 0..TILE_BITS_COUNT {
-            let bg_color_index = get_color_index(
+            let bgw_color_index = get_color_index(
                 self.bgw_fetched_data.byte1,
                 self.bgw_fetched_data.byte2,
                 bit,
             );
 
-            let bg_pixel = if bus.io.lcd.control.bgw_enabled() {
-                Pixel::new(bus.io.lcd.bg_colors[bg_color_index], bg_color_index.into())
+            let bgw_pixel = if bus.io.lcd.control.bgw_enabled() {
+                Pixel::new(bus.io.lcd.bg_colors[bgw_color_index], bgw_color_index.into())
             } else {
                 Pixel::new(bus.io.lcd.bg_colors[0], 0.into())
             };
@@ -152,12 +152,12 @@ impl Pipeline {
                 let pixel = self.sprite_fetcher.fetch_sprite_pixel(
                     &bus.io.lcd,
                     self.fifo_x,
-                    bg_color_index,
+                    bgw_color_index,
                 );
 
-                pixel.unwrap_or(bg_pixel)
+                pixel.unwrap_or(bgw_pixel)
             } else {
-                bg_pixel
+                bgw_pixel
             };
 
             if x >= 0 {
