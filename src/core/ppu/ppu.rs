@@ -2,7 +2,7 @@ use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{LcdMode, LcdStatSrc};
-use crate::ppu::pipeline::{Pipeline, PipelineState};
+use crate::ppu::pipeline::Pipeline;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -53,11 +53,7 @@ impl Ppu {
     pub fn mode_oam(&mut self, bus: &mut Bus) {
         if self.pipeline.line_ticks >= 80 {
             bus.io.lcd.status.mode_set(LcdMode::Transfer);
-            self.pipeline.state = PipelineState::Tile;
-            self.pipeline.line_x = 0;
-            self.pipeline.fetch_x = 0;
-            self.pipeline.pushed_x = 0;
-            self.pipeline.fifo_x = 0;
+            self.pipeline.reset();
         }
 
         if self.pipeline.line_ticks == 1 {
@@ -70,7 +66,7 @@ impl Ppu {
         self.pipeline.process(bus);
 
         if self.pipeline.pushed_x >= LCD_X_RES {
-            self.pipeline.pixel_fifo.clear();
+            self.pipeline.clear();
             bus.io.lcd.status.mode_set(LcdMode::HBlank);
 
             if bus.io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {

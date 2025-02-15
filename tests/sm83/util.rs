@@ -4,10 +4,10 @@ use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use rusty_gb_emu::cpu::instructions::ExecutableInstruction;
 use rusty_gb_emu::cpu::{Cpu, Flags, Registers};
 use rusty_gb_emu::debugger::{CpuLogType, Debugger};
+use rusty_gb_emu::emu::EmuCtx;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use rusty_gb_emu::emu::EmuCtx;
 
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);

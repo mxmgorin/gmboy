@@ -17,21 +17,20 @@ pub struct BgwFetchedData {
 
 #[derive(Debug, Clone)]
 pub struct Pipeline {
-    pub state: PipelineState,
-    pub line_ticks: usize,
-    pub line_x: u8,
     pub pushed_x: u8,
-    pub fetch_x: u8,
-    pub map_y: u8,
-    pub map_x: u8,
-    pub tile_y: u8,
-    pub fifo_x: u8,
-
-    pub pixel_fifo: VecDeque<Pixel>,
-    pub bgw_fetched_data: BgwFetchedData,
+    pub line_ticks: usize,
     pub sprite_fetcher: SpriteFetcher,
-
     pub buffer: Vec<Pixel>,
+
+    state: PipelineState,
+    line_x: u8,
+    fetch_x: u8,
+    map_y: u8,
+    map_x: u8,
+    tile_y: u8,
+    fifo_x: u8,
+    pixel_fifo: VecDeque<Pixel>,
+    bgw_fetched_data: BgwFetchedData,
 }
 
 impl Default for Pipeline {
@@ -143,7 +142,10 @@ impl Pipeline {
             );
 
             let bgw_pixel = if bus.io.lcd.control.bgw_enabled() {
-                Pixel::new(bus.io.lcd.bg_colors[bgw_color_index], bgw_color_index.into())
+                Pixel::new(
+                    bus.io.lcd.bg_colors[bgw_color_index],
+                    bgw_color_index.into(),
+                )
             } else {
                 Pixel::new(bus.io.lcd.bg_colors[0], 0.into())
             };
@@ -167,6 +169,18 @@ impl Pipeline {
         }
 
         true
+    }
+
+    pub fn reset(&mut self) {
+        self.state = PipelineState::Tile;
+        self.line_x = 0;
+        self.fetch_x = 0;
+        self.pushed_x = 0;
+        self.fifo_x = 0;
+    }
+
+    pub fn clear(&mut self) {
+        self.pixel_fifo.clear();
     }
 
     fn get_bgw_data_addr(&self, lcd: &Lcd) -> u16 {

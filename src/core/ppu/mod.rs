@@ -1,10 +1,10 @@
-pub mod oam;
-pub mod ppu;
-pub mod vram;
-pub mod tile;
 pub mod lcd;
+pub mod oam;
 mod pipeline;
+pub mod ppu;
 mod sprite;
+pub mod tile;
+pub mod vram;
 mod window;
 
 pub use ppu::*;

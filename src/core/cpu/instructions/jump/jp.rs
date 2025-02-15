@@ -12,7 +12,9 @@ pub struct JpInstruction {
 
 impl ExecutableInstruction for JpInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        if self.condition_type.is_none() && fetched_data.source.get_register() == Some(RegisterType::HL) {
+        if self.condition_type.is_none()
+            && fetched_data.source.get_register() == Some(RegisterType::HL)
+        {
             // HL uses and no Cycles
             cpu.registers.pc = fetched_data.value;
         } else {

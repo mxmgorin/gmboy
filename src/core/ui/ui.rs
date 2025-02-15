@@ -3,7 +3,7 @@ use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::event::Event;
-use sdl2::pixels::{Color};
+use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -17,8 +17,6 @@ pub const TILE_ROWS: i32 = 24;
 pub const TILE_COLS: i32 = 16;
 pub const Y_SPACER: i32 = SCALE as i32;
 pub const X_DRAW_START: i32 = (SCALE / 2) as i32;
-
-
 
 pub struct Ui {
     _sdl_context: sdl2::Sdl,
