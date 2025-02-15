@@ -82,18 +82,18 @@ impl SpriteFetcher {
     }
 
     pub fn fetch_sprite_data(&mut self, bus: &Bus, byte_offset: u16) {
-        let cur_y = bus.io.lcd.ly as usize;
-        let sprite_height = bus.io.lcd.control.obj_height() as usize;
+        let cur_y: i32 = bus.io.lcd.ly as i32;
+        let sprite_height: u8 = bus.io.lcd.control.obj_height();
 
         for i in 0..self.fetched_sprites_count {
             let sprite = self.fetched_sprites[i];
-            let mut tile_y = cur_y
-                .wrapping_add(TILE_BIT_SIZE as usize)
-                .wrapping_sub(sprite.y as usize)
-                .wrapping_mul(TILE_LINE_BYTES_COUNT);
+            let mut tile_y: u8 = cur_y
+                .wrapping_add(TILE_BIT_SIZE as i32)
+                .wrapping_sub(sprite.y as i32)
+                .wrapping_mul(TILE_LINE_BYTES_COUNT as i32) as u8;
 
             if sprite.f_y_flip() {
-                tile_y = ((sprite_height * 2) - 2) - tile_y;
+                tile_y = sprite_height.wrapping_mul(2).wrapping_sub(2).wrapping_sub(tile_y);
             }
 
             let tile_index = if sprite_height == 16 {
