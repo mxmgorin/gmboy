@@ -2,6 +2,7 @@ use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::window::Window;
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::collections::VecDeque;
 
@@ -10,7 +11,7 @@ pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
 #[derive(Debug, Clone, Default)]
 pub struct BgwFetchedData {
-    pub addr: u8,
+    pub tile_index: u8,
     pub byte1: u8,
     pub byte2: u8,
 }
@@ -27,7 +28,7 @@ pub struct Pipeline {
     pub tile_y: u8,
     pub fifo_x: u8,
 
-    pub fifo: VecDeque<Pixel>,
+    pub pixel_fifo: VecDeque<Pixel>,
     pub bgw_fetched_data: BgwFetchedData,
     pub sprite_fetcher: SpriteFetcher,
 
@@ -38,7 +39,7 @@ impl Default for Pipeline {
     fn default() -> Pipeline {
         Self {
             state: PipelineState::Tile,
-            fifo: Default::default(),
+            pixel_fifo: Default::default(),
             line_x: 0,
             pushed_x: 0,
             fetch_x: 0,
@@ -55,10 +56,6 @@ impl Default for Pipeline {
 }
 
 impl Pipeline {
-    pub fn reset(&mut self) {
-        self.fifo.clear();
-    }
-
     pub fn process(&mut self, bus: &Bus) {
         self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
         self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
@@ -72,8 +69,8 @@ impl Pipeline {
     }
 
     fn push_pixel(&mut self, bus: &Bus) {
-        if self.fifo.len() > MAX_FIFO_SIZE {
-            let pixel = self.fifo.pop_front().unwrap();
+        if self.pixel_fifo.len() > MAX_FIFO_SIZE {
+            let pixel = self.pixel_fifo.pop_front().unwrap();
 
             if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
                 let index = (self.pushed_x as usize)
@@ -93,10 +90,15 @@ impl Pipeline {
                     let addr = bus.io.lcd.control.bg_map_area()
                         + (self.map_x as u16 / TILE_WIDTH)
                         + ((self.map_y as u16 / TILE_HEIGHT) * 32);
-                    self.bgw_fetched_data.addr = bus.read(addr);
+                    self.bgw_fetched_data.tile_index = bus.read(addr);
+
+                    if let Some(tile) = bus.io.lcd.window.get_tile_index(self.fetch_x as u16, bus) {
+                        self.bgw_fetched_data.tile_index = tile;
+                    }
 
                     if bus.io.lcd.control.bgw_data_area() == 0x8800 {
-                        self.bgw_fetched_data.addr = self.bgw_fetched_data.addr.wrapping_add(128);
+                        self.bgw_fetched_data.tile_index =
+                            self.bgw_fetched_data.tile_index.wrapping_add(128);
                     }
                 }
 
@@ -128,7 +130,7 @@ impl Pipeline {
     }
 
     fn try_fifo_add(&mut self, bus: &Bus) -> bool {
-        if self.fifo.len() > MAX_FIFO_SIZE {
+        if self.pixel_fifo.len() > MAX_FIFO_SIZE {
             return false;
         }
 
@@ -160,7 +162,7 @@ impl Pipeline {
             };
 
             if x >= 0 {
-                self.fifo.push_back(pixel);
+                self.pixel_fifo.push_back(pixel);
                 self.fifo_x += 1;
             }
         }
@@ -171,7 +173,7 @@ impl Pipeline {
     fn get_bgw_data_addr(&self, lcd: &Lcd) -> u16 {
         lcd.control
             .bgw_data_area()
-            .wrapping_add(self.bgw_fetched_data.addr as u16 * 16)
+            .wrapping_add(self.bgw_fetched_data.tile_index as u16 * 16)
             .wrapping_add(self.tile_y as u16)
     }
 }

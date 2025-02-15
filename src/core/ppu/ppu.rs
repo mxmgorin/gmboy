@@ -70,7 +70,7 @@ impl Ppu {
         self.pipeline.process(bus);
 
         if self.pipeline.pushed_x >= LCD_X_RES {
-            self.pipeline.reset();
+            self.pipeline.pixel_fifo.clear();
             bus.io.lcd.status.mode_set(LcdMode::HBlank);
 
             if bus.io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
@@ -86,6 +86,7 @@ impl Ppu {
             if io.lcd.ly as usize >= LINES_PER_FRAME {
                 io.lcd.status.mode_set(LcdMode::Oam);
                 io.lcd.ly = 0;
+                io.lcd.window.line_number = 0;
             }
 
             self.pipeline.line_ticks = 0;
@@ -94,6 +95,10 @@ impl Ppu {
 
     fn mode_hblank(&mut self, io: &mut Io) {
         if self.pipeline.line_ticks >= TICKS_PER_LINE {
+            if io.lcd.window.is_visible(&io.lcd) && io.lcd.window.on(&io.lcd) {
+                io.lcd.window.line_number += 1;
+            }
+
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly >= LCD_Y_RES {

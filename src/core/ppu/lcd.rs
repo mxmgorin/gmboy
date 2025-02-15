@@ -1,5 +1,6 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::tile::PixelColor;
+use crate::ppu::window::Window;
 use crate::{get_bit_flag, set_bit};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
@@ -39,8 +40,7 @@ pub struct Lcd {
     pub dma_byte: u8,
     pub bg_palette: u8,
     pub obj_palette: [u8; 2],
-    pub win_y: u8,
-    pub win_x: u8,
+    pub window: Window,
 
     // Other data
     pub bg_colors: [PixelColor; 4],
@@ -60,8 +60,7 @@ impl Default for Lcd {
             dma_byte: 0,
             bg_palette: 0xFC,
             obj_palette: [0xFF, 0xFF],
-            win_y: 0,
-            win_x: 0,
+            window: Window::default(),
             bg_colors: DEFAULT_COLORS,
             sp1_colors: DEFAULT_COLORS,
             sp2_colors: DEFAULT_COLORS,
@@ -82,8 +81,8 @@ impl Lcd {
             LCD_BG_PALETTE_ADDRESS => self.bg_palette,
             LCD_TILE_PALETTE_0_ADDRESS => self.obj_palette[0],
             LCD_TILE_PALETTE_1_ADDRESS => self.obj_palette[1],
-            LCD_WINDOW_Y_ADDRESS => self.win_y,
-            LCD_WINDOW_X_ADDRESS => self.win_x,
+            LCD_WINDOW_Y_ADDRESS => self.window.y,
+            LCD_WINDOW_X_ADDRESS => self.window.x,
             _ => unreachable!(),
         }
     }
@@ -113,8 +112,8 @@ impl Lcd {
             LCD_BG_PALETTE_ADDRESS => self.bg_palette = value,
             LCD_TILE_PALETTE_0_ADDRESS => self.obj_palette[0] = value,
             LCD_TILE_PALETTE_1_ADDRESS => self.obj_palette[1] = value,
-            LCD_WINDOW_Y_ADDRESS => self.win_y = value,
-            LCD_WINDOW_X_ADDRESS => self.win_x = value,
+            LCD_WINDOW_Y_ADDRESS => self.window.y = value,
+            LCD_WINDOW_X_ADDRESS => self.window.x = value,
             _ => unreachable!(),
         }
     }
