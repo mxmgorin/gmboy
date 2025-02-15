@@ -4,11 +4,12 @@ use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
+use crate::ui::events::{UiEvent, UiEventHandler};
+use sdl2::keyboard::Keycode;
 use std::borrow::Cow;
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
-use crate::ui::events::{UiEvent, UiEventHandler};
 
 #[derive(Debug)]
 pub struct Emu {
@@ -54,10 +55,42 @@ impl EmuCtx {
 }
 
 impl UiEventHandler for Emu {
-    fn on_event(&mut self, event: UiEvent) {
+    fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
         match event {
             UiEvent::Quit => self.running = false,
-            _ => {},
+            UiEvent::KeyDown(keycode) => {
+                if keycode == Keycode::UP {
+                    bus.io.joypad.up = true;
+                }
+
+                if keycode == Keycode::DOWN {
+                    bus.io.joypad.down = true;
+                }
+
+                if keycode == Keycode::LEFT {
+                    bus.io.joypad.left = true;
+                }
+
+                if keycode == Keycode::RIGHT {
+                    bus.io.joypad.right = true;
+                }
+
+                if keycode == Keycode::Z {
+                    bus.io.joypad.b = true;
+                }
+
+                if keycode == Keycode::X {
+                    bus.io.joypad.a = true;
+                }
+
+                if keycode == Keycode::KpEnter {
+                    bus.io.joypad.start = true;
+                }
+
+                if keycode == Keycode::TAB {
+                    bus.io.joypad.select = true;
+                }
+            }
         }
     }
 }
@@ -88,7 +121,7 @@ impl Emu {
                 continue;
             }
 
-            ui.handle_events(self);
+            ui.handle_events(&mut cpu.bus, self);
             cpu.step(&mut self.ctx)?;
 
             if let Some(msg) = self.ctx.get_serial_msg() {

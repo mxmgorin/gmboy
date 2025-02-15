@@ -2,11 +2,13 @@ use crate::bus::Bus;
 use crate::ppu::tile::TileData;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::ui::debug_window::DebugWindow;
-use crate::ui::events::{SdlEventHandler, UiEvent, UiEventHandler};
-use sdl2::pixels::Color;
+use crate::ui::events::{UiEvent, UiEventHandler};
+use sdl2::event::Event;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
+use sdl2::EventPump;
+use sdl2::pixels::Color;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
@@ -26,8 +28,9 @@ const SDL_COLORS: [Color; 4] = [
 
 pub struct Ui {
     _sdl_context: sdl2::Sdl,
+    event_pump: EventPump,
+
     main_canvas: Canvas<Window>,
-    event_handler: SdlEventHandler,
     // pre-allocated for use in draw function
     frame_rects: [Vec<Rect>; 4],
     debug_window: Option<DebugWindow>,
@@ -39,7 +42,11 @@ impl Ui {
         let video_subsystem = sdl_context.video()?;
 
         let main_window = video_subsystem
-            .window("Main Window", LCD_X_RES as u32 * SCALE, LCD_Y_RES as u32 * SCALE)
+            .window(
+                "Main Window",
+                LCD_X_RES as u32 * SCALE,
+                LCD_Y_RES as u32 * SCALE,
+            )
             .position_centered()
             .build()
             .unwrap();
@@ -50,7 +57,7 @@ impl Ui {
         debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
 
         Ok(Ui {
-            event_handler: SdlEventHandler::new(&sdl_context),
+            event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
             //ttf_context,
             main_canvas,
@@ -86,14 +93,28 @@ impl Ui {
         self.main_canvas.present();
     }
 
-    pub fn handle_events(&mut self, event_handler: &mut impl UiEventHandler) {
-        if let Some(window_id) = self.event_handler.handle(event_handler) {
-            if let Some(window) = self.debug_window.as_mut() {
-                if window.canvas.window().id() == window_id {
-                    self.debug_window = None;
-                } else {
-                    event_handler.on_event(UiEvent::Quit);
+    pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
+        for event in self.event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. } => event_handler.on_event(bus, UiEvent::Quit),
+                Event::KeyDown {
+                    keycode: Some(keycode),
+                    ..
+                } => event_handler.on_event(bus, UiEvent::KeyDown(keycode)),
+                Event::Window {
+                    win_event: sdl2::event::WindowEvent::Close,
+                    window_id,
+                    ..
+                } => {
+                    if let Some(window) = self.debug_window.as_mut() {
+                        if window.canvas.window().id() == window_id {
+                            self.debug_window = None;
+                        } else {
+                            event_handler.on_event(bus, UiEvent::Quit);
+                        }
+                    }
                 }
+                _ => {}
             }
         }
     }
