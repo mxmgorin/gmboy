@@ -16,6 +16,7 @@ pub const TARGET_FRAME_DURATION: Duration = Duration::from_millis(TARGET_FRAME_T
 #[derive(Debug, Clone)]
 pub struct Ppu {
     pub current_frame: usize,
+    pub line_ticks: usize,
     pub prev_frame_duration: Duration,
     pub start_duration: Duration,
     pub frame_count: usize,
@@ -34,13 +35,14 @@ impl Default for Ppu {
             frame_count: 0,
             fps: 0,
             instant: Instant::now(),
+            line_ticks: 0,
         }
     }
 }
 
 impl Ppu {
     pub fn tick(&mut self, bus: &mut Bus) {
-        self.pipeline.line_ticks += 1;
+        self.line_ticks += 1;
 
         match bus.io.lcd.status.mode() {
             LcdMode::Oam => self.mode_oam(bus),
@@ -51,19 +53,19 @@ impl Ppu {
     }
 
     pub fn mode_oam(&mut self, bus: &mut Bus) {
-        if self.pipeline.line_ticks >= 80 {
+        if self.line_ticks >= 80 {
             bus.io.lcd.status.mode_set(LcdMode::Transfer);
             self.pipeline.reset();
         }
 
-        if self.pipeline.line_ticks == 1 {
+        if self.line_ticks == 1 {
             // read oam on the first tick only
             self.pipeline.sprite_fetcher.load_line_sprites(bus);
         }
     }
 
     fn mode_transfer(&mut self, bus: &mut Bus) {
-        self.pipeline.process(bus);
+        self.pipeline.process(bus, self.line_ticks);
 
         if self.pipeline.pushed_x >= LCD_X_RES {
             self.pipeline.clear();
@@ -76,7 +78,7 @@ impl Ppu {
     }
 
     fn mode_vblank(&mut self, io: &mut Io) {
-        if self.pipeline.line_ticks >= TICKS_PER_LINE {
+        if self.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly as usize >= LINES_PER_FRAME {
@@ -85,12 +87,12 @@ impl Ppu {
                 io.lcd.window.line_number = 0;
             }
 
-            self.pipeline.line_ticks = 0;
+            self.line_ticks = 0;
         }
     }
 
     fn mode_hblank(&mut self, io: &mut Io) {
-        if self.pipeline.line_ticks >= TICKS_PER_LINE {
+        if self.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly >= LCD_Y_RES {
@@ -108,7 +110,7 @@ impl Ppu {
                 io.lcd.status.mode_set(LcdMode::Oam);
             }
 
-            self.pipeline.line_ticks = 0;
+            self.line_ticks = 0;
         }
     }
 

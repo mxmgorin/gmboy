@@ -18,7 +18,6 @@ pub struct BgwFetchedData {
 #[derive(Debug, Clone)]
 pub struct Pipeline {
     pub pushed_x: u8,
-    pub line_ticks: usize,
     pub sprite_fetcher: SpriteFetcher,
     pub buffer: Vec<Pixel>,
 
@@ -46,7 +45,6 @@ impl Default for Pipeline {
             map_x: 0,
             tile_y: 0,
             fifo_x: 0,
-            line_ticks: 0,
             buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize],
             sprite_fetcher: Default::default(),
         }
@@ -54,12 +52,12 @@ impl Default for Pipeline {
 }
 
 impl Pipeline {
-    pub fn process(&mut self, bus: &Bus) {
+    pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
         self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
         self.tile_y = ((self.map_y % TILE_HEIGHT as u8) % 8) * 2;
 
-        if self.line_ticks & 1 != 0 {
+        if line_ticks & 1 != 0 {
             self.fetch(bus);
         }
 
