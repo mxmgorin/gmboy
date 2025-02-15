@@ -1,3 +1,4 @@
+use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
@@ -31,6 +32,7 @@ pub struct Io {
     pub timer: Timer,
     pub interrupts: Interrupts,
     pub lcd: Lcd,
+    pub joypad: Joypad,
 }
 
 impl Default for Io {
@@ -40,6 +42,7 @@ impl Default for Io {
             timer: Timer::default(),
             interrupts: Interrupts::new(),
             lcd: Lcd::default(),
+            joypad: Default::default(),
         }
     }
 }
@@ -60,8 +63,8 @@ impl Io {
             IoAddressLocation::Timer => self.timer.read(address),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
             IoAddressLocation::Display => self.lcd.read(address),
-            IoAddressLocation::Joypad
-            | IoAddressLocation::Audio
+            IoAddressLocation::Joypad => self.joypad.get_byte(),
+            IoAddressLocation::Audio
             | IoAddressLocation::WavePattern
             | IoAddressLocation::VRAMBankSelect
             | IoAddressLocation::DisableBootROM
@@ -92,8 +95,8 @@ impl Io {
             IoAddressLocation::Timer => self.timer.write(address, value),
             IoAddressLocation::InterruptFlags => self.interrupts.int_flags = value,
             IoAddressLocation::Display => self.lcd.write(address, value),
-            IoAddressLocation::Joypad
-            | IoAddressLocation::Audio
+            IoAddressLocation::Joypad => self.joypad.set_byte(value),
+            IoAddressLocation::Audio
             | IoAddressLocation::WavePattern
             | IoAddressLocation::VRAMBankSelect
             | IoAddressLocation::DisableBootROM
