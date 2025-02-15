@@ -58,37 +58,17 @@ impl UiEventHandler for Emu {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
         match event {
             UiEvent::Quit => self.running = false,
-            UiEvent::KeyDown(keycode) => {
-                if keycode == Keycode::UP {
-                    bus.io.joypad.up = true;
-                }
-
-                if keycode == Keycode::DOWN {
-                    bus.io.joypad.down = true;
-                }
-
-                if keycode == Keycode::LEFT {
-                    bus.io.joypad.left = true;
-                }
-
-                if keycode == Keycode::RIGHT {
-                    bus.io.joypad.right = true;
-                }
-
-                if keycode == Keycode::Z {
-                    bus.io.joypad.b = true;
-                }
-
-                if keycode == Keycode::X {
-                    bus.io.joypad.a = true;
-                }
-
-                if keycode == Keycode::KpEnter {
-                    bus.io.joypad.start = true;
-                }
-
-                if keycode == Keycode::TAB {
-                    bus.io.joypad.select = true;
+            UiEvent::Key(keycode, is_down) => {
+                match keycode {
+                    Keycode::UP => bus.io.joypad.up = is_down,
+                    Keycode::DOWN => bus.io.joypad.down = is_down,
+                    Keycode::LEFT => bus.io.joypad.left = is_down,
+                    Keycode::RIGHT => bus.io.joypad.right = is_down,
+                    Keycode::Z => bus.io.joypad.b = is_down,
+                    Keycode::X => bus.io.joypad.a = is_down,
+                    Keycode::Space => bus.io.joypad.start = is_down,
+                    Keycode::TAB => bus.io.joypad.select = is_down,
+                    _ => (), // Ignore other keycodes
                 }
             }
         }

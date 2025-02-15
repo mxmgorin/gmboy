@@ -100,7 +100,11 @@ impl Ui {
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
-                } => event_handler.on_event(bus, UiEvent::KeyDown(keycode)),
+                } => event_handler.on_event(bus, UiEvent::Key(keycode, true)),
+                Event::KeyUp {
+                    keycode: Some(keycode),
+                    ..
+                } => event_handler.on_event(bus, UiEvent::Key(keycode, false)),
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,

@@ -7,5 +7,5 @@ pub trait UiEventHandler {
 
 pub enum UiEvent {
     Quit,
-    KeyDown(Keycode),
+    Key(Keycode, bool),
 }
