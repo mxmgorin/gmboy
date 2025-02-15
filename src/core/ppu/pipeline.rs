@@ -8,6 +8,13 @@ use std::collections::VecDeque;
 pub const MAX_FIFO_SIZE: usize = 8;
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
+#[derive(Debug, Clone, Default)]
+pub struct BgwFetchedData {
+    pub addr: u8,
+    pub byte1: u8,
+    pub byte2: u8,
+}
+
 #[derive(Debug, Clone)]
 pub struct Pipeline {
     pub state: PipelineState,
@@ -21,7 +28,7 @@ pub struct Pipeline {
     pub fifo_x: u8,
 
     pub fifo: VecDeque<Pixel>,
-    pub bgw_fetch_data: [u8; 3],
+    pub bgw_fetched_data: BgwFetchedData,
     pub sprite_fetcher: SpriteFetcher,
 
     pub buffer: Vec<Pixel>,
@@ -35,7 +42,7 @@ impl Default for Pipeline {
             line_x: 0,
             pushed_x: 0,
             fetch_x: 0,
-            bgw_fetch_data: [0; 3],
+            bgw_fetched_data: Default::default(),
             map_y: 0,
             map_x: 0,
             tile_y: 0,
@@ -86,10 +93,10 @@ impl Pipeline {
                     let addr = bus.io.lcd.control.bg_map_area()
                         + (self.map_x as u16 / TILE_WIDTH)
                         + ((self.map_y as u16 / TILE_HEIGHT) * 32);
-                    self.bgw_fetch_data[0] = bus.read(addr);
+                    self.bgw_fetched_data.addr = bus.read(addr);
 
                     if bus.io.lcd.control.bgw_data_area() == 0x8800 {
-                        self.bgw_fetch_data[0] = self.bgw_fetch_data[0].wrapping_add(128);
+                        self.bgw_fetched_data.addr = self.bgw_fetched_data.addr.wrapping_add(128);
                     }
                 }
 
@@ -102,12 +109,12 @@ impl Pipeline {
                 self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
             }
             PipelineState::Data0 => {
-                self.bgw_fetch_data[1] = bus.read(self.get_bgw_data_addr(&bus.io.lcd));
+                self.bgw_fetched_data.byte1 = bus.read(self.get_bgw_data_addr(&bus.io.lcd));
                 self.sprite_fetcher.fetch_sprite_data(bus, 0);
                 self.state = PipelineState::Data1;
             }
             PipelineState::Data1 => {
-                self.bgw_fetch_data[2] = bus.read(self.get_bgw_data_addr(&bus.io.lcd) + 1);
+                self.bgw_fetched_data.byte2 = bus.read(self.get_bgw_data_addr(&bus.io.lcd) + 1);
                 self.sprite_fetcher.fetch_sprite_data(bus, 1);
                 self.state = PipelineState::Idle;
             }
@@ -128,8 +135,11 @@ impl Pipeline {
         let x: i32 = self.fetch_x.wrapping_sub(8 - (bus.io.lcd.scroll_x % 8)) as i32;
 
         for bit in 0..TILE_BITS_COUNT {
-            let bg_color_index =
-                get_color_index(self.bgw_fetch_data[1], self.bgw_fetch_data[2], bit);
+            let bg_color_index = get_color_index(
+                self.bgw_fetched_data.byte1,
+                self.bgw_fetched_data.byte2,
+                bit,
+            );
 
             let bg_pixel = if bus.io.lcd.control.bgw_enabled() {
                 Pixel::new(bus.io.lcd.bg_colors[bg_color_index], bg_color_index.into())
@@ -161,7 +171,7 @@ impl Pipeline {
     fn get_bgw_data_addr(&self, lcd: &Lcd) -> u16 {
         lcd.control
             .bgw_data_area()
-            .wrapping_add(self.bgw_fetch_data[0] as u16 * 16)
+            .wrapping_add(self.bgw_fetched_data.addr as u16 * 16)
             .wrapping_add(self.tile_y as u16)
     }
 }
