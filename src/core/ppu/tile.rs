@@ -1,5 +1,5 @@
 use crate::hex_to_rgba;
-use crate::ppu::vram::VRAM_ADDR_START;
+use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 
 pub const TILE_TABLE_START: u16 = VRAM_ADDR_START;
 pub const TILE_TABLE_END: u16 = 0x97FF;
@@ -9,6 +9,11 @@ pub const TILE_WIDTH: u16 = 8;
 pub const TILE_HEIGHT: u16 = 8;
 pub const TILE_BITS_COUNT: u8 = 8;
 pub const TILES_COUNT: usize = 384;
+
+pub const TILE_MAP_START_0: u16 = 0x9800;
+pub const TILE_MAP_END_0: u16 = 0x9BFF;
+pub const TILE_MAP_START_1: u16 = 0x9C00;
+pub const TILE_MAP_END_1: u16 = VRAM_ADDR_END;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TileData {

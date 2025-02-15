@@ -1,5 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::ppu::tile::PixelColor;
+use crate::ppu::tile::{PixelColor, TILE_MAP_START_0, TILE_MAP_START_1};
 use crate::ppu::window::Window;
 use crate::{get_bit_flag, set_bit};
 
@@ -131,7 +131,7 @@ impl Lcd {
         if self.window.is_visible(self) && self.window.on(self) {
             self.window.line_number += 1;
         }
-        
+
         self.ly += 1;
 
         if self.ly == self.ly_compare {
@@ -176,9 +176,9 @@ impl LcdControl {
 
     pub fn bg_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 3) {
-            0x9C00
+            TILE_MAP_START_1
         } else {
-            0x9800
+            TILE_MAP_START_0
         }
     }
 
@@ -196,9 +196,9 @@ impl LcdControl {
 
     pub fn win_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 6) {
-            0x9C00
+            TILE_MAP_START_1
         } else {
-            0x9800
+            TILE_MAP_START_0
         }
     }
 
