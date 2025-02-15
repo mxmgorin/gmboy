@@ -124,7 +124,7 @@ impl Iterator for TileLineIterator {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PixelColor {
     hex: u32,
 }

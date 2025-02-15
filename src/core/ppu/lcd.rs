@@ -15,16 +15,16 @@ pub const LCD_LY_ADDRESS: u16 = 0xFF44;
 pub const LCD_LY_COMPARE_ADDRESS: u16 = 0xFF45;
 pub const LCD_DMA_ADDRESS: u16 = 0xFF46;
 pub const LCD_BG_PALETTE_ADDRESS: u16 = 0xFF47;
-pub const LCD_TILE_PALETTE_0_ADDRESS: u16 = 0xFF48;
-pub const LCD_TILE_PALETTE_1_ADDRESS: u16 = 0xFF49;
+pub const LCD_OBJ_PALETTE_0_ADDRESS: u16 = 0xFF48;
+pub const LCD_OBJ_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
 pub const DEFAULT_COLORS: [PixelColor; 4] = [
     PixelColor::from_hex(0xFFFFFFFF),
-    PixelColor::from_hex(0xC0C0C0FF),
-    PixelColor::from_hex(0x444444FF),
-    PixelColor::from_hex(0x000000FF),
+    PixelColor::from_hex(0xFFAAAAAA),
+    PixelColor::from_hex(0xFF555555),
+    PixelColor::from_hex(0xFF000000),
 ];
 
 #[derive(Debug, Clone)]
@@ -79,8 +79,8 @@ impl Lcd {
             LCD_LY_COMPARE_ADDRESS => self.ly_compare,
             LCD_DMA_ADDRESS => self.dma_byte,
             LCD_BG_PALETTE_ADDRESS => self.bg_palette,
-            LCD_TILE_PALETTE_0_ADDRESS => self.obj_palette[0],
-            LCD_TILE_PALETTE_1_ADDRESS => self.obj_palette[1],
+            LCD_OBJ_PALETTE_0_ADDRESS => self.obj_palette[0],
+            LCD_OBJ_PALETTE_1_ADDRESS => self.obj_palette[1],
             LCD_WINDOW_Y_ADDRESS => self.window.y,
             LCD_WINDOW_X_ADDRESS => self.window.x,
             _ => unreachable!(),
@@ -88,16 +88,16 @@ impl Lcd {
     }
 
     pub fn update_palette(&mut self, palette_data: u8, pal: u8) {
-        let p_colors: &mut [PixelColor; 4] = match pal {
+        let colors: &mut [PixelColor; 4] = match pal {
             1 => &mut self.sp1_colors,
             2 => &mut self.sp2_colors,
             _ => &mut self.bg_colors,
         };
 
-        p_colors[0] = DEFAULT_COLORS[(palette_data & 0b11) as usize];
-        p_colors[1] = DEFAULT_COLORS[((palette_data >> 2) & 0b11) as usize];
-        p_colors[2] = DEFAULT_COLORS[((palette_data >> 4) & 0b11) as usize];
-        p_colors[3] = DEFAULT_COLORS[((palette_data >> 6) & 0b11) as usize];
+        colors[0] = DEFAULT_COLORS[(palette_data & 0b11) as usize];
+        colors[1] = DEFAULT_COLORS[((palette_data >> 2) & 0b11) as usize];
+        colors[2] = DEFAULT_COLORS[((palette_data >> 4) & 0b11) as usize];
+        colors[3] = DEFAULT_COLORS[((palette_data >> 6) & 0b11) as usize];
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
@@ -109,9 +109,18 @@ impl Lcd {
             LCD_LY_ADDRESS => self.ly = value,
             LCD_LY_COMPARE_ADDRESS => self.ly_compare = value,
             LCD_DMA_ADDRESS => self.dma_byte = value,
-            LCD_BG_PALETTE_ADDRESS => self.bg_palette = value,
-            LCD_TILE_PALETTE_0_ADDRESS => self.obj_palette[0] = value,
-            LCD_TILE_PALETTE_1_ADDRESS => self.obj_palette[1] = value,
+            LCD_BG_PALETTE_ADDRESS => {
+                self.bg_palette = value;
+                self.update_palette(value, 0);
+            }
+            LCD_OBJ_PALETTE_0_ADDRESS => {
+                self.obj_palette[0] = value;
+                self.update_palette(value, 1);
+            }
+            LCD_OBJ_PALETTE_1_ADDRESS => {
+                self.obj_palette[1] = value;
+                self.update_palette(value, 2);
+            }
             LCD_WINDOW_Y_ADDRESS => self.window.y = value,
             LCD_WINDOW_X_ADDRESS => self.window.x = value,
             _ => unreachable!(),

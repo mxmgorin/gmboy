@@ -2,10 +2,7 @@ use crate::bus::Bus;
 use crate::ppu::tile::{
     TileData, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_WIDTH,
 };
-use crate::ui::{
-    allocate_rects_group, fill_rects, SCALE, SPACER, TILE_COLS, TILE_ROWS,
-    X_DRAW_START, Y_SPACER,
-};
+use crate::ui::{SCALE, SPACER, TILE_COLS, TILE_ROWS, X_DRAW_START, Y_SPACER};
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -40,10 +37,9 @@ impl DebugWindow {
     }
 
     pub fn set_position(&mut self, x: i32, y: i32) {
-        self.canvas.window_mut().set_position(
-            WindowPos::Positioned(x),
-            WindowPos::Positioned(y),
-        );
+        self.canvas
+            .window_mut()
+            .set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
     }
 
     pub fn draw(&mut self, bus: &Bus) {
@@ -86,3 +82,41 @@ impl DebugWindow {
         self.canvas.present();
     }
 }
+
+pub fn allocate_rects_group(len: usize) -> [Vec<Rect>; 4] {
+    let mut recs = Vec::with_capacity(len);
+    for _ in 0..recs.capacity() {
+        recs.push(Rect::new(0, 0, SCALE, SCALE));
+    }
+
+    [recs.clone(), recs.clone(), recs.clone(), recs]
+}
+
+pub fn set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: TileData, x: i32, y: i32) -> [usize; 4] {
+    let mut rects_count: [usize; 4] = [0; 4];
+
+    for (line_y, lines) in tile.lines.iter().enumerate() {
+        for (bit, color_id) in lines.iter_color_ids().enumerate() {
+            let rect = &mut recs[color_id as usize][rects_count[color_id as usize]];
+            rect.x = x + (bit as i32 * SCALE as i32);
+            rect.y = y + (line_y as i32 * SCALE as i32);
+            rects_count[color_id as usize] += 1;
+        }
+    }
+
+    rects_count
+}
+
+pub fn fill_rects(canvas: &mut Canvas<Window>, recs: &[Vec<Rect>; 4], rects_count: [usize; 4]) {
+    for (color_id, rects) in recs.iter().enumerate() {
+        canvas.set_draw_color(SDL_COLORS[color_id]);
+        canvas.fill_rects(&rects[..rects_count[color_id]]).unwrap();
+    }
+}
+
+const SDL_COLORS: [Color; 4] = [
+    Color::WHITE,
+    Color::RGB(170, 170, 170), // Light Gray
+    Color::RGB(85, 85, 85),    // Dark Gray
+    Color::BLACK,
+];

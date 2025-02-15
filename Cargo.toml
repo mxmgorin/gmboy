@@ -13,7 +13,7 @@ default-features = false
 features = ["bundled", "unsafe_textures"]
 
 [dependencies]
-
+ahash = "*"
 
 [dev-dependencies]
 criterion = "*"
