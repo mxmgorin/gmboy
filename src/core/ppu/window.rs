@@ -19,7 +19,7 @@ impl Window {
         lcd.control.win_enable() && self.x <= 166 && self.y < LCD_Y_RES
     }
 
-    pub fn get_tile_index(&self, fetch_x: u16, bus: &Bus) -> Option<u8> {
+    pub fn get_tile_idx(&self, fetch_x: u16, bus: &Bus) -> Option<u8> {
         if !self.is_visible(&bus.io.lcd) {
             return None;
         }

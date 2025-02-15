@@ -10,7 +10,7 @@ pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
 #[derive(Debug, Clone, Default)]
 pub struct BgwFetchedData {
-    pub tile_index: u8,
+    pub tile_idx: u8,
     pub byte1: u8,
     pub byte2: u8,
 }
@@ -86,15 +86,16 @@ impl Pipeline {
                     let addr = bus.io.lcd.control.bg_map_area()
                         + (self.map_x as u16 / TILE_WIDTH)
                         + ((self.map_y as u16 / TILE_HEIGHT) * 32);
-                    self.bgw_fetched_data.tile_index = bus.read(addr);
+                    self.bgw_fetched_data.tile_idx = bus.read(addr);
 
-                    if let Some(tile) = bus.io.lcd.window.get_tile_index(self.fetch_x as u16, bus) {
-                        self.bgw_fetched_data.tile_index = tile;
+                    if let Some(tile_idx) = bus.io.lcd.window.get_tile_idx(self.fetch_x as u16, bus)
+                    {
+                        self.bgw_fetched_data.tile_idx = tile_idx;
                     }
 
                     if bus.io.lcd.control.bgw_data_area() == 0x8800 {
-                        self.bgw_fetched_data.tile_index =
-                            self.bgw_fetched_data.tile_index.wrapping_add(128);
+                        self.bgw_fetched_data.tile_idx =
+                            self.bgw_fetched_data.tile_idx.wrapping_add(128);
                     }
                 }
 
@@ -184,7 +185,7 @@ impl Pipeline {
     fn get_bgw_data_addr(&self, lcd: &Lcd) -> u16 {
         lcd.control
             .bgw_data_area()
-            .wrapping_add(self.bgw_fetched_data.tile_index as u16 * 16)
+            .wrapping_add(self.bgw_fetched_data.tile_idx as u16 * 16)
             .wrapping_add(self.tile_y as u16)
     }
 }
