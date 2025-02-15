@@ -15,3 +15,4 @@ Here are some useful resources for Game Boy development and emulation:
 - **[SM83 Tests](https://github.com/SingleStepTests/sm83)**
 
 - **[GB Test ROMs](https://github.com/retrio/gb-test-roms)**
+- **[mooneye test suite](https://github.com/Gekkio/mooneye-test-suite)**
