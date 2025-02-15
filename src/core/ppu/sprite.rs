@@ -39,14 +39,20 @@ impl SpriteFetcher {
                         self.line_sprites.push_front(ram_sprite.to_owned());
                         continue;
                     }
+                } else {
+                    // first element
+                    self.line_sprites.push_front(ram_sprite.to_owned());
+                    continue;
                 }
-
-                self.line_sprites.push_back(ram_sprite.to_owned());
 
                 // do sorting
                 for i in 0..self.line_sprites.len() {
                     if self.line_sprites[i].x > ram_sprite.x {
                         self.line_sprites.insert(i, ram_sprite.to_owned());
+                        break;
+                    } else if i == (self.line_sprites.len() - 1) {
+                        // last element
+                        self.line_sprites.push_front(ram_sprite.to_owned());
                         break;
                     }
                 }
