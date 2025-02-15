@@ -128,6 +128,10 @@ impl Lcd {
     }
 
     pub fn increment_ly(&mut self, interrupts: &mut Interrupts) {
+        if self.window.is_visible(self) && self.window.on(self) {
+            self.window.line_number += 1;
+        }
+        
         self.ly += 1;
 
         if self.ly == self.ly_compare {

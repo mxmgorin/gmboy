@@ -95,10 +95,6 @@ impl Ppu {
 
     fn mode_hblank(&mut self, io: &mut Io) {
         if self.pipeline.line_ticks >= TICKS_PER_LINE {
-            if io.lcd.window.is_visible(&io.lcd) && io.lcd.window.on(&io.lcd) {
-                io.lcd.window.line_number += 1;
-            }
-
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly >= LCD_Y_RES {
