@@ -18,8 +18,8 @@ pub struct SpriteFetcher {
 impl SpriteFetcher {
     pub fn load_line_sprites(&mut self, bus: &mut Bus) {
         self.line_sprites.clear();
-        let cur_y = bus.io.lcd.ly;
-        let sprite_height = bus.io.lcd.control.obj_height();
+        let cur_y: i32 = bus.io.lcd.ly as i32;
+        let sprite_height = bus.io.lcd.control.obj_height() as i32;
 
         for ram_sprite in bus.oam_ram.items.iter() {
             if ram_sprite.x == 0 {
@@ -32,8 +32,10 @@ impl SpriteFetcher {
                 break;
             }
 
-            if ram_sprite.y <= cur_y + 16 && ram_sprite.y + sprite_height >= cur_y + 16 {
-                // this sprite is on the current line
+            if ram_sprite.y as i32 <= cur_y + 16
+                && ram_sprite.y as i32 + sprite_height >= cur_y + 16
+            {
+                // sprite is on the current line
                 if let Some(line_sprite) = self.line_sprites.front() {
                     if line_sprite.x > ram_sprite.x {
                         self.line_sprites.push_front(ram_sprite.to_owned());
@@ -52,7 +54,7 @@ impl SpriteFetcher {
                         break;
                     } else if i == (self.line_sprites.len() - 1) {
                         // last element
-                        self.line_sprites.push_front(ram_sprite.to_owned());
+                        self.line_sprites.push_back(ram_sprite.to_owned());
                         break;
                     }
                 }
@@ -62,9 +64,12 @@ impl SpriteFetcher {
 
     pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
+        let fetch_x = fetch_x as i32;
 
         for sprite in self.line_sprites.iter() {
-            let sp_x = (sprite.x - 8) + (scroll_x % 8);
+            let sp_x: i32 = (sprite.x as i32)
+                .wrapping_sub(8)
+                .wrapping_add(scroll_x as i32 % 8);
 
             if (sp_x >= fetch_x && sp_x < fetch_x + 8)
                 || (sp_x + 8 >= fetch_x && sp_x + 8 < fetch_x + 8)
@@ -93,7 +98,10 @@ impl SpriteFetcher {
                 .wrapping_mul(TILE_LINE_BYTES_COUNT as i32) as u8;
 
             if sprite.f_y_flip() {
-                tile_y = sprite_height.wrapping_mul(2).wrapping_sub(2).wrapping_sub(tile_y);
+                tile_y = sprite_height
+                    .wrapping_mul(2)
+                    .wrapping_sub(2)
+                    .wrapping_sub(tile_y);
             }
 
             let tile_index = if sprite_height == 16 {
@@ -119,14 +127,16 @@ impl SpriteFetcher {
         bg_color_index: usize,
     ) -> Option<Pixel> {
         for i in 0..self.fetched_sprites_count {
-            let sprite_x = self.fetched_sprites[i].x - 8 + (lcd.scroll_x % 8);
+            let sprite_x: i32 = (self.fetched_sprites[i].x as i32)
+                .wrapping_sub(8)
+                .wrapping_add(lcd.scroll_x as i32 % 8);
 
-            if sprite_x + 8 < fifo_x {
+            if sprite_x + 8 < fifo_x as i32 {
                 // past pixel point already
                 continue;
             }
 
-            let offset: i32 = fifo_x as i32 - sprite_x as i32;
+            let offset: i32 = (fifo_x as i32).wrapping_sub(sprite_x);
 
             if !(0..=7).contains(&offset) {
                 // out of bounds
