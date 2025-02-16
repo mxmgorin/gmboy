@@ -58,3 +58,22 @@ fn test_bits_unused_hwio_gs() {
 
     assert_result(name, category, result);
 }
+
+#[test]
+fn test_instr_daa() {
+    let name = "daa";
+    let category = MooneyeRomCategory::Instr.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_interrupts_ie_push() {
+    let name = "ie_push";
+    let category = MooneyeRomCategory::Interrupts.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}

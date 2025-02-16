@@ -49,7 +49,9 @@ pub fn assert_result(name: &str, category: Option<MooneyeRomCategory>, result: R
 #[derive(Debug, Clone, Copy)]
 pub enum MooneyeRomCategory {
     OamDma,
-    Bits
+    Bits,
+    Instr,
+    Interrupts,
 }
 
 pub fn get_test_rom_path(rom_name: &str, category: Option<MooneyeRomCategory>) -> PathBuf {
@@ -68,7 +70,9 @@ impl Display for MooneyeRomCategory {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let dir = match self {
             MooneyeRomCategory::OamDma => "oam_dma",
-            MooneyeRomCategory::Bits => "bits"
+            MooneyeRomCategory::Bits => "bits",
+            MooneyeRomCategory::Instr => "instr",
+            MooneyeRomCategory::Interrupts => "interrupts",
         };
 
         write!(f, "{}", dir)
