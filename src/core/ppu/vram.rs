@@ -1,9 +1,9 @@
 use crate::ppu::tile::{
-    TileData, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_TABLE_END,
-    TILE_TABLE_START,
+    TileData, TileLineData, BG_TILE_MAP_1_ADDR_END, BG_TILE_MAP_1_ADDR_START,
+    BG_TILE_MAP_2_ADDR_END, BG_TILE_MAP_2_ADDR_START, TILE_BIT_SIZE, TILE_HEIGHT,
+    TILE_LINE_BYTES_COUNT, TILE_SET_2_END, TILE_SET_DATA_1_START,
 };
 
-// Tile data is stored in VRAM in the memory area at $8000-$97FF;
 pub const VRAM_SIZE: usize = 0x2000;
 pub const VRAM_ADDR_START: u16 = 0x8000;
 pub const VRAM_ADDR_END: u16 = 0x9FFF;
@@ -20,9 +20,9 @@ pub enum VRamAddressLocation {
 impl From<u16> for VRamAddressLocation {
     fn from(address: u16) -> Self {
         match address {
-            VRAM_ADDR_START..=TILE_TABLE_END => VRamAddressLocation::ChrRam,
-            0x9800..=0x9BFF => VRamAddressLocation::BgMap1,
-            0x9C00..=0x9FFF => VRamAddressLocation::BgMap2,
+            TILE_SET_DATA_1_START..=TILE_SET_2_END => VRamAddressLocation::ChrRam,
+            BG_TILE_MAP_1_ADDR_START..=BG_TILE_MAP_1_ADDR_END => VRamAddressLocation::BgMap1,
+            BG_TILE_MAP_2_ADDR_START..=BG_TILE_MAP_2_ADDR_END => VRamAddressLocation::BgMap2,
             _ => panic!("Invalid VRAM address: {:X}", address),
         }
     }
@@ -70,7 +70,7 @@ impl VideoRam {
 
     pub fn fill_tiles(&self, tiles: &mut [TileData; 384]) {
         for (i, tile) in tiles.iter_mut().enumerate() {
-            let addr = TILE_TABLE_START + (i as u16 * TILE_BIT_SIZE);
+            let addr = TILE_SET_DATA_1_START + (i as u16 * TILE_BIT_SIZE);
             *tile = self.get_tile(addr);
         }
     }
@@ -85,7 +85,7 @@ impl Iterator for TilesIterator<'_> {
     type Item = TileData;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_address < TILE_TABLE_END {
+        if self.current_address < TILE_SET_2_END {
             let tile = self.video_ram.get_tile(self.current_address);
             self.current_address += TILE_BIT_SIZE;
 

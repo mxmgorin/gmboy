@@ -1,5 +1,8 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::ppu::tile::{PixelColor, TILE_MAP_START_0, TILE_MAP_START_1};
+use crate::ppu::tile::{
+    PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
+    TILE_SET_DATA_2_START,
+};
 use crate::ppu::window::Window;
 use crate::{get_bit_flag, set_bit};
 
@@ -176,17 +179,17 @@ impl LcdControl {
 
     pub fn bg_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 3) {
-            TILE_MAP_START_1
+            BG_TILE_MAP_2_ADDR_START
         } else {
-            TILE_MAP_START_0
+            BG_TILE_MAP_1_ADDR_START
         }
     }
 
     pub fn bgw_data_area(&self) -> u16 {
         if get_bit_flag(self.byte, 4) {
-            0x8000
+            TILE_SET_DATA_1_START
         } else {
-            0x8800
+            TILE_SET_DATA_2_START
         }
     }
 
@@ -196,9 +199,9 @@ impl LcdControl {
 
     pub fn win_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 6) {
-            TILE_MAP_START_1
+            BG_TILE_MAP_2_ADDR_START
         } else {
-            TILE_MAP_START_0
+            BG_TILE_MAP_1_ADDR_START
         }
     }
 

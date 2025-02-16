@@ -1,18 +1,18 @@
 // Object attributes reside in the object attribute memory (OAM) at $FE00-FE9F.
 // Has 40 movable objects.
 
-pub const OAM_ITEMS_COUNT: usize = 40;
+pub const OAM_ENTRIES_COUNT: usize = 40;
 pub const OAM_ADDR_START: usize = 0xFE00;
 
 #[derive(Debug, Clone)]
 pub struct OamRam {
-    pub items: [OamItem; OAM_ITEMS_COUNT],
+    pub entries: [OamEntry; OAM_ENTRIES_COUNT],
 }
 
 impl Default for OamRam {
     fn default() -> Self {
         Self {
-            items: [OamItem::default(); OAM_ITEMS_COUNT],
+            entries: [OamEntry::default(); OAM_ENTRIES_COUNT],
         }
     }
 }
@@ -29,10 +29,10 @@ impl OamRam {
         let (item_index, byte_offset) = self.get_index_and_offset(addr as u16);
 
         match byte_offset {
-            0 => self.items[item_index].y,
-            1 => self.items[item_index].x,
-            2 => self.items[item_index].tile_index,
-            3 => self.items[item_index].flags,
+            0 => self.entries[item_index].y,
+            1 => self.entries[item_index].x,
+            2 => self.entries[item_index].tile_index,
+            3 => self.entries[item_index].flags,
             _ => unreachable!(),
         }
     }
@@ -48,10 +48,10 @@ impl OamRam {
         let (item_index, byte_offset) = self.get_index_and_offset(addr as u16);
 
         match byte_offset {
-            0 => self.items[item_index].y = value,
-            1 => self.items[item_index].x = value,
-            2 => self.items[item_index].tile_index = value,
-            3 => self.items[item_index].flags = value,
+            0 => self.entries[item_index].y = value,
+            1 => self.entries[item_index].x = value,
+            2 => self.entries[item_index].tile_index = value,
+            3 => self.entries[item_index].flags = value,
             _ => unreachable!(),
         };
     }
@@ -73,14 +73,14 @@ impl OamRam {
 //  Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
-pub struct OamItem {
+pub struct OamEntry {
     pub y: u8,
     pub x: u8,
     pub tile_index: u8,
     pub flags: u8,
 }
 
-impl OamItem {
+impl OamEntry {
     pub fn f_cgb_pn(&self) -> u8 {
         self.flags & 0b0000_0111 // Extract bits 0-2
     }

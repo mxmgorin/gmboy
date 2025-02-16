@@ -1,17 +1,17 @@
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
-use crate::ppu::oam::OamItem;
+use crate::ppu::oam::OamEntry;
 use crate::ppu::pipeline::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::tile::{
-    get_color_index, Pixel, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_TABLE_START,
+    get_color_index, Pixel, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
 };
 use std::collections::VecDeque;
 
 #[derive(Debug, Clone, Default)]
 pub struct SpriteFetcher {
-    pub line_sprites: VecDeque<OamItem>,
+    pub line_sprites: VecDeque<OamEntry>,
     pub fetched_sprites_count: usize,
-    pub fetched_sprites: [OamItem; 3], //entries fetched during pipeline.
+    pub fetched_sprites: [OamEntry; 3], //entries fetched during pipeline.
     pub fetched_sprite_data: [u8; 6],
 }
 
@@ -21,7 +21,7 @@ impl SpriteFetcher {
         let cur_y: i32 = bus.io.lcd.ly as i32;
         let sprite_height = bus.io.lcd.control.obj_height() as i32;
 
-        for ram_sprite in bus.oam_ram.items.iter() {
+        for ram_sprite in bus.oam_ram.entries.iter() {
             if ram_sprite.x == 0 {
                 // not visible
                 continue;
@@ -111,7 +111,7 @@ impl SpriteFetcher {
                 sprite.tile_index
             };
 
-            let addr = TILE_TABLE_START
+            let addr = TILE_SET_DATA_1_START
                 .wrapping_add(tile_index as u16 * TILE_BIT_SIZE)
                 .wrapping_add(tile_y as u16)
                 .wrapping_add(byte_offset);

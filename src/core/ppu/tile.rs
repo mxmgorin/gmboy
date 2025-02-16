@@ -1,8 +1,19 @@
 use crate::hex_to_rgba;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 
-pub const TILE_TABLE_START: u16 = VRAM_ADDR_START;
-pub const TILE_TABLE_END: u16 = 0x97FF;
+// Tile sets addresses
+pub const TILE_SET_DATA_1_START: u16 = VRAM_ADDR_START;
+pub const TILE_SET_1_END: u16 = 0x8FFF;
+pub const TILE_SET_DATA_2_START: u16 = 0x8800;
+pub const TILE_SET_2_END: u16 = 0x97FF;
+
+// Tile maps addresses
+pub const BG_TILE_MAP_1_ADDR_START: u16 = 0x9800;
+pub const BG_TILE_MAP_1_ADDR_END: u16 = 0x9BFF;
+pub const BG_TILE_MAP_2_ADDR_START: u16 = 0x9C00;
+pub const BG_TILE_MAP_2_ADDR_END: u16 = VRAM_ADDR_END;
+
+// Tile data info
 pub const TILE_LINE_BYTES_COUNT: usize = 2;
 pub const TILE_BIT_SIZE: u16 = 16;
 pub const TILE_WIDTH: u16 = 8;
@@ -10,11 +21,7 @@ pub const TILE_HEIGHT: u16 = 8;
 pub const TILE_BITS_COUNT: u8 = 8;
 pub const TILES_COUNT: usize = 384;
 
-pub const TILE_MAP_START_0: u16 = 0x9800;
-pub const TILE_MAP_END_0: u16 = 0x9BFF;
-pub const TILE_MAP_START_1: u16 = 0x9C00;
-pub const TILE_MAP_END_1: u16 = VRAM_ADDR_END;
-
+/// Tile Data (Character Data). Tile data contains the actual visual representation of the tiles.
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TileData {
     pub lines: [TileLineData; TILE_HEIGHT as usize],
@@ -146,4 +153,10 @@ impl PixelColor {
     pub fn as_rgba(&self) -> (u8, u8, u8, u8) {
         hex_to_rgba(self.hex)
     }
+}
+
+/// Each entry in the tile map is 1 byte and refers to a tile index in the tile data.
+#[derive(Copy, Clone, Debug, Default)]
+pub struct TileMapEntry {
+    pub tile_idx: u8,
 }
