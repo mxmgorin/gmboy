@@ -56,14 +56,15 @@ impl SpriteFetcher {
         }
     }
 
-    pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
+    pub fn fetch_sprite_tiles(&mut self, _scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
         let fetch_x = fetch_x as i32;
 
         for sprite in self.line_sprites.iter() {
-            let sp_x: i32 = (sprite.x as i32)
-                .wrapping_sub(8)
-                .wrapping_add(scroll_x as i32 % 8);
+            let sp_x: i32 = (sprite.x as i32).wrapping_sub(8);
+            // todo: is it needed?
+            // scroll_x doesn't used for sprites—it only applies to the background
+            //.wrapping_add(scroll_x as i32 % 8);
 
             if (sp_x >= fetch_x && sp_x < fetch_x + 8)
                 || (sp_x + 8 >= fetch_x && sp_x + 8 < fetch_x + 8)
@@ -121,20 +122,15 @@ impl SpriteFetcher {
         bg_color_index: usize,
     ) -> Option<Pixel> {
         for i in 0..self.fetched_sprites_count {
-            let sprite_x: i32 = (self.fetched_sprites[i].x as i32)
-                .wrapping_sub(8)
-                .wrapping_add(lcd.scroll_x as i32 % 8);
+            let sprite_x = self.fetched_sprites[i].x as i32 - 8;
 
             if sprite_x + 8 < fifo_x as i32 {
-                // past pixel point already
-                continue;
+                continue; // Skip past sprites
             }
 
-            let offset: i32 = (fifo_x as i32).wrapping_sub(sprite_x);
-
+            let offset = fifo_x as i32 - sprite_x;
             if !(0..=7).contains(&offset) {
-                // out of bounds
-                continue;
+                continue; // Out of sprite range
             }
 
             let bit = if self.fetched_sprites[i].f_x_flip() {
@@ -148,8 +144,7 @@ impl SpriteFetcher {
             let color_index = get_color_index(byte1, byte2, bit as u8);
 
             if color_index == 0 {
-                // transparent
-                continue;
+                continue; // Transparent
             }
 
             if !self.fetched_sprites[i].f_bgp() || bg_color_index == 0 {
