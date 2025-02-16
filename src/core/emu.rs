@@ -67,7 +67,7 @@ impl UiEventHandler for Emu {
                     Keycode::Z => bus.io.joypad.b = is_down,
                     Keycode::X => bus.io.joypad.a = is_down,
                     Keycode::Space => bus.io.joypad.start = is_down,
-                    Keycode::TAB => bus.io.joypad.select = is_down,
+                    Keycode::LShift | Keycode::RShift => bus.io.joypad.select = is_down,
                     _ => (), // Ignore other keycodes
                 }
             }
@@ -90,7 +90,7 @@ impl Emu {
     pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
         let cart = Cart::new(cart_bytes)?;
         let mut cpu = Cpu::new(Bus::new(cart));
-        let mut ui = Ui::new(true)?;
+        let mut ui = Ui::new(false)?;
         let mut prev_frame = 0;
         let mut last_fps_timestamp = Duration::new(0, 0);
         self.running = true;

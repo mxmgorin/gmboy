@@ -2,7 +2,7 @@
 // Has 40 movable objects.
 
 pub const OAM_ENTRIES_COUNT: usize = 40;
-pub const OAM_ADDR_START: usize = 0xFE00;
+pub const OAM_ADDR_START: u16 = 0xFE00;
 
 #[derive(Debug, Clone)]
 pub struct OamRam {
@@ -19,14 +19,7 @@ impl Default for OamRam {
 
 impl OamRam {
     pub fn read(&self, addr: u16) -> u8 {
-        let addr = addr as usize;
-        let addr = if addr >= OAM_ADDR_START {
-            addr - OAM_ADDR_START
-        } else {
-            addr
-        };
-
-        let (item_index, byte_offset) = self.get_index_and_offset(addr as u16);
+        let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
         match byte_offset {
             0 => self.entries[item_index].y,
@@ -38,14 +31,7 @@ impl OamRam {
     }
 
     pub fn write(&mut self, addr: u16, value: u8) {
-        let addr = addr as usize;
-        let addr = if addr >= OAM_ADDR_START {
-            addr - OAM_ADDR_START
-        } else {
-            addr
-        };
-
-        let (item_index, byte_offset) = self.get_index_and_offset(addr as u16);
+        let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
         match byte_offset {
             0 => self.entries[item_index].y = value,
@@ -58,6 +44,7 @@ impl OamRam {
 
     /// Determine the index in the oam_ram array and the specific byte to update
     fn get_index_and_offset(&self, addr: u16) -> (usize, usize) {
+        let addr = addr - OAM_ADDR_START;
         let item_index = (addr / 4) as usize; // Each `OamItem` is 4 bytes
         let byte_offset = (addr % 4) as usize;
 
