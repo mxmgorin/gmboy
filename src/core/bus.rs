@@ -58,7 +58,7 @@ impl From<u16> for BusAddrLocation {
 #[derive(Debug, Clone)]
 pub struct Bus {
     cart: Cart,
-    ram: Ram,
+    pub ram: Ram,
     pub io: Io,
     flat_mem: Option<Vec<u8>>,
     pub dma: Dma,
