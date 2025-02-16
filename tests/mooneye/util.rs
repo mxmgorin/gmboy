@@ -6,12 +6,12 @@ use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-pub fn run_test_rom(
+pub fn run_mooneye_rom(
     name: &str,
     category: Option<MooneyeRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
-    let path = get_test_rom_path(&format!("{}.gb", name), category);
+    let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
     let mut cpu = Cpu::new(Bus::new(cart));
     let mut ctx = EmuCtx::default();
@@ -37,7 +37,7 @@ pub fn run_test_rom(
 }
 
 pub fn assert_result(name: &str, category: Option<MooneyeRomCategory>, result: Result<(), String>) {
-    let path = get_test_rom_path(&format!("{}.gb", name), category).to_string_lossy().to_string();
+    let path = get_mooneye_rom_path(&format!("{}.gb", name), category).to_string_lossy().to_string();
 
     if let Err(err) = result {
         panic!("{path}: FAILED\n{err}")
@@ -55,7 +55,7 @@ pub enum MooneyeRomCategory {
     Timer,
 }
 
-pub fn get_test_rom_path(rom_name: &str, category: Option<MooneyeRomCategory>) -> PathBuf {
+pub fn get_mooneye_rom_path(rom_name: &str, category: Option<MooneyeRomCategory>) -> PathBuf {
     let mut root = PathBuf::from("tests").join("mooneye").join("acceptance");
 
     if let Some(category) = category {

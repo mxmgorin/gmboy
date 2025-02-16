@@ -6,12 +6,12 @@ use rusty_gb_emu::emu::{read_bytes, EmuCtx};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-pub fn run_test_rom(
+pub fn run_blargg_rom(
     name: &str,
     category: Option<TestRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
-    let path = get_test_rom_path(&format!("{}.gb", name), category);
+    let path = get_blargg_rom_path(&format!("{}.gb", name), category);
     let debugger = Debugger::new(CpuLogType::None, true);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
     let mut cpu = Cpu::new(Bus::new(cart));
@@ -54,7 +54,7 @@ pub enum TestRomCategory {
     MemTiming,
 }
 
-pub fn get_test_rom_path(rom_name: &str, category: Option<TestRomCategory>) -> PathBuf {
+pub fn get_blargg_rom_path(rom_name: &str, category: Option<TestRomCategory>) -> PathBuf {
     let mut root = PathBuf::from("tests").join("blargg").join("roms");
 
     if let Some(category) = category {
