@@ -18,26 +18,13 @@ pub struct Emu {
     ctx: EmuCtx,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EmuCtx {
     pub clock: Clock,
     pub debugger: Option<Debugger>,
 }
 
-impl Default for EmuCtx {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl EmuCtx {
-    pub fn new() -> EmuCtx {
-        Self {
-            clock: Default::default(),
-            debugger: None,
-        }
-    }
-
     pub fn with_debugger(debugger: Debugger) -> EmuCtx {
         Self {
             clock: Default::default(),

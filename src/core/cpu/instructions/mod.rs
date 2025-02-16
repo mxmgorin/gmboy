@@ -64,7 +64,7 @@ mod tests {
         cpu.set_pc(0);
         cpu.clock.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
-        cpu.step(&mut EmuCtx::new()).unwrap();
+        cpu.step(&mut EmuCtx::default()).unwrap();
 
         assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
     }
@@ -84,7 +84,7 @@ mod tests {
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, condition_type, 6, M_CYCLES_BY_OPCODES[opcode]);
             } else {
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 // 6
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -106,11 +106,11 @@ mod tests {
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
             } else if instr.address_mode == AddressMode::D16 {
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 // 1
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -132,7 +132,7 @@ mod tests {
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, condition_type, 3, 2);
             } else {
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 // 3
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -154,7 +154,7 @@ mod tests {
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, condition_type, 5, 2);
             } else {
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -184,7 +184,7 @@ mod tests {
             cpu.set_pc(0);
             cpu.clock.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
-            cpu.step(&mut EmuCtx::new()).unwrap();
+            cpu.step(&mut EmuCtx::default()).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
             let actual = cpu.clock.t_cycles / 4;
 
@@ -207,50 +207,50 @@ mod tests {
         match condition_type {
             ConditionType::NC => {
                 cpu.registers.flags.set(None, None, None, false.into());
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
 
                 cpu.set_pc(0);
                 cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
             }
             ConditionType::C => {
                 cpu.registers.flags.set(None, None, None, false.into());
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
 
                 cpu.set_pc(0);
                 cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
             }
             ConditionType::NZ => {
                 cpu.registers.flags.set(false.into(), None, None, None);
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
 
                 cpu.set_pc(0);
                 cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
             }
             ConditionType::Z => {
                 cpu.registers.flags.set(false.into(), None, None, None);
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
 
                 cpu.set_pc(0);
                 cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
-                cpu.step(&mut EmuCtx::new()).unwrap();
+                cpu.step(&mut EmuCtx::default()).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
             }
         }
