@@ -29,7 +29,7 @@ impl Dma {
         let addr = (bus.dma.src_addr as u16 * 0x100).wrapping_add(bus.dma.dest_addr as u16);
         let value = bus.read(addr);
         bus.oam_ram.write(bus.dma.dest_addr as u16, value);
-        bus.dma.dest_addr += bus.dma.dest_addr.wrapping_add(1);
+        bus.dma.dest_addr = bus.dma.dest_addr.wrapping_add(1);
         bus.dma.is_active = bus.dma.dest_addr < 0xA0; // 160
     }
 }
