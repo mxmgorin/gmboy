@@ -21,42 +21,36 @@ impl SpriteFetcher {
         let cur_y: i32 = bus.io.lcd.ly as i32;
         let sprite_height = bus.io.lcd.control.obj_height() as i32;
 
-        for ram_sprite in bus.oam_ram.entries.iter() {
-            if ram_sprite.x == 0 {
-                // not visible
+        for ram_entry in bus.oam_ram.entries.iter() {
+            if ram_entry.x == 0 {
+                // Not visible (X = 0 means hidden on real hardware)
                 continue;
             }
 
             if self.line_sprites.len() >= MAX_FIFO_SPRITES_SIZE {
-                // max sprites per line
+                // Already reached max sprites per scanline (Game Boy limit = 10)
                 break;
             }
 
-            if ram_sprite.y as i32 <= cur_y + 16
-                && ram_sprite.y as i32 + sprite_height >= cur_y + 16
-            {
-                // sprite is on the current line
-                if let Some(line_sprite) = self.line_sprites.front() {
-                    if line_sprite.x > ram_sprite.x {
-                        self.line_sprites.push_front(ram_sprite.to_owned());
-                        continue;
+            // Check if the sprite is on the current scanline
+            if ram_entry.y as i32 <= cur_y + 16 && ram_entry.y as i32 + sprite_height > cur_y + 16 {
+                let mut inserted = false;
+
+                // Iterate through sorted list to insert at correct position
+                for i in 0..self.line_sprites.len() {
+                    let current_entry = &self.line_sprites[i];
+
+                    if ram_entry.x < current_entry.x && ram_entry.x != current_entry.x {
+                        // Sort by X first, then by OAM index if X is the same
+                        self.line_sprites.insert(i, ram_entry.to_owned());
+                        inserted = true;
+                        break;
                     }
-                } else {
-                    // first element
-                    self.line_sprites.push_front(ram_sprite.to_owned());
-                    continue;
                 }
 
-                // do sorting
-                for i in 0..self.line_sprites.len() {
-                    if self.line_sprites[i].x > ram_sprite.x {
-                        self.line_sprites.insert(i, ram_sprite.to_owned());
-                        break;
-                    } else if i == (self.line_sprites.len() - 1) {
-                        // last element
-                        self.line_sprites.push_back(ram_sprite.to_owned());
-                        break;
-                    }
+                if !inserted {
+                    // If no earlier insertion, push to the back
+                    self.line_sprites.push_back(ram_entry.to_owned());
                 }
             }
         }
