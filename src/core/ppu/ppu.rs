@@ -58,6 +58,11 @@ impl Ppu {
             self.pipeline.reset();
         }
 
+        // todo:
+        // GB fetches sprites progressively during the first 80 ticks of the scanline, not instantly
+        //if self.line_ticks % 2 == 0 && self.line_ticks < 80 {
+        //    self.pipeline.sprite_fetcher.load_next_sprite(bus);
+        //}
         if self.line_ticks == 1 {
             // read oam on the first tick only
             self.pipeline.sprite_fetcher.load_line_sprites(bus);

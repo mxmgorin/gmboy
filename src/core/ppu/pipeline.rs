@@ -55,7 +55,7 @@ impl Pipeline {
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
         self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
-        self.tile_y = ((self.map_y % TILE_HEIGHT as u8) % 8) * 2;
+        self.tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
 
         if line_ticks & 1 != 0 {
             self.fetch(bus);
@@ -149,17 +149,17 @@ impl Pipeline {
                 Pixel::new(bus.io.lcd.bg_colors[0], 0.into())
             };
 
-            let pixel = if bus.io.lcd.control.obj_enabled() {
-                let pixel = self.sprite_fetcher.fetch_sprite_pixel(
+            let sprite_pixel = if bus.io.lcd.control.obj_enabled() {
+                self.sprite_fetcher.fetch_sprite_pixel(
                     &bus.io.lcd,
                     self.fifo_x,
                     bgw_color_index,
-                );
-
-                pixel.unwrap_or(bgw_pixel)
+                )
             } else {
-                bgw_pixel
+                None
             };
+
+            let pixel = sprite_pixel.unwrap_or(bgw_pixel);
 
             if x >= 0 {
                 self.pixel_fifo.push_back(pixel);
