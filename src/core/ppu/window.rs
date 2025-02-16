@@ -27,19 +27,16 @@ impl Window {
         let fetch_x = fetch_x + 7;
 
         if fetch_x >= self.x as u16
-            && fetch_x < self.x as u16 + LCD_Y_RES as u16 + 14
+            && fetch_x < self.x as u16 + LCD_X_RES as u16 + 14
             && bus.io.lcd.ly as u16 >= self.y as u16
-            && (bus.io.lcd.ly as u16) < self.y as u16 + LCD_X_RES as u16
+            && (bus.io.lcd.ly as u16) < self.y as u16 + LCD_Y_RES as u16
         {
-            let w_tile_y = self.line_number.wrapping_div(8) as u16;
-            let area = bus.io.lcd.control.win_map_area();
-            let addr = area
-                .wrapping_add(fetch_x)
-                .wrapping_sub(self.x as u16)
-                .wrapping_div(8)
-                .wrapping_add(w_tile_y * 32);
+            let w_tile_x = (fetch_x - self.x as u16) / 8; // Convert pixel X to tile X
+            let w_tile_y = (self.line_number / 8) as u16; // Convert pixel Y to tile Y
+            let area = bus.io.lcd.control.win_map_area(); // Get window tile map base address (0x9800 or 0x9C00)
+            let addr = area + w_tile_x + (w_tile_y * 32); // Calculate correct tile map index
 
-            return Some(bus.read(addr));
+            return Some(bus.read(addr)); // Fetch tile index from VRAM
         }
 
         None
