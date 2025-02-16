@@ -3,16 +3,22 @@ use crate::ppu::lcd::Lcd;
 use crate::ppu::oam::OamEntry;
 use crate::ppu::pipeline::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::tile::{
-    get_color_index, Pixel, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
+    get_color_index, Pixel, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
+    TILE_SET_DATA_1_START,
 };
 use std::collections::VecDeque;
+
+#[derive(Debug, Clone, Default, Copy)]
+pub struct SpriteFetchedData {
+    pub tile_line: TileLineData,
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct SpriteFetcher {
     pub line_sprites: VecDeque<OamEntry>,
     pub fetched_sprites_count: usize,
     pub fetched_sprites: [OamEntry; 3], //entries fetched during pipeline.
-    pub fetched_sprite_data: [u8; 6],
+    pub fetched_sprite_data: [SpriteFetchedData; 3],
 }
 
 impl SpriteFetcher {
@@ -111,7 +117,11 @@ impl SpriteFetcher {
                 .wrapping_add(tile_y as u16)
                 .wrapping_add(byte_offset);
 
-            self.fetched_sprite_data[(i * 2) + byte_offset as usize] = bus.read(addr);
+            match byte_offset {
+                0 => self.fetched_sprite_data[i].tile_line.byte1 = bus.read(addr),
+                1 => self.fetched_sprite_data[i].tile_line.byte2 = bus.read(addr),
+                _ => unreachable!(),
+            }
         }
     }
 
@@ -139,9 +149,9 @@ impl SpriteFetcher {
                 offset
             };
 
-            let byte1 = self.fetched_sprite_data[i * 2];
-            let byte2 = self.fetched_sprite_data[(i * 2) + 1];
-            let color_index = get_color_index(byte1, byte2, bit as u8);
+            let data = self.fetched_sprite_data[i];
+            let color_index =
+                get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit as u8);
 
             if color_index == 0 {
                 continue; // Transparent

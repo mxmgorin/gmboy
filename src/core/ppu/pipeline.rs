@@ -150,11 +150,8 @@ impl Pipeline {
             };
 
             let sprite_pixel = if bus.io.lcd.control.obj_enabled() {
-                self.sprite_fetcher.fetch_sprite_pixel(
-                    &bus.io.lcd,
-                    self.fifo_x,
-                    bgw_color_index,
-                )
+                self.sprite_fetcher
+                    .fetch_sprite_pixel(&bus.io.lcd, self.fifo_x, bgw_color_index)
             } else {
                 None
             };
