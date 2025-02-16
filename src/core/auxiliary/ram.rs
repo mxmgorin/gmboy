@@ -5,34 +5,34 @@ const H_RAM_ADDR_START: usize = 0xFF80;
 
 #[derive(Debug, Clone)]
 pub struct Ram {
-    w_ram: [u8; W_RAM_SIZE],
-    h_ram: [u8; H_RAM_SIZE],
+    working_ram: [u8; W_RAM_SIZE],
+    high_ram: [u8; H_RAM_SIZE],
 }
 
 impl Default for Ram {
     fn default() -> Self {
         Self {
-            w_ram: [0; W_RAM_SIZE],
-            h_ram: [0; H_RAM_SIZE],
+            working_ram: [0; W_RAM_SIZE],
+            high_ram: [0; H_RAM_SIZE],
         }
     }
 }
 
 impl Ram {
-    pub fn w_ram_read(&self, addr: u16) -> u8 {
-        self.w_ram[normalize_w_addr(addr)]
+    pub fn working_ram_read(&self, addr: u16) -> u8 {
+        self.working_ram[normalize_w_addr(addr)]
     }
 
-    pub fn w_ram_write(&mut self, addr: u16, val: u8) {
-        self.w_ram[normalize_w_addr(addr)] = val;
+    pub fn working_ram_write(&mut self, addr: u16, val: u8) {
+        self.working_ram[normalize_w_addr(addr)] = val;
     }
 
-    pub fn h_ram_read(&self, addr: u16) -> u8 {
-        self.h_ram[normalize_h_addr(addr)]
+    pub fn high_ram_read(&self, addr: u16) -> u8 {
+        self.high_ram[normalize_h_addr(addr)]
     }
 
-    pub fn h_ram_write(&mut self, addr: u16, val: u8) {
-        self.h_ram[normalize_h_addr(addr)] = val;
+    pub fn high_ram_write(&mut self, addr: u16, val: u8) {
+        self.high_ram[normalize_h_addr(addr)] = val;
     }
 }
 

@@ -34,6 +34,8 @@ pub enum BusAddrLocation {
     IeRegister,
 }
 
+pub const ECHO_MIRROR_OFFSET: u16 = 0x2000;
+
 impl From<u16> for BusAddrLocation {
     fn from(address: u16) -> Self {
         match address {
@@ -107,11 +109,15 @@ impl Bus {
                 self.cart.read(address)
             }
             BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
-                self.ram.w_ram_read(address)
+                self.ram.working_ram_read(address)
             }
-            BusAddrLocation::EchoRam | BusAddrLocation::Unusable => 0,
+            BusAddrLocation::EchoRam => {
+                let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
+                self.ram.working_ram_read(mirrored_addr)
+            }
+            BusAddrLocation::Unusable => 0xFF,
             BusAddrLocation::IoRegisters => self.io.read(address),
-            BusAddrLocation::HRam => self.ram.h_ram_read(address),
+            BusAddrLocation::HRam => self.ram.high_ram_read(address),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register,
         }
     }
@@ -131,7 +137,11 @@ impl Bus {
 
         match location {
             BusAddrLocation::VRAM => self.video_ram.write(address, value),
-            BusAddrLocation::EchoRam | BusAddrLocation::Unusable => {}
+            BusAddrLocation::EchoRam => {
+                let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
+                self.ram.working_ram_write(mirrored_addr, value);
+            }
+            BusAddrLocation::Unusable => {}
             BusAddrLocation::Oam => {
                 if self.dma.is_active {
                     return;
@@ -143,10 +153,10 @@ impl Bus {
                 self.cart.write(address, value)
             }
             BusAddrLocation::WRamBank0 | BusAddrLocation::WRamBank1To7 => {
-                self.ram.w_ram_write(address, value)
+                self.ram.working_ram_write(address, value)
             }
             BusAddrLocation::IoRegisters => self.io.write(address, value),
-            BusAddrLocation::HRam => self.ram.h_ram_write(address, value),
+            BusAddrLocation::HRam => self.ram.high_ram_write(address, value),
             BusAddrLocation::IeRegister => self.io.interrupts.ie_register = value,
         }
     }
