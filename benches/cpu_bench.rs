@@ -54,7 +54,7 @@ pub fn timer_tick(timer: &mut Timer, interrupts: &mut Interrupts) {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut ctx = EmuCtx::new();
+    let mut ctx = EmuCtx::default();
     let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000])); // Pre-allocate memory
     let mut timer = Timer::default();
 
