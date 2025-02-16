@@ -23,6 +23,8 @@ pub const LCD_OBJ_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
 
+const LCD_STATUS_UNUSED_MASK: u8 = 0b1000_0000;
+
 pub const DEFAULT_COLORS: [PixelColor; 4] = [
     PixelColor::from_hex(0xFFFFFFFF),
     PixelColor::from_hex(0xFFAAAAAA),
@@ -106,7 +108,7 @@ impl Lcd {
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte = value,
-            LCD_STATUS_ADDRESS => self.status.byte = value,
+            LCD_STATUS_ADDRESS => self.status.byte = value | LCD_STATUS_UNUSED_MASK,
             LCD_SCROLL_Y_ADDRESS => self.scroll_y = value,
             LCD_SCROLL_X_ADDRESS => self.scroll_x = value,
             LCD_LY_ADDRESS => self.ly = value,

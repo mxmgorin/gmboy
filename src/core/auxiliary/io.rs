@@ -3,29 +3,33 @@ use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
 
-impl TryFrom<u16> for IoAddressLocation {
-    type Error = ();
+const IO_IF_UNUSED_MASK: u8 = 0b1110_0000;
 
-    fn try_from(address: u16) -> Result<Self, Self::Error> {
+impl From<u16> for IoAddress {
+    fn from(address: u16) -> Self {
         match address {
-            0xFF00 => Ok(Self::Joypad),
-            0xFF01 => Ok(Self::SerialSb),
-            0xFF02 => Ok(Self::SerialSc),
-            TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => Ok(Self::Timer),
-            0xFF10..=0xFF26 => Ok(Self::Audio),
-            0xFF30..=0xFF3F => Ok(Self::WavePattern),
-            LCD_ADDRESS_START..=LCD_ADDRESS_END => Ok(Self::Display),
-            0xFF4F => Ok(Self::VRAMBankSelect),
-            0xFF50 => Ok(Self::DisableBootROM),
-            0xFF51..=0xFF55 => Ok(Self::VRAMdma),
-            0xFF68..=0xFF6B => Ok(Self::Background),
-            0xFF70 => Ok(Self::WRAMBankSelect),
-            0xFF0F => Ok(Self::InterruptFlags),
-            _ => Err(()),
+            0xFF00 => Self::Joypad,
+            0xFF01 => Self::SerialSb,
+            0xFF02 => Self::SerialSc,
+            TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => Self::Timer,
+            0xFF10..=0xFF26 => Self::Audio,
+            0xFF30..=0xFF3F => Self::WavePattern,
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => Self::Display,
+            0xFF4F => Self::VRAMBankSelect,
+            0xFF50 => Self::DisableBootROM,
+            0xFF51..=0xFF55 => Self::VRAMdma,
+            0xFF68..=0xFF6B => Self::Background,
+            0xFF70 => Self::WRAMBankSelect,
+            0xFF0F => Self::InterruptFlags,
+            _ => Self::Unused,
         }
     }
 }
 
+// All unreadable bits of I/O registers return 1. In general, all unused bits in I/O registers are
+// unreadable so they return 1. Some exceptions are:
+// - Unknown purpose (if any) registers. Some bits of them can be read and written.
+// - The IE register (only the 5 lower bits are used, but the upper 3 can hold any value).
 #[derive(Debug, Clone)]
 pub struct Io {
     pub serial: Serial,
@@ -49,64 +53,44 @@ impl Default for Io {
 
 impl Io {
     pub fn read(&self, address: u16) -> u8 {
-        let location = IoAddressLocation::try_from(address);
-
-        let Ok(location) = location else {
-            //#[cfg(not(test))]
-            //eprintln!("Can't IO read address {:X}", address);
-            return 0;
-        };
+        let location = IoAddress::from(address);
 
         match location {
-            IoAddressLocation::SerialSb => self.serial.sb,
-            IoAddressLocation::SerialSc => self.serial.sc,
-            IoAddressLocation::Timer => self.timer.read(address),
-            IoAddressLocation::InterruptFlags => self.interrupts.int_flags,
-            IoAddressLocation::Display => self.lcd.read(address),
-            IoAddressLocation::Joypad => self.joypad.get_byte(),
-            IoAddressLocation::Audio
-            | IoAddressLocation::WavePattern
-            | IoAddressLocation::VRAMBankSelect
-            | IoAddressLocation::DisableBootROM
-            | IoAddressLocation::VRAMdma
-            | IoAddressLocation::Background
-            | IoAddressLocation::WRAMBankSelect => {
-                // TODO: Impl
-                //#[cfg(not(test))]
-                //eprintln!("Can't IO read address {:?} {:X}", location, address);
-
-                0
-            }
+            IoAddress::SerialSb => self.serial.sb,
+            IoAddress::SerialSc => self.serial.sc,
+            IoAddress::Timer => self.timer.read(address),
+            IoAddress::InterruptFlags => self.interrupts.int_flags,
+            IoAddress::Display => self.lcd.read(address),
+            IoAddress::Joypad => self.joypad.get_byte(),
+            IoAddress::Audio
+            | IoAddress::Unused
+            | IoAddress::WavePattern
+            | IoAddress::VRAMBankSelect
+            | IoAddress::DisableBootROM
+            | IoAddress::VRAMdma
+            | IoAddress::Background
+            | IoAddress::WRAMBankSelect => 0xFF,
         }
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        let location = IoAddressLocation::try_from(address);
-
-        let Ok(location) = location else {
-            //#[cfg(not(test))]
-            //eprintln!("Can't IO write address {:X}", address);
-            return;
-        };
+        let location = IoAddress::from(address);
 
         match location {
-            IoAddressLocation::SerialSb => self.serial.sb = value,
-            IoAddressLocation::SerialSc => self.serial.sc = value,
-            IoAddressLocation::Timer => self.timer.write(address, value),
-            IoAddressLocation::InterruptFlags => self.interrupts.int_flags = value,
-            IoAddressLocation::Display => self.lcd.write(address, value),
-            IoAddressLocation::Joypad => self.joypad.set_byte(value),
-            IoAddressLocation::Audio
-            | IoAddressLocation::WavePattern
-            | IoAddressLocation::VRAMBankSelect
-            | IoAddressLocation::DisableBootROM
-            | IoAddressLocation::VRAMdma
-            | IoAddressLocation::Background
-            | IoAddressLocation::WRAMBankSelect => {
-                // TODO: Impl
-                //#[cfg(not(test))]
-                //eprintln!("Can't IO write {:?} address {:X}", location, address);
-            }
+            IoAddress::SerialSb => self.serial.sb = value,
+            IoAddress::SerialSc => self.serial.sc = value | SERIAL_SC_UNUSED_MASK,
+            IoAddress::Timer => self.timer.write(address, value),
+            IoAddress::InterruptFlags => self.interrupts.int_flags = value | IO_IF_UNUSED_MASK,
+            IoAddress::Display => self.lcd.write(address, value),
+            IoAddress::Joypad => self.joypad.set_byte(value),
+            IoAddress::Audio
+            | IoAddress::WavePattern
+            | IoAddress::Unused
+            | IoAddress::VRAMBankSelect
+            | IoAddress::DisableBootROM
+            | IoAddress::VRAMdma
+            | IoAddress::Background
+            | IoAddress::WRAMBankSelect => {}
         }
     }
 }
@@ -118,12 +102,13 @@ pub struct Serial {
     /// FF02 — SC: Serial transfer control
     sc: u8,
 }
-
 impl Default for Serial {
     fn default() -> Self {
         Self::new()
     }
 }
+
+const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 
 impl Serial {
     pub fn new() -> Serial {
@@ -142,7 +127,7 @@ impl Serial {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum IoAddressLocation {
+pub enum IoAddress {
     Joypad,
     /// FF01 — SB: Serial transfer data
     SerialSb,
@@ -158,4 +143,5 @@ pub enum IoAddressLocation {
     VRAMdma,
     Background,
     WRAMBankSelect,
+    Unused,
 }

@@ -5,7 +5,8 @@ pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
 pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;
 pub const TIMER_TMA_ADDRESS: u16 = 0xFF06;
 pub const TIMER_TAC_ADDRESS: u16 = 0xFF07;
-pub const TACK_CYCLES: [usize; 4] = [256, 4, 16, 64];
+pub const TIMER_TAC_CYCLES: [usize; 4] = [256, 4, 16, 64];
+pub const TIMER_TAC_UNUSED_MASK: u8 = 0b11111_000;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -90,7 +91,7 @@ impl Timer {
                 self.tma = value;
             }
             TIMER_TAC_ADDRESS => {
-                self.tac = value;
+                self.tac = value | TIMER_TAC_UNUSED_MASK;
             }
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
