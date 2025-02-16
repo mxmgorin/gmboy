@@ -52,6 +52,7 @@ pub enum MooneyeRomCategory {
     Bits,
     Instr,
     Interrupts,
+    Timer,
 }
 
 pub fn get_test_rom_path(rom_name: &str, category: Option<MooneyeRomCategory>) -> PathBuf {
@@ -73,6 +74,7 @@ impl Display for MooneyeRomCategory {
             MooneyeRomCategory::Bits => "bits",
             MooneyeRomCategory::Instr => "instr",
             MooneyeRomCategory::Interrupts => "interrupts",
+            MooneyeRomCategory::Timer => "timer",
         };
 
         write!(f, "{}", dir)

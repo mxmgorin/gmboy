@@ -3,7 +3,7 @@ use std::time::Duration;
 
 mod util;
 
-const TIMEOUT: Duration = Duration::from_secs(15);
+const TIMEOUT: Duration = Duration::from_secs(10);
 
 #[test]
 fn test_oam_dma_basic() {
@@ -73,6 +73,130 @@ fn test_instr_daa() {
 fn test_interrupts_ie_push() {
     let name = "ie_push";
     let category = MooneyeRomCategory::Interrupts.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_timer_div_write() {
+    let name = "div_write";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_timer_rapid_toggle() {
+    let name = "rapid_toggle";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_timer_tim00() {
+    let name = "tim00";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_timer_tim00_div_trigger() {
+    let name = "tim00_div_trigger";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_timer_tim01() {
+    let name = "tim01";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_timer_tim01_div_trigger() {
+    let name = "tim01_div_trigger";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_timer_tim10() {
+    let name = "tim10";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_timer_tim10_div_trigger() {
+    let name = "tim10_div_trigger";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_timer_tim11() {
+    let name = "tim11";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_timer_tim11_div_trigger() {
+    let name = "tim11_div_trigger";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_timer_tima_reload() {
+    let name = "tima_reload";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME: E: 7F!
+#[test]
+fn test_timer_tima_write_reloading() {
+    let name = "tima_write_reloading";
+    let category = MooneyeRomCategory::Timer.into();
+    let result = run_test_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_timer_tma_write_reloading() {
+    let name = "tma_write_reloading";
+    let category = MooneyeRomCategory::Timer.into();
     let result = run_test_rom(name, category, TIMEOUT);
 
     assert_result(name, category, result);
