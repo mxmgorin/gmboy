@@ -8,12 +8,7 @@ pub struct XorInstruction {
 }
 
 impl ExecutableInstruction for XorInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         cpu.registers.a ^= (fetched_data.value & 0xFF) as u8;
         cpu.registers.flags.set(
             (cpu.registers.a == 0).into(),

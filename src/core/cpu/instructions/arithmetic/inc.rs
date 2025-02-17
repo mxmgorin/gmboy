@@ -8,12 +8,7 @@ pub struct IncInstruction {
 }
 
 impl ExecutableInstruction for IncInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let mut value = fetched_data.value.wrapping_add(1);
 
         match fetched_data.dest {

@@ -29,12 +29,7 @@ pub struct DaaInstruction;
 
 // todo: test
 impl ExecutableInstruction for DaaInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 

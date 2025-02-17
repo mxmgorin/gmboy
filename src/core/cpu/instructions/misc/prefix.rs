@@ -27,12 +27,7 @@ pub fn decode_reg(reg: u16) -> Option<RegisterType> {
 }
 
 impl ExecutableInstruction for PrefixInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let op = fetched_data.value;
         let reg = decode_reg(op & 0b111);
 

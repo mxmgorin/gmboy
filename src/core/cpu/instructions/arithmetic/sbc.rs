@@ -16,12 +16,7 @@ pub struct SbcInstruction {
 }
 
 impl ExecutableInstruction for SbcInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };

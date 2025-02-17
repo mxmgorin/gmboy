@@ -5,12 +5,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct RrcaInstruction;
 
 impl ExecutableInstruction for RrcaInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         let b: u8 = cpu.registers.a & 1;
         cpu.registers.a >>= 1;
         cpu.registers.a |= b << 7;

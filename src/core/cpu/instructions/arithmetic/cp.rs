@@ -18,12 +18,7 @@ pub struct CpInstruction {
 }
 
 impl ExecutableInstruction for CpInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let fetched_value_i32 = fetched_data.value as i32;
         let reg_i32 = cpu.registers.a as i32;
         let result: i32 = reg_i32.wrapping_sub(fetched_value_i32);

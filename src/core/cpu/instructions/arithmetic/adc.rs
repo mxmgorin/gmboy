@@ -9,12 +9,7 @@ pub struct AdcInstruction {
 }
 
 impl ExecutableInstruction for AdcInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let DataDestination::Register(_) = fetched_data.dest else {
             unreachable!();
         };

@@ -8,12 +8,7 @@ pub struct DecInstruction {
 }
 
 impl ExecutableInstruction for DecInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let mut value = fetched_data.value.wrapping_sub(1);
 
         match fetched_data.dest {

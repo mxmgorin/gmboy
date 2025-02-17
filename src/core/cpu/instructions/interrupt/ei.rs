@@ -8,12 +8,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct EiInstruction;
 
 impl ExecutableInstruction for EiInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         cpu.enabling_ime = true;
     }
 

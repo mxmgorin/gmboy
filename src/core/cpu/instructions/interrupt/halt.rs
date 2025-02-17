@@ -6,12 +6,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct HaltInstruction;
 
 impl ExecutableInstruction for HaltInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         cpu.is_halted = true;
     }
 

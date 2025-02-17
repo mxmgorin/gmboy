@@ -5,12 +5,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct RlcaInstruction;
 
 impl ExecutableInstruction for RlcaInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         let mut u: u8 = cpu.registers.a;
         let c: bool = (u >> 7) & 1 != 0;
         u = (u << 1) | c as u8;

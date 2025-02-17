@@ -8,12 +8,7 @@ pub struct AndInstruction {
 }
 
 impl ExecutableInstruction for AndInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         cpu.registers.a &= fetched_data.value as u8;
         cpu.registers.flags.set(
             Some(cpu.registers.a == 0),

@@ -8,12 +8,7 @@ pub struct AddInstruction {
 }
 
 impl ExecutableInstruction for AddInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };

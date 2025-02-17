@@ -7,12 +7,7 @@ pub struct OrInstruction {
 }
 
 impl ExecutableInstruction for OrInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         let value = fetched_data.value & 0xFF;
         cpu.registers.a |= value as u8;
         cpu.registers.flags.set(

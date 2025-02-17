@@ -12,12 +12,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct CplInstruction;
 
 impl ExecutableInstruction for CplInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         cpu.registers.a = !cpu.registers.a;
         cpu.registers
             .flags

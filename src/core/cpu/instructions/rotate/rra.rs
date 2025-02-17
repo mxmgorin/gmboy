@@ -21,12 +21,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct RraInstruction;
 
 impl ExecutableInstruction for RraInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         let carry: u8 = cpu.registers.flags.get_c() as u8;
         let new_c: u8 = cpu.registers.a & 1;
 

@@ -11,12 +11,7 @@ pub struct JpInstruction {
 }
 
 impl ExecutableInstruction for JpInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         if self.condition_type.is_none()
             && fetched_data.source.get_register() == Some(RegisterType::HL)
         {

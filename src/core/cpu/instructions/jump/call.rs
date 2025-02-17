@@ -10,12 +10,7 @@ pub struct CallInstruction {
 }
 
 impl ExecutableInstruction for CallInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, true, callback);
     }
 

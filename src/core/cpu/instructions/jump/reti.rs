@@ -25,12 +25,7 @@ impl RetiInstruction {
 }
 
 impl ExecutableInstruction for RetiInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         cpu.bus.io.interrupts.ime = true;
         self.ret_instruction.execute(cpu, callback, fetched_data);
     }

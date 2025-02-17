@@ -9,12 +9,7 @@ pub struct RetInstruction {
 }
 
 impl ExecutableInstruction for RetInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         if self.condition_type.is_some() {
             callback.m_cycles(1, &mut cpu.bus);
         }

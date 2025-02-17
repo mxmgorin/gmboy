@@ -40,12 +40,7 @@ use crate::cpu::{Cpu, CpuCallback};
 use std::fmt::Display;
 
 pub trait ExecutableInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    );
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData);
     fn get_address_mode(&self) -> AddressMode;
 }
 
@@ -89,12 +84,7 @@ pub enum Instruction {
 }
 
 impl ExecutableInstruction for Instruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         match self {
             Instruction::Unknown(opcode) => {
                 panic!("Can't execute an unknown instruction {:X}", opcode)

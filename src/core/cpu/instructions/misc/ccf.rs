@@ -13,12 +13,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct CcfInstruction;
 
 impl ExecutableInstruction for CcfInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         cpu.registers.flags.set(
             None,
             Some(false),

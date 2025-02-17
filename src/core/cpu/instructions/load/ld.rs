@@ -8,12 +8,7 @@ pub struct LdInstruction {
 }
 
 impl ExecutableInstruction for LdInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if self.address_mode.is_hl_spi8() {

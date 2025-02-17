@@ -1,5 +1,5 @@
 use crate::cpu::instructions::{FetchedData, Instruction};
-use crate::cpu::{Cpu};
+use crate::cpu::Cpu;
 use std::borrow::Cow;
 
 #[derive(Debug, Clone)]

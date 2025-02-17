@@ -8,12 +8,7 @@ pub struct RstInstruction {
 }
 
 impl ExecutableInstruction for RstInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         Instruction::goto_addr(cpu, None, self.address, true, callback);
     }
 

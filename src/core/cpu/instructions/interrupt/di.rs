@@ -7,12 +7,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct DiInstruction;
 
 impl ExecutableInstruction for DiInstruction {
-    fn execute(
-        &self,
-        cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         cpu.bus.io.interrupts.ime = false;
     }
 
