@@ -5,9 +5,8 @@ use rusty_gb_emu::cpu::instructions::{
     AddressMode, ExecutableInstruction, Instruction, INSTRUCTIONS_BY_OPCODES,
 };
 use rusty_gb_emu::cpu::interrupts::Interrupts;
-use rusty_gb_emu::cpu::Cpu;
+use rusty_gb_emu::cpu::{Cpu, CpuCycleCallback};
 use rusty_gb_emu::emu::EmuCtx;
-use rusty_gb_emu::ppu::Ppu;
 
 pub fn instructions(cpu: &mut Cpu, ctx: &mut EmuCtx) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
@@ -56,7 +55,7 @@ pub fn timer_tick(timer: &mut Timer, interrupts: &mut Interrupts) {
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut ctx = EmuCtx::default();
-    let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000]), Ppu::default()); // Pre-allocate memory
+    let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000])); // Pre-allocate memory
     let mut timer = Timer::default();
 
     c.bench_function("timer tick", |b| {
@@ -69,3 +68,9 @@ fn criterion_benchmark(c: &mut Criterion) {
 
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
+
+struct Callback;
+
+impl CpuCycleCallback for Callback {
+    fn m_cycles(&mut self, _m_cycles: usize, _bus: &mut Bus) {}
+}

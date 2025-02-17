@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, RegisterType};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{DataDestination, DataSource, FetchedData};
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LdInstruction {
@@ -8,7 +8,12 @@ pub struct LdInstruction {
 }
 
 impl ExecutableInstruction for LdInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if self.address_mode.is_hl_spi8() {
@@ -25,11 +30,11 @@ impl ExecutableInstruction for LdInstruction {
                         cpu.registers.sp.wrapping_add(offset_e as u16),
                     );
 
-                    cpu.clock.m_cycles(1, &mut cpu.bus);
+                    callback.m_cycles(1, &mut cpu.bus);
                 } else {
                     if let DataSource::Register(src_r) = fetched_data.source {
                         if r.is_16bit() && src_r.is_16bit() {
-                            cpu.clock.m_cycles(1, &mut cpu.bus);
+                            callback.m_cycles(1, &mut cpu.bus);
                         }
                     }
 
@@ -40,14 +45,18 @@ impl ExecutableInstruction for LdInstruction {
                 DataSource::Memory(_) => unreachable!(),
                 DataSource::Register(r) | DataSource::MemoryRegister(r, _) => {
                     if r.is_16bit() {
-                        cpu.write_to_memory(addr + 1, ((fetched_data.value >> 8) & 0xFF) as u8);
-                        cpu.write_to_memory(addr, (fetched_data.value & 0xFF) as u8);
+                        cpu.write_to_memory(
+                            addr + 1,
+                            ((fetched_data.value >> 8) & 0xFF) as u8,
+                            callback,
+                        );
+                        cpu.write_to_memory(addr, (fetched_data.value & 0xFF) as u8, callback);
                     } else {
-                        cpu.write_to_memory(addr, fetched_data.value as u8);
+                        cpu.write_to_memory(addr, fetched_data.value as u8, callback);
                     }
                 }
                 DataSource::Immediate => {
-                    cpu.write_to_memory(addr, fetched_data.value as u8);
+                    cpu.write_to_memory(addr, fetched_data.value as u8, callback);
                 }
             },
         }

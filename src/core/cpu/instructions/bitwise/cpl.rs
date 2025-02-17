@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 /// ComPLement accumulator (A = ~A); also called bitwise NOT.
 /// Cycles: 1
@@ -12,7 +12,12 @@ use crate::cpu::instructions::FetchedData;
 pub struct CplInstruction;
 
 impl ExecutableInstruction for CplInstruction {
-    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        _callback: &mut impl CpuCycleCallback,
+        _fetched_data: FetchedData,
+    ) {
         cpu.registers.a = !cpu.registers.a;
         cpu.registers
             .flags

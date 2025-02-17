@@ -4,7 +4,7 @@ use crate::ppu::Ppu;
 
 pub const T_CYCLES_PER_M_CYCLE: usize = 4;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Clock {
     pub t_cycles: usize,
     pub ppu: Ppu,

@@ -1,7 +1,7 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{DataDestination, FetchedData};
 use crate::cpu::stack::Stack;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PushInstruction {
@@ -13,18 +13,23 @@ pub struct PushInstruction {
 // E5: PUSH HL
 // F5: PUSH AF
 impl ExecutableInstruction for PushInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };
 
-        cpu.clock.m_cycles(1, &mut cpu.bus);
+        callback.m_cycles(1, &mut cpu.bus);
 
         let hi = (cpu.registers.read_register(r) >> 8) & 0xFF;
-        Stack::push(cpu, hi as u8);
+        Stack::push(cpu, hi as u8, callback);
 
         let lo = cpu.registers.read_register(r) & 0xFF;
-        Stack::push(cpu, lo as u8);
+        Stack::push(cpu, lo as u8, callback);
     }
 
     fn get_address_mode(&self) -> AddressMode {

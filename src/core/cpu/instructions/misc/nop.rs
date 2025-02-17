@@ -1,12 +1,17 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct NopInstruction;
 
 impl ExecutableInstruction for NopInstruction {
-    fn execute(&self, _cpu: &mut Cpu, _fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        _cpu: &mut Cpu,
+        _callback: &mut impl CpuCycleCallback,
+        _fetched_data: FetchedData,
+    ) {
         // does nothing
     }
 

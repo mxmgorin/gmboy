@@ -1,8 +1,8 @@
 use crate::core::cpu::instructions::{
     AddressMode, ConditionType, ExecutableInstruction, Instruction,
 };
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{FetchedData, RegisterType};
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct JpInstruction {
@@ -11,14 +11,25 @@ pub struct JpInstruction {
 }
 
 impl ExecutableInstruction for JpInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         if self.condition_type.is_none()
             && fetched_data.source.get_register() == Some(RegisterType::HL)
         {
             // HL uses and no Cycles
             cpu.registers.pc = fetched_data.value;
         } else {
-            Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, false);
+            Instruction::goto_addr(
+                cpu,
+                self.condition_type,
+                fetched_data.value,
+                false,
+                callback,
+            );
         }
     }
 

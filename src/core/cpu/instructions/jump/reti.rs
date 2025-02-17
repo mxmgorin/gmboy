@@ -1,7 +1,7 @@
 use crate::core::cpu::instructions::jump::ret::RetInstruction;
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RetiInstruction {
@@ -25,9 +25,14 @@ impl RetiInstruction {
 }
 
 impl ExecutableInstruction for RetiInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         cpu.bus.io.interrupts.ime = true;
-        self.ret_instruction.execute(cpu, fetched_data);
+        self.ret_instruction.execute(cpu, callback, fetched_data);
     }
 
     fn get_address_mode(&self) -> AddressMode {

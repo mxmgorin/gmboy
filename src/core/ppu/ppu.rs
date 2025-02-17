@@ -10,6 +10,7 @@ pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
 pub const LCD_Y_RES: u8 = 144;
 pub const LCD_X_RES: u8 = 160;
+pub const TARGET_FPS_F: f64 = 60.0;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = 1000 / 60;
 
 #[derive(Debug, Clone)]

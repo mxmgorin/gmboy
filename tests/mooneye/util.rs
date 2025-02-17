@@ -2,10 +2,10 @@ use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cart::Cart;
 use rusty_gb_emu::cpu::Cpu;
 use rusty_gb_emu::emu::{read_bytes, EmuCtx};
+use rusty_gb_emu::ppu::Ppu;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use rusty_gb_emu::ppu::Ppu;
 
 pub fn run_mooneye_rom(
     name: &str,
@@ -14,7 +14,7 @@ pub fn run_mooneye_rom(
 ) -> Result<(), String> {
     let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
-    let mut cpu = Cpu::new(Bus::new(cart), Ppu::default());
+    let mut cpu = Cpu::new(Bus::new(cart));
     let mut ctx = EmuCtx::default();
     let instant = Instant::now();
 
@@ -38,7 +38,9 @@ pub fn run_mooneye_rom(
 }
 
 pub fn assert_result(name: &str, category: Option<MooneyeRomCategory>, result: Result<(), String>) {
-    let path = get_mooneye_rom_path(&format!("{}.gb", name), category).to_string_lossy().to_string();
+    let path = get_mooneye_rom_path(&format!("{}.gb", name), category)
+        .to_string_lossy()
+        .to_string();
 
     if let Err(err) = result {
         panic!("{path}: FAILED\n{err}")

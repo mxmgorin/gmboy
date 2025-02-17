@@ -1,9 +1,9 @@
 mod util;
 
-use std::time::Duration;
 use crate::sm83::util::{run_sb_test_cases, run_test_case, Sm83TestCase};
 use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use rusty_gb_emu::cpu::instructions::Instruction;
+use std::time::Duration;
 
 #[test]
 fn test_sm83_all() {
@@ -37,7 +37,7 @@ fn test_sm83_all() {
 #[test]
 fn test_sm83_str_json() {
     println!("{:?}", Duration::default());
-    
+
     let json_data = r#"
     {
         "name": "41 0000 str json",

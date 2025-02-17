@@ -1,7 +1,7 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{DataDestination, FetchedData, RegisterType};
 use crate::cpu::stack::Stack;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PopInstruction {
@@ -13,13 +13,18 @@ pub struct PopInstruction {
 // E1 POP HL
 // F1 POP AF
 impl ExecutableInstruction for PopInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };
 
-        let lo = Stack::pop(cpu) as u16;
-        let hi = Stack::pop(cpu) as u16;
+        let lo = Stack::pop(cpu, callback) as u16;
+        let hi = Stack::pop(cpu, callback) as u16;
         let addr = (hi << 8) | lo;
 
         if r == RegisterType::AF {

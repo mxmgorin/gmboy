@@ -35,12 +35,17 @@ use crate::core::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::core::cpu::instructions::rotate::rra::RraInstruction;
 use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
 use crate::core::cpu::stack::Stack;
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{ConditionType, FetchedData};
+use crate::cpu::{Cpu, CpuCycleCallback};
 use std::fmt::Display;
 
 pub trait ExecutableInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    );
     fn get_address_mode(&self) -> AddressMode;
 }
 
@@ -84,45 +89,50 @@ pub enum Instruction {
 }
 
 impl ExecutableInstruction for Instruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         match self {
             Instruction::Unknown(opcode) => {
                 panic!("Can't execute an unknown instruction {:X}", opcode)
             }
-            Instruction::Nop(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Inc(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Dec(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ld(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Jr(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Daa(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Cpl(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ccf(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Halt(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Xor(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Di(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Jp(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ldh(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Call(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rra(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rla(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rrca(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rlca(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Or(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ret(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Reti(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Ei(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Scf(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Stop(inst) => inst.execute(cpu, fetched_data),
-            Instruction::And(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Push(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Pop(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Cp(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Add(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Sub(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Adc(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Rst(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Prefix(inst) => inst.execute(cpu, fetched_data),
-            Instruction::Sbc(inst) => inst.execute(cpu, fetched_data),
+            Instruction::Nop(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Inc(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Dec(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Ld(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Jr(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Daa(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Cpl(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Ccf(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Halt(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Xor(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Di(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Jp(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Ldh(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Call(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Rra(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Rla(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Rrca(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Rlca(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Or(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Ret(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Reti(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Ei(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Scf(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Stop(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::And(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Push(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Pop(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Cp(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Add(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Sub(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Adc(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Rst(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Prefix(inst) => inst.execute(cpu, callback, fetched_data),
+            Instruction::Sbc(inst) => inst.execute(cpu, callback, fetched_data),
         }
     }
 
@@ -218,13 +228,19 @@ impl Instruction {
     }
 
     /// Costs 1 M-Cycle without push PC and additional 2 M-Cycles with push PC .
-    pub fn goto_addr(cpu: &mut Cpu, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
+    pub fn goto_addr(
+        cpu: &mut Cpu,
+        cond: Option<ConditionType>,
+        addr: u16,
+        push_pc: bool,
+        callback: &mut impl CpuCycleCallback,
+    ) {
         if ConditionType::check_cond(&cpu.registers, cond) {
             if push_pc {
-                Stack::push16(cpu, cpu.registers.pc);
+                Stack::push16(cpu, cpu.registers.pc, callback);
             }
 
-            cpu.set_pc(addr);
+            cpu.set_pc(addr, callback);
         }
     }
 

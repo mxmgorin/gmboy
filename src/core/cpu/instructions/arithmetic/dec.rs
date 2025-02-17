@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct DecInstruction {
@@ -8,20 +8,25 @@ pub struct DecInstruction {
 }
 
 impl ExecutableInstruction for DecInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         let mut value = fetched_data.value.wrapping_sub(1);
 
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if r.is_16bit() {
-                    cpu.clock.m_cycles(1, &mut cpu.bus);
+                    callback.m_cycles(1, &mut cpu.bus);
                 }
 
                 cpu.registers.set_register(r, value);
                 value = cpu.registers.read_register(r);
             }
             DataDestination::Memory(addr) => {
-                cpu.write_to_memory(addr, value as u8);
+                cpu.write_to_memory(addr, value as u8, callback);
             }
         }
 

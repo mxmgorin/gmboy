@@ -1,5 +1,5 @@
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{FetchedData, Instruction};
+use crate::cpu::{Cpu};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone)]
@@ -80,7 +80,7 @@ impl Debugger {
 
         println!(
             "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
-            cpu.clock.t_cycles,
+            0, // todo: clock.t_cycles,
             pc,
             instruction.to_asm_string(cpu, fetched_data),
             opcode,

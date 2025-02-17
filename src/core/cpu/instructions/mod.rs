@@ -42,10 +42,9 @@ mod tests {
     use crate::cpu::instructions::{
         AddressMode, ConditionType, Instruction, RegisterType, INSTRUCTIONS_BY_OPCODES,
     };
-    use crate::cpu::Cpu;
+    use crate::cpu::{Cpu, CpuCycleCallback};
     use crate::emu::EmuCtx;
     use crate::ppu::Ppu;
-    use std::time::Duration;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -59,131 +58,148 @@ mod tests {
         3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4,
     ];
 
+    #[derive(Debug, Default)]
+    struct Callback {
+        pub t_cycles: usize,
+    }
+
+    impl Callback {
+        pub fn get_m_cycles(&self) -> usize {
+            self.t_cycles / 4
+        }
+    }
+
+    impl CpuCycleCallback for Callback {
+        fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
+            self.t_cycles += m_cycles * 4;
+        }
+    }
+
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let mut cpu = Cpu::new(
-            Bus::with_bytes(vec![0; 100000]),
-            Ppu::default(),
-        );
-        cpu.set_pc(0);
-        cpu.clock.t_cycles = 0;
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut callback = Callback::default();
+        cpu.set_pc(0, &mut callback);
+        callback.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
         cpu.step(&mut EmuCtx::default()).unwrap();
 
-        assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+        assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
     }
 
     #[test]
     pub fn test_m_cycles_call() {
-        let mut cpu = Cpu::new(
-            Bus::with_bytes(vec![0; 100000]),
-            Ppu::default(),
-        );
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Call(instr) = *instr else {
                 continue;
             };
+            let mut callback = Callback::default();
 
-            cpu.set_pc(0);
-            cpu.clock.t_cycles = 0;
+            cpu.set_pc(0, &mut callback);
+            callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, condition_type, 6, M_CYCLES_BY_OPCODES[opcode]);
+                assert_for_condition(
+                    &mut cpu,
+                    &mut callback,
+                    condition_type,
+                    6,
+                    M_CYCLES_BY_OPCODES[opcode],
+                );
             } else {
                 cpu.step(&mut EmuCtx::default()).unwrap();
                 // 6
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles_jp() {
-        let mut cpu = Cpu::new(
-            Bus::with_bytes(vec![0; 100000]),
-            Ppu::default(),
-        );
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jp(instr) = *instr else {
                 continue;
             };
 
-            cpu.set_pc(0);
-            cpu.clock.t_cycles = 0;
+            let mut callback = Callback::default();
+            cpu.set_pc(0, &mut callback);
+            callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
+                assert_for_condition(
+                    &mut cpu,
+                    &mut callback,
+                    condition_type,
+                    4,
+                    M_CYCLES_BY_OPCODES[opcode],
+                );
             } else if instr.address_mode == AddressMode::D16 {
                 cpu.step(&mut EmuCtx::default()).unwrap();
                 // 4
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
                 cpu.step(&mut EmuCtx::default()).unwrap();
                 // 1
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles_jr() {
-        let mut cpu = Cpu::new(
-            Bus::with_bytes(vec![0; 100000]),
-            Ppu::default(),
-        );
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jr(instr) = *instr else {
                 continue;
             };
 
-            cpu.set_pc(0);
-            cpu.clock.t_cycles = 0;
+            let mut callback = Callback::default();
+            cpu.set_pc(0, &mut callback);
+            callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, condition_type, 3, 2);
+                assert_for_condition(&mut cpu, &mut callback, condition_type, 3, 2);
             } else {
                 cpu.step(&mut EmuCtx::default()).unwrap();
                 // 3
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles_ret() {
-        let mut cpu = Cpu::new(
-            Bus::with_bytes(vec![0; 100000]),
-            Ppu::default(),
-        );
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Ret(instr) = *instr else {
                 continue;
             };
 
-            cpu.set_pc(0);
-            cpu.clock.t_cycles = 0;
+            let mut callback = Callback::default();
+            cpu.set_pc(0, &mut callback);
+            callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, condition_type, 5, 2);
+                assert_for_condition(&mut cpu, &mut callback, condition_type, 5, 2);
             } else {
                 cpu.step(&mut EmuCtx::default()).unwrap();
                 // 4
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles() {
-        let mut cpu = Cpu::new(
-            Bus::with_bytes(vec![0; 100000]),
-            Ppu::default(),
-        );
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut callback = Callback::default();
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             match instr {
@@ -201,12 +217,12 @@ mod tests {
                 continue; // todo: investigate
             }
 
-            cpu.set_pc(0);
-            cpu.clock.t_cycles = 0;
+            cpu.set_pc(0, &mut callback);
+            callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
             cpu.step(&mut EmuCtx::default()).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
-            let actual = cpu.clock.t_cycles / 4;
+            let actual = callback.t_cycles / 4;
 
             if actual != expected {
                 let msg = format!(
@@ -220,6 +236,7 @@ mod tests {
 
     pub fn assert_for_condition(
         cpu: &mut Cpu,
+        callback: &mut Callback,
         condition_type: ConditionType,
         m_cycles_set: usize,
         m_cycles_not: usize,
@@ -228,50 +245,50 @@ mod tests {
             ConditionType::NC => {
                 cpu.registers.flags.set(None, None, None, false.into());
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_set, callback.t_cycles / 4);
 
-                cpu.set_pc(0);
-                cpu.clock.t_cycles = 0;
+                cpu.set_pc(0, callback);
+                callback.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_not, callback.t_cycles / 4);
             }
             ConditionType::C => {
                 cpu.registers.flags.set(None, None, None, false.into());
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_not, callback.t_cycles / 4);
 
-                cpu.set_pc(0);
-                cpu.clock.t_cycles = 0;
+                cpu.set_pc(0, callback);
+                callback.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_set, callback.t_cycles / 4);
             }
             ConditionType::NZ => {
                 cpu.registers.flags.set(false.into(), None, None, None);
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_set, callback.t_cycles / 4);
 
-                cpu.set_pc(0);
-                cpu.clock.t_cycles = 0;
+                cpu.set_pc(0, callback);
+                callback.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_not, callback.t_cycles / 4);
             }
             ConditionType::Z => {
                 cpu.registers.flags.set(false.into(), None, None, None);
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_not, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_not, callback.t_cycles / 4);
 
-                cpu.set_pc(0);
-                cpu.clock.t_cycles = 0;
+                cpu.set_pc(0, callback);
+                callback.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
                 cpu.step(&mut EmuCtx::default()).unwrap();
-                assert_eq!(m_cycles_set, cpu.clock.t_cycles / 4);
+                assert_eq!(m_cycles_set, callback.t_cycles / 4);
             }
         }
     }

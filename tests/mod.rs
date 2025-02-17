@@ -1,6 +1,6 @@
 mod blargg;
-mod sm83;
 mod mooneye;
+mod sm83;
 
 pub fn print_with_dashes(content: &str) {
     const TOTAL_LEN: usize = 100;

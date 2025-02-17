@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 /// Load High Memory
 #[derive(Debug, Clone, Copy)]
@@ -9,13 +9,18 @@ pub struct LdhInstruction {
 }
 
 impl ExecutableInstruction for LdhInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         match fetched_data.dest {
             DataDestination::Register(_) => {
                 cpu.registers.a = fetched_data.value as u8;
             }
             DataDestination::Memory(addr) => {
-                cpu.write_to_memory(addr | 0xFF00, fetched_data.value as u8)
+                cpu.write_to_memory(addr | 0xFF00, fetched_data.value as u8, callback);
             }
         }
     }

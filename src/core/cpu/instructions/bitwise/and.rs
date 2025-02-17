@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct AndInstruction {
@@ -8,7 +8,12 @@ pub struct AndInstruction {
 }
 
 impl ExecutableInstruction for AndInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        _callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         cpu.registers.a &= fetched_data.value as u8;
         cpu.registers.flags.set(
             Some(cpu.registers.a == 0),

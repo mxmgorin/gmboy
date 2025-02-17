@@ -1,11 +1,16 @@
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, FetchedData};
-use crate::cpu::Cpu;
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RrcaInstruction;
 
 impl ExecutableInstruction for RrcaInstruction {
-    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        _callback: &mut impl CpuCycleCallback,
+        _fetched_data: FetchedData,
+    ) {
         let b: u8 = cpu.registers.a & 1;
         cpu.registers.a >>= 1;
         cpu.registers.a |= b << 7;

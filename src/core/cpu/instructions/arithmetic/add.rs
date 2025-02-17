@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::core::cpu::Cpu;
 use crate::cpu::instructions::{DataDestination, FetchedData, RegisterType};
+use crate::cpu::{Cpu, CpuCycleCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct AddInstruction {
@@ -8,7 +8,12 @@ pub struct AddInstruction {
 }
 
 impl ExecutableInstruction for AddInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    fn execute(
+        &self,
+        cpu: &mut Cpu,
+        callback: &mut impl CpuCycleCallback,
+        fetched_data: FetchedData,
+    ) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };
@@ -17,7 +22,7 @@ impl ExecutableInstruction for AddInstruction {
         let mut reg_val_u32: u32 = reg_val as u32 + fetched_data.value as u32;
 
         if r == RegisterType::SP {
-            cpu.clock.m_cycles(1, &mut cpu.bus);
+            callback.m_cycles(1, &mut cpu.bus);
             reg_val_u32 = cpu
                 .registers
                 .read_register(r)
@@ -33,7 +38,7 @@ impl ExecutableInstruction for AddInstruction {
         let mut c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
 
         if r.is_16bit() {
-            cpu.clock.m_cycles(1, &mut cpu.bus);
+            callback.m_cycles(1, &mut cpu.bus);
             z = None;
             h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
             let n = (reg_val as u32) + (fetched_data.value as u32);
