@@ -110,99 +110,102 @@ impl Timer {
 
 #[cfg(test)]
 mod tests {
-    use crate::auxiliary::clock::T_CYCLES_PER_M_CYCLE;
     use crate::auxiliary::timer::Timer;
     use crate::cpu::interrupts::Interrupts;
 
     #[test]
-    pub fn test_timer_tima_inc_256() {
-        let mut timer = Timer::default();
-        timer.tac = 0b100;
-        let mut interrupts = Interrupts::default();
-
-        for _ in 0..(256 * T_CYCLES_PER_M_CYCLE) {
-            timer.tick(&mut interrupts)
-        }
-
-        assert_eq!(timer.tima, 1);
-    }
-
-    #[test]
-    pub fn test_timer_tima_inc_4() {
+    pub fn test_timer_tima_01() {
         let mut timer = Timer::default();
         timer.tac = 0b101;
+        timer.div = 0;
         let mut interrupts = Interrupts::default();
+        let mut prev_tima = 0;
+        let cycles = 16;
 
-        for _ in 1..=17 {
-            timer.tick(&mut interrupts)
+        for i in 1..=500 {
+            timer.tick(&mut interrupts);
+
+            if prev_tima != timer.tima {
+                assert_eq!(i % cycles, 0);
+            }
+
+            if i == cycles {
+                assert_eq!(timer.tima, (cycles / i) as u8);
+            }
+
+            prev_tima = timer.tima;
         }
-
-        assert_eq!(timer.tima, 1);
     }
 
     #[test]
-    pub fn test_timer_tac_4_tima_not_inc_3() {
-        let mut timer = Timer::default();
-        timer.tac = 0b101;
-        let mut interrupts = Interrupts::default();
-
-        for _ in 0..3 {
-            println!("1");
-            timer.tick(&mut interrupts)
-        }
-
-        assert_eq!(timer.tima, 0);
-    }
-
-    #[test]
-    pub fn test_timer_tac_4_tima_not_inc_2() {
-        let mut timer = Timer::default();
-        timer.tac = 0b101;
-        let mut interrupts = Interrupts::default();
-
-        for _ in 0..1 {
-            timer.tick(&mut interrupts)
-        }
-
-        assert_eq!(timer.tima, 0);
-    }
-
-    #[test]
-    pub fn test_timer_tima_inc_16() {
+    pub fn test_timer_tima_10() {
         let mut timer = Timer::default();
         timer.tac = 0b110;
+        timer.div = 0;
         let mut interrupts = Interrupts::default();
+        let mut prev_tima = 0;
+        let cycles = 64;
 
-        for _ in 0..(16 * T_CYCLES_PER_M_CYCLE) {
-            timer.tick(&mut interrupts)
+        for i in 1..=1000_usize {
+            timer.tick(&mut interrupts);
+
+            if prev_tima != timer.tima {
+                assert_eq!(i % cycles, 0);
+            }
+
+            if i == cycles {
+                assert_eq!(timer.tima, (cycles / i) as u8);
+            }
+
+            prev_tima = timer.tima;
         }
-
-        assert_eq!(timer.tima, 1);
     }
 
     #[test]
-    pub fn test_timer_tima_not_inc_16() {
-        let mut timer = Timer::default();
-        timer.tac = 0b110;
-        let mut interrupts = Interrupts::default();
-
-        for _ in 0..15 {
-            timer.tick(&mut interrupts)
-        }
-
-        assert_eq!(timer.tima, 0);
-    }
-
-    #[test]
-    pub fn test_timer_tima_inc_64() {
+    pub fn test_timer_tima_11() {
         let mut timer = Timer::default();
         timer.tac = 0b111;
+        timer.div = 0;
         let mut interrupts = Interrupts::default();
+        let mut prev_tima = 0;
+        let cycles = 256;
 
-        for _ in 0..(64 * T_CYCLES_PER_M_CYCLE) {
-            timer.tick(&mut interrupts)
+        for i in 1..=10000_usize {
+            timer.tick(&mut interrupts);
+
+            if prev_tima != timer.tima {
+                assert_eq!(i % cycles, 0);
+            }
+
+            if i == cycles {
+                assert_eq!(timer.tima, (cycles / i) as u8);
+            }
+
+            prev_tima = timer.tima;
         }
+    }
 
-        assert_eq!(timer.tima, 1);
+    #[test]
+    pub fn test_timer_tima_00() {
+        let mut timer = Timer::default();
+        timer.tac = 0b100;
+        timer.div = 0;
+        let mut interrupts = Interrupts::default();
+        let mut prev_tima = 0;
+        let cycles = 1024;
+
+        for i in 1..=10000_usize {
+            timer.tick(&mut interrupts);
+
+            if prev_tima != timer.tima {
+                assert_eq!(i % cycles, 0);
+            }
+
+            if i == cycles {
+                assert_eq!(timer.tima, (cycles / i) as u8);
+            }
+
+            prev_tima = timer.tima;
+        }
     }
 }

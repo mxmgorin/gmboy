@@ -318,7 +318,6 @@ mod tests {
     use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
     use crate::cpu::{Cpu, CpuCallback};
-    use crate::ppu::Ppu;
     use crate::LittleEndianBytes;
 
     #[test]

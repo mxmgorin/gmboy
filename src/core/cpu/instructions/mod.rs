@@ -68,7 +68,7 @@ mod tests {
     }
 
     impl CpuCallback for Callback {
-        fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
+        fn m_cycles(&mut self, m_cycles: usize, _bus: &mut Bus) {
             self.t_cycles += m_cycles * 4;
         }
     }
