@@ -45,7 +45,7 @@ impl Default for Ppu {
 }
 
 impl Ppu {
-    pub fn new(target_fps: f64) -> Ppu {
+    pub fn with_fps_limit(target_fps: f64) -> Ppu {
         Self {
             current_frame: 0,
             pipeline: Pipeline::default(),

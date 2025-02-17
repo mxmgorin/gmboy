@@ -57,7 +57,7 @@ impl Io {
 
         match location {
             IoAddress::SerialSb => self.serial.sb,
-            IoAddress::SerialSc => self.serial.sc,
+            IoAddress::SerialSc => self.serial.sc | SERIAL_SC_UNUSED_MASK,
             IoAddress::Timer => self.timer.read(address),
             IoAddress::InterruptFlags => self.interrupts.int_flags,
             IoAddress::Display => self.lcd.read(address),
@@ -78,7 +78,7 @@ impl Io {
 
         match location {
             IoAddress::SerialSb => self.serial.sb = value,
-            IoAddress::SerialSc => self.serial.sc = value | SERIAL_SC_UNUSED_MASK,
+            IoAddress::SerialSc => self.serial.sc = value,
             IoAddress::Timer => self.timer.write(address, value),
             IoAddress::InterruptFlags => self.interrupts.int_flags = value | IO_IF_UNUSED_MASK,
             IoAddress::Display => self.lcd.write(address, value),

@@ -3,7 +3,7 @@ use crate::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::ui::Ui;
 use crate::cpu::{Cpu, CpuCallback};
-use crate::debugger::Debugger;
+use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::keyboard::Keycode;
@@ -25,10 +25,10 @@ pub struct EmuCtx {
 
 impl EmuCtx {
     pub fn with_fps_limit(fps: f64) -> EmuCtx {
-        let ppu = Ppu::new(fps);
+        let ppu = Ppu::with_fps_limit(fps);
 
         Self {
-            clock: Clock::new(ppu),
+            clock: Clock::with_ppu(ppu),
         }
     }
 }
@@ -71,7 +71,7 @@ impl Emu {
 
     pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
         let cart = Cart::new(cart_bytes)?;
-        let debugger = Debugger::new(crate::core::debugger::CpuLogType::Assembly, true);
+        let mut debugger = Debugger::new(CpuLogType::None, true);
         let mut cpu = Cpu::new(Bus::new(cart));
         let mut ui = Ui::new(false)?;
         let mut prev_frame = 0;
@@ -85,22 +85,23 @@ impl Emu {
             }
 
             ui.handle_events(&mut cpu.bus, self);
-            cpu.step(&mut self.ctx, None)?;
+            cpu.step(&mut self.ctx, Some(&mut debugger))?;
 
             if !debugger.get_serial_msg().is_empty() {
                 println!("Serial: {}", debugger.get_serial_msg());
             }
 
-            if prev_frame != self.ctx.clock.ppu.current_frame {
-                ui.draw(&self.ctx.clock.ppu, &cpu.bus);
+            let ppu = self.ctx.clock.ppu.as_mut().unwrap();
+            if prev_frame != ppu.current_frame {
+                ui.draw(ppu, &cpu.bus);
             }
 
-            if (self.ctx.clock.ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
-                println!("FPS: {}", self.ctx.clock.ppu.fps);
-                last_fps_timestamp = self.ctx.clock.ppu.instant.elapsed();
+            if (ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
+                println!("FPS: {}", ppu.fps);
+                last_fps_timestamp = ppu.instant.elapsed();
             }
 
-            prev_frame = self.ctx.clock.ppu.current_frame;
+            prev_frame = ppu.current_frame;
         }
 
         Ok(())
