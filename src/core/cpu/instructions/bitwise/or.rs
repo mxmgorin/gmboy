@@ -1,5 +1,5 @@
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, FetchedData};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct OrInstruction {
@@ -10,7 +10,7 @@ impl ExecutableInstruction for OrInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        _callback: &mut impl CpuCycleCallback,
+        _callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         let value = fetched_data.value & 0xFF;

@@ -1,5 +1,5 @@
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, FetchedData};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RlcaInstruction;
@@ -8,7 +8,7 @@ impl ExecutableInstruction for RlcaInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        _callback: &mut impl CpuCycleCallback,
+        _callback: &mut impl CpuCallback,
         _fetched_data: FetchedData,
     ) {
         let mut u: u8 = cpu.registers.a;

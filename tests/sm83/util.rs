@@ -2,19 +2,22 @@ use crate::print_with_dashes;
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use rusty_gb_emu::cpu::instructions::ExecutableInstruction;
-use rusty_gb_emu::cpu::{Cpu, Flags, Registers};
-use rusty_gb_emu::debugger::{CpuLogType, Debugger};
-use rusty_gb_emu::emu::EmuCtx;
+use rusty_gb_emu::cpu::{Cpu, CpuCallback, Flags, Registers};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+
+pub struct Callback;
+
+impl CpuCallback for Callback {
+    fn m_cycles(&mut self, _m_cycles: usize, _bus: &mut Bus) {}
+}
 
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
 
     let mut cpu = setup_cpu(test_case);
-    let debugger = Debugger::new(CpuLogType::None, false);
-    cpu.step(&mut EmuCtx::with_debugger(debugger)).unwrap();
+    cpu.step(&mut Callback, None).unwrap();
 
     let result = test_case.validate_final_state(&cpu);
 

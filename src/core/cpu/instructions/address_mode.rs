@@ -1,5 +1,5 @@
 use crate::core::cpu::instructions::instruction::RegisterType;
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 impl AddressMode {
     pub fn is_hl_spi8(self) -> bool {
@@ -9,7 +9,7 @@ impl AddressMode {
     pub fn fetch_data(
         cpu: &mut Cpu,
         address_mode: AddressMode,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
     ) -> FetchedData {
         let mut fetched_data = FetchedData::empty();
 
@@ -317,7 +317,7 @@ mod tests {
     use crate::bus::Bus;
     use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
-    use crate::cpu::{Cpu, CpuCycleCallback};
+    use crate::cpu::{Cpu, CpuCallback};
     use crate::ppu::Ppu;
     use crate::LittleEndianBytes;
 
@@ -435,7 +435,7 @@ mod tests {
 
     struct Callback;
 
-    impl CpuCycleCallback for Callback {
+    impl CpuCallback for Callback {
         fn m_cycles(&mut self, _m_cycles: usize, _bus: &mut Bus) {}
     }
 }

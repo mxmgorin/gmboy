@@ -2,7 +2,7 @@ use crate::core::cpu::instructions::{
     AddressMode, ConditionType, ExecutableInstruction, Instruction,
 };
 use crate::cpu::instructions::{FetchedData, RegisterType};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct JpInstruction {
@@ -14,7 +14,7 @@ impl ExecutableInstruction for JpInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         if self.condition_type.is_none()

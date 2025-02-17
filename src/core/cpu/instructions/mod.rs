@@ -42,9 +42,7 @@ mod tests {
     use crate::cpu::instructions::{
         AddressMode, ConditionType, Instruction, RegisterType, INSTRUCTIONS_BY_OPCODES,
     };
-    use crate::cpu::{Cpu, CpuCycleCallback};
-    use crate::emu::EmuCtx;
-    use crate::ppu::Ppu;
+    use crate::cpu::{Cpu, CpuCallback};
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -59,7 +57,7 @@ mod tests {
     ];
 
     #[derive(Debug, Default)]
-    struct Callback {
+    pub struct Callback {
         pub t_cycles: usize,
     }
 
@@ -69,7 +67,7 @@ mod tests {
         }
     }
 
-    impl CpuCycleCallback for Callback {
+    impl CpuCallback for Callback {
         fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
             self.t_cycles += m_cycles * 4;
         }
@@ -83,7 +81,7 @@ mod tests {
         cpu.set_pc(0, &mut callback);
         callback.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
-        cpu.step(&mut EmuCtx::default()).unwrap();
+        cpu.step(&mut callback, None).unwrap();
 
         assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
     }
@@ -110,7 +108,7 @@ mod tests {
                     M_CYCLES_BY_OPCODES[opcode],
                 );
             } else {
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(&mut callback, None).unwrap();
                 // 6
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
@@ -139,11 +137,11 @@ mod tests {
                     M_CYCLES_BY_OPCODES[opcode],
                 );
             } else if instr.address_mode == AddressMode::D16 {
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(&mut callback, None).unwrap();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(&mut callback, None).unwrap();
                 // 1
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
@@ -166,7 +164,7 @@ mod tests {
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, &mut callback, condition_type, 3, 2);
             } else {
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(&mut callback, None).unwrap();
                 // 3
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
@@ -189,7 +187,7 @@ mod tests {
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, &mut callback, condition_type, 5, 2);
             } else {
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(&mut callback, None).unwrap();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
             };
@@ -220,7 +218,7 @@ mod tests {
             cpu.set_pc(0, &mut callback);
             callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
-            cpu.step(&mut EmuCtx::default()).unwrap();
+            cpu.step(&mut callback, None).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
             let actual = callback.t_cycles / 4;
 
@@ -244,50 +242,50 @@ mod tests {
         match condition_type {
             ConditionType::NC => {
                 cpu.registers.flags.set(None, None, None, false.into());
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_set, callback.t_cycles / 4);
 
                 cpu.set_pc(0, callback);
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_not, callback.t_cycles / 4);
             }
             ConditionType::C => {
                 cpu.registers.flags.set(None, None, None, false.into());
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_not, callback.t_cycles / 4);
 
                 cpu.set_pc(0, callback);
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_set, callback.t_cycles / 4);
             }
             ConditionType::NZ => {
                 cpu.registers.flags.set(false.into(), None, None, None);
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_set, callback.t_cycles / 4);
 
                 cpu.set_pc(0, callback);
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_not, callback.t_cycles / 4);
             }
             ConditionType::Z => {
                 cpu.registers.flags.set(false.into(), None, None, None);
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_not, callback.t_cycles / 4);
 
                 cpu.set_pc(0, callback);
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
-                cpu.step(&mut EmuCtx::default()).unwrap();
+                cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_set, callback.t_cycles / 4);
             }
         }

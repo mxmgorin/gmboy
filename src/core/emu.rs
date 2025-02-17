@@ -2,13 +2,11 @@ use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::ui::Ui;
-use crate::cpu::{Cpu, CpuCycleCallback};
-
-use crate::debugger::{CpuLogType, Debugger};
+use crate::cpu::{Cpu, CpuCallback};
+use crate::debugger::Debugger;
 use crate::ppu::{Ppu, TARGET_FPS_F};
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::keyboard::Keycode;
-use std::borrow::Cow;
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
@@ -22,30 +20,22 @@ pub struct Emu {
 
 #[derive(Debug, Clone, Default)]
 pub struct EmuCtx {
-    pub debugger: Option<Debugger>,
     pub clock: Clock,
 }
 
-impl CpuCycleCallback for EmuCtx {
-    fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
-        self.clock.m_cycles(m_cycles, bus);
+impl EmuCtx {
+    pub fn with_fps_limit(fps: f64) -> EmuCtx {
+        let ppu = Ppu::new(fps);
+
+        Self {
+            clock: Clock::new(ppu),
+        }
     }
 }
 
-impl EmuCtx {
-    pub fn with_debugger(debugger: Debugger) -> EmuCtx {
-        Self {
-            debugger: Some(debugger),
-            clock: Clock::new(Ppu::new(TARGET_FPS_F)),
-        }
-    }
-
-    pub fn get_serial_msg(&self) -> Option<Cow<str>> {
-        if let Some(debugger) = &self.debugger {
-            return Some(debugger.get_serial_msg());
-        };
-
-        None
+impl CpuCallback for EmuCtx {
+    fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
+        self.clock.m_cycles(m_cycles, bus);
     }
 }
 
@@ -75,12 +65,13 @@ impl Emu {
         Ok(Self {
             running: false,
             paused: false,
-            ctx: EmuCtx::with_debugger(Debugger::new(CpuLogType::None, false)),
+            ctx: EmuCtx::with_fps_limit(TARGET_FPS_F),
         })
     }
 
     pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
         let cart = Cart::new(cart_bytes)?;
+        let debugger = Debugger::new(crate::core::debugger::CpuLogType::Assembly, true);
         let mut cpu = Cpu::new(Bus::new(cart));
         let mut ui = Ui::new(false)?;
         let mut prev_frame = 0;
@@ -94,12 +85,10 @@ impl Emu {
             }
 
             ui.handle_events(&mut cpu.bus, self);
-            cpu.step(&mut self.ctx)?;
+            cpu.step(&mut self.ctx, None)?;
 
-            if let Some(msg) = self.ctx.get_serial_msg() {
-                if !msg.is_empty() {
-                    println!("Serial: {msg}");
-                }
+            if !debugger.get_serial_msg().is_empty() {
+                println!("Serial: {}", debugger.get_serial_msg());
             }
 
             if prev_frame != self.ctx.clock.ppu.current_frame {

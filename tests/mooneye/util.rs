@@ -1,8 +1,7 @@
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cart::Cart;
-use rusty_gb_emu::cpu::Cpu;
+use rusty_gb_emu::cpu::{Cpu};
 use rusty_gb_emu::emu::{read_bytes, EmuCtx};
-use rusty_gb_emu::ppu::Ppu;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
@@ -14,12 +13,12 @@ pub fn run_mooneye_rom(
 ) -> Result<(), String> {
     let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
+    let mut callback = EmuCtx::with_fps_limit(10000.0);
     let mut cpu = Cpu::new(Bus::new(cart));
-    let mut ctx = EmuCtx::default();
     let instant = Instant::now();
 
     loop {
-        cpu.step(&mut ctx)?;
+        cpu.step(&mut callback, None)?;
 
         if cpu.registers.b == 3
             && cpu.registers.c == 5

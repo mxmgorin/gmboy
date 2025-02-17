@@ -1,5 +1,5 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 use crate::cpu::instructions::FetchedData;
 
@@ -21,7 +21,7 @@ impl ExecutableInstruction for CpInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        _callback: &mut impl CpuCycleCallback,
+        _callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         let fetched_value_i32 = fetched_data.value as i32;

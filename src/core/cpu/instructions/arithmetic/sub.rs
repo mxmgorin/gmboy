@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct SubInstruction {
@@ -11,7 +11,7 @@ impl ExecutableInstruction for SubInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        _callback: &mut impl CpuCycleCallback,
+        _callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         let DataDestination::Register(r) = fetched_data.dest else {

@@ -2,7 +2,7 @@ use crate::core::cpu::instructions::{
     AddressMode, ConditionType, ExecutableInstruction, Instruction,
 };
 use crate::cpu::instructions::FetchedData;
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct JrInstruction {
@@ -13,7 +13,7 @@ impl ExecutableInstruction for JrInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         let rel = fetched_data.value as i8;

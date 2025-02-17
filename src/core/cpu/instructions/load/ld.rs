@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, RegisterType};
 use crate::cpu::instructions::{DataDestination, DataSource, FetchedData};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LdInstruction {
@@ -11,7 +11,7 @@ impl ExecutableInstruction for LdInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         match fetched_data.dest {

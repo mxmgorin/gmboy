@@ -1,6 +1,6 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::FetchedData;
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 /// Enable Interrupts by setting the IME flag.
 /// The flag is only set after the instruction following EI.
@@ -11,7 +11,7 @@ impl ExecutableInstruction for EiInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        _callback: &mut impl CpuCycleCallback,
+        _callback: &mut impl CpuCallback,
         _fetched_data: FetchedData,
     ) {
         cpu.enabling_ime = true;

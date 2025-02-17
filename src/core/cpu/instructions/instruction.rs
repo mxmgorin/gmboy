@@ -36,14 +36,14 @@ use crate::core::cpu::instructions::rotate::rra::RraInstruction;
 use crate::core::cpu::instructions::rotate::rrca::RrcaInstruction;
 use crate::core::cpu::stack::Stack;
 use crate::cpu::instructions::{ConditionType, FetchedData};
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 use std::fmt::Display;
 
 pub trait ExecutableInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     );
     fn get_address_mode(&self) -> AddressMode;
@@ -92,7 +92,7 @@ impl ExecutableInstruction for Instruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
         fetched_data: FetchedData,
     ) {
         match self {
@@ -233,7 +233,7 @@ impl Instruction {
         cond: Option<ConditionType>,
         addr: u16,
         push_pc: bool,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
     ) {
         if ConditionType::check_cond(&cpu.registers, cond) {
             if push_pc {

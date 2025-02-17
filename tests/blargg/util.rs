@@ -1,9 +1,8 @@
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::cart::Cart;
-use rusty_gb_emu::cpu::Cpu;
+use rusty_gb_emu::cpu::{CounterCpuCallback, Cpu};
 use rusty_gb_emu::debugger::{CpuLogType, Debugger};
-use rusty_gb_emu::emu::{read_bytes, EmuCtx};
-use rusty_gb_emu::ppu::Ppu;
+use rusty_gb_emu::emu::{read_bytes};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -13,15 +12,14 @@ pub fn run_blargg_rom(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
-    let debugger = Debugger::new(CpuLogType::None, true);
+    let mut debugger = Debugger::new(CpuLogType::None, true);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
     let mut cpu = Cpu::new(Bus::new(cart));
-    let mut ctx = EmuCtx::with_debugger(debugger);
     let instant = Instant::now();
 
     loop {
-        cpu.step(&mut ctx)?;
-        let serial_msg = ctx.get_serial_msg().unwrap_or_default().to_lowercase();
+        cpu.step(&mut CounterCpuCallback::default(), Some(&mut debugger))?;
+        let serial_msg = debugger.get_serial_msg().to_lowercase();
 
         if serial_msg.contains("passed") {
             return Ok(());

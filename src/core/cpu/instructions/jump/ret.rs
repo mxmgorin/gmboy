@@ -1,7 +1,7 @@
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::{ConditionType, FetchedData};
 use crate::cpu::stack::Stack;
-use crate::cpu::{Cpu, CpuCycleCallback};
+use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]
 pub struct RetInstruction {
@@ -12,7 +12,7 @@ impl ExecutableInstruction for RetInstruction {
     fn execute(
         &self,
         cpu: &mut Cpu,
-        callback: &mut impl CpuCycleCallback,
+        callback: &mut impl CpuCallback,
         _fetched_data: FetchedData,
     ) {
         if self.condition_type.is_some() {
