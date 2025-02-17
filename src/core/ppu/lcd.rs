@@ -77,7 +77,7 @@ impl Lcd {
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,
-            LCD_STATUS_ADDRESS => self.status.byte,
+            LCD_STATUS_ADDRESS => self.status.byte | LCD_STATUS_UNUSED_MASK,
             LCD_SCROLL_Y_ADDRESS => self.scroll_y,
             LCD_SCROLL_X_ADDRESS => self.scroll_x,
             LCD_LY_ADDRESS => self.ly,
@@ -108,7 +108,7 @@ impl Lcd {
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte = value,
-            LCD_STATUS_ADDRESS => self.status.byte = value | LCD_STATUS_UNUSED_MASK,
+            LCD_STATUS_ADDRESS => self.status.byte = value,
             LCD_SCROLL_Y_ADDRESS => self.scroll_y = value,
             LCD_SCROLL_X_ADDRESS => self.scroll_x = value,
             LCD_LY_ADDRESS => self.ly = value,
