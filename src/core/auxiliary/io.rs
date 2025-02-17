@@ -59,7 +59,7 @@ impl Io {
             IoAddress::SerialSb => self.serial.sb,
             IoAddress::SerialSc => self.serial.sc | SERIAL_SC_UNUSED_MASK,
             IoAddress::Timer => self.timer.read(address),
-            IoAddress::InterruptFlags => self.interrupts.int_flags,
+            IoAddress::InterruptFlags => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
             IoAddress::Display => self.lcd.read(address),
             IoAddress::Joypad => self.joypad.get_byte(),
             IoAddress::Audio
@@ -80,7 +80,7 @@ impl Io {
             IoAddress::SerialSb => self.serial.sb = value,
             IoAddress::SerialSc => self.serial.sc = value,
             IoAddress::Timer => self.timer.write(address, value),
-            IoAddress::InterruptFlags => self.interrupts.int_flags = value | IO_IF_UNUSED_MASK,
+            IoAddress::InterruptFlags => self.interrupts.int_flags = value,
             IoAddress::Display => self.lcd.write(address, value),
             IoAddress::Joypad => self.joypad.set_byte(value),
             IoAddress::Audio
