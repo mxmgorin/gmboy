@@ -4,13 +4,17 @@ use crate::ppu::Ppu;
 
 pub const T_CYCLES_PER_M_CYCLE: usize = 4;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Clock {
     pub t_cycles: usize,
     pub ppu: Ppu,
 }
 
 impl Clock {
+    pub fn new(ppu: Ppu) -> Self {
+        Self { t_cycles: 0, ppu }
+    }
+
     pub fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
         for _ in 0..m_cycles {
             self.t_cycles(T_CYCLES_PER_M_CYCLE, bus);

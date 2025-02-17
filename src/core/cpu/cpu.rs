@@ -5,6 +5,7 @@ use crate::core::cpu::Registers;
 use crate::cpu::instructions::RegisterType;
 use crate::emu::EmuCtx;
 use crate::LittleEndianBytes;
+use crate::ppu::Ppu;
 
 #[derive(Debug, Clone)]
 pub struct Cpu {
@@ -17,13 +18,13 @@ pub struct Cpu {
 }
 
 impl Cpu {
-    pub fn new(bus: Bus) -> Cpu {
+    pub fn new(bus: Bus, ppu: Ppu) -> Cpu {
         Self {
             bus,
             registers: Registers::new(),
             enabling_ime: false,
             current_opcode: 0,
-            clock: Clock::default(),
+            clock: Clock::new(ppu),
             is_halted: false,
         }
     }

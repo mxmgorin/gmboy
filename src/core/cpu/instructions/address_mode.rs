@@ -314,12 +314,14 @@ mod tests {
     use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
     use crate::cpu::Cpu;
+    use crate::ppu::Ppu;
     use crate::LittleEndianBytes;
+    use std::time::Duration;
 
     #[test]
     fn test_fetch_imp() {
         let cart = Cart::new(vec![0u8; 1000]).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart));
+        let mut cpu = Cpu::new(Bus::new(cart), Ppu::default());
         let mode = AddressMode::IMP;
 
         let data = AddressMode::fetch_data(&mut cpu, mode);
@@ -330,7 +332,7 @@ mod tests {
     #[test]
     fn test_fetch_r() {
         let cart = Cart::new(vec![0u8; 1000]).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart));
+        let mut cpu = Cpu::new(Bus::new(cart), Ppu::default());
 
         for reg_type in RegisterType::get_all().iter().cloned() {
             cpu.registers.set_register(reg_type, 23);
@@ -346,7 +348,7 @@ mod tests {
     #[test]
     fn test_fetch_r_r() {
         let cart = Cart::new(vec![0u8; 1000]).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart));
+        let mut cpu = Cpu::new(Bus::new(cart), Ppu::default());
 
         for reg_type in RegisterType::get_all().iter().cloned() {
             cpu.registers.set_register(reg_type, 23);
@@ -366,7 +368,7 @@ mod tests {
         let mut bytes = vec![0u8; 8000];
         bytes[pc] = value;
         let cart = Cart::new(bytes).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart));
+        let mut cpu = Cpu::new(Bus::new(cart), Ppu::default());
         cpu.registers.pc = pc as u16;
         let mode = AddressMode::R_D8(RegisterType::A);
 
@@ -392,7 +394,10 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes).unwrap()));
+        let mut cpu = Cpu::new(
+            Bus::new(Cart::new(bytes).unwrap()),
+            Ppu::default(),
+        );
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
@@ -417,7 +422,10 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes).unwrap()));
+        let mut cpu = Cpu::new(
+            Bus::new(Cart::new(bytes).unwrap()),
+            Ppu::default(),
+        );
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 

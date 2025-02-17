@@ -8,6 +8,7 @@ use rusty_gb_emu::emu::EmuCtx;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use rusty_gb_emu::ppu::Ppu;
 
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
@@ -246,7 +247,7 @@ pub struct RamState(pub u16, pub u8);
 pub struct Cycle(pub u16, pub u8, pub String);
 
 pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
-    let mut cpu = Cpu::new(setup_bus(test_case));
+    let mut cpu = Cpu::new(setup_bus(test_case), Ppu::default());
     set_cpu_state(&mut cpu, test_case);
 
     cpu

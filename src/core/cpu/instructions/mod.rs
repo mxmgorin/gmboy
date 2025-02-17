@@ -44,6 +44,8 @@ mod tests {
     };
     use crate::cpu::Cpu;
     use crate::emu::EmuCtx;
+    use crate::ppu::Ppu;
+    use std::time::Duration;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -60,7 +62,10 @@ mod tests {
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(
+            Bus::with_bytes(vec![0; 100000]),
+            Ppu::default(),
+        );
         cpu.set_pc(0);
         cpu.clock.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
@@ -71,7 +76,10 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_call() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(
+            Bus::with_bytes(vec![0; 100000]),
+            Ppu::default(),
+        );
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Call(instr) = *instr else {
                 continue;
@@ -93,7 +101,10 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jp() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(
+            Bus::with_bytes(vec![0; 100000]),
+            Ppu::default(),
+        );
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jp(instr) = *instr else {
                 continue;
@@ -119,7 +130,10 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jr() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(
+            Bus::with_bytes(vec![0; 100000]),
+            Ppu::default(),
+        );
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jr(instr) = *instr else {
                 continue;
@@ -141,7 +155,10 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_ret() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(
+            Bus::with_bytes(vec![0; 100000]),
+            Ppu::default(),
+        );
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Ret(instr) = *instr else {
                 continue;
@@ -163,7 +180,10 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(
+            Bus::with_bytes(vec![0; 100000]),
+            Ppu::default(),
+        );
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             match instr {

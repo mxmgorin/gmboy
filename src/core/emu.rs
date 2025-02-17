@@ -1,9 +1,9 @@
-use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::cpu::Cpu;
 use crate::core::ui::Ui;
 use crate::debugger::{CpuLogType, Debugger};
+use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::keyboard::Keycode;
 use std::borrow::Cow;
@@ -20,14 +20,12 @@ pub struct Emu {
 
 #[derive(Debug, Clone, Default)]
 pub struct EmuCtx {
-    pub clock: Clock,
     pub debugger: Option<Debugger>,
 }
 
 impl EmuCtx {
     pub fn with_debugger(debugger: Debugger) -> EmuCtx {
         Self {
-            clock: Default::default(),
             debugger: Some(debugger),
         }
     }
@@ -67,16 +65,13 @@ impl Emu {
         Ok(Self {
             running: false,
             paused: false,
-            ctx: EmuCtx {
-                clock: Default::default(),
-                debugger: Some(Debugger::new(CpuLogType::None, false)),
-            },
+            ctx: EmuCtx::with_debugger(Debugger::new(CpuLogType::None, false)),
         })
     }
 
     pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
         let cart = Cart::new(cart_bytes)?;
-        let mut cpu = Cpu::new(Bus::new(cart));
+        let mut cpu = Cpu::new(Bus::new(cart), Ppu::new(60.0));
         let mut ui = Ui::new(false)?;
         let mut prev_frame = 0;
         let mut last_fps_timestamp = Duration::new(0, 0);

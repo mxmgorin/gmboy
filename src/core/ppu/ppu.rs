@@ -11,7 +11,6 @@ pub const TICKS_PER_LINE: usize = 456;
 pub const LCD_Y_RES: u8 = 144;
 pub const LCD_X_RES: u8 = 160;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = 1000 / 60;
-pub const TARGET_FRAME_DURATION: Duration = Duration::from_millis(TARGET_FRAME_TIME_MILLIS);
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
@@ -19,6 +18,8 @@ pub struct Ppu {
     pub line_ticks: usize,
     pub prev_frame_duration: Duration,
     pub start_duration: Duration,
+    pub last_frame_duration: Duration,
+    pub target_frame_duration: Duration,
     pub frame_count: usize,
     pub fps: usize,
     pub instant: Instant,
@@ -29,18 +30,35 @@ impl Default for Ppu {
     fn default() -> Self {
         Self {
             current_frame: 0,
+            line_ticks: 0,
+            prev_frame_duration: Default::default(),
+            start_duration: Default::default(),
+            last_frame_duration: Default::default(),
+            target_frame_duration: Default::default(), // no frame limit
+            frame_count: 0,
+            fps: 0,
+            instant: Instant::now(),
+            pipeline: Default::default(),
+        }
+    }
+}
+
+impl Ppu {
+    pub fn new(target_fps: f64) -> Ppu {
+        Self {
+            current_frame: 0,
             pipeline: Pipeline::default(),
             prev_frame_duration: Duration::new(0, 0),
             start_duration: Duration::new(0, 0),
+            last_frame_duration: Default::default(),
+            target_frame_duration: Duration::from_secs_f64(1.0 / target_fps),
             frame_count: 0,
             fps: 0,
             instant: Instant::now(),
             line_ticks: 0,
         }
     }
-}
 
-impl Ppu {
     pub fn tick(&mut self, bus: &mut Bus) {
         self.line_ticks += 1;
 
@@ -110,6 +128,7 @@ impl Ppu {
 
                 self.current_frame += 1;
                 self.calc_fps();
+                self.limit();
                 self.prev_frame_duration = self.instant.elapsed();
             } else {
                 io.lcd.status.mode_set(LcdMode::Oam);
@@ -121,11 +140,7 @@ impl Ppu {
 
     pub fn calc_fps(&mut self) {
         let end = self.instant.elapsed();
-        let frame_duration = end - self.prev_frame_duration;
-
-        if frame_duration < TARGET_FRAME_DURATION {
-            thread::sleep(TARGET_FRAME_DURATION - frame_duration);
-        }
+        self.last_frame_duration = end - self.prev_frame_duration;
 
         if (end - self.start_duration).as_millis() >= 1000 {
             self.fps = self.frame_count;
@@ -134,5 +149,11 @@ impl Ppu {
         }
 
         self.frame_count += 1;
+    }
+
+    pub fn limit(&self) {
+        if self.last_frame_duration < self.target_frame_duration {
+            thread::sleep(self.target_frame_duration - self.last_frame_duration);
+        }
     }
 }

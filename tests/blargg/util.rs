@@ -5,6 +5,7 @@ use rusty_gb_emu::debugger::{CpuLogType, Debugger};
 use rusty_gb_emu::emu::{read_bytes, EmuCtx};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
+use rusty_gb_emu::ppu::Ppu;
 
 pub fn run_blargg_rom(
     name: &str,
@@ -14,7 +15,7 @@ pub fn run_blargg_rom(
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
     let debugger = Debugger::new(CpuLogType::None, true);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
-    let mut cpu = Cpu::new(Bus::new(cart));
+    let mut cpu = Cpu::new(Bus::new(cart), Ppu::default());
     let mut ctx = EmuCtx::with_debugger(debugger);
     let instant = Instant::now();
 
