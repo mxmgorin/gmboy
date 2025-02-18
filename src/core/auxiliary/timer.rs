@@ -79,9 +79,9 @@ impl Timer {
             (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
 
             if self.tima_overflow && self.tima_overflow_ticks_count == 0 {
-                // Timer interrupt is delayed 4 t-cycles from the TIMA
-                // overflow. The TMA reload to TIMA is also delayed. For one cycle,
-                // after overflowing TIMA, the value in TIMA is 00h, not TMA.
+                // Timer interrupt is delayed 4 ticks from the TIMA overflow.
+                // The TMA reload to TIMA is also delayed for 1 tick.
+                // After overflowing TIMA, the value in TIMA is 00, not TMA.
                 self.tima = 0x00;
             }
         }
