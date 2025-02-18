@@ -19,8 +19,8 @@ impl ExecutableInstruction for RetInstruction {
             let hi = Stack::pop(cpu, callback) as u16;
 
             let addr = (hi << 8) | lo;
-
-            cpu.set_pc(addr, callback);
+            cpu.registers.pc = addr;
+            callback.m_cycles(1, &mut cpu.bus);
         }
     }
 

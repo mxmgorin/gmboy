@@ -78,7 +78,7 @@ mod tests {
         let opcode = 0xF0;
         let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
         let mut callback = Callback::default();
-        cpu.set_pc(0, &mut callback);
+        cpu.registers.pc = 0;
         callback.t_cycles = 0;
         cpu.bus.write(0, opcode as u8);
         cpu.step(&mut callback, None).unwrap();
@@ -95,7 +95,7 @@ mod tests {
             };
             let mut callback = Callback::default();
 
-            cpu.set_pc(0, &mut callback);
+            cpu.registers.pc = 0;
             callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
@@ -124,7 +124,7 @@ mod tests {
             };
 
             let mut callback = Callback::default();
-            cpu.set_pc(0, &mut callback);
+            cpu.registers.pc = 0;
             callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
@@ -157,7 +157,7 @@ mod tests {
             };
 
             let mut callback = Callback::default();
-            cpu.set_pc(0, &mut callback);
+            cpu.registers.pc = 0;
             callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
@@ -180,7 +180,7 @@ mod tests {
             };
 
             let mut callback = Callback::default();
-            cpu.set_pc(0, &mut callback);
+            cpu.registers.pc = 0;
             callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
 
@@ -215,7 +215,7 @@ mod tests {
                 continue; // todo: investigate
             }
 
-            cpu.set_pc(0, &mut callback);
+            cpu.registers.pc = 0;
             callback.t_cycles = 0;
             cpu.bus.write(0, opcode as u8);
             cpu.step(&mut callback, None).unwrap();
@@ -245,7 +245,7 @@ mod tests {
                 cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_set, callback.t_cycles / 4);
 
-                cpu.set_pc(0, callback);
+                cpu.registers.pc = 0;
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
@@ -257,7 +257,7 @@ mod tests {
                 cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_not, callback.t_cycles / 4);
 
-                cpu.set_pc(0, callback);
+                cpu.registers.pc = 0;
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
@@ -269,7 +269,7 @@ mod tests {
                 cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_set, callback.t_cycles / 4);
 
-                cpu.set_pc(0, callback);
+                cpu.registers.pc = 0;
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
@@ -281,7 +281,7 @@ mod tests {
                 cpu.step(callback, None).unwrap();
                 assert_eq!(m_cycles_not, callback.t_cycles / 4);
 
-                cpu.set_pc(0, callback);
+                cpu.registers.pc = 0;
                 callback.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);

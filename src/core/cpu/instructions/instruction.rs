@@ -230,7 +230,8 @@ impl Instruction {
                 Stack::push16(cpu, cpu.registers.pc, callback);
             }
 
-            cpu.set_pc(addr, callback);
+            cpu.registers.pc = addr;
+            callback.m_cycles(1, &mut cpu.bus);
         }
     }
 

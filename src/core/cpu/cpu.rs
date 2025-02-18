@@ -73,12 +73,6 @@ impl Cpu {
         callback.m_cycles(1, &mut self.bus);
     }
 
-    /// Sets PC to specified address. Costs 1 M-Cycle.
-    pub fn set_pc(&mut self, address: u16, callback: &mut impl CpuCallback) {
-        self.registers.pc = address;
-        callback.m_cycles(1, &mut self.bus);
-    }
-
     pub fn step(
         &mut self,
         callback: &mut impl CpuCallback,
