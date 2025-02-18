@@ -10,6 +10,15 @@ pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
 const INTERRUPT_DELAY_TICKS: usize = 4;
 const TIMA_RELOAD_DELAY_TICKS: usize = 1;
 
+// This circuit has three problems:
+// - When writing to DIV register the TIMA register can be increased if the counter has reached half
+// the clocks it needs to increase because the selected bit by the multiplexer will go from 1 to 0 (which
+// is a falling edge, that will be detected by the falling edge detector).
+// - When disabling the timer, if the corresponding bit in the system counter is set to 1, the falling edge
+// detector will see a change from 1 to 0, so TIMA will increase. This means that whenever half the
+// clocks of the count are reached, TIMA will increase when disabling the timer.
+// - When changing TAC register value, if the old selected bit by the multiplexer was 0, the new one is
+// 1, and the new enable bit of TAC is set to 1, it will increase TIMA.
 #[derive(Debug, Clone)]
 pub struct Timer {
     // registers
@@ -64,28 +73,9 @@ impl Timer {
         let is_prev_enabled = self.prev_tac & (1 << 2) != 0;
         // whenever half the clocks of the count are reached, TIMA will increase when disabling the timer
         let disabling_glitch = is_prev_enabled && !is_enabled;
-
+        let bit = self.get_clock_bit();
         // detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
-        let timer_update = match self.tac & 0b11 {
-            // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
-            0b00 => {
-                (self.prev_div & (1 << 9)) != 0 && (self.div & (1 << 9)) == 0 || disabling_glitch
-            }
-            // 0b01 (262144 Hz): div bit 3, increment every 4 M-cycles
-            0b01 => {
-                (self.prev_div & (1 << 3)) != 0 && (self.div & (1 << 3)) == 0 || disabling_glitch
-            }
-            // 0b10 (65536 Hz): div bit 5, increment every 16 M-cycles
-            0b10 => {
-                (self.prev_div & (1 << 5)) != 0 && (self.div & (1 << 5)) == 0 || disabling_glitch
-            }
-            // 0b11 (16384 Hz): div bit 7, increment every 64 M-cycles
-            0b11 => {
-                (self.prev_div & (1 << 7)) != 0 && (self.div & (1 << 7)) == 0 || disabling_glitch
-            }
-            _ => false,
-        };
-
+        let timer_update = (self.prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0 || disabling_glitch;
         self.prev_div = self.div;
 
         // Update TIMA if the timer is enabled and a timer update is triggered
@@ -98,6 +88,20 @@ impl Timer {
                 // After overflowing TIMA, the value in TIMA is 00, not TMA.
                 self.tima = 0x00;
             }
+        }
+    }
+
+    fn get_clock_bit(&self) -> u8 {
+        match self.tac & 0b11 {
+            // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
+            0b00 => 9,
+            // 0b01 (262144 Hz): div bit 3, increment every 4 M-cycles
+            0b01 => 3,
+            // 0b10 (65536 Hz): div bit 5, increment every 16 M-cycles
+            0b10 => 5,
+            // 0b11 (16384 Hz): div bit 7, increment every 64 M-cycles
+            0b11 => 7,
+            _ => unreachable!(),
         }
     }
 
