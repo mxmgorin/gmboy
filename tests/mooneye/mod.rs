@@ -106,7 +106,6 @@ fn test_timer_tim00() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_timer_tim00_div_trigger() {
     let name = "tim00_div_trigger";
@@ -125,7 +124,6 @@ fn test_timer_tim01() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_timer_tim01_div_trigger() {
     let name = "tim01_div_trigger";
@@ -144,7 +142,6 @@ fn test_timer_tim10() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_timer_tim10_div_trigger() {
     let name = "tim10_div_trigger";
@@ -163,7 +160,6 @@ fn test_timer_tim11() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_timer_tim11_div_trigger() {
     let name = "tim11_div_trigger";
