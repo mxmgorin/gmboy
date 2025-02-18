@@ -298,6 +298,15 @@ fn test_ei_timing() {
     assert_result(name, category, result);
 }
 
+#[test]
+fn test_halt_ime0_ei() {
+    let name = "halt_ime0_ei";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
 #[ignore] // FIXME
 #[test]
 fn test_halt_ime0_nointr_timing() {
