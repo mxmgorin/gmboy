@@ -218,7 +218,7 @@ impl Instruction {
     }
 
     /// Costs 1 M-Cycle without push PC and additional 2 M-Cycles with push PC .
-    pub fn goto_addr(
+    pub fn goto_addr_with_cond(
         cpu: &mut Cpu,
         cond: Option<ConditionType>,
         addr: u16,
@@ -226,13 +226,17 @@ impl Instruction {
         callback: &mut impl CpuCallback,
     ) {
         if ConditionType::check_cond(&cpu.registers, cond) {
-            if push_pc {
-                Stack::push16(cpu, cpu.registers.pc, callback);
-            }
-
-            cpu.registers.pc = addr;
+            Instruction::goto_addr(cpu, addr, push_pc, callback);
             callback.m_cycles(1, &mut cpu.bus);
         }
+    }
+
+    pub fn goto_addr(cpu: &mut Cpu, addr: u16, push_pc: bool, callback: &mut impl CpuCallback,) {
+        if push_pc {
+            Stack::push16(cpu, cpu.registers.pc, callback);
+        }
+        
+        cpu.registers.pc = addr;
     }
 
     pub fn to_asm_string(&self, cpu: &Cpu, fetched_data: &FetchedData) -> String {

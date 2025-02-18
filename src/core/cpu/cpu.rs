@@ -116,7 +116,7 @@ impl Cpu {
 
         if self.bus.io.interrupts.ime {
             if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
-                Instruction::goto_addr(self, None, addr, true, callback);
+                Instruction::goto_addr_with_cond(self, None, addr, true, callback);
                 self.bus.io.interrupts.handle_interrupt(it);
                 self.is_halted = false;
             }

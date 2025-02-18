@@ -423,7 +423,6 @@ fn test_reti_timing() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_rst_timing() {
     let name = "rst_timing";
