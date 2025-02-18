@@ -1,22 +1,26 @@
-use crate::auxiliary::clock::T_CYCLES_PER_M_CYCLE;
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 
 pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
 pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;
 pub const TIMER_TMA_ADDRESS: u16 = 0xFF06;
 pub const TIMER_TAC_ADDRESS: u16 = 0xFF07;
-pub const TIMER_TAC_CYCLES: [usize; 4] = [256, 4, 16, 64];
-pub const TIMER_TAC_UNUSED_MASK: u8 = 0b11111_000;
+pub const TIMER_TAC_M_CYCLES: [usize; 4] = [256, 4, 16, 64];
+pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
+
+const INTERRUPT_DELAY_TICKS: usize = 4;
+const TIMA_RELOAD_DELAY_TICKS: usize = 1;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
-    prev_div: u16,
+    // registers
     div: u16,
     tima: u8,
     tma: u8,
     tac: u8,
+    // additional info
+    prev_div: u16,
     tima_overflow: bool,
-    interrupt_delay: usize,
+    tima_overflow_ticks_count: usize,
 }
 
 impl Default for Timer {
@@ -29,7 +33,7 @@ impl Default for Timer {
             tma: 0,
             tac: 0,
             tima_overflow: false,
-            interrupt_delay: 0,
+            tima_overflow_ticks_count: 0,
         }
     }
 }
@@ -38,13 +42,16 @@ impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if self.tima_overflow {
-            if self.interrupt_delay == 0 {
+            if self.tima_overflow_ticks_count == INTERRUPT_DELAY_TICKS {
                 self.tima_overflow = false;
-                self.tima = self.tma;
+                self.tima_overflow_ticks_count = 0;
+
                 interrupts.request_interrupt(InterruptType::Timer);
-            } else {
-                self.interrupt_delay -= 1;
+            } else if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
+                self.tima = self.tma;
             }
+
+            self.tima_overflow_ticks_count += 1;
         }
 
         self.div = self.div.wrapping_add(1);
@@ -71,12 +78,11 @@ impl Timer {
         if timer_update && is_enabled {
             (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
 
-            if self.tima_overflow {
-                // Timer interrupt is delayed 1 cycle (4 clocks) from the TIMA
+            if self.tima_overflow && self.tima_overflow_ticks_count == 0 {
+                // Timer interrupt is delayed 4 t-cycles from the TIMA
                 // overflow. The TMA reload to TIMA is also delayed. For one cycle,
                 // after overflowing TIMA, the value in TIMA is 00h, not TMA.
                 self.tima = 0x00;
-                self.interrupt_delay = T_CYCLES_PER_M_CYCLE;
             }
         }
     }

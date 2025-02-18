@@ -169,7 +169,6 @@ fn test_timer_tim11_div_trigger() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_timer_tima_reload() {
     let name = "tima_reload";
