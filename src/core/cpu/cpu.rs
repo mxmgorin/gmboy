@@ -114,15 +114,15 @@ impl Cpu {
         let prev_enabling_ime = self.enabling_ime;
         instruction.execute(self, callback, fetched_data);
 
-        if self.bus.io.interrupts.ime {
-            self.handle_interrupt(callback);
-            self.enabling_ime = false;
-        }
-
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed
             self.enabling_ime = false;
             self.bus.io.interrupts.ime = true;
+        }
+
+        if self.bus.io.interrupts.ime {
+            self.handle_interrupt(callback);
+            self.enabling_ime = false;
         }
 
         Ok(())
