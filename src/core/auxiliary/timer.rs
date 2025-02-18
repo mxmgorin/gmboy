@@ -27,7 +27,6 @@ pub struct Timer {
     tma: u8,
     tac: u8,
     // additional info
-    prev_div: u16,
     tima_overflow: bool,
     tima_overflow_ticks_count: usize,
 }
@@ -37,7 +36,6 @@ impl Default for Timer {
         Self {
             // This value depends on the model. For the original Game Boy (DMG) it is 0xABCC.
             div: 0xABCC,
-            prev_div: 0xABCC,
             tima: 0,
             tma: 0,
             tac: 0,
@@ -65,14 +63,11 @@ impl Timer {
             }
         }
 
+        let prev_div = self.div;
         self.div = self.div.wrapping_add(1);
-        let bit = self.get_clock_bit();
-        // detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
-        let timer_update = (self.prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0;
-        self.prev_div = self.div;
 
         // Update TIMA if the timer is enabled and a timer update is triggered
-        if timer_update && self.is_enabled() {
+        if self.is_falling_edge(prev_div) && self.is_enabled() {
             self.inc_tima();
         }
     }
@@ -109,12 +104,27 @@ impl Timer {
 
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
-            TIMER_DIV_ADDRESS => self.div = 0,
+            TIMER_DIV_ADDRESS => self.reset_div(),
             TIMER_TIMA_ADDRESS => self.tima = value,
             TIMER_TMA_ADDRESS => self.tma = value,
             TIMER_TAC_ADDRESS => self.write_tac(value),
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
+    }
+
+    pub fn reset_div(&mut self) {
+        let prev_div = self.div;
+        self.div = 0;
+
+        if self.is_enabled() && self.is_falling_edge(prev_div) {
+            self.inc_tima();
+        }
+    }
+
+    /// Detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
+    pub fn is_falling_edge(&self, prev_div: u16) -> bool {
+        let bit = self.get_clock_bit();
+        (prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0
     }
 
     pub fn write_tac(&mut self, value: u8) {
@@ -162,7 +172,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b101,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -189,7 +199,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b110,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -216,7 +226,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b111,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -243,7 +253,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b100,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -270,7 +280,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b100,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -279,7 +289,7 @@ mod tests {
             timer.tick(&mut interrupts);
         }
 
-        timer.div = 0;
+        timer.reset_div();
         timer.tick(&mut interrupts);
 
         assert_eq!(1, timer.tima);
@@ -290,7 +300,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b101,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -299,7 +309,7 @@ mod tests {
             timer.tick(&mut interrupts);
         }
 
-        timer.div = 0;
+        timer.reset_div();
         timer.tick(&mut interrupts);
 
         assert_eq!(1, timer.tima);
@@ -310,7 +320,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b110,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -319,7 +329,7 @@ mod tests {
             timer.tick(&mut interrupts);
         }
 
-        timer.div = 0;
+        timer.reset_div();
         timer.tick(&mut interrupts);
 
         assert_eq!(1, timer.tima);
@@ -330,7 +340,7 @@ mod tests {
         let mut timer = Timer {
             tac: 0b111,
             div: 0,
-            prev_div: 0,
+
             ..Timer::default()
         };
         let mut interrupts = Interrupts::default();
@@ -339,7 +349,7 @@ mod tests {
             timer.tick(&mut interrupts);
         }
 
-        timer.div = 0;
+        timer.reset_div();
         timer.tick(&mut interrupts);
 
         assert_eq!(1, timer.tima);
