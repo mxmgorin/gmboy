@@ -289,7 +289,6 @@ fn test_div_timing() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_ei_timing() {
     let name = "ei_timing";
