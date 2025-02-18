@@ -55,7 +55,7 @@ impl Interrupts {
         self.int_flags |= it as u8;
     }
 
-    pub fn handle_interrupt(&mut self, it: InterruptType) {
+    pub fn acknowledge_interrupt(&mut self, it: InterruptType) {
         let it = it as u8;
 
         self.int_flags &= !it;
@@ -106,7 +106,7 @@ pub mod tests {
             interrupts.request_interrupt(interrupt_type);
 
             assert!(interrupts.check_interrupt(interrupt_type));
-            interrupts.handle_interrupt(interrupt_type);
+            interrupts.acknowledge_interrupt(interrupt_type);
 
             assert!(!interrupts.check_interrupt(interrupt_type));
         }

@@ -217,7 +217,7 @@ impl Instruction {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
-    /// Costs 1 M-Cycle without push PC and additional 2 M-Cycles with push PC .
+    /// Costs 2 M-Cycles with push PC
     pub fn goto_addr(
         cpu: &mut Cpu,
         cond: Option<ConditionType>,

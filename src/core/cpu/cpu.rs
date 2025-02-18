@@ -115,12 +115,7 @@ impl Cpu {
         instruction.execute(self, callback, fetched_data);
 
         if self.bus.io.interrupts.ime {
-            if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
-                Instruction::goto_addr(self, None, addr, true, callback);
-                self.bus.io.interrupts.handle_interrupt(it);
-                self.is_halted = false;
-            }
-
+            self.handle_interrupt(callback);
             self.enabling_ime = false;
         }
 
@@ -131,6 +126,19 @@ impl Cpu {
         }
 
         Ok(())
+    }
+
+    /// Costs 5 M-cycles when there is an interrupt
+    pub fn handle_interrupt(&mut self, callback: &mut impl CpuCallback) {
+        if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
+            callback.m_cycles(2, &mut self.bus);
+
+            self.is_halted = false;
+            self.bus.io.interrupts.acknowledge_interrupt(it);
+            Instruction::goto_addr(self, None, addr, true, callback);
+
+            callback.m_cycles(1, &mut self.bus);
+        }
     }
 
     pub fn read_reg8(&mut self, rt: RegisterType, callback: &mut impl CpuCallback) -> u8 {
