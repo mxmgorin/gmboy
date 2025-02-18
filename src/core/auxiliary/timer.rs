@@ -28,7 +28,6 @@ pub struct Timer {
     tac: u8,
     // additional info
     prev_div: u16,
-    prev_tac: u8,
     tima_overflow: bool,
     tima_overflow_ticks_count: usize,
 }
@@ -42,7 +41,6 @@ impl Default for Timer {
             tima: 0,
             tma: 0,
             tac: 0,
-            prev_tac: 0,
             tima_overflow: false,
             tima_overflow_ticks_count: 0,
         }
@@ -68,16 +66,13 @@ impl Timer {
         }
 
         self.div = self.div.wrapping_add(1);
-        let is_enabled = self.is_enabled(self.tac);
-        // Whenever half the clocks of the count are reached, TIMA will increase when disabling the timer
-        let disabling_glitch = self.is_enabled(self.prev_tac) && !is_enabled;
         let bit = self.get_clock_bit();
         // detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
-        let timer_update = (self.prev_div & (1 << bit)) != 0 && ((self.div & (1 << bit)) == 0 || disabling_glitch);
+        let timer_update = (self.prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0;
         self.prev_div = self.div;
 
         // Update TIMA if the timer is enabled and a timer update is triggered
-        if disabling_glitch || (timer_update && is_enabled) {
+        if timer_update && self.is_enabled() {
             self.inc_tima();
         }
     }
@@ -107,9 +102,9 @@ impl Timer {
         }
     }
 
-    fn is_enabled(&self, tac: u8) -> bool {
+    fn is_enabled(&self) -> bool {
         // If bit 2 of TAC is set to 0 then the timer is disabled
-        tac & (1 << 2) != 0
+        self.tac & (1 << 2) != 0
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
@@ -117,11 +112,32 @@ impl Timer {
             TIMER_DIV_ADDRESS => self.div = 0,
             TIMER_TIMA_ADDRESS => self.tima = value,
             TIMER_TMA_ADDRESS => self.tma = value,
-            TIMER_TAC_ADDRESS => {
-                self.prev_tac = self.tac;
-                self.tac = value;
-            }
+            TIMER_TAC_ADDRESS => self.write_tac(value),
             _ => panic!("Invalid Timer address: {:02X}", address),
+        }
+    }
+
+    pub fn write_tac(&mut self, value: u8) {
+        let old_is_enabled = self.is_enabled();
+        let old_clock_bit = self.get_clock_bit();
+
+        self.tac = value;
+
+        let new_is_enabled = self.is_enabled();
+
+        let disabling_glitch =
+            (self.div & (1 << old_clock_bit)) != 0 && old_is_enabled && !new_is_enabled;
+
+        if disabling_glitch {
+            self.inc_tima();
+        } else {
+            let enabling_glitch = (self.div & (1 << old_clock_bit)) == 0
+                && (self.div & (1 << self.get_clock_bit())) != 0
+                && new_is_enabled;
+
+            if enabling_glitch {
+                self.inc_tima();
+            }
         }
     }
 
