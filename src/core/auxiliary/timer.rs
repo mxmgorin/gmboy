@@ -19,6 +19,7 @@ pub struct Timer {
     tac: u8,
     // additional info
     prev_div: u16,
+    prev_tac: u8,
     tima_overflow: bool,
     tima_overflow_ticks_count: usize,
 }
@@ -32,6 +33,7 @@ impl Default for Timer {
             tima: 0,
             tma: 0,
             tac: 0,
+            prev_tac: 0,
             tima_overflow: false,
             tima_overflow_ticks_count: 0,
         }
@@ -57,27 +59,37 @@ impl Timer {
         }
 
         self.div = self.div.wrapping_add(1);
+        // If bit 2 of TAC is set to 0 then the timer is disabled
+        let is_enabled = self.tac & (1 << 2) != 0;
+        let is_prev_enabled = self.prev_tac & (1 << 2) != 0;
+        // whenever half the clocks of the count are reached, TIMA will increase when disabling the timer
+        let disabling_glitch = is_prev_enabled && !is_enabled;
 
         // detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
         let timer_update = match self.tac & 0b11 {
             // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
-            0b00 => (self.prev_div & (1 << 9)) != 0 && (self.div & (1 << 9)) == 0,
+            0b00 => {
+                (self.prev_div & (1 << 9)) != 0 && (self.div & (1 << 9)) == 0 || disabling_glitch
+            }
             // 0b01 (262144 Hz): div bit 3, increment every 4 M-cycles
-            0b01 => (self.prev_div & (1 << 3)) != 0 && (self.div & (1 << 3)) == 0,
+            0b01 => {
+                (self.prev_div & (1 << 3)) != 0 && (self.div & (1 << 3)) == 0 || disabling_glitch
+            }
             // 0b10 (65536 Hz): div bit 5, increment every 16 M-cycles
-            0b10 => (self.prev_div & (1 << 5)) != 0 && (self.div & (1 << 5)) == 0,
+            0b10 => {
+                (self.prev_div & (1 << 5)) != 0 && (self.div & (1 << 5)) == 0 || disabling_glitch
+            }
             // 0b11 (16384 Hz): div bit 7, increment every 64 M-cycles
-            0b11 => (self.prev_div & (1 << 7)) != 0 && (self.div & (1 << 7)) == 0,
+            0b11 => {
+                (self.prev_div & (1 << 7)) != 0 && (self.div & (1 << 7)) == 0 || disabling_glitch
+            }
             _ => false,
         };
 
         self.prev_div = self.div;
 
-        // If bit 2 of TAC is set to 0 then the timer is disabled
-        let is_enabled = self.tac & (1 << 2) != 0;
-
         // Update TIMA if the timer is enabled and a timer update is triggered
-        if timer_update && is_enabled {
+        if disabling_glitch || (timer_update && is_enabled) {
             (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
 
             if self.tima_overflow {
@@ -94,7 +106,10 @@ impl Timer {
             TIMER_DIV_ADDRESS => self.div = 0,
             TIMER_TIMA_ADDRESS => self.tima = value,
             TIMER_TMA_ADDRESS => self.tma = value,
-            TIMER_TAC_ADDRESS => self.tac = value,
+            TIMER_TAC_ADDRESS => {
+                self.prev_tac = self.tac;
+                self.tac = value;
+            }
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
     }
