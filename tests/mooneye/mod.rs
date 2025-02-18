@@ -224,3 +224,211 @@ fn test_timer_tma_write_reloading() {
 
     assert_result(name, category, result);
 }
+
+#[test]
+fn test_add_sp_e_timing() {
+    let name = "add_sp_e_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_call_cc_timing() {
+    let name = "call_cc_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_call_cc_timing2() {
+    let name = "call_cc_timing2";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_call_timing() {
+    let name = "call_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_call_timing2() {
+    let name = "call_timing2";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_di_timing_gs() {
+    let name = "di_timing-GS";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_div_timing() {
+    let name = "div_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_ei_timing() {
+    let name = "ei_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_halt_ime0_nointr_timing() {
+    let name = "halt_ime0_nointr_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_halt_ime1_timing() {
+    let name = "halt_ime1_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_halt_ime1_timing2_gs() {
+    let name = "halt_ime1_timing2-GS";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_intr_timing() {
+    let name = "intr_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_jp_cc_timing() {
+    let name = "jp_cc_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_jp_timing() {
+    let name = "jp_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_ld_hl_sp_e_timing() {
+    let name = "ld_hl_sp_e_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_pop_timing() {
+    let name = "pop_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_push_timing() {
+    let name = "push_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_ret_cc_timing() {
+    let name = "ret_cc_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_ret_timing() {
+    let name = "ret_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_reti_intr_timing() {
+    let name = "reti_intr_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_reti_timing() {
+    let name = "reti_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[ignore] // FIXME
+#[test]
+fn test_rst_timing() {
+    let name = "rst_timing";
+    let category = MooneyeRomCategory::Timing.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
