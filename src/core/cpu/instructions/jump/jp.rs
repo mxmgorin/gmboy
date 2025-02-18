@@ -18,7 +18,7 @@ impl ExecutableInstruction for JpInstruction {
             // HL uses and no Cycles
             cpu.registers.pc = fetched_data.value;
         } else {
-            Instruction::goto_addr_with_cond(
+            Instruction::goto_addr(
                 cpu,
                 self.condition_type,
                 fetched_data.value,

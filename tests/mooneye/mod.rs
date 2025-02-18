@@ -262,7 +262,6 @@ fn test_call_timing() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_call_timing2() {
     let name = "call_timing2";
