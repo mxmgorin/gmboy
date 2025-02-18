@@ -47,11 +47,13 @@ impl Timer {
             }
 
             if self.tima_overflow_ticks_count == INTERRUPT_DELAY_TICKS {
-                self.tima_overflow = false;
                 interrupts.request_interrupt(InterruptType::Timer);
+                // overflow handled
+                self.tima_overflow = false;
+                self.tima_overflow_ticks_count = 0;
+            } else {
+                self.tima_overflow_ticks_count += 1;
             }
-
-            self.tima_overflow_ticks_count += 1;
         }
 
         self.div = self.div.wrapping_add(1);
@@ -83,7 +85,6 @@ impl Timer {
                 // The TMA reload to TIMA is also delayed for 1 tick.
                 // After overflowing TIMA, the value in TIMA is 00, not TMA.
                 self.tima = 0x00;
-                self.tima_overflow_ticks_count = 0;
             }
         }
     }
