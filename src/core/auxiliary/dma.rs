@@ -14,18 +14,17 @@ impl Dma {
     pub fn start(&mut self, address: u8) {
         if self.is_active {
             self.queue_addr = Some((address as u16) << 8);
-            self.start_delay = 1;
         } else {
             self.src_addr = (address as u16) << 8;
             self.current_index = 0;
-            self.start_delay = 2;
         }
-
+        
+        self.start_delay = 2;
         self.is_active = true;
     }
 
     pub fn is_transferring(&self) -> bool {
-        self.is_active && self.start_delay == 0
+        self.is_active && (self.start_delay == 0 || self.queue_addr.is_some())
     }
 
     /// Executes a single OAM DMA write and auto-increments the internal index cursor.

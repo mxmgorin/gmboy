@@ -33,6 +33,33 @@ fn test_oam_dma_sources_gs() {
 }
 
 #[test]
+fn test_oam_dma_restart() {
+    let name = "oam_dma_restart";
+    let category = MooneyeRomCategory::OamDma.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_oam_dma_start() {
+    let name = "oam_dma_start";
+    let category = MooneyeRomCategory::OamDma.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
+fn test_oam_dma_timing() {
+    let name = "oam_dma_timing";
+    let category = MooneyeRomCategory::OamDma.into();
+    let result = run_mooneye_rom(name, category, TIMEOUT);
+
+    assert_result(name, category, result);
+}
+
+#[test]
 fn test_bits_mem_oam() {
     let name = "mem_oam";
     let category = MooneyeRomCategory::Bits.into();
