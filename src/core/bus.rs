@@ -98,7 +98,7 @@ impl Bus {
 
         match location {
             BusAddrLocation::Oam => {
-                if self.dma.is_active {
+                if self.dma.is_transferring() {
                     return 0xFF;
                 }
 
