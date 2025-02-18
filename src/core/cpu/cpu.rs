@@ -83,13 +83,21 @@ impl Cpu {
             debugger.print_gb_doctor_info(self);
         }
 
-        if self.is_halted {
-            callback.m_cycles(1, &mut self.bus);
+        if self.bus.io.interrupts.ime {
+            self.handle_interrupt(callback);
+            self.enabling_ime = false;
+        }
 
-            if self.bus.io.interrupts.int_flags != 0 {
+        if self.is_halted {            
+            if self.bus.io.interrupts.has_pending() {
+                // HALT bug case: Skips only the next instruction
                 self.is_halted = false;
+                return Ok(());
             }
-
+            
+            // Do nothing, just wait for an interrupt to wake up
+            callback.m_cycles(1, &mut self.bus);
+            
             return Ok(());
         }
 
@@ -119,12 +127,7 @@ impl Cpu {
             self.enabling_ime = false;
             self.bus.io.interrupts.ime = true;
         }
-
-        if self.bus.io.interrupts.ime {
-            self.handle_interrupt(callback);
-            self.enabling_ime = false;
-        }
-
+        
         Ok(())
     }
 

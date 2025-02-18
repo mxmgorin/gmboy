@@ -54,6 +54,10 @@ impl Interrupts {
     pub fn request_interrupt(&mut self, it: InterruptType) {
         self.int_flags |= it as u8;
     }
+    
+    pub fn has_pending(&self) -> bool {
+        self.int_flags != 0
+    }
 
     pub fn acknowledge_interrupt(&mut self, it: InterruptType) {
         let it = it as u8;

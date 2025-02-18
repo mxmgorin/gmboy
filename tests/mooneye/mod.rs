@@ -308,7 +308,6 @@ fn test_halt_ime0_nointr_timing() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_halt_ime1_timing() {
     let name = "halt_ime1_timing";
@@ -318,7 +317,6 @@ fn test_halt_ime1_timing() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_halt_ime1_timing2_gs() {
     let name = "halt_ime1_timing2-GS";
