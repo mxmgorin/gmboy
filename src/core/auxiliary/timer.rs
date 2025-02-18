@@ -42,13 +42,13 @@ impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if self.tima_overflow {
+            if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
+                self.tima = self.tma;
+            }
+
             if self.tima_overflow_ticks_count == INTERRUPT_DELAY_TICKS {
                 self.tima_overflow = false;
-                self.tima_overflow_ticks_count = 0;
-
                 interrupts.request_interrupt(InterruptType::Timer);
-            } else if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
-                self.tima = self.tma;
             }
 
             self.tima_overflow_ticks_count += 1;
@@ -83,6 +83,7 @@ impl Timer {
                 // The TMA reload to TIMA is also delayed for 1 tick.
                 // After overflowing TIMA, the value in TIMA is 00, not TMA.
                 self.tima = 0x00;
+                self.tima_overflow_ticks_count = 0;
             }
         }
     }
