@@ -59,7 +59,7 @@ impl Timer {
 
             if self.tima_overflow_ticks_count == INTERRUPT_DELAY_TICKS {
                 interrupts.request_interrupt(InterruptType::Timer);
-                // overflow handled
+                // reset after overflow handled
                 self.tima_overflow = false;
                 self.tima_overflow_ticks_count = 0;
             } else {
@@ -68,13 +68,12 @@ impl Timer {
         }
 
         self.div = self.div.wrapping_add(1);
-        // If bit 2 of TAC is set to 0 then the timer is disabled
         let is_enabled = self.is_enabled(self.tac);
         // Whenever half the clocks of the count are reached, TIMA will increase when disabling the timer
         let disabling_glitch = self.is_enabled(self.prev_tac) && !is_enabled;
         let bit = self.get_clock_bit();
         // detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
-        let timer_update = (self.prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0 || disabling_glitch;
+        let timer_update = (self.prev_div & (1 << bit)) != 0 && ((self.div & (1 << bit)) == 0 || disabling_glitch);
         self.prev_div = self.div;
 
         // Update TIMA if the timer is enabled and a timer update is triggered
@@ -82,7 +81,7 @@ impl Timer {
             self.inc_tima();
         }
     }
-    
+
     fn inc_tima(&mut self) {
         (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
 
@@ -107,8 +106,9 @@ impl Timer {
             _ => unreachable!(),
         }
     }
-    
+
     fn is_enabled(&self, tac: u8) -> bool {
+        // If bit 2 of TAC is set to 0 then the timer is disabled
         tac & (1 << 2) != 0
     }
 
