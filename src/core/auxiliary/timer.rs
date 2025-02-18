@@ -91,7 +91,7 @@ impl Timer {
                 self.tma = value;
             }
             TIMER_TAC_ADDRESS => {
-                self.tac = value | TIMER_TAC_UNUSED_MASK;
+                self.tac = value;
             }
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
@@ -102,7 +102,7 @@ impl Timer {
             TIMER_DIV_ADDRESS => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
             TIMER_TIMA_ADDRESS => self.tima,
             TIMER_TMA_ADDRESS => self.tma,
-            TIMER_TAC_ADDRESS => self.tac,
+            TIMER_TAC_ADDRESS => self.tac | TIMER_TAC_UNUSED_MASK,
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
     }
