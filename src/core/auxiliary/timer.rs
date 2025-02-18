@@ -69,8 +69,7 @@ impl Timer {
 
         // Update TIMA if the timer is enabled and a timer update is triggered
         if timer_update && is_enabled {
-            self.tima = self.tima.wrapping_add(1);
-            self.tima_overflow = self.tima == 0xFF;
+            (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
 
             if self.tima_overflow {
                 // Timer interrupt is delayed 1 cycle (4 clocks) from the TIMA
