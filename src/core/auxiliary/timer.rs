@@ -69,10 +69,9 @@ impl Timer {
 
         self.div = self.div.wrapping_add(1);
         // If bit 2 of TAC is set to 0 then the timer is disabled
-        let is_enabled = self.tac & (1 << 2) != 0;
-        let is_prev_enabled = self.prev_tac & (1 << 2) != 0;
-        // whenever half the clocks of the count are reached, TIMA will increase when disabling the timer
-        let disabling_glitch = is_prev_enabled && !is_enabled;
+        let is_enabled = self.is_enabled(self.tac);
+        // Whenever half the clocks of the count are reached, TIMA will increase when disabling the timer
+        let disabling_glitch = self.is_enabled(self.prev_tac) && !is_enabled;
         let bit = self.get_clock_bit();
         // detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
         let timer_update = (self.prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0 || disabling_glitch;
@@ -80,14 +79,18 @@ impl Timer {
 
         // Update TIMA if the timer is enabled and a timer update is triggered
         if disabling_glitch || (timer_update && is_enabled) {
-            (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
+            self.inc_tima();
+        }
+    }
+    
+    fn inc_tima(&mut self) {
+        (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
 
-            if self.tima_overflow {
-                // Timer interrupt is delayed 4 ticks from the TIMA overflow.
-                // The TMA reload to TIMA is also delayed for 1 tick.
-                // After overflowing TIMA, the value in TIMA is 00, not TMA.
-                self.tima = 0x00;
-            }
+        if self.tima_overflow {
+            // Timer interrupt is delayed 4 ticks from the TIMA overflow.
+            // The TMA reload to TIMA is also delayed for 1 tick.
+            // After overflowing TIMA, the value in TIMA is 00, not TMA.
+            self.tima = 0x00;
         }
     }
 
@@ -103,6 +106,10 @@ impl Timer {
             0b11 => 7,
             _ => unreachable!(),
         }
+    }
+    
+    fn is_enabled(&self, tac: u8) -> bool {
+        tac & (1 << 2) != 0
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
