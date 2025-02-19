@@ -1,6 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use std::cmp;
-use std::cmp::max_by;
 
 pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
 pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;
