@@ -114,7 +114,6 @@ fn test_timer_div_write() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_timer_rapid_toggle() {
     let name = "rapid_toggle";
