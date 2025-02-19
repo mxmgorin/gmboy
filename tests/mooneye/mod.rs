@@ -206,7 +206,6 @@ fn test_timer_rapid_toggle() {
     assert_result(name, category, result);
 }
 
-#[ignore]
 #[test]
 fn test_timer_tima_write_reloading() {
     let name = "tima_write_reloading";

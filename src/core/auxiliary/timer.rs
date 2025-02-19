@@ -7,12 +7,20 @@ pub const TIMER_TAC_ADDRESS: u16 = 0xFF07;
 pub const TIMER_TAC_M_CYCLES: [usize; 4] = [256, 4, 16, 64];
 pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
 
-// with 3 passes but fails below:
+// with 3 passes
 // test mooneye::test_timer_rapid_toggle
 // test mooneye::test_timer_tima_reload
-// with 4 passes but fails above:
+// but fails 
 // test mooneye::tma_write_reloading
-const TIMA_RELOAD_DELAY_TICKS: usize = 3; // seems like must be 4 (1 M-cycle delay)
+// test mooneye::tma_write_reloading
+
+// with 4 passes
+// test mooneye::tma_write_reloading
+// test mooneye::tma_write_reloading
+// but fails
+// test mooneye::test_timer_rapid_toggle
+// test mooneye::test_timer_tima_reload
+const TIMA_RELOAD_DELAY_TICKS: usize = 4; // seems like must be 4 (1 M-cycle delay)
 
 // #1 During the strange cycle [A] you can prevent the IF flag from being set and prevent the TIMA from
 // being reloaded from TMA by writing a value to TIMA. That new value will be the one that stays in
@@ -61,16 +69,12 @@ impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if self.tima_overflow {
-            // fix for tma_write_reloading
-            let delay_ticks = if self.tima_overflow_tma_write.is_some() {
-                TIMA_RELOAD_DELAY_TICKS + 1
-            } else {
-                TIMA_RELOAD_DELAY_TICKS
-            };
-            
-            if self.tima_overflow_ticks_count == delay_ticks && !self.tima_overflow_skip {
-                self.tima = self.tma;
-                interrupts.request_interrupt(InterruptType::Timer);
+            if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
+                if !self.tima_overflow_skip {
+                    self.tima = self.tma;
+                    interrupts.request_interrupt(InterruptType::Timer);
+                }
+
                 // reset after overflow fully handled
                 self.tima_overflow = false;
                 self.tima_overflow_ticks_count = 0;
@@ -127,7 +131,7 @@ impl Timer {
                     if self.tima_overflow_ticks_count == 0 {
                         // case #1: skip reload and interrupt
                         self.tima_overflow_skip = true;
-                    } else if self.tima_reload_next_tick() {
+                    } else if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
                         // case #2: ignore write
                         return;
                     }
@@ -145,10 +149,6 @@ impl Timer {
             TIMER_TAC_ADDRESS => self.write_tac(value),
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
-    }
-
-    fn tima_reload_next_tick(&self) -> bool {
-        self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS - 1
     }
 
     pub fn reset_div(&mut self) {
