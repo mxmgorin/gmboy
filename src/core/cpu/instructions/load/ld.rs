@@ -31,10 +31,6 @@ impl ExecutableInstruction for LdInstruction {
                         if r.is_16bit() && src_r.is_16bit() {
                             callback.m_cycles(1, &mut cpu.bus);
                         }
-
-                        if r == RegisterType::C && src_r == RegisterType::A {
-                            println!("LD C,A ({:02X})", fetched_data.value);
-                        }
                     }
 
                     cpu.registers.set_register(r, fetched_data.value);
