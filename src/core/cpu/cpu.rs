@@ -86,10 +86,9 @@ impl Cpu {
         self.handle_interrupts(callback);
 
         if self.is_halted {
-            if self.bus.io.interrupts.any_is_pending() {
-                // HALT bug case: Skips only the next instruction
+            if !self.bus.io.interrupts.ime && self.bus.io.interrupts.any_is_pending() {
+                // HALT bug: continue executing instructions
                 self.is_halted = false;
-                return Ok(());
             }
 
             // Do nothing, just wait for an interrupt to wake up

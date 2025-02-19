@@ -307,7 +307,6 @@ fn test_halt_ime0_ei() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_halt_ime0_nointr_timing() {
     let name = "halt_ime0_nointr_timing";
