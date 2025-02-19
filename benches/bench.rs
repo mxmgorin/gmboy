@@ -6,6 +6,7 @@ use rusty_gb_emu::cpu::instructions::{
 };
 use rusty_gb_emu::cpu::interrupts::Interrupts;
 use rusty_gb_emu::cpu::{Cpu, CpuCallback};
+use rusty_gb_emu::ppu::Ppu;
 
 pub fn instructions(cpu: &mut Cpu, ctx: &mut Callback) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
@@ -52,6 +53,12 @@ pub fn timer_tick(timer: &mut Timer, interrupts: &mut Interrupts) {
     }
 }
 
+pub fn ppu_tick(ppu: &mut Ppu, bus: &mut Bus) {
+    for _ in 0..1000 {
+        ppu.tick(bus);
+    }
+}
+
 fn criterion_benchmark(c: &mut Criterion) {
     let mut callback = Callback;
     let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000])); // Pre-allocate memory
@@ -66,6 +73,12 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("execute", |b| b.iter(|| execute(&mut cpu, &mut callback)));
     c.bench_function("cpu step", |b| {
         b.iter(|| instructions(&mut cpu, &mut callback))
+    });
+    
+    let mut bus = Bus::with_bytes(vec![10; 100000]);
+    let mut ppu = Ppu::default();
+    c.bench_function("ppu tick", |b| {
+        b.iter(|| ppu_tick(&mut ppu, &mut bus))
     });
 }
 

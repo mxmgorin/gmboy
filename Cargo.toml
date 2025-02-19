@@ -20,5 +20,5 @@ serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 
 [[bench]]
-name = "cpu_bench"
+name = "bench"
 harness = false
