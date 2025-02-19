@@ -41,9 +41,9 @@ impl Interrupts {
         }
     }
 
-    pub fn check_interrupts(&mut self) -> Option<(u16, InterruptType)> {
+    pub fn get_pending(&mut self) -> Option<(u16, InterruptType)> {
         for (address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
-            if self.check_interrupt(interrupt_type) {
+            if self.is_pending(interrupt_type) {
                 return Some((address, interrupt_type));
             }
         }
@@ -55,8 +55,8 @@ impl Interrupts {
         self.int_flags |= it as u8;
     }
     
-    pub fn has_pending(&self) -> bool {
-        self.int_flags != 0
+    pub fn any_is_pending(&self) -> bool {
+        (self.int_flags & self.ie_register) != 0
     }
 
     pub fn acknowledge_interrupt(&mut self, it: InterruptType) {
@@ -66,7 +66,7 @@ impl Interrupts {
         self.ime = false;
     }
 
-    fn check_interrupt(&self, it: InterruptType) -> bool {
+    fn is_pending(&self, it: InterruptType) -> bool {
         let it = it as u8;
         let is_requested = self.int_flags & it != 0;
         let is_enabled = self.ie_register & it != 0;
@@ -86,7 +86,7 @@ pub mod tests {
 
         for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
             interrupts.request_interrupt(interrupt_type);
-            assert!(interrupts.check_interrupt(interrupt_type));
+            assert!(interrupts.is_pending(interrupt_type));
         }
     }
 
@@ -95,7 +95,7 @@ pub mod tests {
         let interrupts = Interrupts::new();
 
         for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
-            assert!(!interrupts.check_interrupt(interrupt_type));
+            assert!(!interrupts.is_pending(interrupt_type));
         }
     }
 
@@ -104,15 +104,15 @@ pub mod tests {
         let mut interrupts = Interrupts::new();
 
         for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
-            assert!(!interrupts.check_interrupt(interrupt_type));
+            assert!(!interrupts.is_pending(interrupt_type));
 
             interrupts.ie_register |= interrupt_type as u8;
             interrupts.request_interrupt(interrupt_type);
 
-            assert!(interrupts.check_interrupt(interrupt_type));
+            assert!(interrupts.is_pending(interrupt_type));
             interrupts.acknowledge_interrupt(interrupt_type);
 
-            assert!(!interrupts.check_interrupt(interrupt_type));
+            assert!(!interrupts.is_pending(interrupt_type));
         }
     }
 }

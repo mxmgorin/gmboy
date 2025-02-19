@@ -83,21 +83,18 @@ impl Cpu {
             debugger.print_gb_doctor_info(self);
         }
 
-        if self.bus.io.interrupts.ime {
-            self.handle_interrupt(callback);
-            self.enabling_ime = false;
-        }
+        self.handle_interrupts(callback);
 
-        if self.is_halted {            
-            if self.bus.io.interrupts.has_pending() {
+        if self.is_halted {
+            if self.bus.io.interrupts.any_is_pending() {
                 // HALT bug case: Skips only the next instruction
                 self.is_halted = false;
                 return Ok(());
             }
-            
+
             // Do nothing, just wait for an interrupt to wake up
             callback.m_cycles(1, &mut self.bus);
-            
+
             return Ok(());
         }
 
@@ -127,20 +124,25 @@ impl Cpu {
             self.enabling_ime = false;
             self.bus.io.interrupts.ime = true;
         }
-        
+
         Ok(())
     }
 
-    /// Costs 5 M-cycles when there is an interrupt
-    pub fn handle_interrupt(&mut self, callback: &mut impl CpuCallback) {
-        if let Some((addr, it)) = self.bus.io.interrupts.check_interrupts() {
-            callback.m_cycles(2, &mut self.bus);
+    /// Costs 5 M-cycles when an interrupt is executed
+    pub fn handle_interrupts(&mut self, callback: &mut impl CpuCallback) {
+        if self.bus.io.interrupts.ime {
+            if let Some((addr, it)) = self.bus.io.interrupts.get_pending() {
+                // execute interrupt handler
+                callback.m_cycles(2, &mut self.bus);
 
-            self.is_halted = false;
-            self.bus.io.interrupts.acknowledge_interrupt(it);
-            Instruction::goto_addr(self, None, addr, true, callback);
+                self.is_halted = false;
+                self.bus.io.interrupts.acknowledge_interrupt(it);
+                Instruction::goto_addr(self, None, addr, true, callback);
 
-            callback.m_cycles(1, &mut self.bus);
+                callback.m_cycles(1, &mut self.bus);
+            }
+
+            self.enabling_ime = false;
         }
     }
 
