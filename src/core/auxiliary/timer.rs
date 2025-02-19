@@ -9,7 +9,12 @@ pub const TIMER_TAC_M_CYCLES: [usize; 4] = [256, 4, 16, 64];
 pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
 
 const INTERRUPT_DELAY_TICKS: usize = 3; // with 3 passes rapid_toggle but seems like should be 4
-const TIMA_RELOAD_DELAY_TICKS: usize = 3; // with 3 passes tima_reload but seems like should be 4
+const TIMA_RELOAD_DELAY_TICKS: usize = 4; // with 3 passes tima_reload but seems like should be 4
+
+// During the strange cycle [A] you can prevent the IF flag from being set and prevent the TIMA from being reloaded from TMA by writing a value to TIMA. That new value will be the one that stays in the TIMA register after the instruction. Writing to DIV, TAC or other registers won't prevent the IF flag from being set or TIMA from being reloaded.
+// If you write to TIMA during the cycle that TMA is being loaded to it [B], the write will be ignored and TMA value will be written to TIMA instead.
+// If register IF is written during [B], the written value will overwrite the automatic flag set to '1'. If a '0' is written during this cycle, the interrupt won't happen.
+// If TMA is written the same cycle it is loaded to TIMA [B], TIMA is also loaded with that value.
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -20,6 +25,7 @@ pub struct Timer {
     tac: u8,
     // additional info
     tima_overflow: bool,
+    tima_overflow_write: Option<u8>,
     tima_overflow_ticks_count: usize,
 }
 
@@ -32,6 +38,7 @@ impl Default for Timer {
             tma: 0,
             tac: 0,
             tima_overflow: false,
+            tima_overflow_write: None,
             tima_overflow_ticks_count: 0,
         }
     }
@@ -42,19 +49,23 @@ impl Timer {
         // TIMA overflowed during the last cycle
         if self.tima_overflow {
             if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
+                println!("RELOAD TIMA: {:02X}", self.tma);
                 self.tima = self.tma;
-            }
-
-            if self.tima_overflow_ticks_count == INTERRUPT_DELAY_TICKS {
                 interrupts.request_interrupt(InterruptType::Timer);
+            } 
+            
+            if let Some(tima) = self.tima_overflow_write {
+                println!("IGNORE TIMA {:02X}", tima);
             }
 
             if self.tima_overflow_ticks_count
                 >= cmp::max(INTERRUPT_DELAY_TICKS, TIMA_RELOAD_DELAY_TICKS)
             {
+                println!("RESET OVERFLOW");
                 // reset after overflow fully handled
                 self.tima_overflow = false;
                 self.tima_overflow_ticks_count = 0;
+                self.tima_overflow_write = None;
             } else {
                 self.tima_overflow_ticks_count += 1;
             }
@@ -102,7 +113,16 @@ impl Timer {
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             TIMER_DIV_ADDRESS => self.reset_div(),
-            TIMER_TIMA_ADDRESS => self.tima = value,
+            TIMER_TIMA_ADDRESS => {
+                println!("WRITE TIMA {:02X}", value);
+                if self.tima_overflow {
+                    println!("WRITE TIMA OVERFLOW");
+                    self.tima_overflow_write = Some(value);
+                    //return;
+                }
+                
+                self.tima = value;
+            },
             TIMER_TMA_ADDRESS => self.tma = value,
             TIMER_TAC_ADDRESS => self.write_tac(value),
             _ => panic!("Invalid Timer address: {:02X}", address),
