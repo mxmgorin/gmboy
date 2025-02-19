@@ -1,4 +1,6 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
+use std::cmp;
+use std::cmp::max_by;
 
 pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
 pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;
@@ -7,8 +9,8 @@ pub const TIMER_TAC_ADDRESS: u16 = 0xFF07;
 pub const TIMER_TAC_M_CYCLES: [usize; 4] = [256, 4, 16, 64];
 pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
 
-const INTERRUPT_DELAY_TICKS: usize = 3; // with 3 passes rapid_toggle but seems like should be 4 
-const TIMA_RELOAD_DELAY_TICKS: usize = 1;
+const INTERRUPT_DELAY_TICKS: usize = 3; // with 3 passes rapid_toggle but seems like should be 4
+const TIMA_RELOAD_DELAY_TICKS: usize = 3; // with 3 passes tima_reload but seems like should be 4
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -45,9 +47,13 @@ impl Timer {
             }
 
             if self.tima_overflow_ticks_count == INTERRUPT_DELAY_TICKS {
-                println!("REQ TIMER INTR");
                 interrupts.request_interrupt(InterruptType::Timer);
-                // reset after overflow handled
+            }
+
+            if self.tima_overflow_ticks_count
+                >= cmp::max(INTERRUPT_DELAY_TICKS, TIMA_RELOAD_DELAY_TICKS)
+            {
+                // reset after overflow fully handled
                 self.tima_overflow = false;
                 self.tima_overflow_ticks_count = 0;
             } else {
