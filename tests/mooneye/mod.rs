@@ -216,7 +216,6 @@ fn test_timer_tima_write_reloading() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME: passes whe reload delay 4 but broke others
 #[test]
 fn test_timer_tma_write_reloading() {
     let name = "tma_write_reloading";

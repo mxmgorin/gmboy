@@ -37,6 +37,7 @@ pub struct Timer {
     // additional info
     tima_overflow: bool,
     tima_overflow_skip: bool,
+    tima_overflow_tma_write: Option<u8>,
     tima_overflow_ticks_count: usize,
 }
 
@@ -50,6 +51,7 @@ impl Default for Timer {
             tac: 0,
             tima_overflow: false,
             tima_overflow_skip: false,
+            tima_overflow_tma_write: None,
             tima_overflow_ticks_count: 0,
         }
     }
@@ -59,9 +61,14 @@ impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if self.tima_overflow {
-            if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS
-                && !self.tima_overflow_skip
-            {
+            // fix for tma_write_reloading
+            let delay_ticks = if self.tima_overflow_tma_write.is_some() {
+                TIMA_RELOAD_DELAY_TICKS + 1
+            } else {
+                TIMA_RELOAD_DELAY_TICKS
+            };
+            
+            if self.tima_overflow_ticks_count == delay_ticks && !self.tima_overflow_skip {
                 self.tima = self.tma;
                 interrupts.request_interrupt(InterruptType::Timer);
                 // reset after overflow fully handled
@@ -129,9 +136,8 @@ impl Timer {
                 self.tima = value;
             }
             TIMER_TMA_ADDRESS => {
-                if self.tima_reload_next_tick() {
-                    // case #4
-                    self.tima = self.tma;
+                if self.tima_overflow {
+                    self.tima_overflow_tma_write = Some(value);
                 }
 
                 self.tma = value;
