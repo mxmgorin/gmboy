@@ -18,7 +18,7 @@ pub fn run_mooneye_rom(
     let instant = Instant::now();
 
     loop {
-        cpu.step(&mut callback, None)?;
+        cpu.step(&mut callback)?;
 
         if cpu.registers.b == 3
             && cpu.registers.c == 5

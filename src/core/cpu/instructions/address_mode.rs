@@ -317,7 +317,7 @@ mod tests {
     use crate::bus::Bus;
     use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
-    use crate::cpu::{Cpu, CpuCallback};
+    use crate::cpu::{Cpu, CpuCallback, DebugCtx};
     use crate::LittleEndianBytes;
 
     #[test]
@@ -436,5 +436,12 @@ mod tests {
 
     impl CpuCallback for Callback {
         fn m_cycles(&mut self, _m_cycles: usize, _bus: &mut Bus) {}
+
+        fn update_serial(&mut self, cpu: &mut Cpu) {
+            
+        }
+
+        fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {
+        }
     }
 }

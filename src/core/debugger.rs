@@ -1,6 +1,7 @@
 use crate::cpu::instructions::{FetchedData, Instruction};
 use crate::cpu::Cpu;
 use std::borrow::Cow;
+use crate::auxiliary::clock::Clock;
 
 #[derive(Debug, Clone)]
 pub struct Debugger {
@@ -68,6 +69,7 @@ impl Debugger {
 
     pub fn print_cpu_info(
         &self,
+        clock: &Clock,
         cpu: &Cpu,
         pc: u16,
         instruction: &Instruction,
@@ -80,7 +82,7 @@ impl Debugger {
 
         println!(
             "{:08X} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
-            0, // todo: clock.t_cycles,
+            clock.t_cycles,
             pc,
             instruction.to_asm_string(cpu, fetched_data),
             opcode,

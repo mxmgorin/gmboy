@@ -1,12 +1,20 @@
 use crate::bus::Bus;
 use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::core::cpu::Registers;
-use crate::cpu::instructions::RegisterType;
-use crate::debugger::Debugger;
+use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::LittleEndianBytes;
+
+pub struct DebugCtx {
+    pub pc: u16,
+    pub instruction: Instruction,
+    pub opcode: u8,
+    pub fetched_data: FetchedData,
+}
 
 pub trait CpuCallback {
     fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus);
+    fn update_serial(&mut self, cpu: &mut Cpu);
+    fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>);
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -18,6 +26,10 @@ impl CpuCallback for CounterCpuCallback {
     fn m_cycles(&mut self, m_cycles: usize, _bus: &mut Bus) {
         self.m_cycles_count += m_cycles;
     }
+
+    fn update_serial(&mut self, cpu: &mut Cpu) {}
+
+    fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {}
 }
 
 #[derive(Debug, Clone)]
@@ -73,15 +85,9 @@ impl Cpu {
         callback.m_cycles(1, &mut self.bus);
     }
 
-    pub fn step(
-        &mut self,
-        callback: &mut impl CpuCallback,
-        debugger: Option<&mut Debugger>,
-    ) -> Result<(), String> {
+    pub fn step(&mut self, callback: &mut impl CpuCallback) -> Result<(), String> {
         #[cfg(debug_assertions)]
-        if let Some(debugger) = &debugger {
-            debugger.print_gb_doctor_info(self);
-        }
+        callback.debug(self, None);
 
         self.handle_interrupts(callback);
 
@@ -110,10 +116,14 @@ impl Cpu {
         let fetched_data = AddressMode::fetch_data(self, instruction.get_address_mode(), callback);
 
         #[cfg(debug_assertions)]
-        if let Some(debugger) = debugger {
-            debugger.print_cpu_info(self, pc, instruction, self.current_opcode, &fetched_data);
-            debugger.update_serial(self);
-        }
+        let inst_ctx = DebugCtx {
+            pc,
+            instruction: instruction.to_owned(),
+            opcode: self.current_opcode,
+            fetched_data: fetched_data.clone(),
+        };
+        callback.debug(self, Some(inst_ctx));
+        callback.update_serial(self);
 
         let prev_enabling_ime = self.enabling_ime;
         instruction.execute(self, callback, fetched_data);

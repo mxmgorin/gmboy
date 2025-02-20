@@ -2,7 +2,7 @@ use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::core::cart::Cart;
 use crate::core::ui::Ui;
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};
 use crate::ui::events::{UiEvent, UiEventHandler};
@@ -21,6 +21,7 @@ pub struct Emu {
 #[derive(Debug, Clone, Default)]
 pub struct EmuCtx {
     pub clock: Clock,
+    pub debugger: Option<Debugger>,
 }
 
 impl EmuCtx {
@@ -29,6 +30,7 @@ impl EmuCtx {
 
         Self {
             clock: Clock::with_ppu(ppu),
+            debugger: Some(Debugger::new(CpuLogType::None, true)),
         }
     }
 }
@@ -36,6 +38,29 @@ impl EmuCtx {
 impl CpuCallback for EmuCtx {
     fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
         self.clock.m_cycles(m_cycles, bus);
+    }
+
+    fn update_serial(&mut self, cpu: &mut Cpu) {
+        if let Some(debugger) = self.debugger.as_mut() {
+            debugger.update_serial(cpu);
+        }
+    }
+
+    fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {
+        if let Some(debugger) = self.debugger.as_mut() {
+            debugger.print_gb_doctor_info(cpu);
+
+            if let Some(ctx) = ctx {
+                debugger.print_cpu_info(
+                    &self.clock,
+                    cpu,
+                    ctx.pc,
+                    &ctx.instruction,
+                    ctx.opcode,
+                    &ctx.fetched_data,
+                );
+            }
+        }
     }
 }
 
@@ -71,7 +96,6 @@ impl Emu {
 
     pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
         let cart = Cart::new(cart_bytes)?;
-        let mut debugger = Debugger::new(CpuLogType::None, true);
         let mut cpu = Cpu::new(Bus::new(cart));
         let mut ui = Ui::new(false)?;
         let mut prev_frame = 0;
@@ -85,10 +109,12 @@ impl Emu {
             }
 
             ui.handle_events(&mut cpu.bus, self);
-            cpu.step(&mut self.ctx, Some(&mut debugger))?;
+            cpu.step(&mut self.ctx)?;
 
-            if !debugger.get_serial_msg().is_empty() {
-                println!("Serial: {}", debugger.get_serial_msg());
+            if let Some(debugger) = self.ctx.debugger.as_mut() {
+                if debugger.get_serial_msg().is_empty() {
+                    println!("Serial: {}", debugger.get_serial_msg());
+                }
             }
 
             let ppu = self.ctx.clock.ppu.as_mut().unwrap();

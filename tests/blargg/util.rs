@@ -12,14 +12,18 @@ pub fn run_blargg_rom_serial(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
-    let mut debugger = Debugger::new(CpuLogType::None, true);
+    let debugger = Debugger::new(CpuLogType::None, true);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
     let mut cpu = Cpu::new(Bus::new(cart));
     let instant = Instant::now();
+    let mut ctx = EmuCtx {
+        clock: Default::default(),
+        debugger: Some(debugger),
+    };
 
     loop {
-        cpu.step(&mut EmuCtx::default(), Some(&mut debugger))?;
-        let serial_msg = debugger.get_serial_msg().to_lowercase();
+        cpu.step(&mut ctx)?;
+        let serial_msg = ctx.debugger.as_ref().unwrap().get_serial_msg().to_lowercase();
 
         if serial_msg.contains("passed") {
             return Ok(());
@@ -44,7 +48,7 @@ pub fn run_blargg_rom_memory(
     let instant = Instant::now();
 
     loop {
-        cpu.step(&mut EmuCtx::default(), None)?;
+        cpu.step(&mut EmuCtx::default())?;
         let b1 = cpu.bus.read(0xA001);
         let b2 = cpu.bus.read(0xA002);
         let b3 = cpu.bus.read(0xA003);
