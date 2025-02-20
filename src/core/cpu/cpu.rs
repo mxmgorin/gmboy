@@ -27,9 +27,9 @@ impl CpuCallback for CounterCpuCallback {
         self.m_cycles_count += m_cycles;
     }
 
-    fn update_serial(&mut self, cpu: &mut Cpu) {}
+    fn update_serial(&mut self, _cpu: &mut Cpu) {}
 
-    fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {}
+    fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
 }
 
 #[derive(Debug, Clone)]
@@ -103,7 +103,9 @@ impl Cpu {
             return Ok(());
         }
 
+        #[cfg(debug_assertions)]
         let pc = self.registers.pc;
+        
         self.current_opcode = self.fetch_data(callback);
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
@@ -122,6 +124,7 @@ impl Cpu {
             opcode: self.current_opcode,
             fetched_data: fetched_data.clone(),
         };
+        #[cfg(debug_assertions)]
         callback.debug(self, Some(inst_ctx));
         callback.update_serial(self);
 

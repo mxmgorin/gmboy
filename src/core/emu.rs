@@ -30,7 +30,7 @@ impl EmuCtx {
 
         Self {
             clock: Clock::with_ppu(ppu),
-            debugger: Some(Debugger::new(CpuLogType::Assembly, false)),
+            debugger: Some(Debugger::new(CpuLogType::None, false)),
         }
     }
 }

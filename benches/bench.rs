@@ -5,10 +5,10 @@ use rusty_gb_emu::cpu::instructions::{
     AddressMode, ExecutableInstruction, Instruction, INSTRUCTIONS_BY_OPCODES,
 };
 use rusty_gb_emu::cpu::interrupts::Interrupts;
-use rusty_gb_emu::cpu::{Cpu, CpuCallback};
+use rusty_gb_emu::cpu::{CounterCpuCallback, Cpu};
 use rusty_gb_emu::ppu::Ppu;
 
-pub fn instructions(cpu: &mut Cpu, ctx: &mut Callback) {
+pub fn instructions(cpu: &mut Cpu, ctx: &mut CounterCpuCallback) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
         match instr {
             Instruction::Halt(_)
@@ -20,11 +20,11 @@ pub fn instructions(cpu: &mut Cpu, ctx: &mut Callback) {
 
         cpu.registers.pc = 0;
         cpu.bus.write(0, opcode as u8);
-        cpu.step(ctx, None).unwrap();
+        cpu.step(ctx).unwrap();
     }
 }
 
-pub fn fetch_data(cpu: &mut Cpu, callback: &mut Callback) {
+pub fn fetch_data(cpu: &mut Cpu, callback: &mut CounterCpuCallback) {
     for instr in INSTRUCTIONS_BY_OPCODES.iter() {
         if let Instruction::Unknown(_) = instr {
             continue;
@@ -35,7 +35,7 @@ pub fn fetch_data(cpu: &mut Cpu, callback: &mut Callback) {
     }
 }
 
-pub fn execute(cpu: &mut Cpu, callback: &mut Callback) {
+pub fn execute(cpu: &mut Cpu, callback: &mut CounterCpuCallback) {
     for instr in INSTRUCTIONS_BY_OPCODES.iter() {
         if let Instruction::Unknown(_) = instr {
             continue;
@@ -60,7 +60,7 @@ pub fn ppu_tick(ppu: &mut Ppu, bus: &mut Bus) {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut callback = Callback;
+    let mut callback = CounterCpuCallback::default();
     let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000])); // Pre-allocate memory
     let mut timer = Timer::default();
 
@@ -84,9 +84,3 @@ fn criterion_benchmark(c: &mut Criterion) {
 
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);
-
-pub struct Callback;
-
-impl CpuCallback for Callback {
-    fn m_cycles(&mut self, _m_cycles: usize, _bus: &mut Bus) {}
-}
