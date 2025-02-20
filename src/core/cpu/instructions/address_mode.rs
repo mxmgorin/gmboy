@@ -317,7 +317,7 @@ mod tests {
     use crate::bus::Bus;
     use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
-    use crate::cpu::{Cpu, CpuCallback, DebugCtx};
+    use crate::cpu::{CounterCpuCallback, Cpu};
     use crate::LittleEndianBytes;
 
     #[test]
@@ -326,7 +326,7 @@ mod tests {
         let mut cpu = Cpu::new(Bus::new(cart));
         let mode = AddressMode::IMP;
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut Callback);
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
 
         assert_eq!(data.value, 0);
     }
@@ -340,7 +340,7 @@ mod tests {
             cpu.registers.set_register(reg_type, 23);
             let mode = AddressMode::R(reg_type);
 
-            let data = AddressMode::fetch_data(&mut cpu, mode, &mut Callback);
+            let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -356,7 +356,7 @@ mod tests {
             cpu.registers.set_register(reg_type, 23);
             let mode = AddressMode::R_R(RegisterType::BC, reg_type);
 
-            let data = AddressMode::fetch_data(&mut cpu, mode, &mut Callback);
+            let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -374,7 +374,7 @@ mod tests {
         cpu.registers.pc = pc as u16;
         let mode = AddressMode::R_D8(RegisterType::A);
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut Callback);
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
 
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
@@ -400,7 +400,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut Callback);
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);
@@ -425,23 +425,10 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut Callback);
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);
         assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_sub(1));
-    }
-
-    struct Callback;
-
-    impl CpuCallback for Callback {
-        fn m_cycles(&mut self, _m_cycles: usize, _bus: &mut Bus) {}
-
-        fn update_serial(&mut self, cpu: &mut Cpu) {
-            
-        }
-
-        fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {
-        }
     }
 }

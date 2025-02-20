@@ -2,7 +2,7 @@ use crate::print_with_dashes;
 use rusty_gb_emu::bus::Bus;
 use rusty_gb_emu::core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use rusty_gb_emu::cpu::instructions::ExecutableInstruction;
-use rusty_gb_emu::cpu::{CounterCpuCallback, Cpu, CpuCallback, Flags, Registers};
+use rusty_gb_emu::cpu::{CounterCpuCallback, Cpu, Flags, Registers};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
