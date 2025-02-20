@@ -78,10 +78,8 @@ pub struct Timer {
     tac: u8,
     // additional info
     falling_edge_detector: FallingEdgeDetector,
-    tima_overflow: bool,
-    tima_overflow_skip: bool,
     tima_overflow_tma_write: Option<u8>,
-    tima_overflow_ticks_count: usize,
+    tima_overflow_ticks: Option<usize>,
 }
 
 impl Default for Timer {
@@ -92,11 +90,9 @@ impl Default for Timer {
             tima: 0,
             tma: 0,
             tac: 0,
-            tima_overflow: false,
-            tima_overflow_skip: false,
             tima_overflow_tma_write: None,
-            tima_overflow_ticks_count: 0,
             falling_edge_detector: Default::default(),
+            tima_overflow_ticks: None,
         }
     }
 }
@@ -104,19 +100,15 @@ impl Default for Timer {
 impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
-        if self.tima_overflow {
-            if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
-                if !self.tima_overflow_skip {
-                    self.tima = self.tma;
-                    interrupts.request_interrupt(InterruptType::Timer);
-                }
+        if let Some(tima_overflow_ticks) = self.tima_overflow_ticks.as_mut() {
+            if *tima_overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
+                self.tima = self.tma;
+                interrupts.request_interrupt(InterruptType::Timer);
 
                 // reset after overflow fully handled
-                self.tima_overflow = false;
-                self.tima_overflow_ticks_count = 0;
-                self.tima_overflow_skip = false;
+                self.tima_overflow_ticks = None;
             } else {
-                self.tima_overflow_ticks_count += 1;
+                *tima_overflow_ticks += 1;
             }
         }
 
@@ -128,13 +120,15 @@ impl Timer {
     }
 
     fn inc_tima(&mut self) {
-        (self.tima, self.tima_overflow) = self.tima.overflowing_add(1);
+        let (tima, tima_overflow) = self.tima.overflowing_add(1);
+        self.tima = tima;
 
-        if self.tima_overflow {
+        if tima_overflow && self.tima_overflow_ticks.is_none() {
             // Timer interrupt is delayed 4 ticks from the TIMA overflow.
             // The TMA reload to TIMA is also delayed for 1 tick.
             // After overflowing TIMA, the value in TIMA is 00, not TMA.
             self.tima = 0x00;
+            self.tima_overflow_ticks = Some(0);
         }
     }
 
@@ -161,11 +155,11 @@ impl Timer {
         match address {
             TIMER_DIV_ADDRESS => self.reset_div(),
             TIMER_TIMA_ADDRESS => {
-                if self.tima_overflow {
-                    if self.tima_overflow_ticks_count == 0 {
+                if let Some(overflow_ticks) = self.tima_overflow_ticks {
+                    if overflow_ticks == 0 {
                         // case #1: skip reload and interrupt
-                        self.tima_overflow_skip = true;
-                    } else if self.tima_overflow_ticks_count == TIMA_RELOAD_DELAY_TICKS {
+                        self.tima_overflow_ticks = None;
+                    } else if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
                         // case #2: ignore write
                         return;
                     }
@@ -174,7 +168,7 @@ impl Timer {
                 self.tima = value;
             }
             TIMER_TMA_ADDRESS => {
-                if self.tima_overflow {
+                if self.tima_overflow_ticks.is_some() {
                     self.tima_overflow_tma_write = Some(value);
                 }
 
