@@ -30,7 +30,7 @@ impl EmuCtx {
 
         Self {
             clock: Clock::with_ppu(ppu),
-            debugger: Some(Debugger::new(CpuLogType::None, true)),
+            debugger: Some(Debugger::new(CpuLogType::Assembly, false)),
         }
     }
 }
@@ -112,7 +112,7 @@ impl Emu {
             cpu.step(&mut self.ctx)?;
 
             if let Some(debugger) = self.ctx.debugger.as_mut() {
-                if debugger.get_serial_msg().is_empty() {
+                if !debugger.get_serial_msg().is_empty() {
                     println!("Serial: {}", debugger.get_serial_msg());
                 }
             }
