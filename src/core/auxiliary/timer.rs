@@ -1,4 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
+use crate::{get_bit_flag, get_bit_flag16};
 
 pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
 pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;
@@ -10,7 +11,7 @@ pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
 // with 3 passes
 // test mooneye::test_timer_rapid_toggle
 // test mooneye::test_timer_tima_reload
-// but fails 
+// but fails
 // test mooneye::tma_write_reloading
 // test mooneye::tma_write_reloading
 
@@ -21,6 +22,7 @@ pub const TIMER_TAC_UNUSED_MASK: u8 = 0b1111_1000;
 // test mooneye::test_timer_rapid_toggle
 // test mooneye::test_timer_tima_reload
 const TIMA_RELOAD_DELAY_TICKS: usize = 4; // seems like must be 4 (1 M-cycle delay)
+const TAC_ENABLE_BIT: u8 = 2;
 
 // #1 During the strange cycle [A] you can prevent the IF flag from being set and prevent the TIMA from
 // being reloaded from TMA by writing a value to TIMA. That new value will be the one that stays in
@@ -35,6 +37,38 @@ const TIMA_RELOAD_DELAY_TICKS: usize = 4; // seems like must be 4 (1 M-cycle del
 
 // #4 If TMA is written the same cycle it is loaded to TIMA [B], TIMA is also loaded with that value.
 
+#[derive(Debug, Clone, Default)]
+pub struct FallingEdgeDetector {
+    pub prev_result: bool,
+}
+
+impl FallingEdgeDetector {
+    pub fn detect(&mut self, div: u16, tac: u8) -> bool {
+        let clock_bit = get_bit_flag16(div, get_clock_bit_position(tac));
+        let enable_bit = get_bit_flag(tac, TAC_ENABLE_BIT);
+        let and_result = clock_bit && enable_bit;
+
+        let is_falling_edge = self.prev_result && !and_result;
+        self.prev_result = and_result;
+
+        is_falling_edge
+    }
+}
+
+fn get_clock_bit_position(tac: u8) -> u8 {
+    match tac & 0b11 {
+        // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
+        0b00 => 9,
+        // 0b01 (262144 Hz): div bit 3, increment every 4 M-cycles
+        0b01 => 3,
+        // 0b10 (65536 Hz): div bit 5, increment every 16 M-cycles
+        0b10 => 5,
+        // 0b11 (16384 Hz): div bit 7, increment every 64 M-cycles
+        0b11 => 7,
+        _ => unreachable!(),
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Timer {
     // registers
@@ -43,6 +77,7 @@ pub struct Timer {
     tma: u8,
     tac: u8,
     // additional info
+    falling_edge_detector: FallingEdgeDetector,
     tima_overflow: bool,
     tima_overflow_skip: bool,
     tima_overflow_tma_write: Option<u8>,
@@ -61,6 +96,7 @@ impl Default for Timer {
             tima_overflow_skip: false,
             tima_overflow_tma_write: None,
             tima_overflow_ticks_count: 0,
+            falling_edge_detector: Default::default(),
         }
     }
 }
@@ -84,11 +120,9 @@ impl Timer {
             }
         }
 
-        let prev_div = self.div;
         self.div = self.div.wrapping_add(1);
 
-        // Update TIMA if the timer is enabled and a timer update is triggered
-        if self.is_falling_edge(prev_div) && self.is_enabled() {
+        if self.falling_edge_detector.detect(self.div, self.tac) {
             self.inc_tima();
         }
     }
@@ -104,7 +138,7 @@ impl Timer {
         }
     }
 
-    fn get_clock_bit(&self) -> u8 {
+    fn get_clock_bit_position(&self) -> u8 {
         match self.tac & 0b11 {
             // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
             0b00 => 9,
@@ -120,7 +154,7 @@ impl Timer {
 
     fn is_enabled(&self) -> bool {
         // If bit 2 of TAC is set to 0 then the timer is disabled
-        self.tac & (1 << 2) != 0
+        self.tac & (1 << TAC_ENABLE_BIT) != 0
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
@@ -152,26 +186,19 @@ impl Timer {
     }
 
     pub fn reset_div(&mut self) {
-        let prev_div = self.div;
         self.div = 0;
 
         // - When writing to DIV register the TIMA register can be increased if the counter has reached half
         // the clocks it needs to increase because the selected bit by the multiplexer will go from 1 to 0 (which
         // is a falling edge, that will be detected by the falling edge detector).
-        if self.is_enabled() && self.is_falling_edge(prev_div) {
-            self.inc_tima();
-        }
-    }
-
-    /// Detect when bit N transitions from 1 to 0 between the previous DIV and current DIV values
-    pub fn is_falling_edge(&self, prev_div: u16) -> bool {
-        let bit = self.get_clock_bit();
-        (prev_div & (1 << bit)) != 0 && (self.div & (1 << bit)) == 0
+        //if self.is_enabled() && self.is_falling_edge(self.prev_div) {
+        //    self.inc_tima();
+        //}
     }
 
     pub fn write_tac(&mut self, value: u8) {
-        let old_is_enabled = self.is_enabled();
-        let old_clock_bit = self.get_clock_bit();
+        //let old_is_enabled = self.is_enabled();
+        let old_clock_bit = self.get_clock_bit_position();
 
         self.tac = value;
 
@@ -180,22 +207,24 @@ impl Timer {
         // - When disabling the timer, if the corresponding bit in the system counter is set to 1, the falling edge
         // detector will see a change from 1 to 0, so TIMA will increase. This means that whenever half the
         // clocks of the count are reached, TIMA will increase when disabling the timer.
-        let disabling_glitch =
-            (self.div & (1 << old_clock_bit)) != 0 && old_is_enabled && !new_is_enabled;
+        // Correctly emulated by detect_falling_edge
 
-        if disabling_glitch {
+        //let disabling_glitch =
+        //    (self.div & (1 << old_clock_bit)) != 0 && old_is_enabled && !new_is_enabled;
+
+        //if disabling_glitch {
+        //self.inc_tima();
+        //} else {
+        // - When changing TAC register value, if the old selected bit by the multiplexer was 0, the new one is
+        // 1, and the new enable bit of TAC is set to 1, it will increase TIMA.
+        let enabling_glitch = (self.div & (1 << old_clock_bit)) == 0
+            && (self.div & (1 << self.get_clock_bit_position())) != 0
+            && new_is_enabled;
+
+        if enabling_glitch {
             self.inc_tima();
-        } else {
-            // - When changing TAC register value, if the old selected bit by the multiplexer was 0, the new one is
-            // 1, and the new enable bit of TAC is set to 1, it will increase TIMA.
-            let enabling_glitch = (self.div & (1 << old_clock_bit)) == 0
-                && (self.div & (1 << self.get_clock_bit())) != 0
-                && new_is_enabled;
-
-            if enabling_glitch {
-                self.inc_tima();
-            }
         }
+        //}
     }
 
     pub fn read(&self, address: u16) -> u8 {
