@@ -80,6 +80,7 @@ pub struct Timer {
     falling_edge_detector: FallingEdgeDetector,
     tima_overflow_tma_write: Option<u8>,
     tima_overflow_ticks: Option<usize>,
+    disabling_glitch: bool,
 }
 
 impl Default for Timer {
@@ -93,6 +94,7 @@ impl Default for Timer {
             tima_overflow_tma_write: None,
             falling_edge_detector: Default::default(),
             tima_overflow_ticks: None,
+            disabling_glitch: false,
         }
     }
 }
@@ -101,13 +103,13 @@ impl Timer {
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if let Some(tima_overflow_ticks) = self.tima_overflow_ticks.as_mut() {
-            if *tima_overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
-                //println!("RELOAD {:02X}", self.tma);
+            if *tima_overflow_ticks == TIMA_RELOAD_DELAY_TICKS || self.disabling_glitch {
                 self.tima = self.tma;
                 interrupts.request_interrupt(InterruptType::Timer);
 
                 // reset after overflow fully handled
                 self.tima_overflow_ticks = None;
+                self.disabling_glitch = false;
             } else {
                 //println!("SKIP {}", tima_overflow_ticks);
                 *tima_overflow_ticks += 1;
@@ -126,7 +128,6 @@ impl Timer {
         self.write_tima(tima);
 
         if tima_overflow && self.tima_overflow_ticks.is_none() {
-            //println!("OVERFLOW");
             // Timer interrupt is delayed 4 ticks from the TIMA overflow.
             // The TMA reload to TIMA is also delayed for 1 tick.
             // After overflowing TIMA, the value in TIMA is 00, not TMA.
@@ -197,7 +198,7 @@ impl Timer {
     }
 
     pub fn write_tac(&mut self, value: u8) {
-        //let old_is_enabled = self.is_enabled();
+        let old_is_enabled = self.is_enabled();
         let old_clock_bit = self.get_clock_bit_position();
 
         self.tac = value;
@@ -209,22 +210,21 @@ impl Timer {
         // clocks of the count are reached, TIMA will increase when disabling the timer.
         // Correctly emulated by detect_falling_edge
 
-        //let disabling_glitch =
-        //    (self.div & (1 << old_clock_bit)) != 0 && old_is_enabled && !new_is_enabled;
+        // fix rapid_toggle
+        self.disabling_glitch =
+            (self.div & (1 << old_clock_bit)) != 0 && old_is_enabled && !new_is_enabled;
 
-        //if disabling_glitch {
-        //self.inc_tima();
-        //} else {
-        // - When changing TAC register value, if the old selected bit by the multiplexer was 0, the new one is
-        // 1, and the new enable bit of TAC is set to 1, it will increase TIMA.
-        let enabling_glitch = (self.div & (1 << old_clock_bit)) == 0
-            && (self.div & (1 << self.get_clock_bit_position())) != 0
-            && new_is_enabled;
+        if !self.disabling_glitch {
+            // - When changing TAC register value, if the old selected bit by the multiplexer was 0, the new one is
+            // 1, and the new enable bit of TAC is set to 1, it will increase TIMA.
+            let enabling_glitch = (self.div & (1 << old_clock_bit)) == 0
+                && (self.div & (1 << self.get_clock_bit_position())) != 0
+                && new_is_enabled;
 
-        if enabling_glitch {
-            self.inc_tima();
+            if enabling_glitch {
+                self.inc_tima();
+            }
         }
-        //}
     }
 
     pub fn read(&self, address: u16) -> u8 {
