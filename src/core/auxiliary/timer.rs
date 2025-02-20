@@ -102,12 +102,14 @@ impl Timer {
         // TIMA overflowed during the last cycle
         if let Some(tima_overflow_ticks) = self.tima_overflow_ticks.as_mut() {
             if *tima_overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
+                //println!("RELOAD {:02X}", self.tma);
                 self.tima = self.tma;
                 interrupts.request_interrupt(InterruptType::Timer);
 
                 // reset after overflow fully handled
                 self.tima_overflow_ticks = None;
             } else {
+                //println!("SKIP {}", tima_overflow_ticks);
                 *tima_overflow_ticks += 1;
             }
         }
@@ -121,9 +123,10 @@ impl Timer {
 
     fn inc_tima(&mut self) {
         let (tima, tima_overflow) = self.tima.overflowing_add(1);
-        self.tima = tima;
+        self.write_tima(tima);
 
         if tima_overflow && self.tima_overflow_ticks.is_none() {
+            //println!("OVERFLOW");
             // Timer interrupt is delayed 4 ticks from the TIMA overflow.
             // The TMA reload to TIMA is also delayed for 1 tick.
             // After overflowing TIMA, the value in TIMA is 00, not TMA.
@@ -154,20 +157,7 @@ impl Timer {
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             TIMER_DIV_ADDRESS => self.reset_div(),
-            TIMER_TIMA_ADDRESS => {
-                if let Some(overflow_ticks) = self.tima_overflow_ticks {
-                    if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
-                        // case #2: the same tick on which the reload occurs - ignore write
-                        return;
-                    } else {
-                        // case #1: write during 4-ticks delay - abort handling
-                        self.tima_overflow_ticks = None;
-
-                    }
-                }
-
-                self.tima = value;
-            }
+            TIMER_TIMA_ADDRESS => self.write_tima(value),
             TIMER_TMA_ADDRESS => {
                 if self.tima_overflow_ticks.is_some() {
                     self.tima_overflow_tma_write = Some(value);
@@ -178,6 +168,21 @@ impl Timer {
             TIMER_TAC_ADDRESS => self.write_tac(value),
             _ => panic!("Invalid Timer address: {:02X}", address),
         }
+    }
+
+    fn write_tima(&mut self, value: u8) {
+        if let Some(overflow_ticks) = self.tima_overflow_ticks {
+            if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
+                // case #2: the same tick on which the reload occurs - ignore write
+                self.tima = self.tma;
+                return;
+            } else {
+                // case #1: write during 4-ticks delay - abort handling
+                self.tima_overflow_ticks = None;
+            }
+        }
+
+        self.tima = value;
     }
 
     pub fn reset_div(&mut self) {
@@ -225,7 +230,16 @@ impl Timer {
     pub fn read(&self, address: u16) -> u8 {
         match address {
             TIMER_DIV_ADDRESS => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
-            TIMER_TIMA_ADDRESS => self.tima,
+            TIMER_TIMA_ADDRESS => {
+                // fix for tima_reload
+                if let Some(overflow_ticks) = self.tima_overflow_ticks {
+                    if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
+                        return self.tma;
+                    }
+                }
+
+                self.tima
+            }
             TIMER_TMA_ADDRESS => self.tma,
             TIMER_TAC_ADDRESS => self.tac | TIMER_TAC_UNUSED_MASK,
             _ => panic!("Invalid Timer address: {:02X}", address),
