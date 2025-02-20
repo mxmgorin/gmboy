@@ -156,12 +156,13 @@ impl Timer {
             TIMER_DIV_ADDRESS => self.reset_div(),
             TIMER_TIMA_ADDRESS => {
                 if let Some(overflow_ticks) = self.tima_overflow_ticks {
-                    if overflow_ticks == 0 {
-                        // case #1: skip reload and interrupt
-                        self.tima_overflow_ticks = None;
-                    } else if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
-                        // case #2: ignore write
+                    if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
+                        // case #2: the same tick on which the reload occurs - ignore write
                         return;
+                    } else {
+                        // case #1: write during 4-ticks delay - abort handling
+                        self.tima_overflow_ticks = None;
+
                     }
                 }
 
