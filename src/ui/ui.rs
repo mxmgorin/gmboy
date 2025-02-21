@@ -5,7 +5,7 @@ use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+use sdl2::rect::{FRect};
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::EventPump;
@@ -23,7 +23,7 @@ pub struct Ui {
 }
 
 pub struct Layout {
-    pub scale: u32,
+    pub scale: f32,
     pub spacer: i32,
     pub y_spacer: i32,
     pub x_draw_start: i32,
@@ -32,20 +32,21 @@ pub struct Layout {
 }
 
 impl Layout {
-    pub fn new(scale: u32) -> Self {
+    pub fn new(scale: f32) -> Self {
         Self {
             scale,
-            spacer: (8 * scale) as i32,
+            spacer: 8 * scale as i32,
             y_spacer: scale as i32,
-            x_draw_start: (scale / 2) as i32,
-            win_width: LCD_X_RES as u32 * scale,
-            win_height: LCD_Y_RES as u32 * scale,
+            x_draw_start: scale as i32 / 2,
+            win_width: LCD_X_RES as u32 * scale as u32,
+            win_height: LCD_Y_RES as u32 * scale as u32,
         }
     }
 }
 
 impl Ui {
-    pub fn new(scale: u32, debug: bool) -> Result<Self, String> {
+    pub fn new(debug: bool) -> Result<Self, String> {
+        let scale = 4.0;
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
         let layout = Layout::new(scale);
@@ -56,7 +57,8 @@ impl Ui {
             .resizable()
             .build()
             .unwrap();
-        let main_canvas = main_window.into_canvas().build().unwrap();
+        let mut main_canvas = main_window.into_canvas().build().unwrap();
+        main_canvas.set_scale(scale, scale)?;
 
         let (x, y) = main_canvas.window().position();
         let mut debug_window = DebugWindow::new(&video_subsystem);
@@ -72,8 +74,9 @@ impl Ui {
         })
     }
 
-    fn set_scale(&mut self, val: u32) -> Result<(), String> {
+    fn set_scale(&mut self, val: f32) -> Result<(), String> {
         self.layout = Layout::new(val);
+        self.main_canvas.set_scale(val, val)?;
         let window = self.main_canvas.window_mut();
         window
             .set_size(self.layout.win_width, self.layout.win_height)
@@ -95,17 +98,17 @@ impl Ui {
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
-        let mut rect = Rect::new(0, 0, self.layout.scale, self.layout.scale);
+        let mut rect = FRect::new(0.0, 0.0, self.layout.scale, self.layout.scale);
         self.main_canvas.clear();
 
         for y in 0..(LCD_Y_RES as usize) {
             for x in 0..(LCD_X_RES as usize) {
                 let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
-                rect.x = x as i32 * self.layout.scale as i32;
-                rect.y = y as i32 * self.layout.scale as i32;
+                rect.x = x as f32;
+                rect.y = y as f32;
                 let (r, g, b, a) = pixel.color.as_rgba();
                 self.main_canvas.set_draw_color(Color::RGBA(r, g, b, a));
-                self.main_canvas.fill_rect(rect).unwrap();
+                self.main_canvas.fill_frect(rect).unwrap();
             }
         }
 
@@ -126,8 +129,8 @@ impl Ui {
                     ..
                 } => {
                     match keycode {
-                        Keycode::EQUALS => new_scale = Some(self.layout.scale + 1),
-                        Keycode::MINUS => new_scale = Some(self.layout.scale - 1),
+                        Keycode::EQUALS => new_scale = Some(self.layout.scale + 1.0),
+                        Keycode::MINUS => new_scale = Some(self.layout.scale - 1.0),
                         _ => (),
                     }
 

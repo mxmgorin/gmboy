@@ -128,7 +128,7 @@ impl Emu {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
 
-        let mut ui = Ui::new(5, false)?;
+        let mut ui = Ui::new(false)?;
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         while self.ctx.cart.is_none() && self.running {
