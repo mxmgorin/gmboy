@@ -3,6 +3,7 @@ use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
@@ -11,12 +12,6 @@ use sdl2::EventPump;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
-pub const SCALE: u32 = 5;
-pub const SPACER: i32 = (8 * SCALE) as i32;
-pub const TILE_ROWS: i32 = 24;
-pub const TILE_COLS: i32 = 16;
-pub const Y_SPACER: i32 = SCALE as i32;
-pub const X_DRAW_START: i32 = (SCALE / 2) as i32;
 
 pub struct Ui {
     _sdl_context: sdl2::Sdl,
@@ -24,20 +19,41 @@ pub struct Ui {
 
     main_canvas: Canvas<Window>,
     debug_window: Option<DebugWindow>,
+    layout: Layout,
+}
+
+pub struct Layout {
+    pub scale: u32,
+    pub spacer: i32,
+    pub y_spacer: i32,
+    pub x_draw_start: i32,
+    pub win_width: u32,
+    pub win_height: u32,
+}
+
+impl Layout {
+    pub fn new(scale: u32) -> Self {
+        Self {
+            scale,
+            spacer: (8 * scale) as i32,
+            y_spacer: scale as i32,
+            x_draw_start: (scale / 2) as i32,
+            win_width: LCD_X_RES as u32 * scale,
+            win_height: LCD_Y_RES as u32 * scale,
+        }
+    }
 }
 
 impl Ui {
-    pub fn new(debug: bool) -> Result<Self, String> {
+    pub fn new(scale: u32, debug: bool) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
+        let layout = Layout::new(scale);
 
         let main_window = video_subsystem
-            .window(
-                "Main Window",
-                LCD_X_RES as u32 * SCALE,
-                LCD_Y_RES as u32 * SCALE,
-            )
+            .window("GMBoy", layout.win_width, layout.win_height)
             .position_centered()
+            .resizable()
             .build()
             .unwrap();
         let main_canvas = main_window.into_canvas().build().unwrap();
@@ -52,7 +68,22 @@ impl Ui {
             //ttf_context,
             main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
+            layout,
         })
+    }
+
+    fn set_scale(&mut self, val: u32) -> Result<(), String> {
+        self.layout = Layout::new(val);
+        let window = self.main_canvas.window_mut();
+        window
+            .set_size(self.layout.win_width, self.layout.win_height)
+            .map_err(|e| e.to_string())?;
+        window.set_position(
+            sdl2::video::WindowPos::Centered,
+            sdl2::video::WindowPos::Centered,
+        );
+
+        Ok(())
     }
 
     pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
@@ -64,14 +95,14 @@ impl Ui {
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
-        let mut rect = Rect::new(0, 0, SCALE, SCALE);
+        let mut rect = Rect::new(0, 0, self.layout.scale, self.layout.scale);
         self.main_canvas.clear();
 
         for y in 0..(LCD_Y_RES as usize) {
             for x in 0..(LCD_X_RES as usize) {
                 let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
-                rect.x = x as i32 * SCALE as i32;
-                rect.y = y as i32 * SCALE as i32;
+                rect.x = x as i32 * self.layout.scale as i32;
+                rect.y = y as i32 * self.layout.scale as i32;
                 let (r, g, b, a) = pixel.color.as_rgba();
                 self.main_canvas.set_draw_color(Color::RGBA(r, g, b, a));
                 self.main_canvas.fill_rect(rect).unwrap();
@@ -83,14 +114,25 @@ impl Ui {
     }
 
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
+        let mut new_scale = None;
         for event in self.event_pump.poll_iter() {
             match event {
-                Event::DropFile {filename, ..} => event_handler.on_event(bus, UiEvent::DropFile(filename)),
+                Event::DropFile { filename, .. } => {
+                    event_handler.on_event(bus, UiEvent::DropFile(filename))
+                }
                 Event::Quit { .. } => event_handler.on_event(bus, UiEvent::Quit),
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
-                } => event_handler.on_event(bus, UiEvent::Key(keycode, true)),
+                } => {
+                    match keycode {
+                        Keycode::EQUALS => new_scale = Some(self.layout.scale + 1),
+                        Keycode::MINUS => new_scale = Some(self.layout.scale - 1),
+                        _ => (),
+                    }
+
+                    event_handler.on_event(bus, UiEvent::Key(keycode, true))
+                }
                 Event::KeyUp {
                     keycode: Some(keycode),
                     ..
@@ -110,6 +152,10 @@ impl Ui {
                 }
                 _ => {}
             }
+        }
+
+        if let Some(new_scale) = new_scale {
+            self.set_scale(new_scale).unwrap();
         }
     }
 }
