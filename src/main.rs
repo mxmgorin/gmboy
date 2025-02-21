@@ -1,25 +1,13 @@
+use mgboy::emu::Emu;
 use std::env;
-use mgboy::emu::{read_bytes, Emu};
 
 fn main() {
     let mut args: Vec<String> = env::args().collect();
 
     let cart_path = if args.len() < 2 {
-        if let Ok(cart_path) = env::var("CART_PATH") {
-            cart_path
-        } else {
-            eprintln!("Usage: {} <cart_path>", args[0]);
-            std::process::exit(1);
-        }
+        env::var("CART_PATH").ok()
     } else {
-        args.remove(1)
-    };
-
-    let result = read_bytes(&cart_path);
-
-    let Ok(cart_bytes) = result else {
-        eprintln!("Failed to read cart: {}", result.unwrap_err());
-        std::process::exit(1);
+        Some(args.remove(1))
     };
 
     let result = Emu::new();
@@ -29,7 +17,7 @@ fn main() {
         std::process::exit(1);
     };
 
-    if let Err(err) = emu.run(cart_bytes) {
+    if let Err(err) = emu.run(cart_path) {
         eprintln!("Emu run failed: {}", err);
         std::process::exit(1);
     }

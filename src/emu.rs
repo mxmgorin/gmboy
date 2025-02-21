@@ -118,15 +118,31 @@ impl Emu {
         })
     }
 
-    pub fn run(&mut self, cart_bytes: Vec<u8>) -> Result<(), String> {
-        let cart = Cart::new(cart_bytes)?;
-        let mut cpu = Cpu::new(Bus::new(cart));
+    pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
+        if let Some(cart_path) = cart_path {
+            self.ctx.cart = Some(read_cart(&cart_path)?);
+        }
+
         let mut ui = Ui::new(false)?;
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
+
+        while self.ctx.cart.is_none() {
+            ui.handle_events(&mut cpu.bus, self);
+            thread::sleep(Duration::from_millis(100));
+            continue;
+        }
+
         let mut prev_frame = 0;
         let mut last_fps_timestamp = Duration::new(0, 0);
         self.running = true;
 
         while self.running {
+            if let Some(cart) = self.ctx.cart.take() {
+                cpu = Cpu::new(Bus::new(cart));
+                self.ctx = EmuCtx::with_fps_limit(TARGET_FPS_F);
+                last_fps_timestamp = Duration::new(0, 0);
+            }
+
             if self.paused {
                 ui.handle_events(&mut cpu.bus, self);
                 thread::sleep(Duration::from_millis(100));
@@ -153,18 +169,12 @@ impl Emu {
             }
 
             prev_frame = ppu.current_frame;
-
-            if let Some(cart) = self.ctx.cart.take() {
-                cpu = Cpu::new(Bus::new(cart));
-                self.ctx = EmuCtx::with_fps_limit(TARGET_FPS_F);
-                last_fps_timestamp = Duration::new(0, 0);
-            }
         }
 
         Ok(())
     }
 
-    fn _print_cart(&self, cart: &Cart) {
+    fn print_cart(&self, cart: &Cart) {
         println!("Cart Loaded:");
         println!("\t Title    : {}", cart.header.title);
         println!("\t Type     : {:?}", cart.header.cart_type);
@@ -173,6 +183,22 @@ impl Emu {
         println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
         println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
     }
+}
+
+pub fn read_cart(file: &str) -> Result<Cart, String> {
+    let bytes = read_bytes(file);
+
+    let Ok(bytes) = bytes else {
+        return Err(format!("Failed to read bytes: {}", bytes.unwrap_err()));
+    };
+
+    let cart = Cart::new(bytes);
+
+    let Ok(cart) = cart else {
+        return Err(format!("Failed to load cart: {}", cart.unwrap_err()));
+    };
+
+    Ok(cart)
 }
 
 pub fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {
