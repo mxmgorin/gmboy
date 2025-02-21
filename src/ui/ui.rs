@@ -11,7 +11,7 @@ use sdl2::EventPump;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
-pub const SCALE: u32 = 4;
+pub const SCALE: u32 = 5;
 pub const SPACER: i32 = (8 * SCALE) as i32;
 pub const TILE_ROWS: i32 = 24;
 pub const TILE_COLS: i32 = 16;

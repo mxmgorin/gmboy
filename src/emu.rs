@@ -119,6 +119,10 @@ impl Emu {
     }
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
+        self.running = true;
+        let mut prev_frame = 0;
+        let mut last_fps_timestamp = Duration::new(0, 0);
+
         if let Some(cart_path) = cart_path {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
@@ -126,15 +130,11 @@ impl Emu {
         let mut ui = Ui::new(false)?;
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
-        while self.ctx.cart.is_none() {
+        while self.ctx.cart.is_none() && self.running {
             ui.handle_events(&mut cpu.bus, self);
             thread::sleep(Duration::from_millis(100));
             continue;
         }
-
-        let mut prev_frame = 0;
-        let mut last_fps_timestamp = Duration::new(0, 0);
-        self.running = true;
 
         while self.running {
             if let Some(cart) = self.ctx.cart.take() {
@@ -173,16 +173,6 @@ impl Emu {
 
         Ok(())
     }
-
-    fn print_cart(&self, cart: &Cart) {
-        println!("Cart Loaded:");
-        println!("\t Title    : {}", cart.header.title);
-        println!("\t Type     : {:?}", cart.header.cart_type);
-        println!("\t ROM Size : {:?}", cart.header.rom_size);
-        println!("\t RAM Size : {:?}", cart.header.ram_size);
-        println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
-        println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
-    }
 }
 
 pub fn read_cart(file: &str) -> Result<Cart, String> {
@@ -198,7 +188,19 @@ pub fn read_cart(file: &str) -> Result<Cart, String> {
         return Err(format!("Failed to load cart: {}", cart.unwrap_err()));
     };
 
+    print_cart(&cart);
+
     Ok(cart)
+}
+
+fn print_cart(cart: &Cart) {
+    println!("Cart Loaded:");
+    println!("\t Title    : {}", cart.header.title);
+    println!("\t Type     : {:?}", cart.header.cart_type);
+    println!("\t ROM Size : {:?}", cart.header.rom_size);
+    println!("\t RAM Size : {:?}", cart.header.ram_size);
+    println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
+    println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
 }
 
 pub fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {
