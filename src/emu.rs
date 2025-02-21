@@ -76,8 +76,9 @@ impl UiEventHandler for Emu {
                     Keycode::RIGHT => bus.io.joypad.right = is_down,
                     Keycode::Z => bus.io.joypad.b = is_down,
                     Keycode::X => bus.io.joypad.a = is_down,
-                    Keycode::Space => bus.io.joypad.start = is_down,
-                    Keycode::LShift | Keycode::RShift => bus.io.joypad.select = is_down,
+                    Keycode::Return => bus.io.joypad.start = is_down,
+                    Keycode::BACKSPACE => bus.io.joypad.select = is_down,
+                    Keycode::SPACE => if is_down {self.paused = !self.paused },
                     _ => (), // Ignore other keycodes
                 }
             }
@@ -104,10 +105,11 @@ impl Emu {
 
         while self.running {
             if self.paused {
-                thread::sleep(Duration::from_millis(50));
+                ui.handle_events(&mut cpu.bus, self);
+                thread::sleep(Duration::from_millis(100));
                 continue;
             }
-
+            
             ui.handle_events(&mut cpu.bus, self);
             cpu.step(&mut self.ctx)?;
 
