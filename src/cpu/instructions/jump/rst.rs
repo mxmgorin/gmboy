@@ -1,4 +1,4 @@
-use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::cpu::instructions::{FetchedData};
 use crate::cpu::{Cpu, CpuCallback};
 

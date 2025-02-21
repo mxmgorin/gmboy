@@ -1,4 +1,4 @@
-use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction};
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::FetchedData;
 use crate::cpu::{Cpu, CpuCallback};
 // The exact behavior of this instruction depends on the state of the IME flag, and whether interrupts are pending (i.e. whether ‘[IE] & [IF]’ is non-zero):

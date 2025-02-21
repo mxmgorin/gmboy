@@ -1,8 +1,8 @@
-use rusty_gb_emu::bus::Bus;
-use rusty_gb_emu::cart::Cart;
-use rusty_gb_emu::cpu::Cpu;
-use rusty_gb_emu::debugger::{CpuLogType, Debugger};
-use rusty_gb_emu::emu::{read_bytes, EmuCtx};
+use mgboy::bus::Bus;
+use mgboy::cart::Cart;
+use mgboy::cpu::Cpu;
+use mgboy::debugger::{CpuLogType, Debugger};
+use mgboy::emu::{read_bytes, EmuCtx};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 

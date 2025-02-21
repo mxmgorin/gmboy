@@ -1,4 +1,4 @@
-use crate::core::cpu::instructions::instruction::RegisterType;
+use crate::cpu::instructions::instruction::RegisterType;
 use crate::cpu::{Cpu, CpuCallback};
 
 impl AddressMode {

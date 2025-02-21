@@ -1,7 +1,7 @@
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
-use crate::core::cart::Cart;
-use crate::core::ui::Ui;
+use crate::cart::Cart;
+use crate::ui::Ui;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};

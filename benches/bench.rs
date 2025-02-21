@@ -1,12 +1,12 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use rusty_gb_emu::auxiliary::timer::Timer;
-use rusty_gb_emu::bus::Bus;
-use rusty_gb_emu::cpu::instructions::{
+use mgboy::auxiliary::timer::Timer;
+use mgboy::bus::Bus;
+use mgboy::cpu::instructions::{
     AddressMode, ExecutableInstruction, Instruction, INSTRUCTIONS_BY_OPCODES,
 };
-use rusty_gb_emu::cpu::interrupts::Interrupts;
-use rusty_gb_emu::cpu::{CounterCpuCallback, Cpu};
-use rusty_gb_emu::ppu::Ppu;
+use mgboy::cpu::interrupts::Interrupts;
+use mgboy::cpu::{CounterCpuCallback, Cpu};
+use mgboy::ppu::Ppu;
 
 pub fn instructions(cpu: &mut Cpu, ctx: &mut CounterCpuCallback) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {

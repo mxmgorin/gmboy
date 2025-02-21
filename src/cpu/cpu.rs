@@ -1,6 +1,6 @@
 use crate::bus::Bus;
-use crate::core::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
-use crate::core::cpu::Registers;
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
+use crate::cpu::Registers;
 use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::LittleEndianBytes;
 

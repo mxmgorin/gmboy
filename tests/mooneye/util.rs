@@ -1,7 +1,7 @@
-use rusty_gb_emu::bus::Bus;
-use rusty_gb_emu::cart::Cart;
-use rusty_gb_emu::cpu::Cpu;
-use rusty_gb_emu::emu::{read_bytes, EmuCtx};
+use mgboy::bus::Bus;
+use mgboy::cart::Cart;
+use mgboy::cpu::Cpu;
+use mgboy::emu::{read_bytes, EmuCtx};
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};

@@ -1,4 +1,4 @@
-use crate::core::cpu::Registers;
+use crate::cpu::Registers;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConditionType {

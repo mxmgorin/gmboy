@@ -1,5 +1,5 @@
-use crate::core::cpu::instructions::RegisterType;
-use crate::core::{get_bit_flag, set_bit};
+use crate::cpu::instructions::RegisterType;
+use crate::{get_bit_flag, set_bit};
 use std::fmt::Display;
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
@@ -181,7 +181,7 @@ impl Registers {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::cpu::registers::Registers;
+    use crate::cpu::registers::Registers;
 
     #[test]
     fn test_get_flag_z() {
