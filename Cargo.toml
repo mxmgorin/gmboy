@@ -1,5 +1,5 @@
 [package]
-name = "rusty-gb-emu"
+name = "mgboy"
 version = "0.1.0"
 edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
