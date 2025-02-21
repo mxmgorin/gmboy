@@ -8,4 +8,5 @@ pub trait UiEventHandler {
 pub enum UiEvent {
     Quit,
     Key(Keycode, bool),
+    DropFile(String)
 }

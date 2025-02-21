@@ -19,6 +19,7 @@ pub fn run_blargg_rom_serial(
     let mut ctx = EmuCtx {
         clock: Default::default(),
         debugger: Some(debugger),
+        cart: None,
     };
 
     loop {

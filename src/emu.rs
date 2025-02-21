@@ -1,11 +1,11 @@
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cart::Cart;
-use crate::ui::Ui;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};
 use crate::ui::events::{UiEvent, UiEventHandler};
+use crate::ui::Ui;
 use sdl2::keyboard::Keycode;
 use std::path::Path;
 use std::time::Duration;
@@ -22,6 +22,7 @@ pub struct Emu {
 pub struct EmuCtx {
     pub clock: Clock,
     pub debugger: Option<Debugger>,
+    pub cart: Option<Cart>,
 }
 
 impl EmuCtx {
@@ -31,6 +32,7 @@ impl EmuCtx {
         Self {
             clock: Clock::with_ppu(ppu),
             debugger: Some(Debugger::new(CpuLogType::None, false)),
+            cart: None,
         }
     }
 }
@@ -78,9 +80,30 @@ impl UiEventHandler for Emu {
                     Keycode::X => bus.io.joypad.a = is_down,
                     Keycode::Return => bus.io.joypad.start = is_down,
                     Keycode::BACKSPACE => bus.io.joypad.select = is_down,
-                    Keycode::SPACE => if is_down {self.paused = !self.paused },
+                    Keycode::SPACE => {
+                        if is_down {
+                            self.paused = !self.paused
+                        }
+                    }
                     _ => (), // Ignore other keycodes
                 }
+            }
+            UiEvent::DropFile(filename) => {
+                let bytes = read_bytes(&filename);
+
+                let Ok(bytes) = bytes else {
+                    eprintln!("Failed to read bytes: {}", bytes.unwrap_err());
+                    return;
+                };
+
+                let cart = Cart::new(bytes);
+
+                let Ok(cart) = cart else {
+                    eprintln!("Failed to load cart: {}", cart.unwrap_err());
+                    return;
+                };
+
+                self.ctx.cart = Some(cart);
             }
         }
     }
@@ -109,7 +132,7 @@ impl Emu {
                 thread::sleep(Duration::from_millis(100));
                 continue;
             }
-            
+
             ui.handle_events(&mut cpu.bus, self);
             cpu.step(&mut self.ctx)?;
 
@@ -130,6 +153,12 @@ impl Emu {
             }
 
             prev_frame = ppu.current_frame;
+
+            if let Some(cart) = self.ctx.cart.take() {
+                cpu = Cpu::new(Bus::new(cart));
+                self.ctx = EmuCtx::with_fps_limit(TARGET_FPS_F);
+                last_fps_timestamp = Duration::new(0, 0);
+            }
         }
 
         Ok(())

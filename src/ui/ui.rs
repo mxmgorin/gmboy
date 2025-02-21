@@ -85,6 +85,7 @@ impl Ui {
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
         for event in self.event_pump.poll_iter() {
             match event {
+                Event::DropFile {filename, ..} => event_handler.on_event(bus, UiEvent::DropFile(filename)),
                 Event::Quit { .. } => event_handler.on_event(bus, UiEvent::Quit),
                 Event::KeyDown {
                     keycode: Some(keycode),

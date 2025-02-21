@@ -79,6 +79,10 @@ impl Bus {
         }
     }
 
+    pub fn load_cart(&mut self, cart: Cart) {
+        self.cart = cart;
+    }
+
     /// Creates with just array as memory. Use only for tests.
     pub fn with_bytes(bytes: Vec<u8>) -> Self {
         let cart = Cart::new(vec![0; 0x2000]).unwrap();
