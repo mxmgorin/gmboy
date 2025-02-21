@@ -1,12 +1,12 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use mgboy::auxiliary::timer::Timer;
-use mgboy::bus::Bus;
-use mgboy::cpu::instructions::{
+use gmboy::auxiliary::timer::Timer;
+use gmboy::bus::Bus;
+use gmboy::cpu::instructions::{
     AddressMode, ExecutableInstruction, Instruction, INSTRUCTIONS_BY_OPCODES,
 };
-use mgboy::cpu::interrupts::Interrupts;
-use mgboy::cpu::{CounterCpuCallback, Cpu};
-use mgboy::ppu::Ppu;
+use gmboy::cpu::interrupts::Interrupts;
+use gmboy::cpu::{CounterCpuCallback, Cpu};
+use gmboy::ppu::Ppu;
 
 pub fn instructions(cpu: &mut Cpu, ctx: &mut CounterCpuCallback) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {

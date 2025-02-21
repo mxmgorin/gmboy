@@ -1,4 +1,4 @@
-use mgboy::emu::Emu;
+use gmboy::emu::Emu;
 use std::env;
 
 fn main() {

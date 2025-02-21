@@ -1,7 +1,7 @@
-use mgboy::bus::Bus;
-use mgboy::cart::Cart;
-use mgboy::cpu::Cpu;
-use mgboy::emu::{read_bytes, EmuCtx};
+use gmboy::bus::Bus;
+use gmboy::cart::Cart;
+use gmboy::cpu::Cpu;
+use gmboy::emu::{read_bytes, EmuCtx};
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};

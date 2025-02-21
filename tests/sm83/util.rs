@@ -1,8 +1,8 @@
 use crate::print_with_dashes;
-use mgboy::bus::Bus;
-use mgboy::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
-use mgboy::cpu::instructions::ExecutableInstruction;
-use mgboy::cpu::{CounterCpuCallback, Cpu, Flags, Registers};
+use gmboy::bus::Bus;
+use gmboy::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
+use gmboy::cpu::instructions::ExecutableInstruction;
+use gmboy::cpu::{CounterCpuCallback, Cpu, Flags, Registers};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;

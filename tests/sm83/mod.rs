@@ -1,8 +1,8 @@
 mod util;
 
 use crate::sm83::util::{run_sb_test_cases, run_test_case, Sm83TestCase};
-use mgboy::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
-use mgboy::cpu::instructions::Instruction;
+use gmboy::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
+use gmboy::cpu::instructions::Instruction;
 use std::time::Duration;
 
 #[test]

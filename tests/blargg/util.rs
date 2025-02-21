@@ -1,8 +1,8 @@
-use mgboy::bus::Bus;
-use mgboy::cart::Cart;
-use mgboy::cpu::Cpu;
-use mgboy::debugger::{CpuLogType, Debugger};
-use mgboy::emu::{read_bytes, EmuCtx};
+use gmboy::bus::Bus;
+use gmboy::cart::Cart;
+use gmboy::cpu::Cpu;
+use gmboy::debugger::{CpuLogType, Debugger};
+use gmboy::emu::{read_bytes, EmuCtx};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
