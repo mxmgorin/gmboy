@@ -57,7 +57,7 @@ impl From<u16> for BusAddrLocation {
 
 #[derive(Debug, Clone)]
 pub struct Bus {
-    cart: Cart,
+    pub cart: Cart,
     pub ram: Ram,
     pub io: Io,
     flat_mem: Option<Vec<u8>>,
@@ -77,10 +77,6 @@ impl Bus {
             video_ram: Default::default(),
             oam_ram: Default::default(),
         }
-    }
-
-    pub fn load_cart(&mut self, cart: Cart) {
-        self.cart = cart;
     }
 
     /// Creates with just array as memory. Use only for tests.

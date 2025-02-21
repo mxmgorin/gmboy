@@ -85,6 +85,7 @@ impl UiEventHandler for Emu {
                             self.paused = !self.paused
                         }
                     },
+                    Keycode::R => self.ctx.cart = Some(bus.cart.clone()),
                     _ => (), // Ignore other keycodes
                 }
             }
