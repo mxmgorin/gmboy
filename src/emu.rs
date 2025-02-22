@@ -6,8 +6,7 @@ use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};
 use crate::ui::events::{UiEvent, UiEventHandler};
-use crate::ui::{into_pallet, Ui};
-use sdl2::keyboard::Keycode;
+use crate::ui::{Ui};
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
@@ -72,34 +71,8 @@ impl UiEventHandler for Emu {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
         match event {
             UiEvent::Quit => self.running = false,
-            UiEvent::Key(keycode, is_down) => {
-                match keycode {
-                    Keycode::UP => bus.io.joypad.up = is_down,
-                    Keycode::DOWN => bus.io.joypad.down = is_down,
-                    Keycode::LEFT => bus.io.joypad.left = is_down,
-                    Keycode::RIGHT => bus.io.joypad.right = is_down,
-                    Keycode::Z => bus.io.joypad.b = is_down,
-                    Keycode::X => bus.io.joypad.a = is_down,
-                    Keycode::Return => bus.io.joypad.start = is_down,
-                    Keycode::BACKSPACE => bus.io.joypad.select = is_down,
-                    Keycode::SPACE => {
-                        if is_down {
-                            self.paused = !self.paused
-                        }
-                    }
-                    Keycode::R => self.ctx.cart = Some(bus.cart.clone()),
-                    _ => (), // Ignore other keycodes
-                }
-            }
             UiEvent::DropFile(filename) => {
-                let bytes = read_bytes(&filename);
-
-                let Ok(bytes) = bytes else {
-                    eprintln!("Failed to read bytes: {}", bytes.unwrap_err());
-                    return;
-                };
-
-                let cart = Cart::new(bytes);
+                let cart = read_cart(&filename);
 
                 let Ok(cart) = cart else {
                     eprintln!("Failed to load cart: {}", cart.unwrap_err());
@@ -108,6 +81,8 @@ impl UiEventHandler for Emu {
 
                 self.ctx.cart = Some(cart);
             }
+            UiEvent::Pause => self.paused = !self.paused,
+            UiEvent::Restart => self.ctx.cart = Some(bus.cart.clone()),
         }
     }
 }

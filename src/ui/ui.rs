@@ -131,8 +131,7 @@ impl Ui {
     }
 
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
-        let mut new_scale = None;
-        for event in self.event_pump.poll_iter() {
+        while let Some(event) = self.event_pump.poll_event() {
             match event {
                 Event::DropFile { filename, .. } => {
                     event_handler.on_event(bus, UiEvent::DropFile(filename))
@@ -142,28 +141,18 @@ impl Ui {
                     keycode: Some(keycode),
                     ..
                 } => {
-                    match keycode {
-                        Keycode::EQUALS => new_scale = Some(self.config.scale + 1.0),
-                        Keycode::MINUS => new_scale = Some(self.config.scale - 1.0),
-                        Keycode::P => {
-                            self.config.selected_pallet_idx = get_next_pallet_idx(
-                                self.config.selected_pallet_idx,
-                                self.config.pallets.len() - 1,
-                            );
-                            self.curr_palette = into_pallet(
-                                &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
-                            );
-                            bus.io.lcd.set_pallet(self.curr_palette);
-                        }
-                        _ => (),
+                    if let Some(evt) = self.handle_key(bus, keycode, true) {
+                        event_handler.on_event(bus, evt);
                     }
-
-                    event_handler.on_event(bus, UiEvent::Key(keycode, true))
                 }
                 Event::KeyUp {
                     keycode: Some(keycode),
                     ..
-                } => event_handler.on_event(bus, UiEvent::Key(keycode, false)),
+                } => {
+                    if let Some(evt) = self.handle_key(bus, keycode, true) {
+                        event_handler.on_event(bus, evt);
+                    }
+                }
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -180,10 +169,35 @@ impl Ui {
                 _ => {}
             }
         }
+    }
 
-        if let Some(new_scale) = new_scale {
-            self.set_scale(new_scale).unwrap();
+    fn handle_key(&mut self, bus: &mut Bus, keycode: Keycode, is_down: bool) -> Option<UiEvent> {
+        match keycode {
+            Keycode::UP => bus.io.joypad.up = is_down,
+            Keycode::DOWN => bus.io.joypad.down = is_down,
+            Keycode::LEFT => bus.io.joypad.left = is_down,
+            Keycode::RIGHT => bus.io.joypad.right = is_down,
+            Keycode::Z => bus.io.joypad.b = is_down,
+            Keycode::X => bus.io.joypad.a = is_down,
+            Keycode::Return => bus.io.joypad.start = is_down,
+            Keycode::BACKSPACE => bus.io.joypad.select = is_down,
+            Keycode::SPACE => return Some(UiEvent::Pause),
+            Keycode::R => return Some(UiEvent::Restart),
+            Keycode::EQUALS => self.set_scale(self.config.scale + 1.0).unwrap(),
+            Keycode::MINUS => self.set_scale(self.config.scale - 1.0).unwrap(),
+            Keycode::P => {
+                self.config.selected_pallet_idx = get_next_pallet_idx(
+                    self.config.selected_pallet_idx,
+                    self.config.pallets.len() - 1,
+                );
+                self.curr_palette =
+                    into_pallet(&self.config.pallets[self.config.selected_pallet_idx].hex_colors);
+                bus.io.lcd.set_pallet(self.curr_palette);
+            }
+            _ => (), // Ignore other keycodes
         }
+
+        None
     }
 }
 
