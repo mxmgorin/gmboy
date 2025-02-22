@@ -12,6 +12,7 @@ pub const LCD_Y_RES: u8 = 144;
 pub const LCD_X_RES: u8 = 160;
 pub const TARGET_FPS_F: f64 = 60.0;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = 1000 / 60;
+pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
