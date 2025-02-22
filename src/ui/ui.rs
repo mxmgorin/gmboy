@@ -73,7 +73,6 @@ impl Ui {
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
-            //ttf_context,
             canvas: main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
@@ -108,6 +107,7 @@ impl Ui {
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
+        const BYTES_PER_PIXEL: usize = 4;
         self.canvas.clear();
 
         self.texture
@@ -116,7 +116,7 @@ impl Ui {
                     for x in 0..LCD_X_RES as usize {
                         let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
                         let (r, g, b, a) = pixel.color.as_rgba();
-                        let offset = (y * pitch) + (x * 4);
+                        let offset = (y * pitch) + (x * BYTES_PER_PIXEL);
                         buffer[offset] = r;
                         buffer[offset + 1] = g;
                         buffer[offset + 2] = b;
@@ -201,17 +201,5 @@ pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
         curr_idx + 1
     } else {
         0
-    }
-}
-#[cfg(test)]
-mod tests {
-    use crate::ui::into_pallet;
-
-    #[test]
-    fn test_parse_hex_colors() {
-        let colors = vec!["FF0F0F1B".to_string()];
-        let colors = into_pallet(&colors);
-
-        println!("{:?}", colors);
     }
 }
