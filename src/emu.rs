@@ -69,7 +69,10 @@ impl CpuCallback for Emu {
 impl UiEventHandler for EmuCtx {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
         match event {
-            UiEvent::Quit => self.running = false,
+            UiEvent::Quit => {
+                println!("Quit");
+                self.running = false
+            },
             UiEvent::DropFile(filename) => {
                 let cart = read_cart(&filename);
 
@@ -99,11 +102,15 @@ impl Emu {
     }
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
+        self.ctx.running = true;
+        let mut prev_frame = 0;
+        let mut last_fps_timestamp = Duration::new(0, 0);
+        
         if let Some(cart_path) = cart_path {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
 
-        let mut cpu = Cpu::new(Bus::default());
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         while self.ctx.cart.is_none() && self.ctx.running {
             self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
@@ -111,14 +118,11 @@ impl Emu {
             continue;
         }
 
-        self.ctx.running = true;
-        let mut prev_frame = 0;
-        let mut last_fps_timestamp = Duration::new(0, 0);
-
         while self.ctx.running {
             if let Some(cart) = self.ctx.cart.take() {
                 cpu = Cpu::new(Bus::new(cart));
                 self.ctx = EmuCtx::new(self.ctx.config.clone());
+                self.ctx.running = true;
                 last_fps_timestamp = Duration::new(0, 0);
                 cpu.bus.io.lcd.set_pallet(self.ui.curr_palette);
             }
@@ -150,7 +154,7 @@ impl Emu {
 
             prev_frame = ppu.current_frame;
         }
-
+        
         Ok(())
     }
 }

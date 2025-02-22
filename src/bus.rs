@@ -66,20 +66,6 @@ pub struct Bus {
     pub oam_ram: OamRam,
 }
 
-impl Default for Bus {
-    fn default() -> Self {
-        Self {
-            cart: Cart::new(vec![0x50]).unwrap(),
-            ram: Ram::default(),
-            io: Io::default(),
-            flat_mem: None,
-            dma: Default::default(),
-            video_ram: Default::default(),
-            oam_ram: Default::default(),
-        }
-    }
-}
-
 impl Bus {
     pub fn new(cart: Cart) -> Self {
         Self {
