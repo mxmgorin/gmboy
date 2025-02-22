@@ -13,12 +13,15 @@ default-features = false
 features = ["bundled", "unsafe_textures"]
 
 [dependencies]
+serde_json = "*"
+serde = { version = "*", features = ["derive"] }
 
 [dev-dependencies]
 criterion = "*"
-serde = { version = "*", features = ["derive"] }
-serde_json = "*"
 
 [[bench]]
 name = "bench"
 harness = false
+
+# This section is not strictly necessary unless you're using specific build dependencies
+[build-dependencies]

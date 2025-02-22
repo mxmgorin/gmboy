@@ -1,3 +1,4 @@
+use gmboy::config::Config;
 use gmboy::emu::Emu;
 use std::env;
 
@@ -10,7 +11,19 @@ fn main() {
         Some(args.remove(1))
     };
 
-    let result = Emu::new();
+    // Get the directory where the binary is running from
+    let exe_path = env::current_exe().expect("Failed to get executable path");
+    let exe_dir = exe_path.parent().expect("Failed to get executable directory");
+    let config_path = exe_dir.join("save/config.json");
+
+    let config = if config_path.exists() {
+        Config::from_file(config_path.to_str().unwrap()).expect("Failed to parse save/config.json")
+    } else {
+        eprintln!("config.json not found in the save folder");
+        std::process::exit(1);
+    };
+
+    let result = Emu::new(config);
 
     let Ok(mut emu) = result else {
         eprintln!("Emu failed: {}", result.unwrap_err());

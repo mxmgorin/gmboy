@@ -1,0 +1,20 @@
+{
+  "graphics": {
+    "selected_pallet": "Classic",
+    "pallets": [
+      {
+        "name": "Classic",
+        "hex_colors": ["FF9BBC0F", "FF8BAC0F", "FF306230", "FF0F380F"]
+      },
+      {
+        "name": "Hollow",
+        "hex_colors": ["FF0F0F1B", "FF566A75", "FFC6B7BE", "FFFAFBF6"]
+      },
+      {
+        "name": "Black and white",
+        "hex_colors": ["FFFFFFFF", "FFAAAAAA", "FF555555", "FF000000"]
+      }
+    ],
+    "scale": 5.0
+  }
+}

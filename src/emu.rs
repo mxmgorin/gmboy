@@ -1,6 +1,7 @@
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cart::Cart;
+use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};
@@ -16,6 +17,7 @@ pub struct Emu {
     running: bool,
     paused: bool,
     ctx: EmuCtx,
+    config: Config,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -84,7 +86,7 @@ impl UiEventHandler for Emu {
                         if is_down {
                             self.paused = !self.paused
                         }
-                    },
+                    }
                     Keycode::R => self.ctx.cart = Some(bus.cart.clone()),
                     _ => (), // Ignore other keycodes
                 }
@@ -111,11 +113,12 @@ impl UiEventHandler for Emu {
 }
 
 impl Emu {
-    pub fn new() -> Result<Self, String> {
+    pub fn new(config: Config) -> Result<Self, String> {
         Ok(Self {
             running: false,
             paused: false,
             ctx: EmuCtx::with_fps_limit(TARGET_FPS_F),
+            config,
         })
     }
 
@@ -128,7 +131,7 @@ impl Emu {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
 
-        let mut ui = Ui::new(false)?;
+        let mut ui = Ui::new(self.config.graphics.clone(), false)?;
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         while self.ctx.cart.is_none() && self.running {

@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::lcd::BLACK_WHITE_PALLET;
+use crate::config::GraphicsConfig;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
@@ -12,16 +12,6 @@ use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::EventPump;
 
-pub const HOLLOW_PALLET: [PixelColor; 4] = [
-    PixelColor::from_hex(0xFF0F0F1B),
-    PixelColor::from_hex(0xFF566A75),
-    PixelColor::from_hex(0xFFC6B7BE),
-    PixelColor::from_hex(0xFFFAFBF6),
-];
-
-// todo: move pallets to file conf
-pub const PALLETS: [[PixelColor; 4]; 2] = [BLACK_WHITE_PALLET, HOLLOW_PALLET];
-
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
 
@@ -33,6 +23,7 @@ pub struct Ui {
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
+    config: GraphicsConfig,
     curr_pallet_idx: usize,
 }
 
@@ -59,11 +50,10 @@ impl Layout {
 }
 
 impl Ui {
-    pub fn new(debug: bool) -> Result<Self, String> {
-        let scale = 4.0;
+    pub fn new(config: GraphicsConfig, debug: bool) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
-        let layout = Layout::new(scale);
+        let layout = Layout::new(config.scale);
 
         let main_window = video_subsystem
             .window("GMBoy", layout.win_width, layout.win_height)
@@ -72,7 +62,7 @@ impl Ui {
             .build()
             .unwrap();
         let mut main_canvas = main_window.into_canvas().build().unwrap();
-        main_canvas.set_scale(scale, scale)?;
+        main_canvas.set_scale(config.scale, config.scale)?;
 
         let (x, y) = main_canvas.window().position();
         let mut debug_window = DebugWindow::new(&video_subsystem);
@@ -85,7 +75,12 @@ impl Ui {
             main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
-            curr_pallet_idx: 0,
+            curr_pallet_idx: config
+                .pallets
+                .iter()
+                .position(|p| p.name == config.selected_pallet)
+                .unwrap_or_default(),
+            config,
         })
     }
 
@@ -147,8 +142,15 @@ impl Ui {
                         Keycode::EQUALS => new_scale = Some(self.layout.scale + 1.0),
                         Keycode::MINUS => new_scale = Some(self.layout.scale - 1.0),
                         Keycode::P => {
-                            self.curr_pallet_idx = get_next_pallet_idx(self.curr_pallet_idx);
-                            bus.io.lcd.set_pallet(PALLETS[self.curr_pallet_idx]);
+                            self.curr_pallet_idx = get_next_pallet_idx(
+                                self.curr_pallet_idx,
+                                self.config.pallets.len() - 1,
+                            );
+                            let colors = parse_hex_colors(
+                                &self.config.pallets[self.curr_pallet_idx].hex_colors,
+                            );
+
+                            bus.io.lcd.set_pallet(colors[..4].try_into().unwrap());
                         }
                         _ => (),
                     }
@@ -182,10 +184,31 @@ impl Ui {
     }
 }
 
-pub fn get_next_pallet_idx(curr_idx: usize) -> usize {
-    if curr_idx < PALLETS.len() - 1 {
+pub fn parse_hex_colors(hex_colors: &[String]) -> Vec<PixelColor> {
+    hex_colors
+        .iter()
+        .map(|hex| {
+            PixelColor::from_hex(u32::from_str_radix(hex, 16).unwrap())
+        })
+        .collect()
+}
+
+pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
+    if curr_idx < max_idx {
         curr_idx + 1
     } else {
         0
+    }
+}
+#[cfg(test)]
+mod tests {
+    use crate::ui::parse_hex_colors;
+
+    #[test]
+    fn test_parse_hex_colors() {
+        let colors = vec!["FF0F0F1B".to_string()];
+        let colors = parse_hex_colors(&colors);
+        
+        println!("{:?}", colors);
     }
 }
