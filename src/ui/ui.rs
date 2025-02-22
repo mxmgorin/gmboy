@@ -181,18 +181,37 @@ impl Ui {
             Keycode::X => bus.io.joypad.a = is_down,
             Keycode::Return => bus.io.joypad.start = is_down,
             Keycode::BACKSPACE => bus.io.joypad.select = is_down,
-            Keycode::SPACE => return Some(UiEvent::Pause),
-            Keycode::R => return Some(UiEvent::Restart),
-            Keycode::EQUALS => self.set_scale(self.config.scale + 1.0).unwrap(),
-            Keycode::MINUS => self.set_scale(self.config.scale - 1.0).unwrap(),
+            Keycode::SPACE => {
+                if is_down {
+                    return Some(UiEvent::Pause);
+                }
+            }
+            Keycode::R => {
+                if is_down {
+                    return Some(UiEvent::Restart);
+                }
+            }
+            Keycode::EQUALS => {
+                if is_down {
+                    self.set_scale(self.config.scale + 1.0).unwrap()
+                }
+            }
+            Keycode::MINUS => {
+                if is_down {
+                    self.set_scale(self.config.scale - 1.0).unwrap()
+                }
+            }
             Keycode::P => {
-                self.config.selected_pallet_idx = get_next_pallet_idx(
-                    self.config.selected_pallet_idx,
-                    self.config.pallets.len() - 1,
-                );
-                self.curr_palette =
-                    into_pallet(&self.config.pallets[self.config.selected_pallet_idx].hex_colors);
-                bus.io.lcd.set_pallet(self.curr_palette);
+                if is_down {
+                    self.config.selected_pallet_idx = get_next_pallet_idx(
+                        self.config.selected_pallet_idx,
+                        self.config.pallets.len() - 1,
+                    );
+                    self.curr_palette = into_pallet(
+                        &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
+                    );
+                    bus.io.lcd.set_pallet(self.curr_palette);
+                }
             }
             _ => (), // Ignore other keycodes
         }
