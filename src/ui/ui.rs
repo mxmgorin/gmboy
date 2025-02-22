@@ -24,11 +24,10 @@ pub struct Ui {
     layout: Layout,
 
     pub config: GraphicsConfig,
-    pub curr_pallet_idx: usize,
+    pub curr_palette: [PixelColor; 4],
 }
 
 pub struct Layout {
-    pub scale: f32,
     pub spacer: i32,
     pub y_spacer: i32,
     pub x_draw_start: i32,
@@ -39,7 +38,6 @@ pub struct Layout {
 impl Layout {
     pub fn new(scale: f32) -> Self {
         Self {
-            scale,
             spacer: 8 * scale as i32,
             y_spacer: scale as i32,
             x_draw_start: scale as i32 / 2,
@@ -68,12 +66,6 @@ impl Ui {
         let mut debug_window = DebugWindow::new(&video_subsystem);
         debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
 
-        let curr_pallet_idx = config
-            .pallets
-            .iter()
-            .position(|p| p.name == config.selected_pallet)
-            .unwrap_or_default();
-
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
@@ -81,7 +73,7 @@ impl Ui {
             main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
-            curr_pallet_idx,
+            curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
             config,
         })
     }
@@ -110,7 +102,7 @@ impl Ui {
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
-        let mut rect = FRect::new(0.0, 0.0, self.layout.scale, self.layout.scale);
+        let mut rect = FRect::new(0.0, 0.0, self.config.scale, self.config.scale);
         self.main_canvas.clear();
 
         for y in 0..(LCD_Y_RES as usize) {
@@ -141,17 +133,15 @@ impl Ui {
                     ..
                 } => {
                     match keycode {
-                        Keycode::EQUALS => new_scale = Some(self.layout.scale + 1.0),
-                        Keycode::MINUS => new_scale = Some(self.layout.scale - 1.0),
+                        Keycode::EQUALS => new_scale = Some(self.config.scale + 1.0),
+                        Keycode::MINUS => new_scale = Some(self.config.scale - 1.0),
                         Keycode::P => {
-                            self.curr_pallet_idx = get_next_pallet_idx(
-                                self.curr_pallet_idx,
+                            let idx = get_next_pallet_idx(
+                                self.config.selected_pallet_idx,
                                 self.config.pallets.len() - 1,
                             );
-
-                            bus.io.lcd.set_pallet(into_pallet(
-                                &self.config.pallets[self.curr_pallet_idx].hex_colors,
-                            ));
+                            self.curr_palette = into_pallet(&self.config.pallets[idx].hex_colors);
+                            bus.io.lcd.set_pallet(self.curr_palette);
                         }
                         _ => (),
                     }

@@ -1,6 +1,6 @@
 {
   "graphics": {
-    "selected_pallet": "Classic",
+    "selected_pallet_idx": 0,
     "pallets": [
       {
         "name": "Classic",
@@ -9,10 +9,6 @@
       {
         "name": "Hollow",
         "hex_colors": ["FF0F0F1B", "FF566A75", "FFC6B7BE", "FFFAFBF6"]
-      },
-      {
-        "name": "Black and white",
-        "hex_colors": ["FFFFFFFF", "FFAAAAAA", "FF555555", "FF000000"]
       },
       {
         "name": "Rustic",

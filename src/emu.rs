@@ -145,9 +145,7 @@ impl Emu {
                 cpu = Cpu::new(Bus::new(cart));
                 self.ctx = EmuCtx::with_fps_limit(TARGET_FPS_F);
                 last_fps_timestamp = Duration::new(0, 0);
-                cpu.bus.io.lcd.set_pallet(into_pallet(
-                    &ui.config.pallets[ui.curr_pallet_idx].hex_colors,
-                ));
+                cpu.bus.io.lcd.set_pallet(ui.curr_palette);
             }
 
             if self.paused {

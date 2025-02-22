@@ -7,7 +7,7 @@ pub struct Config {
 }
 #[derive(Debug, Deserialize, Clone)]
 pub struct GraphicsConfig {
-    pub selected_pallet: String,
+    pub selected_pallet_idx: usize,
     pub pallets: Vec<Pallet>,
     pub scale: f32,
 }
