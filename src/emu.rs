@@ -20,19 +20,30 @@ pub struct Emu {
 }
 
 pub struct EmuCtx {
-    pub running: bool,
-    pub paused: bool,
+    pub state: EmuState,
     pub cart: Option<Cart>,
     pub config: Config,
+    pub prev_frame: usize,
+    pub last_fps_timestamp: Duration,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum EmuState {
+    WaitingCart,
+    Running,
+    Paused,
+    Restarting,
+    Quitting,
 }
 
 impl EmuCtx {
     pub fn new(config: Config) -> EmuCtx {
         Self {
-            running: false,
+            state: EmuState::WaitingCart,
             cart: None,
-            paused: false,
             config,
+            prev_frame: 0,
+            last_fps_timestamp: Default::default(),
         }
     }
 }
@@ -69,10 +80,7 @@ impl CpuCallback for Emu {
 impl UiEventHandler for EmuCtx {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
         match event {
-            UiEvent::Quit => {
-                println!("Quit");
-                self.running = false
-            },
+            UiEvent::Quit => self.state = EmuState::Quitting,
             UiEvent::DropFile(filename) => {
                 let cart = read_cart(&filename);
 
@@ -83,7 +91,13 @@ impl UiEventHandler for EmuCtx {
 
                 self.cart = Some(cart);
             }
-            UiEvent::Pause => self.paused = !self.paused,
+            UiEvent::Pause => {
+                if self.state == EmuState::Paused {
+                    self.state = EmuState::Running;
+                } else {
+                    self.state = EmuState::Paused;
+                }
+            }
             UiEvent::Restart => self.cart = Some(bus.cart.clone()),
         }
     }
@@ -102,32 +116,25 @@ impl Emu {
     }
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
-        self.ctx.running = true;
-        let mut prev_frame = 0;
-        let mut last_fps_timestamp = Duration::new(0, 0);
-        
         if let Some(cart_path) = cart_path {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
 
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
-        while self.ctx.cart.is_none() && self.ctx.running {
-            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
-            thread::sleep(Duration::from_millis(100));
-            continue;
-        }
+        loop {
+            if self.ctx.state == EmuState::Quitting {
+                break;
+            }
 
-        while self.ctx.running {
             if let Some(cart) = self.ctx.cart.take() {
-                cpu = Cpu::new(Bus::new(cart));
                 self.ctx = EmuCtx::new(self.ctx.config.clone());
-                self.ctx.running = true;
-                last_fps_timestamp = Duration::new(0, 0);
+                self.ctx.state = EmuState::Running;
+                cpu = Cpu::new(Bus::new(cart));
                 cpu.bus.io.lcd.set_pallet(self.ui.curr_palette);
             }
 
-            if self.ctx.paused {
+            if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitingCart {
                 self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
                 continue;
@@ -143,18 +150,18 @@ impl Emu {
             }
 
             let ppu = self.clock.ppu.as_mut().unwrap();
-            if prev_frame != ppu.current_frame {
+            if self.ctx.prev_frame != ppu.current_frame {
                 self.ui.draw(ppu, &cpu.bus);
             }
 
-            if (ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {
+            if (ppu.instant.elapsed() - self.ctx.last_fps_timestamp).as_millis() >= 1000 {
                 println!("FPS: {}", ppu.fps);
-                last_fps_timestamp = ppu.instant.elapsed();
+                self.ctx.last_fps_timestamp = ppu.instant.elapsed();
             }
 
-            prev_frame = ppu.current_frame;
+            self.ctx.prev_frame = ppu.current_frame;
         }
-        
+
         Ok(())
     }
 }
