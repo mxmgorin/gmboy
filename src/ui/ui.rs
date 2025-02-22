@@ -6,9 +6,9 @@ use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
+use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::FRect;
-use sdl2::render::Canvas;
+use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::EventPump;
 
@@ -19,7 +19,8 @@ pub struct Ui {
     _sdl_context: sdl2::Sdl,
     event_pump: EventPump,
 
-    main_canvas: Canvas<Window>,
+    canvas: Canvas<Window>,
+    texture: Texture,
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
@@ -61,6 +62,10 @@ impl Ui {
             .unwrap();
         let mut main_canvas = main_window.into_canvas().build().unwrap();
         main_canvas.set_scale(config.scale, config.scale)?;
+        let texture_creator = main_canvas.texture_creator();
+        let texture = texture_creator
+            .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
+            .unwrap();
 
         let (x, y) = main_canvas.window().position();
         let mut debug_window = DebugWindow::new(&video_subsystem);
@@ -70,18 +75,19 @@ impl Ui {
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
             //ttf_context,
-            main_canvas,
+            canvas: main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
             curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
             config,
+            texture,
         })
     }
 
     fn set_scale(&mut self, val: f32) -> Result<(), String> {
         self.layout = Layout::new(val);
-        self.main_canvas.set_scale(val, val)?;
-        let window = self.main_canvas.window_mut();
+        self.canvas.set_scale(val, val)?;
+        let window = self.canvas.window_mut();
         window
             .set_size(self.layout.win_width, self.layout.win_height)
             .map_err(|e| e.to_string())?;
@@ -102,22 +108,26 @@ impl Ui {
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
-        let mut rect = FRect::new(0.0, 0.0, self.config.scale, self.config.scale);
-        self.main_canvas.clear();
+        self.canvas.clear();
 
-        for y in 0..(LCD_Y_RES as usize) {
-            for x in 0..(LCD_X_RES as usize) {
-                let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
-                rect.x = x as f32;
-                rect.y = y as f32;
-                let (r, g, b, a) = pixel.color.as_rgba();
-                self.main_canvas.set_draw_color(Color::RGBA(r, g, b, a));
-                self.main_canvas.fill_frect(rect).unwrap();
-            }
-        }
+        self.texture
+            .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                for y in 0..LCD_Y_RES as usize {
+                    for x in 0..LCD_X_RES as usize {
+                        let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
+                        let (r, g, b, a) = pixel.color.as_rgba();
+                        let offset = (y * pitch) + (x * 4);
+                        buffer[offset] = r;
+                        buffer[offset + 1] = g;
+                        buffer[offset + 2] = b;
+                        buffer[offset + 3] = a;
+                    }
+                }
+            })
+            .unwrap();
 
-        //fill_rects2(&mut self.main_canvas, &self.rects_by_colors, rects_count);
-        self.main_canvas.present();
+        self.canvas.copy(&self.texture, None, None).unwrap();
+        self.canvas.present();
     }
 
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
