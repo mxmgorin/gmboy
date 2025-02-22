@@ -13,6 +13,14 @@
       {
         "name": "Black and white",
         "hex_colors": ["FFFFFFFF", "FFAAAAAA", "FF555555", "FF000000"]
+      },
+      {
+        "name": "Rustic",
+        "hex_colors": ["ff2c2137", "ff764462", "ffa96868", "ffedb4a1"]
+      },
+      {
+        "name": "Swamp",
+        "hex_colors": ["fffafca4", "ffd68e49", "ff308013", "ff400c01"]
       }
     ],
     "scale": 5.0

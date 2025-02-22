@@ -23,8 +23,8 @@ pub struct Ui {
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
-    config: GraphicsConfig,
-    curr_pallet_idx: usize,
+    pub config: GraphicsConfig,
+    pub curr_pallet_idx: usize,
 }
 
 pub struct Layout {
@@ -68,6 +68,12 @@ impl Ui {
         let mut debug_window = DebugWindow::new(&video_subsystem);
         debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
 
+        let curr_pallet_idx = config
+            .pallets
+            .iter()
+            .position(|p| p.name == config.selected_pallet)
+            .unwrap_or_default();
+
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
@@ -75,11 +81,7 @@ impl Ui {
             main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
-            curr_pallet_idx: config
-                .pallets
-                .iter()
-                .position(|p| p.name == config.selected_pallet)
-                .unwrap_or_default(),
+            curr_pallet_idx,
             config,
         })
     }
@@ -146,11 +148,10 @@ impl Ui {
                                 self.curr_pallet_idx,
                                 self.config.pallets.len() - 1,
                             );
-                            let colors = parse_hex_colors(
-                                &self.config.pallets[self.curr_pallet_idx].hex_colors,
-                            );
 
-                            bus.io.lcd.set_pallet(colors[..4].try_into().unwrap());
+                            bus.io.lcd.set_pallet(into_pallet(
+                                &self.config.pallets[self.curr_pallet_idx].hex_colors,
+                            ));
                         }
                         _ => (),
                     }
@@ -184,13 +185,13 @@ impl Ui {
     }
 }
 
-pub fn parse_hex_colors(hex_colors: &[String]) -> Vec<PixelColor> {
-    hex_colors
+pub fn into_pallet(hex_colors: &[String]) -> [PixelColor; 4] {
+    let colors: Vec<PixelColor> = hex_colors
         .iter()
-        .map(|hex| {
-            PixelColor::from_hex(u32::from_str_radix(hex, 16).unwrap())
-        })
-        .collect()
+        .map(|hex| PixelColor::from_hex(u32::from_str_radix(hex, 16).unwrap()))
+        .collect();
+
+    colors[..4].try_into().unwrap()
 }
 
 pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
@@ -202,13 +203,13 @@ pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
 }
 #[cfg(test)]
 mod tests {
-    use crate::ui::parse_hex_colors;
+    use crate::ui::into_pallet;
 
     #[test]
     fn test_parse_hex_colors() {
         let colors = vec!["FF0F0F1B".to_string()];
-        let colors = parse_hex_colors(&colors);
-        
+        let colors = into_pallet(&colors);
+
         println!("{:?}", colors);
     }
 }

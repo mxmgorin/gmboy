@@ -6,7 +6,7 @@ use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::{Ppu, TARGET_FPS_F};
 use crate::ui::events::{UiEvent, UiEventHandler};
-use crate::ui::Ui;
+use crate::ui::{into_pallet, Ui};
 use sdl2::keyboard::Keycode;
 use std::path::Path;
 use std::time::Duration;
@@ -131,8 +131,8 @@ impl Emu {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
 
-        let mut ui = Ui::new(self.config.graphics.clone(), false)?;
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
+        let mut ui = Ui::new(self.config.graphics.clone(), false)?;
 
         while self.ctx.cart.is_none() && self.running {
             ui.handle_events(&mut cpu.bus, self);
@@ -145,6 +145,9 @@ impl Emu {
                 cpu = Cpu::new(Bus::new(cart));
                 self.ctx = EmuCtx::with_fps_limit(TARGET_FPS_F);
                 last_fps_timestamp = Duration::new(0, 0);
+                cpu.bus.io.lcd.set_pallet(into_pallet(
+                    &ui.config.pallets[ui.curr_pallet_idx].hex_colors,
+                ));
             }
 
             if self.paused {
