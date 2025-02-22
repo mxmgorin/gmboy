@@ -23,7 +23,7 @@ impl Display for Cart {
 
 impl Cart {
     pub fn new(bytes: Vec<u8>) -> Result<Cart, String> {
-        let checksum = calc_checksum(&bytes)?;
+        let checksum = calc_checksum(&bytes);
         let header = CartHeader::new(&bytes)?;
 
         Ok(Self {
@@ -57,11 +57,11 @@ impl Cart {
     }
 }
 
-fn calc_checksum(bytes: &[u8]) -> Result<u8, String> {
+fn calc_checksum(bytes: &[u8]) -> u8 {
     let end = 0x014C;
 
     if bytes.len() < end {
-        return Err("Can't calc_checksum: bytes are shorter than 0x014E".into());
+        return 0;
     }
 
     let start = 0x0134;
@@ -71,7 +71,7 @@ fn calc_checksum(bytes: &[u8]) -> Result<u8, String> {
         checksum = checksum.wrapping_sub(byte).wrapping_sub(1);
     }
 
-    Ok(checksum)
+    checksum
 }
 
 #[derive(Debug, Clone)]

@@ -2,9 +2,10 @@ use gmboy::bus::Bus;
 use gmboy::cart::Cart;
 use gmboy::cpu::Cpu;
 use gmboy::debugger::{CpuLogType, Debugger};
-use gmboy::emu::{read_bytes, EmuCtx};
+use gmboy::emu::{read_bytes};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
+use crate::TestCpuCtx;
 
 pub fn run_blargg_rom_serial(
     name: &str,
@@ -12,19 +13,17 @@ pub fn run_blargg_rom_serial(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
-    let debugger = Debugger::new(CpuLogType::None, true);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
     let mut cpu = Cpu::new(Bus::new(cart));
     let instant = Instant::now();
-    let mut ctx = EmuCtx {
+    let mut ctx = TestCpuCtx {
         clock: Default::default(),
-        debugger: Some(debugger),
-        cart: None,
+        debugger: Debugger::new(CpuLogType::None, true),
     };
 
     loop {
         cpu.step(&mut ctx)?;
-        let serial_msg = ctx.debugger.as_ref().unwrap().get_serial_msg().to_lowercase();
+        let serial_msg = ctx.debugger.get_serial_msg().to_lowercase();
 
         if serial_msg.contains("passed") {
             return Ok(());
@@ -47,9 +46,13 @@ pub fn run_blargg_rom_memory(
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
     let mut cpu = Cpu::new(Bus::new(cart));
     let instant = Instant::now();
+    let mut ctx = TestCpuCtx {
+        clock: Default::default(),
+        debugger: Debugger::new(CpuLogType::None, false),
+    };
 
     loop {
-        cpu.step(&mut EmuCtx::default())?;
+        cpu.step(&mut ctx)?;
         let b1 = cpu.bus.read(0xA001);
         let b2 = cpu.bus.read(0xA002);
         let b3 = cpu.bus.read(0xA003);

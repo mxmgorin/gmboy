@@ -13,7 +13,9 @@ fn main() {
 
     // Get the directory where the binary is running from
     let exe_path = env::current_exe().expect("Failed to get executable path");
-    let exe_dir = exe_path.parent().expect("Failed to get executable directory");
+    let exe_dir = exe_path
+        .parent()
+        .expect("Failed to get executable directory");
     let config_path = exe_dir.join("save/config.json");
 
     let config = if config_path.exists() {
@@ -23,12 +25,7 @@ fn main() {
         std::process::exit(1);
     };
 
-    let result = Emu::new(config);
-
-    let Ok(mut emu) = result else {
-        eprintln!("Emu failed: {}", result.unwrap_err());
-        std::process::exit(1);
-    };
+    let mut emu = Emu::new(config).unwrap();
 
     if let Err(err) = emu.run(cart_path) {
         eprintln!("Emu run failed: {}", err);

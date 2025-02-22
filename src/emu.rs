@@ -4,41 +4,40 @@ use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
-use crate::ppu::{Ppu, TARGET_FPS_F};
+use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
-use crate::ui::{Ui};
+use crate::ui::Ui;
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
 
-#[derive(Debug)]
 pub struct Emu {
-    running: bool,
-    paused: bool,
-    ctx: EmuCtx,
-    config: Config,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct EmuCtx {
     pub clock: Clock,
     pub debugger: Option<Debugger>,
+    pub ui: Ui,
+
+    pub ctx: EmuCtx,
+}
+
+pub struct EmuCtx {
+    pub running: bool,
+    pub paused: bool,
     pub cart: Option<Cart>,
+    pub config: Config,
 }
 
 impl EmuCtx {
-    pub fn with_fps_limit(fps: f64) -> EmuCtx {
-        let ppu = Ppu::with_fps_limit(fps);
-
+    pub fn new(config: Config) -> EmuCtx {
         Self {
-            clock: Clock::with_ppu(ppu),
-            debugger: Some(Debugger::new(CpuLogType::None, false)),
+            running: false,
             cart: None,
+            paused: false,
+            config,
         }
     }
 }
 
-impl CpuCallback for EmuCtx {
+impl CpuCallback for Emu {
     fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
         self.clock.m_cycles(m_cycles, bus);
     }
@@ -67,7 +66,7 @@ impl CpuCallback for EmuCtx {
     }
 }
 
-impl UiEventHandler for Emu {
+impl UiEventHandler for EmuCtx {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
         match event {
             UiEvent::Quit => self.running = false,
@@ -79,68 +78,69 @@ impl UiEventHandler for Emu {
                     return;
                 };
 
-                self.ctx.cart = Some(cart);
+                self.cart = Some(cart);
             }
             UiEvent::Pause => self.paused = !self.paused,
-            UiEvent::Restart => self.ctx.cart = Some(bus.cart.clone()),
+            UiEvent::Restart => self.cart = Some(bus.cart.clone()),
         }
     }
 }
 
 impl Emu {
     pub fn new(config: Config) -> Result<Self, String> {
+        let ppu = Ppu::with_fps_limit(config.graphics.fps);
+
         Ok(Self {
-            running: false,
-            paused: false,
-            ctx: EmuCtx::with_fps_limit(TARGET_FPS_F),
-            config,
+            clock: Clock::with_ppu(ppu),
+            debugger: Some(Debugger::new(CpuLogType::None, false)),
+            ui: Ui::new(config.graphics.clone(), false)?,
+            ctx: EmuCtx::new(config),
         })
     }
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
-        self.running = true;
-        let mut prev_frame = 0;
-        let mut last_fps_timestamp = Duration::new(0, 0);
-
         if let Some(cart_path) = cart_path {
             self.ctx.cart = Some(read_cart(&cart_path)?);
         }
 
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
-        let mut ui = Ui::new(self.config.graphics.clone(), false)?;
+        let mut cpu = Cpu::new(Bus::default());
 
-        while self.ctx.cart.is_none() && self.running {
-            ui.handle_events(&mut cpu.bus, self);
+        while self.ctx.cart.is_none() && self.ctx.running {
+            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
             thread::sleep(Duration::from_millis(100));
             continue;
         }
 
-        while self.running {
+        self.ctx.running = true;
+        let mut prev_frame = 0;
+        let mut last_fps_timestamp = Duration::new(0, 0);
+
+        while self.ctx.running {
             if let Some(cart) = self.ctx.cart.take() {
                 cpu = Cpu::new(Bus::new(cart));
-                self.ctx = EmuCtx::with_fps_limit(TARGET_FPS_F);
+                self.ctx = EmuCtx::new(self.ctx.config.clone());
                 last_fps_timestamp = Duration::new(0, 0);
-                cpu.bus.io.lcd.set_pallet(ui.curr_palette);
+                cpu.bus.io.lcd.set_pallet(self.ui.curr_palette);
             }
 
-            if self.paused {
-                ui.handle_events(&mut cpu.bus, self);
+            if self.ctx.paused {
+                self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
                 continue;
             }
 
-            ui.handle_events(&mut cpu.bus, self);
-            cpu.step(&mut self.ctx)?;
+            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
+            cpu.step(self)?;
 
-            if let Some(debugger) = self.ctx.debugger.as_mut() {
+            if let Some(debugger) = self.debugger.as_mut() {
                 if !debugger.get_serial_msg().is_empty() {
                     println!("Serial: {}", debugger.get_serial_msg());
                 }
             }
 
-            let ppu = self.ctx.clock.ppu.as_mut().unwrap();
+            let ppu = self.clock.ppu.as_mut().unwrap();
             if prev_frame != ppu.current_frame {
-                ui.draw(ppu, &cpu.bus);
+                self.ui.draw(ppu, &cpu.bus);
             }
 
             if (ppu.instant.elapsed() - last_fps_timestamp).as_millis() >= 1000 {

@@ -10,6 +10,7 @@ pub struct GraphicsConfig {
     pub selected_pallet_idx: usize,
     pub pallets: Vec<Pallet>,
     pub scale: f32,
+    pub fps: f64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
