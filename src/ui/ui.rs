@@ -149,7 +149,7 @@ impl Ui {
                     keycode: Some(keycode),
                     ..
                 } => {
-                    if let Some(evt) = self.handle_key(bus, keycode, true) {
+                    if let Some(evt) = self.handle_key(bus, keycode, false) {
                         event_handler.on_event(bus, evt);
                     }
                 }
@@ -172,6 +172,7 @@ impl Ui {
     }
 
     fn handle_key(&mut self, bus: &mut Bus, keycode: Keycode, is_down: bool) -> Option<UiEvent> {
+        println!("{}", keycode);
         match keycode {
             Keycode::UP => bus.io.joypad.up = is_down,
             Keycode::DOWN => bus.io.joypad.down = is_down,
