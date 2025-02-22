@@ -6,8 +6,7 @@ use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::FRect;
+use sdl2::pixels::PixelFormatEnum;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::EventPump;
@@ -84,9 +83,10 @@ impl Ui {
         })
     }
 
-    fn set_scale(&mut self, val: f32) -> Result<(), String> {
-        self.layout = Layout::new(val);
-        self.canvas.set_scale(val, val)?;
+    fn set_scale(&mut self, scale: f32) -> Result<(), String> {
+        self.config.scale = scale;
+        self.layout = Layout::new(scale);
+        self.canvas.set_scale(scale, scale)?;
         let window = self.canvas.window_mut();
         window
             .set_size(self.layout.win_width, self.layout.win_height)
@@ -146,11 +146,13 @@ impl Ui {
                         Keycode::EQUALS => new_scale = Some(self.config.scale + 1.0),
                         Keycode::MINUS => new_scale = Some(self.config.scale - 1.0),
                         Keycode::P => {
-                            let idx = get_next_pallet_idx(
+                            self.config.selected_pallet_idx = get_next_pallet_idx(
                                 self.config.selected_pallet_idx,
                                 self.config.pallets.len() - 1,
                             );
-                            self.curr_palette = into_pallet(&self.config.pallets[idx].hex_colors);
+                            self.curr_palette = into_pallet(
+                                &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
+                            );
                             bus.io.lcd.set_pallet(self.curr_palette);
                         }
                         _ => (),
