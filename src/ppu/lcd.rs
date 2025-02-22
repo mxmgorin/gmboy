@@ -22,15 +22,24 @@ pub const LCD_OBJ_PALETTE_0_ADDRESS: u16 = 0xFF48;
 pub const LCD_OBJ_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
-
 const LCD_STATUS_UNUSED_MASK: u8 = 0b1000_0000;
 
-pub const DEFAULT_COLORS: [PixelColor; 4] = [
+pub const BLACK_WHITE_PALLET: [PixelColor; 4] = [
     PixelColor::from_hex(0xFFFFFFFF),
     PixelColor::from_hex(0xFFAAAAAA),
     PixelColor::from_hex(0xFF555555),
     PixelColor::from_hex(0xFF000000),
 ];
+
+pub const HOLLOW_PALLET: [PixelColor; 4] = [
+    PixelColor::from_hex(0xFF0F0F1B),
+    PixelColor::from_hex(0xFF566A75),
+    PixelColor::from_hex(0xFFC6B7BE),
+    PixelColor::from_hex(0xFFFAFBF6),
+];
+
+// todo: move pallets to file conf
+pub const PALLETS: [[PixelColor; 4]; 2] = [BLACK_WHITE_PALLET, HOLLOW_PALLET];
 
 #[derive(Debug, Clone)]
 #[repr(C)]
@@ -51,10 +60,12 @@ pub struct Lcd {
     pub bg_colors: [PixelColor; 4],
     pub sp1_colors: [PixelColor; 4],
     pub sp2_colors: [PixelColor; 4],
+    pub current_pallet: [PixelColor; 4],
 }
 
 impl Default for Lcd {
     fn default() -> Self {
+        let current_pallet = BLACK_WHITE_PALLET;
         Self {
             control: LcdControl::default(),
             status: LcdStatus::default(),
@@ -66,9 +77,10 @@ impl Default for Lcd {
             bg_palette: 0xFC,
             obj_palette: [0xFF, 0xFF],
             window: Window::default(),
-            bg_colors: DEFAULT_COLORS,
-            sp1_colors: DEFAULT_COLORS,
-            sp2_colors: DEFAULT_COLORS,
+            current_pallet,
+            bg_colors: current_pallet,
+            sp1_colors: current_pallet,
+            sp2_colors: current_pallet,
         }
     }
 }
@@ -92,17 +104,27 @@ impl Lcd {
         }
     }
 
-    pub fn update_palette(&mut self, palette_data: u8, pal: u8) {
-        let colors: &mut [PixelColor; 4] = match pal {
+    pub fn set_pallet(&mut self, pallet: [PixelColor; 4]) {
+        self.current_pallet = pallet;
+
+        for (i, color) in self.current_pallet.iter().enumerate() {
+            self.sp1_colors[i] = *color;
+            self.sp2_colors[i] = *color;
+            self.bg_colors[i] = *color;
+        }
+    }
+
+    fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
+        let colors: &mut [PixelColor; 4] = match pallet_type {
             1 => &mut self.sp1_colors,
             2 => &mut self.sp2_colors,
             _ => &mut self.bg_colors,
         };
 
-        colors[0] = DEFAULT_COLORS[(palette_data & 0b11) as usize];
-        colors[1] = DEFAULT_COLORS[((palette_data >> 2) & 0b11) as usize];
-        colors[2] = DEFAULT_COLORS[((palette_data >> 4) & 0b11) as usize];
-        colors[3] = DEFAULT_COLORS[((palette_data >> 6) & 0b11) as usize];
+        colors[0] = self.current_pallet[(palette_data & 0b11) as usize];
+        colors[1] = self.current_pallet[((palette_data >> 2) & 0b11) as usize];
+        colors[2] = self.current_pallet[((palette_data >> 4) & 0b11) as usize];
+        colors[3] = self.current_pallet[((palette_data >> 6) & 0b11) as usize];
     }
 
     pub fn write(&mut self, address: u16, value: u8) {

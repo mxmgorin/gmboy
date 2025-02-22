@@ -1,14 +1,26 @@
 use crate::bus::Bus;
+use crate::lcd::BLACK_WHITE_PALLET;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
+use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::{FRect};
+use sdl2::rect::FRect;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::EventPump;
+
+pub const HOLLOW_PALLET: [PixelColor; 4] = [
+    PixelColor::from_hex(0xFF0F0F1B),
+    PixelColor::from_hex(0xFF566A75),
+    PixelColor::from_hex(0xFFC6B7BE),
+    PixelColor::from_hex(0xFFFAFBF6),
+];
+
+// todo: move pallets to file conf
+pub const PALLETS: [[PixelColor; 4]; 2] = [BLACK_WHITE_PALLET, HOLLOW_PALLET];
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
@@ -20,6 +32,8 @@ pub struct Ui {
     main_canvas: Canvas<Window>,
     debug_window: Option<DebugWindow>,
     layout: Layout,
+
+    curr_pallet_idx: usize,
 }
 
 pub struct Layout {
@@ -71,6 +85,7 @@ impl Ui {
             main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
+            curr_pallet_idx: 0,
         })
     }
 
@@ -131,6 +146,10 @@ impl Ui {
                     match keycode {
                         Keycode::EQUALS => new_scale = Some(self.layout.scale + 1.0),
                         Keycode::MINUS => new_scale = Some(self.layout.scale - 1.0),
+                        Keycode::P => {
+                            self.curr_pallet_idx = get_next_pallet_idx(self.curr_pallet_idx);
+                            bus.io.lcd.set_pallet(PALLETS[self.curr_pallet_idx]);
+                        }
                         _ => (),
                     }
 
@@ -160,5 +179,13 @@ impl Ui {
         if let Some(new_scale) = new_scale {
             self.set_scale(new_scale).unwrap();
         }
+    }
+}
+
+pub fn get_next_pallet_idx(curr_idx: usize) -> usize {
+    if curr_idx < PALLETS.len() - 1 {
+        curr_idx + 1
+    } else {
+        0
     }
 }
