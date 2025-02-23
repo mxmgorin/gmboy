@@ -108,8 +108,7 @@ impl Ppu {
 
             if io.lcd.ly as usize >= LINES_PER_FRAME {
                 io.lcd.status.mode_set(LcdMode::Oam);
-                io.lcd.ly = 0;
-                io.lcd.window.line_number = 0;
+                io.lcd.reset_ly(&mut io.interrupts);
             }
 
             self.line_ticks = 0;
