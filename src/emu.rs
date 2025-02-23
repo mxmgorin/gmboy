@@ -21,18 +21,17 @@ pub struct Emu {
 
 pub struct EmuCtx {
     pub state: EmuState,
-    pub cart: Option<Cart>,
     pub config: Config,
     pub prev_frame: usize,
     pub last_fps_timestamp: Duration,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum EmuState {
     WaitingCart,
     Running,
     Paused,
-    Restarting,
+    LoadingCart(String),
     Quitting,
 }
 
@@ -40,7 +39,6 @@ impl EmuCtx {
     pub fn new(config: Config) -> EmuCtx {
         Self {
             state: EmuState::WaitingCart,
-            cart: None,
             config,
             prev_frame: 0,
             last_fps_timestamp: Default::default(),
@@ -78,19 +76,10 @@ impl CpuCallback for Emu {
 }
 
 impl UiEventHandler for EmuCtx {
-    fn on_event(&mut self, bus: &mut Bus, event: UiEvent) {
+    fn on_event(&mut self, _bus: &mut Bus, event: UiEvent) {
         match event {
             UiEvent::Quit => self.state = EmuState::Quitting,
-            UiEvent::DropFile(filename) => {
-                let cart = read_cart(&filename);
-
-                let Ok(cart) = cart else {
-                    eprintln!("Failed to load cart: {}", cart.unwrap_err());
-                    return;
-                };
-
-                self.cart = Some(cart);
-            }
+            UiEvent::DropFile(path) => self.state = EmuState::LoadingCart(path),
             UiEvent::Pause => {
                 if self.state == EmuState::Paused {
                     self.state = EmuState::Running;
@@ -98,7 +87,11 @@ impl UiEventHandler for EmuCtx {
                     self.state = EmuState::Paused;
                 }
             }
-            UiEvent::Restart => self.cart = Some(bus.cart.clone()),
+            UiEvent::Restart => {
+                if let Some(path) = &self.config.last_cart_path {
+                    self.state = EmuState::LoadingCart(path.to_owned());
+                }
+            }
         }
     }
 }
@@ -116,8 +109,12 @@ impl Emu {
     }
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
+        if let Some(cart_path) = &self.ctx.config.last_cart_path {
+            self.ctx.state = EmuState::LoadingCart(cart_path.to_owned());
+        }
+
         if let Some(cart_path) = cart_path {
-            self.ctx.cart = Some(read_cart(&cart_path)?);
+            self.ctx.state = EmuState::LoadingCart(cart_path);
         }
 
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
@@ -127,11 +124,22 @@ impl Emu {
                 break;
             }
 
-            if let Some(cart) = self.ctx.cart.take() {
+            if let EmuState::LoadingCart(path) = &self.ctx.state {
+                let cart = read_cart(path);
+
+                let Ok(cart) = cart else {
+                    eprintln!("Failed to load cart: {}", cart.unwrap_err());
+                    break;
+                };
+
+                let mut bus = Bus::new(cart);
+                bus.io.lcd.set_pallet(self.ui.curr_palette);
+                cpu = Cpu::new(bus);
+
+                let path = path.to_owned();
                 self.ctx = EmuCtx::new(self.ctx.config.clone());
                 self.ctx.state = EmuState::Running;
-                cpu = Cpu::new(Bus::new(cart));
-                cpu.bus.io.lcd.set_pallet(self.ui.curr_palette);
+                self.ctx.config.last_cart_path = Some(path.to_owned());
             }
 
             if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitingCart {

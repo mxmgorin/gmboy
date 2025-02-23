@@ -4,6 +4,7 @@ use std::{fs, io};
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub graphics: GraphicsConfig,
+    pub last_cart_path: Option<String>,
 }
 #[derive(Debug, Deserialize, Clone)]
 pub struct GraphicsConfig {
