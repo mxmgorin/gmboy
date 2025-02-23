@@ -16,6 +16,7 @@ pub struct GraphicsConfig {
     pub pallets: Vec<Pallet>,
     pub scale: f32,
     pub fps: f64,
+    pub is_fullscreen: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

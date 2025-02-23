@@ -203,6 +203,12 @@ impl Ui {
                     return Some(UiEvent::ConfigChanged(self.config.clone()));
                 }
             }
+            Keycode::F => {
+                if !is_down {
+                    self.toggle_fullscreen();
+                    return Some(UiEvent::ConfigChanged(self.config.clone()));
+                }
+            }
             Keycode::P => {
                 if !is_down {
                     self.config.selected_pallet_idx = get_next_pallet_idx(
@@ -220,6 +226,22 @@ impl Ui {
         }
 
         None
+    }
+
+    fn toggle_fullscreen(&mut self) {
+        self.config.is_fullscreen = !self.config.is_fullscreen;
+
+        if self.config.is_fullscreen {
+            self.canvas
+                .window_mut()
+                .set_fullscreen(sdl2::video::FullscreenType::Desktop)
+                .unwrap();
+        } else {
+            self.canvas
+                .window_mut()
+                .set_fullscreen(sdl2::video::FullscreenType::Off)
+                .unwrap();
+        }
     }
 }
 
