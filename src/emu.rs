@@ -52,6 +52,11 @@ impl EmuCtx {
             last_fps_timestamp: Default::default(),
         }
     }
+
+    pub fn reset(&mut self) {
+        self.prev_frame = 0;
+        self.last_fps_timestamp = Default::default();
+    }
 }
 
 impl CpuCallback for Emu {
@@ -147,10 +152,9 @@ impl Emu {
                 bus.io.lcd.set_pallet(self.ui.curr_palette);
                 cpu = Cpu::new(bus);
 
-                let path = path.to_owned();
-                self.ctx = EmuCtx::new(self.ctx.config.clone());
-                self.ctx.state = EmuState::Running(RunMode::Normal);
                 self.ctx.config.last_cart_path = Some(path.to_owned());
+                self.ctx.state = EmuState::Running(RunMode::Normal);
+                self.ctx.reset();
             }
 
             self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
