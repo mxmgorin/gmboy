@@ -182,27 +182,27 @@ impl Ui {
             Keycode::Return => bus.io.joypad.start = is_down,
             Keycode::BACKSPACE => bus.io.joypad.select = is_down,
             Keycode::SPACE => {
-                if is_down {
+                if !is_down {
                     return Some(UiEvent::Pause);
                 }
             }
             Keycode::R => {
-                if is_down {
+                if !is_down {
                     return Some(UiEvent::Restart);
                 }
             }
             Keycode::EQUALS => {
-                if is_down {
+                if !is_down {
                     self.set_scale(self.config.scale + 1.0).unwrap()
                 }
             }
             Keycode::MINUS => {
-                if is_down {
+                if !is_down {
                     self.set_scale(self.config.scale - 1.0).unwrap()
                 }
             }
             Keycode::P => {
-                if is_down {
+                if !is_down {
                     self.config.selected_pallet_idx = get_next_pallet_idx(
                         self.config.selected_pallet_idx,
                         self.config.pallets.len() - 1,
