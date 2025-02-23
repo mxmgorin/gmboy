@@ -46,19 +46,23 @@ impl Default for Ppu {
 }
 
 impl Ppu {
-    pub fn with_fps_limit(target_fps: f64) -> Ppu {
+    pub fn with_fps_limit(fps: f64) -> Ppu {
         Self {
             current_frame: 0,
             pipeline: Pipeline::default(),
             prev_frame_duration: Duration::new(0, 0),
             start_duration: Duration::new(0, 0),
             last_frame_duration: Default::default(),
-            target_frame_duration: Duration::from_secs_f64(1.0 / target_fps),
+            target_frame_duration: Duration::from_secs_f64(1.0 / fps),
             frame_count: 0,
             fps: 0,
             instant: Instant::now(),
             line_ticks: 0,
         }
+    }
+
+    pub fn set_fps_limit(&mut self, fps: f64) {
+        self.target_frame_duration = Duration::from_secs_f64(1.0 / fps);
     }
 
     pub fn tick(&mut self, bus: &mut Bus) {

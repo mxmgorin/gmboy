@@ -1,5 +1,6 @@
 use crate::bus::Bus;
 use crate::config::GraphicsConfig;
+use crate::emu::RunMode;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
@@ -213,6 +214,20 @@ impl Ui {
             Keycode::X => bus.io.joypad.a = is_down,
             Keycode::Return => bus.io.joypad.start = is_down,
             Keycode::BACKSPACE => bus.io.joypad.select = is_down,
+            Keycode::TAB => {
+                return if is_down {
+                    Some(UiEvent::Mode(RunMode::Turbo))
+                } else {
+                    Some(UiEvent::Mode(RunMode::Normal))
+                }
+            }
+            Keycode::LSHIFT | Keycode::RSHIFT => {
+                return if is_down {
+                    Some(UiEvent::Mode(RunMode::Slow))
+                } else {
+                    Some(UiEvent::Mode(RunMode::Normal))
+                }
+            }
             Keycode::SPACE => {
                 if !is_down {
                     return Some(UiEvent::Pause);

@@ -7,6 +7,7 @@ use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
+use crate::TARGET_FPS_F;
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
@@ -29,10 +30,17 @@ pub struct EmuCtx {
 #[derive(Debug, Clone, PartialEq)]
 pub enum EmuState {
     WaitCart,
-    Running,
+    Running(RunMode),
     Paused,
     LoadCart(String),
     Quit,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum RunMode {
+    Normal,
+    Slow,
+    Turbo,
 }
 
 impl EmuCtx {
@@ -82,7 +90,7 @@ impl UiEventHandler for EmuCtx {
             UiEvent::DropFile(path) => self.state = EmuState::LoadCart(path),
             UiEvent::Pause => {
                 if self.state == EmuState::Paused {
-                    self.state = EmuState::Running;
+                    self.state = EmuState::Running(RunMode::Normal);
                 } else {
                     self.state = EmuState::Paused;
                 }
@@ -93,6 +101,7 @@ impl UiEventHandler for EmuCtx {
                 }
             }
             UiEvent::ConfigChanged(config) => self.config.graphics = config,
+            UiEvent::Mode(mode) => self.state = EmuState::Running(mode),
         }
     }
 }
@@ -121,6 +130,12 @@ impl Emu {
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         loop {
+            if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
+                self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
+                thread::sleep(Duration::from_millis(100));
+                continue;
+            }
+
             if self.ctx.state == EmuState::Quit {
                 self.ctx.config.save().map_err(|e| e.to_string())?;
                 break;
@@ -134,14 +149,8 @@ impl Emu {
 
                 let path = path.to_owned();
                 self.ctx = EmuCtx::new(self.ctx.config.clone());
-                self.ctx.state = EmuState::Running;
+                self.ctx.state = EmuState::Running(RunMode::Normal);
                 self.ctx.config.last_cart_path = Some(path.to_owned());
-            }
-
-            if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
-                self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
-                thread::sleep(Duration::from_millis(100));
-                continue;
             }
 
             self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
@@ -154,6 +163,15 @@ impl Emu {
             }
 
             let ppu = self.clock.ppu.as_mut().unwrap();
+
+            if let EmuState::Running(mode) = &self.ctx.state {
+                match mode {
+                    RunMode::Normal => ppu.set_fps_limit(TARGET_FPS_F),
+                    RunMode::Slow => ppu.set_fps_limit(TARGET_FPS_F / 2.0),
+                    RunMode::Turbo => ppu.set_fps_limit(TARGET_FPS_F * 2.0),
+                }
+            }
+
             if self.ctx.prev_frame != ppu.current_frame {
                 self.ui.draw(ppu, &cpu.bus);
             }
