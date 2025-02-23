@@ -8,6 +8,12 @@ use std::{env, fs, io};
 pub struct Config {
     pub graphics: GraphicsConfig,
     pub last_cart_path: Option<String>,
+    pub emulation: EmulationConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EmulationConfig {
+    pub rewind_size: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

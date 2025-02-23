@@ -10,6 +10,7 @@ pub trait CartController {
     fn load(&mut self, ram_data: Vec<u8>);
 }
 
+#[derive(Debug, Clone)]
 pub enum CartControllerType {
     Mbc1(Mbc1),
 }
@@ -77,6 +78,7 @@ pub fn new_controller(header: &CartHeader) -> Option<CartControllerType> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ControllerData {
     pub ram_bytes: Vec<u8>,
     pub rom_bank: u16,

@@ -1,11 +1,13 @@
 use crate::cart::controller::{CartController, ControllerData};
 use crate::{MASK_MSB, RAM_ADDRESS_START};
 
+#[derive(Debug, Clone)]
 enum Mode {
     RomBanking,
     RamBanking,
 }
 
+#[derive(Debug, Clone)]
 pub struct Mbc1 {
     data: ControllerData,
     mode: Mode,

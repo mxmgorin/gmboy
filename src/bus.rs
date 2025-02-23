@@ -55,6 +55,7 @@ impl From<u16> for BusAddrLocation {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Bus {
     pub cart: Cart,
     pub ram: Ram,

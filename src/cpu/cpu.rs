@@ -32,6 +32,7 @@ impl CpuCallback for CounterCpuCallback {
     fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
 }
 
+#[derive(Debug, Clone)]
 pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,

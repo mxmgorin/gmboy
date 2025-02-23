@@ -8,9 +8,15 @@ use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
 use crate::TARGET_FPS_F;
+use std::collections::VecDeque;
 use std::path::Path;
 use std::time::Duration;
 use std::{fs, thread};
+
+pub struct EmuSaveState {
+    pub clock: Clock,
+    pub cpu: Cpu,
+}
 
 pub struct Emu {
     pub clock: Clock,
@@ -25,6 +31,7 @@ pub struct EmuCtx {
     pub config: Config,
     pub prev_frame: usize,
     pub last_fps_timestamp: Duration,
+    pub rewind_buffer: VecDeque<EmuSaveState>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -41,6 +48,7 @@ pub enum RunMode {
     Normal,
     Slow,
     Turbo,
+    Rewind,
 }
 
 impl EmuCtx {
@@ -50,6 +58,7 @@ impl EmuCtx {
             config,
             prev_frame: 0,
             last_fps_timestamp: Default::default(),
+            rewind_buffer: Default::default(),
         }
     }
 
@@ -135,6 +144,8 @@ impl Emu {
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         loop {
+            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
+
             if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
                 self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
@@ -157,7 +168,13 @@ impl Emu {
                 self.ctx.reset();
             }
 
-            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
+            if let EmuState::Running(RunMode::Rewind) = &self.ctx.state {
+                if let Some(state) = self.ctx.rewind_buffer.pop_back() {
+                    cpu = state.cpu;
+                    self.clock = state.clock;
+                    self.ctx.reset();
+                }
+            }
             cpu.step(self)?;
 
             if let Some(debugger) = self.debugger.as_mut() {
@@ -166,13 +183,21 @@ impl Emu {
                 }
             }
 
-            let ppu = self.clock.ppu.as_mut().unwrap();
+            let mut ppu = self.clock.ppu.as_mut().unwrap();
 
             if let EmuState::Running(mode) = &self.ctx.state {
                 match mode {
                     RunMode::Normal => ppu.set_fps_limit(TARGET_FPS_F),
                     RunMode::Slow => ppu.set_fps_limit(TARGET_FPS_F / 2.0),
-                    RunMode::Turbo => ppu.set_fps_limit(TARGET_FPS_F * 2.0),
+                    RunMode::Turbo => ppu.set_fps_limit(TARGET_FPS_F * 3.0),
+                    RunMode::Rewind => {
+                        if let Some(state) = self.ctx.rewind_buffer.pop_back() {
+                            cpu = state.cpu;
+                            self.clock = state.clock;
+                            ppu = self.clock.ppu.as_mut().unwrap();
+                            self.ctx.reset();
+                        }
+                    }
                 }
             }
 
@@ -181,6 +206,17 @@ impl Emu {
             }
 
             self.ctx.prev_frame = ppu.current_frame;
+
+            if self.ctx.config.emulation.rewind_size > 0 && self.clock.t_cycles % 5000 == 0 {
+                if self.ctx.rewind_buffer.len() > self.ctx.config.emulation.rewind_size {
+                    self.ctx.rewind_buffer.pop_front();
+                }
+
+                self.ctx.rewind_buffer.push_back(EmuSaveState {
+                    clock: self.clock.clone(),
+                    cpu: cpu.clone(),
+                })
+            }
         }
 
         Ok(())

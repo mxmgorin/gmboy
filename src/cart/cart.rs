@@ -8,6 +8,7 @@ pub const ROM_BANK_SIZE: usize = 16 * 1024;
 pub const RAM_BANK_SIZE: usize = 8 * 1024;
 pub const MASK_MSB: u16 = 0xF000;
 
+#[derive(Debug, Clone)]
 pub struct Cart {
     pub header: CartHeader,
     pub checksum_valid: bool,

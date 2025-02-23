@@ -214,6 +214,13 @@ impl Ui {
             Keycode::X => bus.io.joypad.a = is_down,
             Keycode::Return => bus.io.joypad.start = is_down,
             Keycode::BACKSPACE => bus.io.joypad.select = is_down,
+            Keycode::LCTRL | Keycode::RCTRL => {
+                return if is_down {
+                    Some(UiEvent::Mode(RunMode::Rewind))
+                } else {
+                    Some(UiEvent::Mode(RunMode::Normal))
+                }
+            }
             Keycode::TAB => {
                 return if is_down {
                     Some(UiEvent::Mode(RunMode::Turbo))
