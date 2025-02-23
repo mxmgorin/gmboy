@@ -4,16 +4,18 @@ use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
+use crate::ui::text::{draw_text, TEXTURE_HEIGHT, TEXTURE_WIDTH};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
+use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::EventPump;
-use sdl2::rect::Rect;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
+pub const BYTES_PER_PIXEL: usize = 4;
 
 pub struct Ui {
     _sdl_context: sdl2::Sdl,
@@ -21,6 +23,7 @@ pub struct Ui {
 
     canvas: Canvas<Window>,
     texture: Texture,
+    text_texture: Texture,
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
@@ -70,6 +73,15 @@ impl Ui {
         let mut debug_window = DebugWindow::new(&video_subsystem);
         debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
 
+        let mut text_texture = texture_creator
+            .create_texture_streaming(
+                PixelFormatEnum::RGBA32,
+                TEXTURE_WIDTH as u32,
+                TEXTURE_HEIGHT as u32,
+            )
+            .unwrap();
+        text_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
@@ -79,6 +91,7 @@ impl Ui {
             curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
             config,
             texture,
+            text_texture,
         })
     }
 
@@ -106,9 +119,8 @@ impl Ui {
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
-        const BYTES_PER_PIXEL: usize = 4;
         self.canvas.clear();
-        
+
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
                 for y in 0..LCD_Y_RES as usize {
@@ -129,7 +141,24 @@ impl Ui {
         let dest_rect = calculate_scaled_rect(win_width, win_height);
 
         // Copy the texture while maintaining aspect ratio
-        self.canvas.copy(&self.texture, None, Some(dest_rect)).unwrap();
+        self.canvas
+            .copy(&self.texture, None, Some(dest_rect))
+            .unwrap();
+
+        if self.config.show_fps {
+            draw_text(
+                &mut self.text_texture,
+                &ppu.fps.to_string(),
+                self.curr_palette[3],
+                5,
+                5,
+                self.config.text_scale,
+            );
+            self.canvas
+                .copy(&self.text_texture, None, Some(Rect::new(0, 0, 100, 100)))
+                .unwrap();
+        }
+
         self.canvas.present();
     }
 

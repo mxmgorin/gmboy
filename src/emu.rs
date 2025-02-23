@@ -99,7 +99,7 @@ impl UiEventHandler for EmuCtx {
 
 impl Emu {
     pub fn new(config: Config) -> Result<Self, String> {
-        let ppu = Ppu::with_fps_limit(config.graphics.fps);
+        let ppu = Ppu::with_fps_limit(config.graphics.fps_limit);
 
         Ok(Self {
             clock: Clock::with_ppu(ppu),
@@ -162,11 +162,6 @@ impl Emu {
             let ppu = self.clock.ppu.as_mut().unwrap();
             if self.ctx.prev_frame != ppu.current_frame {
                 self.ui.draw(ppu, &cpu.bus);
-            }
-
-            if (ppu.instant.elapsed() - self.ctx.last_fps_timestamp).as_millis() >= 1000 {
-                println!("FPS: {}", ppu.fps);
-                self.ctx.last_fps_timestamp = ppu.instant.elapsed();
             }
 
             self.ctx.prev_frame = ppu.current_frame;

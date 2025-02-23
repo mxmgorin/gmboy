@@ -1,6 +1,7 @@
 mod debug_window;
 pub mod events;
 pub mod ui;
+mod text;
 
 pub use ui::*;
 
