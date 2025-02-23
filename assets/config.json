@@ -4,11 +4,7 @@
     "pallets": [
       {
         "name": "Classic",
-        "hex_colors": ["FF9BBC0F", "FF8BAC0F", "FF306230", "FF0F380F"]
-      },
-      {
-        "name": "Hollow",
-        "hex_colors": ["FF0F0F1B", "FF566A75", "FFC6B7BE", "FFFAFBF6"]
+        "hex_colors": ["ff081820", "ff346856", "ff88c070", "ffe0f8d0"]
       },
       {
         "name": "Rustic",
@@ -17,6 +13,54 @@
       {
         "name": "Swamp",
         "hex_colors": ["fffafca4", "ffd68e49", "ff308013", "ff400c01"]
+      },
+      {
+        "name": "Kirokaze",
+        "hex_colors": ["ff332c50", "ff46878f", "ff94e344", "ffe2f3e4"]
+      },
+      {
+        "name": "Ice Cream",
+        "hex_colors": ["ff7c3f58", "ffeb6b6f", "fff9a875", "fffff6d3"]
+      },
+      {
+        "name": "2bit demichrome",
+        "hex_colors": ["ff211e20", "ff555568", "ffa0a08b", "ffe9efec"]
+      },
+      {
+        "name": "Mist",
+        "hex_colors": ["ff2d1b00", "ff1e606e", "ff5ab9a8", "ffc4f0c2"]
+      },
+      {
+        "name": "AYY4",
+        "hex_colors": ["ff00303b", "ffff7777", "ffffce96", "fff1f2da"]
+      },
+      {
+        "name": "Wish",
+        "hex_colors": ["ff622e4c", "ff7550e8", "ff608fcf", "ff8be5ff"]
+      },
+      {
+        "name": "Crimson",
+        "hex_colors": ["ffeff9d6", "ffba5044", "ff7a1c4b", "ff1b0326"]
+      },
+      {
+        "name": "SpaceHaze",
+        "hex_colors": ["fff8e3c4", "ffcc3495", "ff6b1fb1", "ff0b0630"]
+      },
+      {
+        "name": "Velvet Cherry",
+        "hex_colors": ["ff2d162c", "ff412752", "ff683a68", "ff9775a6"]
+      },
+      {
+        "name": "Nintendo Super Gameboy",
+        "hex_colors": ["ff331e50", "ffa63725", "ffd68e49", "fff7e7c6"]
+      },
+      {
+        "name": "Fiery Plague",
+        "hex_colors": ["ff1a2129", "ff312137", "ff512839", "ff713141"]
+      },
+      {
+        "name": "Coldfire",
+        "hex_colors": ["ff46425e", "ff5b768d", "ffd17c7c", "fff6c6a8"]
       }
     ],
     "scale": 5.0,
