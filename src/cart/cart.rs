@@ -12,7 +12,6 @@ pub trait CartMbc {
     fn save(&self) -> Option<Vec<u8>>;
 }
 
-#[derive(Debug, Clone)]
 pub struct Cart {
     pub header: CartHeader,
     pub checksum_valid: bool,

@@ -127,13 +127,7 @@ impl Emu {
             }
 
             if let EmuState::LoadCart(path) = &self.ctx.state {
-                let cart = read_cart(path);
-
-                let Ok(cart) = cart else {
-                    eprintln!("Failed to load cart: {}", cart.unwrap_err());
-                    break;
-                };
-
+                let cart = read_cart(path).map_err(|e| e.to_string())?;
                 let mut bus = Bus::new(cart);
                 bus.io.lcd.set_pallet(self.ui.curr_palette);
                 cpu = Cpu::new(bus);
@@ -172,18 +166,8 @@ impl Emu {
 }
 
 pub fn read_cart(file: &str) -> Result<Cart, String> {
-    let bytes = read_bytes(file);
-
-    let Ok(bytes) = bytes else {
-        return Err(format!("Failed to read bytes: {}", bytes.unwrap_err()));
-    };
-
-    let cart = Cart::new(bytes);
-
-    let Ok(cart) = cart else {
-        return Err(format!("Failed to load cart: {}", cart.unwrap_err()));
-    };
-
+    let bytes = read_bytes(file).map_err(|e| e.to_string())?;
+    let cart = Cart::new(bytes).map_err(|e| e.to_string())?;
     print_cart(&cart);
 
     Ok(cart)
