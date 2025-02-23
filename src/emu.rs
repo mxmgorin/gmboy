@@ -28,17 +28,17 @@ pub struct EmuCtx {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EmuState {
-    WaitingCart,
+    WaitCart,
     Running,
     Paused,
-    LoadingCart(String),
-    Quitting,
+    LoadCart(String),
+    Quit,
 }
 
 impl EmuCtx {
     pub fn new(config: Config) -> EmuCtx {
         Self {
-            state: EmuState::WaitingCart,
+            state: EmuState::WaitCart,
             config,
             prev_frame: 0,
             last_fps_timestamp: Default::default(),
@@ -78,8 +78,8 @@ impl CpuCallback for Emu {
 impl UiEventHandler for EmuCtx {
     fn on_event(&mut self, _bus: &mut Bus, event: UiEvent) {
         match event {
-            UiEvent::Quit => self.state = EmuState::Quitting,
-            UiEvent::DropFile(path) => self.state = EmuState::LoadingCart(path),
+            UiEvent::Quit => self.state = EmuState::Quit,
+            UiEvent::DropFile(path) => self.state = EmuState::LoadCart(path),
             UiEvent::Pause => {
                 if self.state == EmuState::Paused {
                     self.state = EmuState::Running;
@@ -89,7 +89,7 @@ impl UiEventHandler for EmuCtx {
             }
             UiEvent::Restart => {
                 if let Some(path) = &self.config.last_cart_path {
-                    self.state = EmuState::LoadingCart(path.to_owned());
+                    self.state = EmuState::LoadCart(path.to_owned());
                 }
             }
         }
@@ -110,21 +110,21 @@ impl Emu {
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
         if let Some(cart_path) = &self.ctx.config.last_cart_path {
-            self.ctx.state = EmuState::LoadingCart(cart_path.to_owned());
+            self.ctx.state = EmuState::LoadCart(cart_path.to_owned());
         }
 
         if let Some(cart_path) = cart_path {
-            self.ctx.state = EmuState::LoadingCart(cart_path);
+            self.ctx.state = EmuState::LoadCart(cart_path);
         }
 
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         loop {
-            if self.ctx.state == EmuState::Quitting {
+            if self.ctx.state == EmuState::Quit {
                 break;
             }
 
-            if let EmuState::LoadingCart(path) = &self.ctx.state {
+            if let EmuState::LoadCart(path) = &self.ctx.state {
                 let cart = read_cart(path);
 
                 let Ok(cart) = cart else {
@@ -142,7 +142,7 @@ impl Emu {
                 self.ctx.config.last_cart_path = Some(path.to_owned());
             }
 
-            if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitingCart {
+            if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
                 self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
                 continue;
