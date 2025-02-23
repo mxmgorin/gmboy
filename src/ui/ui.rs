@@ -193,12 +193,14 @@ impl Ui {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    self.set_scale(self.config.scale + 1.0).unwrap()
+                    self.set_scale(self.config.scale + 1.0).unwrap();
+                    return Some(UiEvent::ConfigChanged(self.config.clone()));
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    self.set_scale(self.config.scale - 1.0).unwrap()
+                    self.set_scale(self.config.scale - 1.0).unwrap();
+                    return Some(UiEvent::ConfigChanged(self.config.clone()));
                 }
             }
             Keycode::P => {
@@ -211,6 +213,7 @@ impl Ui {
                         &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
                     );
                     bus.io.lcd.set_pallet(self.curr_palette);
+                    return Some(UiEvent::ConfigChanged(self.config.clone()));
                 }
             }
             _ => (), // Ignore other keycodes

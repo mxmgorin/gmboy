@@ -92,6 +92,7 @@ impl UiEventHandler for EmuCtx {
                     self.state = EmuState::LoadCart(path.to_owned());
                 }
             }
+            UiEvent::ConfigChanged(config) => self.config.graphics = config,
         }
     }
 }
@@ -121,6 +122,7 @@ impl Emu {
 
         loop {
             if self.ctx.state == EmuState::Quit {
+                self.ctx.config.save().map_err(|e| e.to_string())?;
                 break;
             }
 

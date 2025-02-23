@@ -11,12 +11,7 @@ fn main() {
         Some(args.remove(1))
     };
 
-    // Get the directory where the binary is running from
-    let exe_path = env::current_exe().expect("Failed to get executable path");
-    let exe_dir = exe_path
-        .parent()
-        .expect("Failed to get executable directory");
-    let config_path = exe_dir.join("save/config.json");
+    let config_path = Config::default_path();
 
     let config = if config_path.exists() {
         Config::from_file(config_path.to_str().unwrap()).expect("Failed to parse save/config.json")
