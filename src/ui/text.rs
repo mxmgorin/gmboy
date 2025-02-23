@@ -8,7 +8,7 @@ pub const TEXTURE_HEIGHT: usize = 50;
 pub const CHAR_WIDTH: usize = 8;
 pub const _CHAR_HEIGHT: usize = 8;
 pub const CHAR_SPACING: usize = 2;
-pub const CHAR_COLOR: Color = Color::WHITE;
+pub const _CHAR_COLOR: Color = Color::WHITE;
 pub const BACKGROUND_COLOR: Color = Color::RGBA(0, 0, 0, 0); // transparent
 
 pub fn draw_text(texture: &mut Texture, text: &str, color: PixelColor, x: usize, y: usize, scale: usize) {

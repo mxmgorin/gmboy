@@ -3,12 +3,21 @@ use std::fmt::Display;
 const RAM_ADDRESS_START: usize = 0xA000;
 const RAM_SIZE: usize = 0x4000;
 
+pub trait CartMbc {
+    fn read_rom(&self, address: u16) -> u8;
+    fn write_rom(&mut self, address: u16, value: u8);
+    fn read_ram(&self, address: u16) -> u8;
+    fn write_ram(&mut self, address: u16, value: u8);
+    fn load(&mut self, ram_data: Vec<u8>);
+    fn save(&self) -> Option<Vec<u8>>;
+}
+
 #[derive(Debug, Clone)]
 pub struct Cart {
     pub header: CartHeader,
-    pub rom_bytes: Vec<u8>,
     pub checksum_valid: bool,
-    pub ram_bytes: [u8; RAM_SIZE],
+    pub rom_data: Vec<u8>,
+    pub ram_data: [u8; RAM_SIZE],
 }
 
 impl Display for Cart {
@@ -29,8 +38,8 @@ impl Cart {
         Ok(Self {
             checksum_valid: checksum == header.header_checksum,
             header,
-            rom_bytes: bytes,
-            ram_bytes: [0; RAM_SIZE],
+            rom_data: bytes,
+            ram_data: [0; RAM_SIZE],
         })
     }
 
@@ -39,9 +48,9 @@ impl Cart {
         // todo: Impl ram_bytes banks
 
         if address >= RAM_ADDRESS_START {
-            self.ram_bytes[address - RAM_ADDRESS_START]
+            self.ram_data[address - RAM_ADDRESS_START]
         } else {
-            self.rom_bytes[address]
+            self.rom_data[address]
         }
     }
 
@@ -50,9 +59,9 @@ impl Cart {
 
         // todo: Impl ram banks
         if address >= RAM_ADDRESS_START {
-            self.ram_bytes[address - RAM_ADDRESS_START] = value;
+            self.ram_data[address - RAM_ADDRESS_START] = value;
         } else {
-            self.rom_bytes[address] = value;
+            self.rom_data[address] = value;
         }
     }
 }
@@ -186,38 +195,24 @@ impl TryFrom<u8> for RomSize {
     }
 }
 
-impl RomSize {
+impl RamSize {
     pub fn _number_of_banks(&self) -> usize {
         match self {
-            RomSize::_32KiB => 2,
-            RomSize::_64KiB => 4,
-            RomSize::_128KiB => 8,
-            RomSize::_256KiB => 16,
-            RomSize::_512KiB => 32,
-            RomSize::_1MiB => 64,
-            RomSize::_2MiB => 128,
-            RomSize::_4MiB => 256,
-            RomSize::_8MiB => 512,
-            RomSize::_1_1MiB => 72,
-            RomSize::_1_2MiB => 80,
-            RomSize::_1_5MiB => 96,
+            RamSize::NoRam | RamSize::Unused => 0,
+            RamSize::_8KiB => 1,
+            RamSize::_32KiB => 4,
+            RamSize::_128KiB => 16,
+            RamSize::_64KiB => 8,
         }
     }
 
-    pub fn _size_in_bytes(&self) -> usize {
+    pub fn size_in_bytes(&self) -> usize {
         match self {
-            RomSize::_32KiB => 32 * 1024,
-            RomSize::_64KiB => 64 * 1024,
-            RomSize::_128KiB => 128 * 1024,
-            RomSize::_256KiB => 256 * 1024,
-            RomSize::_512KiB => 512 * 1024,
-            RomSize::_1MiB => 1024 * 1024,
-            RomSize::_2MiB => 2 * 1024 * 1024,
-            RomSize::_4MiB => 4 * 1024 * 1024,
-            RomSize::_8MiB => 8 * 1024 * 1024,
-            RomSize::_1_1MiB => 1_1 * 1024 * 1024,
-            RomSize::_1_2MiB => 1_2 * 1024 * 1024,
-            RomSize::_1_5MiB => 1_5 * 1024 * 1024,
+            RamSize::NoRam | RamSize::Unused => 0,
+            RamSize::_8KiB => 8 * 1024,
+            RamSize::_32KiB => 32 * 1024,
+            RamSize::_128KiB => 128 * 1024,
+            RamSize::_64KiB => 64 * 1024,
         }
     }
 }
