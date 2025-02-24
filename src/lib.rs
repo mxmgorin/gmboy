@@ -7,6 +7,7 @@ pub mod emu;
 pub mod ppu;
 pub mod ui;
 pub mod config;
+pub mod apu;
 
 pub use cart::*;
 pub use ppu::*;
