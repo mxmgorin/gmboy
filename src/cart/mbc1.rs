@@ -1,4 +1,4 @@
-use crate::cart::mbc::{CartMapper, MbcData};
+use crate::cart::mbc::{Mbc, MbcData};
 use crate::{MASK_MSB, RAM_ADDRESS_START};
 
 #[derive(Debug, Clone)]
@@ -22,7 +22,7 @@ impl Mbc1 {
     }
 }
 
-impl CartMapper for Mbc1 {
+impl Mbc for Mbc1 {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
         match (address & MASK_MSB) >> 12 {
             // 0x0000 - 0x3FFF (Bank 00)

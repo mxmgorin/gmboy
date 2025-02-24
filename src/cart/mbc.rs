@@ -2,7 +2,7 @@ use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::{CartData, RAM_BANK_SIZE, ROM_BANK_SIZE};
 
-pub trait CartMapper {
+pub trait Mbc {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8;
     fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
@@ -48,7 +48,7 @@ impl MbcVariant {
     }
 }
 
-impl CartMapper for MbcVariant {
+impl Mbc for MbcVariant {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
         match self {
             MbcVariant::Mbc1(c) => c.read_rom(rom_bytes, address),

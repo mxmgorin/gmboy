@@ -1,5 +1,5 @@
 use crate::cart::header::{CartHeader, CartType, RamSize, RomSize};
-use crate::cart::mbc::{CartMapper, MbcVariant};
+use crate::cart::mbc::{Mbc, MbcVariant};
 
 pub const RAM_ADDRESS_START: usize = 0xA000;
 pub const RAM_SIZE: usize = 0x4000;
