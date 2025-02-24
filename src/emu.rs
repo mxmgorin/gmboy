@@ -148,6 +148,7 @@ impl Emu {
 
         loop {
             if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
+                self.ui.draw_text("DROP FILE");
                 self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
                 continue;

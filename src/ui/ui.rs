@@ -5,7 +5,10 @@ use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
-use crate::ui::text::{draw_text, TEXTURE_HEIGHT, TEXTURE_WIDTH};
+use crate::ui::text::{
+    calc_text_width, draw_text, get_text_height, CHAR_HEIGHT, CHAR_SPACING, CHAR_WIDTH,
+    TEXTURE_HEIGHT, TEXTURE_WIDTH,
+};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
@@ -24,7 +27,8 @@ pub struct Ui {
 
     canvas: Canvas<Window>,
     texture: Texture,
-    text_texture: Texture,
+    overlay_texture: Texture,
+    fps_texture: Texture,
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
@@ -74,14 +78,14 @@ impl Ui {
         let mut debug_window = DebugWindow::new(&video_subsystem);
         debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
 
-        let mut text_texture = texture_creator
-            .create_texture_streaming(
-                PixelFormatEnum::RGBA32,
-                TEXTURE_WIDTH as u32,
-                TEXTURE_HEIGHT as u32,
-            )
+        let mut overlay_texture = texture_creator
+            .create_texture_streaming(PixelFormatEnum::RGBA32, layout.win_width, layout.win_height)
             .unwrap();
-        text_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+        overlay_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+        let mut fps_texture = texture_creator
+            .create_texture_streaming(PixelFormatEnum::RGBA32, 50, 50)
+            .unwrap();
+        fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
@@ -92,7 +96,8 @@ impl Ui {
             curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
             config,
             texture,
-            text_texture,
+            overlay_texture,
+            fps_texture
         })
     }
 
@@ -117,6 +122,35 @@ impl Ui {
         if let Some(debug_window) = self.debug_window.as_mut() {
             debug_window.draw(bus);
         }
+    }
+
+    pub fn draw_text(&mut self, text: &str) {
+        self.canvas.clear();
+
+        let (win_width, win_height) = self.canvas.window().size();
+        let text_width = calc_text_width(text, self.config.text_scale);
+        // Calculate the x and y positions to center the text
+        let x = (win_width as usize - text_width) / 2;
+        let y = (win_height as usize - get_text_height(self.config.text_scale)) / 2;
+
+        draw_text(
+            &mut self.overlay_texture,
+            text,
+            self.curr_palette[3],
+            x,
+            y,
+            self.config.text_scale,
+        );
+
+        self.canvas
+            .copy(
+                &self.overlay_texture,
+                None,
+                Some(Rect::new(0, 0, win_width, win_height)),
+            )
+            .unwrap();
+
+        self.canvas.present();
     }
 
     fn draw_main(&mut self, ppu: &Ppu) {
@@ -147,16 +181,22 @@ impl Ui {
             .unwrap();
 
         if self.config.show_fps {
+            let text = ppu.fps.to_string();
             draw_text(
-                &mut self.text_texture,
-                &ppu.fps.to_string(),
+                &mut self.fps_texture,
+                &text,
                 self.curr_palette[3],
                 5,
                 5,
-                self.config.text_scale,
+                1,
             );
+
             self.canvas
-                .copy(&self.text_texture, None, Some(Rect::new(0, 0, 100, 100)))
+                .copy(
+                    &self.fps_texture,
+                    None,
+                    Some(Rect::new(0, 0, 80, 80)),
+                )
                 .unwrap();
         }
 

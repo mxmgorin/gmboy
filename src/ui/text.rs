@@ -1,17 +1,33 @@
+use crate::tile::PixelColor;
 use crate::ui::BYTES_PER_PIXEL;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
-use crate::tile::PixelColor;
 
 pub const TEXTURE_WIDTH: usize = 50;
 pub const TEXTURE_HEIGHT: usize = 50;
 pub const CHAR_WIDTH: usize = 8;
-pub const _CHAR_HEIGHT: usize = 8;
+pub const CHAR_HEIGHT: usize = 8;
 pub const CHAR_SPACING: usize = 2;
 pub const _CHAR_COLOR: Color = Color::WHITE;
 pub const BACKGROUND_COLOR: Color = Color::RGBA(0, 0, 0, 0); // transparent
 
-pub fn draw_text(texture: &mut Texture, text: &str, color: PixelColor, x: usize, y: usize, scale: usize) {
+/// Calculate the text width based on character count, scale, and character width
+pub fn calc_text_width(text: &str, scale: usize) -> usize {
+    text.len() * CHAR_WIDTH * scale + (text.len() - 1) * CHAR_SPACING * scale
+}
+
+pub fn get_text_height(scale: usize) -> usize {
+    CHAR_HEIGHT * scale
+}
+
+pub fn draw_text(
+    texture: &mut Texture,
+    text: &str,
+    color: PixelColor,
+    x: usize,
+    y: usize,
+    scale: usize,
+) {
     texture
         .with_lock(None, |buffer: &mut [u8], pitch: usize| {
             for i in (0..buffer.len()).step_by(BYTES_PER_PIXEL) {
@@ -23,6 +39,11 @@ pub fn draw_text(texture: &mut Texture, text: &str, color: PixelColor, x: usize,
 
             let mut x_offset = x;
             for c in text.chars() {
+                if c == ' ' {
+                    x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING; // Move forward for space
+                    continue;
+                }
+
                 if let Some(char_index) = get_font_index(c) {
                     if char_index >= FONT.len() {
                         x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
@@ -43,7 +64,7 @@ pub fn draw_text(texture: &mut Texture, text: &str, color: PixelColor, x: usize,
                                         let py = text_pixel_y + dy;
 
                                         let text_offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                                        let (r,g,b,a) = color.as_rgba();
+                                        let (r, g, b, a) = color.as_rgba();
                                         buffer[text_offset] = r;
                                         buffer[text_offset + 1] = g;
                                         buffer[text_offset + 2] = b;
