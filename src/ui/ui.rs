@@ -136,8 +136,8 @@ impl Ui {
             &mut self.overlay_texture,
             text,
             self.curr_palette[3],
-            x,
-            y,
+            0,
+            0,
             self.config.text_scale,
         );
 
@@ -145,7 +145,7 @@ impl Ui {
             .copy(
                 &self.overlay_texture,
                 None,
-                Some(Rect::new(0, 0, win_width, win_height)),
+                Some(Rect::new(x as i32, y as i32, win_width, win_height)),
             )
             .unwrap();
 
