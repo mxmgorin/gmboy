@@ -1,7 +1,7 @@
 use crate::bus::Bus;
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
-use crate::cpu::Registers;
 use crate::cpu::instructions::{FetchedData, RegisterType};
+use crate::cpu::Registers;
 use crate::LittleEndianBytes;
 
 pub struct DebugCtx {
@@ -42,6 +42,16 @@ pub struct Cpu {
 }
 
 impl Cpu {
+    pub fn clone_without_bus(&self) -> Self {
+        Self {
+            bus: Bus::with_bytes(vec![]),
+            registers: self.registers.clone(),
+            enabling_ime: self.enabling_ime,
+            current_opcode: self.current_opcode,
+            is_halted: self.is_halted,
+        }
+    }
+
     pub fn new(bus: Bus) -> Cpu {
         Self {
             bus,
@@ -105,7 +115,7 @@ impl Cpu {
 
         #[cfg(debug_assertions)]
         let pc = self.registers.pc;
-        
+
         self.current_opcode = self.fetch_data(callback);
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {

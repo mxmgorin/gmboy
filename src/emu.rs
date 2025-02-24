@@ -5,6 +5,7 @@ use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
+use crate::mbc::MbcVariant;
 use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
@@ -15,7 +16,9 @@ use std::{fs, thread};
 
 pub struct EmuSaveState {
     pub clock: Clock,
-    pub cpu: Cpu,
+    pub cpu_without_bus: Cpu,
+    pub bus_without_cart: Bus,
+    pub cart_mbc: Option<MbcVariant>,
 }
 
 pub struct Emu {
@@ -157,6 +160,7 @@ impl Emu {
 
             if let EmuState::LoadCart(path) = &self.ctx.state {
                 let cart = read_cart(path).map_err(|e| e.to_string())?;
+
                 let mut bus = Bus::new(cart);
                 bus.io.lcd.set_pallet(self.ui.curr_palette);
                 cpu = Cpu::new(bus);
@@ -168,10 +172,7 @@ impl Emu {
 
             if let EmuState::Running(RunMode::Rewind) = &self.ctx.state {
                 if let Some(state) = self.ctx.rewind_buffer.pop_back() {
-                    cpu = state.cpu;
-                    cpu.bus.io.joypad = Joypad::default();
-                    self.clock = state.clock;
-                    self.ctx.reset();
+                    self.load_state(&mut cpu, state);
                 }
             }
 
@@ -184,7 +185,7 @@ impl Emu {
                 }
             }
 
-            let mut ppu = self.clock.ppu.as_mut().unwrap();
+            let ppu = self.clock.ppu.as_mut().unwrap();
 
             if let EmuState::Running(mode) = &self.ctx.state {
                 match mode {
@@ -197,14 +198,7 @@ impl Emu {
                         self.ctx.config.graphics.fps_limit * self.ctx.config.emulation.turbo_speed
                             / 100.0,
                     ),
-                    RunMode::Rewind => {
-                        if let Some(state) = self.ctx.rewind_buffer.pop_back() {
-                            cpu = state.cpu;
-                            self.clock = state.clock;
-                            ppu = self.clock.ppu.as_mut().unwrap();
-                            self.ctx.reset();
-                        }
-                    }
+                    RunMode::Rewind => (),
                 }
             }
 
@@ -219,33 +213,53 @@ impl Emu {
                     self.ctx.rewind_buffer.pop_front();
                 }
 
-                self.ctx.rewind_buffer.push_back(EmuSaveState {
-                    clock: self.clock.clone(),
-                    cpu: cpu.clone(),
-                })
+                self.ctx.rewind_buffer.push_back(self.save_state(&cpu));
             }
         }
 
         Ok(())
+    }
+
+    pub fn save_state(&self, cpu: &Cpu) -> EmuSaveState {
+        EmuSaveState {
+            clock: self.clock.clone(),
+            cpu_without_bus: cpu.clone_without_bus(),
+            bus_without_cart: cpu.bus.clone_without_cart(),
+            cart_mbc: cpu.bus.cart.mbc.clone(),
+        }
+    }
+
+    pub fn load_state(&mut self, cpu: &mut Cpu, save_state: EmuSaveState) {
+        let mut state_cpu = save_state.cpu_without_bus; // reconstruct cpu
+        state_cpu.bus = save_state.bus_without_cart;
+        state_cpu.bus.io.joypad = Joypad::default(); // reset controls
+        state_cpu.bus.cart.mbc = save_state.cart_mbc; // reconstruct cart
+        state_cpu.bus.cart.data = cpu.bus.cart.data.clone();
+
+        *cpu = state_cpu;
+        self.clock = save_state.clock;
+        self.ctx.reset();
     }
 }
 
 pub fn read_cart(file: &str) -> Result<Cart, String> {
     let bytes = read_bytes(file).map_err(|e| e.to_string())?;
     let cart = Cart::new(bytes).map_err(|e| e.to_string())?;
-    print_cart(&cart);
+    _ = print_cart(&cart).map_err(|e| println!("Failed to print cart: {}", e));
 
     Ok(cart)
 }
 
-fn print_cart(cart: &Cart) {
+fn print_cart(cart: &Cart) -> Result<(), String> {
     println!("Cart Loaded:");
-    println!("\t Title          : {}", cart.data.get_title().unwrap());
-    println!("\t Type           : {:?}", cart.data.get_cart_type().unwrap());
-    println!("\t ROM Size       : {:?}", cart.data.get_rom_size().unwrap());
-    println!("\t RAM Size       : {:?}", cart.data.get_ram_size().unwrap());
+    println!("\t Title          : {}", cart.data.get_title()?);
+    println!("\t Type           : {:?}", cart.data.get_cart_type()?);
+    println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
+    println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);
     println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
     println!("\t Checksum Valid : {}", cart.data.checksum_valid());
+
+    Ok(())
 }
 
 pub fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {

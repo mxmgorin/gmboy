@@ -7,7 +7,7 @@ pub const ROM_BANK_SIZE: usize = 16 * 1024;
 pub const RAM_BANK_SIZE: usize = 8 * 1024;
 pub const MASK_MSB: u16 = 0xF000;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Cart {
     pub data: CartData,
     pub mbc: Option<MbcVariant>,
@@ -48,7 +48,7 @@ impl Cart {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct CartData {
     pub bytes: Vec<u8>,
 }
