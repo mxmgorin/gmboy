@@ -1,4 +1,5 @@
 use crate::auxiliary::clock::Clock;
+use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
 use crate::cart::Cart;
 use crate::config::Config;
@@ -144,8 +145,6 @@ impl Emu {
         let mut cpu = Cpu::new(Bus::with_bytes(vec![]));
 
         loop {
-            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
-
             if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
                 self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
@@ -171,10 +170,13 @@ impl Emu {
             if let EmuState::Running(RunMode::Rewind) = &self.ctx.state {
                 if let Some(state) = self.ctx.rewind_buffer.pop_back() {
                     cpu = state.cpu;
+                    cpu.bus.io.joypad = Joypad::default();
                     self.clock = state.clock;
                     self.ctx.reset();
                 }
             }
+
+            self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
             cpu.step(self)?;
 
             if let Some(debugger) = self.debugger.as_mut() {
