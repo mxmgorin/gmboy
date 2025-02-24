@@ -2,28 +2,26 @@ use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::{CartData, RAM_BANK_SIZE, ROM_BANK_SIZE};
 
-pub trait CartController {
-    fn read_rom(&self, rom_data: &[u8], address: u16) -> u8;
-    fn write_rom(&mut self, rom_data: &mut Vec<u8>, address: u16, value: u8);
+pub trait CartMapper {
+    fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8;
+    fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
-    fn load(&mut self, ram_data: Vec<u8>);
+    fn load_ram(&mut self, ram_bytes: Vec<u8>);
 }
 
 #[derive(Debug, Clone)]
-pub enum CartControllerType {
+pub enum MbcVariant {
     Mbc1(Mbc1),
 }
 
-impl CartControllerType {
-    pub fn new(cart_data: &CartData) -> Option<CartControllerType> {
+impl MbcVariant {
+    pub fn new(cart_data: &CartData) -> Option<MbcVariant> {
         match cart_data.get_cart_type().unwrap() {
             CartType::RomOnly => None,
-            CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
-                Some(CartControllerType::Mbc1(Mbc1::new(ControllerData::new(
-                    cart_data.get_ram_size().unwrap(),
-                ))))
-            }
+            CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => Some(
+                MbcVariant::Mbc1(Mbc1::new(MbcData::new(cart_data.get_ram_size().unwrap()))),
+            ),
             CartType::Mbc2
             | CartType::Mbc2Battery
             | CartType::RomRam
@@ -50,40 +48,40 @@ impl CartControllerType {
     }
 }
 
-impl CartController for CartControllerType {
+impl CartMapper for MbcVariant {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
         match self {
-            CartControllerType::Mbc1(c) => c.read_rom(rom_bytes, address),
+            MbcVariant::Mbc1(c) => c.read_rom(rom_bytes, address),
         }
     }
 
     fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8) {
         match self {
-            CartControllerType::Mbc1(c) => c.write_rom(rom_bytes, address, value),
+            MbcVariant::Mbc1(c) => c.write_rom(rom_bytes, address, value),
         }
     }
 
     fn read_ram(&self, address: u16) -> u8 {
         match self {
-            CartControllerType::Mbc1(c) => c.read_ram(address),
+            MbcVariant::Mbc1(c) => c.read_ram(address),
         }
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {
         match self {
-            CartControllerType::Mbc1(c) => c.write_ram(address, value),
+            MbcVariant::Mbc1(c) => c.write_ram(address, value),
         }
     }
 
-    fn load(&mut self, ram_bytes: Vec<u8>) {
+    fn load_ram(&mut self, ram_bytes: Vec<u8>) {
         match self {
-            CartControllerType::Mbc1(c) => c.load(ram_bytes),
+            MbcVariant::Mbc1(c) => c.load_ram(ram_bytes),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct ControllerData {
+pub struct MbcData {
     pub ram_bytes: Vec<u8>,
     pub rom_bank: u16,
     pub ram_bank: u8,
@@ -92,7 +90,7 @@ pub struct ControllerData {
     pub ram_enabled: bool,
 }
 
-impl ControllerData {
+impl MbcData {
     pub fn new(ram_size: RamSize) -> Self {
         let rom_bank = 1;
         let ram_bank = 0;

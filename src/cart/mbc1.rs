@@ -1,4 +1,4 @@
-use crate::cart::controller::{CartController, ControllerData};
+use crate::cart::mbc::{CartMapper, MbcData};
 use crate::{MASK_MSB, RAM_ADDRESS_START};
 
 #[derive(Debug, Clone)]
@@ -9,12 +9,12 @@ enum Mode {
 
 #[derive(Debug, Clone)]
 pub struct Mbc1 {
-    data: ControllerData,
+    data: MbcData,
     mode: Mode,
 }
 
 impl Mbc1 {
-    pub fn new(inner: ControllerData) -> Self {
+    pub fn new(inner: MbcData) -> Self {
         Self {
             data: inner,
             mode: Mode::RomBanking,
@@ -22,7 +22,7 @@ impl Mbc1 {
     }
 }
 
-impl CartController for Mbc1 {
+impl CartMapper for Mbc1 {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
         match (address & MASK_MSB) >> 12 {
             // 0x0000 - 0x3FFF (Bank 00)
@@ -90,7 +90,7 @@ impl CartController for Mbc1 {
         self.data.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
     }
 
-    fn load(&mut self, ram_data: Vec<u8>) {
+    fn load_ram(&mut self, ram_data: Vec<u8>) {
         self.data.ram_bytes = ram_data;
     }
 }

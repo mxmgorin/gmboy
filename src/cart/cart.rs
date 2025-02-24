@@ -1,5 +1,5 @@
-use crate::cart::controller::{CartController, CartControllerType};
 use crate::cart::header::{CartHeader, CartType, RamSize, RomSize};
+use crate::cart::mbc::{CartMapper, MbcVariant};
 
 pub const RAM_ADDRESS_START: usize = 0xA000;
 pub const RAM_SIZE: usize = 0x4000;
@@ -10,7 +10,7 @@ pub const MASK_MSB: u16 = 0xF000;
 #[derive(Debug, Clone)]
 pub struct Cart {
     pub data: CartData,
-    pub controller: Option<CartControllerType>,
+    pub mbc: Option<MbcVariant>,
 }
 
 impl Cart {
@@ -18,16 +18,16 @@ impl Cart {
         let data = CartData::new(rom_bytes);
 
         Ok(Self {
-            controller: CartControllerType::new(&data),
+            mbc: MbcVariant::new(&data),
             data,
         })
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if let Some(controller) = &self.controller {
+        if let Some(mbc) = &self.mbc {
             match (address & MASK_MSB) >> 12 {
-                0x0..=0x7 => controller.read_rom(&self.data.bytes, address),
-                0xA | 0xB => controller.read_ram(address),
+                0x0..=0x7 => mbc.read_rom(&self.data.bytes, address),
+                0xA | 0xB => mbc.read_ram(address),
                 _ => 0xFF,
             }
         } else {
@@ -36,10 +36,10 @@ impl Cart {
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        if let Some(controller) = &mut self.controller {
+        if let Some(mbc) = &mut self.mbc {
             match (address & MASK_MSB) >> 12 {
-                0x0..=0x7 => controller.write_rom(&mut self.data.bytes, address, value),
-                0xA | 0xB => controller.write_ram(address, value),
+                0x0..=0x7 => mbc.write_rom(&mut self.data.bytes, address, value),
+                0xA | 0xB => mbc.write_ram(address, value),
                 _ => (),
             }
         } else {
