@@ -42,7 +42,7 @@ impl CartHeader {
         Ok(Self {
             entry_point: rom_bytes[0x0100..0x0104].try_into().unwrap(),
             nintendo_logo: rom_bytes[0x0104..0x0134].try_into().unwrap(),
-            title: parse_title(rom_bytes)?,
+            title: Self::parse_title(rom_bytes)?,
             manufacturer_code: if rom_bytes[0x013F..0x0143] != [0x00, 0x00, 0x00, 0x00] {
                 Some(String::from_utf8_lossy(&rom_bytes[0x013F..0x0143]).to_string())
             } else {
@@ -51,24 +51,44 @@ impl CartHeader {
             cgb_flag: rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCGBMode),
             new_licensee_code: rom_bytes[0x0144..0x0146].into(),
             sgb_flag: rom_bytes[0x0146],
-            cart_type: rom_bytes[0x0147].try_into()?,
-            rom_size: rom_bytes[0x0148].try_into()?,
-            ram_size: rom_bytes[0x0149].try_into()?,
+            cart_type: Self::parse_cart_type(rom_bytes)?,
+            rom_size: Self::parse_rom_size(rom_bytes)?,
+            ram_size: Self::parse_ram_size(rom_bytes)?,
             destination_code: rom_bytes[0x014A].try_into()?,
             old_licensee_code: rom_bytes[0x014B].into(),
-            mask_rom_version: rom_bytes[0x014C],
-            header_checksum: rom_bytes[0x014D],
+            mask_rom_version: Self::get_rom_version(rom_bytes),
+            header_checksum: Self::get_header_checksum(rom_bytes),
             global_checksum: u16::from_be_bytes(rom_bytes[0x014E..0x0150].try_into().unwrap()),
         })
     }
-}
 
-fn parse_title(bytes: &[u8]) -> Result<String, String> {
-    let title_bytes = &bytes[0x0134..0x0144];
-    let title = String::from_utf8_lossy(title_bytes).to_string();
-    let trimmed_title = title.trim_end_matches('\0').to_string();
+    pub fn parse_title(rom_bytes: &[u8]) -> Result<String, String> {
+        let title_bytes = &rom_bytes[0x0134..0x0144];
+        let title = String::from_utf8_lossy(title_bytes).to_string();
+        let trimmed_title = title.trim_end_matches('\0').to_string();
 
-    Ok(trimmed_title)
+        Ok(trimmed_title)
+    }
+
+    pub fn parse_cart_type(rom_bytes: &[u8]) -> Result<CartType, String> {
+        rom_bytes[0x0147].try_into()
+    }
+
+    pub fn parse_rom_size(rom_bytes: &[u8]) -> Result<RomSize, String> {
+        rom_bytes[0x0148].try_into()
+    }
+
+    pub fn parse_ram_size(rom_bytes: &[u8]) -> Result<RamSize, String> {
+        rom_bytes[0x0149].try_into()
+    }
+
+    pub fn get_header_checksum(rom_bytes: &[u8]) -> u8 {
+        rom_bytes[0x014D]
+    }
+
+    pub fn get_rom_version(rom_bytes: &[u8]) -> u8 {
+        rom_bytes[0x014C]
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

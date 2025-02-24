@@ -240,12 +240,12 @@ pub fn read_cart(file: &str) -> Result<Cart, String> {
 
 fn print_cart(cart: &Cart) {
     println!("Cart Loaded:");
-    println!("\t Title    : {}", cart.header.title);
-    println!("\t Type     : {:?}", cart.header.cart_type);
-    println!("\t ROM Size : {:?}", cart.header.rom_size);
-    println!("\t RAM Size : {:?}", cart.header.ram_size);
-    println!("\t LIC Code : {:?} ", cart.header.new_licensee_code);
-    println!("\t ROM Version : {:02X}", cart.header.mask_rom_version);
+    println!("\t Title          : {}", cart.data.get_title().unwrap());
+    println!("\t Type           : {:?}", cart.data.get_cart_type().unwrap());
+    println!("\t ROM Size       : {:?}", cart.data.get_rom_size().unwrap());
+    println!("\t RAM Size       : {:?}", cart.data.get_ram_size().unwrap());
+    println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
+    println!("\t Checksum Valid : {}", cart.data.checksum_valid());
 }
 
 pub fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {

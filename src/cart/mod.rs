@@ -1,6 +1,6 @@
 pub mod cart;
-mod mbc1;
-mod controller;
-mod header;
+pub mod mbc1;
+pub mod controller;
+pub mod header;
 
 pub use cart::*;

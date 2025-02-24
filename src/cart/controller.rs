@@ -1,6 +1,6 @@
-use crate::cart::header::{CartHeader, CartType};
+use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
-use crate::{RAM_BANK_SIZE, ROM_BANK_SIZE};
+use crate::{CartData, RAM_BANK_SIZE, ROM_BANK_SIZE};
 
 pub trait CartController {
     fn read_rom(&self, rom_data: &[u8], address: u16) -> u8;
@@ -13,6 +13,41 @@ pub trait CartController {
 #[derive(Debug, Clone)]
 pub enum CartControllerType {
     Mbc1(Mbc1),
+}
+
+impl CartControllerType {
+    pub fn new(cart_data: &CartData) -> Option<CartControllerType> {
+        match cart_data.get_cart_type().unwrap() {
+            CartType::RomOnly => None,
+            CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
+                Some(CartControllerType::Mbc1(Mbc1::new(ControllerData::new(
+                    cart_data.get_ram_size().unwrap(),
+                ))))
+            }
+            CartType::Mbc2
+            | CartType::Mbc2Battery
+            | CartType::RomRam
+            | CartType::RomRamBattery
+            | CartType::Mmm01
+            | CartType::Mmm01Ram
+            | CartType::Mmm01RamBattery
+            | CartType::Mbc3TimerBattery
+            | CartType::Mbc3TimerRamBattery
+            | CartType::Mbc3
+            | CartType::Mbc3Ram
+            | CartType::Mbc3RamBattery
+            | CartType::Mbc5
+            | CartType::Mbc5Ram
+            | CartType::Mbc5RamBattery
+            | CartType::Mbc5Rumble
+            | CartType::Mbc5RumbleRam
+            | CartType::Mbc5RumbleRamBattery
+            | CartType::PocketCamera
+            | CartType::BandaiTama5
+            | CartType::HuC3
+            | CartType::HuC1RamBattery => unimplemented!(),
+        }
+    }
 }
 
 impl CartController for CartControllerType {
@@ -47,37 +82,6 @@ impl CartController for CartControllerType {
     }
 }
 
-pub fn new_controller(header: &CartHeader) -> Option<CartControllerType> {
-    match header.cart_type {
-        CartType::RomOnly => None,
-        CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => Some(
-            CartControllerType::Mbc1(Mbc1::new(ControllerData::new(header))),
-        ),
-        CartType::Mbc2
-        | CartType::Mbc2Battery
-        | CartType::RomRam
-        | CartType::RomRamBattery
-        | CartType::Mmm01
-        | CartType::Mmm01Ram
-        | CartType::Mmm01RamBattery
-        | CartType::Mbc3TimerBattery
-        | CartType::Mbc3TimerRamBattery
-        | CartType::Mbc3
-        | CartType::Mbc3Ram
-        | CartType::Mbc3RamBattery
-        | CartType::Mbc5
-        | CartType::Mbc5Ram
-        | CartType::Mbc5RamBattery
-        | CartType::Mbc5Rumble
-        | CartType::Mbc5RumbleRam
-        | CartType::Mbc5RumbleRamBattery
-        | CartType::PocketCamera
-        | CartType::BandaiTama5
-        | CartType::HuC3
-        | CartType::HuC1RamBattery => unimplemented!(),
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ControllerData {
     pub ram_bytes: Vec<u8>,
@@ -89,7 +93,7 @@ pub struct ControllerData {
 }
 
 impl ControllerData {
-    pub fn new(header: &CartHeader) -> Self {
+    pub fn new(ram_size: RamSize) -> Self {
         let rom_bank = 1;
         let ram_bank = 0;
         let rom_offset: usize = ROM_BANK_SIZE;
@@ -97,7 +101,7 @@ impl ControllerData {
         let ram_enabled = false;
 
         Self {
-            ram_bytes: vec![0; header.ram_size.bytes_size()],
+            ram_bytes: vec![0; ram_size.bytes_size()],
             rom_bank,
             ram_bank,
             rom_offset,
