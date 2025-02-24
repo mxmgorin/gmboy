@@ -1,6 +1,8 @@
 {
   "emulation": {
-    "rewind_size": 4000
+    "rewind_size": 4000,
+    "slow_speed": 50.0,
+    "turbo_speed": 300.0
   },
   "graphics": {
     "selected_pallet_idx": 0,

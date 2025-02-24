@@ -6,14 +6,16 @@ use std::{env, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
-    pub graphics: GraphicsConfig,
     pub last_cart_path: Option<String>,
     pub emulation: EmulationConfig,
+    pub graphics: GraphicsConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EmulationConfig {
     pub rewind_size: usize,
+    pub slow_speed: f64,
+    pub turbo_speed: f64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

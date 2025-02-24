@@ -8,7 +8,6 @@ use crate::debugger::{CpuLogType, Debugger};
 use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
-use crate::TARGET_FPS_F;
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::Duration;
@@ -189,9 +188,15 @@ impl Emu {
 
             if let EmuState::Running(mode) = &self.ctx.state {
                 match mode {
-                    RunMode::Normal => ppu.set_fps_limit(TARGET_FPS_F),
-                    RunMode::Slow => ppu.set_fps_limit(TARGET_FPS_F / 2.0),
-                    RunMode::Turbo => ppu.set_fps_limit(TARGET_FPS_F * 3.0),
+                    RunMode::Normal => ppu.set_fps_limit(self.ctx.config.graphics.fps_limit),
+                    RunMode::Slow => ppu.set_fps_limit(
+                        self.ctx.config.graphics.fps_limit * self.ctx.config.emulation.slow_speed
+                            / 100.0,
+                    ),
+                    RunMode::Turbo => ppu.set_fps_limit(
+                        self.ctx.config.graphics.fps_limit * self.ctx.config.emulation.turbo_speed
+                            / 100.0,
+                    ),
                     RunMode::Rewind => {
                         if let Some(state) = self.ctx.rewind_buffer.pop_back() {
                             cpu = state.cpu;
