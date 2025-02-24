@@ -7,7 +7,6 @@ pub const CHAR_WIDTH: usize = 8;
 pub const CHAR_HEIGHT: usize = 8;
 pub const CHAR_SPACING: usize = 2;
 pub const _CHAR_COLOR: Color = Color::WHITE;
-pub const BACKGROUND_COLOR: Color = Color::RGBA(0, 0, 0, 0); // transparent
 
 /// Calculate the text width based on character count, scale, and character width
 pub fn calc_text_width(text: &str, scale: usize) -> usize {
@@ -16,6 +15,21 @@ pub fn calc_text_width(text: &str, scale: usize) -> usize {
 
 pub fn get_text_height(scale: usize) -> usize {
     CHAR_HEIGHT * scale
+}
+
+pub fn fill_texture(texture: &mut Texture, color: PixelColor) {
+    let (r, g, b, a) = color.as_rgba();
+
+    texture
+        .with_lock(None, |buffer: &mut [u8], _pitch: usize| {
+            for i in (0..buffer.len()).step_by(BYTES_PER_PIXEL) {
+                buffer[i] = r;
+                buffer[i + 1] = g;
+                buffer[i + 2] = b;
+                buffer[i + 3] = a;
+            }
+        })
+        .unwrap();
 }
 
 pub fn draw_text(
@@ -28,13 +42,6 @@ pub fn draw_text(
 ) {
     texture
         .with_lock(None, |buffer: &mut [u8], pitch: usize| {
-            for i in (0..buffer.len()).step_by(BYTES_PER_PIXEL) {
-                buffer[i] = BACKGROUND_COLOR.r; // R
-                buffer[i + 1] = BACKGROUND_COLOR.g; // G
-                buffer[i + 2] = BACKGROUND_COLOR.b; // B
-                buffer[i + 3] = BACKGROUND_COLOR.a; // A
-            }
-
             let mut x_offset = x;
             for c in text.chars() {
                 if c == ' ' {
@@ -42,40 +49,42 @@ pub fn draw_text(
                     continue;
                 }
 
-                if let Some(char_index) = get_font_index(c) {
-                    if char_index >= FONT.len() {
-                        x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
-                        continue;
-                    }
+                let Some(char_index) = get_font_index(c) else {
+                    continue;
+                };
 
-                    let bitmap = FONT[char_index];
+                if char_index >= FONT.len() {
+                    x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                    continue;
+                }
 
-                    for (row, pixel) in bitmap.iter().enumerate() {
-                        for col in 0..CHAR_WIDTH {
-                            if (pixel >> (7 - col)) & 1 == 1 {
-                                let text_pixel_x = x_offset + (col * scale);
-                                let text_pixel_y = y + (row * scale);
+                let bitmap = FONT[char_index];
 
-                                for dy in 0..scale {
-                                    for dx in 0..scale {
-                                        let px = text_pixel_x + dx;
-                                        let py = text_pixel_y + dy;
+                for (row, pixel) in bitmap.iter().enumerate() {
+                    for col in 0..CHAR_WIDTH {
+                        if (pixel >> (7 - col)) & 1 == 1 {
+                            let text_pixel_x = x_offset + (col * scale);
+                            let text_pixel_y = y + (row * scale);
 
-                                        let text_offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                                        let (r, g, b, a) = color.as_rgba();
-                                        buffer[text_offset] = r;
-                                        buffer[text_offset + 1] = g;
-                                        buffer[text_offset + 2] = b;
-                                        buffer[text_offset + 3] = a;
-                                    }
+                            for dy in 0..scale {
+                                for dx in 0..scale {
+                                    let px = text_pixel_x + dx;
+                                    let py = text_pixel_y + dy;
+
+                                    let text_offset = (py * pitch) + (px * BYTES_PER_PIXEL);
+                                    let (r, g, b, a) = color.as_rgba();
+                                    buffer[text_offset] = r;
+                                    buffer[text_offset + 1] = g;
+                                    buffer[text_offset + 2] = b;
+                                    buffer[text_offset + 3] = a;
                                 }
                             }
                         }
                     }
-
-                    // Move to the next character with spacing
-                    x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
                 }
+
+                // Move to the next character with spacing
+                x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
             }
         })
         .unwrap();

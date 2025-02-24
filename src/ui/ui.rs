@@ -5,9 +5,7 @@ use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
-use crate::ui::text::{
-    calc_text_width, draw_text, get_text_height
-};
+use crate::ui::text::{calc_text_width, draw_text, fill_texture, get_text_height};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
@@ -78,7 +76,7 @@ impl Ui {
         debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
 
         let mut overlay_texture = texture_creator
-            .create_texture_streaming(PixelFormatEnum::RGBA32, layout.win_width, layout.win_height)
+            .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
             .unwrap();
         overlay_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let mut fps_texture = texture_creator
@@ -96,7 +94,7 @@ impl Ui {
             config,
             texture,
             overlay_texture,
-            fps_texture
+            fps_texture,
         })
     }
 
@@ -127,26 +125,26 @@ impl Ui {
         self.canvas.clear();
 
         let (win_width, win_height) = self.canvas.window().size();
-        let text_width = calc_text_width(text, self.config.text_scale);
+        let scale = self.config.text_scale;
+        let text_width = calc_text_width(text, scale);
         // Calculate the x and y positions to center the text
-        let x = (win_width as usize - text_width) / 2;
-        let y = (win_height as usize - get_text_height(self.config.text_scale)) / 2;
+        let x = (LCD_X_RES as u32 as usize - text_width) / 2;
+        let y = (LCD_Y_RES as u32 as usize - get_text_height(scale)) / 2;
+
+        fill_texture(&mut self.overlay_texture, self.curr_palette[3]);
 
         draw_text(
             &mut self.overlay_texture,
             text,
-            self.curr_palette[3],
-            0,
-            0,
-            self.config.text_scale,
+            self.curr_palette[0],
+            x,
+            y,
+            scale,
         );
+        let dest_rect = calculate_scaled_rect(win_width, win_height);
 
         self.canvas
-            .copy(
-                &self.overlay_texture,
-                None,
-                Some(Rect::new(x as i32, y as i32, win_width, win_height)),
-            )
+            .copy(&self.overlay_texture, None, Some(dest_rect))
             .unwrap();
 
         self.canvas.present();
@@ -181,21 +179,11 @@ impl Ui {
 
         if self.config.show_fps {
             let text = ppu.fps.to_string();
-            draw_text(
-                &mut self.fps_texture,
-                &text,
-                self.curr_palette[3],
-                5,
-                5,
-                1,
-            );
+            fill_texture(&mut self.fps_texture, PixelColor::from_hex(0));
+            draw_text(&mut self.fps_texture, &text, self.curr_palette[3], 5, 5, 1);
 
             self.canvas
-                .copy(
-                    &self.fps_texture,
-                    None,
-                    Some(Rect::new(0, 0, 80, 80)),
-                )
+                .copy(&self.fps_texture, None, Some(Rect::new(0, 0, 80, 80)))
                 .unwrap();
         }
 

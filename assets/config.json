@@ -147,6 +147,6 @@
     "fps_limit": 60.0,
     "is_fullscreen": false,
     "show_fps": true,
-    "text_scale": 5
+    "text_scale": 1
   }
 }
