@@ -3,8 +3,6 @@ use crate::ui::BYTES_PER_PIXEL;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
 
-pub const TEXTURE_WIDTH: usize = 50;
-pub const TEXTURE_HEIGHT: usize = 50;
 pub const CHAR_WIDTH: usize = 8;
 pub const CHAR_HEIGHT: usize = 8;
 pub const CHAR_SPACING: usize = 2;

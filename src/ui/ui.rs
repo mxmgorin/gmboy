@@ -6,8 +6,7 @@ use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::text::{
-    calc_text_width, draw_text, get_text_height, CHAR_HEIGHT, CHAR_SPACING, CHAR_WIDTH,
-    TEXTURE_HEIGHT, TEXTURE_WIDTH,
+    calc_text_width, draw_text, get_text_height
 };
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
