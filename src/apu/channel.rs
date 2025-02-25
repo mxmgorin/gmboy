@@ -26,15 +26,15 @@ impl ChannelType {
 
     pub fn get_length_timer_expire(&self) -> u16 {
         match self {
-            ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH3 => 64,
-            ChannelType::CH4 => 256,
+            ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH4 => 64,
+            ChannelType::CH3 => 256,
         }
     }
 
     pub fn get_length_timer_mask(&self) -> u8 {
         match self {
-            ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH3 => 0b0011_1111,
-            ChannelType::CH4 => 0xFF,
+            ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH4 => 0b0011_1111,
+            ChannelType::CH3 => 0xFF,
         }
     }
 }
