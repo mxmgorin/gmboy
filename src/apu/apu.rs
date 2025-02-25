@@ -1,9 +1,13 @@
-use crate::apu::ch1_2_square::SquareChannel;
-use crate::apu::ch3_wave::WaveChannel;
-use crate::apu::ch4_noise::NoiseChannel;
+use crate::apu::ch1_2_square::{
+    SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
+};
+use crate::apu::ch3_wave::{
+    WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
+};
+use crate::apu::ch4_noise::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
 use crate::apu::channel::ChannelType;
-use crate::{get_bit_flag, set_bit};
 use crate::apu::frame_sequencer::FrameSequencer;
+use crate::{get_bit_flag, set_bit};
 
 pub const APU_CLOCK_SPEED: u16 = 512;
 
@@ -23,13 +27,28 @@ pub struct Apu {
     // others
     counter: u16,
     frame_sequencer: FrameSequencer,
-    
 }
 
 impl Apu {
     pub fn tick(&mut self) {
         self.frame_sequencer.tick();
         self.counter = self.counter.wrapping_add(1);
+    }
+
+    pub fn write(&mut self, address: u16, value: u8) {}
+
+    pub fn read(&self, address: u16) -> u8 {
+        match address {
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => 0,
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => 0,
+            CH3_START_ADDRESS..=CH3_END_ADDRESS => 0,
+            CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
+            AUDIO_MASTER_CONTROL_ADDRESS => self.audio_master_control.byte,
+            SOUND_PLANNING_ADDRESS => self.sound_panning.byte,
+            MASTER_VOLUME_ADDRESS => self.master_volume.byte,
+            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.read(address),
+            _ => unreachable!(),
+        }
     }
 }
 

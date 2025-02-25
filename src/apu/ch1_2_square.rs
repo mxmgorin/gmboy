@@ -1,14 +1,19 @@
-use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
 use crate::apu::registers::{NRX1, NRX2, NRX3, NRX4};
-use crate::apu::NR52;
 use crate::get_bit_flag;
+
+pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;
+pub const CH1_END_ADDRESS: u16 = NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS;
+
+pub const CH2_START_ADDRESS: u16 = NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS;
+pub const CH2_END_ADDRESS: u16 = NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 
 pub const NR10_CH1_SWEEP_ADDRESS: u16 = 0xFF10;
 pub const NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS: u16 = 0xFF11;
 pub const NR12_CH1_VOL_ENVELOPE_ADDRESS: u16 = 0xFF12;
 pub const NR13_CH1_PERIOD_LOW_ADDRESS: u16 = 0xFF13;
 pub const NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS: u16 = 0xFF14;
+
 pub const NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS: u16 = 0xFF16;
 pub const NR22_CH2_VOL_ENVELOPE_ADDRESS: u16 = 0xFF17;
 pub const NR23_CH2_PERIOD_LOW_ADDRESS: u16 = 0xFF18;
