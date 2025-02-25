@@ -1,5 +1,7 @@
 use crate::{get_bit_flag, set_bit};
 
+pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;
+
 /// FF11 — NR11: Channel 1 length timer & duty cycle
 pub struct NRX1 {
     pub byte: u8,
@@ -47,20 +49,29 @@ pub struct NRX3 {
 }
 
 pub struct NRX4 {
-    pub byte: u8,
+    byte: u8,
 }
 
 impl NRX4 {
+    pub fn read(&self) -> u8 {
+        self.get_length_enable() // trigger and period are write only
+    }
+
     pub fn trigger(&self) -> bool {
         get_bit_flag(self.byte, 7)
     }
 
+    fn get_length_enable(&self) -> u8 {
+        let mask = 1 << NRX4_LENGTH_ENABLE_POS;
+        self.byte & mask
+    }
+
     pub fn is_length_enabled(&self) -> bool {
-        get_bit_flag(self.byte, 7)
+        get_bit_flag(self.byte, NRX4_LENGTH_ENABLE_POS)
     }
 
     pub fn disable_length(&mut self) {
-        set_bit(&mut self.byte, 7, false);
+        set_bit(&mut self.byte, NRX4_LENGTH_ENABLE_POS, false);
     }
 
     pub fn period(&self) -> u8 {

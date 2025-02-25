@@ -41,7 +41,7 @@ impl Apu {
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => 0,
             CH2_START_ADDRESS..=CH2_END_ADDRESS => 0,
-            CH3_START_ADDRESS..=CH3_END_ADDRESS => 0,
+            CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
             AUDIO_MASTER_CONTROL_ADDRESS => self.audio_master_control.byte,
             SOUND_PLANNING_ADDRESS => self.sound_panning.byte,

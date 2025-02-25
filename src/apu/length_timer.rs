@@ -14,14 +14,14 @@ use crate::apu::NR52;
 // and the counter is not zero, it is decremented. If it becomes zero, the channel is disabled.
 #[derive(Copy, Clone, Default)]
 pub struct LengthTimer {
-    counter: u16,
+    pub counter: u8,
 }
 
 impl LengthTimer {
     pub fn tick(&mut self, nr52: &mut NR52, nrx4: &mut NRX4, ch_type: ChannelType) {
         if nrx4.is_length_enabled() && self.counter != 0 {
             self.counter = self.counter.saturating_sub(1);
-        }
+        }       
 
         if self.counter == 0 {
             nr52.disable_ch(ch_type);
