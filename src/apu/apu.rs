@@ -62,13 +62,11 @@ impl Apu {
 
         let cpu_cycles_per_sample = (CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32) as u16;
 
-        while self.counter >= cpu_cycles_per_sample {
+        if self.counter % cpu_cycles_per_sample == 0 {
             let (output_left, output_right) = self.mix_channels();
             let mut buffer = self.buffer.lock().unwrap();
             buffer.push_back(output_left);
             buffer.push_back(output_right);
-
-            self.counter -= cpu_cycles_per_sample;
         }
     }
 
