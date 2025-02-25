@@ -137,10 +137,7 @@ impl Apu {
         let right_volume = self.master_volume.right_volume();
 
         // Apply NR50 scaling
-        left_output = (left_output * left_volume) / 8;
-        right_output = (right_output * right_volume) / 8;
-
-        (left_output, right_output)
+        (left_output * left_volume, right_output * right_volume)
     }
 }
 
