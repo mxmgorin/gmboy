@@ -1,17 +1,17 @@
+pub mod apu;
 pub mod auxiliary;
 pub mod bus;
 pub mod cart;
+pub mod config;
 pub mod cpu;
 pub mod debugger;
 pub mod emu;
 pub mod ppu;
 pub mod ui;
-pub mod config;
-pub mod apu;
 
 pub use cart::*;
-pub use ppu::*;
 pub use cpu::*;
+pub use ppu::*;
 
 pub struct LittleEndianBytes {
     pub low_byte: u8,

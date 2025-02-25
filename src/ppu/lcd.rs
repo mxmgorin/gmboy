@@ -162,13 +162,13 @@ impl Lcd {
         self.ly += 1;
         self.compare_ly(interrupts);
     }
-    
+
     pub fn reset_ly(&mut self, interrupts: &mut Interrupts) {
         self.ly = 0;
         self.window.line_number = 0;
         self.compare_ly(interrupts);
     }
-    
+
     fn compare_ly(&mut self, interrupts: &mut Interrupts) {
         if self.ly == self.ly_compare {
             self.status.lyc_set(true);

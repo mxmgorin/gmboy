@@ -72,12 +72,9 @@ mod tests {
             self.t_cycles += m_cycles * 4;
         }
 
-        fn update_serial(&mut self, _cpu: &mut Cpu) {
-            
-        }
+        fn update_serial(&mut self, _cpu: &mut Cpu) {}
 
-        fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {
-        }
+        fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
     }
 
     #[test]

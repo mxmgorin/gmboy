@@ -43,7 +43,7 @@ impl FrameSequencer {
             self.counter -= CYCLES_DIV;
 
             self.step += 1;
-            
+
             if self.step > 7 {
                 self.step = 0;
             }

@@ -1,5 +1,5 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::{Cpu, CpuCallback};
 
 /// Disable Interrupts by clearing the IME flag.

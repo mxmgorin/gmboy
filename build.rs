@@ -21,7 +21,7 @@ fn main() {
         if let Some(parent) = dest.parent() {
             fs::create_dir_all(parent).unwrap();
         }
-        
+
         fs::copy(&src, &dest).unwrap();
         println!("Copied config.json to target directory.");
     }
@@ -42,8 +42,14 @@ fn should_copy(src: &Path, dest: &Path) -> bool {
         return true;
     }
 
-    let src_modified = src_metadata.unwrap().modified().unwrap_or(SystemTime::UNIX_EPOCH);
-    let dest_modified = dest_metadata.unwrap().modified().unwrap_or(SystemTime::UNIX_EPOCH);
+    let src_modified = src_metadata
+        .unwrap()
+        .modified()
+        .unwrap_or(SystemTime::UNIX_EPOCH);
+    let dest_modified = dest_metadata
+        .unwrap()
+        .modified()
+        .unwrap_or(SystemTime::UNIX_EPOCH);
 
     // Copy only if the source file is newer than the destination
     src_modified > dest_modified

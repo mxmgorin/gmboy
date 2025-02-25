@@ -1,8 +1,8 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::{Cpu, CpuCallback};
 // The exact behavior of this instruction depends on the state of the IME flag, and whether interrupts are pending (i.e. whether ‘[IE] & [IF]’ is non-zero):
-// 
+//
 // If the IME flag is set:
 // The CPU enters low-power mode until after an interrupt is about to be serviced. The handler is executed normally, and the CPU resumes execution after the HALT when that returns.
 // If the IME flag is not set, and no interrupts are pending:

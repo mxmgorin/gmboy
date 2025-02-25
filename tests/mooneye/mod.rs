@@ -114,8 +114,6 @@ fn test_timer_div_write() {
     assert_result(name, category, result);
 }
 
-
-
 #[test]
 fn test_timer_tim00() {
     let name = "tim00";

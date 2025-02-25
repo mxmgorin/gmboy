@@ -1,7 +1,7 @@
 use gmboy::auxiliary::clock::Clock;
 use gmboy::bus::Bus;
-use gmboy::{Cpu, CpuCallback, DebugCtx};
 use gmboy::debugger::Debugger;
+use gmboy::{Cpu, CpuCallback, DebugCtx};
 
 mod blargg;
 mod mooneye;

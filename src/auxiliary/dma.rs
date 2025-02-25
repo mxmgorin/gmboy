@@ -18,7 +18,7 @@ impl Dma {
             self.src_addr = (address as u16) << 8;
             self.current_index = 0;
         }
-        
+
         self.start_delay = 2;
         self.is_active = true;
     }

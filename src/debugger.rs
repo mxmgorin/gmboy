@@ -1,7 +1,7 @@
+use crate::auxiliary::clock::Clock;
 use crate::cpu::instructions::{FetchedData, Instruction};
 use crate::cpu::Cpu;
 use std::borrow::Cow;
-use crate::auxiliary::clock::Clock;
 
 #[derive(Debug, Clone)]
 pub struct Debugger {

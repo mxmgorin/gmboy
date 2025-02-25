@@ -1,7 +1,5 @@
-use crate::cpu::instructions::{
-    AddressMode, ConditionType, ExecutableInstruction, Instruction,
-};
 use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{AddressMode, ConditionType, ExecutableInstruction, Instruction};
 use crate::cpu::{Cpu, CpuCallback};
 
 #[derive(Debug, Clone, Copy)]

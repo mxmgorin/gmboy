@@ -1,11 +1,11 @@
+use crate::TestCpuCtx;
 use gmboy::bus::Bus;
 use gmboy::cart::Cart;
 use gmboy::cpu::Cpu;
 use gmboy::debugger::{CpuLogType, Debugger};
-use gmboy::emu::{read_bytes};
+use gmboy::emu::read_bytes;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use crate::TestCpuCtx;
 
 pub fn run_blargg_rom_serial(
     name: &str,

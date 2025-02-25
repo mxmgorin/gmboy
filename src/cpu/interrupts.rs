@@ -54,7 +54,7 @@ impl Interrupts {
     pub fn request_interrupt(&mut self, it: InterruptType) {
         self.int_flags |= it as u8;
     }
-    
+
     pub fn any_is_pending(&self) -> bool {
         (self.int_flags & self.ie_register) != 0
     }

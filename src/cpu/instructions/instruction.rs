@@ -34,8 +34,8 @@ use crate::cpu::instructions::rotate::rla::RlaInstruction;
 use crate::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::cpu::instructions::rotate::rra::RraInstruction;
 use crate::cpu::instructions::rotate::rrca::RrcaInstruction;
-use crate::cpu::stack::Stack;
 use crate::cpu::instructions::{ConditionType, FetchedData};
+use crate::cpu::stack::Stack;
 use crate::cpu::{Cpu, CpuCallback};
 use std::fmt::Display;
 

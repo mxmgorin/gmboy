@@ -1,14 +1,14 @@
+use crate::TestCpuCtx;
+use gmboy::auxiliary::clock::Clock;
 use gmboy::bus::Bus;
 use gmboy::cart::Cart;
 use gmboy::cpu::Cpu;
+use gmboy::debugger::{CpuLogType, Debugger};
 use gmboy::emu::{read_bytes, EmuCtx};
+use gmboy::Ppu;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use gmboy::auxiliary::clock::Clock;
-use gmboy::debugger::{CpuLogType, Debugger};
-use gmboy::{Ppu};
-use crate::TestCpuCtx;
 
 pub fn run_mooneye_rom(
     name: &str,

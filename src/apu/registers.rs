@@ -1,4 +1,5 @@
-use crate::{get_bit_flag, set_bit};
+use crate::apu::channel::ChannelType;
+use crate::{get_bit_flag, set_bit, LittleEndianBytes};
 
 pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;
 
@@ -14,7 +15,7 @@ impl NRX1 {
 
     /// (Write-only): The higher this field is, the shorter the time before the channel is cut.
     pub fn initial_length_timer(&self) -> u8 {
-        self.byte & 0b0011_1111
+        self.byte & ChannelType::get_length_timer_mask(&ChannelType::CH2)
     }
 }
 
@@ -43,21 +44,53 @@ impl NRX2 {
     }
 }
 
-/// period low [write-only]
-pub struct NRX3 {
-    pub byte: u8,
+/// Merged together NRX3 and NRX4 for convenience
+#[derive(Clone, Debug)]
+pub struct NRX3_4 {
+    pub period_low: NRX3,
+    pub high_and_ctrl: NRX4,
 }
 
+impl NRX3_4 {
+    pub fn get_period(&self) -> u16 {
+        let value = LittleEndianBytes {
+            low_byte: self.period_low.byte,
+            high_byte: self.high_and_ctrl.get_period(),
+        };
+
+        value.into()
+    }
+}
+
+///  Period low, write-only
+#[derive(Clone, Debug)]
+pub struct NRX3 {
+    byte: u8,
+}
+
+impl NRX3 {
+    pub fn set(&mut self, value: u8) {
+        self.byte = value;
+    }
+}
+
+/// Period high & control
+#[derive(Clone, Debug)]
 pub struct NRX4 {
     byte: u8,
 }
 
 impl NRX4 {
+    /// Read value of 'length enable' bit. Trigger and period are write only
     pub fn read(&self) -> u8 {
-        self.get_length_enable() // trigger and period are write only
+        self.get_length_enable()
     }
 
-    pub fn trigger(&self) -> bool {
+    pub fn write(&mut self, value: u8) {
+        self.byte = value;
+    }
+
+    pub fn is_triggered(&self) -> bool {
         get_bit_flag(self.byte, 7)
     }
 
@@ -74,7 +107,7 @@ impl NRX4 {
         set_bit(&mut self.byte, NRX4_LENGTH_ENABLE_POS, false);
     }
 
-    pub fn period(&self) -> u8 {
+    pub fn get_period(&self) -> u8 {
         self.byte & 0b0000_0111
     }
 }
