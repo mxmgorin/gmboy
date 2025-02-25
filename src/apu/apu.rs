@@ -79,7 +79,14 @@ impl Apu {
         }
 
         if address == AUDIO_MASTER_CONTROL_ADDRESS {
+            let prev_enable = self.master_ctrl.is_audio_on();
             self.master_ctrl.write(value);
+            
+            if !prev_enable && self.master_ctrl.is_audio_on() {
+                // turning on
+                self.ch3.wave_ram.clear();
+            }
+            
             return;
         }
 

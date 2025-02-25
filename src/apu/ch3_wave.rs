@@ -140,11 +140,11 @@ impl WaveRam {
         self.bytes[index as usize] = value;
     }
 
-    pub fn read_sample(&self) -> u8 {
+    fn read_sample(&self) -> u8 {
         let byte_index = self.sample_index / 2;
-        let high_nibble = self.sample_index % 2 == 0;
+        let is_high_nibble = self.sample_index % 2 == 0;
 
-        if high_nibble {
+        if is_high_nibble {
             self.bytes[byte_index] >> 4
         } else {
             self.bytes[byte_index] & 0x0F
