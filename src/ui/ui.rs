@@ -6,6 +6,7 @@ use crate::tile::PixelColor;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::text::{calc_text_width, draw_text, fill_texture, get_text_height};
+use sdl2::audio::{AudioDevice, AudioSpecDesired};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
@@ -13,6 +14,8 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::EventPump;
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
@@ -28,6 +31,8 @@ pub struct Ui {
     fps_texture: Texture,
     debug_window: Option<DebugWindow>,
     layout: Layout,
+
+    audio_device: AudioDevice<AudioCallback>,
 
     pub config: GraphicsConfig,
     pub curr_palette: [PixelColor; 4],
@@ -54,7 +59,11 @@ impl Layout {
 }
 
 impl Ui {
-    pub fn new(config: GraphicsConfig, debug: bool) -> Result<Self, String> {
+    pub fn new(
+        audio_buffer: Arc<Mutex<VecDeque<u8>>>,
+        config: GraphicsConfig,
+        debug: bool,
+    ) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
         let layout = Layout::new(config.scale);
@@ -84,6 +93,18 @@ impl Ui {
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
+        let audio_subsystem = sdl_context.audio()?;
+        let desired_spec = AudioSpecDesired {
+            freq: Some(44100),
+            channels: Some(1),
+            samples: Some(512),
+        };
+
+        let audio_device =
+            audio_subsystem.open_playback(None, &desired_spec, move |_spec| AudioCallback {
+                buffer: audio_buffer,
+            })?;
+
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
             _sdl_context: sdl_context,
@@ -95,6 +116,7 @@ impl Ui {
             texture,
             overlay_texture,
             fps_texture,
+            audio_device,
         })
     }
 
@@ -363,5 +385,21 @@ pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
         curr_idx + 1
     } else {
         0
+    }
+}
+
+struct AudioCallback {
+    buffer: Arc<Mutex<VecDeque<u8>>>,
+}
+
+impl sdl2::audio::AudioCallback for AudioCallback {
+    type Channel = u8;
+
+    fn callback(&mut self, out: &mut [u8]) {
+        let mut buffer = self.buffer.lock().unwrap();
+
+        for sample in out.iter_mut() {
+            *sample = buffer.pop_front().unwrap_or(128); // Default to silence (middle)
+        }
     }
 }

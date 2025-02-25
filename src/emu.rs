@@ -130,7 +130,7 @@ impl Emu {
         Ok(Self {
             clock: Clock::with_ppu(ppu),
             debugger: Some(Debugger::new(CpuLogType::None, false)),
-            ui: Ui::new(config.graphics.clone(), false)?,
+            ui: Ui::new(Default::default(), config.graphics.clone(), false)?,
             ctx: EmuCtx::new(config),
         })
     }
