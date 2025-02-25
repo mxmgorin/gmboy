@@ -1,5 +1,5 @@
 use crate::apu::ch1_2_square::{
-    SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
+    Ch1, Ch2, SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
 };
 use crate::apu::ch3_wave::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
@@ -7,16 +7,18 @@ use crate::apu::ch3_wave::{
 use crate::apu::ch4_noise::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
 use crate::apu::channel::ChannelType;
 use crate::apu::frame_sequencer::FrameSequencer;
-use crate::{get_bit_flag, set_bit};
+use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 pub const APU_CLOCK_SPEED: u16 = 512;
+pub const SAMPLING_FREQUENCY: u16 = 41000;
 
 pub const AUDIO_MASTER_CONTROL_ADDRESS: u16 = 0xFF26;
 pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
 
+#[derive(Debug, Clone)]
 pub struct Apu {
     // internal mem
     ch1: SquareChannel,
@@ -26,9 +28,28 @@ pub struct Apu {
     master_ctrl: NR52,
     sound_panning: NR51,
     master_volume: NR50,
-    // others
+
+    // other data
     counter: u16,
     frame_sequencer: FrameSequencer,
+    pub buffer: Arc<Mutex<VecDeque<u8>>>,
+}
+
+impl Default for Apu {
+    fn default() -> Self {
+        Self {
+            ch1: SquareChannel::Ch1(Ch1::default()),
+            ch2: SquareChannel::Ch2(Ch2::default()),
+            ch3: WaveChannel::default(),
+            ch4: NoiseChannel::default(),
+            master_ctrl: NR52::default(),
+            sound_panning: NR51::default(),
+            master_volume: Default::default(),
+            counter: 0,
+            frame_sequencer: Default::default(),
+            buffer: Arc::new(Mutex::new(Default::default())),
+        }
+    }
 }
 
 impl Apu {
@@ -38,6 +59,17 @@ impl Apu {
         self.counter = self.counter.wrapping_add(1);
 
         self.ch3.tick(&self.master_ctrl);
+
+        let cpu_cycles_per_sample = (CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32) as u16;
+
+        while self.counter >= cpu_cycles_per_sample {
+            let (output_left, output_right) = self.mix_channels();
+            let mut buffer = self.buffer.lock().unwrap();
+            buffer.push_back(output_left);
+            buffer.push_back(output_right);
+
+            self.counter -= cpu_cycles_per_sample;
+        }
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
@@ -85,9 +117,35 @@ impl Apu {
             _ => panic!("Invalid APU address: {:x}", address),
         }
     }
+
+    /// Combines outputs from all channels
+    fn mix_channels(&self) -> (u8, u8) {
+        let mut left_output = 0;
+        let mut right_output = 0;
+
+        // Channel 3
+        if self.sound_panning.ch3_left() {
+            left_output += self.ch3.get_output(&self.master_ctrl);
+        }
+
+        if self.sound_panning.ch3_right() {
+            right_output += self.ch3.get_output(&self.master_ctrl);
+        }
+
+        // Apply volume control from NR50
+        let left_volume = self.master_volume.left_volume();
+        let right_volume = self.master_volume.right_volume();
+
+        // Apply NR50 scaling
+        left_output = (left_output * left_volume) / 8;
+        right_output = (right_output * right_volume) / 8;
+
+        (left_output, right_output)
+    }
 }
 
 /// FF26 — NR52: Audio master control
+#[derive(Debug, Clone, Default)]
 pub struct NR52 {
     byte: u8,
 }
@@ -131,6 +189,7 @@ impl NR52 {
 /// FF25 — NR51:
 /// Each channel can be panned hard left, center, hard right, or ignored entirely.
 /// Setting a bit to 1 enables the channel to go into the selected output.
+#[derive(Debug, Clone, Default)]
 pub struct NR51 {
     pub byte: u8,
 }
@@ -172,20 +231,14 @@ pub struct NR50 {
 impl NR50 {
     pub fn left_volume(&self) -> u8 {
         let vol = (self.byte >> 4) & 0b111; // Extract bits 6-4
-        if vol == 0 {
-            1
-        } else {
-            vol + 1
-        } // 0 -> 1, 1-7 -> 2-8
+
+        vol + 1 // Convert 0-7 to 1-8
     }
 
     pub fn right_volume(&self) -> u8 {
         let vol = self.byte & 0b111; // Extract bits 2-0
-        if vol == 0 {
-            1
-        } else {
-            vol + 1
-        } // 0 -> 1, 1-7 -> 2-8
+
+        vol + 1 // Convert 0-7 to 1-8
     }
 
     pub fn vin_left_enabled(&self) -> bool {

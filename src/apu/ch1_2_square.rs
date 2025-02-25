@@ -1,3 +1,4 @@
+use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
 use crate::apu::registers::{NRX1, NRX2, NRX3, NRX4};
 use crate::get_bit_flag;
@@ -26,11 +27,13 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
     [0, 1, 1, 1, 1, 1, 1, 0],
 ];
 
+#[derive(Debug, Clone)]
 pub enum SquareChannel {
     Ch1(Ch1),
     Ch2(Ch2),
 }
 
+#[derive(Debug, Clone)]
 pub struct Ch1 {
     // registers
     pub sweep: NR10,
@@ -42,6 +45,20 @@ pub struct Ch1 {
     length_timer: LengthTimer,
 }
 
+impl Default for Ch1 {
+    fn default() -> Ch1 {
+        Self {
+            sweep: Default::default(),
+            len_timer_duty_cycle: Default::default(),
+            volume_envelope: Default::default(),
+            period_low: Default::default(),
+            period_high_control: Default::default(),
+            length_timer: LengthTimer::new(ChannelType::CH1),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Ch2 {
     pub len_timer_duty_cycle: NRX1,
     pub volume_envelope: NRX2,
@@ -51,8 +68,21 @@ pub struct Ch2 {
     length_timer: LengthTimer,
 }
 
+impl Default for Ch2 {
+    fn default() -> Self {
+        Self {
+            len_timer_duty_cycle: Default::default(),
+            volume_envelope: Default::default(),
+            period_low: Default::default(),
+            period_high_control: Default::default(),
+            length_timer: LengthTimer::new(ChannelType::CH2),
+        }
+    }
+}
+
 /// FF10 — NR10: Channel 1 sweep
 /// This register controls CH1’s period sweep functionality.
+#[derive(Debug, Clone, Default)]
 pub struct NR10 {
     pub byte: u8,
 }

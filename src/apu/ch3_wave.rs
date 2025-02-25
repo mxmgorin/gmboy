@@ -4,7 +4,7 @@ use crate::apu::registers::NRX3_4;
 use crate::apu::NR52;
 
 pub const CH3_START_ADDRESS: u16 = CH3_NR30_DAC_ENABLE_ADDRESS;
-pub const CH3_END_ADDRESS: u16 = CH3_NR33_PERIOD_LOW_ADDRESS;
+pub const CH3_END_ADDRESS: u16 = CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS;
 
 pub const CH3_NR30_DAC_ENABLE_ADDRESS: u16 = 0xFF1A;
 pub const CH3_NR31_LENGTH_TIMER_ADDRESS: u16 = 0xFF1B;
@@ -31,6 +31,20 @@ pub struct WaveChannel {
 
     period_timer: u16, // Internal timer for frequency stepping
     volume_shift: u8,
+}
+
+impl Default for WaveChannel {
+    fn default() -> Self {
+        Self {
+            dac_enable: Default::default(),
+            length_timer: LengthTimer::new(ChannelType::CH3),
+            output_level: Default::default(),
+            period_and_ctrl: Default::default(),
+            wave_ram: Default::default(),
+            period_timer: 0,
+            volume_shift: 0,
+        }
+    }
 }
 
 impl WaveChannel {
@@ -171,7 +185,7 @@ impl NR30 {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NR32 {
     byte: u8,
 }

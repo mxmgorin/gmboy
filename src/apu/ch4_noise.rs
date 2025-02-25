@@ -9,6 +9,7 @@ pub const NR42_CH4_VOLUME_ENVELOPE_ADDRESS: u16 = 0xFF21;
 pub const NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS: u16 = 0xFF22;
 pub const NR44_CH4_CONTROL_ADDRESS: u16 = 0xFF23;
 
+#[derive(Debug, Clone, Default)]
 pub struct NoiseChannel {
     pub length_timer: NRX1,
     pub volume_envelope: NRX2,
@@ -18,6 +19,7 @@ pub struct NoiseChannel {
 
 /// FF22 — NR43: Channel 4 frequency & randomness
 /// This register allows controlling the way the amplitude is randomly switched.
+#[derive(Debug, Clone, Default)]
 pub struct NR43 {
     pub byte: u8,
 }

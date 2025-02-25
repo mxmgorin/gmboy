@@ -18,7 +18,14 @@ pub struct LengthTimer {
     ch_type: ChannelType,
 }
 
-impl LengthTimer {
+impl LengthTimer {    
+    pub fn new(ch_type: ChannelType) -> Self {
+        Self {
+            counter: 0,
+            ch_type,
+        }
+    }
+    
     pub fn tick(&mut self, nr52: &mut NR52, nrx4: &mut NRX4) {
         if nrx4.is_length_enabled() && self.counter != 0 {
             self.counter += 1;

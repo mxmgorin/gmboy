@@ -34,9 +34,12 @@ impl Clock {
             self.t_cycles = self.t_cycles.wrapping_add(1);
 
             bus.io.timer.tick(&mut bus.io.interrupts);
+
             if let Some(ppu) = self.ppu.as_mut() {
                 ppu.tick(bus);
             }
+            
+            bus.io.apu.tick();
         }
     }
 }

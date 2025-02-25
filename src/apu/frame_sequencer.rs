@@ -17,6 +17,7 @@ use crate::CPU_CLOCK_SPEED;
 // Rate   256 Hz      64 Hz       128 Hz
 const CYCLES_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
+#[derive(Debug, Clone, Default)]
 pub struct FrameSequencer {
     counter: u16,
     step: u8,

@@ -32,7 +32,8 @@ pub struct Ui {
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
-    audio_device: AudioDevice<AudioCallback>,
+    _audio_device: AudioDevice<AudioCallback>,
+    pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 
     pub config: GraphicsConfig,
     pub curr_palette: [PixelColor; 4],
@@ -59,11 +60,7 @@ impl Layout {
 }
 
 impl Ui {
-    pub fn new(
-        audio_buffer: Arc<Mutex<VecDeque<u8>>>,
-        config: GraphicsConfig,
-        debug: bool,
-    ) -> Result<Self, String> {
+    pub fn new(config: GraphicsConfig, debug: bool) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
         let layout = Layout::new(config.scale);
@@ -100,10 +97,14 @@ impl Ui {
             samples: Some(512),
         };
 
+        let audio_buffer = Arc::new(Mutex::new(VecDeque::with_capacity(1024)));
+        let audio_buffer_clone = audio_buffer.clone();
         let audio_device =
             audio_subsystem.open_playback(None, &desired_spec, move |_spec| AudioCallback {
-                buffer: audio_buffer,
+                buffer: audio_buffer_clone,
             })?;
+
+        audio_device.resume();
 
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
@@ -116,7 +117,8 @@ impl Ui {
             texture,
             overlay_texture,
             fps_texture,
-            audio_device,
+            _audio_device: audio_device,
+            audio_buffer,
         })
     }
 

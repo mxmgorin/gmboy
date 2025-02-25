@@ -4,6 +4,7 @@ use crate::{get_bit_flag, set_bit, LittleEndianBytes};
 pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;
 
 /// FF11 — NR11: Channel 1 length timer & duty cycle
+#[derive(Debug, Clone, Default)]
 pub struct NRX1 {
     pub byte: u8,
 }
@@ -21,6 +22,7 @@ impl NRX1 {
 
 /// FF12 — NR12: Channel 1 volume & envelope
 /// This register controls the digital amplitude of the “high” part of the pulse, and the sweep applied to that setting.
+#[derive(Debug, Clone, Default)]
 pub struct NRX2 {
     pub byte: u8,
 }
@@ -45,7 +47,7 @@ impl NRX2 {
 }
 
 /// Merged together NRX3 and NRX4 for convenience
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NRX3_4 {
     pub period_low: NRX3,
     pub high_and_ctrl: NRX4,
@@ -63,7 +65,7 @@ impl NRX3_4 {
 }
 
 ///  Period low, write-only
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NRX3 {
     byte: u8,
 }
@@ -75,7 +77,7 @@ impl NRX3 {
 }
 
 /// Period high & control
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct NRX4 {
     byte: u8,
 }
