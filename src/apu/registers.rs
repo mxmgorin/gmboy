@@ -1,4 +1,4 @@
-use crate::get_bit_flag;
+use crate::{get_bit_flag, set_bit};
 
 /// FF11 — NR11: Channel 1 length timer & duty cycle
 pub struct NRX1 {
@@ -35,6 +35,10 @@ impl NRX2 {
     pub fn sweep_pace(&self) -> u8 {
         self.byte & 0b0000_0111
     }
+
+    pub fn dac_enabled(&self) -> bool {
+        (self.byte & 0xF0) != 0
+    }
 }
 
 /// period low [write-only]
@@ -51,8 +55,12 @@ impl NRX4 {
         get_bit_flag(self.byte, 7)
     }
 
-    pub fn length_enable(&self) -> bool {
+    pub fn is_length_enabled(&self) -> bool {
         get_bit_flag(self.byte, 7)
+    }
+
+    pub fn disable_length(&mut self) {
+        set_bit(&mut self.byte, 7, false);
     }
 
     pub fn period(&self) -> u8 {

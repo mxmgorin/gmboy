@@ -4,6 +4,8 @@ use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
 use crate::LittleEndianBytes;
 
+pub const CPU_CLOCK_SPEED: u32 = 4194304;
+
 pub struct DebugCtx {
     pub pc: u16,
     pub instruction: Instruction,

@@ -1,4 +1,7 @@
+use crate::apu::channel::ChannelType;
+use crate::apu::length_timer::LengthTimer;
 use crate::apu::registers::{NRX1, NRX2, NRX3, NRX4};
+use crate::apu::NR52;
 use crate::get_bit_flag;
 
 pub const NR10_CH1_SWEEP_ADDRESS: u16 = 0xFF10;
@@ -24,11 +27,14 @@ pub enum SquareChannel {
 }
 
 pub struct Ch1 {
+    // registers
+    pub sweep: NR10,
     pub len_timer_duty_cycle: NRX1,
     pub volume_envelope: NRX2,
     pub period_low: NRX3,
     pub period_high_control: NRX4,
-    pub sweep: NR10Sweep,
+
+    length_timer: LengthTimer,
 }
 
 pub struct Ch2 {
@@ -36,15 +42,17 @@ pub struct Ch2 {
     pub volume_envelope: NRX2,
     pub period_low: NRX3,
     pub period_high_control: NRX4,
+
+    length_timer: LengthTimer,
 }
 
 /// FF10 — NR10: Channel 1 sweep
 /// This register controls CH1’s period sweep functionality.
-pub struct NR10Sweep {
+pub struct NR10 {
     pub byte: u8,
 }
 
-impl NR10Sweep {
+impl NR10 {
     /// This dictates how often sweep “iterations” happen, in units of 128 Hz ticks5 (7.8 ms). Note
     /// that the value written to this field is not re-read by the hardware until a sweep iteration
     /// completes, or the channel is (re)triggered.
