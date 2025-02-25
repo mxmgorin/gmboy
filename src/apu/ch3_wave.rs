@@ -61,13 +61,7 @@ impl WaveChannel {
 
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         match address {
-            CH3_NR30_DAC_ENABLE_ADDRESS => {
-                self.dac_enable.byte = value;
-
-                if !self.dac_enable.is_dac_enabled() {
-                    master_ctrl.deactivate_ch(&ChannelType::CH3);
-                }
-            }
+            CH3_NR30_DAC_ENABLE_ADDRESS => self.dac_enable.byte = value,
             CH3_NR31_LENGTH_TIMER_ADDRESS => self.length_timer.set_counter(value),
             CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.output_level.byte = value,
             CH3_NR33_PERIOD_LOW_ADDRESS => self.period_and_ctrl.period_low.set(value),
@@ -75,9 +69,10 @@ impl WaveChannel {
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
         }
     }
-    
+
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
-        self.length_timer.tick(master_ctrl, &mut self.period_and_ctrl.high_and_ctrl);
+        self.length_timer
+            .tick(master_ctrl, &mut self.period_and_ctrl.high_and_ctrl);
     }
 
     pub fn tick(&mut self, master_ctrl: &NR52) {
