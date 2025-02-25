@@ -33,7 +33,8 @@ pub struct Apu {
 
 impl Apu {
     pub fn tick(&mut self) {
-        self.frame_sequencer.tick();
+        self.frame_sequencer
+            .tick(&mut self.master_ctrl, &mut self.ch3);
         self.counter = self.counter.wrapping_add(1);
 
         self.ch3.tick(&self.master_ctrl);

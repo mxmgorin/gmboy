@@ -1,4 +1,5 @@
-use crate::apu::APU_CLOCK_SPEED;
+use crate::apu::ch3_wave::WaveChannel;
+use crate::apu::{APU_CLOCK_SPEED, NR52};
 use crate::CPU_CLOCK_SPEED;
 
 // The frame sequencer generates low frequency clocks for the modulation units. It is clocked by a 512 Hz timer.
@@ -14,7 +15,6 @@ use crate::CPU_CLOCK_SPEED;
 // 7      -           Clock       -
 // ---------------------------------------
 // Rate   256 Hz      64 Hz       128 Hz
-
 const CYCLES_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
 pub struct FrameSequencer {
@@ -24,19 +24,19 @@ pub struct FrameSequencer {
 
 impl FrameSequencer {
     // ticks every t-cycle
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, master_ctrl: &mut NR52, ch3: &mut WaveChannel) {
         self.counter += 1;
 
         if self.counter >= CYCLES_DIV {
             match self.step {
-                0 => {} // tick_length
+                0 => ch3.tick_length(master_ctrl), // tick_length
                 1 => {}
-                2 => {} // tick length, sweep
+                2 => ch3.tick_length(master_ctrl), // tick length, sweep
                 3 => {}
-                4 => {} // tick_length
+                4 => ch3.tick_length(master_ctrl), // tick_length
                 5 => {}
-                6 => {} // tick length, sweep
-                7 => {} // tick envelope
+                6 => ch3.tick_length(master_ctrl), // tick length, sweep
+                7 => {}                            // tick envelope
                 _ => unreachable!(),
             }
 

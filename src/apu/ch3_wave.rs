@@ -61,6 +61,10 @@ impl WaveChannel {
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
         }
     }
+    
+    pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
+        self.length_timer.tick(master_ctrl, &mut self.period_and_ctrl.high_and_ctrl);
+    }
 
     pub fn tick(&mut self, master_ctrl: &NR52) {
         if self.is_enabled(master_ctrl) {
