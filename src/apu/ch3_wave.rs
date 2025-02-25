@@ -1,8 +1,7 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
-use crate::apu::registers::{NRX3, NRX3_4, NRX4};
-use crate::apu::{NR50, NR52};
-use crate::LittleEndianBytes;
+use crate::apu::registers::NRX3_4;
+use crate::apu::NR52;
 
 pub const CH3_START_ADDRESS: u16 = CH3_NR30_DAC_ENABLE_ADDRESS;
 pub const CH3_END_ADDRESS: u16 = CH3_NR33_PERIOD_LOW_ADDRESS;
@@ -20,35 +19,6 @@ pub const CH3_NR32_OUTPUT_LEVEL_MASK: u8 = 0b0110_0000;
 
 pub const CH3_NR30_DAC_ENABLE_POS: u8 = 7;
 
-#[derive(Clone, Debug, Default)]
-pub struct WaveRam {
-    // 32 nibbles of 4 bit samples
-    bytes: [u8; 32],
-    index: usize,
-    sample_buffer: u8,
-}
-
-impl WaveRam {
-    pub fn read(&self, addr: u16) -> u8 {
-        let addr = addr - CH3_WAVE_RAM_START;
-        self.bytes[addr as usize]
-    }
-
-    pub fn write(&mut self, addr: u16, value: u8) {
-        let index = addr - CH3_WAVE_RAM_START;
-        self.bytes[index as usize] = (value & 0xF0) >> 4;
-        self.bytes[index as usize + 1] = value & 0xF;
-    }
-
-    pub fn reset(&mut self) {
-        self.index = 0;
-    }
-
-    pub fn clear(&mut self) {
-        self.sample_buffer = 0;
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct WaveChannel {
     dac_enable: NR30,
@@ -59,8 +29,8 @@ pub struct WaveChannel {
     period_and_ctrl: NRX3_4,
     pub wave_ram: WaveRam,
 
-    period_div: u16,
-    volume: u8,
+    period_timer: u16, // Internal timer for frequency stepping
+    volume_shift: u8,
 }
 
 impl WaveChannel {
@@ -79,7 +49,7 @@ impl WaveChannel {
         match address {
             CH3_NR30_DAC_ENABLE_ADDRESS => {
                 self.dac_enable.byte = value;
-                
+
                 if !self.dac_enable.is_dac_enabled() {
                     master_ctrl.deactivate_ch(&ChannelType::CH3);
                 }
@@ -91,8 +61,41 @@ impl WaveChannel {
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
         }
     }
-    
-    pub fn is_on(&self, master_ctrl: &NR52) -> bool {
+
+    pub fn tick(&mut self, master_ctrl: &NR52) {
+        if self.is_enabled(master_ctrl) {
+            if self.period_timer > 0 {
+                self.period_timer -= 1;
+            }
+
+            if self.period_timer == 0 {
+                self.period_timer = (2048 - self.period_and_ctrl.get_period()) * 2;
+                self.wave_ram.inc_sample_index();
+            }
+        }
+    }
+
+    pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
+        if !self.is_enabled(master_ctrl) {
+            return 0;
+        }
+
+        self.wave_ram.sample_buffer >> self.volume_shift
+    }
+
+    fn trigger(&mut self, master_ctrl: &mut NR52) {
+        master_ctrl.activate_ch(&ChannelType::CH3);
+
+        if self.length_timer.is_expired() {
+            self.length_timer.reset();
+        }
+
+        self.period_timer = self.period_and_ctrl.get_period();
+        self.volume_shift = self.output_level.get_volume_shift();
+        self.wave_ram.reset();
+    }
+
+    fn is_enabled(&self, master_ctrl: &NR52) -> bool {
         self.dac_enable.is_dac_enabled() && master_ctrl.is_ch_active(ChannelType::CH3)
     }
 
@@ -103,17 +106,49 @@ impl WaveChannel {
             self.trigger(nr52);
         }
     }
+}
 
-    fn trigger(&mut self, nr52: &mut NR52) {
-        nr52.activate_ch(&ChannelType::CH2);
+#[derive(Clone, Debug, Default)]
+pub struct WaveRam {
+    // 32 samples, 4 bit each
+    bytes: [u8; 16],
+    sample_index: usize,
+    sample_buffer: u8,
+}
 
-        if self.length_timer.is_expired() {
-            self.length_timer.reset();
+impl WaveRam {
+    pub fn read(&self, addr: u16) -> u8 {
+        let addr = addr - CH3_WAVE_RAM_START;
+        self.bytes[addr as usize]
+    }
+
+    pub fn write(&mut self, addr: u16, value: u8) {
+        let index = addr - CH3_WAVE_RAM_START;
+        self.bytes[index as usize] = value;
+    }
+
+    pub fn read_sample(&self) -> u8 {
+        let byte_index = self.sample_index / 2;
+        let high_nibble = self.sample_index % 2 == 0;
+
+        if high_nibble {
+            self.bytes[byte_index] >> 4
+        } else {
+            self.bytes[byte_index] & 0x0F
         }
+    }
 
-        self.period_div = self.period_and_ctrl.get_period();
-        self.volume = self.wave_ram.sample_buffer >> self.output_level.get_volume_shift();
-        self.wave_ram.reset();
+    pub fn inc_sample_index(&mut self) {
+        self.sample_index = (self.sample_index + 1) % 32;
+        self.sample_buffer = self.read_sample();
+    }
+
+    pub fn reset(&mut self) {
+        self.sample_index = 0;
+    }
+
+    pub fn clear(&mut self) {
+        self.sample_buffer = 0;
     }
 }
 

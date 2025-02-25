@@ -8,6 +8,8 @@ use crate::apu::ch4_noise::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
 use crate::apu::channel::ChannelType;
 use crate::apu::frame_sequencer::FrameSequencer;
 use crate::{get_bit_flag, set_bit};
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
 
 pub const APU_CLOCK_SPEED: u16 = 512;
 
@@ -33,6 +35,8 @@ impl Apu {
     pub fn tick(&mut self) {
         self.frame_sequencer.tick();
         self.counter = self.counter.wrapping_add(1);
+
+        self.ch3.tick(&self.master_ctrl);
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
