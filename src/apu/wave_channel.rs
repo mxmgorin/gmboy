@@ -59,7 +59,7 @@ impl WaveChannel {
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         match address {
             CH3_NR30_DAC_ENABLE_ADDRESS => self.dac_enable.byte = value,
-            CH3_NR31_LENGTH_TIMER_ADDRESS => self.length_timer.set_counter(value),
+            CH3_NR31_LENGTH_TIMER_ADDRESS => self.length_timer.write(value),
             CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.output_level.byte = value,
             CH3_NR33_PERIOD_LOW_ADDRESS => self.period_and_ctrl.period_low.write(value),
             CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => self.write_period_high(value, master_ctrl),

@@ -1,6 +1,6 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
-use crate::apu::registers::{NRX1, NRX2, NRX3, NRX3X4, NRX4};
+use crate::apu::registers::{NRX1, NRX2, NRX3X4};
 use crate::get_bit_flag;
 
 pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;

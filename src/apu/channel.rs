@@ -20,7 +20,7 @@ impl ChannelType {
         }
     }
 
-    pub fn get_length_timer_expire(&self) -> u16 {
+    pub fn get_initial_length_timer(&self) -> u16 {
         match self {
             ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH4 => 64,
             ChannelType::CH3 => 256,
