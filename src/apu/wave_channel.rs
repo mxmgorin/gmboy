@@ -1,6 +1,6 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
-use crate::apu::registers::NRX3_NRX4;
+use crate::apu::registers::NRX3X4;
 use crate::apu::NR52;
 
 pub const CH3_START_ADDRESS: u16 = CH3_NR30_DAC_ENABLE_ADDRESS;
@@ -23,7 +23,7 @@ pub struct WaveChannel {
     length_timer: LengthTimer,
     output_level: NR32,
     // todo: Period changes (written to NR33 or NR34) only take effect after the following time wave RAM is read
-    period_and_ctrl: NRX3_NRX4,
+    period_and_ctrl: NRX3X4,
     pub wave_ram: WaveRam,
 
     period_timer: u16, // Internal timer for frequency stepping
@@ -61,7 +61,7 @@ impl WaveChannel {
             CH3_NR30_DAC_ENABLE_ADDRESS => self.dac_enable.byte = value,
             CH3_NR31_LENGTH_TIMER_ADDRESS => self.length_timer.set_counter(value),
             CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.output_level.byte = value,
-            CH3_NR33_PERIOD_LOW_ADDRESS => self.period_and_ctrl.period_low.set(value),
+            CH3_NR33_PERIOD_LOW_ADDRESS => self.period_and_ctrl.period_low.write(value),
             CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => self.write_period_high(value, master_ctrl),
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
         }
@@ -158,6 +158,7 @@ impl WaveRam {
     }
 }
 
+// DAC enable
 #[derive(Clone, Debug, Default)]
 pub struct NR30 {
     byte: u8,
@@ -169,10 +170,11 @@ impl NR30 {
     }
 
     pub fn read(&self) -> u8 {
-        self.byte | 0b1000_0000
+        self.byte | 1 << CH3_NR30_DAC_ENABLE_POS
     }
 }
 
+/// Output level
 #[derive(Clone, Debug, Default)]
 pub struct NR32 {
     byte: u8,
@@ -180,11 +182,11 @@ pub struct NR32 {
 
 impl NR32 {
     pub fn read(&self) -> u8 {
-        self.byte & 0b0110_0000
+        self.byte | 0b1001_1111
     }
 
     pub fn get_volume_shift(&self) -> u8 {
-        match self.read() {
+        match self.byte & 0b0110_0000 {
             0b0000_0000 => 4, // mute
             0b0010_0000 => 0, // 100%
             0b0100_0000 => 1, // 50%
