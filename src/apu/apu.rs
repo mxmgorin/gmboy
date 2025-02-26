@@ -1,12 +1,10 @@
-use crate::apu::ch1_2_square::{
-    Ch1, Ch2, SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
-};
-use crate::apu::ch3_wave::{
-    WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
-};
-use crate::apu::ch4_noise::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
 use crate::apu::channel::ChannelType;
 use crate::apu::frame_sequencer::FrameSequencer;
+use crate::apu::noise_channel::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
+use crate::apu::square_channel::{SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS};
+use crate::apu::wave_channel::{
+    WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
+};
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
@@ -38,8 +36,8 @@ pub struct Apu {
 impl Default for Apu {
     fn default() -> Self {
         Self {
-            ch1: SquareChannel::Ch1(Ch1::default()),
-            ch2: SquareChannel::Ch2(Ch2::default()),
+            ch1: SquareChannel::ch1(),
+            ch2: SquareChannel::ch2(),
             ch3: WaveChannel::default(),
             ch4: NoiseChannel::default(),
             master_ctrl: NR52::default(),
@@ -80,12 +78,12 @@ impl Apu {
         if address == AUDIO_MASTER_CONTROL_ADDRESS {
             let prev_enable = self.master_ctrl.is_audio_on();
             self.master_ctrl.write(value);
-            
+
             if !prev_enable && self.master_ctrl.is_audio_on() {
                 // turning on
                 self.ch3.wave_ram.clear();
             }
-            
+
             return;
         }
 

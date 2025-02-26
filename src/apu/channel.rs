@@ -1,11 +1,7 @@
 // Square 1: Sweep -> Timer -> Duty -> Length Counter -> Envelope -> Mixer
-//
 // Square 2:          Timer -> Duty -> Length Counter -> Envelope -> Mixer
-//
 // Wave:              Timer -> Wave -> Length Counter -> Volume   -> Mixer
-//
 // Noise:             Timer -> LFSR -> Length Counter -> Envelope -> Mixer
-
 #[derive(Clone, Debug)]
 pub enum ChannelType {
     CH1,

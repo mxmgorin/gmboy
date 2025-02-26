@@ -1,6 +1,6 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
-use crate::apu::registers::NRX3_4;
+use crate::apu::registers::NRX3_NRX4;
 use crate::apu::NR52;
 
 pub const CH3_START_ADDRESS: u16 = CH3_NR30_DAC_ENABLE_ADDRESS;
@@ -23,7 +23,7 @@ pub struct WaveChannel {
     length_timer: LengthTimer,
     output_level: NR32,
     // todo: Period changes (written to NR33 or NR34) only take effect after the following time wave RAM is read
-    period_and_ctrl: NRX3_4,
+    period_and_ctrl: NRX3_NRX4,
     pub wave_ram: WaveRam,
 
     period_timer: u16, // Internal timer for frequency stepping

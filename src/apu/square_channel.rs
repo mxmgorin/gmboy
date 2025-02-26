@@ -1,6 +1,6 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
-use crate::apu::registers::{NRX1, NRX2, NRX3, NRX4};
+use crate::apu::registers::{NRX1, NRX2, NRX3, NRX3_NRX4, NRX4};
 use crate::get_bit_flag;
 
 pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;
@@ -28,54 +28,47 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
 ];
 
 #[derive(Debug, Clone)]
-pub enum SquareChannel {
-    Ch1(Ch1),
-    Ch2(Ch2),
-}
-
-#[derive(Debug, Clone)]
-pub struct Ch1 {
+pub struct SquareChannel {
     // registers
-    pub sweep: NR10,
-    pub len_timer_duty_cycle: NRX1,
-    pub volume_envelope: NRX2,
-    pub period_low: NRX3,
-    pub period_high_control: NRX4,
+    sweep: Option<NR10>,
+    len_timer_duty_cycle: NRX1,
+    volume_envelope: NRX2,
+    period_and_control: NRX3_NRX4,
 
+    // other data
     length_timer: LengthTimer,
 }
 
-impl Default for Ch1 {
-    fn default() -> Ch1 {
+impl SquareChannel {
+    pub fn ch1() -> SquareChannel {
         Self {
-            sweep: Default::default(),
+            sweep: Some(Default::default()),
             len_timer_duty_cycle: Default::default(),
             volume_envelope: Default::default(),
-            period_low: Default::default(),
-            period_high_control: Default::default(),
+            period_and_control: Default::default(),
             length_timer: LengthTimer::new(ChannelType::CH1),
+        }
+    }
+
+    pub fn ch2() -> SquareChannel {
+        Self {
+            sweep: None,
+            len_timer_duty_cycle: Default::default(),
+            volume_envelope: Default::default(),
+            period_and_control: Default::default(),
+            length_timer: LengthTimer::new(ChannelType::CH2),
         }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Ch2 {
-    pub len_timer_duty_cycle: NRX1,
-    pub volume_envelope: NRX2,
-    pub period_low: NRX3,
-    pub period_high_control: NRX4,
-
-    length_timer: LengthTimer,
-}
-
-impl Default for Ch2 {
-    fn default() -> Self {
+impl Default for SquareChannel {
+    fn default() -> SquareChannel {
         Self {
+            sweep: Default::default(),
             len_timer_duty_cycle: Default::default(),
             volume_envelope: Default::default(),
-            period_low: Default::default(),
-            period_high_control: Default::default(),
-            length_timer: LengthTimer::new(ChannelType::CH2),
+            period_and_control: Default::default(),
+            length_timer: LengthTimer::new(ChannelType::CH1),
         }
     }
 }

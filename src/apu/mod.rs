@@ -1,7 +1,7 @@
 pub mod apu;
-pub mod ch1_2_square;
-pub mod ch3_wave;
-pub mod ch4_noise;
+pub mod square_channel;
+pub mod wave_channel;
+pub mod noise_channel;
 mod channel;
 mod frame_sequencer;
 mod length_timer;

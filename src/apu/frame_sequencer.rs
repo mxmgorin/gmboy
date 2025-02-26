@@ -1,4 +1,4 @@
-use crate::apu::ch3_wave::WaveChannel;
+use crate::apu::wave_channel::WaveChannel;
 use crate::apu::{APU_CLOCK_SPEED, NR52};
 use crate::CPU_CLOCK_SPEED;
 

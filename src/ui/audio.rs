@@ -1,7 +1,7 @@
+use crate::apu::SAMPLING_FREQUENCY;
 use sdl2::audio::{AudioDevice, AudioSpecDesired};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
-use crate::apu::SAMPLING_FREQUENCY;
 
 pub fn create_audio_device(
     sdl_context: &sdl2::Sdl,
@@ -36,10 +36,8 @@ impl sdl2::audio::AudioCallback for BufferedAudioCallback {
         let mut buffer = self.buffer.lock().unwrap();
 
         for out_sample in out.iter_mut() {
-            if let Some(sample) =  buffer.pop_front() {
+            if let Some(sample) = buffer.pop_front() {
                 *out_sample = sample;
-            } else {
-                //println!("no sample")
             }
         }
     }

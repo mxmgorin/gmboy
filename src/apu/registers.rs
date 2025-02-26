@@ -48,12 +48,12 @@ impl NRX2 {
 
 /// Merged together NRX3 and NRX4 for convenience
 #[derive(Clone, Debug, Default)]
-pub struct NRX3_4 {
+pub struct NRX3_NRX4 {
     pub period_low: NRX3,
     pub high_and_ctrl: NRX4,
 }
 
-impl NRX3_4 {
+impl NRX3_NRX4 {
     pub fn get_period(&self) -> u16 {
         let value = LittleEndianBytes {
             low_byte: self.period_low.byte,
