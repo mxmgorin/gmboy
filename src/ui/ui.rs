@@ -1,13 +1,13 @@
+use crate::apu::{Apu, SAMPLING_FREQUENCY};
 use crate::bus::Bus;
 use crate::config::GraphicsConfig;
 use crate::emu::RunMode;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
-use crate::ui::audio::{create_audio_device, BufferedAudioCallback};
+use crate::ui::audio::{GameAudio};
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::text::{calc_text_width, draw_text, fill_texture, get_text_height};
-use sdl2::audio::{AudioDevice};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
@@ -15,8 +15,6 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::EventPump;
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
@@ -33,8 +31,7 @@ pub struct Ui {
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
-    _audio_device: AudioDevice<BufferedAudioCallback>,
-    pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
+    pub audio: GameAudio,
 
     pub config: GraphicsConfig,
     pub curr_palette: [PixelColor; 4],
@@ -91,11 +88,8 @@ impl Ui {
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
-        let (audio_device, audio_buffer) = create_audio_device(&sdl_context)?;
-
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
-            _sdl_context: sdl_context,
             canvas: main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
@@ -104,8 +98,9 @@ impl Ui {
             texture,
             overlay_texture,
             fps_texture,
-            _audio_device: audio_device,
-            audio_buffer,
+            audio: GameAudio::new(&sdl_context),
+
+            _sdl_context: sdl_context,
         })
     }
 
@@ -123,6 +118,8 @@ impl Ui {
 
         Ok(())
     }
+
+
 
     pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
         self.draw_main(ppu);

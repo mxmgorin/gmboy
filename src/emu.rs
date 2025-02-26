@@ -163,7 +163,7 @@ impl Emu {
                 let cart = read_cart(path).map_err(|e| e.to_string())?;
 
                 let mut bus = Bus::new(cart);
-                bus.io.apu.buffer = self.ui.audio_buffer.clone();
+                //bus.io.apu.buffer = self.ui.audio_buffer.clone();
                 bus.io.lcd.set_pallet(self.ui.curr_palette);
                 cpu = Cpu::new(bus);
 
@@ -207,6 +207,8 @@ impl Emu {
             if self.ctx.prev_frame != ppu.current_frame {
                 self.ui.draw(ppu, &cpu.bus);
             }
+
+            self.ui.audio.play(&mut cpu.bus.io.apu)?;
 
             self.ctx.prev_frame = ppu.current_frame;
 

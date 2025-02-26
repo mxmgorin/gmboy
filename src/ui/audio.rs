@@ -1,44 +1,45 @@
-use crate::apu::SAMPLING_FREQUENCY;
-use sdl2::audio::{AudioDevice, AudioSpecDesired};
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
+use crate::apu::{Apu, AUDIO_BUFFER_SIZE, SAMPLING_FREQUENCY};
+use sdl2::audio::{AudioQueue, AudioSpecDesired};
+use sdl2::{AudioSubsystem, Sdl};
 
-pub fn create_audio_device(
-    sdl_context: &sdl2::Sdl,
-) -> Result<(AudioDevice<BufferedAudioCallback>, Arc<Mutex<VecDeque<u8>>>), String> {
-    let audio_subsystem = sdl_context.audio()?;
-    let desired_spec = AudioSpecDesired {
-        freq: Some(SAMPLING_FREQUENCY as i32 - 1000),
-        channels: Some(2),
-        samples: Some(1024),
-    };
+pub const VOLUME: f32 = 64.0;
 
-    let audio_buffer = Arc::new(Mutex::new(VecDeque::with_capacity(1024)));
-    let audio_buffer_clone = audio_buffer.clone();
-    let audio_device =
-        audio_subsystem.open_playback(None, &desired_spec, move |_spec| BufferedAudioCallback {
-            buffer: audio_buffer_clone,
-        })?;
-
-    audio_device.resume();
-
-    Ok((audio_device, audio_buffer))
+pub struct GameAudio {
+    device: AudioQueue<f32>,
+    _audio_subsystem: AudioSubsystem,
 }
 
-pub struct BufferedAudioCallback {
-    buffer: Arc<Mutex<VecDeque<u8>>>,
-}
+impl GameAudio {
+    pub fn new(sdl: &Sdl) -> Self {
+        let audio_subsystem = sdl.audio().unwrap();
 
-impl sdl2::audio::AudioCallback for BufferedAudioCallback {
-    type Channel = u8;
+        let desired_spec = AudioSpecDesired {
+            freq: Some(SAMPLING_FREQUENCY as i32 - 1000),
+            channels: Some(2),
+            samples: Some(AUDIO_BUFFER_SIZE as u16),
+        };
 
-    fn callback(&mut self, out: &mut [u8]) {
-        let mut buffer = self.buffer.lock().unwrap();
+        // creates the queue that is going to be used to update the
+        // audio stream with new values during the main loop
+        let device = audio_subsystem.open_queue(None, &desired_spec).unwrap();
+        device.resume();
 
-        for out_sample in out.iter_mut() {
-            if let Some(sample) = buffer.pop_front() {
-                *out_sample = sample;
-            }
+        Self {
+            device,
+
+            _audio_subsystem: audio_subsystem,
         }
+    }
+
+    pub fn play(&mut self, apu: &mut Apu) -> Result<(), String> {
+        if apu.buffer.is_empty() {
+            return Ok(());
+        }
+
+        let audio_buffer: Vec<f32> = apu.buffer.iter().map(|v| *v as f32 / VOLUME).collect();
+        self.device.queue_audio(&audio_buffer)?;
+        apu.buffer.clear();
+
+        Ok(())
     }
 }

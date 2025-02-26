@@ -1,7 +1,9 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::frame_sequencer::FrameSequencer;
 use crate::apu::noise_channel::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
-use crate::apu::square_channel::{SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS};
+use crate::apu::square_channel::{
+    SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
+};
 use crate::apu::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
@@ -15,6 +17,7 @@ pub const SAMPLING_FREQUENCY: u16 = 41000;
 pub const AUDIO_MASTER_CONTROL_ADDRESS: u16 = 0xFF26;
 pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
+pub const AUDIO_BUFFER_SIZE: usize = 1024;
 
 #[derive(Debug, Clone)]
 pub struct Apu {
@@ -30,7 +33,7 @@ pub struct Apu {
     // other data
     sample_clock: u32,
     frame_sequencer: FrameSequencer,
-    pub buffer: Arc<Mutex<VecDeque<u8>>>,
+    pub buffer: VecDeque<u8>,
 }
 
 impl Default for Apu {
@@ -45,7 +48,7 @@ impl Default for Apu {
             master_volume: Default::default(),
             sample_clock: 0,
             frame_sequencer: Default::default(),
-            buffer: Arc::new(Mutex::new(Default::default())),
+            buffer: VecDeque::with_capacity(AUDIO_BUFFER_SIZE),
         }
     }
 }
@@ -63,9 +66,17 @@ impl Apu {
 
         if self.sample_clock % ticks_per_sample == 0 {
             let (output_left, output_right) = self.mix_channels();
-            let mut buffer = self.buffer.lock().unwrap();
-            buffer.push_back(output_left);
-            buffer.push_back(output_right);
+            // let mut buffer = self.buffer.lock().unwrap();
+            // buffer.push_back(output_left);
+            // buffer.push_back(output_right);
+
+            if self.buffer.len() >= AUDIO_BUFFER_SIZE {
+                self.buffer.pop_front();
+                self.buffer.pop_front();
+            }
+
+            self.buffer.push_back(output_left);
+            self.buffer.push_back(output_right);
         }
     }
 
