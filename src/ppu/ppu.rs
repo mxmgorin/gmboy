@@ -19,12 +19,12 @@ pub struct Ppu {
     pub current_frame: usize,
     pub line_ticks: usize,
     pub prev_frame_duration: Duration,
-    pub start_duration: Duration,
+    pub frame_start_duration: Duration,
     pub last_frame_duration: Duration,
     pub target_frame_duration: Duration,
     pub frame_count: usize,
     pub fps: usize,
-    pub instant: Instant,
+    pub timer: Instant,
     pub pipeline: Pipeline,
 }
 
@@ -34,12 +34,12 @@ impl Default for Ppu {
             current_frame: 0,
             line_ticks: 0,
             prev_frame_duration: Default::default(),
-            start_duration: Default::default(),
+            frame_start_duration: Default::default(),
             last_frame_duration: Default::default(),
             target_frame_duration: Default::default(), // no frame limit
             frame_count: 0,
             fps: 0,
-            instant: Instant::now(),
+            timer: Instant::now(),
             pipeline: Default::default(),
         }
     }
@@ -51,12 +51,12 @@ impl Ppu {
             current_frame: 0,
             pipeline: Pipeline::default(),
             prev_frame_duration: Duration::new(0, 0),
-            start_duration: Duration::new(0, 0),
+            frame_start_duration: Duration::new(0, 0),
             last_frame_duration: Default::default(),
             target_frame_duration: Duration::from_secs_f64(1.0 / fps),
             frame_count: 0,
             fps: 0,
-            instant: Instant::now(),
+            timer: Instant::now(),
             line_ticks: 0,
         }
     }
@@ -134,7 +134,7 @@ impl Ppu {
                 self.current_frame += 1;
                 self.calc_fps();
                 self.limit();
-                self.prev_frame_duration = self.instant.elapsed();
+                self.prev_frame_duration = self.timer.elapsed();
             } else {
                 io.lcd.status.mode_set(LcdMode::Oam);
             }
@@ -144,12 +144,12 @@ impl Ppu {
     }
 
     pub fn calc_fps(&mut self) {
-        let end = self.instant.elapsed();
-        self.last_frame_duration = end - self.prev_frame_duration;
+        let current_duration = self.timer.elapsed();
+        self.last_frame_duration = current_duration - self.prev_frame_duration;
 
-        if (end - self.start_duration).as_millis() >= 1000 {
+        if (current_duration - self.frame_start_duration).as_millis() >= 1000 {
             self.fps = self.frame_count;
-            self.start_duration = end;
+            self.frame_start_duration = current_duration;
             self.frame_count = 0;
         }
 
