@@ -1,4 +1,3 @@
-use crate::apu::{Apu, SAMPLING_FREQUENCY};
 use crate::bus::Bus;
 use crate::config::GraphicsConfig;
 use crate::emu::RunMode;

@@ -8,11 +8,9 @@ use crate::apu::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
-use std::collections::VecDeque;
-use std::sync::{Arc, Mutex};
 
 pub const APU_CLOCK_SPEED: u16 = 512;
-pub const SAMPLING_FREQUENCY: u16 = 41000;
+pub const SAMPLING_FREQUENCY: u16 = 44100;
 
 pub const AUDIO_MASTER_CONTROL_ADDRESS: u16 = 0xFF26;
 pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
@@ -33,7 +31,8 @@ pub struct Apu {
     // other data
     sample_clock: u32,
     frame_sequencer: FrameSequencer,
-    pub buffer: VecDeque<u8>,
+    buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
+    buffer_index: usize,
 }
 
 impl Default for Apu {
@@ -48,7 +47,8 @@ impl Default for Apu {
             master_volume: Default::default(),
             sample_clock: 0,
             frame_sequencer: Default::default(),
-            buffer: VecDeque::with_capacity(AUDIO_BUFFER_SIZE),
+            buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
+            buffer_index: 0,
         }
     }
 }
@@ -65,19 +65,30 @@ impl Apu {
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
 
         if self.sample_clock % ticks_per_sample == 0 {
-            let (output_left, output_right) = self.mix_channels();
-            // let mut buffer = self.buffer.lock().unwrap();
-            // buffer.push_back(output_left);
-            // buffer.push_back(output_right);
-
-            if self.buffer.len() >= AUDIO_BUFFER_SIZE {
-                self.buffer.pop_front();
-                self.buffer.pop_front();
+            if self.is_buffer_full() {
+                self.buffer_index = 0;
             }
 
-            self.buffer.push_back(output_left);
-            self.buffer.push_back(output_right);
+            let (output_left, output_right) = self.mix_channels();
+            self.buffer[self.buffer_index] = output_left as f32 / 66.0;
+            self.buffer[self.buffer_index + 1] = output_right as f32 / 66.0;
+            self.buffer_index += 2;
         }
+    }
+
+    pub fn take_buffer(&mut self) -> &[f32] {
+        let buffer = &self.buffer[0..self.buffer_index];
+        self.buffer_index = 0;
+
+        buffer
+    }
+
+    pub fn is_buffer_empty(&self) -> bool {
+        self.buffer_index == 0
+    }
+
+    pub fn is_buffer_full(&self) -> bool {
+        self.buffer_index >= AUDIO_BUFFER_SIZE
     }
 
     pub fn write(&mut self, address: u16, value: u8) {

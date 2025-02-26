@@ -2,8 +2,6 @@ use crate::apu::{Apu, AUDIO_BUFFER_SIZE, SAMPLING_FREQUENCY};
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
 
-pub const VOLUME: f32 = 64.0;
-
 pub struct GameAudio {
     device: AudioQueue<f32>,
     _audio_subsystem: AudioSubsystem,
@@ -14,7 +12,7 @@ impl GameAudio {
         let audio_subsystem = sdl.audio().unwrap();
 
         let desired_spec = AudioSpecDesired {
-            freq: Some(SAMPLING_FREQUENCY as i32 - 1000),
+            freq: Some(SAMPLING_FREQUENCY as i32),
             channels: Some(2),
             samples: Some(AUDIO_BUFFER_SIZE as u16),
         };
@@ -32,13 +30,9 @@ impl GameAudio {
     }
 
     pub fn play(&mut self, apu: &mut Apu) -> Result<(), String> {
-        if apu.buffer.is_empty() {
-            return Ok(());
+        if apu.is_buffer_full() {
+            self.device.queue_audio(apu.take_buffer())?;
         }
-
-        let audio_buffer: Vec<f32> = apu.buffer.iter().map(|v| *v as f32 / VOLUME).collect();
-        self.device.queue_audio(&audio_buffer)?;
-        apu.buffer.clear();
 
         Ok(())
     }
