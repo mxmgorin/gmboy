@@ -81,7 +81,7 @@ impl Apu {
 
             if !prev_enable && self.master_ctrl.is_audio_on() {
                 // turning on
-                self.ch3.wave_ram.clear();
+                self.ch3.wave_ram.clear_sample_buffer();
             }
 
             return;

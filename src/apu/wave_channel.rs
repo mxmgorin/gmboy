@@ -102,7 +102,7 @@ impl WaveChannel {
 
         //self.period_timer = self.period_and_ctrl.get_period();
         self.volume_shift = self.output_level.get_volume_shift();
-        self.wave_ram.reset();
+        self.wave_ram.reset_sample_index();
     }
 
     fn write_period_high(&mut self, value: u8, nr52: &mut NR52) {
@@ -149,11 +149,12 @@ impl WaveRam {
         self.sample_buffer = self.read_sample();
     }
 
-    pub fn reset(&mut self) {
+    pub fn reset_sample_index(&mut self) {
         self.sample_index = 0;
     }
 
-    pub fn clear(&mut self) {
+    pub fn clear_sample_buffer(&mut self) {
+        self.sample_index = 0;
         self.sample_buffer = 0;
     }
 }
