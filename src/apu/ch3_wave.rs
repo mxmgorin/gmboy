@@ -14,9 +14,6 @@ pub const CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS: u16 = 0xFF1E;
 
 pub const CH3_WAVE_RAM_START: u16 = 0xFF30;
 pub const CH3_WAVE_RAM_END: u16 = 0xFF3F;
-
-pub const CH3_NR32_OUTPUT_LEVEL_MASK: u8 = 0b0110_0000;
-
 pub const CH3_NR30_DAC_ENABLE_POS: u8 = 7;
 
 #[derive(Clone, Debug)]
@@ -76,24 +73,24 @@ impl WaveChannel {
     }
 
     pub fn tick(&mut self, master_ctrl: &NR52) {
-        if self.is_enabled(master_ctrl) {
+        if master_ctrl.is_ch_active(ChannelType::CH3) && self.dac_enable.is_dac_enabled() {
             if self.period_timer > 0 {
                 self.period_timer -= 1;
             }
 
             if self.period_timer == 0 {
                 self.period_timer = (2048 - self.period_and_ctrl.get_period()) * 2;
-                self.wave_ram.inc_sample_index();
+                self.wave_ram.inc_sample_index(); // generate sample
             }
         }
     }
 
     pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
-        if !self.is_enabled(master_ctrl) {
-            return 0;
+        if master_ctrl.is_ch_active(ChannelType::CH3) && self.dac_enable.is_dac_enabled() {
+            return self.wave_ram.sample_buffer >> self.volume_shift;
         }
 
-        self.wave_ram.sample_buffer >> self.volume_shift
+        0
     }
 
     fn trigger(&mut self, master_ctrl: &mut NR52) {
@@ -103,13 +100,9 @@ impl WaveChannel {
             self.length_timer.reset();
         }
 
-        self.period_timer = self.period_and_ctrl.get_period();
+        //self.period_timer = self.period_and_ctrl.get_period();
         self.volume_shift = self.output_level.get_volume_shift();
         self.wave_ram.reset();
-    }
-
-    fn is_enabled(&self, master_ctrl: &NR52) -> bool {
-        self.dac_enable.is_dac_enabled() && master_ctrl.is_ch_active(ChannelType::CH3)
     }
 
     fn write_period_high(&mut self, value: u8, nr52: &mut NR52) {
@@ -176,7 +169,7 @@ impl NR30 {
     }
 
     pub fn read(&self) -> u8 {
-        self.byte & 0b1000_0000
+        self.byte | 0b1000_0000
     }
 }
 
@@ -187,7 +180,7 @@ pub struct NR32 {
 
 impl NR32 {
     pub fn read(&self) -> u8 {
-        self.byte & CH3_NR32_OUTPUT_LEVEL_MASK
+        self.byte & 0b0110_0000
     }
 
     pub fn get_volume_shift(&self) -> u8 {
