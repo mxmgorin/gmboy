@@ -3,10 +3,11 @@ use crate::config::GraphicsConfig;
 use crate::emu::RunMode;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
+use crate::ui::audio::{create_audio_device, BufferedAudioCallback};
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::text::{calc_text_width, draw_text, fill_texture, get_text_height};
-use sdl2::audio::{AudioDevice, AudioSpecDesired};
+use sdl2::audio::{AudioDevice};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
@@ -32,7 +33,7 @@ pub struct Ui {
     debug_window: Option<DebugWindow>,
     layout: Layout,
 
-    _audio_device: AudioDevice<AudioCallback>,
+    _audio_device: AudioDevice<BufferedAudioCallback>,
     pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 
     pub config: GraphicsConfig,
@@ -90,21 +91,7 @@ impl Ui {
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
-        let audio_subsystem = sdl_context.audio()?;
-        let desired_spec = AudioSpecDesired {
-            freq: Some(44100),
-            channels: Some(1),
-            samples: Some(512),
-        };
-
-        let audio_buffer = Arc::new(Mutex::new(VecDeque::with_capacity(1024)));
-        let audio_buffer_clone = audio_buffer.clone();
-        let audio_device =
-            audio_subsystem.open_playback(None, &desired_spec, move |_spec| AudioCallback {
-                buffer: audio_buffer_clone,
-            })?;
-
-        audio_device.resume();
+        let (audio_device, audio_buffer) = create_audio_device(&sdl_context)?;
 
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
@@ -387,21 +374,5 @@ pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
         curr_idx + 1
     } else {
         0
-    }
-}
-
-struct AudioCallback {
-    buffer: Arc<Mutex<VecDeque<u8>>>,
-}
-
-impl sdl2::audio::AudioCallback for AudioCallback {
-    type Channel = u8;
-
-    fn callback(&mut self, out: &mut [u8]) {
-        let mut buffer = self.buffer.lock().unwrap();
-
-        for sample in out.iter_mut() {
-            *sample = buffer.pop_front().unwrap_or(128); // Default to silence (middle)
-        }
     }
 }

@@ -2,6 +2,7 @@ mod debug_window;
 pub mod events;
 mod text;
 pub mod ui;
+mod audio;
 
 pub use ui::*;
 

@@ -20,7 +20,7 @@ pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
 
 #[derive(Debug, Clone)]
 pub struct Apu {
-    // internal mem
+    // internal
     ch1: SquareChannel,
     ch2: SquareChannel,
     ch3: WaveChannel,
@@ -30,7 +30,7 @@ pub struct Apu {
     master_volume: NR50,
 
     // other data
-    counter: u16,
+    sample_clock: u32,
     frame_sequencer: FrameSequencer,
     pub buffer: Arc<Mutex<VecDeque<u8>>>,
 }
@@ -45,7 +45,7 @@ impl Default for Apu {
             master_ctrl: NR52::default(),
             sound_panning: NR51::default(),
             master_volume: Default::default(),
-            counter: 0,
+            sample_clock: 0,
             frame_sequencer: Default::default(),
             buffer: Arc::new(Mutex::new(Default::default())),
         }
@@ -54,15 +54,16 @@ impl Default for Apu {
 
 impl Apu {
     pub fn tick(&mut self) {
+        self.sample_clock = self.sample_clock.wrapping_add(1);
         self.frame_sequencer
-            .tick(&mut self.master_ctrl, &mut self.ch3);
-        self.counter = self.counter.wrapping_add(1);
+            .tick(self.sample_clock, &mut self.master_ctrl, &mut self.ch3);
 
         self.ch3.tick(&self.master_ctrl);
 
-        let cpu_cycles_per_sample = (CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32) as u16;
+        // down sample by nearest-neighbor
+        let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
 
-        if self.counter % cpu_cycles_per_sample == 0 {
+        if self.sample_clock % ticks_per_sample == 0 {
             let (output_left, output_right) = self.mix_channels();
             let mut buffer = self.buffer.lock().unwrap();
             buffer.push_back(output_left);
