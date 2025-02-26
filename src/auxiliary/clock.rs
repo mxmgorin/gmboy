@@ -1,10 +1,11 @@
 use crate::auxiliary::dma::Dma;
 use crate::bus::Bus;
 use crate::ppu::Ppu;
+use std::time::{Duration, Instant};
 
 pub const T_CYCLES_PER_M_CYCLE: usize = 4;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Clock {
     pub t_cycles: usize,
     pub ppu: Option<Ppu>,
@@ -41,5 +42,12 @@ impl Clock {
             
             bus.io.apu.tick();
         }
+    }
+}
+
+pub fn spin_wait(duration: Duration) {
+    let start = Instant::now();
+    while start.elapsed() < duration {
+        std::hint::spin_loop();
     }
 }

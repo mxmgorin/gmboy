@@ -3,8 +3,8 @@ use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{LcdMode, LcdStatSrc};
 use crate::ppu::pipeline::Pipeline;
-use std::thread;
 use std::time::{Duration, Instant};
+use crate::auxiliary::clock::spin_wait;
 
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
@@ -158,7 +158,9 @@ impl Ppu {
 
     pub fn limit(&self) {
         if self.last_frame_duration < self.target_frame_duration {
-            thread::sleep(self.target_frame_duration - self.last_frame_duration);
+            spin_wait(self.target_frame_duration - self.last_frame_duration);
         }
     }
 }
+
+
