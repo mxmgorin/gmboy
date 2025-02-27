@@ -30,7 +30,7 @@ impl GameAudio {
     }
 
     pub fn play(&mut self, apu: &mut Apu) -> Result<(), String> {
-        if apu.is_buffer_full() {
+        if apu.is_buffer_ready() {
             self.device.queue_audio(apu.take_buffer())?;
         }
 

@@ -67,7 +67,7 @@ impl Apu {
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
 
         if self.ticks_count % ticks_per_sample == 0 {
-            if self.is_buffer_full() {
+            if self.is_buffer_ready() {
                 self.buffer_index = 0;
             }
 
@@ -89,12 +89,8 @@ impl Apu {
         buffer
     }
 
-    pub fn is_buffer_empty(&self) -> bool {
-        self.buffer_index == 0
-    }
-
-    pub fn is_buffer_full(&self) -> bool {
-        self.buffer_index >= AUDIO_BUFFER_SIZE
+    pub fn is_buffer_ready(&self) -> bool {
+        self.buffer_index >= AUDIO_BUFFER_SIZE / 2
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
