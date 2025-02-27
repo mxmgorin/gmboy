@@ -87,7 +87,7 @@ impl SquareChannel {
         }
     }
 
-    pub fn write(&mut self, address: u16, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         match self.get_offset(address) {
             0 => {} // todo
             1 => self.nrx1_len_timer_duty_cycle.byte = value,
@@ -99,7 +99,7 @@ impl SquareChannel {
                 self.nrx3x4_period_and_ctrl.high_and_ctrl.write(value);
 
                 if self.nrx3x4_period_and_ctrl.high_and_ctrl.is_triggered() {
-                    self.trigger();
+                    self.trigger(master_ctrl);
                 }
             }
             _ => panic!("Invalid Square address: {:#X}", address),
@@ -155,11 +155,15 @@ impl SquareChannel {
         }
     }
 
-    fn trigger(&mut self) {
+    fn trigger(&mut self, master_ctrl: &mut NR52) {
+        master_ctrl.activate_ch(&self.length_timer.ch_type);
+
+        if self.length_timer.is_expired() {
+            self.length_timer.reset();
+        }
+
+        self.period_timer = (2048 - self.nrx3x4_period_and_ctrl.get_period()) * 4;
         // todo:
-        // Ch1 is enabled.
-        // If length timer expired it is reset.
-        // The period divider is set to the contents of NR13 and NR14.
         // Envelope timer is reset.
         // Volume is set to contents of NR12 initial volume.
         // Sweep does several things.

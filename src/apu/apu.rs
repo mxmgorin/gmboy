@@ -24,7 +24,7 @@ pub struct Apu {
     ch2: SquareChannel,
     ch3: WaveChannel,
     ch4: NoiseChannel,
-    master_ctrl: NR52,
+    nr52_master_ctrl: NR52,
     sound_panning: NR51,
     master_volume: NR50,
 
@@ -42,7 +42,7 @@ impl Default for Apu {
             ch2: SquareChannel::ch2(),
             ch3: WaveChannel::default(),
             ch4: NoiseChannel::default(),
-            master_ctrl: NR52::default(),
+            nr52_master_ctrl: NR52::default(),
             sound_panning: NR51::default(),
             master_volume: Default::default(),
             sample_clock: 0,
@@ -57,9 +57,9 @@ impl Apu {
     pub fn tick(&mut self) {
         self.sample_clock = self.sample_clock.wrapping_add(1);
         self.frame_sequencer
-            .tick(self.sample_clock, &mut self.master_ctrl, &mut self.ch3);
+            .tick(self.sample_clock, &mut self.nr52_master_ctrl, &mut self.ch3);
 
-        self.ch3.tick(&self.master_ctrl);
+        self.ch3.tick(&self.nr52_master_ctrl);
 
         // down sample by nearest-neighbor
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
@@ -98,10 +98,10 @@ impl Apu {
         }
 
         if address == AUDIO_MASTER_CONTROL_ADDRESS {
-            let prev_enable = self.master_ctrl.is_audio_on();
-            self.master_ctrl.write(value);
+            let prev_enable = self.nr52_master_ctrl.is_audio_on();
+            self.nr52_master_ctrl.write(value);
 
-            if !prev_enable && self.master_ctrl.is_audio_on() {
+            if !prev_enable && self.nr52_master_ctrl.is_audio_on() {
                 // turning on
                 self.ch3.wave_ram.clear_sample_buffer();
             }
@@ -109,20 +109,20 @@ impl Apu {
             return;
         }
 
-        if !self.master_ctrl.is_audio_on() {
+        if !self.nr52_master_ctrl.is_audio_on() {
             return;
         }
 
         // todo: the length timers (in NRx1) on monochrome models also writable event when turned off
 
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value),
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value),
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52_master_ctrl),
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52_master_ctrl),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
-                self.ch3.write(address, value, &mut self.master_ctrl)
+                self.ch3.write(address, value, &mut self.nr52_master_ctrl)
             }
             CH4_START_ADDRESS..=CH4_END_ADDRESS => {}
-            AUDIO_MASTER_CONTROL_ADDRESS => self.master_ctrl.write(value),
+            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52_master_ctrl.write(value),
             SOUND_PLANNING_ADDRESS => self.sound_panning.byte = value,
             MASTER_VOLUME_ADDRESS => self.master_volume.byte = value,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.write(address, value),
@@ -136,7 +136,7 @@ impl Apu {
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.read(address),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
-            AUDIO_MASTER_CONTROL_ADDRESS => self.master_ctrl.read(),
+            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52_master_ctrl.read(),
             SOUND_PLANNING_ADDRESS => self.sound_panning.byte,
             MASTER_VOLUME_ADDRESS => self.master_volume.byte,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.read(address),
@@ -151,11 +151,11 @@ impl Apu {
 
         // Channel 3
         if self.sound_panning.ch3_left() {
-            left_output += self.ch3.get_output(&self.master_ctrl);
+            left_output += self.ch3.get_output(&self.nr52_master_ctrl);
         }
 
         if self.sound_panning.ch3_right() {
-            right_output += self.ch3.get_output(&self.master_ctrl);
+            right_output += self.ch3.get_output(&self.nr52_master_ctrl);
         }
 
         // Apply volume control from NR50
