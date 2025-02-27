@@ -1,5 +1,5 @@
 use crate::apu::channel::ChannelType;
-use crate::apu::registers::NRX4;
+use crate::apu::registers::NRx4;
 use crate::apu::NR52;
 
 //A length counter disables a channel when it decrements to zero. It contains an internal counter
@@ -26,7 +26,7 @@ impl LengthTimer {
         }
     }
 
-    pub fn tick(&mut self, nr52: &mut NR52, nrx4: &mut NRX4) {
+    pub fn tick(&mut self, nr52: &mut NR52, nrx4: &mut NRx4) {
         if !nrx4.is_length_enabled() || self.is_expired() {
             return;
         }

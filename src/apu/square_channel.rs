@@ -1,6 +1,6 @@
 use crate::apu::channel::ChannelType;
 use crate::apu::length_timer::LengthTimer;
-use crate::apu::registers::{NRX1, NRX2, NRX3X4};
+use crate::apu::registers::{NRx1, NRx2, NRx3x4};
 use crate::apu::NR52;
 use crate::get_bit_flag;
 
@@ -31,70 +31,71 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
 #[derive(Debug, Clone)]
 pub struct SquareChannel {
     // registers
-    sweep: Option<NR10>,
-    nrx1_len_timer_duty_cycle: NRX1,
-    nrx2_volume_envelope: NRX2,
-    nrx3x4_period_and_ctrl: NRX3X4,
+    nr0x_sweep: Option<NR10>,
+    nrx1_len_timer_duty_cycle: NRx1,
+    nrx2_volume_envelope: NRx2,
+    nrx3x4_period_and_ctrl: NRx3x4,
 
     // other data
+    start_address: u16,
     length_timer: LengthTimer,
     period_timer: u16, // Internal timer for frequency stepping
     duty_number: u8,
-    duty_position: u8,
+    duty_sequence: u8,
     output: u8,
 }
 
 impl SquareChannel {
     pub fn ch1() -> SquareChannel {
         Self {
-            sweep: Some(Default::default()),
+            nr0x_sweep: Some(Default::default()),
             nrx1_len_timer_duty_cycle: Default::default(),
             nrx2_volume_envelope: Default::default(),
             nrx3x4_period_and_ctrl: Default::default(),
+            start_address: CH1_START_ADDRESS,
             length_timer: LengthTimer::new(ChannelType::CH1),
             period_timer: 0,
             duty_number: 0,
-            duty_position: 0,
+            duty_sequence: 0,
             output: 0,
         }
     }
 
     pub fn ch2() -> SquareChannel {
         Self {
-            sweep: None,
+            nr0x_sweep: None,
             nrx1_len_timer_duty_cycle: Default::default(),
             nrx2_volume_envelope: Default::default(),
             nrx3x4_period_and_ctrl: Default::default(),
+            start_address: CH2_START_ADDRESS,
             length_timer: LengthTimer::new(ChannelType::CH2),
             period_timer: 0,
             duty_number: 0,
-            duty_position: 0,
+            duty_sequence: 0,
             output: 0,
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        // todo: handle for ch1
-        match address {
-            //NR10_CH1_SWEEP_ADDRESS => 0,
-            NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS => self.nrx1_len_timer_duty_cycle.byte,
-            NR22_CH2_VOL_ENVELOPE_ADDRESS => self.nrx2_volume_envelope.byte,
-            NR23_CH2_PERIOD_LOW_ADDRESS => 0xFF,
-            NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS => {
-                self.nrx3x4_period_and_ctrl.high_and_ctrl.read()
-            }
+        match self.get_offset(address) {
+            0 => 0, // todo
+            1 => self.nrx1_len_timer_duty_cycle.byte,
+            2 => self.nrx2_volume_envelope.byte,
+            3 => 0xFF,
+            4 => self.nrx3x4_period_and_ctrl.high_and_ctrl.read(),
             _ => panic!("Invalid Square address: {:#X}", address),
         }
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        // todo: handle for ch1
-        match address {
-            //NR10_CH1_SWEEP_ADDRESS => 0,
-            NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS => self.nrx1_len_timer_duty_cycle.byte = value,
-            NR22_CH2_VOL_ENVELOPE_ADDRESS => self.nrx2_volume_envelope.byte = value,
-            NR23_CH2_PERIOD_LOW_ADDRESS => self.nrx3x4_period_and_ctrl.period_low.write(value),
-            NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS => {
+        match self.get_offset(address) {
+            0 => {} // todo
+            1 => self.nrx1_len_timer_duty_cycle.byte = value,
+            // Writes to this register while the channel is on require retriggering it afterwards.
+            // If the write turns the channel off, retriggering is not necessary (it would do nothing).
+            2 => self.nrx2_volume_envelope.byte = value,
+            3 => self.nrx3x4_period_and_ctrl.period_low.write(value),
+            4 => {
                 self.nrx3x4_period_and_ctrl.high_and_ctrl.write(value);
 
                 if self.nrx3x4_period_and_ctrl.high_and_ctrl.is_triggered() {
@@ -103,6 +104,16 @@ impl SquareChannel {
             }
             _ => panic!("Invalid Square address: {:#X}", address),
         }
+    }
+
+    fn get_offset(&self, address: u16) -> u16 {
+        let mut offset = address - self.start_address;
+
+        if self.start_address == CH2_START_ADDRESS {
+            offset += 1;
+        }
+
+        offset
     }
 
     pub fn tick_envelope(&mut self, _master_ctrl: &mut NR52) {
@@ -139,7 +150,7 @@ impl SquareChannel {
                 };
 
                 self.period_timer += (2048 - self.nrx3x4_period_and_ctrl.get_period()) * 4;
-                self.duty_position = (self.duty_position + 1) & 0x07;
+                self.duty_sequence = (self.duty_sequence + 1) & 0x07;
             }
         }
     }

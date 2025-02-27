@@ -116,7 +116,7 @@ impl Apu {
         // todo: the length timers (in NRx1) on monochrome models also writable event when turned off
 
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => {}
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value),
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
                 self.ch3.write(address, value, &mut self.master_ctrl)
@@ -132,7 +132,7 @@ impl Apu {
 
     pub fn read(&self, address: u16) -> u8 {
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => 0,
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.read(address),
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.read(address),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,

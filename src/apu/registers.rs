@@ -5,11 +5,11 @@ pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;
 
 /// FF11 — NR11: Channel 1 length timer & duty cycle
 #[derive(Debug, Clone, Default)]
-pub struct NRX1 {
+pub struct NRx1 {
     pub byte: u8,
 }
 
-impl NRX1 {
+impl NRx1 {
     pub fn duty_cycle(&self) -> u8 {
         self.byte & 0b1100_0000
     }
@@ -23,11 +23,11 @@ impl NRX1 {
 /// FF12 — NR12: Channel 1 volume & envelope
 /// This register controls the digital amplitude of the “high” part of the pulse, and the sweep applied to that setting.
 #[derive(Debug, Clone, Default)]
-pub struct NRX2 {
+pub struct NRx2 {
     pub byte: u8,
 }
 
-impl NRX2 {
+impl NRx2 {
     /// The envelope’s direction; 0 = decrease volume over time, 1 = increase volume over time.
     pub fn increasing_envelope_direction(&self) -> bool {
         get_bit_flag(self.byte, 3)
@@ -48,12 +48,12 @@ impl NRX2 {
 
 /// Merged together NRX3 and NRX4 for convenience
 #[derive(Clone, Debug, Default)]
-pub struct NRX3X4 {
-    pub period_low: NRX3,
-    pub high_and_ctrl: NRX4,
+pub struct NRx3x4 {
+    pub period_low: NRx3,
+    pub high_and_ctrl: NRx4,
 }
 
-impl NRX3X4 {
+impl NRx3x4 {
     pub fn get_period(&self) -> u16 {
         let value = LittleEndianBytes {
             low_byte: self.period_low.byte,
@@ -66,11 +66,11 @@ impl NRX3X4 {
 
 ///  Period low, write-only
 #[derive(Clone, Debug, Default)]
-pub struct NRX3 {
+pub struct NRx3 {
     byte: u8,
 }
 
-impl NRX3 {
+impl NRx3 {
     pub fn write(&mut self, value: u8) {
         self.byte = value;
     }
@@ -78,11 +78,11 @@ impl NRX3 {
 
 /// Period high & control
 #[derive(Clone, Debug, Default)]
-pub struct NRX4 {
+pub struct NRx4 {
     byte: u8,
 }
 
-impl NRX4 {
+impl NRx4 {
     /// Read value of 'length enable' bit. Trigger and period are write only
     pub fn read(&self) -> u8 {
         self.get_length_enable()

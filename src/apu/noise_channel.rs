@@ -1,4 +1,4 @@
-use crate::apu::registers::{NRX1, NRX2, NRX4};
+use crate::apu::registers::{NRx1, NRx2, NRx4};
 use crate::get_bit_flag;
 
 pub const CH4_START_ADDRESS: u16 = NR41_CH4_LENGTH_TIMER_ADDRESS;
@@ -11,10 +11,10 @@ pub const NR44_CH4_CONTROL_ADDRESS: u16 = 0xFF23;
 
 #[derive(Debug, Clone, Default)]
 pub struct NoiseChannel {
-    pub length_timer: NRX1,
-    pub volume_envelope: NRX2,
+    pub length_timer: NRx1,
+    pub volume_envelope: NRx2,
     pub frequency_randomness: NR43,
-    pub control: NRX4,
+    pub control: NRx4,
 }
 
 /// FF22 — NR43: Channel 4 frequency & randomness
