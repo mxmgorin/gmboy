@@ -1,4 +1,4 @@
-use crate::apu::channel::ChannelType;
+use crate::apu::channels::channel::ChannelType;
 use crate::apu::registers::NRx3x4;
 
 #[derive(Clone, Debug)]

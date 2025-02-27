@@ -1,6 +1,6 @@
-use crate::apu::noise_channel::CH4_START_ADDRESS;
-use crate::apu::square_channel::{CH1_START_ADDRESS, CH2_START_ADDRESS};
-use crate::apu::wave_channel::CH3_START_ADDRESS;
+use crate::apu::channels::noise_channel::CH4_START_ADDRESS;
+use crate::apu::channels::square_channel::{CH1_START_ADDRESS, CH2_START_ADDRESS};
+use crate::apu::channels::wave_channel::CH3_START_ADDRESS;
 
 // Square 1: Sweep -> Timer -> Duty -> Length Counter -> Envelope -> Mixer
 // Square 2:          Timer -> Duty -> Length Counter -> Envelope -> Mixer

@@ -1,6 +1,6 @@
-use crate::apu::channel::ChannelType;
-use crate::apu::length_timer::LengthTimer;
-use crate::apu::period_timer::PeriodTimer;
+use crate::apu::channels::channel::ChannelType;
+use crate::apu::timers::length_timer::LengthTimer;
+use crate::apu::timers::period_timer::PeriodTimer;
 use crate::apu::registers::{NRx1, NRx3x4};
 use crate::apu::NR52;
 

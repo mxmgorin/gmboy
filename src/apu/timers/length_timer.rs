@@ -1,4 +1,4 @@
-use crate::apu::channel::ChannelType;
+use crate::apu::channels::channel::ChannelType;
 use crate::apu::registers::{NRx1, NRx4};
 use crate::apu::NR52;
 

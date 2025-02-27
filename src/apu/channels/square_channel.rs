@@ -1,7 +1,7 @@
-use crate::apu::channel::ChannelType;
-use crate::apu::length_timer::LengthTimer;
-use crate::apu::period_timer::PeriodTimer;
+use crate::apu::channels::channel::ChannelType;
 use crate::apu::registers::{NRx1, NRx2, NRx3x4};
+use crate::apu::timers::length_timer::LengthTimer;
+use crate::apu::timers::period_timer::PeriodTimer;
 use crate::apu::NR52;
 use crate::get_bit_flag;
 
@@ -34,7 +34,7 @@ pub struct SquareChannel {
     // registers
     nr0x_sweep: Option<NR10>,
     nrx1_len_timer_duty_cycle: NRx1,
-    nrx2_volume_envelope: NRx2,
+    nrx2_volume_envelope_and_dac: NRx2,
     nrx3x4_period_and_ctrl: NRx3x4,
 
     // other data
@@ -53,7 +53,7 @@ impl SquareChannel {
         Self {
             nr0x_sweep: Some(Default::default()),
             nrx1_len_timer_duty_cycle: NRx1::new(ch_type),
-            nrx2_volume_envelope: Default::default(),
+            nrx2_volume_envelope_and_dac: Default::default(),
             nrx3x4_period_and_ctrl: Default::default(),
             ch_type,
             length_timer: LengthTimer::new(ch_type),
@@ -70,7 +70,7 @@ impl SquareChannel {
         Self {
             nr0x_sweep: None,
             nrx1_len_timer_duty_cycle: NRx1::new(ch_type),
-            nrx2_volume_envelope: Default::default(),
+            nrx2_volume_envelope_and_dac: Default::default(),
             nrx3x4_period_and_ctrl: Default::default(),
             ch_type,
             length_timer: LengthTimer::new(ch_type),
@@ -85,7 +85,7 @@ impl SquareChannel {
         match self.get_offset(address) {
             0 => 0, // todo
             1 => self.nrx1_len_timer_duty_cycle.byte,
-            2 => self.nrx2_volume_envelope.byte,
+            2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
             4 => self.nrx3x4_period_and_ctrl.nrx4.read(),
             _ => panic!("Invalid Square address: {:#X}", address),
@@ -98,7 +98,7 @@ impl SquareChannel {
             1 => self.nrx1_len_timer_duty_cycle.byte = value,
             // Writes to this register while the channel is on require retriggering it afterwards.
             // If the write turns the channel off, retriggering is not necessary (it would do nothing).
-            2 => self.nrx2_volume_envelope.byte = value,
+            2 => self.nrx2_volume_envelope_and_dac.byte = value,
             3 => self.nrx3x4_period_and_ctrl.period_low.write(value),
             4 => {
                 self.nrx3x4_period_and_ctrl.nrx4.write(value);
@@ -121,6 +121,16 @@ impl SquareChannel {
         offset
     }
 
+    pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
+        if master_ctrl.is_ch_active(&self.ch_type)
+            && self.nrx2_volume_envelope_and_dac.is_dac_enabled()
+        {
+            return 0; // todo
+        }
+
+        0
+    }
+
     pub fn tick_envelope(&mut self, _master_ctrl: &mut NR52) {
         // todo
     }
@@ -138,7 +148,7 @@ impl SquareChannel {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.output =
                 if WAVE_DUTY_PATTERNS[self.duty_number as usize][self.duty_number as usize] == 1 {
-                    self.nrx2_volume_envelope.initial_volume()
+                    self.nrx2_volume_envelope_and_dac.initial_volume()
                 } else {
                     0
                 };

@@ -1,4 +1,4 @@
-use crate::apu::channel::ChannelType;
+use crate::apu::channels::channel::ChannelType;
 use crate::{get_bit_flag, set_bit, LittleEndianBytes};
 
 pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;

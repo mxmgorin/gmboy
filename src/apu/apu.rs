@@ -1,12 +1,12 @@
-use crate::apu::channel::ChannelType;
-use crate::apu::frame_sequencer::FrameSequencer;
-use crate::apu::noise_channel::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
-use crate::apu::square_channel::{
+use crate::apu::channels::channel::ChannelType;
+use crate::apu::channels::noise_channel::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
+use crate::apu::channels::square_channel::{
     SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
 };
-use crate::apu::wave_channel::{
+use crate::apu::channels::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
+use crate::apu::mixer::Mixer;
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 
 pub const APU_CLOCK_SPEED: u16 = 512;
@@ -17,6 +17,8 @@ pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
 pub const AUDIO_BUFFER_SIZE: usize = 1024;
 
+pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
+
 #[derive(Debug, Clone)]
 pub struct Apu {
     // internal
@@ -25,12 +27,11 @@ pub struct Apu {
     ch3: WaveChannel,
     ch4: NoiseChannel,
     nr52_master_ctrl: NR52,
-    sound_panning: NR51,
-    master_volume: NR50,
+    mixer: Mixer,
 
     // other data
-    sample_clock: u32,
-    frame_sequencer: FrameSequencer,
+    frame_sequencer_step: u8,
+    ticks_count: u32,
     buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
     buffer_index: usize,
 }
@@ -43,10 +44,9 @@ impl Default for Apu {
             ch3: WaveChannel::default(),
             ch4: NoiseChannel::default(),
             nr52_master_ctrl: NR52::default(),
-            sound_panning: NR51::default(),
-            master_volume: Default::default(),
-            sample_clock: 0,
-            frame_sequencer: Default::default(),
+            mixer: Default::default(),
+            frame_sequencer_step: 0,
+            ticks_count: 0,
             buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
             buffer_index: 0,
         }
@@ -55,26 +55,20 @@ impl Default for Apu {
 
 impl Apu {
     pub fn tick(&mut self) {
-        self.sample_clock = self.sample_clock.wrapping_add(1);
-        self.frame_sequencer.tick(
-            self.sample_clock,
-            &mut self.nr52_master_ctrl,
-            &mut self.ch1,
-            &mut self.ch2,
-            &mut self.ch3,
-        );
-
+        self.ticks_count = self.ticks_count.wrapping_add(1);
+        self.sequence_frame();
         self.ch3.tick();
 
         // down sample by nearest-neighbor
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
 
-        if self.sample_clock % ticks_per_sample == 0 {
+        if self.ticks_count % ticks_per_sample == 0 {
             if self.is_buffer_full() {
                 self.buffer_index = 0;
             }
 
-            let (output_left, output_right) = self.mix_channels();
+            let outputs = self.get_outputs();
+            let (output_left, output_right) = self.mixer.mix(outputs);
             self.buffer[self.buffer_index] = output_left as f32 / 66.0;
             self.buffer[self.buffer_index + 1] = output_right as f32 / 66.0;
             self.buffer_index += 2;
@@ -132,8 +126,8 @@ impl Apu {
             }
             CH4_START_ADDRESS..=CH4_END_ADDRESS => {}
             AUDIO_MASTER_CONTROL_ADDRESS => self.nr52_master_ctrl.write(value),
-            SOUND_PLANNING_ADDRESS => self.sound_panning.byte = value,
-            MASTER_VOLUME_ADDRESS => self.master_volume.byte = value,
+            SOUND_PLANNING_ADDRESS => self.mixer.nr51_sound_panning.byte = value,
+            MASTER_VOLUME_ADDRESS => self.mixer.nr50_master_volume.byte = value,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.write(address, value),
             _ => panic!("Invalid APU address: {:x}", address),
         }
@@ -146,33 +140,73 @@ impl Apu {
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
             AUDIO_MASTER_CONTROL_ADDRESS => self.nr52_master_ctrl.read(),
-            SOUND_PLANNING_ADDRESS => self.sound_panning.byte,
-            MASTER_VOLUME_ADDRESS => self.master_volume.byte,
+            SOUND_PLANNING_ADDRESS => self.mixer.nr51_sound_panning.byte,
+            MASTER_VOLUME_ADDRESS => self.mixer.nr50_master_volume.byte,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.read(address),
             _ => panic!("Invalid APU address: {:x}", address),
         }
     }
 
-    /// Combines outputs from all channels
-    fn mix_channels(&self) -> (u8, u8) {
-        let mut left_output = 0;
-        let mut right_output = 0;
+    /// Gets output from all channels
+    fn get_outputs(&self) -> [u8; 4] {
+        let mut outputs = [0; 4];
 
-        // Channel 3
-        if self.sound_panning.ch3_left() {
-            left_output += self.ch3.get_output(&self.nr52_master_ctrl);
+        outputs[0] = self.ch1.get_output(&self.nr52_master_ctrl);
+        outputs[1] = self.ch2.get_output(&self.nr52_master_ctrl);
+        outputs[2] = self.ch3.get_output(&self.nr52_master_ctrl);
+
+        outputs
+    }
+
+    // Step   Length Ctr  Vol Env     Sweep
+    // ---------------------------------------
+    // 0      Clock       -           -
+    // 1      -           -           -
+    // 2      Clock       -           Clock
+    // 3      -           -           -
+    // 4      Clock       -           -
+    // 5      -           -           -
+    // 6      Clock       -           Clock
+    // 7      -           Clock       -
+    // ---------------------------------------
+    // Rate   256 Hz      64 Hz       128 Hz
+    /// The frame sequencer generates low frequency clocks for the modulation units. It is clocked by a 512 Hz timer.
+    fn sequence_frame(&mut self) {
+        if self.ticks_count % FRAME_SEQUENCER_DIV as u32 == 0 {
+            match self.frame_sequencer_step {
+                0 => {
+                    // 256 Hz, tick_length
+                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                }
+                1 => {}
+                2 => {
+                    // tick length, sweep
+                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                }
+                3 => {}
+                4 => {
+                    // 256 Hz, tick_length
+                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                }
+                5 => {}
+                6 => {
+                    // 128 Hz, tick length, sweep
+                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                }
+                7 => {} // 64 Hz, tick envelope
+                _ => unreachable!(),
+            }
+
+            self.frame_sequencer_step = (self.frame_sequencer_step + 1) & 7;
         }
-
-        if self.sound_panning.ch3_right() {
-            right_output += self.ch3.get_output(&self.nr52_master_ctrl);
-        }
-
-        // Apply volume control from NR50
-        let left_volume = self.master_volume.left_volume();
-        let right_volume = self.master_volume.right_volume();
-
-        // Apply NR50 scaling
-        (left_output * left_volume, right_output * right_volume)
     }
 }
 
