@@ -1,7 +1,8 @@
 use crate::apu::channels::channel::ChannelType;
+use crate::apu::dac::{apply_dac, DacEnable, DigitalOutputProducer};
+use crate::apu::registers::{NRx1, NRx2, NRx3x4};
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
-use crate::apu::registers::{NRx1, NRx3x4};
 use crate::apu::NR52;
 
 pub const CH3_START_ADDRESS: u16 = CH3_NR30_DAC_ENABLE_ADDRESS;
@@ -16,6 +17,24 @@ pub const CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS: u16 = 0xFF1E;
 pub const CH3_WAVE_RAM_START: u16 = 0xFF30;
 pub const CH3_WAVE_RAM_END: u16 = 0xFF3F;
 pub const CH3_NR30_DAC_ENABLE_POS: u8 = 7;
+
+impl DacEnable for WaveChannel {
+    fn is_dac_enabled(&self) -> bool {
+        self.nrx0_dac_enable.is_dac_enabled()
+    }
+}
+
+impl DigitalOutputProducer for WaveChannel {
+    fn get_output(&self, nr52: NR52) -> u8 {
+        if nr52.is_ch_active(&ChannelType::CH3) {
+            let output = self.wave_ram.sample_buffer >> self.volume_shift;
+
+            return output;
+        }
+
+        0
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct WaveChannel {
@@ -91,14 +110,6 @@ impl WaveChannel {
         }
     }
 
-    pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
-        if master_ctrl.is_ch_active(&ChannelType::CH3) && self.nrx0_dac_enable.is_dac_enabled() {
-            return self.wave_ram.sample_buffer >> self.volume_shift;
-        }
-
-        0
-    }
-
     fn trigger(&mut self, master_ctrl: &mut NR52) {
         master_ctrl.activate_ch(&ChannelType::CH3);
 
@@ -158,7 +169,7 @@ impl WaveRam {
 }
 
 // DAC enable
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Copy)]
 pub struct NR30 {
     byte: u8,
 }
@@ -169,12 +180,12 @@ impl NR30 {
     }
 
     pub fn read(&self) -> u8 {
-        self.byte | 1 << CH3_NR30_DAC_ENABLE_POS
+        self.byte | (1 << CH3_NR30_DAC_ENABLE_POS)
     }
 }
 
 /// Output level
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Copy)]
 pub struct NR32 {
     byte: u8,
 }

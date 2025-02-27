@@ -12,6 +12,7 @@ pub mod ui;
 pub use cart::*;
 pub use cpu::*;
 pub use ppu::*;
+pub use apu::*;
 
 pub struct LittleEndianBytes {
     pub low_byte: u8,

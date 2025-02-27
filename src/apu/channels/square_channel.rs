@@ -1,4 +1,5 @@
 use crate::apu::channels::channel::ChannelType;
+use crate::apu::dac::{DacEnable, DigitalOutputProducer};
 use crate::apu::registers::{NRx1, NRx2, NRx3x4};
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
@@ -29,6 +30,30 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
     [0, 1, 1, 1, 1, 1, 1, 0],
 ];
 
+impl DacEnable for SquareChannel {
+    fn is_dac_enabled(&self) -> bool {
+        self.nrx2_volume_envelope_and_dac.is_dac_enabled()
+    }
+}
+
+impl DigitalOutputProducer for SquareChannel {
+    fn get_output(&self, master_ctrl: NR52) -> u8 {
+        if master_ctrl.is_ch_active(&self.ch_type) {
+            let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
+
+            let output = if WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] == 1 {
+                self.nrx2_volume_envelope_and_dac.initial_volume()
+            } else {
+                0
+            };
+
+            return output;
+        }
+
+        0
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SquareChannel {
     // registers
@@ -41,9 +66,7 @@ pub struct SquareChannel {
     ch_type: ChannelType,
     period_timer: PeriodTimer,
     length_timer: LengthTimer,
-    duty_number: u8,
     duty_sequence: usize,
-    output: u8,
 }
 
 impl SquareChannel {
@@ -58,9 +81,7 @@ impl SquareChannel {
             ch_type,
             length_timer: LengthTimer::new(ch_type),
             period_timer: PeriodTimer::new(ch_type),
-            duty_number: 0,
             duty_sequence: 0,
-            output: 0,
         }
     }
 
@@ -75,15 +96,13 @@ impl SquareChannel {
             ch_type,
             length_timer: LengthTimer::new(ch_type),
             period_timer: PeriodTimer::new(ch_type),
-            duty_number: 0,
             duty_sequence: 0,
-            output: 0,
         }
     }
 
     pub fn read(&self, address: u16) -> u8 {
         match self.get_offset(address) {
-            0 => 0, // todo
+            0 => self.nr0x_sweep.expect("ch1 must have sweep").byte,
             1 => self.nrx1_len_timer_duty_cycle.byte,
             2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
@@ -94,10 +113,10 @@ impl SquareChannel {
 
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         match self.get_offset(address) {
-            0 => {} // todo
+            0 => self.nr0x_sweep.as_mut().expect("ch1 must have sweep").byte = value,
             1 => self.nrx1_len_timer_duty_cycle.byte = value,
-            // Writes to this register while the channel is on require retriggering it afterwards.
-            // If the write turns the channel off, retriggering is not necessary (it would do nothing).
+            // Writes to this register while the channel is on require re-triggering it after wards.
+            // If the write turns the channel off, re-triggering is not necessary (it would do nothing).
             2 => self.nrx2_volume_envelope_and_dac.byte = value,
             3 => self.nrx3x4_period_and_ctrl.period_low.write(value),
             4 => {
@@ -121,16 +140,6 @@ impl SquareChannel {
         offset
     }
 
-    pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
-        if master_ctrl.is_ch_active(&self.ch_type)
-            && self.nrx2_volume_envelope_and_dac.is_dac_enabled()
-        {
-            return self.output;
-        }
-
-        0
-    }
-
     pub fn tick_envelope(&mut self, _master_ctrl: &mut NR52) {
         // todo
     }
@@ -146,14 +155,6 @@ impl SquareChannel {
 
     pub fn tick(&mut self) {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
-            let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
-
-            self.output = if WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] == 1 {
-                self.nrx2_volume_envelope_and_dac.initial_volume()
-            } else {
-                0
-            };
-
             self.duty_sequence = (self.duty_sequence + 1) & 0x07;
         }
     }
@@ -175,7 +176,7 @@ impl SquareChannel {
 
 /// FF10 — NR10: Channel 1 sweep
 /// This register controls CH1’s period sweep functionality.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Copy)]
 pub struct NR10 {
     pub byte: u8,
 }

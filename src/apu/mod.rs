@@ -1,7 +1,8 @@
 pub mod apu;
-mod registers;
-mod timers;
-mod channels;
-mod mixer;
+pub mod registers;
+pub mod timers;
+pub mod channels;
+pub mod mixer;
+pub mod dac;
 
 pub use apu::*;

@@ -6,6 +6,7 @@ use crate::apu::channels::square_channel::{
 use crate::apu::channels::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
+use crate::apu::dac::apply_dac;
 use crate::apu::mixer::Mixer;
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 
@@ -57,7 +58,7 @@ impl Apu {
     pub fn tick(&mut self) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.sequence_frame();
-        
+
         self.ch1.tick();
         self.ch2.tick();
         self.ch3.tick();
@@ -70,10 +71,13 @@ impl Apu {
                 self.buffer_index = 0;
             }
 
-            let outputs = self.get_outputs();
-            let (output_left, output_right) = self.mixer.mix(outputs);
-            self.buffer[self.buffer_index] = output_left as f32 / 66.0;
-            self.buffer[self.buffer_index + 1] = output_right as f32 / 66.0;
+            self.mixer.outputs[0] = apply_dac(self.nr52_master_ctrl, &self.ch1);
+            self.mixer.outputs[1] = apply_dac(self.nr52_master_ctrl, &self.ch2);
+            self.mixer.outputs[2] = apply_dac(self.nr52_master_ctrl, &self.ch3);
+            let (output_left, output_right) = self.mixer.mix();
+
+            self.buffer[self.buffer_index] = output_left;
+            self.buffer[self.buffer_index + 1] = output_right;
             self.buffer_index += 2;
         }
     }
@@ -150,17 +154,6 @@ impl Apu {
         }
     }
 
-    /// Gets output from all channels
-    fn get_outputs(&self) -> [u8; 4] {
-        let mut outputs = [0; 4];
-
-        outputs[0] = self.ch1.get_output(&self.nr52_master_ctrl);
-        outputs[1] = self.ch2.get_output(&self.nr52_master_ctrl);
-        outputs[2] = self.ch3.get_output(&self.nr52_master_ctrl);
-
-        outputs
-    }
-
     // Step   Length Ctr  Vol Env     Sweep
     // ---------------------------------------
     // 0      Clock       -           -
@@ -214,7 +207,7 @@ impl Apu {
 }
 
 /// FF26 — NR52: Audio master control
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Copy)]
 pub struct NR52 {
     byte: u8,
 }
