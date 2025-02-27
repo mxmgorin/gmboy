@@ -176,6 +176,7 @@ impl Apu {
                 2 => {
                     // tick length, sweep
                     self.ch1.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch1.tick_sweep(&mut self.nr52_master_ctrl);
                     self.ch2.tick_length(&mut self.nr52_master_ctrl);
                     self.ch3.tick_length(&mut self.nr52_master_ctrl);
                 }
@@ -190,6 +191,7 @@ impl Apu {
                 6 => {
                     // tick length, sweep
                     self.ch1.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch1.tick_sweep(&mut self.nr52_master_ctrl);
                     self.ch2.tick_length(&mut self.nr52_master_ctrl);
                     self.ch3.tick_length(&mut self.nr52_master_ctrl);
                 }

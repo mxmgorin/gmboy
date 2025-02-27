@@ -6,6 +6,7 @@ use crate::apu::timers::period_timer::PeriodTimer;
 use crate::apu::NR52;
 use crate::get_bit_flag;
 use crate::timers::envelope_timer::EnvelopeTimer;
+use crate::timers::sweep_timer::SweepTimer;
 
 pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;
 pub const CH1_END_ADDRESS: u16 = NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS;
@@ -34,7 +35,7 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
 #[derive(Debug, Clone)]
 pub struct SquareChannel {
     // registers
-    nr0x_sweep: Option<NR10>,
+    sweep_timer: Option<SweepTimer>,
     nrx1_len_timer_duty_cycle: NRx1,
     nrx2_volume_envelope_and_dac: NRx2,
     nrx3x4_period_and_ctrl: NRx3x4,
@@ -82,7 +83,7 @@ impl SquareChannel {
 
     fn new(ch_type: ChannelType) -> Self {
         Self {
-            nr0x_sweep: if ch_type == ChannelType::CH1 {
+            sweep_timer: if ch_type == ChannelType::CH1 {
                 Some(Default::default())
             } else {
                 None
@@ -99,8 +100,17 @@ impl SquareChannel {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        match self.get_offset(address) {
-            0 => self.nr0x_sweep.expect("ch1 must have sweep").byte,
+        let mut offset = self.get_offset(address);
+
+        if offset == 0 {
+            if let Some(sweep_timer) = self.sweep_timer.as_ref() {
+                return sweep_timer.nr10.byte;
+            } else {
+                offset += 1;
+            }
+        }
+
+        match offset {
             1 => self.nrx1_len_timer_duty_cycle.byte,
             2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
@@ -110,8 +120,18 @@ impl SquareChannel {
     }
 
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
-        match self.get_offset(address) {
-            0 => self.nr0x_sweep.as_mut().expect("ch1 must have sweep").byte = value,
+        let mut offset = self.get_offset(address);
+
+        if offset == 0 {
+            if let Some(sweep_timer) = self.sweep_timer.as_mut() {
+                sweep_timer.nr10.byte = value;
+                return;
+            } else {
+                offset += 1;
+            }
+        }
+
+        match offset {
             1 => self.nrx1_len_timer_duty_cycle.byte = value,
             // Writes to this register while the channel is on require re-triggering it after wards.
             // If the write turns the channel off, re-triggering is not necessary (it would do nothing).
@@ -129,21 +149,17 @@ impl SquareChannel {
     }
 
     fn get_offset(&self, address: u16) -> u16 {
-        let mut offset = address - self.ch_type.get_start_address();
-
-        if self.ch_type == ChannelType::CH2 {
-            offset += 1;
-        }
-
-        offset
+        address - self.ch_type.get_start_address()
     }
 
     pub fn tick_envelope(&mut self) {
         self.envelope_timer.tick(self.nrx2_volume_envelope_and_dac);
     }
 
-    pub fn tick_sweep(&mut self, _master_ctrl: &mut NR52) {
-        // todo
+    pub fn tick_sweep(&mut self, nr52: &mut NR52) {
+        if let Some(sweep) = self.sweep_timer.as_mut() {
+            sweep.tick(nr52, &mut self.nrx3x4_period_and_ctrl);
+        }
     }
 
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
@@ -157,8 +173,8 @@ impl SquareChannel {
         }
     }
 
-    fn trigger(&mut self, master_ctrl: &mut NR52) {
-        master_ctrl.activate_ch(&self.ch_type);
+    fn trigger(&mut self, nr52: &mut NR52) {
+        nr52.activate_ch(&self.ch_type);
 
         if self.length_timer.is_expired() {
             self.length_timer.reload(&self.nrx1_len_timer_duty_cycle);
@@ -167,8 +183,10 @@ impl SquareChannel {
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);
         self.envelope_timer
             .reload(self.nrx2_volume_envelope_and_dac);
-        // todo:
-        // Sweep does several things.
+
+        if let Some(sweep) = self.sweep_timer.as_mut() {
+            sweep.reload(nr52, self.nrx3x4_period_and_ctrl);
+        }
     }
 }
 
@@ -190,7 +208,7 @@ impl NR10 {
     }
 
     /// 0 = Addition (period increases); 1 = Subtraction (period decreases)
-    pub fn direction(&self) -> bool {
+    pub fn direction_down(&self) -> bool {
         get_bit_flag(self.byte, 3)
     }
 

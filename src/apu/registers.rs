@@ -71,7 +71,7 @@ impl NRx2 {
 }
 
 /// Merged together NRX3 and NRX4 for convenience
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Copy)]
 pub struct NRx3x4 {
     pub period_low: NRx3,
     pub nrx4: NRx4,
@@ -85,6 +85,11 @@ impl NRx3x4 {
         };
 
         value.into()
+    }
+
+    pub fn set_period(&mut self, value: u16) {
+        self.period_low.byte = (value & 0xFF) as u8; // Extract lower 8 bits
+        self.nrx4.set_period((value >> 8) as u8);
     }
 }
 
@@ -135,5 +140,10 @@ impl NRx4 {
 
     pub fn get_period(&self) -> u8 {
         self.byte & 0b0000_0111
+    }
+
+    pub fn set_period(&mut self, value: u8) {
+        let value = value & 0b0000_0111; // Extract 3 bits
+        self.byte = (self.byte & 0b1111_1000) | value; // Preserve other bits
     }
 }
