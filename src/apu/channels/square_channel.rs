@@ -5,6 +5,7 @@ use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
 use crate::apu::NR52;
 use crate::get_bit_flag;
+use crate::timers::envelope_timer::EnvelopeTimer;
 
 pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;
 pub const CH1_END_ADDRESS: u16 = NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS;
@@ -30,30 +31,6 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
     [0, 1, 1, 1, 1, 1, 1, 0],
 ];
 
-impl DacEnable for SquareChannel {
-    fn is_dac_enabled(&self) -> bool {
-        self.nrx2_volume_envelope_and_dac.is_dac_enabled()
-    }
-}
-
-impl DigitalOutputProducer for SquareChannel {
-    fn get_output(&self, master_ctrl: NR52) -> u8 {
-        if master_ctrl.is_ch_active(&self.ch_type) {
-            let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
-
-            let output = if WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] == 1 {
-                self.nrx2_volume_envelope_and_dac.initial_volume()
-            } else {
-                0
-            };
-
-            return output;
-        }
-
-        0
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct SquareChannel {
     // registers
@@ -66,28 +43,44 @@ pub struct SquareChannel {
     ch_type: ChannelType,
     period_timer: PeriodTimer,
     length_timer: LengthTimer,
+    envelope_timer: EnvelopeTimer,
     duty_sequence: usize,
+}
+
+impl DacEnable for SquareChannel {
+    fn is_dac_enabled(&self) -> bool {
+        self.nrx2_volume_envelope_and_dac.is_dac_enabled()
+    }
+}
+
+impl DigitalOutputProducer for SquareChannel {
+    fn get_output(&self, master_ctrl: NR52) -> u8 {
+        if master_ctrl.is_ch_active(&self.ch_type) {
+            let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
+
+            let output = if WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] == 1 {
+                self.envelope_timer.get_volume()
+            } else {
+                0
+            };
+
+            return output;
+        }
+
+        0
+    }
 }
 
 impl SquareChannel {
     pub fn ch1() -> SquareChannel {
-        let ch_type = ChannelType::CH1;
-
-        Self {
-            nr0x_sweep: Some(Default::default()),
-            nrx1_len_timer_duty_cycle: NRx1::new(ch_type),
-            nrx2_volume_envelope_and_dac: Default::default(),
-            nrx3x4_period_and_ctrl: Default::default(),
-            ch_type,
-            length_timer: LengthTimer::new(ch_type),
-            period_timer: PeriodTimer::new(ch_type),
-            duty_sequence: 0,
-        }
+        Self::new(ChannelType::CH1)
     }
 
     pub fn ch2() -> SquareChannel {
-        let ch_type = ChannelType::CH2;
+        Self::new(ChannelType::CH2)
+    }
 
+    fn new(ch_type: ChannelType) -> Self {
         Self {
             nr0x_sweep: None,
             nrx1_len_timer_duty_cycle: NRx1::new(ch_type),
@@ -97,6 +90,7 @@ impl SquareChannel {
             length_timer: LengthTimer::new(ch_type),
             period_timer: PeriodTimer::new(ch_type),
             duty_sequence: 0,
+            envelope_timer: Default::default(),
         }
     }
 
@@ -140,8 +134,8 @@ impl SquareChannel {
         offset
     }
 
-    pub fn tick_envelope(&mut self, _master_ctrl: &mut NR52) {
-        // todo
+    pub fn tick_envelope(&mut self) {
+        self.envelope_timer.tick(self.nrx2_volume_envelope_and_dac);
     }
 
     pub fn tick_sweep(&mut self, _master_ctrl: &mut NR52) {
@@ -167,9 +161,8 @@ impl SquareChannel {
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);
+        self.envelope_timer.reload(self.nrx2_volume_envelope_and_dac);
         // todo:
-        // Envelope timer is reset.
-        // Volume is set to contents of NR12 initial volume.
         // Sweep does several things.
     }
 }

@@ -167,7 +167,7 @@ impl Apu {
         if self.ticks_count % FRAME_SEQUENCER_DIV as u32 == 0 {
             match self.frame_sequencer_step {
                 0 => {
-                    // 256 Hz, tick_length
+                    // tick_length
                     self.ch1.tick_length(&mut self.nr52_master_ctrl);
                     self.ch2.tick_length(&mut self.nr52_master_ctrl);
                     self.ch3.tick_length(&mut self.nr52_master_ctrl);
@@ -181,19 +181,23 @@ impl Apu {
                 }
                 3 => {}
                 4 => {
-                    // 256 Hz, tick_length
+                    // tick_length
                     self.ch1.tick_length(&mut self.nr52_master_ctrl);
                     self.ch2.tick_length(&mut self.nr52_master_ctrl);
                     self.ch3.tick_length(&mut self.nr52_master_ctrl);
                 }
                 5 => {}
                 6 => {
-                    // 128 Hz, tick length, sweep
+                    // tick length, sweep
                     self.ch1.tick_length(&mut self.nr52_master_ctrl);
                     self.ch2.tick_length(&mut self.nr52_master_ctrl);
                     self.ch3.tick_length(&mut self.nr52_master_ctrl);
                 }
-                7 => {} // 64 Hz, tick envelope
+                7 => {
+                    // tick envelope
+                    self.ch1.tick_envelope();
+                    self.ch2.tick_envelope();
+                } 
                 _ => unreachable!(),
             }
 

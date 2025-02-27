@@ -53,7 +53,7 @@ pub struct NRx2 {
 
 impl NRx2 {
     /// The envelope’s direction; 0 = decrease volume over time, 1 = increase volume over time.
-    pub fn increasing_envelope_direction(&self) -> bool {
+    pub fn envelope_dir_up(&self) -> bool {
         get_bit_flag(self.byte, 3)
     }
 
