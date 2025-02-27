@@ -18,12 +18,12 @@ pub const CH3_NR30_DAC_ENABLE_POS: u8 = 7;
 
 #[derive(Clone, Debug)]
 pub struct WaveChannel {
-    dac_enable: NR30,
+    nr30_dac_enable: NR30,
     // NR31
-    length_timer: LengthTimer,
-    output_level: NR32,
+    nr31_length_timer: LengthTimer,
+    rn32_output_level: NR32,
     // todo: Period changes (written to NR33 or NR34) only take effect after the following time wave RAM is read
-    period_and_ctrl: NRX3X4,
+    nr33_34_period_and_ctrl: NRX3X4,
     pub wave_ram: WaveRam,
 
     period_timer: u16, // Internal timer for frequency stepping
@@ -33,10 +33,10 @@ pub struct WaveChannel {
 impl Default for WaveChannel {
     fn default() -> Self {
         Self {
-            dac_enable: Default::default(),
-            length_timer: LengthTimer::new(ChannelType::CH3),
-            output_level: Default::default(),
-            period_and_ctrl: Default::default(),
+            nr30_dac_enable: Default::default(),
+            nr31_length_timer: LengthTimer::new(ChannelType::CH3),
+            rn32_output_level: Default::default(),
+            nr33_34_period_and_ctrl: Default::default(),
             wave_ram: Default::default(),
             period_timer: 0,
             volume_shift: 0,
@@ -47,47 +47,51 @@ impl Default for WaveChannel {
 impl WaveChannel {
     pub fn read(&self, address: u16) -> u8 {
         match address {
-            CH3_NR30_DAC_ENABLE_ADDRESS => self.dac_enable.read(),
+            CH3_NR30_DAC_ENABLE_ADDRESS => self.nr30_dac_enable.read(),
             CH3_NR31_LENGTH_TIMER_ADDRESS => 0xFF, // write-only
-            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.output_level.read(),
+            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.rn32_output_level.read(),
             CH3_NR33_PERIOD_LOW_ADDRESS => 0xFF, // write-only
-            CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => self.period_and_ctrl.high_and_ctrl.read(),
+            CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => {
+                self.nr33_34_period_and_ctrl.high_and_ctrl.read()
+            }
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
         }
     }
 
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         match address {
-            CH3_NR30_DAC_ENABLE_ADDRESS => self.dac_enable.byte = value,
-            CH3_NR31_LENGTH_TIMER_ADDRESS => self.length_timer.write(value),
-            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.output_level.byte = value,
-            CH3_NR33_PERIOD_LOW_ADDRESS => self.period_and_ctrl.period_low.write(value),
+            CH3_NR30_DAC_ENABLE_ADDRESS => self.nr30_dac_enable.byte = value,
+            CH3_NR31_LENGTH_TIMER_ADDRESS => self.nr31_length_timer.write(value),
+            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.rn32_output_level.byte = value,
+            CH3_NR33_PERIOD_LOW_ADDRESS => self.nr33_34_period_and_ctrl.period_low.write(value),
             CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => self.write_period_high(value, master_ctrl),
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
         }
     }
 
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
-        self.length_timer
-            .tick(master_ctrl, &mut self.period_and_ctrl.high_and_ctrl);
+        self.nr31_length_timer
+            .tick(master_ctrl, &mut self.nr33_34_period_and_ctrl.high_and_ctrl);
     }
 
     pub fn tick(&mut self, master_ctrl: &NR52) {
-        if master_ctrl.is_ch_active(&self.length_timer.ch_type) && self.dac_enable.is_dac_enabled()
+        if master_ctrl.is_ch_active(&self.nr31_length_timer.ch_type)
+            && self.nr30_dac_enable.is_dac_enabled()
         {
             if self.period_timer > 0 {
                 self.period_timer -= 1;
             }
 
             if self.period_timer == 0 {
-                self.period_timer = (2048 - self.period_and_ctrl.get_period()) * 2;
+                self.period_timer = (2048 - self.nr33_34_period_and_ctrl.get_period()) * 2;
                 self.wave_ram.inc_sample_index(); // generate sample
             }
         }
     }
 
     pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
-        if master_ctrl.is_ch_active(&self.length_timer.ch_type) && self.dac_enable.is_dac_enabled()
+        if master_ctrl.is_ch_active(&self.nr31_length_timer.ch_type)
+            && self.nr30_dac_enable.is_dac_enabled()
         {
             return self.wave_ram.sample_buffer >> self.volume_shift;
         }
@@ -96,21 +100,21 @@ impl WaveChannel {
     }
 
     fn trigger(&mut self, master_ctrl: &mut NR52) {
-        master_ctrl.activate_ch(&self.length_timer.ch_type);
+        master_ctrl.activate_ch(&self.nr31_length_timer.ch_type);
 
-        if self.length_timer.is_expired() {
-            self.length_timer.reset();
+        if self.nr31_length_timer.is_expired() {
+            self.nr31_length_timer.reset();
         }
 
         //self.period_timer = self.period_and_ctrl.get_period();
-        self.volume_shift = self.output_level.get_volume_shift();
+        self.volume_shift = self.rn32_output_level.get_volume_shift();
         self.wave_ram.reset_sample_index();
     }
 
     fn write_period_high(&mut self, value: u8, nr52: &mut NR52) {
-        self.period_and_ctrl.high_and_ctrl.write(value);
+        self.nr33_34_period_and_ctrl.high_and_ctrl.write(value);
 
-        if self.period_and_ctrl.high_and_ctrl.is_triggered() {
+        if self.nr33_34_period_and_ctrl.high_and_ctrl.is_triggered() {
             self.trigger(nr52);
         }
     }

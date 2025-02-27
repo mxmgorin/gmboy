@@ -39,9 +39,8 @@ pub struct SquareChannel {
     // other data
     length_timer: LengthTimer,
     period_timer: u16, // Internal timer for frequency stepping
-    pattern_index: u8,
-    wave_pattern: u8,
-
+    duty_number: u8,
+    duty_position: u8,
     output: u8,
 }
 
@@ -54,8 +53,8 @@ impl SquareChannel {
             nrx3x4_period_and_ctrl: Default::default(),
             length_timer: LengthTimer::new(ChannelType::CH1),
             period_timer: 0,
-            pattern_index: 0,
-            wave_pattern: 0,
+            duty_number: 0,
+            duty_position: 0,
             output: 0,
         }
     }
@@ -68,8 +67,8 @@ impl SquareChannel {
             nrx3x4_period_and_ctrl: Default::default(),
             length_timer: LengthTimer::new(ChannelType::CH2),
             period_timer: 0,
-            pattern_index: 0,
-            wave_pattern: 0,
+            duty_number: 0,
+            duty_position: 0,
             output: 0,
         }
     }
@@ -83,6 +82,24 @@ impl SquareChannel {
             NR23_CH2_PERIOD_LOW_ADDRESS => 0xFF,
             NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS => {
                 self.nrx3x4_period_and_ctrl.high_and_ctrl.read()
+            }
+            _ => panic!("Invalid Square address: {:#X}", address),
+        }
+    }
+
+    pub fn write(&mut self, address: u16, value: u8) {
+        // todo: handle for ch1
+        match address {
+            //NR10_CH1_SWEEP_ADDRESS => 0,
+            NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS => self.nrx1_len_timer_duty_cycle.byte = value,
+            NR22_CH2_VOL_ENVELOPE_ADDRESS => self.nrx2_volume_envelope.byte = value,
+            NR23_CH2_PERIOD_LOW_ADDRESS => self.nrx3x4_period_and_ctrl.period_low.write(value),
+            NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS => {
+                self.nrx3x4_period_and_ctrl.high_and_ctrl.write(value);
+
+                if self.nrx3x4_period_and_ctrl.high_and_ctrl.is_triggered() {
+                    self.trigger();
+                }
             }
             _ => panic!("Invalid Square address: {:#X}", address),
         }
@@ -112,8 +129,8 @@ impl SquareChannel {
             if self.period_timer == 0 {
                 self.period_timer = (2048 - self.nrx3x4_period_and_ctrl.get_period()) * 4;
                 // generate sample
-                self.output = if WAVE_DUTY_PATTERNS[self.wave_pattern as usize]
-                    [self.pattern_index as usize]
+                self.output = if WAVE_DUTY_PATTERNS[self.duty_number as usize]
+                    [self.duty_number as usize]
                     == 1
                 {
                     self.nrx2_volume_envelope.initial_volume()
@@ -122,9 +139,19 @@ impl SquareChannel {
                 };
 
                 self.period_timer += (2048 - self.nrx3x4_period_and_ctrl.get_period()) * 4;
-                self.pattern_index = (self.pattern_index + 1) & 0x07;
+                self.duty_position = (self.duty_position + 1) & 0x07;
             }
         }
+    }
+
+    fn trigger(&mut self) {
+        // todo:
+        // Ch1 is enabled.
+        // If length timer expired it is reset.
+        // The period divider is set to the contents of NR13 and NR14.
+        // Envelope timer is reset.
+        // Volume is set to contents of NR12 initial volume.
+        // Sweep does several things.
     }
 }
 

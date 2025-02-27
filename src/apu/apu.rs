@@ -117,7 +117,7 @@ impl Apu {
 
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => {}
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => {}
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
                 self.ch3.write(address, value, &mut self.master_ctrl)
             }
