@@ -1,3 +1,4 @@
+use crate::apu::square_channel::SquareChannel;
 use crate::apu::wave_channel::WaveChannel;
 use crate::apu::{APU_CLOCK_SPEED, NR52};
 use crate::CPU_CLOCK_SPEED;
@@ -24,17 +25,40 @@ pub struct FrameSequencer {
 
 impl FrameSequencer {
     // ticks every t-cycle
-    pub fn tick(&mut self, sample_clock: u32, master_ctrl: &mut NR52, ch3: &mut WaveChannel) {
+    pub fn tick(
+        &mut self,
+        sample_clock: u32,
+        master_ctrl: &mut NR52,
+        ch1: &mut SquareChannel,
+        ch2: &mut SquareChannel,
+        ch3: &mut WaveChannel,
+    ) {
         if sample_clock % CYCLES_DIV as u32 == 0 {
             match self.step {
-                0 => ch3.tick_length(master_ctrl), // tick_length
+                0 => {
+                    ch1.tick_length(master_ctrl);
+                    ch2.tick_length(master_ctrl);
+                    ch3.tick_length(master_ctrl);
+                } // tick_length
                 1 => {}
-                2 => ch3.tick_length(master_ctrl), // tick length, sweep
+                2 => {
+                    ch1.tick_length(master_ctrl);
+                    ch2.tick_length(master_ctrl);
+                    ch3.tick_length(master_ctrl);
+                } // tick length, sweep
                 3 => {}
-                4 => ch3.tick_length(master_ctrl), // tick_length
+                4 => {
+                    ch1.tick_length(master_ctrl);
+                    ch2.tick_length(master_ctrl);
+                    ch3.tick_length(master_ctrl);
+                } // tick_length
                 5 => {}
-                6 => ch3.tick_length(master_ctrl), // tick length, sweep
-                7 => {}                            // tick envelope
+                6 => {
+                    ch1.tick_length(master_ctrl);
+                    ch2.tick_length(master_ctrl);
+                    ch3.tick_length(master_ctrl);
+                } // tick length, sweep
+                7 => {} // tick envelope
                 _ => unreachable!(),
             }
 

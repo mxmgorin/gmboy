@@ -56,10 +56,15 @@ impl Default for Apu {
 impl Apu {
     pub fn tick(&mut self) {
         self.sample_clock = self.sample_clock.wrapping_add(1);
-        self.frame_sequencer
-            .tick(self.sample_clock, &mut self.nr52_master_ctrl, &mut self.ch3);
+        self.frame_sequencer.tick(
+            self.sample_clock,
+            &mut self.nr52_master_ctrl,
+            &mut self.ch1,
+            &mut self.ch2,
+            &mut self.ch3,
+        );
 
-        self.ch3.tick(&self.nr52_master_ctrl);
+        self.ch3.tick();
 
         // down sample by nearest-neighbor
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
@@ -116,8 +121,12 @@ impl Apu {
         // todo: the length timers (in NRx1) on monochrome models also writable event when turned off
 
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52_master_ctrl),
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52_master_ctrl),
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => {
+                self.ch1.write(address, value, &mut self.nr52_master_ctrl)
+            }
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => {
+                self.ch2.write(address, value, &mut self.nr52_master_ctrl)
+            }
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
                 self.ch3.write(address, value, &mut self.nr52_master_ctrl)
             }
@@ -197,15 +206,24 @@ impl NR52 {
 
     /// Only the status of the channels’ generation circuits is reported
     pub fn is_ch_active(&self, ch_type: &ChannelType) -> bool {
-        get_bit_flag(self.byte, ch_type.get_enable_bit_pos())
+        get_bit_flag(self.byte, Self::get_enable_bit_pos(ch_type))
     }
 
     pub fn deactivate_ch(&mut self, ch_type: &ChannelType) {
-        set_bit(&mut self.byte, ch_type.get_enable_bit_pos(), false);
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), false);
     }
 
     pub fn activate_ch(&mut self, ch_type: &ChannelType) {
-        set_bit(&mut self.byte, ch_type.get_enable_bit_pos(), true);
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), true);
+    }
+
+    fn get_enable_bit_pos(ch_type: &ChannelType) -> u8 {
+        match ch_type {
+            ChannelType::CH1 => 0,
+            ChannelType::CH2 => 1,
+            ChannelType::CH3 => 2,
+            ChannelType::CH4 => 3,
+        }
     }
 }
 

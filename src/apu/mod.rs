@@ -6,5 +6,6 @@ mod channel;
 mod frame_sequencer;
 mod length_timer;
 mod registers;
+mod period_timer;
 
 pub use apu::*;

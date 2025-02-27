@@ -1,5 +1,5 @@
 use crate::apu::channel::ChannelType;
-use crate::apu::registers::NRx4;
+use crate::apu::registers::{NRx1, NRx4};
 use crate::apu::NR52;
 
 //A length counter disables a channel when it decrements to zero. It contains an internal counter
@@ -14,8 +14,8 @@ use crate::apu::NR52;
 // and the counter is not zero, it is decremented. If it becomes zero, the channel is disabled.
 #[derive(Clone, Debug)]
 pub struct LengthTimer {
-    counter: u16, // write-only
-    pub ch_type: ChannelType,
+    counter: u16,
+    ch_type: ChannelType,
 }
 
 impl LengthTimer {
@@ -42,12 +42,14 @@ impl LengthTimer {
         self.counter == 0
     }
 
-    pub fn write(&mut self, value: u8) {
-        let masked = (value & self.ch_type.get_length_timer_mask()) as u16;
-        self.counter = self.ch_type.get_initial_length_timer() - masked;
+    pub fn reload(&mut self, nrx1: &NRx1) {
+        self.counter = self.get_initial_length() - nrx1.initial_length_timer() as u16;
     }
 
-    pub fn reset(&mut self) {
-        self.counter = self.ch_type.get_initial_length_timer();
+    pub fn get_initial_length(&self) -> u16 {
+        match self.ch_type {
+            ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH4 => 64,
+            ChannelType::CH3 => 256,
+        }
     }
 }
