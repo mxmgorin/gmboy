@@ -82,7 +82,11 @@ impl SquareChannel {
 
     fn new(ch_type: ChannelType) -> Self {
         Self {
-            nr0x_sweep: None,
+            nr0x_sweep: if ch_type == ChannelType::CH1 {
+                Some(Default::default())
+            } else {
+                None
+            },
             nrx1_len_timer_duty_cycle: NRx1::new(ch_type),
             nrx2_volume_envelope_and_dac: Default::default(),
             nrx3x4_period_and_ctrl: Default::default(),
@@ -161,7 +165,8 @@ impl SquareChannel {
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);
-        self.envelope_timer.reload(self.nrx2_volume_envelope_and_dac);
+        self.envelope_timer
+            .reload(self.nrx2_volume_envelope_and_dac);
         // todo:
         // Sweep does several things.
     }
