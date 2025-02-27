@@ -73,7 +73,8 @@ impl WaveChannel {
     }
 
     pub fn tick(&mut self, master_ctrl: &NR52) {
-        if master_ctrl.is_ch_active(ChannelType::CH3) && self.dac_enable.is_dac_enabled() {
+        if master_ctrl.is_ch_active(&self.length_timer.ch_type) && self.dac_enable.is_dac_enabled()
+        {
             if self.period_timer > 0 {
                 self.period_timer -= 1;
             }
@@ -86,7 +87,8 @@ impl WaveChannel {
     }
 
     pub fn get_output(&self, master_ctrl: &NR52) -> u8 {
-        if master_ctrl.is_ch_active(ChannelType::CH3) && self.dac_enable.is_dac_enabled() {
+        if master_ctrl.is_ch_active(&self.length_timer.ch_type) && self.dac_enable.is_dac_enabled()
+        {
             return self.wave_ram.sample_buffer >> self.volume_shift;
         }
 
@@ -94,7 +96,7 @@ impl WaveChannel {
     }
 
     fn trigger(&mut self, master_ctrl: &mut NR52) {
-        master_ctrl.activate_ch(&ChannelType::CH3);
+        master_ctrl.activate_ch(&self.length_timer.ch_type);
 
         if self.length_timer.is_expired() {
             self.length_timer.reset();

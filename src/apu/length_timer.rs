@@ -15,7 +15,7 @@ use crate::apu::NR52;
 #[derive(Clone, Debug)]
 pub struct LengthTimer {
     counter: u16, // write-only
-    ch_type: ChannelType,
+    pub ch_type: ChannelType,
 }
 
 impl LengthTimer {

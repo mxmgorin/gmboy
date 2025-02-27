@@ -29,7 +29,7 @@ pub struct NRX2 {
 
 impl NRX2 {
     /// The envelope’s direction; 0 = decrease volume over time, 1 = increase volume over time.
-    pub fn env_dir(&self) -> bool {
+    pub fn increasing_envelope_direction(&self) -> bool {
         get_bit_flag(self.byte, 3)
     }
 
@@ -41,7 +41,7 @@ impl NRX2 {
         self.byte & 0b0000_0111
     }
 
-    pub fn dac_enabled(&self) -> bool {
+    pub fn is_dac_enabled(&self) -> bool {
         (self.byte & 0xF0) != 0
     }
 }

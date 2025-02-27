@@ -133,7 +133,7 @@ impl Apu {
     pub fn read(&self, address: u16) -> u8 {
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => 0,
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => 0,
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.read(address),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
             AUDIO_MASTER_CONTROL_ADDRESS => self.master_ctrl.read(),
@@ -196,7 +196,7 @@ impl NR52 {
     }
 
     /// Only the status of the channels’ generation circuits is reported
-    pub fn is_ch_active(&self, ch_type: ChannelType) -> bool {
+    pub fn is_ch_active(&self, ch_type: &ChannelType) -> bool {
         get_bit_flag(self.byte, ch_type.get_enable_bit_pos())
     }
 
