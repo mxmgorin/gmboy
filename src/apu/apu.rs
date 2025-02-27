@@ -90,7 +90,7 @@ impl Apu {
     }
 
     pub fn is_buffer_ready(&self) -> bool {
-        self.buffer_index >= AUDIO_BUFFER_SIZE / 2
+        self.buffer_index >= AUDIO_BUFFER_SIZE
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
