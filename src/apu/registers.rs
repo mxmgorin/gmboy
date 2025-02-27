@@ -15,12 +15,20 @@ impl NRx1 {
         Self { byte: 0, ch_type }
     }
 
-    pub fn duty_cycle(&self) -> u8 {
-        if self.ch_type != ChannelType::CH3 || self.ch_type != ChannelType::CH4 {
+    pub fn _read_duty_cycle(&self) -> u8 {
+        if self.ch_type == ChannelType::CH3 || self.ch_type == ChannelType::CH4 {
             panic!("CH3 and CH4 doesn't have duty cycle")
         }
 
         self.byte & 0b1100_0000
+    }
+
+    pub fn get_duty_cycle_idx(&self) -> u8 {
+        if self.ch_type == ChannelType::CH3 || self.ch_type == ChannelType::CH4 {
+            panic!("CH3 and CH4 doesn't have duty cycle")
+        }
+
+        self.byte >> 6
     }
 
     /// (Write-only): The higher this field is, the shorter the time before the channel is cut.

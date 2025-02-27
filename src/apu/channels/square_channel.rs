@@ -42,7 +42,7 @@ pub struct SquareChannel {
     period_timer: PeriodTimer,
     length_timer: LengthTimer,
     duty_number: u8,
-    duty_sequence: u8,
+    duty_sequence: usize,
     output: u8,
 }
 
@@ -125,7 +125,7 @@ impl SquareChannel {
         if master_ctrl.is_ch_active(&self.ch_type)
             && self.nrx2_volume_envelope_and_dac.is_dac_enabled()
         {
-            return 0; // todo
+            return self.output;
         }
 
         0
@@ -146,12 +146,13 @@ impl SquareChannel {
 
     pub fn tick(&mut self) {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
-            self.output =
-                if WAVE_DUTY_PATTERNS[self.duty_number as usize][self.duty_number as usize] == 1 {
-                    self.nrx2_volume_envelope_and_dac.initial_volume()
-                } else {
-                    0
-                };
+            let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
+
+            self.output = if WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] == 1 {
+                self.nrx2_volume_envelope_and_dac.initial_volume()
+            } else {
+                0
+            };
 
             self.duty_sequence = (self.duty_sequence + 1) & 0x07;
         }

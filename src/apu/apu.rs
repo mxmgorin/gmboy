@@ -57,6 +57,9 @@ impl Apu {
     pub fn tick(&mut self) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.sequence_frame();
+        
+        self.ch1.tick();
+        self.ch2.tick();
         self.ch3.tick();
 
         // down sample by nearest-neighbor
