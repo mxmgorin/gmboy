@@ -58,6 +58,6 @@ impl Mixer {
 }
 
 fn apply_volume(sample: f32, volume: u8) -> f32 {
-    let volume_factor = (volume as f32 + 1.0) / 8.0;
+    let volume_factor = volume as f32 / 8.0;
     sample * volume_factor
 }
