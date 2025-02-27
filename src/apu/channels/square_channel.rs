@@ -184,8 +184,8 @@ impl SquareChannel {
         self.envelope_timer
             .reload(self.nrx2_volume_envelope_and_dac);
 
-        if let Some(sweep) = self.sweep_timer.as_mut() {
-            sweep.reload(nr52, self.nrx3x4_period_and_ctrl);
+        if let Some(sweep_timer) = self.sweep_timer.as_mut() {
+            sweep_timer.reload(nr52, self.nrx3x4_period_and_ctrl);
         }
     }
 }

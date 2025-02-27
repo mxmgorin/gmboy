@@ -33,13 +33,18 @@ impl SweepTimer {
             }
         }
     }
-    
+
     pub fn reload(&mut self, nr52: &mut NR52, nrx3x4: NRx3x4) {
+        let pace = self.reload_counter();
+        let individual_step_non_zero = self.nr10.individual_step() != 0;
+
+        self.enabled = individual_step_non_zero || pace != 0;
         self.shadow_frequency = nrx3x4.get_period();
-        self.reload_counter();
-        self.enabled = self.nr10.pace() != 0 || self.nr10.individual_step() != 0;
-        /* for overflow check */
-        self.calc_frequency(nr52);
+
+        if individual_step_non_zero {
+            /* for overflow check */
+            self.calc_frequency(nr52);
+        }
     }
 
     fn reload_counter(&mut self) -> u8 {
