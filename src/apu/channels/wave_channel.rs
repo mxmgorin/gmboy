@@ -1,6 +1,6 @@
 use crate::apu::channels::channel::ChannelType;
-use crate::apu::dac::{apply_dac, DacEnable, DigitalOutputProducer};
-use crate::apu::registers::{NRx1, NRx2, NRx3x4};
+use crate::apu::dac::{DacEnable, DigitalOutputProducer};
+use crate::apu::registers::{NRx1, NRx3x4};
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
 use crate::apu::NR52;
