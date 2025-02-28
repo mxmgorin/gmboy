@@ -1,7 +1,7 @@
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::oam::OamEntry;
-use crate::ppu::pipeline::MAX_FIFO_SPRITES_SIZE;
+use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::tile::{
     get_color_index, Pixel, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
     TILE_SET_DATA_1_START,

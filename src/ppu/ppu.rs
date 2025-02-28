@@ -2,7 +2,7 @@ use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{PpuMode, LcdStatSrc};
-use crate::ppu::pipeline::Pipeline;
+use crate::ppu::fetcher::Pipeline;
 use std::time::{Duration, Instant};
 use crate::auxiliary::clock::spin_wait;
 

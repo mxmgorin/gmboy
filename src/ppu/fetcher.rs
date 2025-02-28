@@ -21,7 +21,7 @@ pub struct Pipeline {
     pub sprite_fetcher: SpriteFetcher,
     pub buffer: Vec<Pixel>,
 
-    state: PipelineState,
+    fetch_step: FetchStep,
     line_x: u8,
     fetch_x: u8,
     map_y: u8,
@@ -35,7 +35,7 @@ pub struct Pipeline {
 impl Default for Pipeline {
     fn default() -> Pipeline {
         Self {
-            state: PipelineState::Tile,
+            fetch_step: FetchStep::Tile,
             pixel_fifo: Default::default(),
             line_x: 0,
             pushed_x: 0,
@@ -80,8 +80,8 @@ impl Pipeline {
     }
 
     fn fetch(&mut self, bus: &Bus) {
-        match self.state {
-            PipelineState::Tile => {
+        match self.fetch_step {
+            FetchStep::Tile => {
                 if bus.io.lcd.control.bgw_enabled() {
                     let addr = bus.io.lcd.control.bg_map_area()
                         + (self.map_x as u16 / TILE_WIDTH)
@@ -104,23 +104,23 @@ impl Pipeline {
                         .fetch_sprite_tiles(bus.io.lcd.scroll_x, self.fetch_x);
                 }
 
-                self.state = PipelineState::Data0;
+                self.fetch_step = FetchStep::Data0;
                 self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
             }
-            PipelineState::Data0 => {
+            FetchStep::Data0 => {
                 self.bgw_fetched_data.byte1 = bus.read(self.get_bgw_data_addr(&bus.io.lcd));
                 self.sprite_fetcher.fetch_sprite_data(bus, 0);
-                self.state = PipelineState::Data1;
+                self.fetch_step = FetchStep::Data1;
             }
-            PipelineState::Data1 => {
+            FetchStep::Data1 => {
                 self.bgw_fetched_data.byte2 = bus.read(self.get_bgw_data_addr(&bus.io.lcd) + 1);
                 self.sprite_fetcher.fetch_sprite_data(bus, 1);
-                self.state = PipelineState::Idle;
+                self.fetch_step = FetchStep::Idle;
             }
-            PipelineState::Idle => self.state = PipelineState::Push,
-            PipelineState::Push => {
+            FetchStep::Idle => self.fetch_step = FetchStep::Push,
+            FetchStep::Push => {
                 if self.try_fifo_add(bus) {
-                    self.state = PipelineState::Tile;
+                    self.fetch_step = FetchStep::Tile;
                 }
             }
         }
@@ -168,7 +168,7 @@ impl Pipeline {
     }
 
     pub fn reset(&mut self) {
-        self.state = PipelineState::Tile;
+        self.fetch_step = FetchStep::Tile;
         self.line_x = 0;
         self.fetch_x = 0;
         self.pushed_x = 0;
@@ -188,7 +188,7 @@ impl Pipeline {
 }
 
 #[derive(Debug, Clone)]
-pub enum PipelineState {
+pub enum FetchStep {
     Tile,
     Data0,
     Data1,
