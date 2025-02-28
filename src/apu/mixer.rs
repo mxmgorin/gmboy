@@ -1,5 +1,7 @@
 use crate::apu::{NR50, NR51};
 
+pub const VOLUME_DIV: f32 = 100.0;
+
 #[derive(Debug, Clone, Default)]
 pub struct Mixer {
     pub nr51_panning: NR51,
@@ -53,11 +55,21 @@ impl Mixer {
             right_sample += self.sample4;
         }
 
-        let left_sample = apply_volume(left_sample, self.nr50_volume.left_volume());
-        let right_sample = apply_volume(right_sample, self.nr50_volume.right_volume());
+        let (left_sample, right_sample) = self.amplify(left_sample, right_sample);
+
+        (adjust_volume(left_sample), adjust_volume(right_sample))
+    }
+
+    fn amplify(&self, sample_left: f32, sample_right: f32) -> (f32, f32) {
+        let left_sample = apply_volume(sample_left, self.nr50_volume.left_volume());
+        let right_sample = apply_volume(sample_right, self.nr50_volume.right_volume());
 
         (left_sample, right_sample)
     }
+}
+
+fn adjust_volume(sample: f32) -> f32 {
+    sample / VOLUME_DIV
 }
 
 fn apply_volume(sample: f32, volume: u8) -> f32 {

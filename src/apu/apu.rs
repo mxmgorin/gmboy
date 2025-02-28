@@ -17,7 +17,7 @@ pub const SAMPLING_FREQ: u16 = 44100;
 pub const AUDIO_MASTER_CONTROL_ADDRESS: u16 = 0xFF26;
 pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
-pub const AUDIO_BUFFER_SIZE: usize = 2048;
+pub const AUDIO_BUFFER_SIZE: usize = 512;
 
 pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
@@ -93,7 +93,7 @@ impl Apu {
     }
 
     pub fn output_ready(&self) -> bool {
-        self.output_buffer_idx >= AUDIO_BUFFER_SIZE / 2
+        self.output_buffer_idx >= AUDIO_BUFFER_SIZE
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
