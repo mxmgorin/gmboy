@@ -1,7 +1,8 @@
 use crate::apu::registers::{NRx2, NRx4};
 use crate::channels::channel::ChannelType;
-use crate::get_bit_flag;
 use crate::registers::NRx1;
+use crate::timers::length_timer::LengthTimer;
+use crate::{get_bit_flag, NR52};
 
 pub const CH4_START_ADDRESS: u16 = NR41_CH4_LENGTH_TIMER_ADDRESS;
 pub const CH4_END_ADDRESS: u16 = NR44_CH4_CONTROL_ADDRESS;
@@ -17,6 +18,8 @@ pub struct NoiseChannel {
     nrx2_envelope_and_dac: NRx2,
     nr43_freq_and_rnd: NR43,
     nrx4_ctrl: NRx4,
+
+    length_timer: LengthTimer,
 }
 
 impl Default for NoiseChannel {
@@ -26,6 +29,7 @@ impl Default for NoiseChannel {
             nrx2_envelope_and_dac: Default::default(),
             nr43_freq_and_rnd: Default::default(),
             nrx4_ctrl: Default::default(),
+            length_timer: LengthTimer::new(ChannelType::CH4),
         }
     }
 }
@@ -49,6 +53,10 @@ impl NoiseChannel {
             NR44_CH4_CONTROL_ADDRESS => self.nrx4_ctrl.write(value),
             _ => panic!("Invalid NoiseChannel address: {:#X}", addr),
         }
+    }
+
+    pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
+        self.length_timer.tick(master_ctrl, &mut self.nrx4_ctrl);
     }
 }
 

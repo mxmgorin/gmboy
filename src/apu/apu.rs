@@ -168,6 +168,7 @@ impl Apu {
                     self.ch1.tick_length(&mut self.nr52);
                     self.ch2.tick_length(&mut self.nr52);
                     self.ch3.tick_length(&mut self.nr52);
+                    self.ch4.tick_length(&mut self.nr52);
                 }
                 1 => {}
                 2 => {
@@ -176,6 +177,7 @@ impl Apu {
                     self.ch1.tick_sweep(&mut self.nr52);
                     self.ch2.tick_length(&mut self.nr52);
                     self.ch3.tick_length(&mut self.nr52);
+                    self.ch4.tick_length(&mut self.nr52);
                 }
                 3 => {}
                 4 => {
@@ -183,6 +185,7 @@ impl Apu {
                     self.ch1.tick_length(&mut self.nr52);
                     self.ch2.tick_length(&mut self.nr52);
                     self.ch3.tick_length(&mut self.nr52);
+                    self.ch4.tick_length(&mut self.nr52);
                 }
                 5 => {}
                 6 => {
@@ -191,6 +194,7 @@ impl Apu {
                     self.ch1.tick_sweep(&mut self.nr52);
                     self.ch2.tick_length(&mut self.nr52);
                     self.ch3.tick_length(&mut self.nr52);
+                    self.ch4.tick_length(&mut self.nr52);
                 }
                 7 => {
                     // tick envelope

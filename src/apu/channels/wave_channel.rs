@@ -48,7 +48,7 @@ pub struct WaveChannel {
     // other data
     // todo: Period changes (written to NR33 or NR34) only take effect after the following time wave RAM is read
     period_timer: PeriodTimer,
-    pub length_timer: LengthTimer,
+    length_timer: LengthTimer,
     volume_shift: u8,
 }
 
