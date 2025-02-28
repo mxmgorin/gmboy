@@ -65,6 +65,7 @@ impl Apu {
         self.ch1.tick();
         self.ch2.tick();
         self.ch3.tick();
+        self.ch4.tick();
 
         // down sample by nearest-neighbor
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQ as u32;
@@ -76,7 +77,8 @@ impl Apu {
 
             (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
             (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
-            (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch2);
+            (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
+            (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
             let (output_left, output_right) = self.mixer.mix();
 
             self.output_buffer[self.output_buffer_idx] = self.hpf.apply_filter(output_left);
@@ -124,7 +126,7 @@ impl Apu {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52),
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.write(address, value, &mut self.nr52),
-            CH4_START_ADDRESS..=CH4_END_ADDRESS => self.ch4.write(address, value),
+            CH4_START_ADDRESS..=CH4_END_ADDRESS => self.ch4.write(address, value, &mut self.nr52),
             AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.write(value),
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte = value,
@@ -174,10 +176,11 @@ impl Apu {
                 2 => {
                     // tick length, sweep
                     self.ch1.tick_length(&mut self.nr52);
-                    self.ch1.tick_sweep(&mut self.nr52);
                     self.ch2.tick_length(&mut self.nr52);
                     self.ch3.tick_length(&mut self.nr52);
                     self.ch4.tick_length(&mut self.nr52);
+
+                    self.ch1.tick_sweep(&mut self.nr52);
                 }
                 3 => {}
                 4 => {
@@ -191,17 +194,17 @@ impl Apu {
                 6 => {
                     // tick length, sweep
                     self.ch1.tick_length(&mut self.nr52);
-                    self.ch1.tick_sweep(&mut self.nr52);
                     self.ch2.tick_length(&mut self.nr52);
                     self.ch3.tick_length(&mut self.nr52);
                     self.ch4.tick_length(&mut self.nr52);
+
+                    self.ch1.tick_sweep(&mut self.nr52);
                 }
                 7 => {
                     // tick envelope
                     self.ch1.tick_envelope();
                     self.ch2.tick_envelope();
                     self.ch4.tick_envelope();
-
                 }
                 _ => unreachable!(),
             }
