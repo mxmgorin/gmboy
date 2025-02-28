@@ -56,7 +56,7 @@ impl DacEnable for SquareChannel {
 
 impl DigitalSampleProducer for SquareChannel {
     fn get_sample(&self, master_ctrl: NR52) -> u8 {
-        if master_ctrl.is_ch_active(&self.ch_type) {
+        if master_ctrl.is_ch_on(self.ch_type) {
             let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
 
             let output = if WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] == 1 {
@@ -174,7 +174,7 @@ impl SquareChannel {
     }
 
     fn trigger(&mut self, nr52: &mut NR52) {
-        nr52.activate_ch(&self.ch_type);
+        nr52.activate_ch(self.ch_type);
 
         if self.length_timer.is_expired() {
             self.length_timer.reload(&self.nrx1_len_timer_duty_cycle);

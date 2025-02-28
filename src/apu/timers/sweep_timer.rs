@@ -70,7 +70,7 @@ impl SweepTimer {
 
         /* overflow check */
         if new_frequency > 2047 {
-            nr52.deactivate_ch(&ChannelType::CH1);
+            nr52.deactivate_ch(ChannelType::CH1);
         }
 
         new_frequency

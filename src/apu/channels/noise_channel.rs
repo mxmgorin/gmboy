@@ -33,15 +33,17 @@ pub struct NoiseChannel {
 
 impl Default for NoiseChannel {
     fn default() -> NoiseChannel {
+        let ch_type = ChannelType::CH4;
+
         Self {
-            nrx1_len: NRx1::new(ChannelType::CH4),
+            nrx1_len: NRx1::new(ch_type),
             nrx2_envelope_and_dac: Default::default(),
             nr43_freq_and_rnd: Default::default(),
             nrx4_ctrl: Default::default(),
-            length_timer: LengthTimer::new(ChannelType::CH4),
+            length_timer: LengthTimer::new(ch_type),
             envelope_timer: Default::default(),
             frequency_timer: 0,
-            lfsr: 0,
+            lfsr: 0x7FFF,
         }
     }
 }
@@ -55,7 +57,7 @@ impl DacEnable for NoiseChannel {
 impl DigitalSampleProducer for NoiseChannel {
     fn get_sample(&self, master_ctrl: NR52) -> u8 {
         // If the bit shifted out is a 0, the channel emits a 0; otherwise, it emits the volume selected in NR42
-        if master_ctrl.is_ch_active(&ChannelType::CH3) && (self.lfsr & 0b01) == 0 {
+        if master_ctrl.is_ch4_on() && (self.lfsr & 0b01) == 0 {
             return self.envelope_timer.get_volume();
         }
 
@@ -91,11 +93,14 @@ impl NoiseChannel {
     }
 
     pub fn tick(&mut self) {
+        if self.frequency_timer > 0 {
+            self.frequency_timer -= 1;
+        }
+
         // If the frequency timer decrement to 0, it is reloaded with the formula
         // `divisor_code << clock_shift` and wave position is advanced by one.
         if self.frequency_timer == 0 {
-            let clock_divider = self.nr43_freq_and_rnd.clock_divider();
-            let divisor = DIVISORS[clock_divider as usize];
+            let divisor = DIVISORS[self.nr43_freq_and_rnd.clock_divider() as usize];
             // Reload the frequency timer with the correct divisor
             self.frequency_timer = divisor << self.nr43_freq_and_rnd.clock_shift();
             // The XOR result of the 0th and 1st bit of LFSR is computed
@@ -108,8 +113,6 @@ impl NoiseChannel {
                 self.lfsr |= xor_result << 6;
             }
         }
-
-        self.frequency_timer = self.frequency_timer.wrapping_sub(1);
     }
 
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
@@ -121,7 +124,7 @@ impl NoiseChannel {
     }
 
     fn trigger(&mut self, nr52: &mut NR52) {
-        nr52.activate_ch(&ChannelType::CH4);
+        nr52.activate_ch4();
 
         if self.length_timer.is_expired() {
             self.length_timer.reload(&self.nrx1_len);

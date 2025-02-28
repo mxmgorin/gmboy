@@ -26,7 +26,7 @@ impl DacEnable for WaveChannel {
 
 impl DigitalSampleProducer for WaveChannel {
     fn get_sample(&self, nr52: NR52) -> u8 {
-        if nr52.is_ch_active(&ChannelType::CH3) {
+        if nr52.is_ch3_on() {
             let output = self.wave_ram.sample_buffer >> self.volume_shift;
 
             return output;
@@ -111,7 +111,7 @@ impl WaveChannel {
     }
 
     fn trigger(&mut self, master_ctrl: &mut NR52) {
-        master_ctrl.activate_ch(&ChannelType::CH3);
+        master_ctrl.activate_ch3();
 
         if self.length_timer.is_expired() {
             self.length_timer.reload(&self.nrx1_length_timer);

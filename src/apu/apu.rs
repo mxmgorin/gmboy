@@ -242,20 +242,52 @@ impl NR52 {
         get_bit_flag(self.byte, 7)
     }
 
+    pub fn is_ch1_on(&self) -> bool {
+        get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH1))
+    }
+
+    pub fn is_ch2_on(&self) -> bool {
+        get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH2))
+    }
+
+    pub fn is_ch3_on(&self) -> bool {
+        get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH3))
+    }
+
+    pub fn is_ch4_on(&self) -> bool {
+        get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH4))
+    }
+
     /// Only the status of the channels’ generation circuits is reported
-    pub fn is_ch_active(&self, ch_type: &ChannelType) -> bool {
+    pub fn is_ch_on(&self, ch_type: ChannelType) -> bool {
         get_bit_flag(self.byte, Self::get_enable_bit_pos(ch_type))
     }
 
-    pub fn deactivate_ch(&mut self, ch_type: &ChannelType) {
+    pub fn deactivate_ch(&mut self, ch_type: ChannelType) {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), false);
     }
 
-    pub fn activate_ch(&mut self, ch_type: &ChannelType) {
+    pub fn activate_ch1(&mut self, ) {
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH1), true);
+    }
+
+    pub fn activate_ch2(&mut self, ) {
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH2), true);
+    }
+
+    pub fn activate_ch3(&mut self, ) {
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH3), true);
+    }
+
+    pub fn activate_ch4(&mut self, ) {
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH4), true);
+    }
+
+    pub fn activate_ch(&mut self, ch_type: ChannelType) {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), true);
     }
 
-    fn get_enable_bit_pos(ch_type: &ChannelType) -> u8 {
+    fn get_enable_bit_pos(ch_type: ChannelType) -> u8 {
         match ch_type {
             ChannelType::CH1 => 0,
             ChannelType::CH2 => 1,

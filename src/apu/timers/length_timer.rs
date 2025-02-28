@@ -34,7 +34,7 @@ impl LengthTimer {
         self.counter = self.counter.saturating_sub(1);
 
         if self.is_expired() {
-            nr52.deactivate_ch(&self.ch_type);
+            nr52.deactivate_ch(self.ch_type);
         }
     }
 
