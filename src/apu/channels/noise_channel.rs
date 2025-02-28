@@ -131,7 +131,7 @@ impl NoiseChannel {
         }
 
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);
-        self.lfsr = 0xFFFF;
+        self.lfsr = 0x7FFF;
     }
 }
 
