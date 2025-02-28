@@ -14,6 +14,23 @@ pub struct BgwFetchedData {
     pub byte1: u8,
     pub byte2: u8,
     pub is_window: bool,
+    pub map_x: u8,
+    pub map_y: u8,
+}
+
+impl BgwFetchedData {
+    pub fn get_bgw_data_addr(&mut self, lcd: &Lcd) -> u16 {
+        if self.is_window {
+            self.map_y = lcd.ly.wrapping_sub(lcd.window.y);
+        }
+
+        let tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
+
+        lcd.control
+            .bgw_data_area()
+            .wrapping_add(self.tile_idx as u16 * 16)
+            .wrapping_add(tile_y as u16)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -25,8 +42,6 @@ pub struct PixelFetcher {
     fetch_step: FetchStep,
     line_x: u8,
     fetch_x: u8,
-    map_y: u8,
-    map_x: u8,
     fifo_x: u8,
     pixel_fifo: VecDeque<Pixel>,
     bgw_fetched_data: BgwFetchedData,
@@ -41,8 +56,6 @@ impl Default for PixelFetcher {
             pushed_x: 0,
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
-            map_y: 0,
-            map_x: 0,
             fifo_x: 0,
             buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize],
             sprite_fetcher: Default::default(),
@@ -52,9 +65,6 @@ impl Default for PixelFetcher {
 
 impl PixelFetcher {
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
-        self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
-        self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
-
         if line_ticks & 1 != 0 {
             self.fetch(bus);
         }
@@ -81,9 +91,11 @@ impl PixelFetcher {
         match self.fetch_step {
             FetchStep::Tile => {
                 if bus.io.lcd.control.bgw_enabled() {
+                    self.bgw_fetched_data.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
+                    self.bgw_fetched_data.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
                     let addr = bus.io.lcd.control.bg_map_area()
-                        + (self.map_x as u16 / TILE_WIDTH)
-                        + ((self.map_y as u16 / TILE_HEIGHT) * 32);
+                        + (self.bgw_fetched_data.map_x as u16 / TILE_WIDTH)
+                        + ((self.bgw_fetched_data.map_y as u16 / TILE_HEIGHT) * 32);
                     self.bgw_fetched_data.tile_idx = bus.read(addr);
                     self.bgw_fetched_data.is_window = false;
 
@@ -108,12 +120,12 @@ impl PixelFetcher {
                 self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
             }
             FetchStep::Data0 => {
-                self.bgw_fetched_data.byte1 = bus.read(self.get_bgw_data_addr(&bus.io.lcd));
+                self.bgw_fetched_data.byte1 = bus.read(self.bgw_fetched_data.get_bgw_data_addr(&bus.io.lcd));
                 self.sprite_fetcher.fetch_sprite_data(bus, 0);
                 self.fetch_step = FetchStep::Data1;
             }
             FetchStep::Data1 => {
-                self.bgw_fetched_data.byte2 = bus.read(self.get_bgw_data_addr(&bus.io.lcd) + 1);
+                self.bgw_fetched_data.byte2 = bus.read(self.bgw_fetched_data.get_bgw_data_addr(&bus.io.lcd) + 1);
                 self.sprite_fetcher.fetch_sprite_data(bus, 1);
                 self.fetch_step = FetchStep::Idle;
             }
@@ -177,19 +189,6 @@ impl PixelFetcher {
 
     pub fn clear(&mut self) {
         self.pixel_fifo.clear();
-    }
-
-    fn get_bgw_data_addr(&mut self, lcd: &Lcd) -> u16 {
-        if self.bgw_fetched_data.is_window {
-            self.map_y = lcd.ly.wrapping_sub(lcd.window.y);
-        }
-
-        let tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
-        
-        lcd.control
-            .bgw_data_area()
-            .wrapping_add(self.bgw_fetched_data.tile_idx as u16 * 16)
-            .wrapping_add(tile_y as u16)
     }
 }
 
