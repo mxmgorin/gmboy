@@ -25,7 +25,7 @@ pub struct NoiseChannel {
 
     length_timer: LengthTimer,
     envelope_timer: EnvelopeTimer,
-    frequency_timer: u16,
+    freq_timer: u16,
     /// linear feedback shift register:
     /// 15 bits for its current state and 1 bit to temporarily store the next bit to shift in
     lfsr: u16,
@@ -42,7 +42,7 @@ impl Default for NoiseChannel {
             nrx4_ctrl: Default::default(),
             length_timer: LengthTimer::new(ch_type),
             envelope_timer: Default::default(),
-            frequency_timer: 0,
+            freq_timer: 0,
             lfsr: 0x7FFF,
         }
     }
@@ -93,16 +93,15 @@ impl NoiseChannel {
     }
 
     pub fn tick(&mut self) {
-        if self.frequency_timer > 0 {
-            self.frequency_timer -= 1;
+        if self.freq_timer > 0 {
+            self.freq_timer -= 1;
         }
 
         // If the frequency timer decrement to 0, it is reloaded with the formula
         // `divisor_code << clock_shift` and wave position is advanced by one.
-        if self.frequency_timer == 0 {
-            let divisor = DIVISORS[self.nr43_freq_and_rnd.clock_divider() as usize];
-            // Reload the frequency timer with the correct divisor
-            self.frequency_timer = divisor << self.nr43_freq_and_rnd.clock_shift();
+        if self.freq_timer == 0 {            
+            self.reload_freq_timer();
+
             // The XOR result of the 0th and 1st bit of LFSR is computed
             let xor_result = (self.lfsr & 0b01) ^ ((self.lfsr & 0b10) >> 1);
             self.lfsr = (self.lfsr >> 1) | (xor_result << 14);
@@ -130,8 +129,15 @@ impl NoiseChannel {
             self.length_timer.reload(&self.nrx1_len);
         }
 
+        self.reload_freq_timer();
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);
         self.lfsr = 0x7FFF;
+    }
+    
+    fn reload_freq_timer(&mut self) {
+        // Reload the frequency timer with the correct divisor
+        let divisor = DIVISORS[self.nr43_freq_and_rnd.clock_divider() as usize];
+        self.freq_timer = divisor << self.nr43_freq_and_rnd.clock_shift();
     }
 }
 
