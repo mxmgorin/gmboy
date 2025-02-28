@@ -1,7 +1,7 @@
 use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
-use crate::ppu::lcd::{LcdMode, LcdStatSrc};
+use crate::ppu::lcd::{PpuMode, LcdStatSrc};
 use crate::ppu::pipeline::Pipeline;
 use std::time::{Duration, Instant};
 use crate::auxiliary::clock::spin_wait;
@@ -68,17 +68,17 @@ impl Ppu {
     pub fn tick(&mut self, bus: &mut Bus) {
         self.line_ticks += 1;
 
-        match bus.io.lcd.status.mode() {
-            LcdMode::Oam => self.mode_oam(bus),
-            LcdMode::Transfer => self.mode_transfer(bus),
-            LcdMode::HBlank => self.mode_hblank(&mut bus.io),
-            LcdMode::VBlank => self.mode_vblank(&mut bus.io),
+        match bus.io.lcd.status.ppu_mode() {
+            PpuMode::Oam => self.mode_oam(bus),
+            PpuMode::Transfer => self.mode_transfer(bus),
+            PpuMode::HBlank => self.mode_hblank(&mut bus.io),
+            PpuMode::VBlank => self.mode_vblank(&mut bus.io),
         }
     }
 
     pub fn mode_oam(&mut self, bus: &mut Bus) {
         if self.line_ticks >= 80 {
-            bus.io.lcd.status.mode_set(LcdMode::Transfer);
+            bus.io.lcd.status.set_ppu_mode(PpuMode::Transfer);
             self.pipeline.reset();
         }
 
@@ -98,7 +98,7 @@ impl Ppu {
 
         if self.pipeline.pushed_x >= LCD_X_RES {
             self.pipeline.clear();
-            bus.io.lcd.status.mode_set(LcdMode::HBlank);
+            bus.io.lcd.status.set_ppu_mode(PpuMode::HBlank);
 
             if bus.io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
                 bus.io.interrupts.request_interrupt(InterruptType::LCDStat);
@@ -111,7 +111,7 @@ impl Ppu {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly as usize >= LINES_PER_FRAME {
-                io.lcd.status.mode_set(LcdMode::Oam);
+                io.lcd.status.set_ppu_mode(PpuMode::Oam);
                 io.lcd.reset_ly(&mut io.interrupts);
             }
 
@@ -124,7 +124,7 @@ impl Ppu {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly >= LCD_Y_RES {
-                io.lcd.status.mode_set(LcdMode::VBlank);
+                io.lcd.status.set_ppu_mode(PpuMode::VBlank);
                 io.interrupts.request_interrupt(InterruptType::VBlank);
 
                 if io.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
@@ -136,7 +136,7 @@ impl Ppu {
                 self.limit();
                 self.prev_frame_duration = self.timer.elapsed();
             } else {
-                io.lcd.status.mode_set(LcdMode::Oam);
+                io.lcd.status.set_ppu_mode(PpuMode::Oam);
             }
 
             self.line_ticks = 0;

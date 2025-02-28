@@ -250,11 +250,11 @@ pub struct LcdStatus {
 }
 
 impl LcdStatus {
-    pub fn mode(&self) -> LcdMode {
-        LcdMode::from(self.byte)
+    pub fn ppu_mode(&self) -> PpuMode {
+        PpuMode::from(self.byte)
     }
 
-    pub fn mode_set(&mut self, mode: LcdMode) {
+    pub fn set_ppu_mode(&mut self, mode: PpuMode) {
         self.byte &= !0b11;
         self.byte |= mode as u8;
     }
@@ -273,7 +273,7 @@ impl LcdStatus {
 }
 
 #[derive(Copy, Clone, PartialEq)]
-pub enum LcdMode {
+pub enum PpuMode {
     HBlank,
     VBlank,
     Oam,
@@ -288,13 +288,13 @@ pub enum LcdStatSrc {
     Lyc = 1 << 6,
 }
 
-impl From<u8> for LcdMode {
+impl From<u8> for PpuMode {
     fn from(value: u8) -> Self {
         match value & 0b11 {
-            0 => LcdMode::HBlank,
-            1 => LcdMode::VBlank,
-            2 => LcdMode::Oam,
-            3 => LcdMode::Transfer,
+            0 => PpuMode::HBlank,
+            1 => PpuMode::VBlank,
+            2 => PpuMode::Oam,
+            3 => PpuMode::Transfer,
             _ => unreachable!(),
         }
     }
