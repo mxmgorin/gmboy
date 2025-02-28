@@ -11,7 +11,7 @@ use crate::timers::sweep_timer::SweepTimer;
 pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;
 pub const CH1_END_ADDRESS: u16 = NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS;
 
-pub const CH2_START_ADDRESS: u16 = NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS;
+pub const CH2_START_ADDRESS: u16 = NR20_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 pub const CH2_END_ADDRESS: u16 = NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 
 pub const NR10_CH1_SWEEP_ADDRESS: u16 = 0xFF10;
@@ -20,6 +20,8 @@ pub const NR12_CH1_VOL_ENVELOPE_ADDRESS: u16 = 0xFF12;
 pub const NR13_CH1_PERIOD_LOW_ADDRESS: u16 = 0xFF13;
 pub const NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS: u16 = 0xFF14;
 
+/// There is no NR20 register.
+pub const NR20_CH2_PERIOD_HIGH_CONTROL_ADDRESS: u16 = 0xFF15;
 pub const NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS: u16 = 0xFF16;
 pub const NR22_CH2_VOL_ENVELOPE_ADDRESS: u16 = 0xFF17;
 pub const NR23_CH2_PERIOD_LOW_ADDRESS: u16 = 0xFF18;
@@ -100,17 +102,16 @@ impl SquareChannel {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        let mut offset = self.get_offset(address);
-
-        if let Some(sweep_timer) = &self.sweep_timer {
-            if offset == 0 {
-                return sweep_timer.nr10.byte;
-            }
-        } else {
-            offset += 1;
-        }
+        let offset = self.get_offset(address);
 
         match offset {
+            0 => {
+                if let Some(sweep_timer) = &self.sweep_timer {
+                    sweep_timer.nr10.byte
+                } else {
+                    0xFF
+                }
+            }
             1 => self.nrx1_len_timer_duty_cycle.byte,
             2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
@@ -120,18 +121,14 @@ impl SquareChannel {
     }
 
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
-        let mut offset = self.get_offset(address);
-
-        if let Some(sweep_timer) = self.sweep_timer.as_mut() {
-            if offset == 0 {
-                sweep_timer.nr10.byte = value;
-                return;
-            }
-        } else {
-            offset += 1;
-        }
+        let offset = self.get_offset(address);
 
         match offset {
+            0 => {
+                if let Some(sweep_timer) = self.sweep_timer.as_mut() {
+                    sweep_timer.nr10.byte = value;
+                }
+            }
             1 => self.nrx1_len_timer_duty_cycle.byte = value,
             // Writes to this register while the channel is on require re-triggering it after wards.
             // If the write turns the channel off, re-triggering is not necessary (it would do nothing).

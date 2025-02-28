@@ -11,6 +11,9 @@ use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 
+pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
+pub const AUDIO_END_ADDRESS: u16 = 0xFF26;
+
 pub const APU_CLOCK_SPEED: u16 = 512;
 pub const SAMPLING_FREQ: u16 = 44100;
 
@@ -131,7 +134,13 @@ impl Apu {
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte = value,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.write(address, value),
-            _ => panic!("Invalid APU address: {:x}", address),
+            _ => {
+                if (AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS).contains(&address) {
+                    return;
+                }
+
+                panic!("Invalid APU address: {:x}", address);
+            }
         }
     }
 
@@ -145,7 +154,13 @@ impl Apu {
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.read(address),
-            _ => panic!("Invalid APU address: {:x}", address),
+            _ => {
+                if (AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS).contains(&address) {
+                    return 0xFF;
+                }
+
+                panic!("Invalid APU address: {:x}", address);
+            }
         }
     }
 
@@ -267,20 +282,36 @@ impl NR52 {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), false);
     }
 
-    pub fn activate_ch1(&mut self, ) {
-        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH1), true);
+    pub fn activate_ch1(&mut self) {
+        set_bit(
+            &mut self.byte,
+            Self::get_enable_bit_pos(ChannelType::CH1),
+            true,
+        );
     }
 
-    pub fn activate_ch2(&mut self, ) {
-        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH2), true);
+    pub fn activate_ch2(&mut self) {
+        set_bit(
+            &mut self.byte,
+            Self::get_enable_bit_pos(ChannelType::CH2),
+            true,
+        );
     }
 
-    pub fn activate_ch3(&mut self, ) {
-        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH3), true);
+    pub fn activate_ch3(&mut self) {
+        set_bit(
+            &mut self.byte,
+            Self::get_enable_bit_pos(ChannelType::CH3),
+            true,
+        );
     }
 
-    pub fn activate_ch4(&mut self, ) {
-        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH4), true);
+    pub fn activate_ch4(&mut self) {
+        set_bit(
+            &mut self.byte,
+            Self::get_enable_bit_pos(ChannelType::CH4),
+            true,
+        );
     }
 
     pub fn activate_ch(&mut self, ch_type: ChannelType) {

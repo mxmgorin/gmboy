@@ -1,6 +1,8 @@
 use crate::apu::Apu;
+use crate::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
+use crate::channels::wave_channel::{CH3_WAVE_RAM_END, CH3_WAVE_RAM_START};
 use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
 
@@ -13,8 +15,8 @@ impl From<u16> for IoAddress {
             0xFF01 => Self::SerialSb,
             0xFF02 => Self::SerialSc,
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => Self::Timer,
-            0xFF10..=0xFF26 => Self::Audio,
-            0xFF30..=0xFF3F => Self::WavePattern,
+            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS => Self::Audio,
+            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => Self::WavePattern,
             LCD_ADDRESS_START..=LCD_ADDRESS_END => Self::Display,
             0xFF4F => Self::VRAMBankSelect,
             0xFF50 => Self::DisableBootROM,
