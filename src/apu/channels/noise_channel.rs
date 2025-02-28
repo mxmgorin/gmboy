@@ -150,11 +150,11 @@ pub struct NR43 {
 
 impl NR43 {
     pub fn clock_shift(&self) -> u8 {
-        self.byte & 0b1111_0000
+        self.byte >> 4
     }
 
     pub fn get_lfsr_width(&self) -> LfsrWidth {
-        if get_bit_flag(self.byte, 3) {
+        if self.lfsr_width() {
             LfsrWidth::Bit7
         } else {
             LfsrWidth::Bit15
