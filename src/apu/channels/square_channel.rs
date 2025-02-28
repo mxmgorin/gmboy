@@ -1,5 +1,5 @@
 use crate::apu::channels::channel::ChannelType;
-use crate::apu::dac::{DacEnable, DigitalOutputProducer};
+use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::{NRx1, NRx2, NRx3x4};
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
@@ -54,8 +54,8 @@ impl DacEnable for SquareChannel {
     }
 }
 
-impl DigitalOutputProducer for SquareChannel {
-    fn get_output(&self, master_ctrl: NR52) -> u8 {
+impl DigitalSampleProducer for SquareChannel {
+    fn get_sample(&self, master_ctrl: NR52) -> u8 {
         if master_ctrl.is_ch_active(&self.ch_type) {
             let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
 

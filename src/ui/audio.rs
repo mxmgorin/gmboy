@@ -1,4 +1,4 @@
-use crate::apu::{Apu, AUDIO_BUFFER_SIZE, SAMPLING_FREQUENCY};
+use crate::apu::{Apu, AUDIO_BUFFER_SIZE, SAMPLING_FREQ};
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
 
@@ -12,7 +12,7 @@ impl GameAudio {
         let audio_subsystem = sdl.audio().unwrap();
 
         let desired_spec = AudioSpecDesired {
-            freq: Some(SAMPLING_FREQUENCY as i32),
+            freq: Some(SAMPLING_FREQ as i32),
             channels: Some(2),
             samples: Some(AUDIO_BUFFER_SIZE as u16),
         };
@@ -30,8 +30,8 @@ impl GameAudio {
     }
 
     pub fn play(&mut self, apu: &mut Apu) -> Result<(), String> {
-        if apu.is_buffer_ready() {
-            self.device.queue_audio(apu.take_buffer())?;
+        if apu.output_ready() {
+            self.device.queue_audio(apu.take_output())?;
         }
 
         Ok(())

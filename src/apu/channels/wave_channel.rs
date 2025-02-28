@@ -1,5 +1,5 @@
 use crate::apu::channels::channel::ChannelType;
-use crate::apu::dac::{DacEnable, DigitalOutputProducer};
+use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::{NRx1, NRx3x4};
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
@@ -24,8 +24,8 @@ impl DacEnable for WaveChannel {
     }
 }
 
-impl DigitalOutputProducer for WaveChannel {
-    fn get_output(&self, nr52: NR52) -> u8 {
+impl DigitalSampleProducer for WaveChannel {
+    fn get_sample(&self, nr52: NR52) -> u8 {
         if nr52.is_ch_active(&ChannelType::CH3) {
             let output = self.wave_ram.sample_buffer >> self.volume_shift;
 

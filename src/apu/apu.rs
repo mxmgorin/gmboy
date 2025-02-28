@@ -7,16 +7,17 @@ use crate::apu::channels::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
 use crate::apu::dac::apply_dac;
+use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 
 pub const APU_CLOCK_SPEED: u16 = 512;
-pub const SAMPLING_FREQUENCY: u16 = 44100;
+pub const SAMPLING_FREQ: u16 = 44100;
 
 pub const AUDIO_MASTER_CONTROL_ADDRESS: u16 = 0xFF26;
 pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
-pub const AUDIO_BUFFER_SIZE: usize = 1024;
+pub const AUDIO_BUFFER_SIZE: usize = 2048;
 
 pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
@@ -27,14 +28,15 @@ pub struct Apu {
     ch2: SquareChannel,
     ch3: WaveChannel,
     ch4: NoiseChannel,
-    nr52_master_ctrl: NR52,
+    nr52: NR52,
     mixer: Mixer,
 
     // other data
     frame_sequencer_step: u8,
     ticks_count: u32,
-    buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
-    buffer_index: usize,
+    output_buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
+    output_buffer_idx: usize,
+    hpf: Hpf,
 }
 
 impl Default for Apu {
@@ -44,12 +46,13 @@ impl Default for Apu {
             ch2: SquareChannel::ch2(),
             ch3: WaveChannel::default(),
             ch4: NoiseChannel::default(),
-            nr52_master_ctrl: NR52::default(),
+            nr52: NR52::default(),
             mixer: Default::default(),
             frame_sequencer_step: 0,
             ticks_count: 0,
-            buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
-            buffer_index: 0,
+            output_buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
+            output_buffer_idx: 0,
+            hpf: Hpf::new(SAMPLING_FREQ as i32),
         }
     }
 }
@@ -64,33 +67,33 @@ impl Apu {
         self.ch3.tick();
 
         // down sample by nearest-neighbor
-        let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY as u32;
+        let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQ as u32;
 
         if self.ticks_count % ticks_per_sample == 0 {
-            if self.is_buffer_ready() {
-                self.buffer_index = 0;
+            if self.output_buffer_idx >= AUDIO_BUFFER_SIZE {
+                self.output_buffer_idx = 0;
             }
 
-            self.mixer.outputs[0] = apply_dac(self.nr52_master_ctrl, &self.ch1);
-            self.mixer.outputs[1] = apply_dac(self.nr52_master_ctrl, &self.ch2);
-            self.mixer.outputs[2] = apply_dac(self.nr52_master_ctrl, &self.ch3);
+            (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
+            (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
+            (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch2);
             let (output_left, output_right) = self.mixer.mix();
 
-            self.buffer[self.buffer_index] = output_left;
-            self.buffer[self.buffer_index + 1] = output_right;
-            self.buffer_index += 2;
+            self.output_buffer[self.output_buffer_idx] = self.hpf.apply_filter(output_left);
+            self.output_buffer[self.output_buffer_idx + 1] = self.hpf.apply_filter(output_right);
+            self.output_buffer_idx += 2;
         }
     }
 
-    pub fn take_buffer(&mut self) -> &[f32] {
-        let buffer = &self.buffer[0..self.buffer_index];
-        self.buffer_index = 0;
+    pub fn take_output(&mut self) -> &[f32] {
+        let buffer = &self.output_buffer[0..self.output_buffer_idx];
+        self.output_buffer_idx = 0;
 
         buffer
     }
 
-    pub fn is_buffer_ready(&self) -> bool {
-        self.buffer_index >= AUDIO_BUFFER_SIZE
+    pub fn output_ready(&self) -> bool {
+        self.output_buffer_idx >= AUDIO_BUFFER_SIZE / 2
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
@@ -100,10 +103,10 @@ impl Apu {
         }
 
         if address == AUDIO_MASTER_CONTROL_ADDRESS {
-            let prev_enable = self.nr52_master_ctrl.is_audio_on();
-            self.nr52_master_ctrl.write(value);
+            let prev_enable = self.nr52.is_audio_on();
+            self.nr52.write(value);
 
-            if !prev_enable && self.nr52_master_ctrl.is_audio_on() {
+            if !prev_enable && self.nr52.is_audio_on() {
                 // turning on
                 self.ch3.wave_ram.clear_sample_buffer();
             }
@@ -111,26 +114,20 @@ impl Apu {
             return;
         }
 
-        if !self.nr52_master_ctrl.is_audio_on() {
+        if !self.nr52.is_audio_on() {
             return;
         }
 
         // todo: the length timers (in NRx1) on monochrome models also writable event when turned off
 
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => {
-                self.ch1.write(address, value, &mut self.nr52_master_ctrl)
-            }
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => {
-                self.ch2.write(address, value, &mut self.nr52_master_ctrl)
-            }
-            CH3_START_ADDRESS..=CH3_END_ADDRESS => {
-                self.ch3.write(address, value, &mut self.nr52_master_ctrl)
-            }
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52),
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52),
+            CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.write(address, value, &mut self.nr52),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => {}
-            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52_master_ctrl.write(value),
-            SOUND_PLANNING_ADDRESS => self.mixer.nr51_sound_panning.byte = value,
-            MASTER_VOLUME_ADDRESS => self.mixer.nr50_master_volume.byte = value,
+            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.write(value),
+            SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
+            MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte = value,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.write(address, value),
             _ => panic!("Invalid APU address: {:x}", address),
         }
@@ -142,9 +139,9 @@ impl Apu {
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.read(address),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
-            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52_master_ctrl.read(),
-            SOUND_PLANNING_ADDRESS => self.mixer.nr51_sound_panning.byte,
-            MASTER_VOLUME_ADDRESS => self.mixer.nr50_master_volume.byte,
+            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.read(),
+            SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte,
+            MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.read(address),
             _ => panic!("Invalid APU address: {:x}", address),
         }
@@ -168,38 +165,38 @@ impl Apu {
             match self.frame_sequencer_step {
                 0 => {
                     // tick_length
-                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch1.tick_length(&mut self.nr52);
+                    self.ch2.tick_length(&mut self.nr52);
+                    self.ch3.tick_length(&mut self.nr52);
                 }
                 1 => {}
                 2 => {
                     // tick length, sweep
-                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch1.tick_sweep(&mut self.nr52_master_ctrl);
-                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch1.tick_length(&mut self.nr52);
+                    self.ch1.tick_sweep(&mut self.nr52);
+                    self.ch2.tick_length(&mut self.nr52);
+                    self.ch3.tick_length(&mut self.nr52);
                 }
                 3 => {}
                 4 => {
                     // tick_length
-                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch1.tick_length(&mut self.nr52);
+                    self.ch2.tick_length(&mut self.nr52);
+                    self.ch3.tick_length(&mut self.nr52);
                 }
                 5 => {}
                 6 => {
                     // tick length, sweep
-                    self.ch1.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch1.tick_sweep(&mut self.nr52_master_ctrl);
-                    self.ch2.tick_length(&mut self.nr52_master_ctrl);
-                    self.ch3.tick_length(&mut self.nr52_master_ctrl);
+                    self.ch1.tick_length(&mut self.nr52);
+                    self.ch1.tick_sweep(&mut self.nr52);
+                    self.ch2.tick_length(&mut self.nr52);
+                    self.ch3.tick_length(&mut self.nr52);
                 }
                 7 => {
                     // tick envelope
                     self.ch1.tick_envelope();
                     self.ch2.tick_envelope();
-                } 
+                }
                 _ => unreachable!(),
             }
 
