@@ -102,12 +102,12 @@ impl SquareChannel {
     pub fn read(&self, address: u16) -> u8 {
         let mut offset = self.get_offset(address);
 
-        if offset == 0 {
-            if let Some(sweep_timer) = self.sweep_timer.as_ref() {
+        if let Some(sweep_timer) = &self.sweep_timer {
+            if offset == 0 {
                 return sweep_timer.nr10.byte;
-            } else {
-                offset += 1;
             }
+        } else {
+            offset += 1;
         }
 
         match offset {
@@ -122,13 +122,13 @@ impl SquareChannel {
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         let mut offset = self.get_offset(address);
 
-        if offset == 0 {
-            if let Some(sweep_timer) = self.sweep_timer.as_mut() {
+        if let Some(sweep_timer) = self.sweep_timer.as_mut() {
+            if offset == 0 {
                 sweep_timer.nr10.byte = value;
                 return;
-            } else {
-                offset += 1;
             }
+        } else {
+            offset += 1;
         }
 
         match offset {
