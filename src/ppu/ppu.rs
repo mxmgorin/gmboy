@@ -2,7 +2,7 @@ use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{PpuMode, LcdStatSrc};
-use crate::ppu::fetcher::Pipeline;
+use crate::ppu::fetcher::PixelFetcher;
 use std::time::{Duration, Instant};
 use crate::auxiliary::clock::spin_wait;
 
@@ -25,7 +25,7 @@ pub struct Ppu {
     pub frame_count: usize,
     pub fps: usize,
     pub timer: Instant,
-    pub pipeline: Pipeline,
+    pub pipeline: PixelFetcher,
 }
 
 impl Default for Ppu {
@@ -49,7 +49,7 @@ impl Ppu {
     pub fn with_fps_limit(fps: f64) -> Ppu {
         Self {
             current_frame: 0,
-            pipeline: Pipeline::default(),
+            pipeline: PixelFetcher::default(),
             prev_frame_duration: Duration::new(0, 0),
             frame_start_duration: Duration::new(0, 0),
             last_frame_duration: Default::default(),

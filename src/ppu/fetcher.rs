@@ -13,10 +13,11 @@ pub struct BgwFetchedData {
     pub tile_idx: u8,
     pub byte1: u8,
     pub byte2: u8,
+    pub is_window: bool,
 }
 
 #[derive(Debug, Clone)]
-pub struct Pipeline {
+pub struct PixelFetcher {
     pub pushed_x: u8,
     pub sprite_fetcher: SpriteFetcher,
     pub buffer: Vec<Pixel>,
@@ -32,8 +33,8 @@ pub struct Pipeline {
     bgw_fetched_data: BgwFetchedData,
 }
 
-impl Default for Pipeline {
-    fn default() -> Pipeline {
+impl Default for PixelFetcher {
+    fn default() -> PixelFetcher {
         Self {
             fetch_step: FetchStep::Tile,
             pixel_fifo: Default::default(),
@@ -51,7 +52,7 @@ impl Default for Pipeline {
     }
 }
 
-impl Pipeline {
+impl PixelFetcher {
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
         self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
@@ -87,10 +88,12 @@ impl Pipeline {
                         + (self.map_x as u16 / TILE_WIDTH)
                         + ((self.map_y as u16 / TILE_HEIGHT) * 32);
                     self.bgw_fetched_data.tile_idx = bus.read(addr);
+                    self.bgw_fetched_data.is_window = false;
 
                     if let Some(tile_idx) = bus.io.lcd.window.get_tile_idx(self.fetch_x as u16, bus)
                     {
                         self.bgw_fetched_data.tile_idx = tile_idx;
+                        self.bgw_fetched_data.is_window = true;
                     }
 
                     if bus.io.lcd.control.bgw_data_area() == 0x8800 {
@@ -179,7 +182,12 @@ impl Pipeline {
         self.pixel_fifo.clear();
     }
 
-    fn get_bgw_data_addr(&self, lcd: &Lcd) -> u16 {
+    fn get_bgw_data_addr(&mut self, lcd: &Lcd) -> u16 {
+        if self.bgw_fetched_data.is_window {
+            self.map_y = lcd.ly.wrapping_sub(lcd.window.y);
+            self.tile_y = (self.map_y % TILE_HEIGHT as u8) * 2; // Using window-relative map_y
+        }
+        
         lcd.control
             .bgw_data_area()
             .wrapping_add(self.bgw_fetched_data.tile_idx as u16 * 16)
