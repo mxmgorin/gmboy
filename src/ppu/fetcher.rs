@@ -27,7 +27,6 @@ pub struct PixelFetcher {
     fetch_x: u8,
     map_y: u8,
     map_x: u8,
-    tile_y: u8,
     fifo_x: u8,
     pixel_fifo: VecDeque<Pixel>,
     bgw_fetched_data: BgwFetchedData,
@@ -44,7 +43,6 @@ impl Default for PixelFetcher {
             bgw_fetched_data: Default::default(),
             map_y: 0,
             map_x: 0,
-            tile_y: 0,
             fifo_x: 0,
             buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize],
             sprite_fetcher: Default::default(),
@@ -56,7 +54,6 @@ impl PixelFetcher {
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         self.map_y = bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
         self.map_x = self.fetch_x.wrapping_add(bus.io.lcd.scroll_x);
-        self.tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
 
         if line_ticks & 1 != 0 {
             self.fetch(bus);
@@ -185,13 +182,14 @@ impl PixelFetcher {
     fn get_bgw_data_addr(&mut self, lcd: &Lcd) -> u16 {
         if self.bgw_fetched_data.is_window {
             self.map_y = lcd.ly.wrapping_sub(lcd.window.y);
-            self.tile_y = (self.map_y % TILE_HEIGHT as u8) * 2; // Using window-relative map_y
         }
+
+        let tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
         
         lcd.control
             .bgw_data_area()
             .wrapping_add(self.bgw_fetched_data.tile_idx as u16 * 16)
-            .wrapping_add(self.tile_y as u16)
+            .wrapping_add(tile_y as u16)
     }
 }
 
