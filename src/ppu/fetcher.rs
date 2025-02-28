@@ -15,6 +15,7 @@ pub struct BgwFetchedData {
     pub map_x: u8,
     pub map_y: u8,
     pub data_area: u16,
+    pub is_window: bool,
 }
 
 impl BgwFetchedData {
@@ -24,6 +25,12 @@ impl BgwFetchedData {
         self.data_area
             .wrapping_add(self.tile_idx as u16 * 16)
             .wrapping_add(tile_y as u16)
+    }
+
+    pub fn normalize_tile_idx(&mut self) {
+        if self.data_area == 0x8800 {
+            self.tile_idx = self.tile_idx.wrapping_add(128);
+        }
     }
 }
 
@@ -70,11 +77,22 @@ impl PixelFetcher {
         if self.pixel_fifo.len() > MAX_FIFO_SIZE {
             let pixel = self.pixel_fifo.pop_front().unwrap();
 
-            if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
+            // Check if we are in the window or background layer
+            // For the window layer, bypass scroll_x to avoid horizontal scrolling
+            if self.bgw_fetched_data.is_window {
+                // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
                 let index = (self.pushed_x as usize)
                     .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
                 self.buffer[index] = pixel;
                 self.pushed_x += 1;
+            } else {
+                // For the background layer, apply scroll_x for horizontal scrolling
+                if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
+                    let index = (self.pushed_x as usize)
+                        .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
+                    self.buffer[index] = pixel;
+                    self.pushed_x += 1;
+                }
             }
 
             self.line_x += 1;
@@ -85,16 +103,16 @@ impl PixelFetcher {
         match self.fetch_step {
             FetchStep::Tile => {
                 if bus.io.lcd.control.bgw_enabled() {
-                    self.bgw_fetched_data.data_area = bus.io.lcd.control.bgw_data_area();
-
                     if let Some(tile_idx) = bus.io.lcd.window.get_tile_idx(self.fetch_x as u16, bus)
                     {
+                        self.bgw_fetched_data.is_window = true;
                         self.bgw_fetched_data.map_y =
                             bus.io.lcd.ly.wrapping_add(bus.io.lcd.window.y);
                         self.bgw_fetched_data.map_x =
                             self.fetch_x.wrapping_add(bus.io.lcd.window.x);
                         self.bgw_fetched_data.tile_idx = tile_idx;
                     } else {
+                        self.bgw_fetched_data.is_window = false;
                         self.bgw_fetched_data.map_y =
                             bus.io.lcd.ly.wrapping_add(bus.io.lcd.scroll_y);
                         self.bgw_fetched_data.map_x =
@@ -104,11 +122,9 @@ impl PixelFetcher {
                             + ((self.bgw_fetched_data.map_y as u16 / TILE_HEIGHT) * 32);
                         self.bgw_fetched_data.tile_idx = bus.read(addr);
                     }
-
-                    if self.bgw_fetched_data.data_area == 0x8800 {
-                        self.bgw_fetched_data.tile_idx =
-                            self.bgw_fetched_data.tile_idx.wrapping_add(128);
-                    }
+                    
+                    self.bgw_fetched_data.data_area = bus.io.lcd.control.bgw_data_area();
+                    self.bgw_fetched_data.normalize_tile_idx();
                 }
 
                 if bus.io.lcd.control.obj_enabled() {
@@ -125,8 +141,7 @@ impl PixelFetcher {
                 self.fetch_step = FetchStep::Data1;
             }
             FetchStep::Data1 => {
-                self.bgw_fetched_data.byte2 =
-                    bus.read(self.bgw_fetched_data.get_data_addr() + 1);
+                self.bgw_fetched_data.byte2 = bus.read(self.bgw_fetched_data.get_data_addr() + 1);
                 self.sprite_fetcher.fetch_sprite_data(bus, 1);
                 self.fetch_step = FetchStep::Idle;
             }
