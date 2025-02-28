@@ -3,6 +3,7 @@ use crate::channels::channel::ChannelType;
 use crate::registers::NRx1;
 use crate::timers::length_timer::LengthTimer;
 use crate::{get_bit_flag, NR52};
+use crate::timers::envelope_timer::EnvelopeTimer;
 
 pub const CH4_START_ADDRESS: u16 = NR41_CH4_LENGTH_TIMER_ADDRESS;
 pub const CH4_END_ADDRESS: u16 = NR44_CH4_CONTROL_ADDRESS;
@@ -20,6 +21,7 @@ pub struct NoiseChannel {
     nrx4_ctrl: NRx4,
 
     length_timer: LengthTimer,
+    envelope_timer: EnvelopeTimer,
 }
 
 impl Default for NoiseChannel {
@@ -30,6 +32,7 @@ impl Default for NoiseChannel {
             nr43_freq_and_rnd: Default::default(),
             nrx4_ctrl: Default::default(),
             length_timer: LengthTimer::new(ChannelType::CH4),
+            envelope_timer: Default::default(),
         }
     }
 }
@@ -57,6 +60,10 @@ impl NoiseChannel {
 
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
         self.length_timer.tick(master_ctrl, &mut self.nrx4_ctrl);
+    }
+
+    pub fn tick_envelope(&mut self) {
+        self.envelope_timer.tick(self.nrx2_envelope_and_dac);
     }
 }
 

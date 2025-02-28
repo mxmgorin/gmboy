@@ -200,6 +200,8 @@ impl Apu {
                     // tick envelope
                     self.ch1.tick_envelope();
                     self.ch2.tick_envelope();
+                    self.ch4.tick_envelope();
+
                 }
                 _ => unreachable!(),
             }
