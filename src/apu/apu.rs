@@ -124,7 +124,7 @@ impl Apu {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52),
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.write(address, value, &mut self.nr52),
-            CH4_START_ADDRESS..=CH4_END_ADDRESS => {}
+            CH4_START_ADDRESS..=CH4_END_ADDRESS => self.ch4.write(address, value),
             AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.write(value),
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte = value,
@@ -138,7 +138,7 @@ impl Apu {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.read(address),
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.read(address),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.read(address),
-            CH4_START_ADDRESS..=CH4_END_ADDRESS => 0,
+            CH4_START_ADDRESS..=CH4_END_ADDRESS => self.ch4.read(address),
             AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.read(),
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte,
