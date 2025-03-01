@@ -282,6 +282,10 @@ impl NR52 {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), false);
     }
 
+    pub fn deactivate_ch4(&mut self) {
+        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH4), false);
+    }
+
     pub fn activate_ch1(&mut self) {
         set_bit(
             &mut self.byte,
@@ -372,15 +376,11 @@ pub struct NR50 {
 
 impl NR50 {
     pub fn left_volume(&self) -> u8 {
-        let vol = (self.byte >> 4) & 0b111; // Extract bits 6-4
-
-        vol + 1 // Convert 0-7 to 1-8
+        (self.byte >> 4) & 0b111 // Extract bits 6-4
     }
 
     pub fn right_volume(&self) -> u8 {
-        let vol = self.byte & 0b111; // Extract bits 2-0
-
-        vol + 1 // Convert 0-7 to 1-8
+        self.byte & 0b111 // Extract bits 2-0
     }
 
     pub fn vin_left_enabled(&self) -> bool {

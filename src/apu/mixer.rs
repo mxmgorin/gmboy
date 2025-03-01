@@ -1,7 +1,5 @@
 use crate::apu::{NR50, NR51};
 
-pub const VOLUME_DIV: f32 = 100.0;
-
 #[derive(Debug, Clone, Default)]
 pub struct Mixer {
     pub nr51_panning: NR51,
@@ -69,10 +67,10 @@ impl Mixer {
 }
 
 fn adjust_volume(sample: f32) -> f32 {
-    sample / VOLUME_DIV
+    sample
 }
 
 fn apply_volume(sample: f32, volume: u8) -> f32 {
-    let volume_factor = volume as f32 / 8.0;
+    let volume_factor = (volume as f32 + 1.0) / 8.0;
     sample * volume_factor
 }

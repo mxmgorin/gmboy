@@ -174,7 +174,7 @@ impl SquareChannel {
         nr52.activate_ch(self.ch_type);
 
         if self.length_timer.is_expired() {
-            self.length_timer.reload(&self.nrx1_len_timer_duty_cycle);
+            self.length_timer.reload(self.nrx1_len_timer_duty_cycle);
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);

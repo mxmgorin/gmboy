@@ -78,7 +78,10 @@ impl NoiseChannel {
 
     pub fn write(&mut self, addr: u16, value: u8, master_ctrl: &mut NR52) {
         match addr {
-            NR41_CH4_LENGTH_TIMER_ADDRESS => self.nrx1_len.byte = value,
+            NR41_CH4_LENGTH_TIMER_ADDRESS => {
+                self.nrx1_len.byte = value;
+                self.length_timer.reload(self.nrx1_len);
+            },
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => self.nrx2_envelope_and_dac.byte = value,
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte = value,
             NR44_CH4_CONTROL_ADDRESS => {
@@ -126,10 +129,9 @@ impl NoiseChannel {
         nr52.activate_ch4();
 
         if self.length_timer.is_expired() {
-            self.length_timer.reload(&self.nrx1_len);
+            self.length_timer.reload(self.nrx1_len);
         }
 
-        self.reload_freq_timer();
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);
         self.lfsr = 0x7FFF;
     }

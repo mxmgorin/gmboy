@@ -84,7 +84,7 @@ impl WaveChannel {
             CH3_NR30_DAC_ENABLE_ADDRESS => self.nrx0_dac_enable.byte = value,
             CH3_NR31_LENGTH_TIMER_ADDRESS => {
                 self.nrx1_length_timer.byte = value;
-                self.length_timer.reload(&self.nrx1_length_timer); // research: do it must be reloaded after write?
+                self.length_timer.reload(self.nrx1_length_timer); // research: do it must be reloaded after write?
             }
             CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.nrx2_output_level.byte = value,
             CH3_NR33_PERIOD_LOW_ADDRESS => self.nrx3x4_period_and_ctrl.period_low.write(value),
@@ -114,7 +114,7 @@ impl WaveChannel {
         master_ctrl.activate_ch3();
 
         if self.length_timer.is_expired() {
-            self.length_timer.reload(&self.nrx1_length_timer);
+            self.length_timer.reload(self.nrx1_length_timer);
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);

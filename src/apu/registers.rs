@@ -58,7 +58,7 @@ impl NRx2 {
     }
 
     pub fn initial_volume(&self) -> u8 {
-        self.byte & 0b1111_0000
+        self.byte >> 4
     }
 
     pub fn sweep_pace(&self) -> u8 {
