@@ -1,7 +1,7 @@
 use crate::bus::Bus;
+use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::oam::OamEntry;
-use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::tile::{
     get_color_index, Pixel, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
     TILE_SET_DATA_1_START,
@@ -62,15 +62,12 @@ impl SpriteFetcher {
         }
     }
 
-    pub fn fetch_sprite_tiles(&mut self, _scroll_x: u8, fetch_x: u8) {
+    pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
         let fetch_x = fetch_x as i32;
 
         for sprite in self.line_sprites.iter() {
-            let sp_x: i32 = (sprite.x as i32).wrapping_sub(8);
-            // todo: is it needed?
-            // scroll_x doesn't used for sprites—it only applies to the background
-            //.wrapping_add(scroll_x as i32 % 8);
+            let sp_x = self.calc_sprite_x(sprite.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x + 8)
                 || (sp_x + 8 >= fetch_x && sp_x + 8 < fetch_x + 8)
@@ -85,6 +82,10 @@ impl SpriteFetcher {
                 break;
             }
         }
+    }
+    
+    fn calc_sprite_x(&self, sprite_x: u8, scroll_x: u8) -> i32 {
+        (sprite_x as i32 - 8) + (scroll_x as i32 % 8)
     }
 
     pub fn fetch_sprite_data(&mut self, bus: &Bus, byte_offset: u16) {
@@ -132,7 +133,8 @@ impl SpriteFetcher {
         bg_color_index: usize,
     ) -> Option<Pixel> {
         for i in 0..self.fetched_sprites_count {
-            let sprite_x = self.fetched_sprites[i].x as i32 - 8;
+            let sprite = self.fetched_sprites[i];
+            let sprite_x = self.calc_sprite_x(sprite.x, lcd.scroll_x);
 
             if sprite_x + 8 < fifo_x as i32 {
                 continue; // Skip past sprites

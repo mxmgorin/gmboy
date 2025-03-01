@@ -13,7 +13,6 @@ use crate::channels::noise_channel::NR41_CH4_LENGTH_TIMER_ADDRESS;
 use crate::channels::square_channel::{
     NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS, NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS,
 };
-use crate::channels::wave_channel::CH3_NR31_LENGTH_TIMER_ADDRESS;
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 
 pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
