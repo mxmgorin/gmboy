@@ -114,7 +114,7 @@ impl WaveChannel {
         master_ctrl.activate_ch3();
 
         if self.length_timer.is_expired() {
-            self.length_timer.reload(self.nrx1_length_timer);
+            self.length_timer.reset();
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);

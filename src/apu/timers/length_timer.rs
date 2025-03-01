@@ -45,6 +45,10 @@ impl LengthTimer {
     pub fn reload(&mut self, nrx1: NRx1) {
         self.counter = self.get_initial_length() - nrx1.initial_length_timer() as u16;
     }
+    
+    pub fn reset(&mut self) {
+        self.counter = self.get_initial_length();
+    }
 
     pub fn get_initial_length(&self) -> u16 {
         match self.ch_type {

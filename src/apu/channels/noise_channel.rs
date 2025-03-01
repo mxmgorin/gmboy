@@ -129,7 +129,7 @@ impl NoiseChannel {
         nr52.activate_ch4();
 
         if self.length_timer.is_expired() {
-            self.length_timer.reload(self.nrx1_len);
+            self.length_timer.reset();
         }
 
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);

@@ -129,7 +129,10 @@ impl SquareChannel {
                     sweep_timer.nr10.byte = value;
                 }
             }
-            1 => self.nrx1_len_timer_duty_cycle.byte = value,
+            1 => {
+                self.nrx1_len_timer_duty_cycle.byte = value;
+                self.length_timer.reload(self.nrx1_len_timer_duty_cycle); // research: do it must be reloaded after write?
+            }
             // Writes to this register while the channel is on require re-triggering it after wards.
             // If the write turns the channel off, re-triggering is not necessary (it would do nothing).
             2 => self.nrx2_volume_envelope_and_dac.byte = value,
@@ -174,7 +177,7 @@ impl SquareChannel {
         nr52.activate_ch(self.ch_type);
 
         if self.length_timer.is_expired() {
-            self.length_timer.reload(self.nrx1_len_timer_duty_cycle);
+            self.length_timer.reset();
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);
