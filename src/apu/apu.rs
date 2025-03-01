@@ -9,6 +9,11 @@ use crate::apu::channels::wave_channel::{
 use crate::apu::dac::apply_dac;
 use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
+use crate::channels::noise_channel::NR41_CH4_LENGTH_TIMER_ADDRESS;
+use crate::channels::square_channel::{
+    NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS, NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS,
+};
+use crate::channels::wave_channel::CH3_NR31_LENGTH_TIMER_ADDRESS;
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
 
 pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
@@ -107,30 +112,48 @@ impl Apu {
             return;
         }
 
-        if address == AUDIO_MASTER_CONTROL_ADDRESS {
-            let prev_enable = self.nr52.is_audio_on();
-            self.nr52.write(value);
-
-            if !prev_enable && self.nr52.is_audio_on() {
-                // turning on
-                self.ch3.wave_ram.clear_sample_buffer();
-            }
-
-            return;
+        if !self.nr52.is_audio_on() && address != AUDIO_MASTER_CONTROL_ADDRESS {
+            //return; todo: research Asteroids tries to write to panning before enabling
         }
 
-        if !self.nr52.is_audio_on() {
-            return;
-        }
-
-        // todo: the length timers (in NRx1) on monochrome models also writable event when turned off
+        // the length timers (in NRx1) on monochrome models also writable event when turned off
+        let value = if !self.nr52.is_audio_on()
+            && [
+                NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS,
+                NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS,
+                NR41_CH4_LENGTH_TIMER_ADDRESS,
+            ]
+            .contains(&address)
+        {
+            value & 0b0011_1111
+        } else {
+            value
+        };
 
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52),
             CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.write(address, value, &mut self.nr52),
             CH4_START_ADDRESS..=CH4_END_ADDRESS => self.ch4.write(address, value, &mut self.nr52),
-            AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.write(value),
+            AUDIO_MASTER_CONTROL_ADDRESS => {
+                let prev_enable = self.nr52.is_audio_on();
+                self.nr52.write(value);
+
+                if !prev_enable && self.nr52.is_audio_on() {
+                    // turning on
+                    self.ch3.wave_ram.clear_sample_buffer();
+                } else if prev_enable && !self.nr52.is_audio_on() {
+                    // turning_off
+                    for addr in CH1_START_ADDRESS..=0xFF25 {
+                        self.write(addr, 0x00);
+                    }
+
+                    self.frame_sequencer_step = 0;
+                    self.ch1.duty_sequence = 0;
+                    self.ch2.duty_sequence = 0;
+                    self.ch3.wave_ram.reset_sample_index();
+                }
+            }
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte = value,
             CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.write(address, value),
@@ -283,7 +306,11 @@ impl NR52 {
     }
 
     pub fn deactivate_ch4(&mut self) {
-        set_bit(&mut self.byte, Self::get_enable_bit_pos(ChannelType::CH4), false);
+        set_bit(
+            &mut self.byte,
+            Self::get_enable_bit_pos(ChannelType::CH4),
+            false,
+        );
     }
 
     pub fn activate_ch1(&mut self) {

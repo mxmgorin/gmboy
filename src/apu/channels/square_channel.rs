@@ -47,7 +47,7 @@ pub struct SquareChannel {
     period_timer: PeriodTimer,
     length_timer: LengthTimer,
     envelope_timer: EnvelopeTimer,
-    duty_sequence: usize,
+    pub duty_sequence: usize,
 }
 
 impl DacEnable for SquareChannel {
