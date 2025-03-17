@@ -15,11 +15,6 @@ pub fn apply_dac<T: DacEnable + DigitalSampleProducer>(nr52: NR52, producer: &T)
 
     if dac_enabled {
         let sample = producer.get_sample(nr52);
-
-        if sample == 0 {
-            return (dac_enabled, 1.0);
-        }
-
         let sample = (sample as f32 / 7.5) - 1.0;
 
         return (dac_enabled, sample);
