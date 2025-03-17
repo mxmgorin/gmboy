@@ -1,5 +1,6 @@
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
+use crate::mbc2::Mbc2;
 use crate::{CartData, RAM_BANK_SIZE, ROM_BANK_SIZE};
 
 pub trait Mbc {
@@ -13,6 +14,7 @@ pub trait Mbc {
 #[derive(Debug, Clone)]
 pub enum MbcVariant {
     Mbc1(Mbc1),
+    Mbc2(Mbc2),
 }
 
 impl MbcVariant {
@@ -23,9 +25,10 @@ impl MbcVariant {
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => Some(
                 MbcVariant::Mbc1(Mbc1::new(MbcData::new(cart_data.get_ram_size().unwrap()))),
             ),
-            CartType::Mbc2
-            | CartType::Mbc2Battery
-            | CartType::RomRam
+            CartType::Mbc2 | CartType::Mbc2Battery => Some(MbcVariant::Mbc2(Mbc2::new(
+                MbcData::new(cart_data.get_ram_size().unwrap()),
+            ))),
+            CartType::RomRam
             | CartType::RomRamBattery
             | CartType::Mmm01
             | CartType::Mmm01Ram
@@ -53,30 +56,35 @@ impl Mbc for MbcVariant {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
         match self {
             MbcVariant::Mbc1(c) => c.read_rom(rom_bytes, address),
+            MbcVariant::Mbc2(c) => c.read_rom(rom_bytes, address),
         }
     }
 
     fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8) {
         match self {
             MbcVariant::Mbc1(c) => c.write_rom(rom_bytes, address, value),
+            MbcVariant::Mbc2(c) => c.write_rom(rom_bytes, address, value),
         }
     }
 
     fn read_ram(&self, address: u16) -> u8 {
         match self {
             MbcVariant::Mbc1(c) => c.read_ram(address),
+            MbcVariant::Mbc2(c) => c.read_ram(address),
         }
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {
         match self {
             MbcVariant::Mbc1(c) => c.write_ram(address, value),
+            MbcVariant::Mbc2(c) => c.write_ram(address, value),
         }
     }
 
     fn load_ram(&mut self, ram_bytes: Vec<u8>) {
         match self {
             MbcVariant::Mbc1(c) => c.load_ram(ram_bytes),
+            MbcVariant::Mbc2(c) => c.load_ram(ram_bytes),
         }
     }
 }
@@ -100,6 +108,14 @@ impl MbcData {
             rom_offset: ROM_BANK_SIZE,
             ram_offset: RAM_BANK_SIZE,
             ram_enabled: false,
+        }
+    }
+
+    pub fn set_rom_bank(&mut self, rom_bytes_len: usize) {
+        let max_banks = (rom_bytes_len / self.rom_offset).max(1);
+
+        if self.rom_bank as usize >= max_banks {
+            self.rom_bank = (self.rom_bank as usize % max_banks) as u16;
         }
     }
 }

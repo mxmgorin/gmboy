@@ -61,11 +61,7 @@ impl Mbc for Mbc1 {
             _ => (),
         }
 
-        let max_banks = (rom_data.len() / self.data.rom_offset).max(1);
-
-        if self.data.rom_bank as usize >= max_banks {
-            self.data.rom_bank = (self.data.rom_bank as usize % max_banks) as u16;
-        }
+        self.data.set_rom_bank(rom_data.len());
     }
 
     fn read_ram(&self, address: u16) -> u8 {
