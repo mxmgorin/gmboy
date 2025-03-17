@@ -92,19 +92,13 @@ pub struct MbcData {
 
 impl MbcData {
     pub fn new(ram_size: RamSize) -> Self {
-        let rom_bank = 1;
-        let ram_bank = 0;
-        let rom_offset: usize = ROM_BANK_SIZE;
-        let ram_offset: usize = RAM_BANK_SIZE;
-        let ram_enabled = false;
-
         Self {
             ram_bytes: vec![0; ram_size.bytes_size()],
-            rom_bank,
-            ram_bank,
-            rom_offset,
-            ram_offset,
-            ram_enabled,
+            rom_bank: 1,
+            ram_bank: 0,
+            rom_offset: ROM_BANK_SIZE,
+            ram_offset: RAM_BANK_SIZE,
+            ram_enabled: false,
         }
     }
 }
