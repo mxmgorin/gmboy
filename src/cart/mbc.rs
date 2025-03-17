@@ -17,7 +17,8 @@ pub enum MbcVariant {
 
 impl MbcVariant {
     pub fn new(cart_data: &CartData) -> Option<MbcVariant> {
-        match cart_data.get_cart_type().unwrap() {
+        let cart_type = cart_data.get_cart_type().unwrap();
+        match cart_type {
             CartType::RomOnly => None,
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => Some(
                 MbcVariant::Mbc1(Mbc1::new(MbcData::new(cart_data.get_ram_size().unwrap()))),
@@ -43,7 +44,7 @@ impl MbcVariant {
             | CartType::PocketCamera
             | CartType::BandaiTama5
             | CartType::HuC3
-            | CartType::HuC1RamBattery => unimplemented!(),
+            | CartType::HuC1RamBattery => unimplemented!("Cart type {:?}", cart_type),
         }
     }
 }
