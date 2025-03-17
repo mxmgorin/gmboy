@@ -2,7 +2,8 @@
 /// offset created by inactive channels with an enabled DAC, and off-center waveforms.
 #[derive(Debug, Clone)]
 pub struct Hpf {
-    capacitor: f32,
+    left_capacitor: f32,
+    right_capacitor: f32,
     charge_factor: f32,
 
     pub dac1_enabled: bool,
@@ -14,7 +15,8 @@ pub struct Hpf {
 impl Hpf {
     pub fn new(sampling_freq: i32) -> Hpf {
         Self {
-            capacitor: 0.0,
+            left_capacitor: 0.0,
+            right_capacitor: 0.0,
             charge_factor: calc_charge_factor(sampling_freq),
             dac1_enabled: false,
             dac2_enabled: false,
@@ -28,20 +30,23 @@ impl Hpf {
     /// When all four channel DACs are off, the master volume units are disconnected from the sound
     /// output and the output level becomes 0. When any channel DAC is on, a high-pass filter
     /// capacitor is connected which slowly removes any DC component from the signal
-    pub fn apply_filter(&mut self, input: f32) -> f32 {
-        let mut out = 0.0;
-
+    pub fn apply_filter(&mut self, left_input: f32, right_input: f32) -> (f32, f32) {
         if self.dac1_enabled || self.dac2_enabled || self.dac3_enabled || self.dac4_enabled {
-            out = input - self.capacitor;
+            let left_out = left_input - self.left_capacitor;
+            let right_out = right_input - self.right_capacitor;
 
             // capacitor slowly charges to 'in' via their difference
-            self.capacitor = input - out * self.charge_factor; // 0.999958 and 0.998943 for MGB&CGB
+            self.left_capacitor = left_input - left_out * self.charge_factor;
+            self.right_capacitor = right_input - right_out * self.charge_factor;
+
+            return (left_out, right_out);
         }
 
-        out
+        (0.0, 0.0)
     }
 }
 
+/// 0.999958 and 0.998943 for MGB&CGB
 fn calc_charge_factor(sampling_freq: i32) -> f32 {
     0.999958_f32.powf(4194304.0 / sampling_freq as f32)
 }

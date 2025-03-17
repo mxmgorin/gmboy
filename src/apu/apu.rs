@@ -88,8 +88,9 @@ impl Apu {
             (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
             let (output_left, output_right) = self.mixer.mix();
 
-            self.output_buffer[self.output_buffer_idx] = self.hpf.apply_filter(output_left);
-            self.output_buffer[self.output_buffer_idx + 1] = self.hpf.apply_filter(output_right);
+            let (output_left, output_right) = self.hpf.apply_filter(output_left, output_right);
+            self.output_buffer[self.output_buffer_idx] = output_left;
+            self.output_buffer[self.output_buffer_idx + 1] = output_right;
             self.output_buffer_idx += 2;
         }
     }
