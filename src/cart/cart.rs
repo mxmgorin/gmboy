@@ -42,8 +42,6 @@ impl Cart {
                 0xA | 0xB => mbc.write_ram(address, value),
                 _ => (),
             }
-        } else {
-            self.data.bytes[address as usize] = value;
         }
     }
 }
