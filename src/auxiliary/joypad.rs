@@ -26,20 +26,18 @@ pub struct Joypad {
 impl Joypad {
     pub fn get_byte(&self) -> u8 {
         if self.actions_selected {
-            return ((!self.a as u8) << A_OR_RIGHT_BIT)
+            ((!self.a as u8) << A_OR_RIGHT_BIT)
                 | ((!self.b as u8) << B_OR_LEFT_BIT)
                 | ((!self.select as u8) << SELECT_OR_UP_BIT)
-                | ((!self.start as u8) << START_OR_DOWN_BIT);
-        }
-
-        if self.directions_selected {
-            return ((!self.right as u8) << A_OR_RIGHT_BIT)
+                | ((!self.start as u8) << START_OR_DOWN_BIT)
+        } else if self.directions_selected {
+            ((!self.right as u8) << A_OR_RIGHT_BIT)
                 | ((!self.left as u8) << B_OR_LEFT_BIT)
                 | ((!self.up as u8) << SELECT_OR_UP_BIT)
-                | ((!self.down as u8) << START_OR_DOWN_BIT);
+                | ((!self.down as u8) << START_OR_DOWN_BIT)
+        } else {
+            0xCF
         }
-
-        0xFF
     }
 
     pub fn set_byte(&mut self, value: u8) {
