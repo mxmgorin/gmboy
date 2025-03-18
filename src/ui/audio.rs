@@ -1,6 +1,8 @@
+use std::time::Duration;
 use crate::apu::{Apu, AUDIO_BUFFER_SIZE, SAMPLING_FREQ};
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
+use crate::auxiliary::clock::spin_wait;
 
 pub struct GameAudio {
     device: AudioQueue<f32>,
@@ -30,6 +32,10 @@ impl GameAudio {
     }
 
     pub fn update(&mut self, apu: &mut Apu) -> Result<(), String> {
+        if (self.device.size() as usize) > AUDIO_BUFFER_SIZE * 10 {
+            spin_wait(Duration::from_micros(1));
+        }
+        
         if apu.output_ready() {
             self.device.queue_audio(apu.take_output())?;
         }
