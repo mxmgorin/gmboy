@@ -104,7 +104,7 @@ impl UiEventHandler for EmuCtx {
     fn on_event(&mut self, _bus: &mut Bus, event: UiEvent) {
         match event {
             UiEvent::Quit => self.state = EmuState::Quit,
-            UiEvent::DropFile(path) => self.state = EmuState::LoadCart(path),
+            UiEvent::FileDropped(path) => self.state = EmuState::LoadCart(path),
             UiEvent::Pause => {
                 if self.state == EmuState::Paused {
                     self.state = EmuState::Running(RunMode::Normal);
@@ -118,7 +118,8 @@ impl UiEventHandler for EmuCtx {
                 }
             }
             UiEvent::ConfigChanged(config) => self.config.graphics = config,
-            UiEvent::Mode(mode) => self.state = EmuState::Running(mode),
+            UiEvent::ModeChanged(mode) => self.state = EmuState::Running(mode),
+            UiEvent::Mute => self.config.emulation.is_muted = !self.config.emulation.is_muted,
         }
     }
 }
@@ -212,7 +213,9 @@ impl Emu {
                 self.ui.draw(ppu, &cpu.bus);
             }
 
-            self.ui.audio.play(&mut cpu.bus.io.apu)?;
+            if !self.ctx.config.emulation.is_muted && EmuState::Running(RunMode::Turbo) != self.ctx.state {
+                self.ui.audio.update(&mut cpu.bus.io.apu)?;
+            }
 
             self.ctx.prev_frame = ppu.current_frame;
 

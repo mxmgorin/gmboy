@@ -16,6 +16,7 @@ pub struct EmulationConfig {
     pub rewind_size: usize,
     pub slow_speed: f64,
     pub turbo_speed: f64,
+    pub is_muted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

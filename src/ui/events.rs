@@ -9,8 +9,9 @@ pub trait UiEventHandler {
 pub enum UiEvent {
     Quit,
     Pause,
-    DropFile(String),
+    FileDropped(String),
     Restart,
     ConfigChanged(GraphicsConfig),
-    Mode(RunMode),
+    ModeChanged(RunMode),
+    Mute,
 }

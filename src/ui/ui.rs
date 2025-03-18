@@ -201,7 +201,7 @@ impl Ui {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
                 Event::DropFile { filename, .. } => {
-                    event_handler.on_event(bus, UiEvent::DropFile(filename))
+                    event_handler.on_event(bus, UiEvent::FileDropped(filename))
                 }
                 Event::Quit { .. } => event_handler.on_event(bus, UiEvent::Quit),
                 Event::KeyDown {
@@ -250,23 +250,23 @@ impl Ui {
             Keycode::BACKSPACE => bus.io.joypad.select = is_down,
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
-                    Some(UiEvent::Mode(RunMode::Rewind))
+                    Some(UiEvent::ModeChanged(RunMode::Rewind))
                 } else {
-                    Some(UiEvent::Mode(RunMode::Normal))
+                    Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
             }
             Keycode::TAB => {
                 return if is_down {
-                    Some(UiEvent::Mode(RunMode::Turbo))
+                    Some(UiEvent::ModeChanged(RunMode::Turbo))
                 } else {
-                    Some(UiEvent::Mode(RunMode::Normal))
+                    Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
             }
             Keycode::LSHIFT | Keycode::RSHIFT => {
                 return if is_down {
-                    Some(UiEvent::Mode(RunMode::Slow))
+                    Some(UiEvent::ModeChanged(RunMode::Slow))
                 } else {
-                    Some(UiEvent::Mode(RunMode::Normal))
+                    Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
             }
             Keycode::SPACE => {
@@ -295,6 +295,11 @@ impl Ui {
                 if !is_down {
                     self.toggle_fullscreen();
                     return Some(UiEvent::ConfigChanged(self.config.clone()));
+                }
+            }
+            Keycode::M => {
+                if !is_down {
+                    return Some(UiEvent::Mute);
                 }
             }
             Keycode::P => {

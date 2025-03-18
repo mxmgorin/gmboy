@@ -29,7 +29,7 @@ impl GameAudio {
         }
     }
 
-    pub fn play(&mut self, apu: &mut Apu) -> Result<(), String> {
+    pub fn update(&mut self, apu: &mut Apu) -> Result<(), String> {
         if apu.output_ready() {
             self.device.queue_audio(apu.take_output())?;
         }
