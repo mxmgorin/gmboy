@@ -148,7 +148,12 @@ impl Emu {
 
         loop {
             if self.ctx.state == EmuState::Paused || self.ctx.state == EmuState::WaitCart {
-                self.ui.draw_text("DROP FILE");
+                let text = if self.ctx.state == EmuState::Paused {
+                    "PAUSED"
+                } else {
+                    "DROP FILE"
+                };
+                self.ui.draw_text(text);
                 self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
                 thread::sleep(Duration::from_millis(100));
                 continue;
@@ -163,7 +168,6 @@ impl Emu {
                 let cart = read_cart(path).map_err(|e| e.to_string())?;
 
                 let mut bus = Bus::new(cart);
-                //bus.io.apu.buffer = self.ui.audio_buffer.clone();
                 bus.io.lcd.set_pallet(self.ui.curr_palette);
                 cpu = Cpu::new(bus);
 
