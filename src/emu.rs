@@ -213,7 +213,7 @@ impl Emu {
                 self.ui.draw(ppu, &cpu.bus);
             }
 
-            if !self.ctx.config.emulation.is_muted && EmuState::Running(RunMode::Turbo) != self.ctx.state {
+            if !self.ctx.config.emulation.is_muted && EmuState::Running(RunMode::Normal) == self.ctx.state {
                 self.ui.audio.update(&mut cpu.bus.io.apu)?;
             }
 
