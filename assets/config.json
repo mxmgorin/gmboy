@@ -9,6 +9,24 @@
     "selected_pallet_idx": 0,
     "pallets": [
       {
+        "name": "Forgotten Swamp",
+        "hex_colors": [
+          "ffd1ada1",
+          "ff4d7d65",
+          "ff593a5f",
+          "ff3b252e"
+        ]
+      },
+      {
+        "name": "Kirokaze",
+        "hex_colors": [
+          "ff332c50",
+          "ff46878f",
+          "ff94e344",
+          "ffe2f3e4"
+        ]
+      },
+      {
         "name": "Classic",
         "hex_colors": [
           "ff081820",
