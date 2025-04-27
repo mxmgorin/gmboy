@@ -15,7 +15,6 @@ features = ["bundled", "unsafe_textures"]
 [dependencies]
 serde_json = "*"
 serde = { version = "*", features = ["derive"] }
-bincode = "*"
 
 [dev-dependencies]
 criterion = "*"
