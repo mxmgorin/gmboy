@@ -68,7 +68,13 @@ First, make sure you have Rust installed. If you don't, install it with:
 ````
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ````
-Then, simply build the project — no additional dependencies are required:
+Then, installed dependencies (SDL2)
+
+Arch Linux:
+```bash
+sudo pacman -S sdl2
+````
+After that, you should be able to build:
 ```bash
 cargo build --release
 ```

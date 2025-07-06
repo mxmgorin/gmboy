@@ -10,7 +10,7 @@ default = []
 [dependencies.sdl2]
 version = "0.37"
 default-features = false
-features = ["bundled", "unsafe_textures"]
+features = ["unsafe_textures"] #"bundled"
 
 [dependencies]
 serde_json = "*"
