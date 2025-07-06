@@ -3,10 +3,11 @@ use crate::config::GraphicsConfig;
 use crate::emu::RunMode;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
-use crate::ui::audio::{GameAudio};
+use crate::ui::audio::GameAudio;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::text::{calc_text_width, draw_text, fill_texture, get_text_height};
+use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
@@ -14,7 +15,6 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::{EventPump, GameControllerSubsystem};
-use sdl2::controller::GameController;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
@@ -30,7 +30,7 @@ pub struct Ui {
     overlay_texture: Texture,
     fps_texture: Texture,
     debug_window: Option<DebugWindow>,
-    layout: Layout,    
+    layout: Layout,
     game_controllers: Vec<GameController>,
 
     pub audio: GameAudio,
@@ -89,7 +89,7 @@ impl Ui {
             .create_texture_streaming(PixelFormatEnum::RGBA32, 50, 50)
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-        
+
         let mut game_controllers = vec![];
         let game_controller_subsystem = sdl_context.game_controller()?;
 
@@ -99,7 +99,7 @@ impl Ui {
                 game_controllers.push(controller);
             }
         }
-        
+
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
             game_controller_subsystem,
@@ -132,8 +132,6 @@ impl Ui {
 
         Ok(())
     }
-
-
 
     pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
         self.draw_main(ppu);
@@ -273,9 +271,12 @@ impl Ui {
         }
     }
 
-    fn handle_controller_button(&mut self, bus: &mut Bus, button: sdl2::controller::Button, is_down: bool) -> Option<UiEvent> {
-        println!("handle_controller_button: {:?}", button);
-        
+    fn handle_controller_button(
+        &mut self,
+        bus: &mut Bus,
+        button: sdl2::controller::Button,
+        is_down: bool,
+    ) -> Option<UiEvent> {
         match button {
             sdl2::controller::Button::DPadUp => bus.io.joypad.up = is_down,
             sdl2::controller::Button::DPadDown => bus.io.joypad.down = is_down,
