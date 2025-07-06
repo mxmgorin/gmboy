@@ -13,7 +13,8 @@ use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
-use sdl2::EventPump;
+use sdl2::{EventPump, GameControllerSubsystem};
+use sdl2::controller::GameController;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
@@ -21,6 +22,7 @@ pub const BYTES_PER_PIXEL: usize = 4;
 
 pub struct Ui {
     _sdl_context: sdl2::Sdl,
+    game_controller_subsystem: GameControllerSubsystem,
     event_pump: EventPump,
 
     canvas: Canvas<Window>,
@@ -28,7 +30,8 @@ pub struct Ui {
     overlay_texture: Texture,
     fps_texture: Texture,
     debug_window: Option<DebugWindow>,
-    layout: Layout,
+    layout: Layout,    
+    game_controllers: Vec<GameController>,
 
     pub audio: GameAudio,
 
@@ -86,9 +89,20 @@ impl Ui {
             .create_texture_streaming(PixelFormatEnum::RGBA32, 50, 50)
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+        
+        let mut game_controllers = vec![];
+        let game_controller_subsystem = sdl_context.game_controller()?;
 
+        for id in 0..game_controller_subsystem.num_joysticks()? {
+            if game_controller_subsystem.is_game_controller(id) {
+                let controller = game_controller_subsystem.open(id).unwrap();
+                game_controllers.push(controller);
+            }
+        }
+        
         Ok(Ui {
             event_pump: sdl_context.event_pump()?,
+            game_controller_subsystem,
             canvas: main_canvas,
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
@@ -98,6 +112,7 @@ impl Ui {
             overlay_texture,
             fps_texture,
             audio: GameAudio::new(&sdl_context),
+            game_controllers,
 
             _sdl_context: sdl_context,
         })
@@ -200,6 +215,16 @@ impl Ui {
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
+                Event::ControllerDeviceAdded { which, .. } => {
+                    if let Ok(controller) = self.game_controller_subsystem.open(which) {
+                        self.game_controllers.push(controller);
+                        println!("Controller {} connected", which);
+                    }
+                }
+                Event::ControllerDeviceRemoved { which, .. } => {
+                    self.game_controllers.retain(|c| c.instance_id() != which);
+                    println!("Controller {} disconnected", which);
+                }
                 Event::DropFile { filename, .. } => {
                     event_handler.on_event(bus, UiEvent::FileDropped(filename))
                 }
@@ -220,6 +245,16 @@ impl Ui {
                         event_handler.on_event(bus, evt);
                     }
                 }
+                Event::ControllerButtonDown { button, .. } => {
+                    if let Some(evt) = self.handle_controller_button(bus, button, true) {
+                        event_handler.on_event(bus, evt);
+                    }
+                }
+                Event::ControllerButtonUp { button, .. } => {
+                    if let Some(evt) = self.handle_controller_button(bus, button, false) {
+                        event_handler.on_event(bus, evt);
+                    }
+                }
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -236,6 +271,27 @@ impl Ui {
                 _ => {}
             }
         }
+    }
+
+    fn handle_controller_button(&mut self, bus: &mut Bus, button: sdl2::controller::Button, is_down: bool) -> Option<UiEvent> {
+        println!("handle_controller_button: {:?}", button);
+        
+        match button {
+            sdl2::controller::Button::DPadUp => bus.io.joypad.up = is_down,
+            sdl2::controller::Button::DPadDown => bus.io.joypad.down = is_down,
+            sdl2::controller::Button::DPadLeft => bus.io.joypad.left = is_down,
+            sdl2::controller::Button::DPadRight => bus.io.joypad.right = is_down,
+            sdl2::controller::Button::B => bus.io.joypad.b = is_down,
+            sdl2::controller::Button::A => bus.io.joypad.a = is_down,
+            sdl2::controller::Button::Y => bus.io.joypad.b = is_down,
+            sdl2::controller::Button::X => bus.io.joypad.a = is_down,
+            sdl2::controller::Button::Start => bus.io.joypad.start = is_down,
+            sdl2::controller::Button::Back => bus.io.joypad.select = is_down,
+            sdl2::controller::Button::Guide => bus.io.joypad.select = is_down,
+            _ => (), // Ignore other keycodes
+        }
+
+        None
     }
 
     fn handle_key(&mut self, bus: &mut Bus, keycode: Keycode, is_down: bool) -> Option<UiEvent> {
