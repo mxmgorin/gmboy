@@ -33,7 +33,7 @@ impl GameAudio {
 
     pub fn update(&mut self, apu: &mut Apu) -> Result<(), String> {
         if (self.device.size() as usize) > AUDIO_BUFFER_SIZE * 10 {
-            spin_wait(Duration::from_micros(1));
+            spin_wait(Duration::from_millis(10));
         }
         
         if apu.output_ready() {
