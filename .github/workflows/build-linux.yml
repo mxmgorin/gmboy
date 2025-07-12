@@ -21,11 +21,11 @@ jobs:
 
       - name: Prepare Linux release files
         run: |
-          mkdir -p dist/linux
-          cp target/release/gmboy dist/linux/
+          mkdir -p dist
+          cp target/release/gmboy dist/
 
       - name: Zip Linux release
-        run: cd dist && zip -r gmboy-linux.zip linux
+        run: cd dist && zip -r gmboy-linux.zip .
 
       - name: Upload Linux zip to GitHub Release
         uses: softprops/action-gh-release@v2
