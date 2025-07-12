@@ -21,3 +21,37 @@ jobs:
           files: target/release/gmboy
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+  build-windows:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 curl
+
+      - name: Add Windows target
+        run: rustup target add x86_64-pc-windows-gnu
+
+      - name: Download SDL2 for Windows
+        run: |
+          curl -LO https://www.libsdl.org/release/SDL2-devel-2.28.5-mingw.tar.gz
+          tar -xzf SDL2-devel-2.28.5-mingw.tar.gz
+          mv SDL2-2.28.5/x86_64-w64-mingw32 /opt/SDL2-win
+
+      - name: Build Windows release
+        env:
+          LIBRARY_PATH: /opt/SDL2-win/lib
+          C_INCLUDE_PATH: /opt/SDL2-win/include
+          PKG_CONFIG_ALLOW_CROSS: "1"
+          SDL2_DIR: /opt/SDL2-win
+        run: cargo build --release --target x86_64-pc-windows-gnu
+
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmboy-windows
+          path: target/x86_64-pc-windows-gnu/release/gmboy.exe
