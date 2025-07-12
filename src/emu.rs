@@ -1,4 +1,4 @@
-use crate::auxiliary::clock::Clock;
+use crate::auxiliary::clock::{spin_wait, Clock};
 use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
 use crate::cart::Cart;
@@ -11,8 +11,12 @@ use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
 use std::collections::VecDeque;
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::{fs, thread};
+
+const _CYCLES_PER_SECOND: usize = 4_194_304;
+const CYCLES_PER_FRAME: usize = 70224;
+const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
 
 pub struct EmuSaveState {
     pub clock: Clock,
@@ -126,7 +130,7 @@ impl UiEventHandler for EmuCtx {
 
 impl Emu {
     pub fn new(config: Config) -> Result<Self, String> {
-        let ppu = Ppu::with_fps_limit(config.graphics.fps_limit);
+        let ppu = Ppu::default();
 
         Ok(Self {
             clock: Clock::with_ppu(ppu),
@@ -134,6 +138,27 @@ impl Emu {
             ui: Ui::new(config.graphics.clone(), false)?,
             ctx: EmuCtx::new(config),
         })
+    }
+
+    fn tick(&mut self, cpu: &mut Cpu) -> Result<(), String>  {
+        let frame_start = Instant::now();
+        let prev_m_cycles = self.clock.get_m_cycles();
+
+        while self.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
+            cpu.step(self)?;
+
+            if !self.ctx.config.emulation.is_muted && EmuState::Running(RunMode::Normal) == self.ctx.state {
+                self.ui.audio.update(&mut cpu.bus.io.apu)?;
+            }
+        }
+
+        let elapsed = frame_start.elapsed();
+
+        if elapsed < FRAME_DURATION {
+            spin_wait(FRAME_DURATION - elapsed);
+        }
+
+        Ok(())
     }
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
@@ -184,7 +209,7 @@ impl Emu {
             }
 
             self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
-            cpu.step(self)?;
+            self.tick(&mut cpu)?;
 
             if let Some(debugger) = self.debugger.as_mut() {
                 if !debugger.get_serial_msg().is_empty() {
@@ -211,10 +236,6 @@ impl Emu {
 
             if self.ctx.prev_frame != ppu.current_frame {
                 self.ui.draw(ppu, &cpu.bus);
-            }
-
-            if !self.ctx.config.emulation.is_muted && EmuState::Running(RunMode::Normal) == self.ctx.state {
-                self.ui.audio.update(&mut cpu.bus.io.apu)?;
             }
 
             self.ctx.prev_frame = ppu.current_frame;
