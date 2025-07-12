@@ -10,9 +10,11 @@ pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
 pub const LCD_Y_RES: u8 = 144;
 pub const LCD_X_RES: u8 = 160;
-pub const TARGET_FPS_F: f64 = 60.0;
-pub const TARGET_FRAME_TIME_MILLIS: u64 = 1000 / 60;
+pub const TARGET_FPS_F: f64 = 59.7;
+pub const TARGET_FRAME_TIME_MILLIS: u64 = FRAME_DURATION.as_millis() as u64;
 pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
+pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
+pub const CYCLES_PER_FRAME: usize = 70224;
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
@@ -63,6 +65,10 @@ impl Ppu {
 
     pub fn set_fps_limit(&mut self, fps: f64) {
         self.target_frame_duration = Duration::from_secs_f64(1.0 / fps);
+    }
+
+    pub fn reset_fps_limit(&mut self) {
+        self.target_frame_duration = FRAME_DURATION;
     }
 
     pub fn tick(&mut self, bus: &mut Bus) {

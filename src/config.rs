@@ -24,7 +24,6 @@ pub struct GraphicsConfig {
     pub selected_pallet_idx: usize,
     pub pallets: Vec<Pallet>,
     pub scale: f32,
-    pub fps_limit: f64,
     pub is_fullscreen: bool,
     pub show_fps: bool,
     pub text_scale: usize,

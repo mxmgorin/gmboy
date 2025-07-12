@@ -9,14 +9,13 @@ use crate::mbc::MbcVariant;
 use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
+use crate::{CYCLES_PER_FRAME, FRAME_DURATION, TARGET_FPS_F};
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
 use std::{fs, thread};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
-const CYCLES_PER_FRAME: usize = 70224;
-const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
 
 pub struct EmuSaveState {
     pub clock: Clock,
@@ -140,14 +139,16 @@ impl Emu {
         })
     }
 
-    fn tick(&mut self, cpu: &mut Cpu) -> Result<(), String>  {
+    fn tick(&mut self, cpu: &mut Cpu) -> Result<(), String> {
         let frame_start = Instant::now();
         let prev_m_cycles = self.clock.get_m_cycles();
 
         while self.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
             cpu.step(self)?;
 
-            if !self.ctx.config.emulation.is_muted && EmuState::Running(RunMode::Normal) == self.ctx.state {
+            if !self.ctx.config.emulation.is_muted
+                && EmuState::Running(RunMode::Normal) == self.ctx.state
+            {
                 self.ui.audio.update(&mut cpu.bus.io.apu)?;
             }
         }
@@ -221,14 +222,11 @@ impl Emu {
 
             if let EmuState::Running(mode) = &self.ctx.state {
                 match mode {
-                    RunMode::Normal => ppu.set_fps_limit(self.ctx.config.graphics.fps_limit),
-                    RunMode::Slow => ppu.set_fps_limit(
-                        self.ctx.config.graphics.fps_limit * self.ctx.config.emulation.slow_speed
-                            / 100.0,
-                    ),
+                    RunMode::Normal => ppu.reset_fps_limit(),
+                    RunMode::Slow => ppu
+                        .set_fps_limit(TARGET_FPS_F * self.ctx.config.emulation.slow_speed / 100.0),
                     RunMode::Turbo => ppu.set_fps_limit(
-                        self.ctx.config.graphics.fps_limit * self.ctx.config.emulation.turbo_speed
-                            / 100.0,
+                        TARGET_FPS_F * self.ctx.config.emulation.turbo_speed / 100.0,
                     ),
                     RunMode::Rewind => (),
                 }
