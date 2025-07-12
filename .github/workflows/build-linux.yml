@@ -23,7 +23,6 @@ jobs:
         run: |
           mkdir -p dist/linux
           cp target/release/gmboy dist/linux/
-          cp target/release/config.json dist/linux/
 
       - name: Zip Linux release
         run: cd dist && zip -r gmboy-linux.zip linux
