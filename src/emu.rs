@@ -164,7 +164,9 @@ impl Emu {
 
     pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
         if let Some(cart_path) = &self.ctx.config.last_cart_path {
-            self.ctx.state = EmuState::LoadCart(cart_path.to_owned());
+            if Path::new(cart_path).exists() {
+                self.ctx.state = EmuState::LoadCart(cart_path.to_owned());
+            }
         }
 
         if let Some(cart_path) = cart_path {
