@@ -23,6 +23,10 @@ jobs:
         C:\vcpkg\vcpkg.exe install sdl2 sdl2-image sdl2-mixer sdl2-ttf
         echo "VCPKG_ROOT=C:\\vcpkg" >> $GITHUB_ENV
 
+    - name: Set RUSTFLAGS for SDL2 linking
+      run: echo "RUSTFLAGS=-L C:\\vcpkg\\installed\\x64-windows\\lib" >> $env:GITHUB_ENV
+      shell: powershell
+
     - name: Install Rust toolchain
       uses: actions-rs/toolchain@v1
       with:
