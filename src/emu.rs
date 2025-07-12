@@ -152,11 +152,13 @@ impl Emu {
         } else {
             1.0
         };
-        
+
         if self.ctx.speed_multiplier != speed_multiplier {
             self.clock.reset();
         }
-        
+
+        self.ctx.speed_multiplier = speed_multiplier;
+
         let emulated_time_ns =
             (self.clock.t_cycles as f64 * CYCLE_TIME / speed_multiplier).round() as u64;
 
