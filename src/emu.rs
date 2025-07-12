@@ -12,7 +12,7 @@ use crate::ui::Ui;
 use crate::CYCLES_PER_FRAME;
 use std::collections::VecDeque;
 use std::path::Path;
-use std::time::{Duration};
+use std::time::Duration;
 use std::{fs, thread};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
@@ -27,6 +27,7 @@ pub struct EmuSaveState {
 
 pub struct Emu {
     pub clock: Clock,
+    pub ppu: Ppu,
     pub debugger: Option<Debugger>,
     pub ui: Ui,
 
@@ -79,7 +80,7 @@ impl EmuCtx {
 
 impl CpuCallback for Emu {
     fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
-        self.clock.m_cycles(m_cycles, bus);
+        self.clock.m_cycles(m_cycles, bus, &mut self.ppu);
     }
 
     fn update_serial(&mut self, cpu: &mut Cpu) {
@@ -132,10 +133,9 @@ impl UiEventHandler for EmuCtx {
 
 impl Emu {
     pub fn new(config: Config) -> Result<Self, String> {
-        let ppu = Ppu::default();
-
         Ok(Self {
-            clock: Clock::with_ppu(ppu),
+            ppu: Ppu::default(),
+            clock: Clock::default(),
             debugger: Some(Debugger::new(CpuLogType::None, false)),
             ui: Ui::new(config.graphics.clone(), false)?,
             ctx: EmuCtx::new(config),
@@ -191,13 +191,11 @@ impl Emu {
             spin_wait(emulated_time - real_elapsed);
         }
 
-        let ppu = self.clock.ppu.as_mut().unwrap();
-
-        if self.ctx.prev_frame != ppu.current_frame {
-            self.ui.draw(ppu, &cpu.bus);
+        if self.ctx.prev_frame != self.ppu.current_frame {
+            self.ui.draw(&mut self.ppu, &cpu.bus);
         }
 
-        self.ctx.prev_frame = ppu.current_frame;
+        self.ctx.prev_frame = self.ppu.current_frame;
 
         Ok(())
     }

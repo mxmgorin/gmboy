@@ -1,11 +1,10 @@
-use crate::TestCpuCtx;
+use crate::{TestCpuCtxWithPPu};
 use gmboy::auxiliary::clock::Clock;
 use gmboy::bus::Bus;
 use gmboy::cart::Cart;
 use gmboy::cpu::Cpu;
 use gmboy::debugger::{CpuLogType, Debugger};
-use gmboy::emu::{read_bytes, EmuCtx};
-use gmboy::Ppu;
+use gmboy::emu::{read_bytes};
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
@@ -17,9 +16,10 @@ pub fn run_mooneye_rom(
 ) -> Result<(), String> {
     let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
     let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
-    let mut callback = TestCpuCtx {
-        clock: Clock::with_ppu(Ppu::with_fps_limit(10000.0)),
+    let mut callback = TestCpuCtxWithPPu {
+        clock: Clock::default(),
         debugger: Debugger::new(CpuLogType::None, false),
+        ppu: Default::default(),
     };
     let mut cpu = Cpu::new(Bus::new(cart));
     let instant = Instant::now();

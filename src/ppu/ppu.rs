@@ -4,7 +4,7 @@ use crate::cpu::interrupts::InterruptType;
 use crate::ppu::lcd::{PpuMode, LcdStatSrc};
 use crate::ppu::fetcher::PixelFetcher;
 use std::time::{Duration, Instant};
-use crate::auxiliary::clock::spin_wait;
+use crate::auxiliary::clock::{spin_wait, Tickable};
 
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
@@ -15,6 +15,12 @@ pub const TARGET_FRAME_TIME_MILLIS: u64 = FRAME_DURATION.as_millis() as u64;
 pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
 pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
 pub const CYCLES_PER_FRAME: usize = 70224;
+
+impl Tickable for Ppu {
+    fn tick(&mut self, bus: &mut Bus)  {
+        self.tick(bus);
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Ppu {
@@ -48,26 +54,7 @@ impl Default for Ppu {
 }
 
 impl Ppu {
-    pub fn with_fps_limit(fps: f64) -> Ppu {
-        Self {
-            current_frame: 0,
-            pipeline: PixelFetcher::default(),
-            prev_frame_duration: Duration::new(0, 0),
-            frame_start_duration: Duration::new(0, 0),
-            last_frame_duration: Default::default(),
-            target_frame_duration: Duration::from_secs_f64(1.0 / fps),
-            frame_count: 0,
-            fps: 0,
-            timer: Instant::now(),
-            line_ticks: 0,
-        }
-    }
-
-    pub fn set_fps_limit(&mut self, fps: f64) {
-        self.target_frame_duration = Duration::from_secs_f64(1.0 / fps);
-    }
-
-    pub fn reset_fps_limit(&mut self) {
+    pub fn reset_frame_duration(&mut self) {
         self.target_frame_duration = FRAME_DURATION;
     }
 
