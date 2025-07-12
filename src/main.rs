@@ -16,8 +16,14 @@ fn main() {
     let config = if config_path.exists() {
         Config::from_file(config_path.to_str().unwrap()).expect(&format!("Failed to parse {:?}", config_path))
     } else {
-        eprintln!("config.json not found in the save folder");
-        std::process::exit(1);
+        let config = Config::default();
+
+        if let Err(err) = config.save() {
+            eprintln!("failed to create default config: {}", err);
+            std::process::exit(1);
+        }
+
+        config
     };
 
     let mut emu = Emu::new(config).unwrap();
