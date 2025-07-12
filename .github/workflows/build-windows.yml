@@ -40,16 +40,15 @@ jobs:
       run: |
         mkdir dist
         copy target\release\gmboy.exe dist\
-        copy target\release\config.json dist\
         copy C:\vcpkg\installed\x64-windows\bin\SDL2.dll dist\
 
     - name: Zip release folder
       run: |
         powershell Compress-Archive -Path dist\* -DestinationPath gmboy-windows.zip
 
-    - name: Upload Linux zip to GitHub Release
+    - name: Upload zip to GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/gmboy-windows.zip
+        files: gmboy-windows.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
