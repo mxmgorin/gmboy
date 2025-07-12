@@ -6,18 +6,35 @@ use std::time::{Duration, Instant};
 
 pub const T_CYCLES_PER_M_CYCLE: usize = 4;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Clock {
+    pub start_time: Instant,
     pub t_cycles: usize,
     pub ppu: Option<Ppu>,
+}
+
+impl Default for Clock {
+    fn default() -> Self {
+        Self {
+            start_time: Instant::now(),
+            t_cycles: 0,
+            ppu: None,
+        }
+    }
 }
 
 impl Clock {
     pub fn with_ppu(ppu: Ppu) -> Self {
         Self {
+            start_time: Instant::now(),
             t_cycles: 0,
             ppu: Some(ppu),
         }
+    }
+    
+    pub fn reset(&mut self) {
+        self.t_cycles = 0;
+        self.start_time = Instant::now();
     }
 
     pub fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {

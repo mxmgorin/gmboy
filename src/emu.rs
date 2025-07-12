@@ -9,13 +9,14 @@ use crate::mbc::MbcVariant;
 use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
-use crate::{CYCLES_PER_FRAME, FRAME_DURATION, TARGET_FPS_F};
+use crate::CYCLES_PER_FRAME;
 use std::collections::VecDeque;
 use std::path::Path;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use std::{fs, thread};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
+const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
 
 pub struct EmuSaveState {
     pub clock: Clock,
@@ -33,6 +34,7 @@ pub struct Emu {
 }
 
 pub struct EmuCtx {
+    pub speed_multiplier: f64,
     pub state: EmuState,
     pub config: Config,
     pub prev_frame: usize,
@@ -60,6 +62,7 @@ pub enum RunMode {
 impl EmuCtx {
     pub fn new(config: Config) -> EmuCtx {
         Self {
+            speed_multiplier: 1.0,
             state: EmuState::WaitCart,
             config,
             prev_frame: 0,
@@ -139,12 +142,38 @@ impl Emu {
         })
     }
 
+    fn calc_emulated_time(&mut self) -> Duration {
+        let speed_multiplier = if let EmuState::Running(mode) = &self.ctx.state {
+            match mode {
+                RunMode::Rewind | RunMode::Normal => 1.0,
+                RunMode::Slow => self.ctx.config.emulation.slow_speed / 100.0,
+                RunMode::Turbo => self.ctx.config.emulation.turbo_speed / 100.0,
+            }
+        } else {
+            1.0
+        };
+        
+        if self.ctx.speed_multiplier != speed_multiplier {
+            self.clock.reset();
+        }
+        
+        let emulated_time_ns =
+            (self.clock.t_cycles as f64 * CYCLE_TIME / speed_multiplier).round() as u64;
+
+        Duration::from_nanos(emulated_time_ns)
+    }
+
     fn tick(&mut self, cpu: &mut Cpu) -> Result<(), String> {
-        let frame_start = Instant::now();
         let prev_m_cycles = self.clock.get_m_cycles();
 
         while self.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
             cpu.step(self)?;
+
+            if let Some(debugger) = self.debugger.as_mut() {
+                if !debugger.get_serial_msg().is_empty() {
+                    println!("Serial: {}", debugger.get_serial_msg());
+                }
+            }
 
             if !self.ctx.config.emulation.is_muted
                 && EmuState::Running(RunMode::Normal) == self.ctx.state
@@ -153,11 +182,20 @@ impl Emu {
             }
         }
 
-        let elapsed = frame_start.elapsed();
+        let real_elapsed = self.clock.start_time.elapsed();
+        let emulated_time = self.calc_emulated_time();
 
-        if elapsed < FRAME_DURATION {
-            spin_wait(FRAME_DURATION - elapsed);
+        if emulated_time > real_elapsed {
+            spin_wait(emulated_time - real_elapsed);
         }
+
+        let ppu = self.clock.ppu.as_mut().unwrap();
+
+        if self.ctx.prev_frame != ppu.current_frame {
+            self.ui.draw(ppu, &cpu.bus);
+        }
+
+        self.ctx.prev_frame = ppu.current_frame;
 
         Ok(())
     }
@@ -213,32 +251,6 @@ impl Emu {
 
             self.ui.handle_events(&mut cpu.bus, &mut self.ctx);
             self.tick(&mut cpu)?;
-
-            if let Some(debugger) = self.debugger.as_mut() {
-                if !debugger.get_serial_msg().is_empty() {
-                    println!("Serial: {}", debugger.get_serial_msg());
-                }
-            }
-
-            let ppu = self.clock.ppu.as_mut().unwrap();
-
-            if let EmuState::Running(mode) = &self.ctx.state {
-                match mode {
-                    RunMode::Normal => ppu.reset_fps_limit(),
-                    RunMode::Slow => ppu
-                        .set_fps_limit(TARGET_FPS_F * self.ctx.config.emulation.slow_speed / 100.0),
-                    RunMode::Turbo => ppu.set_fps_limit(
-                        TARGET_FPS_F * self.ctx.config.emulation.turbo_speed / 100.0,
-                    ),
-                    RunMode::Rewind => (),
-                }
-            }
-
-            if self.ctx.prev_frame != ppu.current_frame {
-                self.ui.draw(ppu, &cpu.bus);
-            }
-
-            self.ctx.prev_frame = ppu.current_frame;
 
             if self.ctx.config.emulation.rewind_size > 0 && self.clock.t_cycles % 5000 == 0 {
                 if self.ctx.rewind_buffer.len() > self.ctx.config.emulation.rewind_size {
