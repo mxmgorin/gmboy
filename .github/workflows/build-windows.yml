@@ -1,53 +1,49 @@
-name: Build windows release
+name: Build windlows release
 
 on:
   push:
-    branches:
-      - "*"
-  release:
-    types: [published]
-    
+    branches: [main]
+  pull_request:
+
 jobs:
   build-windows:
     if: github.event_name == 'release'
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v2
-      
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-pc-windows-msvc      
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Prepare dist folder
-        shell: pwsh
-        run: mkdir dist\windows
+    - name: Install SDL2 (via vcpkg)
+      run: |
+        git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+        C:\vcpkg\bootstrap-vcpkg.bat
+        C:\vcpkg\vcpkg.exe install sdl2 sdl2-image sdl2-mixer sdl2-ttf
+        echo "::set-env name=VCPKG_ROOT::C:\\vcpkg"
 
-      - name: Download SDL2 DLL for Windows
-        shell: pwsh
-        run: |
-          Invoke-WebRequest -Uri https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-devel-2.28.5-VC.zip -OutFile SDL2.zip
-          Expand-Archive -Path SDL2.zip -DestinationPath SDL2
-          $dllPath = Get-ChildItem SDL2 -Directory | Select-Object -First 1
-          Copy-Item "$($dllPath.FullName)\lib\x64\SDL2.dll" dist\windows\
-      
-      - name: Build Release
-        run: cargo build --release --target x86_64-pc-windows-msvc
-      
-      - name: Prepare release files
-        run: |
-          mkdir dist\windows
-          copy target\x86_64-pc-windows-msvc\release\gmboy.exe dist\windows\
-          copy "C:\tools\SDL2\bin\SDL2.dll" dist\windows\
-          copy target\x86_64-pc-windows-msvc\release\config.json dist\windows\
-      
-      - name: Zip Windows release
-        run: powershell Compress-Archive -Path dist\windows\* -DestinationPath dist\gmboy-windows.zip
-      
-      - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist\gmboy-windows.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable-x86_64-pc-windows-msvc
+        override: true
+
+    - name: Build release
+      run: cargo build --release
+
+    - name: Prepare release folder
+      run: |
+        mkdir release_files
+        copy target\release\gmboy.exe dist\
+        copy target\release\config.json dist\
+        copy C:\vcpkg\installed\x64-windows\bin\SDL2.dll dist\
+
+    - name: Zip release folder
+      run: |
+        powershell Compress-Archive -Path dist\* -DestinationPath gmboy-windows.zip
+
+    - name: Upload Linux zip to GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/gmboy-windows.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
