@@ -14,7 +14,7 @@ fn main() {
     let config_path = Config::default_path();
 
     let config = if config_path.exists() {
-        Config::from_file(config_path.to_str().unwrap()).expect("Failed to parse save/config.json")
+        Config::from_file(config_path.to_str().unwrap()).expect(&format!("Failed to parse {:?}", config_path))
     } else {
         eprintln!("config.json not found in the save folder");
         std::process::exit(1);

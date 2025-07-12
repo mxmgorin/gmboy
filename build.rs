@@ -11,7 +11,6 @@ fn main() {
     let dest = Path::new(&target_dir)
         .join("target")
         .join(build_target)
-        .join("save")
         .join("config.json");
 
     // Tell Cargo to rerun this script if config.json changes

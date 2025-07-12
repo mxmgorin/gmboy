@@ -59,6 +59,6 @@ impl Config {
             .parent()
             .expect("Failed to get executable directory");
 
-        exe_dir.join("save/config.json")
+        exe_dir.join("config.json")
     }
 }
