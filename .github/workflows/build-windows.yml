@@ -9,6 +9,7 @@ on:
     
 jobs:
   build-windows:
+    if: github.event_name == 'release'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
