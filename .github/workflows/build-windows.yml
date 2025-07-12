@@ -38,7 +38,7 @@ jobs:
 
     - name: Prepare release folder
       run: |
-        mkdir release_files
+        mkdir dist
         copy target\release\gmboy.exe dist\
         copy target\release\config.json dist\
         copy C:\vcpkg\installed\x64-windows\bin\SDL2.dll dist\
