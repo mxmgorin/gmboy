@@ -21,7 +21,7 @@ jobs:
         git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
         C:\vcpkg\bootstrap-vcpkg.bat
         C:\vcpkg\vcpkg.exe install sdl2 sdl2-image sdl2-mixer sdl2-ttf
-        echo "::set-env name=VCPKG_ROOT::C:\\vcpkg"
+        echo "VCPKG_ROOT=C:\\vcpkg" >> $GITHUB_ENV
 
     - name: Install Rust toolchain
       uses: actions-rs/toolchain@v1
