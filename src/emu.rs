@@ -12,14 +12,13 @@ use crate::ui::Ui;
 use crate::CYCLES_PER_FRAME;
 use std::collections::VecDeque;
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::{fs, thread};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
 
 pub struct EmuSaveState {
-    pub clock: Clock,
     pub cpu_without_bus: Cpu,
     pub bus_without_cart: Bus,
     pub cart_mbc: Option<MbcVariant>,
@@ -41,6 +40,7 @@ pub struct EmuCtx {
     pub prev_frame: usize,
     pub last_fps_timestamp: Duration,
     pub rewind_buffer: VecDeque<EmuSaveState>,
+    pub last_rewind_save: Instant,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -72,12 +72,14 @@ impl EmuCtx {
             prev_frame: 0,
             last_fps_timestamp: Default::default(),
             rewind_buffer: Default::default(),
+            last_rewind_save: Instant::now(),
         }
     }
 
     pub fn reset(&mut self) {
         self.prev_frame = 0;
         self.last_fps_timestamp = Default::default();
+        self.clock = Clock::default();
     }
 }
 
@@ -245,18 +247,23 @@ impl Emu {
             if let EmuState::Running(RunMode::Rewind) = &self.ctx.state {
                 if let Some(state) = self.ctx.rewind_buffer.pop_back() {
                     load_state(self, state);
+                    thread::sleep(Duration::from_millis(100));
                 }
             }
 
             self.ui.handle_events(&mut self.cpu.bus, &mut self.ctx);
             self.tick()?;
 
-            if self.ctx.config.emulation.rewind_size > 0 && self.ctx.clock.t_cycles % 5000 == 0 {
+            let now = Instant::now();
+            if self.ctx.config.emulation.rewind_size > 0
+                && now.duration_since(self.ctx.last_rewind_save).as_secs_f32() >= 2.0
+            {
                 if self.ctx.rewind_buffer.len() > self.ctx.config.emulation.rewind_size {
                     self.ctx.rewind_buffer.pop_front();
                 }
 
                 self.ctx.rewind_buffer.push_back(self.save_state(&self.cpu));
+                self.ctx.last_rewind_save = now;
             }
         }
 
@@ -265,7 +272,6 @@ impl Emu {
 
     pub fn save_state(&self, cpu: &Cpu) -> EmuSaveState {
         EmuSaveState {
-            clock: self.ctx.clock.clone(),
             cpu_without_bus: cpu.clone_without_bus(),
             bus_without_cart: cpu.bus.clone_without_cart(),
             cart_mbc: cpu.bus.cart.mbc.clone(),
@@ -281,7 +287,6 @@ fn load_state(emu: &mut Emu, save_state: EmuSaveState) {
     state_cpu.bus.cart.data = emu.cpu.bus.cart.data.clone();
 
     emu.cpu = state_cpu;
-    emu.ctx.clock = save_state.clock;
     emu.ctx.reset();
 }
 
