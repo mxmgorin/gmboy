@@ -1,0 +1,36 @@
+name: Build linux release
+
+on:
+  push:
+    branches:
+      - "*"
+  release:
+    types: [published]
+
+jobs:
+  build-linux:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - run: sudo apt-get update && sudo apt-get install -y libsdl2-dev zip
+
+      - run: cargo build --release
+
+      - name: Prepare Linux release files
+        run: |
+          mkdir -p dist/linux
+          cp target/release/gmboy dist/linux/
+          cp config.json dist/linux/
+
+      - name: Zip Linux release
+        run: cd dist && zip -r gmboy-linux.zip linux
+
+      - name: Upload Linux zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/gmboy-linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
