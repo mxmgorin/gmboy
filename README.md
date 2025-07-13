@@ -29,10 +29,10 @@ It's not just an emulator — it's a playground for experimentation.
 - **Slow and Turbo Modes**  
   Ability to slow down and speed up emulation.
 
-- **Rewind**
+- **Rewind**  
   Go back in time! Undo your actions and retry sections without restarting.
 
-- **Save states**
+- **Save states**  
   Save your game progress and resume from the exact same point at any time — no need to rely on in-game save systems.
 
 - **Tests**  
