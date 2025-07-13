@@ -21,14 +21,15 @@ pub enum MbcVariant {
 impl MbcVariant {
     pub fn new(cart_data: &CartData) -> Option<MbcVariant> {
         let cart_type = cart_data.get_cart_type().unwrap();
-        match cart_type {
-            CartType::RomOnly => None,
-            CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => Some(
-                MbcVariant::Mbc1(Mbc1::new(MbcData::new(cart_data.get_ram_size().unwrap()))),
-            ),
-            CartType::Mbc2 | CartType::Mbc2Battery => Some(MbcVariant::Mbc2(Mbc2::new(
-                MbcData::new(cart_data.get_ram_size().unwrap()),
-            ))),
+        let ram_size = cart_data.get_ram_size().unwrap();
+        let mbc_data = MbcData::new(ram_size);
+
+        let mbc_variant = match cart_type {
+            CartType::RomOnly => return None,
+            CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
+                MbcVariant::Mbc1(Mbc1::new(mbc_data))
+            }
+            CartType::Mbc2 | CartType::Mbc2Battery => MbcVariant::Mbc2(Mbc2::new(mbc_data)),
             CartType::RomRam
             | CartType::RomRamBattery
             | CartType::Mmm01
@@ -49,7 +50,9 @@ impl MbcVariant {
             | CartType::BandaiTama5
             | CartType::HuC3
             | CartType::HuC1RamBattery => unimplemented!("Cart type {:?}", cart_type),
-        }
+        };
+
+        Some(mbc_variant)
     }
 }
 
