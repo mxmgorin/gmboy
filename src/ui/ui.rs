@@ -212,8 +212,6 @@ impl Ui {
 
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
         while let Some(event) = self.event_pump.poll_event() {
-            println!("Event {:?}", event);
-
             match event {
                 Event::ControllerDeviceAdded { which, .. } => {
                     if let Ok(controller) = self.game_controller_subsystem.open(which) {
@@ -255,6 +253,13 @@ impl Ui {
                         event_handler.on_event(bus, evt);
                     }
                 }
+                Event::JoyAxisMotion {
+                    axis_idx, value, ..
+                } => {
+                    if let Some(evt) = self.handle_joy_axis(axis_idx, value) {
+                        event_handler.on_event(bus, evt);
+                    }
+                }
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -292,8 +297,12 @@ impl Ui {
                 } else {
                     Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
+            }
+            sdl2::controller::Button::X => {
+                if !is_down {
+                    self.next_palette(bus)
+                }
             },
-            sdl2::controller::Button::X => self.next_palette(bus),
             sdl2::controller::Button::Start => bus.io.joypad.start = is_down,
             sdl2::controller::Button::Back => bus.io.joypad.select = is_down,
             sdl2::controller::Button::Guide => bus.io.joypad.select = is_down,
@@ -303,16 +312,36 @@ impl Ui {
                 } else {
                     Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
-            },
+            }
             sdl2::controller::Button::RightShoulder => {
                 return if is_down {
                     Some(UiEvent::ModeChanged(RunMode::Turbo))
                 } else {
                     Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
-            },
+            }
 
             _ => (), // Ignore other keycodes
+        }
+
+        None
+    }
+
+    fn handle_joy_axis(&mut self, axis_idx: u8, value: i16) -> Option<UiEvent> {
+        const LEFT: u8 = 2;
+        const RIGHT: u8 = 5;
+        const THRESHOLD: i16 = 20_000;
+
+        let is_down = value > THRESHOLD;
+
+        if axis_idx == LEFT {
+            if !is_down {
+                return Some(UiEvent::SaveState(SaveStateEvent::Load, 0));
+            }
+        } else if axis_idx == RIGHT {
+            if !is_down {
+                return Some(UiEvent::SaveState(SaveStateEvent::Create, 0));
+            }
         }
 
         None
@@ -505,9 +534,8 @@ impl Ui {
             self.config.selected_pallet_idx,
             self.config.pallets.len() - 1,
         );
-        self.curr_palette = into_pallet(
-            &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
-        );
+        self.curr_palette =
+            into_pallet(&self.config.pallets[self.config.selected_pallet_idx].hex_colors);
         bus.io.lcd.set_pallet(self.curr_palette);
     }
 }
