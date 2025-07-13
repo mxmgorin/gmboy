@@ -4,15 +4,15 @@
 Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage.
 It's not just an emulator — it's a playground for experimentation.
 
-## Features
+## Supports
 
--  **CPU Emulation**  
-  Full instruction set of Sharp LR35902 CPU with accurate timing.
+-  **Full CPU Emulation**  
+  Full instruction set of Sharp LR35902 CPU with accurate timing (instruction and sub-instruction).
 
-- **PPU Emulation (Graphics)**  
+- **Full PPU Emulation (Graphics)**  
   Rendering of background, window, and sprites.
 
-- **APU Emulation (Audio)**  
+- **Full APU Emulation (Audio)**  
   Sound output with all 4 audio channels.
 
 - **Input Handling**  
@@ -21,21 +21,24 @@ It's not just an emulator — it's a playground for experimentation.
 - **Cartridge Support**  
   Handles ROM loading and MBC0, MBC1, MBC2.
 
+## Features
+
 - **Multiple Palettes**  
   Includes different color palettes with ability to add through config file.
 
 - **Slow and Turbo Modes**  
   Ability to slow down and speed up emulation.
 
-- **Rewind Feature**  
+- **Rewind**  
   Rewind gameplay to undo mistakes.
 
--  **Auto testing**  
-   Integrated SM83 json tests, blargg tests, mooneye test suite.
+-  **Tests**  
+   Integrated SM83 json tests, blargg tests, mooneye test suite (throught `cargo test`).
 
 ## ⌨️ Keybindings
 
 ### Controls
+
 | Key               | Action      |
 |-------------------|-------------|
 | Arrow Up          | Dpad Up     |
@@ -49,6 +52,7 @@ It's not just an emulator — it's a playground for experimentation.
 
 
 ### Emulator Functions
+
 | Key                    | Action                          |
 |------------------------|--------------------------------|
 | Left Ctrl / Right Ctrl | Toggle **Rewind** mode (hold)  |
@@ -68,12 +72,13 @@ First, make sure you have Rust installed. If you don't, install it with:
 ````
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ````
-Then, installed dependencies (SDL2)
+Then, install dependencies: SDL2
 
 Arch Linux:
 ```bash
 sudo pacman -S sdl2
 ````
+
 After that, you should be able to build:
 ```bash
 cargo build --release
@@ -87,8 +92,10 @@ cargo build --release
 - [ ] Emulator menu (with settings etc.)
 - [ ] Accuracy improvements, bug fixes
 - [ ] Shaders
+- [ ] GBC mode
 
 ## References
+
 Here are some useful resources for Game Boy development and emulation:
 
 - [Game Boy Complete Technical Reference](https://gbdev.io/pandocs/)
@@ -98,6 +105,8 @@ Here are some useful resources for Game Boy development and emulation:
 - [A curated list of Game Boy development resources](https://github.com/gbdev/awesome-gbdev)
 
 ## Acknowledgments
+
 - [SM83 Tests](https://github.com/SingleStepTests/sm83)
 - [GB Test ROMs](https://github.com/retrio/gb-test-roms)
 - [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite)
+- [DMG acid2 Test](https://github.com/mattcurrie/dmg-acid2)
