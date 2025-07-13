@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 
 pub fn run_blargg_rom_serial(
     name: &str,
-    category: Option<TestRomCategory>,
+    category: Option<BlarggRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
@@ -39,7 +39,7 @@ pub fn run_blargg_rom_serial(
 
 pub fn run_blargg_rom_memory(
     name: &str,
-    category: Option<TestRomCategory>,
+    category: Option<BlarggRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
@@ -73,35 +73,33 @@ pub fn run_blargg_rom_memory(
     }
 }
 
-pub fn assert_result(name: &str, category: Option<TestRomCategory>, result: Result<(), String>) {
-    let name = if let Some(category) = category {
-        format!("{:?} {}", category, name)
-    } else {
-        name.to_owned()
-    };
+pub fn assert_result(name: &str, category: Option<BlarggRomCategory>, result: Result<(), String>) {
+    let path = get_blargg_rom_path(&format!("{}.gb", name), category)
+        .to_string_lossy()
+        .to_string();
 
     if let Err(err) = result {
-        panic!("{name}: FAILED\n{err}")
+        panic!("{path}: FAILED\n{err}")
     } else {
-        println!("{name}: OK");
+        println!("{path}: OK");
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum TestRomCategory {
+pub enum BlarggRomCategory {
     CpuInstructions,
     MemTiming,
     OamBug,
 }
 
-pub fn get_blargg_rom_path(rom_name: &str, category: Option<TestRomCategory>) -> PathBuf {
+pub fn get_blargg_rom_path(rom_name: &str, category: Option<BlarggRomCategory>) -> PathBuf {
     let mut root = PathBuf::from("tests").join("blargg").join("roms");
 
     if let Some(category) = category {
         let dir = match category {
-            TestRomCategory::CpuInstructions => "cpu_instrs",
-            TestRomCategory::MemTiming => "mem_timing",
-            TestRomCategory::OamBug => "oam_bug",
+            BlarggRomCategory::CpuInstructions => "cpu_instrs",
+            BlarggRomCategory::MemTiming => "mem_timing",
+            BlarggRomCategory::OamBug => "oam_bug",
         };
 
         root = root.join(dir);
