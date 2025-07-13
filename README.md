@@ -38,7 +38,7 @@ It's not just an emulator — it's a playground for experimentation.
 ## Test Results
 
 - ### SM83: 
-Passes all tests successfully ✅
+Passes all of 356000 tests successfully ✅
 
 - ### Blargg
 

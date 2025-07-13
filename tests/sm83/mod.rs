@@ -7,13 +7,15 @@ use std::time::Duration;
 
 #[test]
 fn test_sm83_all() {
+    let mut count = 0;
+
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
         if let Instruction::Unknown(_) = instruction {
             continue;
         }
 
         if opcode == 0xCB {
-            run_sb_test_cases(false);
+            count += run_sb_test_cases(false);
             continue;
         }
 
@@ -24,6 +26,7 @@ fn test_sm83_all() {
 
         for test_case in test_cases.iter() {
             run_test_case(test_case, false);
+            count += 1;
         }
 
         println!(
@@ -32,6 +35,8 @@ fn test_sm83_all() {
             test_cases.len()
         );
     }
+
+    println!("passed {count} 'sm83' test cases",);
 }
 
 #[test]

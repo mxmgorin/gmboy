@@ -34,7 +34,9 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     }
 }
 
-pub fn run_sb_test_cases(print_result: bool) {
+pub fn run_sb_test_cases(print_result: bool) -> usize {
+    let mut count = 0;
+    
     for i in 0..256 {
         let test_cases = Sm83TestCase::load_file(&format!("cb {:02X}.json", i).to_lowercase());
 
@@ -44,8 +46,11 @@ pub fn run_sb_test_cases(print_result: bool) {
 
         for test_case in test_cases.iter() {
             run_test_case(test_case, print_result);
+            count += 1;
         }
     }
+
+    count
 }
 
 #[derive(Debug, Serialize, Deserialize)]
