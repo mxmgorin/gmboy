@@ -29,8 +29,8 @@ It's not just an emulator — it's a playground for experimentation.
 - **Slow and Turbo Modes**  
   Ability to slow down and speed up emulation.
 
-- **Rewind**  
-  Rewind gameplay to undo mistakes.
+- **Rewind**
+  Go back in time! Undo your actions and retry sections without restarting.
 
 -  **Tests**  
    Integrated SM83 json tests, blargg tests, mooneye test suite (throught `cargo test`).
