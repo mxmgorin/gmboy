@@ -54,7 +54,9 @@ impl EmuSaveState {
             .parent()
             .expect("Failed to get executable directory");
 
-        exe_dir.join(format!("{game_name}_{index}.state"))
+        exe_dir
+            .join("save_states")
+            .join(format!("{game_name}_{index}.state"))
     }
 }
 
