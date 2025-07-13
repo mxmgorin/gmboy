@@ -1,7 +1,8 @@
+use serde::{Deserialize, Serialize};
 use crate::bus::{Bus, ECHO_MIRROR_OFFSET};
 use crate::ppu::oam::OAM_ADDR_START;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Dma {
     pub is_active: bool,
     pub current_index: u16,

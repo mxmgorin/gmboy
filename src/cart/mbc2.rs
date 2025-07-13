@@ -1,7 +1,8 @@
+use serde::{Deserialize, Serialize};
 use crate::mbc::{Mbc, MbcData};
 use crate::{MASK_MSB, RAM_ADDRESS_START};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc2 {
     data: MbcData,
 }

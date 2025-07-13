@@ -1,13 +1,14 @@
+use serde::{Deserialize, Serialize};
 use crate::cart::mbc::{Mbc, MbcData};
 use crate::{MASK_MSB, RAM_ADDRESS_START};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 enum Mode {
     RomBanking,
     RamBanking,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc1 {
     data: MbcData,
     mode: Mode,

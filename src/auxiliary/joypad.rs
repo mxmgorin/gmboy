@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 pub const JOYPAD_ADDR: u16 = 0xFF00;
 
 pub const A_OR_RIGHT_BIT: u8 = 0x00;
@@ -8,7 +10,7 @@ pub const START_OR_DOWN_BIT: u8 = 0x03;
 pub const SELECT_DIRECTIONS_BIT: u8 = 0x04;
 pub const SELECT_ACTIONS_BIT: u8 = 0x05;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Joypad {
     pub start: bool,
     pub select: bool,

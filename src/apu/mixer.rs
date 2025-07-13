@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::{NR50, NR51};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Mixer {
     pub nr51_panning: NR51,
     pub nr50_volume: NR50,

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
@@ -41,7 +42,7 @@ pub const HOLLOW_PALLET: [PixelColor; 4] = [
 // todo: move pallets to file conf
 pub const PALLETS: [[PixelColor; 4]; 2] = [BLACK_WHITE_PALLET, HOLLOW_PALLET];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[repr(C)]
 pub struct Lcd {
     // Registers
@@ -182,7 +183,7 @@ impl Lcd {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub struct LcdControl {
     pub byte: u8,
@@ -243,7 +244,7 @@ impl LcdControl {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 #[repr(C)]
 pub struct LcdStatus {
     pub byte: u8,

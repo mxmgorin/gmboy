@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 const INTERRUPTS_BY_ADDRESSES: [(u16, InterruptType); 5] = [
     (0x40, InterruptType::VBlank),
     (0x48, InterruptType::LCDStat),
@@ -16,7 +18,7 @@ pub enum InterruptType {
     Joypad = 16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Interrupts {
     /// Interrupt flags
     pub int_flags: u8,

@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use crate::channels::channel::ChannelType;
 use crate::channels::square_channel::NR10;
 use crate::registers::NRx3x4;
 use crate::NR52;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct SweepTimer {
     counter: u8,
     shadow_frequency: u16,

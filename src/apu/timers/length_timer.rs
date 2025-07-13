@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::registers::{NRx1, NRx4};
 use crate::apu::NR52;
@@ -12,7 +13,7 @@ use crate::apu::NR52;
 //
 // Each length counter is clocked at 256 Hz by the frame sequencer. When clocked while enabled by NRx4
 // and the counter is not zero, it is decremented. If it becomes zero, the channel is disabled.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LengthTimer {
     counter: u16,
     ch_type: ChannelType,

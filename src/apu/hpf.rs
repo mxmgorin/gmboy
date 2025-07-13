@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 /// A high-pass filter (HPF) removes constant biases over time. The HPFs therefore remove the DC
 /// offset created by inactive channels with an enabled DAC, and off-center waveforms.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hpf {
     left_capacitor: f32,
     right_capacitor: f32,

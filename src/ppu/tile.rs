@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::hex_to_rgba;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 
@@ -136,7 +137,7 @@ impl Iterator for TileLineIterator {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelColor {
     hex: u32,
 }

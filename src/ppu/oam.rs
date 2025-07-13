@@ -1,11 +1,19 @@
 // Object attributes reside in the object attribute memory (OAM) at $FE00-FE9F.
 // Has 40 movable objects.
+use serde::de::{Error, SeqAccess, Visitor};
+use serde::ser::SerializeSeq;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt;
 
 pub const OAM_ENTRIES_COUNT: usize = 40;
 pub const OAM_ADDR_START: u16 = 0xFE00;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OamRam {
+    #[serde(
+        serialize_with = "serialize_array_oam",
+        deserialize_with = "deserialize_array_oam"
+    )]
     pub entries: [OamEntry; OAM_ENTRIES_COUNT],
 }
 
@@ -59,7 +67,7 @@ impl OamRam {
 //  Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
 //  Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
 #[repr(C)]
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct OamEntry {
     pub y: u8,
     pub x: u8,
@@ -91,4 +99,58 @@ impl OamEntry {
     pub fn f_bgp(&self) -> bool {
         (self.flags & 0b1000_0000) != 0 // Bit 7
     }
+}
+
+pub fn serialize_array_oam<S>(
+    arr: &[OamEntry; OAM_ENTRIES_COUNT],
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let mut seq = serializer.serialize_seq(Some(OAM_ENTRIES_COUNT))?;
+    for elem in arr.iter() {
+        seq.serialize_element(elem)?;
+    }
+    seq.end()
+}
+
+// Visitor for deserialization
+struct OamArrayVisitor;
+
+impl<'de> Visitor<'de> for OamArrayVisitor {
+    type Value = [OamEntry; OAM_ENTRIES_COUNT];
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            formatter,
+            "an array of {} OamEntry items",
+            OAM_ENTRIES_COUNT
+        )
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<[OamEntry; OAM_ENTRIES_COUNT], A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut vec = Vec::with_capacity(OAM_ENTRIES_COUNT);
+        for i in 0..OAM_ENTRIES_COUNT {
+            let value = seq
+                .next_element()?
+                .ok_or_else(|| Error::invalid_length(i, &self))?;
+            vec.push(value);
+        }
+        vec.try_into()
+            .map_err(|_| Error::custom("Failed to convert Vec to array"))
+    }
+}
+
+// Deserializer function
+pub fn deserialize_array_oam<'de, D>(
+    deserializer: D,
+) -> Result<[OamEntry; OAM_ENTRIES_COUNT], D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_seq(OamArrayVisitor)
 }

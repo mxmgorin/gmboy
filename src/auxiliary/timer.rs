@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::{get_bit_flag, get_bit_flag16};
 
@@ -37,7 +38,7 @@ const TAC_ENABLE_BIT: u8 = 2;
 
 // #4 If TMA is written the same cycle it is loaded to TIMA [B], TIMA is also loaded with that value.
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FallingEdgeDetector {
     pub prev_result: bool,
 }
@@ -69,7 +70,7 @@ fn get_clock_bit_position(tac: u8) -> u8 {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Timer {
     // registers
     div: u16,

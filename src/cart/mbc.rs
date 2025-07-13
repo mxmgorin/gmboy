@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
@@ -11,7 +12,7 @@ pub trait Mbc {
     fn load_ram(&mut self, ram_bytes: Vec<u8>);
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MbcVariant {
     Mbc1(Mbc1),
     Mbc2(Mbc2),
@@ -89,7 +90,7 @@ impl Mbc for MbcVariant {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MbcData {
     pub ram_bytes: Vec<u8>,
     pub rom_bank: u16,

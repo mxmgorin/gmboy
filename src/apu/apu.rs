@@ -14,6 +14,9 @@ use crate::channels::square_channel::{
     NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS, NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS,
 };
 use crate::{get_bit_flag, set_bit, CPU_CLOCK_SPEED};
+use serde::de::Error;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::ser::SerializeSeq;
 
 pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
 pub const AUDIO_END_ADDRESS: u16 = 0xFF26;
@@ -28,7 +31,7 @@ pub const AUDIO_BUFFER_SIZE: usize = 512;
 
 pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Apu {
     // internal
     ch1: SquareChannel,
@@ -41,9 +44,49 @@ pub struct Apu {
     // other data
     frame_sequencer_step: u8,
     ticks_count: u32,
+    #[serde(
+        serialize_with = "serialize_boxed_array",
+        deserialize_with = "deserialize_boxed_array"
+    )]
     output_buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
     output_buffer_idx: usize,
     hpf: Hpf,
+}
+fn serialize_boxed_array<S>(
+    arr: &Box<[f32; AUDIO_BUFFER_SIZE]>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let mut seq = serializer.serialize_seq(Some(AUDIO_BUFFER_SIZE))?;
+    for item in arr.iter() {
+        seq.serialize_element(item)?;
+    }
+
+    seq.end()
+}
+
+fn deserialize_boxed_array<'de, D>(
+    deserializer: D,
+) -> Result<Box<[f32; AUDIO_BUFFER_SIZE]>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let vec: Vec<f32> = Deserialize::deserialize(deserializer)?;
+    if vec.len() != AUDIO_BUFFER_SIZE {
+        return Err(Error::custom(format!(
+            "Expected array of length {}, got {}",
+            AUDIO_BUFFER_SIZE,
+            vec.len()
+        )));
+    }
+
+    let boxed_array: Box<[f32; AUDIO_BUFFER_SIZE]> = vec
+        .into_boxed_slice()
+        .try_into()
+        .map_err(|_| Error::custom("Failed to convert Vec to Boxed array"))?;
+    Ok(boxed_array)
 }
 
 impl Default for Apu {
@@ -253,7 +296,7 @@ impl Apu {
 }
 
 /// FF26 — NR52: Audio master control
-#[derive(Debug, Clone, Default, Copy)]
+#[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct NR52 {
     byte: u8,
 }
@@ -362,7 +405,7 @@ impl NR52 {
 /// FF25 — NR51:
 /// Each channel can be panned hard left, center, hard right, or ignored entirely.
 /// Setting a bit to 1 enables the channel to go into the selected output.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NR51 {
     pub byte: u8,
 }
@@ -396,7 +439,7 @@ impl NR51 {
 
 /// FF24 — NR50: Master volume & VIN panning
 /// A value of 0 is treated as a volume of 1 (very quiet), and a value of 7 is treated as a volume of 8 (no volume reduction). Importantly, the amplifier never mutes a non-silent input.
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub struct NR50 {
     pub byte: u8,
 }

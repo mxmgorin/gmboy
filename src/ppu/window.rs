@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Window {
     // registers
     pub y: u8,

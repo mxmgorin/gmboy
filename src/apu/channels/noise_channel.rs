@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::registers::{NRx2, NRx4};
 use crate::channels::channel::ChannelType;
 use crate::dac::{DacEnable, DigitalSampleProducer};
@@ -16,7 +17,7 @@ pub const NR44_CH4_CONTROL_ADDRESS: u16 = 0xFF23;
 
 const DIVISORS: [u16; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NoiseChannel {
     nrx1_len: NRx1,
     nrx2_envelope_and_dac: NRx2,
@@ -145,7 +146,7 @@ impl NoiseChannel {
 
 /// FF22 — NR43: Channel 4 frequency & randomness
 /// This register allows controlling the way the amplitude is randomly switched.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NR43 {
     byte: u8,
 }

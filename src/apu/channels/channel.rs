@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::channels::noise_channel::CH4_START_ADDRESS;
 use crate::apu::channels::square_channel::{CH1_START_ADDRESS, CH2_START_ADDRESS};
 use crate::apu::channels::wave_channel::CH3_START_ADDRESS;
@@ -6,7 +7,7 @@ use crate::apu::channels::wave_channel::CH3_START_ADDRESS;
 // Square 2:          Timer -> Duty -> Length Counter -> Envelope -> Mixer
 // Wave:              Timer -> Wave -> Length Counter -> Volume   -> Mixer
 // Noise:             Timer -> LFSR -> Length Counter -> Envelope -> Mixer
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ChannelType {
     CH1,
     CH2,

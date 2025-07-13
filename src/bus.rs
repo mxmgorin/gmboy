@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::auxiliary::dma::Dma;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::Ram;
@@ -55,7 +56,7 @@ impl From<u16> for BusAddrLocation {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Bus {
     pub cart: Cart,
     pub ram: Ram,

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::bus::Bus;
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::cpu::instructions::{FetchedData, RegisterType};
@@ -34,7 +35,7 @@ impl CpuCallback for CounterCpuCallback {
     fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Cpu {
     pub bus: Bus,
     pub registers: Registers,

@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use crate::registers::NRx2;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct EnvelopeTimer {
     counter: u8,
     volume: u8,

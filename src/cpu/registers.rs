@@ -1,13 +1,14 @@
 use crate::cpu::instructions::RegisterType;
 use crate::{get_bit_flag, set_bit};
 use std::fmt::Display;
+use serde::{Deserialize, Serialize};
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
 const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
 const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
 const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Registers {
     pub a: u8,
     pub flags: Flags,
@@ -21,7 +22,7 @@ pub struct Registers {
     pub pc: u16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Flags {
     pub byte: u8,
 }

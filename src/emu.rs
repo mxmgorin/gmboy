@@ -10,18 +10,52 @@ use crate::ppu::Ppu;
 use crate::ui::events::{UiEvent, UiEventHandler};
 use crate::ui::Ui;
 use crate::CYCLES_PER_FRAME;
+use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use std::path::Path;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use std::{fs, thread};
+use std::{env, fs, thread};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
 
+#[derive(Serialize, Deserialize)]
 pub struct EmuSaveState {
     pub cpu_without_bus: Cpu,
     pub bus_without_cart: Bus,
     pub cart_mbc: Option<MbcVariant>,
+}
+
+impl EmuSaveState {
+    pub fn save(&self, game_name: &str, index: usize) -> std::io::Result<()> {
+        let path = Self::generate_path(game_name, index);
+        let encoded: Vec<u8> = bincode::serialize(self).expect("Failed to serialize state");
+        let mut file = File::create(path)?;
+        file.write_all(&encoded)?;
+
+        Ok(())
+    }
+
+    pub fn load(game_name: &str, index: usize) -> std::io::Result<Self> {
+        let path = Self::generate_path(game_name, index);
+        let mut file = File::open(path)?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer)?;
+
+        let decoded = bincode::deserialize(&buffer).expect("Failed to deserialize state");
+        Ok(decoded)
+    }
+
+    pub fn generate_path(game_name: &str, index: usize) -> PathBuf {
+        let exe_path = env::current_exe().expect("Failed to get executable path");
+        let exe_dir = exe_path
+            .parent()
+            .expect("Failed to get executable directory");
+
+        exe_dir.join(format!("{game_name}_{index}.state"))
+    }
 }
 
 pub struct Emu {
@@ -246,7 +280,7 @@ impl Emu {
 
             if let EmuState::Running(RunMode::Rewind) = &self.ctx.state {
                 if let Some(state) = self.ctx.rewind_buffer.pop_back() {
-                    load_state(self, state);
+                    load_save_state(self, state);
                     thread::sleep(Duration::from_millis(100));
                 }
             }
@@ -262,7 +296,9 @@ impl Emu {
                     self.ctx.rewind_buffer.pop_front();
                 }
 
-                self.ctx.rewind_buffer.push_back(self.save_state(&self.cpu));
+                self.ctx
+                    .rewind_buffer
+                    .push_back(self.create_save_state(&self.cpu));
                 self.ctx.last_rewind_save = now;
             }
         }
@@ -270,7 +306,7 @@ impl Emu {
         Ok(())
     }
 
-    pub fn save_state(&self, cpu: &Cpu) -> EmuSaveState {
+    pub fn create_save_state(&self, cpu: &Cpu) -> EmuSaveState {
         EmuSaveState {
             cpu_without_bus: cpu.clone_without_bus(),
             bus_without_cart: cpu.bus.clone_without_cart(),
@@ -279,7 +315,7 @@ impl Emu {
     }
 }
 
-fn load_state(emu: &mut Emu, save_state: EmuSaveState) {
+fn load_save_state(emu: &mut Emu, save_state: EmuSaveState) {
     let mut state_cpu = save_state.cpu_without_bus; // reconstruct cpu
     state_cpu.bus = save_state.bus_without_cart;
     state_cpu.bus.io.joypad = Joypad::default(); // reset controls

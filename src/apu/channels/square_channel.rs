@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::{NRx1, NRx2, NRx3x4};
@@ -34,7 +35,7 @@ pub const WAVE_DUTY_PATTERNS: [[u8; 8]; 4] = [
     [0, 1, 1, 1, 1, 1, 1, 0],
 ];
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SquareChannel {
     // registers
     sweep_timer: Option<SweepTimer>,
@@ -186,7 +187,7 @@ impl SquareChannel {
 
 /// FF10 — NR10: Channel 1 sweep
 /// This register controls CH1’s period sweep functionality.
-#[derive(Debug, Clone, Default, Copy)]
+#[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct NR10 {
     pub byte: u8,
 }

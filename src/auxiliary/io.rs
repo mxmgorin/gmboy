@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::Apu;
 use crate::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
@@ -33,7 +34,7 @@ impl From<u16> for IoAddress {
 // unreadable so they return 1. Some exceptions are:
 // - Unknown purpose (if any) registers. Some bits of them can be read and written.
 // - The IE register (only the 5 lower bits are used, but the upper 3 can hold any value).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
@@ -98,7 +99,7 @@ impl Io {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Serial {
     /// FF01 — SB: Serial transfer data
     sb: u8,

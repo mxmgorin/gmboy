@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::{NRx1, NRx3x4};
@@ -36,7 +37,7 @@ impl DigitalSampleProducer for WaveChannel {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct WaveChannel {
     // registers
     nrx0_dac_enable: NR30,
@@ -123,7 +124,7 @@ impl WaveChannel {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct WaveRam {
     // 32 samples, 4 bit each
     bytes: [u8; 16],
@@ -169,7 +170,7 @@ impl WaveRam {
 }
 
 // DAC enable
-#[derive(Clone, Debug, Default, Copy)]
+#[derive(Clone, Debug, Default, Copy, Serialize, Deserialize)]
 pub struct NR30 {
     byte: u8,
 }
@@ -185,7 +186,7 @@ impl NR30 {
 }
 
 /// Output level
-#[derive(Clone, Debug, Default, Copy)]
+#[derive(Clone, Debug, Default, Copy, Serialize, Deserialize)]
 pub struct NR32 {
     byte: u8,
 }
