@@ -102,8 +102,6 @@ Passes all of 356000 tests successfully ✅
 
 - ### Emulator Functions
 
-### 🎮 Emulator Functions
-
 | Action                      | Keyboard                            | Gamepad        |
 |-----------------------------|-------------------------------------|----------------|
 | Toggle **Rewind** (hold)    | Left Ctrl / Right Ctrl              | Y              |
