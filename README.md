@@ -35,10 +35,9 @@ It's not just an emulator — it's a playground for experimentation.
 - **Tests**  
   Integrated SM83 json tests, blargg tests, mooneye test suite (throught `cargo test`).
 
-## Test Results
+## Tests
 
-<details>
-  <summary><strong>Blargg (click to expand)</strong></summary>
+- ### Blargg
 
 | CPU Instructions          | Memory Timing         | OAM Bug               |
 |---------------------------|-----------------------|-----------------------|
@@ -56,10 +55,7 @@ It's not just an emulator — it's a playground for experimentation.
 | instr_timing.gb ❌         |                       |                       |
 | instr_timing.gb ❌         |                       |                       |
 
-</details>
-
-<details>
-  <summary><strong>Mooneye (click to expand)</strong></summary>
+- ### Mooneye
 
 | General & OAM DMA            | Timing                       | Timer Accuracy                 |
 |------------------------------|------------------------------|-------------------------------|
@@ -72,8 +68,8 @@ It's not just an emulator — it's a playground for experimentation.
 | oam_dma/oam_dma_restart.gb ✅ | halt_ime0_ei.gb ✅            | tim10.gb ✅                 |
 | oam_dma/oam_dma_start.gb ✅   | halt_ime0_nointr_timing.gb ✅ | tim10_div_trigger.gb ✅     |
 | oam_dma/oam_dma_timing.gb ✅  | halt_ime1_timing.gb ✅        | tim11.gb ✅                 |
-|                              | halt_ime1_timing2-GS.gb ✅    | tim11_div_trigger.gb ✅     |
-|                              | jp_cc_timing.gb ✅            | tima_reload.gb ✅           |
+| unused_hwio-GS.gb ❌          | halt_ime1_timing2-GS.gb ✅    | tim11_div_trigger.gb ✅     |
+| ie_push.gb ❌                 | jp_cc_timing.gb ✅            | tima_reload.gb ✅           |
 |                              | jp_timing.gb ✅               | tima_write_reloading.gb ✅  |
 |                              | ld_hl_sp_e_timing.gb ✅       | tma_write_reloading.gb ✅   |
 |                              | pop_timing.gb ✅              |                               |
@@ -83,14 +79,12 @@ It's not just an emulator — it's a playground for experimentation.
 |                              | reti_intr_timing.gb ✅        |                               |
 |                              | reti_timing.gb ✅             |                               |
 |                              | rst_timing.gb ✅              |                               |
-| unused_hwio-GS.gb ❌          | di_timing-GS.gb ❌            |                               |
-| ie_push.gb ❌                 | intr_timing.gb ❌             |                               |
-
-</details>
+|                              | di_timing-GS.gb ❌            |                               |
+|                              | intr_timing.gb ❌             |                               |
 
 ## ⌨️ Keybindings
 
-### Controls
+- ### Controls
 
 | Key               | Action      |
 |-------------------|-------------|
@@ -104,7 +98,7 @@ It's not just an emulator — it's a playground for experimentation.
 | Backspace         | Select      |
 
 
-### Emulator Functions
+- ### Emulator Functions
 
 | Key                    | Action                          |
 |------------------------|--------------------------------|
@@ -125,7 +119,7 @@ First, make sure you have Rust installed. If you don't, install it with:
 ````
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ````
-Then, install dependencies: SDL2
+Then, install dependencies: **SDL2**
 
 Arch Linux:
 ```bash
