@@ -35,7 +35,10 @@ It's not just an emulator — it's a playground for experimentation.
 - **Tests**  
   Integrated SM83 json tests, blargg tests, mooneye test suite (throught `cargo test`).
 
-## Tests
+## Test Results
+
+- ### SM83: 
+Passes all tests successfully ✅
 
 - ### Blargg
 
@@ -96,7 +99,6 @@ It's not just an emulator — it's a playground for experimentation.
 | X                 | A           |
 | Enter (Return)    | Start       |
 | Backspace         | Select      |
-
 
 - ### Emulator Functions
 
