@@ -32,6 +32,9 @@ It's not just an emulator — it's a playground for experimentation.
 - **Rewind**
   Go back in time! Undo your actions and retry sections without restarting.
 
+- **Save states**
+  Save your game progress and resume from the exact same point at any time — no need to rely on in-game save systems.
+
 - **Tests**  
   Integrated SM83 json tests, blargg tests, mooneye test suite (throught `cargo test`).
 
@@ -138,7 +141,6 @@ cargo build --release
 ```
 ## Planned features
 
-- [ ] Save states
 - [ ] SRAM saving (battery-backed saves)
 - [ ] More MBC types (MBC3, MBC5, etc.)
 - [ ] Re-mappable keybindings
