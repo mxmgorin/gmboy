@@ -7,7 +7,7 @@ use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::mbc::MbcVariant;
 use crate::ppu::Ppu;
-use crate::ui::events::{UiEvent, UiEventHandler};
+use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::Ui;
 use crate::CYCLES_PER_FRAME;
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ use std::{env, fs, thread};
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmuSaveState {
     pub cpu_without_bus: Cpu,
     pub bus_without_cart: Bus,
@@ -31,6 +31,11 @@ pub struct EmuSaveState {
 impl EmuSaveState {
     pub fn save(&self, game_name: &str, index: usize) -> std::io::Result<()> {
         let path = Self::generate_path(game_name, index);
+
+        if let Some(parent) = Path::new(&path).parent() {
+            fs::create_dir_all(parent)?;
+        }
+
         let encoded: Vec<u8> = bincode::serialize(self).expect("Failed to serialize state");
         let mut file = File::create(path)?;
         file.write_all(&encoded)?;
@@ -77,6 +82,7 @@ pub struct EmuCtx {
     pub last_fps_timestamp: Duration,
     pub rewind_buffer: VecDeque<EmuSaveState>,
     pub last_rewind_save: Instant,
+    pub pending_save_state: Option<(SaveStateEvent, usize)>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -109,6 +115,7 @@ impl EmuCtx {
             last_fps_timestamp: Default::default(),
             rewind_buffer: Default::default(),
             last_rewind_save: Instant::now(),
+            pending_save_state: None,
         }
     }
 
@@ -168,6 +175,7 @@ impl UiEventHandler for EmuCtx {
             UiEvent::ConfigChanged(config) => self.config.graphics = config,
             UiEvent::ModeChanged(mode) => self.state = EmuState::Running(mode),
             UiEvent::Mute => self.config.emulation.is_muted = !self.config.emulation.is_muted,
+            UiEvent::SaveState(event, index) => self.pending_save_state = Some((event, index)),
         }
     }
 }
@@ -302,6 +310,35 @@ impl Emu {
                     .rewind_buffer
                     .push_back(self.create_save_state(&self.cpu));
                 self.ctx.last_rewind_save = now;
+            }
+
+            if let Some((event, index)) = self.ctx.pending_save_state.take() {
+                let title = self.cpu.bus.cart.data.get_title();
+
+                let Ok(title) = title else {
+                    eprintln!("Failed save_state: failed to get_title {:?}", title);
+                    continue;
+                };
+
+                match event {
+                    SaveStateEvent::Create => {
+                        let save_state = self.create_save_state(&self.cpu);
+
+                        if let Err(err) = save_state.save(&title, index) {
+                            eprintln!("Failed save_state: {:?}", err);
+                        }
+                    }
+                    SaveStateEvent::Load => {
+                        let save_state = EmuSaveState::load(&title, index);
+
+                        let Ok(save_state) = save_state else {
+                            eprintln!("Failed load save_state: {:?}", save_state);
+                            continue;
+                        };
+
+                        load_save_state(self, save_state);
+                    }
+                }
             }
         }
 

@@ -14,4 +14,10 @@ pub enum UiEvent {
     ConfigChanged(GraphicsConfig),
     ModeChanged(RunMode),
     Mute,
+    SaveState(SaveStateEvent, usize),
+}
+
+pub enum SaveStateEvent {
+    Create,
+    Load,
 }

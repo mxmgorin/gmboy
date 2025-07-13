@@ -66,7 +66,7 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            last_cart_path: None,
+            last_cart_path: Some("/home/mxmgo/Emulation/Roms/GB/SolarStriker (World).gb".to_string()),
             emulation: EmulationConfig {
                 rewind_size: 4000,
                 slow_speed: 50.0,

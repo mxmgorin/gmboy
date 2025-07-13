@@ -5,7 +5,7 @@ use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::audio::GameAudio;
 use crate::ui::debug_window::DebugWindow;
-use crate::ui::events::{UiEvent, UiEventHandler};
+use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::text::{calc_text_width, draw_text, fill_texture, get_text_height};
 use sdl2::controller::GameController;
 use sdl2::event::Event;
@@ -370,6 +370,96 @@ impl Ui {
                     );
                     bus.io.lcd.set_pallet(self.curr_palette);
                     return Some(UiEvent::ConfigChanged(self.config.clone()));
+                }
+            }
+            Keycode::NUM_1 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 1));
+                }
+            }
+            Keycode::NUM_2 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 2));
+                }
+            }
+            Keycode::NUM_3 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 3));
+                }
+            }
+            Keycode::NUM_4 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 4));
+                }
+            }
+            Keycode::NUM_5 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 5));
+                }
+            }
+            Keycode::NUM_6 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 6));
+                }
+            }
+            Keycode::NUM_7 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 7));
+                }
+            }
+            Keycode::NUM_8 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 8));
+                }
+            }
+            Keycode::NUM_9 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 9));
+                }
+            }
+            Keycode::F1 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 1));
+                }
+            }
+            Keycode::F2 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 2));
+                }
+            }
+            Keycode::F3 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 3));
+                }
+            }
+            Keycode::F4 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 4));
+                }
+            }
+            Keycode::F5 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 5));
+                }
+            }
+            Keycode::F6 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 6));
+                }
+            }
+            Keycode::F7 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 7));
+                }
+            }
+            Keycode::F8 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 8));
+                }
+            }
+            Keycode::F9 => {
+                if !is_down {
+                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 9));
                 }
             }
             _ => (), // Ignore other keycodes
