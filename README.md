@@ -116,8 +116,8 @@ Passes all of 356000 tests successfully ✅
 | Toggle fullscreen           | F                                   |                |
 | Mute audio                  | M                                   |                |
 | Cycle color palettes        | P                                   | X              |
-| Load save state             | F1–F19                              |                |
-| Create save state           | 1–9                                 |                |
+| Load save state             | F1–F19                              | Right Trigger  |
+| Create save state           | 1–9                                 | Left Trigger   |
 
 
 
