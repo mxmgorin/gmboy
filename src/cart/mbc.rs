@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
-use crate::{CartData, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use crate::{CartData, ROM_BANK_SIZE};
+use serde::{Deserialize, Serialize};
 
 pub trait Mbc {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8;
@@ -95,8 +95,6 @@ pub struct MbcData {
     pub ram_bytes: Vec<u8>,
     pub rom_bank: u16,
     pub ram_bank: u8,
-    pub rom_offset: usize,
-    pub ram_offset: usize,
     pub ram_enabled: bool,
 }
 
@@ -106,14 +104,12 @@ impl MbcData {
             ram_bytes: vec![0; ram_size.bytes_size()],
             rom_bank: 1,
             ram_bank: 0,
-            rom_offset: ROM_BANK_SIZE,
-            ram_offset: RAM_BANK_SIZE,
             ram_enabled: false,
         }
     }
 
     pub fn set_rom_bank(&mut self, rom_bytes_len: usize) {
-        let max_banks = (rom_bytes_len / self.rom_offset).max(1);
+        let max_banks = (rom_bytes_len / ROM_BANK_SIZE).max(1);
 
         if self.rom_bank as usize >= max_banks {
             self.rom_bank = (self.rom_bank as usize % max_banks) as u16;

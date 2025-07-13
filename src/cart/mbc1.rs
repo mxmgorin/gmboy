@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::cart::mbc::{Mbc, MbcData};
-use crate::{MASK_MSB, RAM_ADDRESS_START};
+use crate::{MASK_MSB, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum Mode {
@@ -30,8 +30,8 @@ impl Mbc for Mbc1 {
             0x0..=0x3 => rom_bytes[address as usize],
             // 0x4000 - 0x7FFF (Bank 01-7F)
             0x4..=0x7 => {
-                let offset = self.data.rom_offset * self.data.rom_bank as usize;
-                rom_bytes[(address as usize - self.data.rom_offset) + offset]
+                let offset = ROM_BANK_SIZE * self.data.rom_bank as usize;
+                rom_bytes[(address as usize - ROM_BANK_SIZE) + offset]
             }
             _ => 0xFF,
         }
@@ -70,7 +70,7 @@ impl Mbc for Mbc1 {
             return 0xFF;
         }
 
-        let offset = self.data.ram_offset * self.data.ram_bank as usize;
+        let offset = RAM_BANK_SIZE * self.data.ram_bank as usize;
 
         self.data.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset]
     }
@@ -80,7 +80,7 @@ impl Mbc for Mbc1 {
             return;
         }
 
-        let ram_offset = self.data.ram_offset;
+        let ram_offset = RAM_BANK_SIZE;
         let ram_bank = self.data.ram_bank;
         let offset = ram_offset * ram_bank as usize;
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::mbc::{Mbc, MbcData};
-use crate::{MASK_MSB, RAM_ADDRESS_START};
+use crate::{MASK_MSB, RAM_ADDRESS_START, ROM_BANK_SIZE};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc2 {
@@ -20,8 +20,8 @@ impl Mbc for Mbc2 {
             0x0..=0x3 => rom_bytes[address as usize],
             // 0x4000 - 0x7FFF (Bank 01-7F)
             0x4..=0x7 => {
-                let offset = self.data.rom_offset * self.data.rom_bank as usize;
-                rom_bytes[(address as usize - self.data.rom_offset) + offset]
+                let offset = ROM_BANK_SIZE * self.data.rom_bank as usize;
+                rom_bytes[(address as usize - ROM_BANK_SIZE) + offset]
             }
             _ => {
                 eprintln!("Unknown address: {:#X}. Can't read byte.", address);
