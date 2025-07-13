@@ -102,18 +102,24 @@ Passes all of 356000 tests successfully ✅
 
 - ### Emulator Functions
 
-| Key                    | Action                          |
-|------------------------|--------------------------------|
-| Left Ctrl / Right Ctrl | Toggle **Rewind** mode (hold)  |
-| Tab                    | Toggle **Turbo** mode (hold)   |
-| Left Shift / Right Shift | Toggle **Slow motion** mode (hold) |
-| Space                  | Pause                          |
-| R                      | Restart                        |
-| + (Equals)             | Increase scale                 |
-| - (Minus)              | Decrease scale                 |
-| F                      | Toggle fullscreen              |
-| M                      | Mute audio                    |
-| P                      | Cycle through color palettes  |
+### 🎮 Emulator Functions
+
+| Action                      | Keyboard                            | Gamepad        |
+|-----------------------------|-------------------------------------|----------------|
+| Toggle **Rewind** (hold)    | Left Ctrl / Right Ctrl              | Y              |
+| Toggle **Turbo** (hold)     | Tab                                 | Right Shoulder |
+| Toggle **Slow motion** (hold)| Left Shift / Right Shift           | Left Shoulder  |
+| Pause                       | Space                               |                |
+| Restart                     | R                                   |                |
+| Increase screen scale       | + (Equals)                          |                |
+| Decrease screen scale       | - (Minus)                           |                |
+| Toggle fullscreen           | F                                   |                |
+| Mute audio                  | M                                   |                |
+| Cycle color palettes        | P                                   | X              |
+| Load save state             | F1–F19                              |                |
+| Create save state           | 1–9                                 |                |
+
+
 
 ## 🛠️ Building
 
