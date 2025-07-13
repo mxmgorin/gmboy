@@ -212,6 +212,8 @@ impl Ui {
 
     pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
         while let Some(event) = self.event_pump.poll_event() {
+            println!("Event {:?}", event);
+
             match event {
                 Event::ControllerDeviceAdded { which, .. } => {
                     if let Ok(controller) = self.game_controller_subsystem.open(which) {
@@ -284,11 +286,32 @@ impl Ui {
             sdl2::controller::Button::DPadRight => bus.io.joypad.right = is_down,
             sdl2::controller::Button::B => bus.io.joypad.b = is_down,
             sdl2::controller::Button::A => bus.io.joypad.a = is_down,
-            sdl2::controller::Button::Y => bus.io.joypad.b = is_down,
-            sdl2::controller::Button::X => bus.io.joypad.a = is_down,
+            sdl2::controller::Button::Y => {
+                return if is_down {
+                    Some(UiEvent::ModeChanged(RunMode::Rewind))
+                } else {
+                    Some(UiEvent::ModeChanged(RunMode::Normal))
+                }
+            },
+            sdl2::controller::Button::X => self.next_palette(bus),
             sdl2::controller::Button::Start => bus.io.joypad.start = is_down,
             sdl2::controller::Button::Back => bus.io.joypad.select = is_down,
             sdl2::controller::Button::Guide => bus.io.joypad.select = is_down,
+            sdl2::controller::Button::LeftShoulder => {
+                return if is_down {
+                    Some(UiEvent::ModeChanged(RunMode::Slow))
+                } else {
+                    Some(UiEvent::ModeChanged(RunMode::Normal))
+                }
+            },
+            sdl2::controller::Button::RightShoulder => {
+                return if is_down {
+                    Some(UiEvent::ModeChanged(RunMode::Turbo))
+                } else {
+                    Some(UiEvent::ModeChanged(RunMode::Normal))
+                }
+            },
+
             _ => (), // Ignore other keycodes
         }
 
@@ -361,14 +384,7 @@ impl Ui {
             }
             Keycode::P => {
                 if !is_down {
-                    self.config.selected_pallet_idx = get_next_pallet_idx(
-                        self.config.selected_pallet_idx,
-                        self.config.pallets.len() - 1,
-                    );
-                    self.curr_palette = into_pallet(
-                        &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
-                    );
-                    bus.io.lcd.set_pallet(self.curr_palette);
+                    self.next_palette(bus);
                     return Some(UiEvent::ConfigChanged(self.config.clone()));
                 }
             }
@@ -482,6 +498,17 @@ impl Ui {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
+    }
+
+    fn next_palette(&mut self, bus: &mut Bus) {
+        self.config.selected_pallet_idx = get_next_pallet_idx(
+            self.config.selected_pallet_idx,
+            self.config.pallets.len() - 1,
+        );
+        self.curr_palette = into_pallet(
+            &self.config.pallets[self.config.selected_pallet_idx].hex_colors,
+        );
+        bus.io.lcd.set_pallet(self.curr_palette);
     }
 }
 
