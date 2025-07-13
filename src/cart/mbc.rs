@@ -4,6 +4,13 @@ use crate::mbc2::Mbc2;
 use crate::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 
+pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
+pub const ROM_BANK_ZERO_END_ADDR: u16 = 0x3FFF;
+pub const ROM_BANK_NON_ZERO_START_ADDR: u16 = 0x4000;
+pub const ROM_BANK_NON_ZERO_END_ADDR: u16 = 0x7FFF;
+pub const RAM_EXTERNAL_START_ADDR: u16 = 0xA000;
+pub const RAM_EXTERNAL_END_ADDR: u16 = 0xBFFF;
+
 pub trait Mbc {
     fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8;
     fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8);
