@@ -1,6 +1,7 @@
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
+use crate::mbc5::Mbc5;
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -28,6 +29,7 @@ pub trait Mbc {
 pub enum MbcVariant {
     Mbc1(Mbc1),
     Mbc2(Mbc2),
+    Mbc5(Mbc5),
 }
 
 impl MbcVariant {
@@ -43,6 +45,12 @@ impl MbcVariant {
             CartType::Mbc1RamBattery => MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_size, true))),
             CartType::Mbc2 => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false))),
             CartType::Mbc2Battery => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, true))),
+            CartType::Mbc5 | CartType::Mbc5Ram | CartType::Mbc5Rumble | CartType::Mbc5RumbleRam => {
+                MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false)))
+            }
+            CartType::Mbc5RamBattery | CartType::Mbc5RumbleRamBattery => {
+                MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, true)))
+            }
             CartType::RomRam
             | CartType::RomRamBattery
             | CartType::Mmm01
@@ -53,12 +61,6 @@ impl MbcVariant {
             | CartType::Mbc3
             | CartType::Mbc3Ram
             | CartType::Mbc3RamBattery
-            | CartType::Mbc5
-            | CartType::Mbc5Ram
-            | CartType::Mbc5RamBattery
-            | CartType::Mbc5Rumble
-            | CartType::Mbc5RumbleRam
-            | CartType::Mbc5RumbleRamBattery
             | CartType::PocketCamera
             | CartType::BandaiTama5
             | CartType::HuC3
@@ -74,6 +76,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc2(c) => c.read_rom(cart_data, address),
+            MbcVariant::Mbc5(c) => c.read_rom(cart_data, address),
         }
     }
 
@@ -81,6 +84,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.write_rom(address, value),
             MbcVariant::Mbc2(c) => c.write_rom(address, value),
+            MbcVariant::Mbc5(c) => c.write_rom(address, value),
         }
     }
 
@@ -88,6 +92,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.read_ram(address),
             MbcVariant::Mbc2(c) => c.read_ram(address),
+            MbcVariant::Mbc5(c) => c.read_ram(address),
         }
     }
 
@@ -95,6 +100,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.write_ram(address, value),
             MbcVariant::Mbc2(c) => c.write_ram(address, value),
+            MbcVariant::Mbc5(c) => c.write_ram(address, value),
         }
     }
 
@@ -102,6 +108,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.load_save(save),
             MbcVariant::Mbc2(c) => c.load_save(save),
+            MbcVariant::Mbc5(c) => c.load_save(save),
         }
     }
 
@@ -109,6 +116,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.dump_save(),
             MbcVariant::Mbc2(c) => c.dump_save(),
+            MbcVariant::Mbc5(c) => c.dump_save(),
         }
     }
 }
@@ -143,7 +151,7 @@ impl MbcData {
             _ => 0xFF,
         }
     }
-    
+
     pub fn write_ram_enabled(&mut self, value: u8) {
         self.ram_enabled = value == 0x0A;
     }
@@ -217,9 +225,7 @@ impl BatterySave {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
 
-        Ok(Self {
-            ram_bytes: buffer,
-        })
+        Ok(Self { ram_bytes: buffer })
     }
 
     pub fn generate_path(name: &str) -> PathBuf {

@@ -31,11 +31,8 @@ impl Mbc for Mbc1 {
 
     fn write_rom(&mut self, address: u16, value: u8) {
         match address {
-            // RAM enable
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
-            // ROM bank number
             0x2000..=0x3FFF => {
-                // Specify the lower 5 bits
                 let bank_number = if value == 0 { 1 } else { value };
                 self.data.rom_bank_number =
                     (self.data.rom_bank_number & 0b0110_0000) | (bank_number & 0b0001_1111) as u16;
@@ -45,7 +42,6 @@ impl Mbc for Mbc1 {
                 Mode::RamBanking => self.data.ram_bank_number = value,
                 Mode::RomBanking => self.data.rom_bank_number |= ((value & 0b0000_0011) << 5) as u16,
             },
-            // Banking mode select
             0x6000..=0x7FFF => match value {
                 0 => self.mode = Mode::RomBanking,
                 1 => self.mode = Mode::RamBanking,

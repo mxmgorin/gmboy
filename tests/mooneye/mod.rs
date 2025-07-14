@@ -23,7 +23,6 @@ fn test_oam_dma_reg_read() {
     assert_result(name, category, result);
 }
 
-#[ignore] // TODO: IMPL Mbc5RamBattery
 #[test]
 fn test_oam_dma_sources_gs() {
     let name = "sources-GS";
