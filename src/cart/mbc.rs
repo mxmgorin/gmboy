@@ -164,9 +164,8 @@ impl BatterySave {
             fs::create_dir_all(parent)?;
         }
 
-        let encoded: Vec<u8> = bincode::serialize(&self.ram_bytes).expect("Failed to serialize state");
         let mut file = File::create(path)?;
-        file.write_all(&encoded)?;
+        file.write_all(&self.ram_bytes)?;
 
         Ok(())
     }
@@ -176,10 +175,9 @@ impl BatterySave {
         let mut file = File::open(path)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
-        let decoded: Vec<u8> = bincode::deserialize(&buffer).expect("Failed to deserialize save");
 
         Ok(Self {
-            ram_bytes: decoded,
+            ram_bytes: buffer,
         })
     }
 
