@@ -224,7 +224,7 @@ impl Ui {
                     println!("Controller {} disconnected", which);
                 }
                 Event::DropFile { filename, .. } => {
-                    event_handler.on_event(bus, UiEvent::FileDropped(filename))
+                    event_handler.on_event(bus, UiEvent::FileDropped(filename.into()))
                 }
                 Event::Quit { .. } => event_handler.on_event(bus, UiEvent::Quit),
                 Event::KeyDown {

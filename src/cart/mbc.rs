@@ -35,7 +35,7 @@ impl MbcVariant {
         let cart_type = cart_data.get_cart_type().unwrap();
         let ram_size = cart_data.get_ram_size().unwrap();
 
-        let mut mbc_variant = match cart_type {
+        let mbc_variant = match cart_type {
             CartType::RomOnly => return None,
             CartType::Mbc1 | CartType::Mbc1Ram => {
                 MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_size, false)))
@@ -64,16 +64,6 @@ impl MbcVariant {
             | CartType::HuC3
             | CartType::HuC1RamBattery => unimplemented!("Cart type {:?}", cart_type),
         };
-
-        let title = cart_data.get_title();
-        let save = BatterySave::load(&title);
-
-        let Ok(save) = save else {
-            eprintln!("Failed BatterySave::load: {:?}", save);
-            return Some(mbc_variant);
-        };
-
-        mbc_variant.load_save(save);
 
         Some(mbc_variant)
     }
@@ -167,36 +157,38 @@ impl BatterySave {
     pub fn from_bytes(bytes: Vec<u8>) -> Self {
         Self { ram_bytes: bytes }
     }
-    pub fn save(&self, rom_title: &str) -> std::io::Result<()> {
-        let path = Self::generate_path(rom_title);
+    pub fn save(&self, name: &str) -> std::io::Result<()> {
+        let path = Self::generate_path(name);
 
         if let Some(parent) = Path::new(&path).parent() {
             fs::create_dir_all(parent)?;
         }
 
-        let encoded: Vec<u8> = bincode::serialize(self).expect("Failed to serialize state");
+        let encoded: Vec<u8> = bincode::serialize(&self.ram_bytes).expect("Failed to serialize state");
         let mut file = File::create(path)?;
         file.write_all(&encoded)?;
 
         Ok(())
     }
 
-    pub fn load(rom_title: &str) -> std::io::Result<Self> {
-        let path = Self::generate_path(rom_title);
+    pub fn load(name: &str) -> std::io::Result<Self> {
+        let path = Self::generate_path(name);
         let mut file = File::open(path)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
-        let decoded = bincode::deserialize(&buffer).expect("Failed to deserialize state");
+        let decoded: Vec<u8> = bincode::deserialize(&buffer).expect("Failed to deserialize state");
 
-        Ok(decoded)
+        Ok(Self {
+            ram_bytes: decoded,
+        })
     }
 
-    pub fn generate_path(rom_title: &str) -> PathBuf {
+    pub fn generate_path(name: &str) -> PathBuf {
         let exe_path = env::current_exe().expect("Failed to get executable path");
         let exe_dir = exe_path
             .parent()
             .expect("Failed to get executable directory");
 
-        exe_dir.join("saves").join(format!("{rom_title}.sav"))
+        exe_dir.join("saves").join(format!("{name}.sav"))
     }
 }

@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use crate::bus::Bus;
 use crate::config::GraphicsConfig;
 use crate::emu::RunMode;
@@ -9,7 +10,7 @@ pub trait UiEventHandler {
 pub enum UiEvent {
     Quit,
     Pause,
-    FileDropped(String),
+    FileDropped(PathBuf),
     Restart,
     ConfigChanged(GraphicsConfig),
     ModeChanged(RunMode),

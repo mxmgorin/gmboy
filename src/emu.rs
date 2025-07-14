@@ -5,7 +5,7 @@ use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
-use crate::mbc::{Mbc, MbcVariant};
+use crate::mbc::{BatterySave, Mbc, MbcVariant};
 use crate::ppu::Ppu;
 use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::Ui;
@@ -90,7 +90,7 @@ pub enum EmuState {
     WaitCart,
     Running(RunMode),
     Paused,
-    LoadCart(String),
+    LoadCart(PathBuf),
     Quit,
 }
 
@@ -169,7 +169,7 @@ impl UiEventHandler for EmuCtx {
             }
             UiEvent::Restart => {
                 if let Some(path) = &self.config.last_cart_path {
-                    self.state = EmuState::LoadCart(path.to_owned());
+                    self.state = EmuState::LoadCart(PathBuf::from(path));
                 }
             }
             UiEvent::ConfigChanged(config) => self.config.graphics = config,
@@ -247,10 +247,10 @@ impl Emu {
         Ok(())
     }
 
-    pub fn run(&mut self, cart_path: Option<String>) -> Result<(), String> {
+    pub fn run(&mut self, cart_path: Option<PathBuf>) -> Result<(), String> {
         if let Some(cart_path) = &self.ctx.config.last_cart_path {
             if Path::new(cart_path).exists() {
-                self.ctx.state = EmuState::LoadCart(cart_path.to_owned());
+                self.ctx.state = EmuState::LoadCart(cart_path.into());
             }
         }
 
@@ -283,7 +283,7 @@ impl Emu {
                 bus.io.lcd.set_pallet(self.ui.curr_palette);
                 self.cpu = Cpu::new(bus);
 
-                self.ctx.config.last_cart_path = Some(path.to_owned());
+                self.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
                 self.ctx.state = EmuState::Running(RunMode::Normal);
                 self.ctx.reset();
             }
@@ -339,8 +339,9 @@ impl Emu {
 
         if let Some(mbc) = &self.cpu.bus.cart.mbc {
             if let Some(save) = mbc.dump_save() {
-                let title = self.cpu.bus.cart.data.get_title();
-                save.save(&title).map_err(|e| e.to_string())?;
+                let path = Path::new(self.ctx.config.last_cart_path.as_ref().unwrap());
+                let name = path.file_stem().unwrap().to_string_lossy();
+                save.save(&name).map_err(|e| e.to_string())?;
             }
         }
 
@@ -367,10 +368,21 @@ fn load_save_state(emu: &mut Emu, save_state: EmuSaveState) {
     emu.ctx.reset();
 }
 
-pub fn read_cart(file: &str) -> Result<Cart, String> {
-    let bytes = read_bytes(file).map_err(|e| e.to_string())?;
-    let cart = Cart::new(bytes).map_err(|e| e.to_string())?;
+pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
+    let bytes = read_bytes(file_path).map_err(|e| e.to_string())?;
+    let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
     _ = print_cart(&cart).map_err(|e| println!("Failed to print cart: {}", e));
+    let file_name = file_path.file_stem().expect("we read file").to_str().unwrap();
+    let save = BatterySave::load(file_name);
+
+    let Ok(save) = save else {
+        eprintln!("Failed BatterySave::load: {:?}", save);
+        return Ok(cart);
+    };
+
+    if let Some(mbc) = cart.mbc.as_mut() {
+        mbc.load_save(save);
+    }
 
     Ok(cart)
 }
@@ -387,9 +399,9 @@ fn print_cart(cart: &Cart) -> Result<(), String> {
     Ok(())
 }
 
-pub fn read_bytes(file_path: &str) -> Result<Vec<u8>, String> {
-    if !Path::new(file_path).exists() {
-        return Err(format!("File not found: {}", file_path));
+pub fn read_bytes(file_path: &Path) -> Result<Vec<u8>, String> {
+    if !file_path.exists() {
+        return Err(format!("File not found: {:?}", file_path));
     }
 
     fs::read(file_path).map_err(|e| format!("Failed to read file: {}", e))

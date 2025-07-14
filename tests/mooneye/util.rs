@@ -15,7 +15,7 @@ pub fn run_mooneye_rom(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
-    let cart = Cart::new(read_bytes(path.to_str().unwrap())?)?;
+    let cart = Cart::new(read_bytes(path.as_path())?)?;
     let mut callback = TestCpuCtxWithPPu {
         clock: Clock::default(),
         debugger: Debugger::new(CpuLogType::None, false),

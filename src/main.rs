@@ -28,7 +28,7 @@ fn main() {
 
     let mut emu = Emu::new(config).unwrap();
 
-    if let Err(err) = emu.run(cart_path) {
+    if let Err(err) = emu.run(cart_path.map(|x| x.into())) {
         eprintln!("Emu run failed: {}", err);
         std::process::exit(1);
     }
