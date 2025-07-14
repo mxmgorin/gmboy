@@ -48,19 +48,20 @@ Passes all of 356000 tests successfully ✅
 
 - ### Blargg
 
-| CPU Instructions          | Memory Timing         | OAM Bug               |
-|---------------------------|-----------------------|-----------------------|
-| 01-special.gb ✅           | 01-read_timing.gb ✅   | 3-non_causes.gb ✅  |
-| 02-interrupts.gb ✅        | 02-write_timing.gb ✅  | 6-timing_no_bug.gb ✅|
-| 03-op sp,hl.gb ✅          | 03-modify_timing.gb ✅ | 7-timing_effect.gb ✅|
-| 04-op r,imm.gb ✅          |                       | 8-instr_effect.gb ✅|
-| 05-op rp.gb ✅             |                       |                       |
-| 06-ld r,r.gb ✅            |                       |                       |
-| 07-jr,jp,call,ret,rst ✅   |                       |                       |
-| 08-misc instrs.gb ✅       |                       |                       |
-| 09-op r,r.gb ✅            |                       |                       |
-| 10-bit ops.gb ✅           |                       |                       |
-| 11-op a,(hl).gb ✅         |                       |                       |
+| CPU Instructions        | Memory Timing          | OAM Bug                 |
+| ----------------------- | ---------------------- | ----------------------- |
+| 01-special.gb ✅         | 01-read\_timing.gb ✅   | 1-lcd\_sync.gb ✅        |
+| 02-interrupts.gb ✅      | 02-write\_timing.gb ✅  | 2-causes.gb ✅           |
+| 03-op sp,hl.gb ✅        | 03-modify\_timing.gb ✅ | 3-non\_causes.gb ✅      |
+| 04-op r,imm.gb ✅        |                        | 4-scanline\_timing.gb ✅ |
+| 05-op rp.gb ✅           |                        | 5-timing\_bug.gb ✅      |
+| 06-ld r,r.gb ✅          |                        | 6-timing\_no\_bug.gb ✅  |
+| 07-jr,jp,call,ret,rst ✅ |                        | 7-timing\_effect.gb ✅   |
+| 08-misc instrs.gb ✅     |                        | 8-instr\_effect.gb ✅    |
+| 09-op r,r.gb ✅          |                        |                         |
+| 10-bit ops.gb ✅         |                        |                         |
+| 11-op a,(hl).gb ✅       |                        |                         |
+
 
 - ### Mooneye
 
@@ -87,7 +88,6 @@ Passes all of 356000 tests successfully ✅
 |                              | reti_timing.gb ✅             |                               |
 |                              | rst_timing.gb ✅              |                               |
 |                              | di_timing-GS.gb ❌            |                               |
-|                              | intr_timing.gb ❌             |                               |
 
 ## ⌨️ Keybindings
 

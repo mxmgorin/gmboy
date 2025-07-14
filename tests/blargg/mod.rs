@@ -201,7 +201,6 @@ fn test_cpu_instructs_11() {
     );
 }
 
-#[ignore]
 #[test]
 fn test_oam_bug_1() {
     let name = "1-lcd_sync";
@@ -214,7 +213,6 @@ fn test_oam_bug_1() {
     );
 }
 
-#[ignore]
 #[test]
 fn test_oam_bug_2() {
     let name = "2-causes";
@@ -237,7 +235,6 @@ fn test_oam_bug_3() {
     assert_result(name, category, result);
 }
 
-#[ignore]
 #[test]
 fn test_oam_bug_4() {
     let name = "4-scanline_timing";
@@ -248,7 +245,6 @@ fn test_oam_bug_4() {
     assert_result(name, category, result);
 }
 
-#[ignore]
 #[test]
 fn test_oam_bug_5() {
     let name = "5-timing_bug";
