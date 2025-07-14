@@ -176,7 +176,7 @@ impl BatterySave {
         let mut file = File::open(path)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
-        let decoded: Vec<u8> = bincode::deserialize(&buffer).expect("Failed to deserialize state");
+        let decoded: Vec<u8> = bincode::deserialize(&buffer).expect("Failed to deserialize save");
 
         Ok(Self {
             ram_bytes: decoded,
