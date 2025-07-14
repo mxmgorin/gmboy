@@ -1,5 +1,5 @@
-use crate::mbc::{BatterySave, Mbc, MbcData, ROM_BANK_NON_ZERO_END_ADDR, ROM_BANK_NON_ZERO_START_ADDR, ROM_BANK_ZERO_END_ADDR, ROM_BANK_ZERO_START_ADDR};
-use crate::{CartData, RAM_ADDRESS_START, ROM_BANK_SIZE};
+use crate::mbc::{BatterySave, Mbc, MbcData};
+use crate::{CartData};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,18 +15,7 @@ impl Mbc2 {
 
 impl Mbc for Mbc2 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
-        match address {
-            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
-            ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                let offset = ROM_BANK_SIZE * self.data.rom_bank as usize;
-                cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
-            }
-            _ => {
-                eprintln!("Unknown address: {:#X}. Can't read byte.", address);
-
-                0xFF
-            }
-        }
+        self.data.read_rom(cart_data, address)
     }
 
     fn write_rom(&mut self, address: u16, value: u8) {
@@ -37,7 +26,7 @@ impl Mbc for Mbc2 {
                     return;
                 }
 
-                self.data.ram_enabled = value == 0x0A
+                self.data.write_ram_enabled(value);
             }
             // ROM bank number
             0x2000..=0x3FFF => {
@@ -57,27 +46,11 @@ impl Mbc for Mbc2 {
     }
 
     fn read_ram(&self, address: u16) -> u8 {
-        if !self.data.ram_enabled {
-            return 0xFF;
-        }
-
-        if self.data.ram_bytes.is_empty() {
-            return 0xFF;
-        }
-
-        self.data.ram_bytes[address as usize - RAM_ADDRESS_START] & 0xF
+        self.data.read_ram(address)
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {
-        if !self.data.ram_enabled {
-            return;
-        }
-
-        if self.data.ram_bytes.is_empty() {
-            return;
-        }
-
-        self.data.ram_bytes[address as usize - RAM_ADDRESS_START] = value & 0xF;
+        self.data.write_ram(address, value);
     }
 
     fn load_save(&mut self, save: BatterySave) {

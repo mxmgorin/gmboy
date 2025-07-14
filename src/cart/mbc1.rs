@@ -1,6 +1,6 @@
 use crate::cart::mbc::{Mbc, MbcData};
-use crate::mbc::{BatterySave, ROM_BANK_NON_ZERO_END_ADDR, ROM_BANK_NON_ZERO_START_ADDR, ROM_BANK_ZERO_END_ADDR, ROM_BANK_ZERO_START_ADDR};
-use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use crate::mbc::BatterySave;
+use crate::CartData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,20 +26,13 @@ impl Mbc1 {
 
 impl Mbc for Mbc1 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
-        match address {
-            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
-            ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                let offset = ROM_BANK_SIZE * self.data.rom_bank as usize;
-                cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
-            }
-            _ => 0xFF,
-        }
+        self.data.read_rom(cart_data, address)
     }
 
     fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             // RAM enable
-            0x0000..=0x1FFF => self.data.ram_enabled = value == 0x0A,
+            0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             // ROM bank number
             0x2000..=0x3FFF => {
                 // Specify the lower 5 bits
@@ -63,25 +56,11 @@ impl Mbc for Mbc1 {
     }
 
     fn read_ram(&self, address: u16) -> u8 {
-        if !self.data.ram_enabled {
-            return 0xFF;
-        }
-
-        let offset = RAM_BANK_SIZE * self.data.ram_bank as usize;
-
-        self.data.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset]
+        self.data.read_ram(address)
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {
-        if !self.data.ram_enabled {
-            return;
-        }
-
-        let ram_offset = RAM_BANK_SIZE;
-        let ram_bank = self.data.ram_bank;
-        let offset = ram_offset * ram_bank as usize;
-
-        self.data.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
+        self.data.write_ram(address, value);
     }
 
     fn load_save(&mut self, save: BatterySave) {

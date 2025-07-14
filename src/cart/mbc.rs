@@ -1,7 +1,7 @@
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
-use crate::CartData;
+use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
@@ -131,6 +131,47 @@ impl MbcData {
             ram_enabled: false,
             has_battery,
         }
+    }
+
+    pub fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
+        match address {
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
+            ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+                let offset = ROM_BANK_SIZE * self.rom_bank as usize;
+                cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
+            }
+            _ => 0xFF,
+        }
+    }
+    
+    pub fn write_ram_enabled(&mut self, value: u8) {
+        self.ram_enabled = value == 0x0A;
+    }
+
+    pub fn read_ram(&self, address: u16) -> u8 {
+        if !self.ram_enabled {
+            return 0xFF;
+        }
+
+        if self.ram_bytes.is_empty() {
+            return 0xFF;
+        }
+
+        let offset = RAM_BANK_SIZE * self.ram_bank as usize;
+        self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset]
+    }
+
+    pub fn write_ram(&mut self, address: u16, value: u8) {
+        if !self.ram_enabled {
+            return;
+        }
+
+        if self.ram_bytes.is_empty() {
+            return;
+        }
+
+        let offset = RAM_BANK_SIZE * self.ram_bank as usize;
+        self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
     }
 
     pub fn load_save(&mut self, save: BatterySave) {
