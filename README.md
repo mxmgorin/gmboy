@@ -67,7 +67,7 @@ Passes all of 356000 tests successfully ✅
 
 | General & OAM DMA            | Timing                       | Timer Accuracy                 |
 |------------------------------|------------------------------|-------------------------------|
-| add_sp_e_timing.gb ✅         | call_cc_timing.gb ✅          | div_write.gb ✅             |
+| oam_dma/oam_dma_timing.gb ✅  | call_cc_timing.gb ✅          | div_write.gb ✅             |
 | bits/mem_oam.gb ✅            | call_cc_timing2.gb ✅         | rapid_toggle.gb ✅          |
 | bits/reg_f.gb ✅              | call_timing.gb ✅             | tim00.gb ✅                 |
 | instr/daa.gb ✅               | call_timing2.gb ✅            | tim00_div_trigger.gb ✅     |
@@ -75,7 +75,7 @@ Passes all of 356000 tests successfully ✅
 | oam_dma/reg_read.gb ✅        | ei_timing.gb ✅               | tim01_div_trigger.gb ✅     |
 | oam_dma/oam_dma_restart.gb ✅ | halt_ime0_ei.gb ✅            | tim10.gb ✅                 |
 | oam_dma/oam_dma_start.gb ✅   | halt_ime0_nointr_timing.gb ✅ | tim10_div_trigger.gb ✅     |
-| oam_dma/oam_dma_timing.gb ✅  | halt_ime1_timing.gb ✅        | tim11.gb ✅                 |
+| sources-GS ❌                 | halt_ime1_timing.gb ✅        | tim11.gb ✅                 |
 | unused_hwio-GS.gb ❌          | halt_ime1_timing2-GS.gb ✅    | tim11_div_trigger.gb ✅     |
 | ie_push.gb ❌                 | jp_cc_timing.gb ✅            | tima_reload.gb ✅           |
 |                              | jp_timing.gb ✅               | tima_write_reloading.gb ✅  |
@@ -87,7 +87,9 @@ Passes all of 356000 tests successfully ✅
 |                              | reti_intr_timing.gb ✅        |                               |
 |                              | reti_timing.gb ✅             |                               |
 |                              | rst_timing.gb ✅              |                               |
+|                              |  add_sp_e_timing.gb ✅        |                               |
 |                              | di_timing-GS.gb ❌            |                               |
+|                              | intr_timing ❌                |                               |
 
 ## ⌨️ Keybindings
 
