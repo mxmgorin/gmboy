@@ -1,7 +1,7 @@
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
-use crate::{CartData, ROM_BANK_SIZE};
+use crate::CartData;
 use serde::{Deserialize, Serialize};
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
@@ -12,8 +12,8 @@ pub const RAM_EXTERNAL_START_ADDR: u16 = 0xA000;
 pub const RAM_EXTERNAL_END_ADDR: u16 = 0xBFFF;
 
 pub trait Mbc {
-    fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8;
-    fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8);
+    fn read_rom(&self, cart_data: &CartData, address: u16) -> u8;
+    fn write_rom(&mut self, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
     fn load_ram(&mut self, ram_bytes: Vec<u8>);
@@ -64,17 +64,17 @@ impl MbcVariant {
 }
 
 impl Mbc for MbcVariant {
-    fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
+    fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match self {
-            MbcVariant::Mbc1(c) => c.read_rom(rom_bytes, address),
-            MbcVariant::Mbc2(c) => c.read_rom(rom_bytes, address),
+            MbcVariant::Mbc1(c) => c.read_rom(cart_data, address),
+            MbcVariant::Mbc2(c) => c.read_rom(cart_data, address),
         }
     }
 
-    fn write_rom(&mut self, rom_bytes: &mut Vec<u8>, address: u16, value: u8) {
+    fn write_rom(&mut self, address: u16, value: u8) {
         match self {
-            MbcVariant::Mbc1(c) => c.write_rom(rom_bytes, address, value),
-            MbcVariant::Mbc2(c) => c.write_rom(rom_bytes, address, value),
+            MbcVariant::Mbc1(c) => c.write_rom(address, value),
+            MbcVariant::Mbc2(c) => c.write_rom(address, value),
         }
     }
 
@@ -115,14 +115,6 @@ impl MbcData {
             rom_bank: 1,
             ram_bank: 0,
             ram_enabled: false,
-        }
-    }
-
-    pub fn set_rom_bank(&mut self, rom_bytes_len: usize) {
-        let max_banks = (rom_bytes_len / ROM_BANK_SIZE).max(1);
-
-        if self.rom_bank as usize >= max_banks {
-            self.rom_bank = (self.rom_bank as usize % max_banks) as u16;
         }
     }
 }

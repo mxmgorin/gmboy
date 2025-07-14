@@ -31,7 +31,7 @@ impl Cart {
         if let Some(mbc) = &self.mbc {
             match address {
                 ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                    mbc.read_rom(&self.data.bytes, address)
+                    mbc.read_rom(&self.data, address)
                 }
                 RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => mbc.read_ram(address),
                 _ => 0xFF,
@@ -45,7 +45,7 @@ impl Cart {
         if let Some(mbc) = &mut self.mbc {
             match address {
                 ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                    mbc.write_rom(&mut self.data.bytes, address, value)
+                    mbc.write_rom(address, value)
                 }
                 RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => mbc.write_ram(address, value),
                 _ => (),

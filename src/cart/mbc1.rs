@@ -3,7 +3,7 @@ use crate::mbc::{
     ROM_BANK_NON_ZERO_END_ADDR, ROM_BANK_NON_ZERO_START_ADDR, ROM_BANK_ZERO_END_ADDR,
     ROM_BANK_ZERO_START_ADDR,
 };
-use crate::{RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
+use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,18 +28,18 @@ impl Mbc1 {
 }
 
 impl Mbc for Mbc1 {
-    fn read_rom(&self, rom_bytes: &[u8], address: u16) -> u8 {
+    fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match address {
-            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => rom_bytes[address as usize],
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
             ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
                 let offset = ROM_BANK_SIZE * self.data.rom_bank as usize;
-                rom_bytes[(address as usize - ROM_BANK_SIZE) + offset]
+                cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
             }
             _ => 0xFF,
         }
     }
 
-    fn write_rom(&mut self, rom_data: &mut Vec<u8>, address: u16, value: u8) {
+    fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             // RAM enable
             0x0000..=0x1FFF => self.data.ram_enabled = value == 0x0A,
@@ -63,8 +63,6 @@ impl Mbc for Mbc1 {
             },
             _ => (),
         }
-
-        self.data.set_rom_bank(rom_data.len());
     }
 
     fn read_ram(&self, address: u16) -> u8 {
