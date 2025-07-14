@@ -5,7 +5,7 @@ use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
-use crate::mbc::MbcVariant;
+use crate::mbc::{Mbc, MbcVariant};
 use crate::ppu::Ppu;
 use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::Ui;
@@ -315,11 +315,6 @@ impl Emu {
             if let Some((event, index)) = self.ctx.pending_save_state.take() {
                 let title = self.cpu.bus.cart.data.get_title();
 
-                let Ok(title) = title else {
-                    eprintln!("Failed save_state: failed to get_title {:?}", title);
-                    continue;
-                };
-
                 match event {
                     SaveStateEvent::Create => {
                         let save_state = self.create_save_state(&self.cpu);
@@ -339,6 +334,13 @@ impl Emu {
                         load_save_state(self, save_state);
                     }
                 }
+            }
+        }
+
+        if let Some(mbc) = &self.cpu.bus.cart.mbc {
+            if let Some(save) = mbc.dump_save() {
+                let title = self.cpu.bus.cart.data.get_title();
+                save.save(&title).map_err(|e| e.to_string())?;
             }
         }
 
@@ -375,7 +377,7 @@ pub fn read_cart(file: &str) -> Result<Cart, String> {
 
 fn print_cart(cart: &Cart) -> Result<(), String> {
     println!("Cart Loaded:");
-    println!("\t Title          : {}", cart.data.get_title()?);
+    println!("\t Title          : {}", cart.data.get_title());
     println!("\t Type           : {:?}", cart.data.get_cart_type()?);
     println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
     println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);

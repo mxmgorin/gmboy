@@ -42,7 +42,7 @@ impl CartHeader {
         Ok(Self {
             entry_point: rom_bytes[0x0100..0x0104].try_into().unwrap(),
             nintendo_logo: rom_bytes[0x0104..0x0134].try_into().unwrap(),
-            title: Self::parse_title(rom_bytes)?,
+            title: Self::parse_title(rom_bytes),
             manufacturer_code: if rom_bytes[0x013F..0x0143] != [0x00, 0x00, 0x00, 0x00] {
                 Some(String::from_utf8_lossy(&rom_bytes[0x013F..0x0143]).to_string())
             } else {
@@ -62,12 +62,12 @@ impl CartHeader {
         })
     }
 
-    pub fn parse_title(rom_bytes: &[u8]) -> Result<String, String> {
+    pub fn parse_title(rom_bytes: &[u8]) -> String {
         let title_bytes = &rom_bytes[0x0134..0x0144];
         let title = String::from_utf8_lossy(title_bytes).to_string();
         let trimmed_title = title.trim_end_matches('\0').to_string();
 
-        Ok(trimmed_title)
+        trimmed_title
     }
 
     pub fn parse_cart_type(rom_bytes: &[u8]) -> Result<CartType, String> {

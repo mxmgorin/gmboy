@@ -64,7 +64,7 @@ impl CartData {
         Self { bytes }
     }
 
-    pub fn get_title(&self) -> Result<String, String> {
+    pub fn get_title(&self) -> String {
         CartHeader::parse_title(&self.bytes)
     }
 

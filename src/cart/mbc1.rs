@@ -1,8 +1,5 @@
 use crate::cart::mbc::{Mbc, MbcData};
-use crate::mbc::{
-    ROM_BANK_NON_ZERO_END_ADDR, ROM_BANK_NON_ZERO_START_ADDR, ROM_BANK_ZERO_END_ADDR,
-    ROM_BANK_ZERO_START_ADDR,
-};
+use crate::mbc::{BatterySave, ROM_BANK_NON_ZERO_END_ADDR, ROM_BANK_NON_ZERO_START_ADDR, ROM_BANK_ZERO_END_ADDR, ROM_BANK_ZERO_START_ADDR};
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 
@@ -87,7 +84,11 @@ impl Mbc for Mbc1 {
         self.data.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
     }
 
-    fn load_ram(&mut self, ram_data: Vec<u8>) {
-        self.data.ram_bytes = ram_data;
+    fn load_save(&mut self, save: BatterySave) {
+        self.data.load_save(save);
+    }
+
+    fn dump_save(&self) -> Option<BatterySave> {
+        self.data.dump_save()
     }
 }
