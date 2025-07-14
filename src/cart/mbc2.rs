@@ -35,7 +35,7 @@ impl Mbc for Mbc2 {
                 }
 
                 let bank_number = if value == 0 { 1 } else { value };
-                self.data.rom_bank = (bank_number & 0xF) as u16;
+                self.data.rom_bank_number = (bank_number & 0xF) as u16;
             }
             0x4000..=0x7FFF => {}
             _ => eprintln!(

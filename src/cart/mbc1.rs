@@ -37,13 +37,13 @@ impl Mbc for Mbc1 {
             0x2000..=0x3FFF => {
                 // Specify the lower 5 bits
                 let bank_number = if value == 0 { 1 } else { value };
-                self.data.rom_bank =
-                    (self.data.rom_bank & 0b0110_0000) | (bank_number & 0b0001_1111) as u16;
+                self.data.rom_bank_number =
+                    (self.data.rom_bank_number & 0b0110_0000) | (bank_number & 0b0001_1111) as u16;
             }
             // RAM bank number — or — upper bits of ROM bank number
             0x4000..=0x5FFF => match self.mode {
-                Mode::RamBanking => self.data.ram_bank = value,
-                Mode::RomBanking => self.data.rom_bank |= ((value & 0b0000_0011) << 5) as u16,
+                Mode::RamBanking => self.data.ram_bank_number = value,
+                Mode::RomBanking => self.data.rom_bank_number |= ((value & 0b0000_0011) << 5) as u16,
             },
             // Banking mode select
             0x6000..=0x7FFF => match value {

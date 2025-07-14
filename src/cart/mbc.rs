@@ -116,8 +116,8 @@ impl Mbc for MbcVariant {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MbcData {
     pub ram_bytes: Vec<u8>,
-    pub rom_bank: u16,
-    pub ram_bank: u8,
+    pub rom_bank_number: u16,
+    pub ram_bank_number: u8,
     pub ram_enabled: bool,
     pub has_battery: bool,
 }
@@ -126,8 +126,8 @@ impl MbcData {
     pub fn new(ram_size: RamSize, has_battery: bool) -> Self {
         Self {
             ram_bytes: vec![0; ram_size.bytes_size()],
-            rom_bank: 1,
-            ram_bank: 0,
+            rom_bank_number: 1,
+            ram_bank_number: 0,
             ram_enabled: false,
             has_battery,
         }
@@ -137,7 +137,7 @@ impl MbcData {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
             ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                let offset = ROM_BANK_SIZE * self.rom_bank as usize;
+                let offset = ROM_BANK_SIZE * self.rom_bank_number as usize;
                 cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
             }
             _ => 0xFF,
@@ -157,7 +157,7 @@ impl MbcData {
             return 0xFF;
         }
 
-        let offset = RAM_BANK_SIZE * self.ram_bank as usize;
+        let offset = RAM_BANK_SIZE * self.ram_bank_number as usize;
         self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset]
     }
 
@@ -170,7 +170,7 @@ impl MbcData {
             return;
         }
 
-        let offset = RAM_BANK_SIZE * self.ram_bank as usize;
+        let offset = RAM_BANK_SIZE * self.ram_bank_number as usize;
         self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
     }
 
