@@ -313,18 +313,18 @@ impl Emu {
             }
 
             if let Some((event, index)) = self.ctx.pending_save_state.take() {
-                let title = self.cpu.bus.cart.data.get_title();
+                let name = self.ctx.config.get_last_cart_file_stem().unwrap();
 
                 match event {
                     SaveStateEvent::Create => {
                         let save_state = self.create_save_state(&self.cpu);
 
-                        if let Err(err) = save_state.save(&title, index) {
+                        if let Err(err) = save_state.save(&name, index) {
                             eprintln!("Failed save_state: {:?}", err);
                         }
                     }
                     SaveStateEvent::Load => {
-                        let save_state = EmuSaveState::load(&title, index);
+                        let save_state = EmuSaveState::load(&name, index);
 
                         let Ok(save_state) = save_state else {
                             eprintln!("Failed load save_state: {:?}", save_state);
@@ -339,8 +339,7 @@ impl Emu {
 
         if let Some(mbc) = &self.cpu.bus.cart.mbc {
             if let Some(save) = mbc.dump_save() {
-                let path = Path::new(self.ctx.config.last_cart_path.as_ref().unwrap());
-                let name = path.file_stem().unwrap().to_string_lossy();
+                let name = self.ctx.config.get_last_cart_file_stem().unwrap();
                 save.save(&name).map_err(|e| e.to_string())?;
             }
         }

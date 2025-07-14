@@ -1,14 +1,22 @@
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fs, io};
+use std::borrow::Cow;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub last_cart_path: Option<String>,
     pub emulation: EmulationConfig,
     pub graphics: GraphicsConfig,
+}
+impl Config {
+    pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
+        let path = Path::new(self.last_cart_path.as_ref()?);
+        
+        Some(path.file_stem().unwrap().to_string_lossy())
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
