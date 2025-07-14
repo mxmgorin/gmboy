@@ -7,19 +7,22 @@ It's not just an emulator — it's a playground for experimentation.
 ## Supports
 
 -  **Full CPU Emulation**  
-  Full instruction set of Sharp LR35902 CPU with accurate timing (instruction and sub-instruction).
+   Complete implementation of the Sharp LR35902 instruction set with accurate instruction and sub-instruction timing.
 
 - **Full PPU Emulation (Graphics)**  
   Rendering of background, window, and sprites.
 
 - **Full APU Emulation (Audio)**  
-  Sound output with all 4 audio channels.
+  Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
+
+- **Cartridge MBCs**  
+  Supports ROM loading with MBC0, MBC1, and MBC2 mappers.
+
+- **SRAM Battery Saves**  
+  Persistent save data using battery-backed SRAM.
 
 - **Input Handling**  
-  Emulates button inputs (D-Pad, A, B, Start, Select).
-
-- **Cartridge Support**  
-  Handles ROM loading and MBC0, MBC1, MBC2.
+  Emulates all standard Game Boy button inputs (D-Pad, A, B, Start, Select)..
 
 ## Features
 
@@ -58,8 +61,6 @@ Passes all of 356000 tests successfully ✅
 | 09-op r,r.gb ✅            |                       |                       |
 | 10-bit ops.gb ✅           |                       |                       |
 | 11-op a,(hl).gb ✅         |                       |                       |
-| instr_timing.gb ❌         |                       |                       |
-| instr_timing.gb ❌         |                       |                       |
 
 - ### Mooneye
 
@@ -141,7 +142,6 @@ cargo build --release
 ```
 ## Planned features
 
-- [ ] SRAM saving (battery-backed saves)
 - [ ] More MBC types (MBC3, MBC5, etc.)
 - [ ] Re-mappable keybindings
 - [ ] Emulator menu (with settings etc.)
