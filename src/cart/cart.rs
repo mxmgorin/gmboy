@@ -74,28 +74,43 @@ impl Cart {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if let Some(mbc) = &self.mbc {
-            match address {
-                ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+        match address {
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+                if let Some(mbc) = &self.mbc {
                     mbc.read_rom(&self.data, address)
+                } else {
+                    self.data.bytes[address as usize]
                 }
-                RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => mbc.read_ram(address),
-                _ => 0xFF,
             }
-        } else {
-            self.data.bytes[address as usize]
+            RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => {
+                if let Some(mbc) = &self.mbc {
+                    mbc.read_ram(address)
+                } else {
+                    self.ram_bytes
+                        .get(address as usize - RAM_ADDRESS_START)
+                        .copied()
+                        .unwrap_or(0xFF)
+                }
+            }
+            _ => 0xFF,
         }
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        if let Some(mbc) = &mut self.mbc {
-            match address {
-                ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+        match address {
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+                if let Some(mbc) = &mut self.mbc {
                     mbc.write_rom(address, value)
                 }
-                RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => mbc.write_ram(address, value),
-                _ => (),
             }
+            RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => {
+                if let Some(mbc) = &mut self.mbc {
+                    mbc.write_ram(address, value)
+                } else if !self.ram_bytes.is_empty() {
+                    self.ram_bytes[address as usize - RAM_ADDRESS_START] = value;
+                }
+            }
+            _ => (),
         }
     }
 

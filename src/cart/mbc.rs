@@ -1,4 +1,3 @@
-use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
 use crate::mbc3::Mbc3;

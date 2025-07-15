@@ -5,7 +5,7 @@ use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
-use crate::mbc::{BatterySave, Mbc, MbcVariant};
+use crate::mbc::{BatterySave, MbcVariant};
 use crate::ppu::Ppu;
 use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::Ui;
