@@ -374,10 +374,8 @@ pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
         .expect("we read file")
         .to_str()
         .unwrap();
-    let save = BatterySave::load(file_name);
 
-    let Ok(save) = save else {
-        eprintln!("Failed BatterySave::load: {:?}", save);
+    let Ok(save) = BatterySave::load(file_name) else {
         return Ok(cart);
     };
 
