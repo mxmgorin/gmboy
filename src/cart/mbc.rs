@@ -45,10 +45,17 @@ impl MbcVariant {
             CartType::Mbc1RamBattery => MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_size, true))),
             CartType::Mbc2 => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false))),
             CartType::Mbc2Battery => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, true))),
-            CartType::Mbc5 | CartType::Mbc5Ram | CartType::Mbc5Rumble | CartType::Mbc5RumbleRam => {
-                MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false)))
-            }
-            CartType::Mbc5RamBattery | CartType::Mbc5RumbleRamBattery => {
+            CartType::Mbc5
+            | CartType::Mbc5Ram
+            | CartType::Mbc5Rumble
+            | CartType::Mbc5RumbleRam
+            | CartType::Mbc3
+            | CartType::Mbc3Ram => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false))),
+            CartType::Mbc5RamBattery
+            | CartType::Mbc5RumbleRamBattery
+            | CartType::Mbc3RamBattery
+            | CartType::Mbc3TimerBattery
+            | CartType::Mbc3TimerRamBattery => {
                 MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, true)))
             }
             CartType::RomRam
@@ -56,11 +63,6 @@ impl MbcVariant {
             | CartType::Mmm01
             | CartType::Mmm01Ram
             | CartType::Mmm01RamBattery
-            | CartType::Mbc3TimerBattery
-            | CartType::Mbc3TimerRamBattery
-            | CartType::Mbc3
-            | CartType::Mbc3Ram
-            | CartType::Mbc3RamBattery
             | CartType::PocketCamera
             | CartType::BandaiTama5
             | CartType::HuC3
