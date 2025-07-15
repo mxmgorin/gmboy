@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
+use crate::mbc3::Mbc3;
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
 pub const ROM_BANK_ZERO_END_ADDR: u16 = 0x3FFF;
@@ -29,6 +30,7 @@ pub trait Mbc {
 pub enum MbcVariant {
     Mbc1(Mbc1),
     Mbc2(Mbc2),
+    Mbc3(Mbc3),
     Mbc5(Mbc5),
 }
 
@@ -78,6 +80,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc2(c) => c.read_rom(cart_data, address),
+            MbcVariant::Mbc3(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc5(c) => c.read_rom(cart_data, address),
         }
     }
@@ -86,6 +89,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.write_rom(address, value),
             MbcVariant::Mbc2(c) => c.write_rom(address, value),
+            MbcVariant::Mbc3(c) => c.write_rom(address, value),
             MbcVariant::Mbc5(c) => c.write_rom(address, value),
         }
     }
@@ -94,6 +98,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.read_ram(address),
             MbcVariant::Mbc2(c) => c.read_ram(address),
+            MbcVariant::Mbc3(c) => c.read_ram(address),
             MbcVariant::Mbc5(c) => c.read_ram(address),
         }
     }
@@ -102,6 +107,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.write_ram(address, value),
             MbcVariant::Mbc2(c) => c.write_ram(address, value),
+            MbcVariant::Mbc3(c) => c.write_ram(address, value),
             MbcVariant::Mbc5(c) => c.write_ram(address, value),
         }
     }
@@ -110,6 +116,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.load_save(save),
             MbcVariant::Mbc2(c) => c.load_save(save),
+            MbcVariant::Mbc3(c) => c.load_save(save),
             MbcVariant::Mbc5(c) => c.load_save(save),
         }
     }
@@ -118,6 +125,7 @@ impl Mbc for MbcVariant {
         match self {
             MbcVariant::Mbc1(c) => c.dump_save(),
             MbcVariant::Mbc2(c) => c.dump_save(),
+            MbcVariant::Mbc3(c) => c.dump_save(),
             MbcVariant::Mbc5(c) => c.dump_save(),
         }
     }
