@@ -15,6 +15,14 @@ pub fn run_mooneye_rom(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
+
+    run_mooneye_rom_path(path, timeout)
+}
+
+pub fn run_mooneye_rom_path(
+    path: PathBuf,
+    timeout: Duration,
+) -> Result<(), String> {
     let cart = Cart::new(read_bytes(path.as_path())?)?;
     let mut callback = TestCpuCtxWithPPu {
         clock: Clock::default(),
@@ -44,9 +52,13 @@ pub fn run_mooneye_rom(
 }
 
 pub fn assert_result(name: &str, category: Option<MooneyeRomCategory>, result: Result<(), String>) {
-    let path = get_mooneye_rom_path(&format!("{}.gb", name), category)
-        .to_string_lossy()
-        .to_string();
+    let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
+
+    assert_result_path(path, result);
+}
+
+pub fn assert_result_path(path: PathBuf, result: Result<(), String>) {
+    let path = path.to_string_lossy().to_string();
 
     if let Err(err) = result {
         panic!("{path}: FAILED\n{err}")

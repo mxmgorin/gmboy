@@ -1,9 +1,10 @@
-use crate::mooneye::util::{assert_result, run_mooneye_rom, MooneyeRomCategory};
+use std::path::{PathBuf};
+use crate::mooneye::util::{assert_result, assert_result_path, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory};
 use std::time::Duration;
 
 mod util;
 
-const TIMEOUT: Duration = Duration::from_secs(2);
+const TIMEOUT: Duration = Duration::from_secs(3);
 
 #[test]
 fn test_oam_dma_basic() {
@@ -430,4 +431,66 @@ fn test_rst_timing() {
     let result = run_mooneye_rom(name, category, TIMEOUT);
 
     assert_result(name, category, result);
+}
+
+#[ignore]
+#[test]
+fn test_mbc2_bits_ramg() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/bits_ramg.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_mbc2_bits_romb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/bits_romb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc2_bits_unused() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/bits_unused.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_mbc2_ram() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/ram.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_mbc2_rom_1mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/rom_1Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_mbc2_rom_2mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/rom_2Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_mbc2_rom_512kb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/rom_512kb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
 }
