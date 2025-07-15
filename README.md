@@ -16,7 +16,7 @@ It's not just an emulator — it's a playground for experimentation.
   Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
 
 - **Cartridge MBCs**  
-  Supports ROM loading with MBC0, MBC1, and MBC2 mappers.
+  Supports ROM loading with NO MBC, MBC1, MBC2, MBC3, MBC5 mappers.
 
 - **SRAM Battery Saves**  
   Persistent save data using battery-backed SRAM.
@@ -144,12 +144,12 @@ cargo build --release
 ```
 ## Planned features
 
-- [ ] More MBC types (MBC3, MBC5, etc.)
+- [ ] GBC mode
 - [ ] Re-mappable keybindings
 - [ ] Emulator menu (with settings etc.)
 - [ ] Accuracy improvements, bug fixes
 - [ ] Shaders
-- [ ] GBC mode
+- [ ] Web, android builds
 
 ## References
 
