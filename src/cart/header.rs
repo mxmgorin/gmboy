@@ -152,7 +152,7 @@ impl RamSize {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialOrd, PartialEq)]
 #[repr(u8)]
 pub enum RamSize {
     NoRam = 0x00,
@@ -672,6 +672,39 @@ pub enum CartType {
     BandaiTama5 = 0xFD,
     HuC3 = 0xFE,
     HuC1RamBattery = 0xFF,
+}
+
+impl CartType {
+    pub fn has_battery(&self) -> bool {
+        match self {
+            CartType::Mbc1RamBattery |
+            CartType::Mbc5RumbleRamBattery |
+            CartType::Mmm01RamBattery |
+            CartType::Mbc2Battery |
+            CartType::Mbc3TimerBattery |
+            CartType::Mbc3TimerRamBattery |
+            CartType::Mbc3RamBattery |
+            CartType::RomRamBattery |
+            CartType::HuC1RamBattery |
+            CartType::Mbc5RamBattery => true,
+            CartType::RomOnly |
+            CartType::Mbc1 |
+            CartType::Mbc1Ram |
+            CartType::Mbc2 |
+            CartType::RomRam |
+            CartType::Mmm01 |
+            CartType::Mmm01Ram |
+            CartType::Mbc3 |
+            CartType::Mbc3Ram |
+            CartType::Mbc5 |
+            CartType::Mbc5Ram |
+            CartType::Mbc5Rumble |
+            CartType::Mbc5RumbleRam |
+            CartType::PocketCamera |
+            CartType::BandaiTama5 |
+            CartType::HuC3 => false,
+        }
+    }
 }
 
 impl TryFrom<u8> for CartType {

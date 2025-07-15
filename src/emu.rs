@@ -337,11 +337,9 @@ impl Emu {
             }
         }
 
-        if let Some(mbc) = &self.cpu.bus.cart.mbc {
-            if let Some(save) = mbc.dump_save() {
-                let name = self.ctx.config.get_last_cart_file_stem().unwrap();
-                save.save(&name).map_err(|e| e.to_string())?;
-            }
+        if let Some(save) = self.cpu.bus.cart.dump_save() {
+            let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+            save.save(&name).map_err(|e| e.to_string())?;
         }
 
         Ok(())
@@ -371,7 +369,11 @@ pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
     let bytes = read_bytes(file_path).map_err(|e| e.to_string())?;
     let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
     _ = print_cart(&cart).map_err(|e| println!("Failed to print cart: {}", e));
-    let file_name = file_path.file_stem().expect("we read file").to_str().unwrap();
+    let file_name = file_path
+        .file_stem()
+        .expect("we read file")
+        .to_str()
+        .unwrap();
     let save = BatterySave::load(file_name);
 
     let Ok(save) = save else {
@@ -379,9 +381,7 @@ pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
         return Ok(cart);
     };
 
-    if let Some(mbc) = cart.mbc.as_mut() {
-        mbc.load_save(save);
-    }
+    cart.load_save(save);
 
     Ok(cart)
 }

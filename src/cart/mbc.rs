@@ -1,6 +1,7 @@
 use crate::cart::header::{CartType, RamSize};
 use crate::cart::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
+use crate::mbc3::Mbc3;
 use crate::mbc5::Mbc5;
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
@@ -8,7 +9,6 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
-use crate::mbc3::Mbc3;
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
 pub const ROM_BANK_ZERO_END_ADDR: u16 = 0x3FFF;
@@ -32,47 +32,6 @@ pub enum MbcVariant {
     Mbc2(Mbc2),
     Mbc3(Mbc3),
     Mbc5(Mbc5),
-}
-
-impl MbcVariant {
-    pub fn new(cart_data: &CartData) -> Option<MbcVariant> {
-        let cart_type = cart_data.get_cart_type().unwrap();
-        let ram_size = cart_data.get_ram_size().unwrap();
-
-        let mbc_variant = match cart_type {
-            CartType::RomOnly => return None,
-            CartType::Mbc1 | CartType::Mbc1Ram => {
-                MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_size, false)))
-            }
-            CartType::Mbc1RamBattery => MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_size, true))),
-            CartType::Mbc2 => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false))),
-            CartType::Mbc2Battery => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, true))),
-            CartType::Mbc5
-            | CartType::Mbc5Ram
-            | CartType::Mbc5Rumble
-            | CartType::Mbc5RumbleRam
-            | CartType::Mbc3
-            | CartType::Mbc3Ram => MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, false))),
-            CartType::Mbc5RamBattery
-            | CartType::Mbc5RumbleRamBattery
-            | CartType::Mbc3RamBattery
-            | CartType::Mbc3TimerBattery
-            | CartType::Mbc3TimerRamBattery => {
-                MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_size, true)))
-            }
-            CartType::RomRam
-            | CartType::RomRamBattery
-            | CartType::Mmm01
-            | CartType::Mmm01Ram
-            | CartType::Mmm01RamBattery
-            | CartType::PocketCamera
-            | CartType::BandaiTama5
-            | CartType::HuC3
-            | CartType::HuC1RamBattery => unimplemented!("Cart type {:?}", cart_type),
-        };
-
-        Some(mbc_variant)
-    }
 }
 
 impl Mbc for MbcVariant {
@@ -137,17 +96,15 @@ pub struct MbcData {
     pub rom_bank_number: u16,
     pub ram_bank_number: u8,
     pub ram_enabled: bool,
-    pub has_battery: bool,
 }
 
 impl MbcData {
-    pub fn new(ram_size: RamSize, has_battery: bool) -> Self {
+    pub fn new(ram_bytes: Vec<u8>) -> Self {
         Self {
-            ram_bytes: vec![0; ram_size.bytes_size()],
+            ram_bytes,
             rom_bank_number: 1,
             ram_bank_number: 0,
             ram_enabled: false,
-            has_battery,
         }
     }
 
@@ -193,17 +150,11 @@ impl MbcData {
     }
 
     pub fn load_save(&mut self, save: BatterySave) {
-        if self.has_battery {
-            self.ram_bytes = save.ram_bytes;
-        }
+        self.ram_bytes = save.ram_bytes;
     }
 
     pub fn dump_save(&self) -> Option<BatterySave> {
-        if self.has_battery {
-            return Some(BatterySave::from_bytes(self.ram_bytes.clone()));
-        }
-
-        None
+        Some(BatterySave::from_bytes(self.ram_bytes.clone()))
     }
 }
 
