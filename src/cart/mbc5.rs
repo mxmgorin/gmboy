@@ -1,5 +1,5 @@
-use crate::mbc::{BatterySave, Mbc, MbcData};
-use crate::{CartData};
+use crate::mbc::{Mbc, MbcData};
+use crate::CartData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,7 +27,8 @@ impl Mbc for Mbc5 {
             }
             0x3000..=0x3FFF => {
                 // Set the 9th bit (bit 8)
-                self.data.rom_bank_number = (self.data.rom_bank_number & 0xFF) | ((value as u16 & 0x01) << 8);
+                self.data.rom_bank_number =
+                    (self.data.rom_bank_number & 0xFF) | ((value as u16 & 0x01) << 8);
             }
             0x4000..=0x5FFF => {
                 // RAM bank select (only lower 4 bits used)
@@ -45,11 +46,11 @@ impl Mbc for Mbc5 {
         self.data.write_ram(address, value);
     }
 
-    fn load_save(&mut self, save: BatterySave) {
-        self.data.load_save(save);
+    fn load_ram(&mut self, bytes: Vec<u8>) {
+        self.data.load_ram(bytes);
     }
 
-    fn dump_save(&self) -> Option<BatterySave> {
-        self.data.dump_save()
+    fn dump_ram(&self) -> Option<Vec<u8>> {
+        self.data.dump_ram()
     }
 }

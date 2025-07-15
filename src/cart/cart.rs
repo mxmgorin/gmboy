@@ -1,8 +1,8 @@
 use crate::cart::header::{CartHeader, CartType, RamSize, RomSize};
 use crate::cart::mbc::{Mbc, MbcVariant};
 use crate::mbc::{
-    BatterySave, MbcData, RAM_EXTERNAL_END_ADDR, RAM_EXTERNAL_START_ADDR,
-    ROM_BANK_NON_ZERO_END_ADDR, ROM_BANK_ZERO_START_ADDR,
+    MbcData, RAM_EXTERNAL_END_ADDR, RAM_EXTERNAL_START_ADDR, ROM_BANK_NON_ZERO_END_ADDR,
+    ROM_BANK_ZERO_START_ADDR,
 };
 use crate::mbc1::Mbc1;
 use crate::mbc2::Mbc2;
@@ -114,22 +114,22 @@ impl Cart {
         }
     }
 
-    pub fn load_save(&mut self, save: BatterySave) {
+    pub fn load_ram(&mut self, bytes: Vec<u8>) {
         if self.has_battery {
             if let Some(mbc) = &mut self.mbc {
-                mbc.load_save(save);
+                mbc.load_ram(bytes);
             } else if !self.ram_bytes.is_empty() {
-                self.ram_bytes = save.ram_bytes;
+                self.ram_bytes = bytes;
             }
         }
     }
 
-    pub fn dump_save(&self) -> Option<BatterySave> {
+    pub fn dump_ram(&self) -> Option<Vec<u8>> {
         if self.has_battery {
             if let Some(mbc) = &self.mbc {
-                return mbc.dump_save();
+                return mbc.dump_ram();
             } else if !self.ram_bytes.is_empty() {
-                return Some(BatterySave::from_bytes(self.ram_bytes.clone()));
+                return Some(self.ram_bytes.clone());
             }
         }
 

@@ -4,10 +4,6 @@ use crate::mbc3::Mbc3;
 use crate::mbc5::Mbc5;
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-use std::{env, fs};
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
 pub const ROM_BANK_ZERO_END_ADDR: u16 = 0x3FFF;
@@ -21,8 +17,8 @@ pub trait Mbc {
     fn write_rom(&mut self, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
-    fn load_save(&mut self, save: BatterySave);
-    fn dump_save(&self) -> Option<BatterySave>;
+    fn load_ram(&mut self, bytes: Vec<u8>);
+    fn dump_ram(&self) -> Option<Vec<u8>>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,21 +66,21 @@ impl Mbc for MbcVariant {
         }
     }
 
-    fn load_save(&mut self, save: BatterySave) {
+    fn load_ram(&mut self, bytes: Vec<u8>) {
         match self {
-            MbcVariant::Mbc1(c) => c.load_save(save),
-            MbcVariant::Mbc2(c) => c.load_save(save),
-            MbcVariant::Mbc3(c) => c.load_save(save),
-            MbcVariant::Mbc5(c) => c.load_save(save),
+            MbcVariant::Mbc1(c) => c.load_ram(bytes),
+            MbcVariant::Mbc2(c) => c.load_ram(bytes),
+            MbcVariant::Mbc3(c) => c.load_ram(bytes),
+            MbcVariant::Mbc5(c) => c.load_ram(bytes),
         }
     }
 
-    fn dump_save(&self) -> Option<BatterySave> {
+    fn dump_ram(&self) -> Option<Vec<u8>> {
         match self {
-            MbcVariant::Mbc1(c) => c.dump_save(),
-            MbcVariant::Mbc2(c) => c.dump_save(),
-            MbcVariant::Mbc3(c) => c.dump_save(),
-            MbcVariant::Mbc5(c) => c.dump_save(),
+            MbcVariant::Mbc1(c) => c.dump_ram(),
+            MbcVariant::Mbc2(c) => c.dump_ram(),
+            MbcVariant::Mbc3(c) => c.dump_ram(),
+            MbcVariant::Mbc5(c) => c.dump_ram(),
         }
     }
 }
@@ -148,52 +144,13 @@ impl MbcData {
         self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
     }
 
-    pub fn load_save(&mut self, save: BatterySave) {
-        self.ram_bytes = save.ram_bytes;
+    pub fn load_ram(&mut self, bytes: Vec<u8>) {
+        self.ram_bytes = bytes;
     }
 
-    pub fn dump_save(&self) -> Option<BatterySave> {
-        Some(BatterySave::from_bytes(self.ram_bytes.clone()))
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct BatterySave {
-    pub ram_bytes: Vec<u8>,
-}
-
-impl BatterySave {
-    pub fn from_bytes(bytes: Vec<u8>) -> Self {
-        Self { ram_bytes: bytes }
-    }
-    pub fn save(&self, name: &str) -> std::io::Result<()> {
-        let path = Self::generate_path(name);
-
-        if let Some(parent) = Path::new(&path).parent() {
-            fs::create_dir_all(parent)?;
-        }
-
-        let mut file = File::create(path)?;
-        file.write_all(&self.ram_bytes)?;
-
-        Ok(())
-    }
-
-    pub fn load(name: &str) -> std::io::Result<Self> {
-        let path = Self::generate_path(name);
-        let mut file = File::open(path)?;
-        let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
-
-        Ok(Self { ram_bytes: buffer })
-    }
-
-    pub fn generate_path(name: &str) -> PathBuf {
-        let exe_path = env::current_exe().expect("Failed to get executable path");
-        let exe_dir = exe_path
-            .parent()
-            .expect("Failed to get executable directory");
-
-        exe_dir.join("saves").join(format!("{name}.sav"))
+    pub fn dump_ram(&self) -> Option<Vec<u8>> {
+        Some(self.ram_bytes.clone())
     }
 }
+
+

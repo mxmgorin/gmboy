@@ -1,4 +1,4 @@
-use crate::mbc::{BatterySave, Mbc, MbcData};
+use crate::mbc::{Mbc, MbcData};
 use crate::{CartData};
 use serde::{Deserialize, Serialize};
 
@@ -48,11 +48,11 @@ impl Mbc for Mbc2 {
         self.data.write_ram(address, value);
     }
 
-    fn load_save(&mut self, save: BatterySave) {
-        self.data.load_save(save);
+    fn load_ram(&mut self, bytes: Vec<u8>) {
+        self.data.load_ram(bytes);
     }
 
-    fn dump_save(&self) -> Option<BatterySave> {
-        self.data.dump_save()
+    fn dump_ram(&self) -> Option<Vec<u8>> {
+        self.data.dump_ram()
     }
 }

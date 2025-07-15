@@ -5,7 +5,7 @@ use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
-use crate::mbc::{BatterySave, MbcVariant};
+use crate::mbc::{MbcVariant};
 use crate::ppu::Ppu;
 use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::Ui;
@@ -17,6 +17,7 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use std::{env, fs, thread};
+use crate::battery::BatterySave;
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
@@ -337,8 +338,9 @@ impl Emu {
             }
         }
 
-        if let Some(save) = self.cpu.bus.cart.dump_save() {
+        if let Some(bytes) = self.cpu.bus.cart.dump_ram() {
             let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+            let save = BatterySave::from_bytes(bytes);
             save.save(&name).map_err(|e| e.to_string())?;
         }
 
@@ -379,7 +381,7 @@ pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
         return Ok(cart);
     };
 
-    cart.load_save(save);
+    cart.load_ram(save.ram_bytes);
 
     Ok(cart)
 }

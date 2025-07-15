@@ -8,6 +8,7 @@ pub mod debugger;
 pub mod emu;
 pub mod ppu;
 pub mod ui;
+pub mod battery;
 
 pub use apu::*;
 pub use cart::*;
