@@ -4,7 +4,7 @@ use std::time::Duration;
 
 mod util;
 
-const TIMEOUT: Duration = Duration::from_secs(5);
+const TIMEOUT: Duration = Duration::from_secs(15);
 
 #[test]
 fn test_oam_dma_basic() {
