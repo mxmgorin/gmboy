@@ -133,7 +133,7 @@ impl MbcData {
     }
 
     pub fn write_ram_enabled(&mut self, value: u8) {
-        self.ram_enabled = value == 0x0A;
+        self.ram_enabled = value & 0xF == 0xA;
     }
 
     pub fn read_ram(&self, address: u16) -> u8 {

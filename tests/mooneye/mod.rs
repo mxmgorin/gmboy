@@ -457,7 +457,6 @@ fn test_mbc1_bits_mode() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_mbc1_bits_ramg() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/bits_ramg.gb");
