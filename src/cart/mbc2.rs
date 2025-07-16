@@ -20,23 +20,17 @@ impl Mbc for Mbc2 {
 
     fn write_rom(&mut self, address: u16, value: u8) {
         match address {
-            0x0000..=0x1FFF => {
-                if address & 0x100 != 0 {
-                    return;
+            0x0000..=0x3FFF => {
+                if address & 0x100 == 0 {
+                    self.data.ram_enabled = value & 0xF == 0xA;
+                } else {
+                    self.data.rom_bank_number = match (value as u16) & 0x0F {
+                        0 => 1,
+                        n => n,
+                    }
                 }
-
-                self.data.write_ram_enabled(value);
             }
-            0x2000..=0x3FFF => {
-                if address & 0x100 != 0x100 {
-                    return;
-                }
-
-                let bank_number = if value == 0 { 1 } else { value };
-                self.data.rom_bank_number = (bank_number & 0xF) as u16;
-            }
-            0x4000..=0x7FFF => {}
-            _ => {},
+            _ => {}
         }
     }
 
