@@ -12,7 +12,6 @@ pub enum BankingMode {
 pub struct Mbc1 {
     data: MbcData,
     banking_mode: BankingMode,
-    bank1: u8, // 5 bit register
 }
 
 impl Mbc1 {
@@ -20,15 +19,12 @@ impl Mbc1 {
         Self {
             data: inner,
             banking_mode: BankingMode::RomBanking,
-            bank1: 1,
         }
     }
 }
 
 impl Mbc for Mbc1 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
-        let rom_bank_count = (cart_data.bytes.len() / ROM_BANK_SIZE).max(1);
-
         let bank = if address < 0x4000 {
             // --- Fixed bank area ---
             match self.banking_mode {
@@ -40,14 +36,18 @@ impl Mbc for Mbc1 {
             }
         } else {
             // --- Switchable bank area ---
-            let mut bank = self.bank1 & 0b0001_1111;
+            let rom_bank_count = (cart_data.bytes.len() / ROM_BANK_SIZE).max(1);
+            let mut bank = self.data.rom_bank_number as u8 & 0b0001_1111 ;
 
             if bank == 0 {
                 bank = 1; // Bank 0 is never mapped here
             }
 
-            // Combine with upper bits (bits 5–6 from 0x4000–0x5FFF writes)
-            bank |= self.data.ram_bank_number & 0b0110_0000;
+            if cart_data.bytes.len() > ROM_BANK_SIZE {
+                // Combine with upper bits (bits 5–6 from 0x4000–0x5FFF writes)
+                bank |= self.data.ram_bank_number & 0b0110_0000;
+            }
+
             // Clamp to available ROM bank count
             bank %= rom_bank_count as u8;
 
@@ -64,14 +64,14 @@ impl Mbc for Mbc1 {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {
                 let value = if value == 0 { 1 } else { value };
-                self.bank1 =
-                    (self.bank1 & 0b0110_0000) | (value & 0b0001_1111);
+                self.data.rom_bank_number =
+                    (self.data.rom_bank_number & 0b0110_0000) | (value as u16 & 0b0001_1111);
             }
             // RAM bank number — or — upper bits of ROM bank number
             0x4000..=0x5FFF => match self.banking_mode {
                 BankingMode::RamBanking => self.data.ram_bank_number = value & 0b0000_0011,
                 BankingMode::RomBanking => {
-                    self.bank1 |= (value & 0b0000_0011) << 5;
+                    self.data.rom_bank_number |= (value as u16 & 0b0000_0011) << 5;
                 },
             },
             0x6000..=0x7FFF => match value {
