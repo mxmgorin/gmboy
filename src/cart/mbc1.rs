@@ -64,8 +64,7 @@ impl Mbc for Mbc1 {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {
                 let value = if value == 0 { 1 } else { value };
-                self.data.rom_bank_number =
-                    (self.data.rom_bank_number & 0b0110_0000) | (value as u16 & 0b0001_1111);
+                self.data.rom_bank_number = value as u16 & 0b0001_1111;
             }
             // RAM bank number — or — upper bits of ROM bank number
             0x4000..=0x5FFF => match self.banking_mode {
