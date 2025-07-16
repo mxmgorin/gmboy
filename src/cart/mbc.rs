@@ -136,30 +136,40 @@ impl MbcData {
         self.ram_enabled = value & 0xF == 0xA;
     }
 
+    fn effective_ram_bank(&self) -> usize {
+        if self.ram_bytes.len() <= RAM_BANK_SIZE {
+            0
+        } else {
+            self.ram_bank_number as usize
+        }
+    }
+
     pub fn read_ram(&self, address: u16) -> u8 {
-        if !self.ram_enabled {
+        if !self.ram_enabled || self.ram_bytes.is_empty() {
             return 0xFF;
         }
 
-        if self.ram_bytes.is_empty() {
-            return 0xFF;
-        }
+        let offset = RAM_BANK_SIZE * self.effective_ram_bank();
+        let index = (address as usize - RAM_ADDRESS_START) + offset;
 
-        let offset = RAM_BANK_SIZE * self.ram_bank_number as usize;
-        self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset]
+        if index < self.ram_bytes.len() {
+            self.ram_bytes[index]
+        } else {
+            0xFF
+        }
     }
 
     pub fn write_ram(&mut self, address: u16, value: u8) {
-        if !self.ram_enabled {
+        if !self.ram_enabled || self.ram_bytes.is_empty() {
             return;
         }
 
-        if self.ram_bytes.is_empty() {
-            return;
-        }
+        let offset = RAM_BANK_SIZE * self.effective_ram_bank();
+        let index = (address as usize - RAM_ADDRESS_START) + offset;
 
-        let offset = RAM_BANK_SIZE * self.ram_bank_number as usize;
-        self.ram_bytes[(address as usize - RAM_ADDRESS_START) + offset] = value;
+        if index < self.ram_bytes.len() {
+            self.ram_bytes[index] = value;
+        }
     }
 
     pub fn load_ram(&mut self, bytes: Vec<u8>) {

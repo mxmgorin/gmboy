@@ -474,7 +474,6 @@ fn test_mbc1_multicart_rom_8mb() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_mbc1_ram_64kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/ram_64kb.gb");
