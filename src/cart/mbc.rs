@@ -14,7 +14,7 @@ pub const RAM_EXTERNAL_END_ADDR: u16 = 0xBFFF;
 
 pub trait Mbc {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8;
-    fn write_rom(&mut self, address: u16, value: u8);
+    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
     fn load_ram(&mut self, bytes: Vec<u8>);
@@ -45,14 +45,13 @@ impl Mbc for MbcVariant {
         }
     }
 
-    fn write_rom(&mut self, address: u16, value: u8) {
+    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
         match self {
-            MbcVariant::NoMbc |
-            MbcVariant::NoMbcRam(_) => {}
-            MbcVariant::Mbc1(c) => c.write_rom(address, value),
-            MbcVariant::Mbc2(c) => c.write_rom(address, value),
-            MbcVariant::Mbc3(c) => c.write_rom(address, value),
-            MbcVariant::Mbc5(c) => c.write_rom(address, value),
+            MbcVariant::NoMbc | MbcVariant::NoMbcRam(_) => {}
+            MbcVariant::Mbc1(c) => c.write_rom(&cart_data, address, value),
+            MbcVariant::Mbc2(c) => c.write_rom(&cart_data, address, value),
+            MbcVariant::Mbc3(c) => c.write_rom(&cart_data, address, value),
+            MbcVariant::Mbc5(c) => c.write_rom(&cart_data, address, value),
         }
     }
 
@@ -169,5 +168,10 @@ impl MbcData {
 
     pub fn dump_ram(&self) -> Option<Vec<u8>> {
         Some(self.ram_bytes.clone())
+    }
+
+    pub fn clamp_rom_bank_number(&mut self, cart_data: &CartData) {
+        let max_banks = (cart_data.bytes.len() / ROM_BANK_SIZE).max(1);
+        self.rom_bank_number = self.rom_bank_number % max_banks as u16;
     }
 }

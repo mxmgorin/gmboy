@@ -1,5 +1,5 @@
 use crate::mbc::{Mbc, MbcData};
-use crate::CartData;
+use crate::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,7 +20,7 @@ impl Mbc for Mbc2 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, address: u16, value: u8) {
+    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
         match address {
             0x0000..=0x3FFF => {
                 if address & 0x100 == 0 {
@@ -29,7 +29,8 @@ impl Mbc for Mbc2 {
                     self.data.rom_bank_number = match (value as u16) & 0x0F {
                         0 => 1,
                         n => n,
-                    }
+                    };
+                    self.data.clamp_rom_bank_number(cart_data);
                 }
             }
             _ => {}
