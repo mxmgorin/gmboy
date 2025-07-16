@@ -65,6 +65,8 @@ Passes all of 356000 tests successfully ✅
 
 - ### Mooneye
 
+- acceptance
+ 
 | General & OAM DMA            | Timing                       | Timer Accuracy                 |
 |------------------------------|------------------------------|-------------------------------|
 | oam_dma/oam_dma_timing.gb ✅  | call_cc_timing.gb ✅          | div_write.gb ✅             |
@@ -90,6 +92,18 @@ Passes all of 356000 tests successfully ✅
 |                              |  add_sp_e_timing.gb ✅        |                               |
 |                              | di_timing-GS.gb ❌            |                               |
 |                              | intr_timing ❌                |                               |
+
+- emulator-only
+
+| mbc2              |
+| ----------------- |
+| bits\_ramg.gb ✅   |
+| bits\_romb.gb ✅   |
+| bits\_unused.gb ✅ |
+| ram.gb ✅          |
+| rom\_1Mb.gb ✅     |
+| rom\_2Mb.gb ✅     |
+| rom\_512kb.gb ✅   |
 
 ## ⌨️ Keybindings
 
