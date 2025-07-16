@@ -19,7 +19,7 @@ pub const RAM_BANK_SIZE: usize = 8 * 1024;
 pub struct Cart {
     pub data: CartData,
     pub has_battery: bool,
-    pub mbc: Option<MbcVariant>,
+    pub mbc: MbcVariant,
 }
 
 impl Cart {
@@ -28,15 +28,10 @@ impl Cart {
         let cart_type = data.get_cart_type()?;
         let ram_size = data.get_ram_size()?;
         let ram_bytes = vec![0; ram_size.bytes_size()];
-        let mut cart = Self {
-            mbc: None,
-            data,
-            has_battery: cart_type.has_battery(),
-        };
 
-        cart.mbc = Some(match cart_type {
-            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbc(ram_bytes),
-            CartType::RomOnly => return Ok(cart),
+        let mbc = match cart_type {
+            CartType::RomOnly => MbcVariant::NoMbc,
+            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(ram_bytes),
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
                 MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_bytes)))
             }
@@ -63,50 +58,44 @@ impl Cart {
             | CartType::BandaiTama5
             | CartType::HuC3
             | CartType::HuC1RamBattery => unimplemented!("Cart type {:?}", cart_type),
-        });
+        };
 
-        Ok(cart)
+        Ok(Self {
+            data,
+            has_battery: cart_type.has_battery(),
+            mbc,
+        })
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        if let Some(mbc) = &self.mbc {
-            match address {
-                ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                    mbc.read_rom(&self.data, address)
-                }
-                RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => mbc.read_ram(address),
-                _ => 0xFF,
+        match address {
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+                self.mbc.read_rom(&self.data, address)
             }
-        } else {
-            self.data.bytes[address as usize]
+            RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => self.mbc.read_ram(address),
+            _ => 0xFF,
         }
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
-        if let Some(mbc) = &mut self.mbc {
-            match address {
-                ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                    mbc.write_rom(address, value)
-                }
-                RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => mbc.write_ram(address, value),
-                _ => (),
+        match address {
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
+                self.mbc.write_rom(address, value)
             }
+            RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => self.mbc.write_ram(address, value),
+            _ => (),
         }
     }
 
     pub fn load_ram(&mut self, bytes: Vec<u8>) {
         if self.has_battery {
-            if let Some(mbc) = &mut self.mbc {
-                mbc.load_ram(bytes);
-            }
+            self.mbc.load_ram(bytes);
         }
     }
 
     pub fn dump_ram(&self) -> Option<Vec<u8>> {
         if self.has_battery {
-            if let Some(mbc) = &self.mbc {
-                return mbc.dump_ram();
-            }
+            return self.mbc.dump_ram();
         }
 
         None

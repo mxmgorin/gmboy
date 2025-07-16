@@ -26,7 +26,7 @@ const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nano
 pub struct EmuSaveState {
     pub cpu_without_bus: Cpu,
     pub bus_without_cart: Bus,
-    pub cart_mbc: Option<MbcVariant>,
+    pub cart_mbc: MbcVariant,
 }
 
 impl EmuSaveState {

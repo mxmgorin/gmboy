@@ -21,10 +21,12 @@ pub trait Mbc {
     fn dump_ram(&self) -> Option<Vec<u8>>;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum MbcVariant {
+    #[default]
+    NoMbc,
     /// 8 KiB
-    NoMbc(Vec<u8>),
+    NoMbcRam(Vec<u8>),
     Mbc1(Mbc1),
     Mbc2(Mbc2),
     Mbc3(Mbc3),
@@ -34,7 +36,8 @@ pub enum MbcVariant {
 impl Mbc for MbcVariant {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match self {
-            MbcVariant::NoMbc(_c) => cart_data.bytes[address as usize],
+            MbcVariant::NoMbc => cart_data.bytes[address as usize],
+            MbcVariant::NoMbcRam(_c) => cart_data.bytes[address as usize],
             MbcVariant::Mbc1(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc2(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc3(c) => c.read_rom(cart_data, address),
@@ -44,7 +47,8 @@ impl Mbc for MbcVariant {
 
     fn write_rom(&mut self, address: u16, value: u8) {
         match self {
-            MbcVariant::NoMbc(_c) => {}
+            MbcVariant::NoMbc |
+            MbcVariant::NoMbcRam(_) => {}
             MbcVariant::Mbc1(c) => c.write_rom(address, value),
             MbcVariant::Mbc2(c) => c.write_rom(address, value),
             MbcVariant::Mbc3(c) => c.write_rom(address, value),
@@ -54,7 +58,8 @@ impl Mbc for MbcVariant {
 
     fn read_ram(&self, address: u16) -> u8 {
         match self {
-            MbcVariant::NoMbc(c) => c
+            MbcVariant::NoMbc => 0xFF,
+            MbcVariant::NoMbcRam(c) => c
                 .get(address as usize - RAM_ADDRESS_START)
                 .copied()
                 .unwrap_or(0xFF),
@@ -67,7 +72,8 @@ impl Mbc for MbcVariant {
 
     fn write_ram(&mut self, address: u16, value: u8) {
         match self {
-            MbcVariant::NoMbc(c) => c[address as usize - RAM_ADDRESS_START] = value,
+            MbcVariant::NoMbc => {}
+            MbcVariant::NoMbcRam(c) => c[address as usize - RAM_ADDRESS_START] = value,
             MbcVariant::Mbc1(c) => c.write_ram(address, value),
             MbcVariant::Mbc2(c) => c.write_ram(address, value),
             MbcVariant::Mbc3(c) => c.write_ram(address, value),
@@ -77,7 +83,8 @@ impl Mbc for MbcVariant {
 
     fn load_ram(&mut self, bytes: Vec<u8>) {
         match self {
-            MbcVariant::NoMbc(c) => *c = bytes,
+            MbcVariant::NoMbc => {}
+            MbcVariant::NoMbcRam(c) => *c = bytes,
             MbcVariant::Mbc1(c) => c.load_ram(bytes),
             MbcVariant::Mbc2(c) => c.load_ram(bytes),
             MbcVariant::Mbc3(c) => c.load_ram(bytes),
@@ -87,7 +94,8 @@ impl Mbc for MbcVariant {
 
     fn dump_ram(&self) -> Option<Vec<u8>> {
         match self {
-            MbcVariant::NoMbc(c) => Some(c.to_owned()),
+            MbcVariant::NoMbc => None,
+            MbcVariant::NoMbcRam(c) => Some(c.to_owned()),
             MbcVariant::Mbc1(c) => c.dump_ram(),
             MbcVariant::Mbc2(c) => c.dump_ram(),
             MbcVariant::Mbc3(c) => c.dump_ram(),
