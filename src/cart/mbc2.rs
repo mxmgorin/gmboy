@@ -1,5 +1,5 @@
 use crate::mbc::{Mbc, MbcData};
-use crate::{CartData};
+use crate::CartData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -7,9 +7,11 @@ pub struct Mbc2 {
     data: MbcData,
 }
 
-impl Mbc2 {
-    pub fn new(data: MbcData) -> Self {
-        Self { data }
+impl Default for Mbc2 {
+    fn default() -> Self {
+        Self {
+            data: MbcData::new(vec![0; 512 * 4]),
+        }
     }
 }
 
@@ -35,7 +37,12 @@ impl Mbc for Mbc2 {
     }
 
     fn read_ram(&self, address: u16) -> u8 {
-        self.data.read_ram(address)
+        if !self.data.ram_enabled {
+            return 0xFF;
+        }
+
+        let address = (address as usize) & 0x1FF; // wrap every 512 bytes
+        self.data.ram_bytes[address] | 0xF0
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {

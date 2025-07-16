@@ -36,7 +36,7 @@ impl Cart {
                 MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_bytes)))
             }
             CartType::Mbc2 | CartType::Mbc2Battery => {
-                MbcVariant::Mbc2(Mbc2::new(MbcData::new(ram_bytes)))
+                MbcVariant::Mbc2(Mbc2::default())
             }
             CartType::Mbc5
             | CartType::Mbc5Ram
