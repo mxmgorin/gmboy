@@ -28,18 +28,22 @@ impl Mbc for Mbc1 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {
                 let bank_number = if value == 0 { 1 } else { value };
                 self.data.rom_bank_number =
                     (self.data.rom_bank_number & 0b0110_0000) | (bank_number & 0b0001_1111) as u16;
+                self.data.clamp_rom_bank_number(cart_data);
             }
             // RAM bank number — or — upper bits of ROM bank number
             0x4000..=0x5FFF => match self.mode {
                 Mode::RamBanking => self.data.ram_bank_number = value,
-                Mode::RomBanking => self.data.rom_bank_number |= ((value & 0b0000_0011) << 5) as u16,
+                Mode::RomBanking => {
+                    self.data.rom_bank_number |= ((value & 0b0000_0011) << 5) as u16;
+                    self.data.clamp_rom_bank_number(cart_data);
+                },
             },
             0x6000..=0x7FFF => match value {
                 0 => self.mode = Mode::RomBanking,

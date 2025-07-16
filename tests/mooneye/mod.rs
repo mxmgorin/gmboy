@@ -449,7 +449,6 @@ fn test_mbc1_bits_bank2() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_mbc1_bits_mode() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/bits_mode.gb");
