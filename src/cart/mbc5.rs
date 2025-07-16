@@ -1,6 +1,7 @@
 use crate::mbc::{Mbc, MbcData};
 use crate::CartData;
 use serde::{Deserialize, Serialize};
+use crate::mbc1::BankingMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc5 {
@@ -39,11 +40,11 @@ impl Mbc for Mbc5 {
     }
 
     fn read_ram(&self, address: u16) -> u8 {
-        self.data.read_ram(address)
+        self.data.read_ram(address, BankingMode::RamBanking)
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {
-        self.data.write_ram(address, value);
+        self.data.write_ram(address, value, BankingMode::RamBanking);
     }
 
     fn load_ram(&mut self, bytes: Vec<u8>) {

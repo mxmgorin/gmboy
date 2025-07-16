@@ -2,8 +2,8 @@ use crate::cart::mbc::{Mbc, MbcData};
 use crate::CartData;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-enum Mode {
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum BankingMode {
     RomBanking,
     RamBanking,
 }
@@ -11,14 +11,14 @@ enum Mode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc1 {
     data: MbcData,
-    mode: Mode,
+    banking_mode: BankingMode,
 }
 
 impl Mbc1 {
     pub fn new(inner: MbcData) -> Self {
         Self {
             data: inner,
-            mode: Mode::RomBanking,
+            banking_mode: BankingMode::RomBanking,
         }
     }
 }
@@ -38,16 +38,16 @@ impl Mbc for Mbc1 {
                 self.data.clamp_rom_bank_number(cart_data);
             }
             // RAM bank number — or — upper bits of ROM bank number
-            0x4000..=0x5FFF => match self.mode {
-                Mode::RamBanking => self.data.ram_bank_number = value,
-                Mode::RomBanking => {
+            0x4000..=0x5FFF => match self.banking_mode {
+                BankingMode::RamBanking => self.data.ram_bank_number = value,
+                BankingMode::RomBanking => {
                     self.data.rom_bank_number |= ((value & 0b0000_0011) << 5) as u16;
                     self.data.clamp_rom_bank_number(cart_data);
                 },
             },
             0x6000..=0x7FFF => match value {
-                0 => self.mode = Mode::RomBanking,
-                1 => self.mode = Mode::RamBanking,
+                0 => self.banking_mode = BankingMode::RomBanking,
+                1 => self.banking_mode = BankingMode::RamBanking,
                 _ => {}
             },
             _ => (),
@@ -55,11 +55,11 @@ impl Mbc for Mbc1 {
     }
 
     fn read_ram(&self, address: u16) -> u8 {
-        self.data.read_ram(address)
+        self.data.read_ram(address, self.banking_mode)
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {
-        self.data.write_ram(address, value);
+        self.data.write_ram(address, value, self.banking_mode);
     }
 
     fn load_ram(&mut self, bytes: Vec<u8>) {

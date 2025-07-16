@@ -4,6 +4,7 @@ use crate::mbc3::Mbc3;
 use crate::mbc5::Mbc5;
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
+use crate::mbc1::BankingMode;
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
 pub const ROM_BANK_ZERO_END_ADDR: u16 = 0x3FFF;
@@ -136,20 +137,24 @@ impl MbcData {
         self.ram_enabled = value & 0xF == 0xA;
     }
 
-    fn effective_ram_bank(&self) -> usize {
+    fn effective_ram_bank(&self, banking_mode: BankingMode) -> usize {
         if self.ram_bytes.len() <= RAM_BANK_SIZE {
             0
+        } else if banking_mode == BankingMode::RomBanking {
+            // Mode 0: ROM banking mode → always use RAM bank 0
+            0
         } else {
-            self.ram_bank_number as usize
+            // Mode 1: RAM banking mode → use selected RAM bank, clamped
+            (self.ram_bank_number as usize) % (self.ram_bytes.len() / RAM_BANK_SIZE)
         }
     }
 
-    pub fn read_ram(&self, address: u16) -> u8 {
+    pub fn read_ram(&self, address: u16, banking_mode: BankingMode) -> u8 {
         if !self.ram_enabled || self.ram_bytes.is_empty() {
             return 0xFF;
         }
 
-        let offset = RAM_BANK_SIZE * self.effective_ram_bank();
+        let offset = RAM_BANK_SIZE * self.effective_ram_bank(banking_mode);
         let index = (address as usize - RAM_ADDRESS_START) + offset;
 
         if index < self.ram_bytes.len() {
@@ -159,12 +164,12 @@ impl MbcData {
         }
     }
 
-    pub fn write_ram(&mut self, address: u16, value: u8) {
+    pub fn write_ram(&mut self, address: u16, value: u8, banking_mode: BankingMode) {
         if !self.ram_enabled || self.ram_bytes.is_empty() {
             return;
         }
 
-        let offset = RAM_BANK_SIZE * self.effective_ram_bank();
+        let offset = RAM_BANK_SIZE * self.effective_ram_bank(banking_mode);
         let index = (address as usize - RAM_ADDRESS_START) + offset;
 
         if index < self.ram_bytes.len() {

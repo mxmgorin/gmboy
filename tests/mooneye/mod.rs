@@ -482,7 +482,6 @@ fn test_mbc1_ram_64kb() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_mbc1_ram_256kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/ram_256kb.gb");
