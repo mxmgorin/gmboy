@@ -595,3 +595,59 @@ fn test_mbc2_rom_512kb() {
 
     assert_result_path(path, result);
 }
+
+#[test]
+fn test_mbc5_rom_1mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_1Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc5_rom_2mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_2Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc5_rom_4mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_4Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc5_rom_8mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_8Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc5_rom_16mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_16Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc5_rom_32mb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_32Mb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_mbc5_rom_512kb() {
+    let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_512kb.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
