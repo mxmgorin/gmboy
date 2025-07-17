@@ -58,14 +58,18 @@ impl Mbc1 {
 
         mask as u8
     }
+
+    pub fn get_rom_address(address: u16, bank_number: u8) -> usize {
+        (address as usize & 0x3FFF) + (bank_number as usize * ROM_BANK_SIZE)
+    }
 }
 
 impl Mbc for Mbc1 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         let bank = self.get_effective_rom_bank_number(cart_data, address);
-        let index = (address as usize & 0x3FFF) + (bank as usize * ROM_BANK_SIZE);
+        let address = Mbc1::get_rom_address(address, bank);
 
-        cart_data.bytes.get(index).copied().unwrap_or(0xFF)
+        cart_data.bytes.get(address).copied().unwrap_or(0xFF)
     }
 
     fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
@@ -180,9 +184,12 @@ pub mod tests {
         mbc.data.rom_bank_number = 0b00100;
         mbc.data.ram_bank_number = 0b10;
         mbc.banking_mode = BankingMode::RamBanking;
+        let address = 0x72A7;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(&cart_date, 0x72A7);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(&cart_date, address);
+        let address = Mbc1::get_rom_address(address, effective_rom_bank_number);
 
         assert_eq!(effective_rom_bank_number, 0b1000100);
+        assert_eq!(address, 0x1132A7)
     }
 }
