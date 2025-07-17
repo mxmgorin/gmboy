@@ -37,9 +37,9 @@ impl Mbc for Mbc1 {
         } else {
             // --- Switchable bank area ---
             let rom_bank_count = (cart_data.bytes.len() / ROM_BANK_SIZE).max(1);
-            let mut bank = self.data.rom_bank_number as u8 & 0b0001_1111 ;
+            let mut bank = self.data.rom_bank_number as u8 ;
 
-            if bank == 0 {
+            if bank & 0b0001_1111 == 0 {
                 bank = 1; // Bank 0 is never mapped here
             }
 
@@ -66,14 +66,14 @@ impl Mbc for Mbc1 {
                 let value = if value == 0 { 1 } else { value };
                 self.data.rom_bank_number = value as u16 & 0b0001_1111;
             }
-            // RAM bank number — or — upper bits of ROM bank number
             0x4000..=0x5FFF => match self.banking_mode {
                 BankingMode::RamBanking => self.data.ram_bank_number = value & 0b0000_0011,
                 BankingMode::RomBanking => {
-                    self.data.rom_bank_number |= (value as u16 & 0b0000_0011) << 5;
+                    // self.data.rom_bank_number |= (value as u16 & 0b0000_0011) << 5; todo: or this?
+                    self.data.ram_bank_number = value & 0b0000_0011;
                 },
             },
-            0x6000..=0x7FFF => match value {
+            0x6000..=0x7FFF => match value & 0x0000_0001 {
                 0 => self.banking_mode = BankingMode::RomBanking,
                 1 => self.banking_mode = BankingMode::RamBanking,
                 _ => {}
