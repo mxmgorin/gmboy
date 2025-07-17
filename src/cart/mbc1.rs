@@ -45,7 +45,7 @@ impl Mbc for Mbc1 {
 
             if cart_data.bytes.len() > ROM_BANK_SIZE {
                 // Combine with upper bits (bits 5–6 from 0x4000–0x5FFF writes)
-                bank |= self.data.ram_bank_number & 0b0110_0000;
+                bank |= self.data.ram_bank_number << 5;
             }
 
             // Clamp to available ROM bank count
