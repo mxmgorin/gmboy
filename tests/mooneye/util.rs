@@ -45,6 +45,16 @@ pub fn run_mooneye_rom_path(
             return Ok(());
         }
 
+        if cpu.registers.b == 0x42
+            && cpu.registers.c == 0x42
+            && cpu.registers.d == 0x42
+            && cpu.registers.e == 0x42
+            && cpu.registers.h == 0x42
+            && cpu.registers.l == 0x42
+        {
+            return Err("FAILING RESULT".to_string());
+        }
+
         if instant.elapsed() > timeout {
             return Err(format!("TIMEOUT: {}", timeout.as_secs()));
         }
