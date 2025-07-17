@@ -1,11 +1,12 @@
 use crate::auxiliary::clock::{spin_wait, Clock};
 use crate::auxiliary::joypad::Joypad;
+use crate::battery::BatterySave;
 use crate::bus::Bus;
 use crate::cart::Cart;
 use crate::config::Config;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
-use crate::mbc::{MbcVariant};
+use crate::mbc::MbcVariant;
 use crate::ppu::Ppu;
 use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
 use crate::ui::Ui;
@@ -17,7 +18,6 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use std::{env, fs, thread};
-use crate::battery::BatterySave;
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
@@ -287,6 +287,17 @@ impl Emu {
                 self.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
                 self.ctx.state = EmuState::Running(RunMode::Normal);
                 self.ctx.reset();
+
+                if self.ctx.config.load_save_state_at_start {
+                    let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+                    let save_state = EmuSaveState::load(&name, 0);
+
+                    if let Ok(save_state) = save_state {
+                        load_save_state(self, save_state);
+                    } else {
+                        eprintln!("Failed load save_state: {:?}", save_state);
+                    };
+                }
             }
 
             if let EmuState::Running(RunMode::Rewind) = &self.ctx.state {
@@ -342,6 +353,13 @@ impl Emu {
             let name = self.ctx.config.get_last_cart_file_stem().unwrap();
             let save = BatterySave::from_bytes(bytes);
             save.save(&name).map_err(|e| e.to_string())?;
+        }
+
+        let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+        let save_state = self.create_save_state(&self.cpu);
+
+        if let Err(err) = save_state.save(&name, 0) {
+            eprintln!("Failed save_state: {:?}", err);
         }
 
         Ok(())

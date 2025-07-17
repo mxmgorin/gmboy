@@ -8,6 +8,7 @@ use std::borrow::Cow;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub last_cart_path: Option<String>,
+    pub load_save_state_at_start: bool,
     pub emulation: EmulationConfig,
     pub graphics: GraphicsConfig,
 }
@@ -74,7 +75,8 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            last_cart_path: Some("/home/mxmgo/Emulation/Roms/GB/SolarStriker (World).gb".to_string()),
+            last_cart_path: None,
+            load_save_state_at_start: true,
             emulation: EmulationConfig {
                 rewind_size: 4000,
                 slow_speed: 50.0,
