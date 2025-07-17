@@ -52,7 +52,7 @@ pub fn run_mooneye_rom_path(
             && cpu.registers.h == 0x42
             && cpu.registers.l == 0x42
         {
-            return Err("FAILING RESULT".to_string());
+            return Err(format!("FAILING RESULT ({:?})", instant.elapsed()));
         }
 
         if instant.elapsed() > timeout {
