@@ -69,8 +69,7 @@ impl Mbc for Mbc1 {
             0x4000..=0x5FFF => match self.banking_mode {
                 BankingMode::RamBanking => self.data.ram_bank_number = value & 0b0000_0011,
                 BankingMode::RomBanking => {
-                    // self.data.rom_bank_number |= (value as u16 & 0b0000_0011) << 5; todo: or this?
-                    self.data.ram_bank_number = value & 0b0000_0011;
+                    self.data.rom_bank_number |= (value as u16 & 0b0000_0011) << 5;
                 },
             },
             0x6000..=0x7FFF => match value & 0x0000_0001 {
