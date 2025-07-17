@@ -336,11 +336,11 @@ impl Ui {
 
         if axis_idx == LEFT {
             if !is_down {
-                return Some(UiEvent::SaveState(SaveStateEvent::Load, 0));
+                return Some(UiEvent::SaveState(SaveStateEvent::Load, 1));
             }
         } else if axis_idx == RIGHT {
             if !is_down {
-                return Some(UiEvent::SaveState(SaveStateEvent::Create, 0));
+                return Some(UiEvent::SaveState(SaveStateEvent::Create, 1));
             }
         }
 
