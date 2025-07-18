@@ -12,7 +12,7 @@ pub struct Mbc2 {
 impl Mbc2 {
     pub fn new(rom_size: RomSize) -> Self {
         Self {
-            data: MbcData::new(vec![0; 512 * 4], rom_size),
+            data: MbcData::new(vec![0; 512 * 4].into_boxed_slice(), rom_size),
         }
     }
 }
@@ -52,11 +52,11 @@ impl Mbc for Mbc2 {
         self.data.write_ram(address, value, BankingMode::RamBanking);
     }
 
-    fn load_ram(&mut self, bytes: Vec<u8>) {
+    fn load_ram(&mut self, bytes: Box<[u8]>) {
         self.data.load_ram(bytes);
     }
 
-    fn dump_ram(&self) -> Option<Vec<u8>> {
+    fn dump_ram(&self) -> Option<Box<[u8]>> {
         self.data.dump_ram()
     }
 }

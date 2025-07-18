@@ -6,11 +6,11 @@ use std::{env, fs};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatterySave {
-    pub ram_bytes: Vec<u8>,
+    pub ram_bytes: Box<[u8]>,
 }
 
 impl BatterySave {
-    pub fn from_bytes(bytes: Vec<u8>) -> Self {
+    pub fn from_bytes(bytes: Box<[u8]>) -> Self {
         Self { ram_bytes: bytes }
     }
 
@@ -33,7 +33,7 @@ impl BatterySave {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
 
-        Ok(Self { ram_bytes: buffer })
+        Ok(Self { ram_bytes: buffer.into_boxed_slice() })
     }
 
     pub fn generate_path(name: &str) -> PathBuf {

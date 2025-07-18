@@ -23,7 +23,7 @@ pub struct Cart {
 }
 
 impl Cart {
-    pub fn new(rom_bytes: Vec<u8>) -> Result<Cart, String> {
+    pub fn new(rom_bytes: Box<[u8]>) -> Result<Cart, String> {
         let data = CartData::new(rom_bytes);
         let cart_type = data.get_cart_type()?;
         let ram_size = data.get_ram_size()?;
@@ -31,7 +31,7 @@ impl Cart {
 
         let mbc = match cart_type {
             CartType::RomOnly => MbcVariant::NoMbc,
-            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(vec![0; ram_size.bytes_size()]),
+            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(vec![0; ram_size.bytes_size()].into_boxed_slice()),
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
                 MbcVariant::Mbc1(Mbc1::new(ram_size, rom_size, &data.bytes))
             }
@@ -87,13 +87,13 @@ impl Cart {
         }
     }
 
-    pub fn load_ram(&mut self, bytes: Vec<u8>) {
+    pub fn load_ram(&mut self, bytes: Box<[u8]>) {
         if self.has_battery {
             self.mbc.load_ram(bytes);
         }
     }
 
-    pub fn dump_ram(&self) -> Option<Vec<u8>> {
+    pub fn dump_ram(&self) -> Option<Box<[u8]>> {
         if self.has_battery {
             return self.mbc.dump_ram();
         }
@@ -104,11 +104,11 @@ impl Cart {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CartData {
-    pub bytes: Vec<u8>,
+    pub bytes: Box<[u8]>,
 }
 
 impl CartData {
-    pub fn new(bytes: Vec<u8>) -> Self {
+    pub fn new(bytes: Box<[u8]>) -> Self {
         Self { bytes }
     }
 
@@ -135,7 +135,7 @@ impl CartData {
     pub fn checksum_valid(&self) -> bool {
         let checksum = self.calc_checksum();
 
-        CartHeader::get_header_checksum(self.bytes.as_slice()) == checksum
+        CartHeader::get_header_checksum(&self.bytes) == checksum
     }
 
     pub fn calc_checksum(&self) -> u8 {

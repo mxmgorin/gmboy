@@ -19,8 +19,8 @@ pub trait Mbc {
     fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
-    fn load_ram(&mut self, bytes: Vec<u8>);
-    fn dump_ram(&self) -> Option<Vec<u8>>;
+    fn load_ram(&mut self, bytes: Box<[u8]>);
+    fn dump_ram(&self) -> Option<Box<[u8]>>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -28,7 +28,7 @@ pub enum MbcVariant {
     #[default]
     NoMbc,
     /// 8 KiB
-    NoMbcRam(Vec<u8>),
+    NoMbcRam(Box<[u8]>),
     Mbc1(Mbc1),
     Mbc2(Mbc2),
     Mbc3(Mbc3),
@@ -82,7 +82,7 @@ impl Mbc for MbcVariant {
         }
     }
 
-    fn load_ram(&mut self, bytes: Vec<u8>) {
+    fn load_ram(&mut self, bytes: Box<[u8]>) {
         match self {
             MbcVariant::NoMbc => {}
             MbcVariant::NoMbcRam(c) => *c = bytes,
@@ -93,7 +93,7 @@ impl Mbc for MbcVariant {
         }
     }
 
-    fn dump_ram(&self) -> Option<Vec<u8>> {
+    fn dump_ram(&self) -> Option<Box<[u8]>> {
         match self {
             MbcVariant::NoMbc => None,
             MbcVariant::NoMbcRam(c) => Some(c.to_owned()),
@@ -107,7 +107,7 @@ impl Mbc for MbcVariant {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MbcData {
-    pub ram_bytes: Vec<u8>,
+    pub ram_bytes: Box<[u8]>,
     pub rom_bank_number: u16,
     pub ram_bank_number: u8,
     pub ram_enabled: bool,
@@ -115,7 +115,7 @@ pub struct MbcData {
 }
 
 impl MbcData {
-    pub fn new(ram_bytes: Vec<u8>, rom_size: RomSize) -> Self {
+    pub fn new(ram_bytes: Box<[u8]>, rom_size: RomSize) -> Self {
         Self {
             ram_bytes,
             rom_bank_number: 1,
@@ -180,11 +180,11 @@ impl MbcData {
         }
     }
 
-    pub fn load_ram(&mut self, bytes: Vec<u8>) {
+    pub fn load_ram(&mut self, bytes: Box<[u8]>) {
         self.ram_bytes = bytes;
     }
 
-    pub fn dump_ram(&self) -> Option<Vec<u8>> {
+    pub fn dump_ram(&self) -> Option<Box<[u8]>> {
         Some(self.ram_bytes.clone())
     }
 

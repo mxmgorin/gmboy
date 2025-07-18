@@ -322,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_fetch_imp() {
-        let cart = Cart::new(vec![0u8; 1000]).unwrap();
+        let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
         let mut cpu = Cpu::new(Bus::new(cart));
         let mode = AddressMode::IMP;
 
@@ -333,7 +333,7 @@ mod tests {
 
     #[test]
     fn test_fetch_r() {
-        let cart = Cart::new(vec![0u8; 1000]).unwrap();
+        let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
         let mut cpu = Cpu::new(Bus::new(cart));
 
         for reg_type in RegisterType::get_all().iter().cloned() {
@@ -349,7 +349,7 @@ mod tests {
 
     #[test]
     fn test_fetch_r_r() {
-        let cart = Cart::new(vec![0u8; 1000]).unwrap();
+        let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
         let mut cpu = Cpu::new(Bus::new(cart));
 
         for reg_type in RegisterType::get_all().iter().cloned() {
@@ -367,7 +367,7 @@ mod tests {
     fn test_fetch_r_d8() {
         let pc = 4;
         let value = 25;
-        let mut bytes = vec![0u8; 8000];
+        let mut bytes = vec![0u8; 8000].into_boxed_slice();
         bytes[pc] = value;
         let cart = Cart::new(bytes).unwrap();
         let mut cpu = Cpu::new(Bus::new(cart));
@@ -396,7 +396,7 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes).unwrap()));
+        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes.into_boxed_slice()).unwrap()));
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
@@ -421,7 +421,7 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes).unwrap()));
+        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes.into_boxed_slice()).unwrap()));
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 

@@ -19,7 +19,7 @@ pub struct Mbc1 {
 impl Mbc1 {
     pub fn new(ram_size: RamSize, rom_size: RomSize, rom_bytes: &[u8]) -> Self {
         Self {
-            data: MbcData::new(vec![0; ram_size.bytes_size()], rom_size),
+            data: MbcData::new(vec![0; ram_size.bytes_size()].into_boxed_slice(), rom_size),
             banking_mode: BankingMode::RomBanking,
             is_multicart: Mbc1::is_multicart(rom_bytes),
         }
@@ -114,11 +114,11 @@ impl Mbc for Mbc1 {
         self.data.write_ram(address, value, self.banking_mode);
     }
 
-    fn load_ram(&mut self, bytes: Vec<u8>) {
+    fn load_ram(&mut self, bytes: Box<[u8]>) {
         self.data.load_ram(bytes);
     }
 
-    fn dump_ram(&self) -> Option<Vec<u8>> {
+    fn dump_ram(&self) -> Option<Box<[u8]>> {
         self.data.dump_ram()
     }
 }

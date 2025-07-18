@@ -417,10 +417,10 @@ fn print_cart(cart: &Cart) -> Result<(), String> {
     Ok(())
 }
 
-pub fn read_bytes(file_path: &Path) -> Result<Vec<u8>, String> {
+pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
     if !file_path.exists() {
         return Err(format!("File not found: {:?}", file_path));
     }
 
-    fs::read(file_path).map_err(|e| format!("Failed to read file: {}", e))
+    fs::read(file_path).map(|x| x.into_boxed_slice()).map_err(|e| format!("Failed to read file: {}", e))
 }

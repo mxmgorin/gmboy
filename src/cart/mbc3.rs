@@ -137,7 +137,7 @@ impl RtcRegisters {
 impl Mbc3 {
     pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
         Self {
-            data: MbcData::new(vec![0; ram_size.bytes_size()], rom_size),
+            data: MbcData::new(vec![0; ram_size.bytes_size()].into_boxed_slice(), rom_size),
             rtc: Default::default(),
         }
     }
@@ -194,11 +194,11 @@ impl Mbc for Mbc3 {
         self.data.write_ram(address, value, BankingMode::RamBanking);
     }
 
-    fn load_ram(&mut self, bytes: Vec<u8>) {
+    fn load_ram(&mut self, bytes: Box<[u8]>) {
         self.data.load_ram(bytes);
     }
 
-    fn dump_ram(&self) -> Option<Vec<u8>> {
+    fn dump_ram(&self) -> Option<Box<[u8]>> {
         self.data.dump_ram()
     }
 }
