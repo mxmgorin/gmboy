@@ -5,13 +5,16 @@ use crate::cart::Cart;
 use crate::cpu::Cpu;
 use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
-use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
+use crate::emu::ctx::{
+    handle_load_cart_state, handle_pending_save_state, handle_rewind_state, EmuCtx, EmuState,
+    RunMode,
+};
 use crate::emu::save_state::EmuSaveState;
-use crate::ppu::tile::Pixel;
+use crate::ppu::tile::{Pixel, PixelColor};
 use crate::ppu::CYCLES_PER_FRAME;
 use std::fs;
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
@@ -100,8 +103,8 @@ impl Emu {
         }
     }
 
-    pub fn shutdown(self) {
-        if let Err(err) = self.ctx.config.save().map_err(|e| e.to_string()) {
+    pub fn save_files(self) {
+        if let Err(err) = self.ctx.config.save_file().map_err(|e| e.to_string()) {
             eprint!("Failed config.save: {err}");
         }
 
@@ -119,6 +122,29 @@ impl Emu {
         if let Err(err) = self.create_save_state(&self.cpu).save_file(&name, 0) {
             eprintln!("Failed save_state: {:?}", err);
         }
+    }
+
+    pub fn tick_rewind(&mut self) {
+        let now = Instant::now();
+
+        if self.ctx.config.emulation.rewind_size > 0
+            && now.duration_since(self.ctx.last_rewind_save).as_secs_f32() >= 2.0
+        {
+            if self.ctx.rewind_buffer.len() > self.ctx.config.emulation.rewind_size {
+                self.ctx.rewind_buffer.pop_front();
+            }
+
+            self.ctx
+                .rewind_buffer
+                .push_back(self.create_save_state(&self.cpu));
+            self.ctx.last_rewind_save = now;
+        }
+    }
+
+    pub fn handle_state(&mut self, pallet: [PixelColor; 4]) {
+        handle_pending_save_state(self);
+        handle_load_cart_state(self, pallet);
+        handle_rewind_state(self);
     }
 }
 

@@ -52,7 +52,7 @@ impl EmuConfig {
         Ok(config)
     }
 
-    pub fn save(&self) -> Result<(), io::Error> {
+    pub fn save_file(&self) -> Result<(), io::Error> {
         let save_path = EmuConfig::default_path();
 
         // Open file in write mode, truncating (overwriting) any existing content
