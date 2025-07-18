@@ -1,10 +1,11 @@
+use core::cpu::Cpu;
 use crate::ui::Ui;
-use emu::battery::BatterySave;
-use emu::bus::Bus;
-use emu::config::EmuConfig;
-use emu::ctx::{EmuState, RunMode};
-use emu::save_state::{EmuSaveState, SaveStateEvent};
-use emu::{load_save_state, read_cart, Cpu, Emu};
+use core::emu::battery::BatterySave;
+use core::bus::Bus;
+use core::emu::config::EmuConfig;
+use core::emu::ctx::{EmuState, RunMode};
+use core::emu::save_state::{EmuSaveState, SaveStateEvent};
+use core::emu::{load_save_state, read_cart, Emu};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use std::{env, thread};

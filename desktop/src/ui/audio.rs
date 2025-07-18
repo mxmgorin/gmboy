@@ -1,4 +1,4 @@
-use emu::apu::{AUDIO_BUFFER_SIZE, SAMPLING_FREQ};
+use core::apu::{AUDIO_BUFFER_SIZE, SAMPLING_FREQ};
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
 

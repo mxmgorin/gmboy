@@ -1,8 +1,10 @@
+use core::emu::ctx::EmuState;
+use core::emu::ctx::EmuCtx;
+use core::emu::save_state::SaveStateEvent;
+use core::emu::ctx::RunMode;
 use std::path::PathBuf;
-use emu::bus::Bus;
-use emu::config::GraphicsConfig;
-use emu::ctx::{EmuCtx, EmuState, RunMode};
-use emu::save_state::SaveStateEvent;
+use core::bus::Bus;
+use core::emu::config::GraphicsConfig;
 
 pub trait UiEventHandler {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent);

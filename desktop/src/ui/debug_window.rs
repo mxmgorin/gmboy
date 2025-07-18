@@ -1,4 +1,4 @@
-use emu::tile::{
+use core::ppu::tile::{
     TileData, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_WIDTH,
 };
 use sdl2::pixels::Color;

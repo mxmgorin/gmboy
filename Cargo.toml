@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "emu",
+    "core",
     "desktop",
 ]
 

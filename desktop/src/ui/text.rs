@@ -1,4 +1,4 @@
-use emu::tile::PixelColor;
+use core::ppu::tile::PixelColor;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
 use crate::ui::ui::BYTES_PER_PIXEL;
