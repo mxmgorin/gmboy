@@ -409,6 +409,7 @@ fn print_cart(cart: &Cart) -> Result<(), String> {
     println!("\t Title          : {}", cart.data.get_title());
     println!("\t Type           : {:?}", cart.data.get_cart_type()?);
     println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
+    println!("\t ROM bytes       : {:?}", cart.data.bytes.len());
     println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);
     println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
     println!("\t Checksum Valid : {}", cart.data.checksum_valid());
