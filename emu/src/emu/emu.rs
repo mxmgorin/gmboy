@@ -11,12 +11,14 @@ use crate::CYCLES_PER_FRAME;
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
+use crate::tile::Pixel;
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
 
 pub trait EmuCallback {
     fn update_audio(&mut self, output: &[f32]);
+    fn update_video(&mut self, buffer: &[Pixel], fps: usize);
 }
 
 pub struct Emu {
@@ -75,6 +77,11 @@ impl Emu {
             }
         }
 
+        if self.ctx.prev_frame != self.ctx.ppu.current_frame {
+            callback.update_video(&self.ctx.ppu.pipeline.buffer, self.ctx.ppu.fps);
+        }
+
+        self.ctx.prev_frame = self.ctx.ppu.current_frame;
         let real_elapsed = self.ctx.clock.start_time.elapsed();
         let emulated_time = self.calc_emulated_time();
 

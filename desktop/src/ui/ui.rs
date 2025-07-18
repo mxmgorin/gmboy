@@ -5,9 +5,9 @@ use crate::ui::text::*;
 use emu::bus::Bus;
 use emu::config::GraphicsConfig;
 use emu::ctx::RunMode;
-use emu::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
+use emu::ppu::{LCD_X_RES, LCD_Y_RES};
 use emu::save_state::SaveStateEvent;
-use emu::tile::PixelColor;
+use emu::tile::{Pixel, PixelColor, TileData};
 use emu::{EmuCallback};
 use sdl2::controller::GameController;
 use sdl2::event::Event;
@@ -27,6 +27,10 @@ impl EmuCallback for Ui {
         if let Err(err) = self.audio.update(output) {
             eprintln!("Failed update_audio: {}", err);
         }
+    }
+
+    fn update_video(&mut self, buffer: &[Pixel], fps: usize) {
+        self.draw_main(buffer, fps);
     }
 }
 
@@ -143,11 +147,9 @@ impl Ui {
         Ok(())
     }
 
-    pub fn draw(&mut self, ppu: &Ppu, bus: &Bus) {
-        self.draw_main(ppu);
-
+    pub fn draw_debug(&mut self, tiles: impl Iterator<Item = TileData>) {
         if let Some(debug_window) = self.debug_window.as_mut() {
-            debug_window.draw(bus);
+            debug_window.draw_tiles(tiles);
         }
     }
 
@@ -180,14 +182,14 @@ impl Ui {
         self.canvas.present();
     }
 
-    fn draw_main(&mut self, ppu: &Ppu) {
+    fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize) {
         self.canvas.clear();
 
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
                 for y in 0..LCD_Y_RES as usize {
                     for x in 0..LCD_X_RES as usize {
-                        let pixel = ppu.pipeline.buffer[x + (y * LCD_X_RES as usize)];
+                        let pixel = pixel_buffer[x + (y * LCD_X_RES as usize)];
                         let (r, g, b, a) = pixel.color.as_rgba();
                         let offset = (y * pitch) + (x * BYTES_PER_PIXEL);
                         buffer[offset] = r;
@@ -208,7 +210,7 @@ impl Ui {
             .unwrap();
 
         if self.config.show_fps {
-            let text = ppu.fps.to_string();
+            let text = fps.to_string();
             fill_texture(&mut self.fps_texture, PixelColor::from_hex(0));
             draw_text(&mut self.fps_texture, &text, self.curr_palette[3], 5, 5, 1);
 

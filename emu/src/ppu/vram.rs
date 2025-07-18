@@ -122,11 +122,11 @@ impl VideoRam {
         tile
     }
 
-    pub fn fill_tiles(&self, tiles: &mut [TileData; 384]) {
-        for (i, tile) in tiles.iter_mut().enumerate() {
+    pub fn iter_tiles(&self) -> impl Iterator<Item = TileData> + '_ {
+        (0..384).map(move |i| {
             let addr = TILE_SET_DATA_1_START + (i as u16 * TILE_BIT_SIZE);
-            *tile = self.get_tile(addr);
-        }
+            self.get_tile(addr)
+        })
     }
 }
 

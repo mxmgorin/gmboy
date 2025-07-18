@@ -48,12 +48,11 @@ impl DebugWindow {
             .set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
     }
 
-    pub fn draw(&mut self, bus: &Bus) {
-        bus.video_ram.fill_tiles(&mut self.tiles);
-        self.draw_tiles();
-    }
+    pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
+        for (dst, src) in self.tiles.iter_mut().zip(tiles) {
+            *dst = src;
+        }
 
-    fn draw_tiles(&mut self) {
         let mut col_x_draw = X_DRAW_START;
         let mut row_y_draw: i32 = 0;
         let mut tile_num = 0;

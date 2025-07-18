@@ -1,13 +1,13 @@
+use crate::ui::Ui;
 use emu::battery::BatterySave;
 use emu::bus::Bus;
-use emu::config::{EmuConfig};
+use emu::config::EmuConfig;
 use emu::ctx::{EmuState, RunMode};
 use emu::save_state::{EmuSaveState, SaveStateEvent};
 use emu::{load_save_state, read_cart, Cpu, Emu};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 use std::{env, thread};
-use crate::ui::Ui;
 
 pub mod ui;
 
@@ -108,10 +108,8 @@ fn run(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(), Str
         emu.tick(ui)?;
 
         if emu.ctx.prev_frame != emu.ctx.ppu.current_frame {
-            ui.draw(&mut emu.ctx.ppu, &emu.cpu.bus);
+            ui.draw_debug(emu.cpu.bus.video_ram.iter_tiles());
         }
-
-        emu.ctx.prev_frame = emu.ctx.ppu.current_frame;
 
         let now = Instant::now();
         if emu.ctx.config.emulation.rewind_size > 0
