@@ -1,4 +1,3 @@
-use emu::bus::Bus;
 use emu::tile::{
     TileData, TILES_COUNT, TILE_BITS_COUNT, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_WIDTH,
 };
