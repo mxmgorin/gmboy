@@ -4,18 +4,26 @@ use sdl2::{AudioSubsystem, Sdl};
 
 pub struct GameAudio {
     device: AudioQueue<f32>,
+    max_queue_size: u32,
     _audio_subsystem: AudioSubsystem,
 }
 
 impl GameAudio {
     pub fn new(sdl: &Sdl) -> Self {
         let audio_subsystem = sdl.audio().unwrap();
-
         let desired_spec = AudioSpecDesired {
             freq: Some(SAMPLING_FREQ as i32),
             channels: Some(2),
             samples: Some(AUDIO_BUFFER_SIZE as u16),
         };
+
+        // Avoid overfilling the SDL2 audio queue
+        let bytes_per_sample = size_of::<f32>() as u32;
+        let bytes_per_second = desired_spec.freq.unwrap_or_default() as u32
+            * desired_spec.channels.unwrap_or_default() as u32
+            * bytes_per_sample;
+        let bytes_per_ms = bytes_per_second / 1000;
+        let max_queue_size = 100 * bytes_per_ms; // e.g., limit to 100 ms latency
 
         // creates the queue that is going to be used to update the
         // audio stream with new values during the main loop
@@ -24,13 +32,13 @@ impl GameAudio {
 
         Self {
             device,
-
+            max_queue_size,
             _audio_subsystem: audio_subsystem,
         }
     }
 
     pub fn update(&mut self, apu: &mut Apu) -> Result<(), String> {
-        if apu.output_ready() {
+        if apu.output_ready() && self.device.size() < self.max_queue_size {
             self.device.queue_audio(apu.take_output())?;
         }
 
