@@ -23,31 +23,27 @@ impl Mbc1 {
         }
     }
 
-    pub fn get_effective_rom_bank_number(&self, address: u16) -> u8 {
+    pub fn get_effective_rom_bank_number(&self, address: u16, is_multicart: bool) -> u8 {
         let bank = if address < 0x4000 {
-            // --- Fixed bank area ---
             match self.banking_mode {
                 BankingMode::RomBanking => 0,
                 BankingMode::RamBanking => {
-                    // In RAM banking mode, upper bits (bits 5–6) affect the 0x0000 area
-                    (self.data.ram_bank_number & 0b0000_0011) << 5
+                    if is_multicart {
+                        self.data.ram_bank_number << 4
+                    } else {
+                        self.data.ram_bank_number << 5
+                    }
                 }
             }
         } else {
-            // --- Switchable bank area ---
-            let mut bank = self.data.rom_bank_number as u8;
-
-            if bank & 0b0001_1111 == 0 {
-                bank = 1; // Bank 0 is never mapped here
+            if is_multicart {
+                (self.data.rom_bank_number as u8 & 0b1111) | self.data.ram_bank_number << 4
+            } else {
+                self.data.rom_bank_number as u8 | self.data.ram_bank_number << 5
             }
-
-            // Combine with upper bits (bits 5–6 from 0x4000–0x5FFF writes)
-            bank |= self.data.ram_bank_number << 5;
-
-            bank
         };
 
-        bank & self.get_rom_bank_mask()
+        bank
     }
 
     pub fn get_rom_bank_mask(&self) -> u8 {
@@ -58,31 +54,27 @@ impl Mbc1 {
     }
 
     pub fn get_rom_address(address: u16, bank_number: u8) -> usize {
-        (address as usize & 0x3FFF) + (bank_number as usize * ROM_BANK_SIZE)
+        (address as usize & 0x3FFF) | (bank_number as usize * ROM_BANK_SIZE)
     }
 }
 
 impl Mbc for Mbc1 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
-        let bank = self.get_effective_rom_bank_number(address);
-        let address = Mbc1::get_rom_address(address, bank);
+        let bank = self.get_effective_rom_bank_number(address, false);
+        let address = Mbc1::get_rom_address(address, bank) & (cart_data.bytes.len() - 1);
 
-        cart_data.bytes.get(address).copied().unwrap_or(0xFF)
+        cart_data.bytes[address]
     }
 
     fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {
+                let value = value & 0b0001_1111;
                 let value = if value == 0 { 1 } else { value };
-                self.data.rom_bank_number = value as u16 & 0b0001_1111;
+                self.data.rom_bank_number = value as u16;
             }
-            0x4000..=0x5FFF => match self.banking_mode {
-                BankingMode::RamBanking => self.data.ram_bank_number = value & 0b0000_0011,
-                BankingMode::RomBanking => {
-                    self.data.rom_bank_number |= (value as u16 & 0b0000_0011) << 5;
-                }
-            },
+            0x4000..=0x5FFF => self.data.ram_bank_number = value & 0b0000_0011,
             0x6000..=0x7FFF => match value & 0x0000_0001 {
                 0 => self.banking_mode = BankingMode::RomBanking,
                 1 => self.banking_mode = BankingMode::RamBanking,
@@ -138,7 +130,7 @@ pub mod tests {
         mbc.data.rom_bank_number = 0b10010;
         mbc.data.ram_bank_number = 0b01;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x4000);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x4000, false);
 
         assert_eq!(effective_rom_bank_number, 0b0110010);
     }
@@ -164,13 +156,13 @@ pub mod tests {
         mbc.data.ram_bank_number = 0b01;
         mbc.banking_mode = BankingMode::RomBanking;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000, false);
 
         assert_eq!(effective_rom_bank_number, 0b0000000);
 
         mbc.banking_mode = BankingMode::RamBanking;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000, false);
 
         assert_eq!(effective_rom_bank_number, 0b0100000);
     }
@@ -194,7 +186,7 @@ pub mod tests {
         mbc.banking_mode = BankingMode::RamBanking;
         let address = 0x72A7;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(address);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(address, false);
         let address = Mbc1::get_rom_address(address, effective_rom_bank_number);
 
         assert_eq!(effective_rom_bank_number, 0b1000100);

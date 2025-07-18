@@ -514,7 +514,6 @@ fn test_mbc1_rom_4mb() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_mbc1_rom_8mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_8Mb.gb");
@@ -523,7 +522,6 @@ fn test_mbc1_rom_8mb() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_mbc1_rom_16mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_16Mb.gb");
