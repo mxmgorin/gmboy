@@ -130,6 +130,25 @@ impl TryFrom<u8> for RomSize {
     }
 }
 
+impl RomSize {
+    pub fn banks_count(&self) -> usize {
+        match self {
+            RomSize::Rom32KiB => 2,
+            RomSize::Rom64KiB => 4,
+            RomSize::Rom128KiB => 8,
+            RomSize::Rom256KiB => 16,
+            RomSize::Rom512KiB => 32,
+            RomSize::Rom1MiB => 64,
+            RomSize::Rom2MiB => 128,
+            RomSize::Rom4MiB => 256,
+            RomSize::Rom8MiB => 512,
+            RomSize::Rom1_1MiB => 72,
+            RomSize::Rom1_2MiB => 80,
+            RomSize::Rom1_5MiB => 96,
+        }
+    }
+}
+
 impl RamSize {
     pub fn _number_of_banks(&self) -> usize {
         match self {

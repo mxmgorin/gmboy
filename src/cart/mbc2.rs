@@ -1,6 +1,7 @@
 use crate::mbc::{Mbc, MbcData};
 use crate::{CartData};
 use serde::{Deserialize, Serialize};
+use crate::header::RomSize;
 use crate::mbc1::BankingMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -8,10 +9,10 @@ pub struct Mbc2 {
     data: MbcData,
 }
 
-impl Default for Mbc2 {
-    fn default() -> Self {
+impl Mbc2 {
+    pub fn new(rom_size: RomSize) -> Self {
         Self {
-            data: MbcData::new(vec![0; 512 * 4]),
+            data: MbcData::new(vec![0; 512 * 4], rom_size),
         }
     }
 }
@@ -21,7 +22,7 @@ impl Mbc for Mbc2 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
         match address {
             0x0000..=0x3FFF => {
                 if address & 0x100 == 0 {
@@ -31,7 +32,7 @@ impl Mbc for Mbc2 {
                         0 => 1,
                         n => n,
                     };
-                    self.data.clamp_rom_bank_number(cart_data);
+                    self.data.clamp_rom_bank_number();
                 }
             }
             _ => {}

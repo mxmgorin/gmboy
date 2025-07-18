@@ -147,13 +147,13 @@ impl Mbc for Mbc3 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {
                 let bank_number = if value == 0 { 1 } else { value };
                 self.data.rom_bank_number = bank_number as u16;
-                self.data.clamp_rom_bank_number(cart_data);
+                self.data.clamp_rom_bank_number();
             }
             0x4000..=0x5FFF => {
                 match value {

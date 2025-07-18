@@ -4,6 +4,7 @@ use crate::mbc3::Mbc3;
 use crate::mbc5::Mbc5;
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
+use crate::header::RomSize;
 use crate::mbc1::BankingMode;
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
@@ -110,15 +111,17 @@ pub struct MbcData {
     pub rom_bank_number: u16,
     pub ram_bank_number: u8,
     pub ram_enabled: bool,
+    pub rom_banks_count: usize
 }
 
 impl MbcData {
-    pub fn new(ram_bytes: Vec<u8>) -> Self {
+    pub fn new(ram_bytes: Vec<u8>, rom_size: RomSize) -> Self {
         Self {
             ram_bytes,
             rom_bank_number: 1,
             ram_bank_number: 0,
             ram_enabled: false,
+            rom_banks_count: rom_size.banks_count(),
         }
     }
 
@@ -185,8 +188,7 @@ impl MbcData {
         Some(self.ram_bytes.clone())
     }
 
-    pub fn clamp_rom_bank_number(&mut self, cart_data: &CartData) {
-        let max_banks = (cart_data.bytes.len() / ROM_BANK_SIZE).max(1);
-        self.rom_bank_number = self.rom_bank_number % max_banks as u16;
+    pub fn clamp_rom_bank_number(&mut self) {
+        self.rom_bank_number = self.rom_bank_number % self.rom_banks_count as u16;
     }
 }

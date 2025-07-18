@@ -19,19 +19,19 @@ impl Mbc for Mbc5 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x2FFF => {
                 // Set lower 8 bits of the ROM bank
                 self.data.rom_bank_number = (self.data.rom_bank_number & 0x100) | value as u16;
-                self.data.clamp_rom_bank_number(cart_data);
+                self.data.clamp_rom_bank_number();
             }
             0x3000..=0x3FFF => {
                 // Set the 9th bit (bit 8)
                 self.data.rom_bank_number =
                     (self.data.rom_bank_number & 0xFF) | ((value as u16 & 0x01) << 8);
-                self.data.clamp_rom_bank_number(cart_data);
+                self.data.clamp_rom_bank_number();
             }
             0x4000..=0x5FFF => {
                 // RAM bank select (only lower 4 bits used)
