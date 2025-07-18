@@ -76,7 +76,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             last_cart_path: None,
-            load_save_state_at_start: true,
+            load_save_state_at_start: false,
             emulation: EmulationConfig {
                 rewind_size: 4000,
                 slow_speed: 50.0,
