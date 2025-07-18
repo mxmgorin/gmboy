@@ -16,13 +16,13 @@ It's not just an emulator — it's a playground for experimentation.
   Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
 
 - **Cartridge MBCs**  
-  Supports ROM loading with NO MBC, MBC1, MBC2, MBC3, MBC5 mappers.
+  Supports ROM loading with No MBC, MBC1, MBC2, MBC3, MBC5 mappers.
 
 - **SRAM Battery Saves**  
   Persistent save data using battery-backed SRAM.
 
 - **Input Handling**  
-  Emulates all standard Game Boy button inputs (D-Pad, A, B, Start, Select)..
+  Emulates all standard Game Boy button inputs (D-Pad, A, B, Start, Select).
 
 ## Features
 
@@ -44,7 +44,7 @@ It's not just an emulator — it's a playground for experimentation.
 ## Test Results
 
 - ### SM83: 
-Passes all of 356000 tests successfully ✅
+Passes all of 356 000 tests successfully ✅
 
 - ### Blargg
 
@@ -111,8 +111,6 @@ Passes all of 356000 tests successfully ✅
 | rom_16Mb.gb ✅               |                   |                    |
 | rom_512kb.gb ✅              |                   |                    |
 
-
-
 ## ⌨️ Keybindings
 
 - ### Controls
@@ -130,22 +128,20 @@ Passes all of 356000 tests successfully ✅
 
 - ### Emulator Functions
 
-| Action                      | Keyboard                            | Gamepad        |
-|-----------------------------|-------------------------------------|----------------|
-| Toggle **Rewind** (hold)    | Left Ctrl / Right Ctrl              | Y              |
-| Toggle **Turbo** (hold)     | Tab                                 | Right Shoulder |
-| Toggle **Slow motion** (hold)| Left Shift / Right Shift           | Left Shoulder  |
-| Pause                       | Space                               |                |
-| Restart                     | R                                   |                |
-| Increase screen scale       | + (Equals)                          |                |
-| Decrease screen scale       | - (Minus)                           |                |
-| Toggle fullscreen           | F                                   |                |
-| Mute audio                  | M                                   |                |
-| Cycle color palettes        | P                                   | X              |
-| Load save state             | F1–F19                              | Right Trigger  |
-| Create save state           | 1–9                                 | Left Trigger   |
-
-
+| Action                        | Keyboard                            | Gamepad           |
+|-------------------------------|-------------------------------------|-------------------|
+| Toggle **Rewind** (hold)      | Left Ctrl / Right Ctrl              | Y                 |
+| Toggle **Turbo** (hold)       | Tab                                 | Right Shoulder    |
+| Toggle **Slow motion** (hold) | Left Shift / Right Shift           | Left Shoulder     |
+| Pause                         | Space                               |                   |
+| Restart                       | R                                   |                   |
+| Increase screen scale         | + (Equals)                          |                   |
+| Decrease screen scale         | - (Minus)                           |                   |
+| Toggle fullscreen             | F                                   |                   |
+| Mute audio                    | M                                   |                   |
+| Cycle color palettes          | P                                   | X                 |
+| Load save state (1-9)         | F1–F19                              | Right Trigger (1) |
+| Create save state (1-9)       | 1–9                                 | Left Trigger (1)  |
 
 ## 🛠️ Building
 
