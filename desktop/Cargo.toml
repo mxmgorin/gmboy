@@ -1,0 +1,10 @@
+[package]
+name = "desktop"
+version = "0.1.0"
+edition = "2021"
+authors = ["troidem <mxmgorin@gmail.com>"]
+
+[dependencies]
+emu = { path = "../emu" }
+rfd = "0.13"
+sdl2 = { version = "0.37", default-features = false, features = ["unsafe_textures"] } #"bundled"

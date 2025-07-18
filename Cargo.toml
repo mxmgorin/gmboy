@@ -1,30 +1,7 @@
-[package]
-name = "gmboy"
-version = "0.1.0"
-edition = "2021"
-authors = ["troidem <mxmgorin@gmail.com>"]
+[workspace]
+members = [
+    "emu",
+    "desktop",
+]
 
-[features]
-default = []
-
-[dependencies.sdl2]
-version = "0.37"
-default-features = false
-features = ["unsafe_textures"] #"bundled"
-
-[dependencies]
-serde_json = "1.0.140"
-serde = { version = "1.0.219", features = ["derive"] }
-bincode = "1.3"
-crc = "1.3"
-rfd = "0.13"
-
-[dev-dependencies]
-criterion = "0.6.0"
-
-[[bench]]
-name = "bench"
-harness = false
-
-# This section is not strictly necessary unless you're using specific build dependencies
-[build-dependencies]
+resolver = "2"
