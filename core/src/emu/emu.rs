@@ -7,11 +7,11 @@ use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
 use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
 use crate::emu::save_state::EmuSaveState;
+use crate::ppu::tile::Pixel;
+use crate::ppu::CYCLES_PER_FRAME;
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
-use crate::ppu::CYCLES_PER_FRAME;
-use crate::ppu::tile::Pixel;
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
@@ -97,6 +97,27 @@ impl Emu {
             cpu_without_bus: cpu.clone_without_bus(),
             bus_without_cart: cpu.bus.clone_without_cart(),
             cart_mbc: cpu.bus.cart.mbc.clone(),
+        }
+    }
+
+    pub fn shutdown(self) {
+        if let Err(err) = self.ctx.config.save().map_err(|e| e.to_string()) {
+            eprint!("Failed config.save: {err}");
+        }
+
+        let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+
+        if let Some(bytes) = self.cpu.bus.cart.dump_ram() {
+            if let Err(err) = BatterySave::from_bytes(bytes)
+                .save_file(&name)
+                .map_err(|e| e.to_string())
+            {
+                eprint!("Failed BatterySave: {err}");
+            };
+        }
+
+        if let Err(err) = self.create_save_state(&self.cpu).save_file(&name, 0) {
+            eprintln!("Failed save_state: {:?}", err);
         }
     }
 }

@@ -42,8 +42,9 @@ fn main() {
 
     if let Err(err) = run(&mut emu, &mut ui, cart_path.map(|x| x.into())) {
         eprintln!("Run failed: {}", err);
-        std::process::exit(1);
     }
+
+    emu.shutdown();
 }
 
 fn run(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(), String> {
@@ -71,7 +72,6 @@ fn run(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(), Str
         }
 
         if emu.ctx.state == EmuState::Quit {
-            emu.ctx.config.save().map_err(|e| e.to_string())?;
             break;
         }
 
@@ -149,18 +149,6 @@ fn run(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(), Str
                 }
             }
         }
-    }
-
-    let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
-
-    if let Some(bytes) = emu.cpu.bus.cart.dump_ram() {
-        BatterySave::from_bytes(bytes)
-            .save_file(&name)
-            .map_err(|e| e.to_string())?;
-    }
-
-    if let Err(err) = emu.create_save_state(&emu.cpu).save_file(&name, 0) {
-        eprintln!("Failed save_state: {:?}", err);
     }
 
     Ok(())
