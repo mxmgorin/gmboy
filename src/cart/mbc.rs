@@ -4,7 +4,7 @@ use crate::mbc3::Mbc3;
 use crate::mbc5::Mbc5;
 use crate::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
-use crate::header::RomSize;
+use crate::header::{RomSize};
 use crate::mbc1::BankingMode;
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;

@@ -1,7 +1,7 @@
 use crate::cart::header::{CartHeader, CartType, RamSize, RomSize};
 use crate::cart::mbc::{Mbc, MbcVariant};
 use crate::mbc::{
-    MbcData, RAM_EXTERNAL_END_ADDR, RAM_EXTERNAL_START_ADDR, ROM_BANK_NON_ZERO_END_ADDR,
+    RAM_EXTERNAL_END_ADDR, RAM_EXTERNAL_START_ADDR, ROM_BANK_NON_ZERO_END_ADDR,
     ROM_BANK_ZERO_START_ADDR,
 };
 use crate::mbc1::Mbc1;
@@ -28,13 +28,12 @@ impl Cart {
         let cart_type = data.get_cart_type()?;
         let ram_size = data.get_ram_size()?;
         let rom_size = data.get_rom_size()?;
-        let ram_bytes = vec![0; ram_size.bytes_size()];
 
         let mbc = match cart_type {
             CartType::RomOnly => MbcVariant::NoMbc,
-            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(ram_bytes),
+            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(vec![0; ram_size.bytes_size()]),
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
-                MbcVariant::Mbc1(Mbc1::new(MbcData::new(ram_bytes, rom_size)))
+                MbcVariant::Mbc1(Mbc1::new(ram_size, rom_size))
             }
             CartType::Mbc2 | CartType::Mbc2Battery => {
                 MbcVariant::Mbc2(Mbc2::new(rom_size))
@@ -47,11 +46,11 @@ impl Cart {
             | CartType::Mbc3Ram
             | CartType::Mbc5RamBattery
             | CartType::Mbc5RumbleRamBattery => {
-                MbcVariant::Mbc5(Mbc5::new(MbcData::new(ram_bytes, rom_size)))
+                MbcVariant::Mbc5(Mbc5::new(ram_size, rom_size))
             }
             CartType::Mbc3RamBattery
             | CartType::Mbc3TimerBattery
-            | CartType::Mbc3TimerRamBattery => MbcVariant::Mbc3(Mbc3::new(MbcData::new(ram_bytes, rom_size))),
+            | CartType::Mbc3TimerRamBattery => MbcVariant::Mbc3(Mbc3::new(ram_size, rom_size)),
             CartType::Mmm01
             | CartType::Mmm01Ram
             | CartType::Mmm01RamBattery

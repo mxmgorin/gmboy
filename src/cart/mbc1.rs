@@ -1,6 +1,7 @@
 use crate::cart::mbc::{Mbc, MbcData};
 use crate::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
+use crate::header::{RamSize, RomSize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BankingMode {
@@ -15,9 +16,9 @@ pub struct Mbc1 {
 }
 
 impl Mbc1 {
-    pub fn new(inner: MbcData) -> Self {
+    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
         Self {
-            data: inner,
+            data: MbcData::new(vec![0; ram_size.bytes_size()], rom_size),
             banking_mode: BankingMode::RomBanking,
         }
     }
@@ -113,10 +114,9 @@ impl Mbc for Mbc1 {
 
 #[cfg(test)]
 pub mod tests {
-    use crate::mbc::MbcData;
     use crate::mbc1::{BankingMode, Mbc1};
     use crate::{CartData, ROM_BANK_SIZE};
-    use crate::header::RomSize;
+    use crate::header::{RamSize, RomSize};
 
     #[test]
     pub fn test_get_rom_bank_mask_256kib() {
@@ -138,7 +138,8 @@ pub mod tests {
     pub fn test_effective_rom_bank_number_0x40000() {
         let cart_date = CartData::new(vec![0; ROM_BANK_SIZE * 50]);
         let rom_size = RomSize::Rom1MiB;
-        let mut mbc = Mbc1::new(MbcData::new(vec![0; ROM_BANK_SIZE], rom_size));
+        let ram_size = RamSize::Ram8KiB;
+        let mut mbc = Mbc1::new(ram_size, rom_size);
         mbc.data.rom_bank_number = 0b10010;
         mbc.data.ram_bank_number = 0b01;
 
@@ -162,8 +163,9 @@ pub mod tests {
         // Effective ROM bank number
         // (reading 0x0000-0x3FFF, MODE = 0b1) 0b
         let rom_size = RomSize::Rom1MiB;
+        let ram_size = RamSize::Ram8KiB;
         let cart_date = CartData::new(vec![0; ROM_BANK_SIZE * 1024]);
-        let mut mbc = Mbc1::new(MbcData::new(vec![0; ROM_BANK_SIZE], rom_size));
+        let mut mbc = Mbc1::new(ram_size, rom_size);
         mbc.data.rom_bank_number = 0b10010;
         mbc.data.ram_bank_number = 0b01;
         mbc.banking_mode = BankingMode::RomBanking;
@@ -191,8 +193,9 @@ pub mod tests {
         // Address being read 0b0111 0010 1010 0111 (= 0x72A7)
         // Actual physical ROM address 0b1 0001 0011 0010 1010 0111 (= 0x1132A7)
         let rom_size = RomSize::Rom1MiB;
+        let ram_size = RamSize::Ram8KiB;
         let cart_date = CartData::new(vec![0; ROM_BANK_SIZE * 1024]);
-        let mut mbc = Mbc1::new(MbcData::new(vec![0; ROM_BANK_SIZE], rom_size));
+        let mut mbc = Mbc1::new(ram_size, rom_size);
         mbc.data.rom_bank_number = 0b00100;
         mbc.data.ram_bank_number = 0b10;
         mbc.banking_mode = BankingMode::RamBanking;

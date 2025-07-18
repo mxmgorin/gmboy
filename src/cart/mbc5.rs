@@ -1,7 +1,8 @@
+use crate::header::{RamSize, RomSize};
 use crate::mbc::{Mbc, MbcData};
+use crate::mbc1::BankingMode;
 use crate::CartData;
 use serde::{Deserialize, Serialize};
-use crate::mbc1::BankingMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc5 {
@@ -9,8 +10,10 @@ pub struct Mbc5 {
 }
 
 impl Mbc5 {
-    pub fn new(data: MbcData) -> Self {
-        Self { data }
+    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
+        Self {
+            data: MbcData::new(vec![0; ram_size.bytes_size()], rom_size),
+        }
     }
 }
 

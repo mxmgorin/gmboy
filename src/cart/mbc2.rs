@@ -1,7 +1,7 @@
 use crate::mbc::{Mbc, MbcData};
 use crate::{CartData};
 use serde::{Deserialize, Serialize};
-use crate::header::RomSize;
+use crate::header::{RomSize};
 use crate::mbc1::BankingMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

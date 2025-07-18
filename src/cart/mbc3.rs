@@ -2,6 +2,7 @@ use crate::mbc::{Mbc, MbcData};
 use crate::CartData;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
+use crate::header::{RamSize, RomSize};
 use crate::mbc1::BankingMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,9 +135,9 @@ impl RtcRegisters {
 }
 
 impl Mbc3 {
-    pub fn new(data: MbcData) -> Self {
+    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
         Self {
-            data,
+            data: MbcData::new(vec![0; ram_size.bytes_size()], rom_size),
             rtc: Default::default(),
         }
     }
