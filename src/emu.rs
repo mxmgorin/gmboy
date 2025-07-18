@@ -30,27 +30,27 @@ pub struct EmuSaveState {
 }
 
 impl EmuSaveState {
-    pub fn save(&self, game_name: &str, index: usize) -> std::io::Result<()> {
+    pub fn save(&self, game_name: &str, index: usize) -> Result<(), String> {
         let path = Self::generate_path(game_name, index);
 
         if let Some(parent) = Path::new(&path).parent() {
-            fs::create_dir_all(parent)?;
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
 
-        let encoded: Vec<u8> = bincode::serialize(self).expect("Failed to serialize state");
-        let mut file = File::create(path)?;
-        file.write_all(&encoded)?;
+        let encoded: Vec<u8> = bincode::serialize(self).map_err(|e| e.to_string())?;
+        let mut file = File::create(path).map_err(|e| e.to_string())?;
+        file.write_all(&encoded).map_err(|e| e.to_string())?;
 
         Ok(())
     }
 
-    pub fn load(game_name: &str, index: usize) -> std::io::Result<Self> {
+    pub fn load(game_name: &str, index: usize) -> Result<Self, String> {
         let path = Self::generate_path(game_name, index);
-        let mut file = File::open(path)?;
+        let mut file = File::open(path).map_err(|e| e.to_string())?;
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer)?;
+        file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
+        let decoded = bincode::deserialize(&buffer).map_err(|e| e.to_string())?;
 
-        let decoded = bincode::deserialize(&buffer).expect("Failed to deserialize state");
         Ok(decoded)
     }
 
