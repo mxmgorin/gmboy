@@ -126,6 +126,14 @@ pub mod tests {
     }
 
     #[test]
+    pub fn test_get_rom_bank_mask_512kib() {
+        let cart_date = CartData::new(vec![0; 1024 * 512]); // 4 Mbit
+        let mask = Mbc1::get_rom_bank_mask(&cart_date);
+
+        assert_eq!(mask, 0b00011111);
+    }
+
+    #[test]
     pub fn test_effective_rom_bank_number_0x40000() {
         let cart_date = CartData::new(vec![0; ROM_BANK_SIZE * 50]);
         let mut mbc = Mbc1::new(MbcData::new(vec![0; ROM_BANK_SIZE]));
