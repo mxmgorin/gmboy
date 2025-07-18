@@ -6,13 +6,13 @@ use std::{env, fs, io};
 use std::borrow::Cow;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Config {
+pub struct EmuConfig {
     pub last_cart_path: Option<String>,
     pub load_save_state_at_start: bool,
     pub emulation: EmulationConfig,
     pub graphics: GraphicsConfig,
 }
-impl Config {
+impl EmuConfig {
     pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
         let path = Path::new(self.last_cart_path.as_ref()?);
         
@@ -44,7 +44,7 @@ pub struct Pallet {
     pub hex_colors: [String; 4],
 }
 
-impl Config {
+impl EmuConfig {
     pub fn from_file(path: &str) -> io::Result<Self> {
         let data = fs::read_to_string(path)?;
         let config: Self = serde_json::from_str(&data)?;
@@ -53,7 +53,7 @@ impl Config {
     }
 
     pub fn save(&self) -> Result<(), io::Error> {
-        let save_path = Config::default_path();
+        let save_path = EmuConfig::default_path();
 
         // Open file in write mode, truncating (overwriting) any existing content
         let mut file = File::create(save_path)?;
@@ -72,7 +72,7 @@ impl Config {
     }
 }
 
-impl Default for Config {
+impl Default for EmuConfig {
     fn default() -> Self {
         Self {
             last_cart_path: None,

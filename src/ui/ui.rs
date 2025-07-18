@@ -1,6 +1,4 @@
 use crate::bus::Bus;
-use crate::config::GraphicsConfig;
-use crate::emu::RunMode;
 use crate::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use crate::tile::PixelColor;
 use crate::ui::audio::GameAudio;
@@ -15,6 +13,8 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::{EventPump, GameControllerSubsystem};
+use crate::emu::config::GraphicsConfig;
+use crate::emu::ctx::RunMode;
 
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;

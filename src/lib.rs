@@ -2,13 +2,11 @@ pub mod apu;
 pub mod auxiliary;
 pub mod bus;
 pub mod cart;
-pub mod config;
 pub mod cpu;
 pub mod debugger;
 pub mod emu;
 pub mod ppu;
 pub mod ui;
-pub mod battery;
 
 pub use apu::*;
 pub use cart::*;

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use crate::bus::Bus;
-use crate::config::GraphicsConfig;
-use crate::emu::RunMode;
+use crate::emu::config::GraphicsConfig;
+use crate::emu::ctx::RunMode;
 
 pub trait UiEventHandler {
     fn on_event(&mut self, bus: &mut Bus, event: UiEvent);

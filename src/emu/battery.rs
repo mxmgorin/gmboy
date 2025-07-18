@@ -14,7 +14,7 @@ impl BatterySave {
         Self { ram_bytes: bytes }
     }
 
-    pub fn save(&self, name: &str) -> std::io::Result<()> {
+    pub fn save_file(&self, name: &str) -> std::io::Result<()> {
         let path = Self::generate_path(name);
 
         if let Some(parent) = Path::new(&path).parent() {
@@ -27,7 +27,7 @@ impl BatterySave {
         Ok(())
     }
 
-    pub fn load(name: &str) -> std::io::Result<Self> {
+    pub fn load_file(name: &str) -> std::io::Result<Self> {
         let path = Self::generate_path(name);
         let mut file = File::open(path)?;
         let mut buffer = Vec::new();

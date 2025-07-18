@@ -1,70 +1,21 @@
-use crate::auxiliary::clock::{spin_wait, Clock};
+use crate::auxiliary::clock::spin_wait;
 use crate::auxiliary::joypad::Joypad;
-use crate::battery::BatterySave;
 use crate::bus::Bus;
 use crate::cart::Cart;
-use crate::config::Config;
-use crate::cpu::{Cpu, CpuCallback, DebugCtx};
-use crate::debugger::{CpuLogType, Debugger};
-use crate::mbc::MbcVariant;
-use crate::ppu::Ppu;
-use crate::ui::events::{SaveStateEvent, UiEvent, UiEventHandler};
+use crate::cpu::Cpu;
+use crate::emu::battery::BatterySave;
+use crate::emu::config::EmuConfig;
+use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
+use crate::emu::save_state::EmuSaveState;
+use crate::ui::events::SaveStateEvent;
 use crate::ui::Ui;
 use crate::CYCLES_PER_FRAME;
-use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
-use std::fs::File;
-use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
-use std::{env, fs, thread};
+use std::{fs, thread};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EmuSaveState {
-    pub cpu_without_bus: Cpu,
-    pub bus_without_cart: Bus,
-    pub cart_mbc: MbcVariant,
-}
-
-impl EmuSaveState {
-    pub fn save(&self, game_name: &str, index: usize) -> Result<(), String> {
-        let path = Self::generate_path(game_name, index);
-
-        if let Some(parent) = Path::new(&path).parent() {
-            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-        }
-
-        let encoded: Vec<u8> = bincode::serialize(self).map_err(|e| e.to_string())?;
-        let mut file = File::create(path).map_err(|e| e.to_string())?;
-        file.write_all(&encoded).map_err(|e| e.to_string())?;
-
-        Ok(())
-    }
-
-    pub fn load(game_name: &str, index: usize) -> Result<Self, String> {
-        let path = Self::generate_path(game_name, index);
-        let mut file = File::open(path).map_err(|e| e.to_string())?;
-        let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
-        let decoded = bincode::deserialize(&buffer).map_err(|e| e.to_string())?;
-
-        Ok(decoded)
-    }
-
-    pub fn generate_path(game_name: &str, index: usize) -> PathBuf {
-        let exe_path = env::current_exe().expect("Failed to get executable path");
-        let exe_dir = exe_path
-            .parent()
-            .expect("Failed to get executable directory");
-
-        exe_dir
-            .join("save_states")
-            .join(format!("{game_name}_{index}.state"))
-    }
-}
 
 pub struct Emu {
     pub ctx: EmuCtx,
@@ -72,124 +23,8 @@ pub struct Emu {
     pub ui: Ui,
 }
 
-pub struct EmuCtx {
-    pub ppu: Ppu,
-    pub clock: Clock,
-    pub debugger: Option<Debugger>,
-    pub speed_multiplier: f64,
-    pub state: EmuState,
-    pub config: Config,
-    pub prev_frame: usize,
-    pub last_fps_timestamp: Duration,
-    pub rewind_buffer: VecDeque<EmuSaveState>,
-    pub last_rewind_save: Instant,
-    pub pending_save_state: Option<(SaveStateEvent, usize)>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum EmuState {
-    WaitCart,
-    Running(RunMode),
-    Paused,
-    LoadCart(PathBuf),
-    Quit,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum RunMode {
-    Normal,
-    Slow,
-    Turbo,
-    Rewind,
-}
-
-impl EmuCtx {
-    pub fn new(config: Config) -> EmuCtx {
-        Self {
-            ppu: Ppu::default(),
-            clock: Clock::default(),
-            debugger: Some(Debugger::new(CpuLogType::None, false)),
-            speed_multiplier: 1.0,
-            state: EmuState::WaitCart,
-            config,
-            prev_frame: 0,
-            last_fps_timestamp: Default::default(),
-            rewind_buffer: Default::default(),
-            last_rewind_save: Instant::now(),
-            pending_save_state: None,
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.prev_frame = 0;
-        self.last_fps_timestamp = Default::default();
-        self.clock = Clock::default();
-    }
-}
-
-impl CpuCallback for EmuCtx {
-    fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus) {
-        self.clock.m_cycles(m_cycles, bus, &mut self.ppu);
-    }
-
-    fn update_serial(&mut self, cpu: &mut Cpu) {
-        if let Some(debugger) = self.debugger.as_mut() {
-            debugger.update_serial(cpu);
-        }
-    }
-
-    fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {
-        if let Some(debugger) = self.debugger.as_mut() {
-            debugger.print_gb_doctor_info(cpu);
-
-            if let Some(ctx) = ctx {
-                debugger.print_cpu_info(
-                    &self.clock,
-                    cpu,
-                    ctx.pc,
-                    &ctx.instruction,
-                    ctx.opcode,
-                    &ctx.fetched_data,
-                );
-            }
-        }
-    }
-}
-
-impl UiEventHandler for EmuCtx {
-    fn on_event(&mut self, _bus: &mut Bus, event: UiEvent) {
-        match event {
-            UiEvent::Quit => self.state = EmuState::Quit,
-            UiEvent::FileDropped(path) => self.state = EmuState::LoadCart(path),
-            UiEvent::Pause => {
-                if self.state == EmuState::Paused {
-                    self.state = EmuState::Running(RunMode::Normal);
-                } else {
-                    self.state = EmuState::Paused;
-                }
-            }
-            UiEvent::Restart => {
-                if let Some(path) = &self.config.last_cart_path {
-                    self.state = EmuState::LoadCart(PathBuf::from(path));
-                }
-            }
-            UiEvent::ConfigChanged(config) => self.config.graphics = config,
-            UiEvent::ModeChanged(mode) => self.state = EmuState::Running(mode),
-            UiEvent::Mute => self.config.emulation.is_muted = !self.config.emulation.is_muted,
-            UiEvent::SaveState(event, index) => self.pending_save_state = Some((event, index)),
-            UiEvent::PickFile => {
-                if self.state == EmuState::WaitCart || self.state == EmuState::Paused {
-                    if let Some(path) = rfd::FileDialog::new().pick_file() {
-                        self.state = EmuState::LoadCart(path);
-                    }
-                }
-            }
-        }
-    }
-}
-
 impl Emu {
-    pub fn new(config: Config) -> Result<Self, String> {
+    pub fn new(config: EmuConfig) -> Result<Self, String> {
         Ok(Self {
             cpu: Cpu::new(Bus::with_bytes(vec![])),
             ui: Ui::new(config.graphics.clone(), false)?,
@@ -297,7 +132,7 @@ impl Emu {
 
                 if self.ctx.config.load_save_state_at_start {
                     let name = self.ctx.config.get_last_cart_file_stem().unwrap();
-                    let save_state = EmuSaveState::load(&name, 0);
+                    let save_state = EmuSaveState::load_file(&name, 0);
 
                     if let Ok(save_state) = save_state {
                         load_save_state(self, save_state);
@@ -338,12 +173,12 @@ impl Emu {
                     SaveStateEvent::Create => {
                         let save_state = self.create_save_state(&self.cpu);
 
-                        if let Err(err) = save_state.save(&name, index) {
+                        if let Err(err) = save_state.save_file(&name, index) {
                             eprintln!("Failed save_state: {:?}", err);
                         }
                     }
                     SaveStateEvent::Load => {
-                        let save_state = EmuSaveState::load(&name, index);
+                        let save_state = EmuSaveState::load_file(&name, index);
 
                         let Ok(save_state) = save_state else {
                             eprintln!("Failed load save_state: {:?}", save_state);
@@ -356,16 +191,15 @@ impl Emu {
             }
         }
 
+        let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+
         if let Some(bytes) = self.cpu.bus.cart.dump_ram() {
-            let name = self.ctx.config.get_last_cart_file_stem().unwrap();
-            let save = BatterySave::from_bytes(bytes);
-            save.save(&name).map_err(|e| e.to_string())?;
+            BatterySave::from_bytes(bytes)
+                .save_file(&name)
+                .map_err(|e| e.to_string())?;
         }
 
-        let name = self.ctx.config.get_last_cart_file_stem().unwrap();
-        let save_state = self.create_save_state(&self.cpu);
-
-        if let Err(err) = save_state.save(&name, 0) {
+        if let Err(err) = self.create_save_state(&self.cpu).save_file(&name, 0) {
             eprintln!("Failed save_state: {:?}", err);
         }
 
@@ -402,7 +236,7 @@ pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
         .to_str()
         .unwrap();
 
-    let Ok(save) = BatterySave::load(file_name) else {
+    let Ok(save) = BatterySave::load_file(file_name) else {
         return Ok(cart);
     };
 
