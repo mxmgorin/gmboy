@@ -101,14 +101,14 @@ Passes all of 356000 tests successfully ✅
 | bits_bank2.gb ✅              | bits_romb.gb ✅    | rom_1Mb.gb ✅       |
 | bits_mode.gb ✅               | bits_unused.gb ✅  | rom_2Mb.gb ✅       |
 | bits_ramg.gb ✅               | ram.gb ✅          | rom_4Mb.gb ✅       |
-| multicart_rom_8Mb.gb ❌      | rom_1Mb.gb ✅      | rom_8Mb.gb ✅       |
+| multicart_rom_8Mb.gb ✅      | rom_1Mb.gb ✅      | rom_8Mb.gb ✅       |
 | ram_64kb.gb ✅               | rom_2Mb.gb ✅      | rom_16Mb.gb ✅      |
 | ram_256kb.gb ✅              | rom_512kb.gb ✅    | rom_32Mb.gb ✅      |
 | rom_1Mb.gb ✅                |                   |                    |
 | rom_2Mb.gb ✅                |                   |                    |
 | rom_4Mb.gb ✅                |                   |                    |
-| rom_8Mb.gb ❌                |                   |                    |
-| rom_16Mb.gb ❌               |                   |                    |
+| rom_8Mb.gb ✅                |                   |                    |
+| rom_16Mb.gb ✅               |                   |                    |
 | rom_512kb.gb ✅              |                   |                    |
 
 

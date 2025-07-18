@@ -33,7 +33,7 @@ impl Cart {
             CartType::RomOnly => MbcVariant::NoMbc,
             CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(vec![0; ram_size.bytes_size()]),
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
-                MbcVariant::Mbc1(Mbc1::new(ram_size, rom_size))
+                MbcVariant::Mbc1(Mbc1::new(ram_size, rom_size, &data.bytes))
             }
             CartType::Mbc2 | CartType::Mbc2Battery => {
                 MbcVariant::Mbc2(Mbc2::new(rom_size))

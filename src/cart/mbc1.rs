@@ -13,22 +13,44 @@ pub enum BankingMode {
 pub struct Mbc1 {
     data: MbcData,
     banking_mode: BankingMode,
+    is_multicart: bool,
 }
 
 impl Mbc1 {
-    pub fn new(ram_size: RamSize, rom_size: RomSize) -> Self {
+    pub fn new(ram_size: RamSize, rom_size: RomSize, rom_bytes: &[u8]) -> Self {
         Self {
             data: MbcData::new(vec![0; ram_size.bytes_size()], rom_size),
             banking_mode: BankingMode::RomBanking,
+            is_multicart: Mbc1::is_multicart(rom_bytes),
         }
     }
 
-    pub fn get_effective_rom_bank_number(&self, address: u16, is_multicart: bool) -> u8 {
+    fn is_multicart(rom_bytes: &[u8]) -> bool {
+        // Only 8 Mbit MBC1 multicarts exist
+        if rom_bytes.len() != 1_048_576 {
+            return false;
+        }
+
+        let nintendo_logo_count = (0..4)
+            .map(|page| {
+                let start = page * 0x40000 + 0x0104;
+                let end = start + 0x30;
+
+                crc::crc32::checksum_ieee(&rom_bytes[start..end])
+            })
+            .filter(|&checksum| checksum == 0x4619_5417)
+            .count();
+
+        // A multicart should have at least two games + a menu with valid logo data
+        nintendo_logo_count >= 3
+    }
+
+    pub fn get_effective_rom_bank_number(&self, address: u16) -> u8 {
         let bank = if address < 0x4000 {
             match self.banking_mode {
                 BankingMode::RomBanking => 0,
                 BankingMode::RamBanking => {
-                    if is_multicart {
+                    if self.is_multicart {
                         self.data.ram_bank_number << 4
                     } else {
                         self.data.ram_bank_number << 5
@@ -36,7 +58,7 @@ impl Mbc1 {
                 }
             }
         } else {
-            if is_multicart {
+            if self.is_multicart {
                 (self.data.rom_bank_number as u8 & 0b1111) | self.data.ram_bank_number << 4
             } else {
                 self.data.rom_bank_number as u8 | self.data.ram_bank_number << 5
@@ -60,7 +82,7 @@ impl Mbc1 {
 
 impl Mbc for Mbc1 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
-        let bank = self.get_effective_rom_bank_number(address, false);
+        let bank = self.get_effective_rom_bank_number(address);
         let address = Mbc1::get_rom_address(address, bank) & (cart_data.bytes.len() - 1);
 
         cart_data.bytes[address]
@@ -108,7 +130,7 @@ pub mod tests {
 
     #[test]
     pub fn test_get_rom_bank_mask_256kib() {
-        let mbc = Mbc1::new(RamSize::Ram32KiB, RomSize::Rom256KiB);
+        let mbc = Mbc1::new(RamSize::Ram32KiB, RomSize::Rom256KiB, &vec![]);
         let mask = mbc.get_rom_bank_mask();
 
         assert_eq!(mask, 0b00001111);
@@ -116,7 +138,7 @@ pub mod tests {
 
     #[test]
     pub fn test_get_rom_bank_mask_512kib() {
-        let mbc = Mbc1::new(RamSize::Ram32KiB, RomSize::Rom512KiB);
+        let mbc = Mbc1::new(RamSize::Ram32KiB, RomSize::Rom512KiB, &vec![]);
         let mask = mbc.get_rom_bank_mask();
 
         assert_eq!(mask, 0b00011111);
@@ -126,11 +148,11 @@ pub mod tests {
     pub fn test_effective_rom_bank_number_0x40000() {
         let rom_size = RomSize::Rom1MiB;
         let ram_size = RamSize::Ram8KiB;
-        let mut mbc = Mbc1::new(ram_size, rom_size);
+        let mut mbc = Mbc1::new(ram_size, rom_size, &vec![]);
         mbc.data.rom_bank_number = 0b10010;
         mbc.data.ram_bank_number = 0b01;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x4000, false);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x4000);
 
         assert_eq!(effective_rom_bank_number, 0b0110010);
     }
@@ -151,18 +173,18 @@ pub mod tests {
         // (reading 0x0000-0x3FFF, MODE = 0b1) 0b
         let rom_size = RomSize::Rom1MiB;
         let ram_size = RamSize::Ram8KiB;
-        let mut mbc = Mbc1::new(ram_size, rom_size);
+        let mut mbc = Mbc1::new(ram_size, rom_size, &vec![]);
         mbc.data.rom_bank_number = 0b10010;
         mbc.data.ram_bank_number = 0b01;
         mbc.banking_mode = BankingMode::RomBanking;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000, false);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000);
 
         assert_eq!(effective_rom_bank_number, 0b0000000);
 
         mbc.banking_mode = BankingMode::RamBanking;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000, false);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(0x0000);
 
         assert_eq!(effective_rom_bank_number, 0b0100000);
     }
@@ -180,13 +202,13 @@ pub mod tests {
         // Actual physical ROM address 0b1 0001 0011 0010 1010 0111 (= 0x1132A7)
         let rom_size = RomSize::Rom4MiB;
         let ram_size = RamSize::Ram8KiB;
-        let mut mbc = Mbc1::new(ram_size, rom_size);
+        let mut mbc = Mbc1::new(ram_size, rom_size, &vec![]);
         mbc.data.rom_bank_number = 0b00100;
         mbc.data.ram_bank_number = 0b10;
         mbc.banking_mode = BankingMode::RamBanking;
         let address = 0x72A7;
 
-        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(address, false);
+        let effective_rom_bank_number = mbc.get_effective_rom_bank_number(address);
         let address = Mbc1::get_rom_address(address, effective_rom_bank_number);
 
         assert_eq!(effective_rom_bank_number, 0b1000100);
