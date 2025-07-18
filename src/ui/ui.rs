@@ -260,6 +260,9 @@ impl Ui {
                         event_handler.on_event(bus, evt);
                     }
                 }
+                Event::MouseButtonDown { .. } => {
+                    event_handler.on_event(bus, UiEvent::PickFile);
+                }
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,

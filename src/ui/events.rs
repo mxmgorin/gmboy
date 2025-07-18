@@ -16,6 +16,7 @@ pub enum UiEvent {
     ModeChanged(RunMode),
     Mute,
     SaveState(SaveStateEvent, usize),
+    PickFile,
 }
 
 pub enum SaveStateEvent {

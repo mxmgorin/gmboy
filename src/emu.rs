@@ -177,6 +177,13 @@ impl UiEventHandler for EmuCtx {
             UiEvent::ModeChanged(mode) => self.state = EmuState::Running(mode),
             UiEvent::Mute => self.config.emulation.is_muted = !self.config.emulation.is_muted,
             UiEvent::SaveState(event, index) => self.pending_save_state = Some((event, index)),
+            UiEvent::PickFile => {
+                if self.state == EmuState::WaitCart || self.state == EmuState::Paused {
+                    if let Some(path) = rfd::FileDialog::new().pick_file() {
+                        self.state = EmuState::LoadCart(path);
+                    }
+                }
+            }
         }
     }
 }
@@ -422,5 +429,7 @@ pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
         return Err(format!("File not found: {:?}", file_path));
     }
 
-    fs::read(file_path).map(|x| x.into_boxed_slice()).map_err(|e| format!("Failed to read file: {}", e))
+    fs::read(file_path)
+        .map(|x| x.into_boxed_slice())
+        .map_err(|e| format!("Failed to read file: {}", e))
 }
