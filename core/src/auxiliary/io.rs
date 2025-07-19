@@ -55,7 +55,7 @@ impl Io {
             apu: Default::default(),
         }
     }
-    
+
     pub fn read(&self, address: u16) -> u8 {
         let location = IoAddress::from(address);
 
@@ -108,7 +108,6 @@ pub struct Serial {
 const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 
 impl Serial {
-
     pub fn has_data(&self) -> bool {
         self.sc == 0x81
     }

@@ -396,7 +396,10 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes.into_boxed_slice()).unwrap(), Default::default()));
+        let mut cpu = Cpu::new(Bus::new(
+            Cart::new(bytes.into_boxed_slice()).unwrap(),
+            Default::default(),
+        ));
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
@@ -421,7 +424,10 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(Cart::new(bytes.into_boxed_slice()).unwrap(), Default::default()));
+        let mut cpu = Cpu::new(Bus::new(
+            Cart::new(bytes.into_boxed_slice()).unwrap(),
+            Default::default(),
+        ));
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 

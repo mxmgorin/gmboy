@@ -1,6 +1,6 @@
 use crate::auxiliary::clock::Clock;
 use crate::cpu::instructions::{FetchedData, Instruction};
-use crate::cpu::Cpu;
+use crate::cpu::{Cpu, DebugCtx};
 use std::borrow::Cow;
 
 #[derive(Debug, Clone)]
@@ -19,12 +19,37 @@ pub enum CpuLogType {
 }
 
 impl Debugger {
+    pub fn disabled() -> Self {
+        Self::new(CpuLogType::None, false)
+    }
+
     pub fn new(log_type: CpuLogType, serial_enabled: bool) -> Self {
         Debugger {
             msg: [0; 1024],
             size: 0,
             cpu_log_type: log_type,
             serial_enabled,
+        }
+    }
+
+    pub fn print(&mut self, cpu: &mut Cpu, clock: &Clock, ctx: Option<DebugCtx>) {
+        self.print_gb_doctor_info(cpu);
+
+        if let Some(ctx) = ctx {
+            self.print_cpu_info(
+                clock,
+                cpu,
+                ctx.pc,
+                &ctx.instruction,
+                ctx.opcode,
+                &ctx.fetched_data,
+            );
+        }
+    }
+
+    pub fn print_serial(&self) {
+        if !self.get_serial_msg().is_empty() {
+            println!("Serial: {}", self.get_serial_msg());
         }
     }
 
@@ -39,7 +64,7 @@ impl Debugger {
         }
     }
 
-    pub fn print_gb_doctor_info(&self, cpu: &Cpu) {
+    fn print_gb_doctor_info(&self, cpu: &Cpu) {
         if self.cpu_log_type != CpuLogType::GbDoctor {
             return;
         }
@@ -67,7 +92,7 @@ impl Debugger {
         );
     }
 
-    pub fn print_cpu_info(
+    fn print_cpu_info(
         &self,
         clock: &Clock,
         cpu: &Cpu,

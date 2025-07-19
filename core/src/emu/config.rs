@@ -41,12 +41,12 @@ impl EmuPallet {
     pub fn black_white() -> Self {
         Self {
             name: "Back and White".to_string(),
-            hex_colors:   [
+            hex_colors: [
                 "0xFFFFFFFF".to_string(),
                 "0xFFAAAAAA".to_string(),
                 "0xFF555555".to_string(),
                 "0xFF000000".to_string(),
-            ]
+            ],
         }
     }
 

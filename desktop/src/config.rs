@@ -21,7 +21,7 @@ impl DesktopEmuConfig {
 
         Some(path.file_stem()?.to_string_lossy())
     }
-    
+
     pub fn clone_emulation(&self) -> EmuConfig {
         self.emulation.clone()
     }
@@ -55,7 +55,6 @@ impl GraphicsConfig {
 
         core::into_pallet(&self.pallets[idx].hex_colors)
     }
-
 }
 
 impl DesktopEmuConfig {

@@ -7,6 +7,20 @@ use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum RunMode {
+    Normal,
+    Slow,
+    Turbo,
+}
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum EmuState {
+    Running(RunMode),
+    Paused,
+    Rewind,
+}
+
 pub enum SaveStateEvent {
     Create,
     Load,

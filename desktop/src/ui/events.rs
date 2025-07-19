@@ -1,8 +1,7 @@
 use crate::ui::Ui;
 use crate::Emu;
-use core::emu::ctx::EmuState;
-use core::emu::ctx::RunMode;
-use core::emu::save_state::SaveStateEvent;
+use core::emu::state::{RunMode, EmuState};
+use core::emu::state::SaveStateEvent;
 use sdl2::keyboard::Keycode;
 use std::path::PathBuf;
 
@@ -30,7 +29,7 @@ impl Ui {
                 }
             }
             SaveStateEvent::Load => {
-                let save_state = core::emu::ctx::EmuSaveState::load_file(&name, index);
+                let save_state = core::emu::runtime::EmuSaveState::load_file(&name, index);
 
                 let Ok(save_state) = save_state else {
                     eprintln!("Failed load save_state: {}", save_state.unwrap_err());
@@ -49,10 +48,10 @@ impl Ui {
                 self.config.last_cart_path = path.to_str().map(|s| s.to_string());
             }
             UiEvent::Pause => {
-                if emu.ctx.state == EmuState::Paused {
-                    emu.ctx.state = EmuState::Running(RunMode::Normal);
+                if emu.state == EmuState::Paused {
+                    emu.state = EmuState::Running(RunMode::Normal);
                 } else {
-                    emu.ctx.state = EmuState::Paused;
+                    emu.state = EmuState::Paused;
                 }
             }
             UiEvent::Restart => {
@@ -60,18 +59,18 @@ impl Ui {
                     emu.load_cart_file(&PathBuf::from(path), false);
                 }
             }
-            UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),
-            UiEvent::Mute => emu.ctx.config.is_muted = !emu.ctx.config.is_muted,
+            UiEvent::ModeChanged(mode) => emu.state = EmuState::Running(mode),
+            UiEvent::Mute => emu.config.is_muted = !emu.config.is_muted,
             UiEvent::SaveState(event, index) => self.handle_save_state(emu, event, index),
             UiEvent::PickFile => {
-                if emu.ctx.state == EmuState::Paused {
+                if emu.state == EmuState::Paused {
                     if let Some(path) = rfd::FileDialog::new().pick_file() {
                         emu.load_cart_file(&path, self.config.load_save_state_at_start);
                         self.config.last_cart_path = path.to_str().map(|s| s.to_string());
                     }
                 }
             }
-            UiEvent::Rewind => emu.ctx.state = EmuState::Rewind,
+            UiEvent::Rewind => emu.state = EmuState::Rewind,
         }
     }
 

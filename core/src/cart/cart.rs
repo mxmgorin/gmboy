@@ -68,7 +68,7 @@ impl Cart {
     pub fn generate_name(&self) -> String {
         let global_checksum = CartHeader::parse_global_checksum(&self.data.bytes);
         let title = self.data.get_title();
-        
+
         format!("{title}-{global_checksum}")
     }
 

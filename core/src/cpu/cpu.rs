@@ -1,11 +1,11 @@
+use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
+use crate::ppu::lcd::Lcd;
 use crate::LittleEndianBytes;
 use serde::{Deserialize, Serialize};
-use crate::auxiliary::io::Io;
-use crate::ppu::lcd::Lcd;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
