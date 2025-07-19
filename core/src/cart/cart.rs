@@ -15,6 +15,22 @@ pub const RAM_SIZE: usize = 0x4000;
 pub const ROM_BANK_SIZE: usize = 16 * 1024;
 pub const RAM_BANK_SIZE: usize = 8 * 1024;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CartSaveState {
+    pub has_battery: bool,
+    pub mbc: MbcVariant,
+}
+
+impl CartSaveState {
+    pub fn into_cart(self, data: CartData) -> Cart {
+        Cart {
+            data,
+            has_battery: self.has_battery,
+            mbc: self.mbc,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Cart {
     pub data: CartData,
@@ -23,6 +39,21 @@ pub struct Cart {
 }
 
 impl Cart {
+    pub fn create_save_state(&self) -> CartSaveState {
+        CartSaveState {
+            has_battery: self.has_battery,
+            mbc: self.mbc.clone(),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            data: Default::default(),
+            has_battery: false,
+            mbc: Default::default(),
+        }
+    }
+
     pub fn new(rom_bytes: Box<[u8]>) -> Result<Cart, String> {
         let data = CartData::new(rom_bytes);
         let cart_type = data.get_cart_type()?;

@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
+use crate::cart::CartSaveState;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum RunMode {
@@ -28,7 +29,8 @@ pub enum SaveStateEvent {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmuSaveState {
     pub cpu: Cpu,
-    pub bus: Bus,
+    pub bus_without_cart: Bus,
+    pub cart_save_state: CartSaveState,
 }
 
 impl EmuSaveState {

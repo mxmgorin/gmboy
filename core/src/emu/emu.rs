@@ -15,7 +15,7 @@ use crate::ppu::CYCLES_PER_FRAME;
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
-use std::{fs, thread};
+use std::{fs, mem, thread};
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
@@ -129,7 +129,8 @@ impl Emu {
     pub fn create_save_state(&self, cpu: &Cpu) -> EmuSaveState {
         EmuSaveState {
             cpu: cpu.clone(),
-            bus: self.runtime.bus.clone(),
+            bus_without_cart: self.runtime.bus.clone_empty_cart(),
+            cart_save_state: self.runtime.bus.cart.create_save_state(),
         }
     }
 
@@ -185,6 +186,7 @@ impl Emu {
         self.cpu = Cpu::default();
         self.state = EmuState::Running(RunMode::Normal);
         self.reset();
+        self.rewind_buffer.clear();
 
         if save_state {
             let name = path.file_stem().unwrap().to_str().expect("cart is valid");
@@ -199,11 +201,17 @@ impl Emu {
     }
 
     pub fn load_save_state(&mut self, save_state: EmuSaveState) {
-        self.runtime.bus = save_state.bus;
+        // reconstruct cart
+        let mut bus = save_state.bus_without_cart;
+        mem::swap(&mut bus.cart.data, &mut self.runtime.bus.cart.data);
+        let cart = save_state.cart_save_state.into_cart(bus.cart.data);
+        bus.cart = cart;
+
+        self.runtime.bus = bus;
         self.runtime.bus.io.joypad = Joypad::default(); // reset controls
-        
+
         self.cpu = save_state.cpu;
-        
+
         self.reset();
     }
 
