@@ -61,10 +61,7 @@ impl Ui {
                 }
             }
             UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),
-            UiEvent::Mute => {
-                emu.ctx.config.is_muted = !emu.ctx.config.is_muted;
-                self.sync_settings(emu);
-            },
+            UiEvent::Mute => emu.ctx.config.is_muted = !emu.ctx.config.is_muted,
             UiEvent::SaveState(event, index) => self.handle_save_state(emu, event, index),
             UiEvent::PickFile => {
                 if emu.ctx.state == EmuState::Paused {

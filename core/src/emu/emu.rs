@@ -116,7 +116,7 @@ impl Emu {
         }
     }
 
-    pub fn save_files(self, cart_file_path: &Path) -> Result<(), String> {
+    pub fn save_files(&self, cart_file_path: &Path) -> Result<(), String> {
         let name = cart_file_path.file_stem().unwrap().to_str();
 
         let Some(name) = name else {

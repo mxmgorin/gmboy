@@ -34,7 +34,7 @@ fn main() {
         config
     };
 
-    let mut emu = Emu::new(config.emulation.clone(), config.graphics.get_current_pallet()).unwrap();
+    let mut emu = Emu::new(config.clone_emulation(), config.graphics.get_current_pallet()).unwrap();
     let mut ui = Ui::new(config, false).unwrap();
 
     if let Some(cart_path) = cart_path {
@@ -59,6 +59,8 @@ fn main() {
         }
     }
 
+    ui.config.set_emulation(emu.ctx.config);
+    
     if let Err(err) = ui.config.save_file().map_err(|e| e.to_string()) {
         eprint!("Failed config.save: {err}");
     }

@@ -8,16 +8,26 @@ use std::{env, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DesktopEmuConfig {
+    emulation: EmuConfig, // only for deserialization
+
     pub last_cart_path: Option<String>,
     pub load_save_state_at_start: bool,
-    pub emulation: EmuConfig,
     pub graphics: GraphicsConfig,
 }
+
 impl DesktopEmuConfig {
     pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
         let path = Path::new(self.last_cart_path.as_ref()?);
 
         Some(path.file_stem()?.to_string_lossy())
+    }
+    
+    pub fn clone_emulation(&self) -> EmuConfig {
+        self.emulation.clone()
+    }
+
+    pub fn set_emulation(&mut self, config: EmuConfig) {
+        self.emulation = config;
     }
 }
 

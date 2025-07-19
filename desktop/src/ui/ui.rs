@@ -314,9 +314,7 @@ impl Ui {
             self.config.graphics.pallets.len() - 1,
         );
         let pallet = &self.config.graphics.pallets[self.config.graphics.selected_pallet_idx];
-        self.curr_palette = into_pallet(
-            &pallet.hex_colors,
-        );
+        self.curr_palette = into_pallet(&pallet.hex_colors);
         emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
     }
 
@@ -334,10 +332,6 @@ impl Ui {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
-    }
-
-    pub fn sync_settings(&mut self, emu: &mut Emu) {
-        self.config.emulation = emu.ctx.config.clone();
     }
 }
 
