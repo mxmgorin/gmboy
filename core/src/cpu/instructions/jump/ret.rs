@@ -11,7 +11,7 @@ pub struct RetInstruction {
 impl ExecutableInstruction for RetInstruction {
     fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
         if self.condition_type.is_some() {
-            callback.m_cycles(1, &mut cpu.bus); // internal: branch decision?
+            callback.m_cycles(1); // internal: branch decision?
         }
 
         if ConditionType::check_cond(&cpu.registers, self.condition_type) {
@@ -20,7 +20,7 @@ impl ExecutableInstruction for RetInstruction {
 
             let addr = (hi << 8) | lo;
             cpu.registers.pc = addr;
-            callback.m_cycles(1, &mut cpu.bus); // internal: set PC?
+            callback.m_cycles(1); // internal: set PC?
         }
     }
 

@@ -10,10 +10,12 @@ use std::path::PathBuf;
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
 
-    let mut cpu = setup_cpu(test_case);
-    cpu.step(&mut CounterCpuCallback::default()).unwrap();
+    let mut bus = setup_bus(test_case);
+    let mut cpu = setup_cpu(test_case, &mut bus);
+    let mut ctx = CounterCpuCallback { m_cycles_count: 0, bus };
+    cpu.step(&mut ctx).unwrap();
 
-    let result = test_case.validate_final_state(&cpu);
+    let result = test_case.validate_final_state(&cpu, &ctx.bus);
 
     if let Err(err) = result {
         let inst = INSTRUCTIONS_BY_OPCODES[cpu.current_opcode as usize];
@@ -101,33 +103,8 @@ impl Sm83TestCase {
         serde_json::from_str(json).unwrap()
     }
 
-    pub fn _assert_final_state(&self, cpu: &Cpu) {
-        assert_eq!(cpu.registers.a, self.final_state.a);
-        assert_eq!(cpu.registers.b, self.final_state.b);
-        assert_eq!(cpu.registers.c, self.final_state.c);
-        assert_eq!(cpu.registers.d, self.final_state.d);
-        assert_eq!(cpu.registers.e, self.final_state.e);
-        assert_eq!(cpu.registers.flags.byte, self.final_state.f);
-        assert_eq!(cpu.registers.h, self.final_state.h);
-        assert_eq!(cpu.registers.l, self.final_state.l);
-        assert_eq!(cpu.registers.sp, self.final_state.sp);
-        assert_eq!(cpu.registers.pc, self.final_state.pc);
-        assert_eq!(
-            cpu.enabling_ime,
-            self.final_state.ime.unwrap_or_default() != 0
-        );
 
-        // todo: re-search
-        //assert_eq!(cpu.auxiliary.io.interrupts.ie_register, self.final_state.ie);
-        //assert_eq!(cpu.cycles, self.final_state.cycles);
-
-        // Assert RAM contents
-        for ram in self.final_state.ram.iter() {
-            assert_eq!(cpu.bus.read(ram.0), ram.1);
-        }
-    }
-
-    pub fn validate_final_state(&self, cpu: &Cpu) -> Result<(), String> {
+    pub fn validate_final_state(&self, cpu: &Cpu, bus: &Bus) -> Result<(), String> {
         if cpu.registers.a != self.final_state.a {
             return Err(format!(
                 "Invalid A: actual={}, expected={}",
@@ -189,19 +166,19 @@ impl Sm83TestCase {
             ));
         }
         if let Some(ime) = self.final_state.ime {
-            if cpu.bus.io.interrupts.ime != (ime != 0) {
+            if bus.io.interrupts.ime != (ime != 0) {
                 return Err(format!(
                     "Invalid IME: actual={}, expected={}",
-                    cpu.bus.io.interrupts.ime,
+                    bus.io.interrupts.ime,
                     self.final_state.ime.unwrap_or_default()
                 ));
             }
         }
         if let Some(ie) = self.final_state.ie {
-            if cpu.bus.io.interrupts.ie_register != ie {
+            if bus.io.interrupts.ie_register != ie {
                 return Err(format!(
                     "Invalid IE: actual={}, expected={}",
-                    cpu.bus.io.interrupts.ie_register, ie
+                    bus.io.interrupts.ie_register, ie
                 ));
             }
         }
@@ -211,10 +188,10 @@ impl Sm83TestCase {
 
         // Assert RAM contents
         for ram in self.final_state.ram.iter() {
-            if cpu.bus.read(ram.0) != ram.1 {
+            if bus.read(ram.0) != ram.1 {
                 return Err(format!(
                     "Invalid RAM: actual={}, expected={}",
-                    cpu.bus.read(ram.0),
+                    bus.read(ram.0),
                     ram.1
                 ));
             }
@@ -247,9 +224,9 @@ pub struct RamState(pub u16, pub u8);
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cycle(pub u16, pub u8, pub String);
 
-pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
-    let mut cpu = Cpu::new(setup_bus(test_case));
-    set_cpu_state(&mut cpu, test_case);
+pub fn setup_cpu(test_case: &Sm83TestCase, bus: &mut Bus) -> Cpu {
+    let mut cpu = Cpu::default();
+    set_cpu_state(&mut cpu, test_case, bus);
 
     cpu
 }
@@ -263,7 +240,7 @@ pub fn setup_bus(test_case: &Sm83TestCase) -> Bus {
     bus
 }
 
-pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
+pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase, bus: &mut Bus) {
     cpu.registers = Registers {
         a: test_case.initial_state.a,
         flags: Flags {
@@ -279,9 +256,9 @@ pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
         pc: test_case.initial_state.pc,
     };
     if let Some(ie) = test_case.initial_state.ie {
-        cpu.bus.io.interrupts.ie_register = ie;
+        bus.io.interrupts.ie_register = ie;
     }
     if let Some(ime) = test_case.initial_state.ime {
-        cpu.bus.io.interrupts.ime = ime != 0
+        bus.io.interrupts.ime = ime != 0
     }
 }

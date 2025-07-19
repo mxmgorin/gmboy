@@ -2,6 +2,7 @@ use crate::auxiliary::clock::Clock;
 use crate::cpu::instructions::{FetchedData, Instruction};
 use crate::cpu::{Cpu, DebugCtx};
 use std::borrow::Cow;
+use crate::bus::Bus;
 
 #[derive(Debug, Clone)]
 pub struct Debugger {
@@ -32,8 +33,8 @@ impl Debugger {
         }
     }
 
-    pub fn print(&mut self, cpu: &mut Cpu, clock: &Clock, ctx: Option<DebugCtx>) {
-        self.print_gb_doctor_info(cpu);
+    pub fn print(&mut self, cpu: &mut Cpu, clock: &Clock, ctx: Option<DebugCtx>, bus: &Bus) {
+        self.print_gb_doctor_info(cpu, bus);
 
         if let Some(ctx) = ctx {
             self.print_cpu_info(
@@ -43,6 +44,7 @@ impl Debugger {
                 &ctx.instruction,
                 ctx.opcode,
                 &ctx.fetched_data,
+                bus,
             );
         }
     }
@@ -57,24 +59,24 @@ impl Debugger {
         String::from_utf8_lossy(&self.msg[..self.size])
     }
 
-    pub fn update_serial(&mut self, cpu: &mut Cpu) {
-        if self.serial_enabled && cpu.bus.io.serial.has_data() {
-            self.msg[self.size] = cpu.bus.io.serial.take_data();
+    pub fn update_serial(&mut self, bus: &mut Bus) {
+        if self.serial_enabled && bus.io.serial.has_data() {
+            self.msg[self.size] = bus.io.serial.take_data();
             self.size += 1;
         }
     }
 
-    fn print_gb_doctor_info(&self, cpu: &Cpu) {
+    fn print_gb_doctor_info(&self, cpu: &Cpu, bus: &Bus) {
         if self.cpu_log_type != CpuLogType::GbDoctor {
             return;
         }
 
         let pc_mem = format!(
             "PCMEM:{:02X},{:02X},{:02X},{:02X}",
-            cpu.bus.read(cpu.registers.pc),
-            cpu.bus.read(cpu.registers.pc.wrapping_add(1)),
-            cpu.bus.read(cpu.registers.pc.wrapping_add(2)),
-            cpu.bus.read(cpu.registers.pc.wrapping_add(3))
+            bus.read(cpu.registers.pc),
+            bus.read(cpu.registers.pc.wrapping_add(1)),
+            bus.read(cpu.registers.pc.wrapping_add(2)),
+            bus.read(cpu.registers.pc.wrapping_add(3))
         );
         println!(
             "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} {}",
@@ -100,6 +102,7 @@ impl Debugger {
         instruction: &Instruction,
         opcode: u8,
         fetched_data: &FetchedData,
+        bus: &Bus,
     ) {
         if self.cpu_log_type != CpuLogType::Assembly {
             return;
@@ -109,10 +112,10 @@ impl Debugger {
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             clock.t_cycles,
             pc,
-            instruction.to_asm_string(cpu, fetched_data),
+            instruction.to_asm_string(cpu, fetched_data, bus),
             opcode,
-            cpu.bus.read(pc.wrapping_add(1)),
-            cpu.bus.read(pc.wrapping_add(2)),
+            bus.read(pc.wrapping_add(1)),
+            bus.read(pc.wrapping_add(2)),
             cpu.registers.a,
             cpu.registers.flags,
             cpu.registers.b,

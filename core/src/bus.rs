@@ -68,18 +68,6 @@ pub struct Bus {
 }
 
 impl Bus {
-    pub fn clone_without_cart(&self) -> Self {
-        Self {
-            cart: Cart::default(),
-            ram: self.ram.clone(),
-            io: self.io.clone(),
-            flat_mem: self.flat_mem.clone(),
-            dma: self.dma.clone(),
-            video_ram: self.video_ram.clone(),
-            oam_ram: self.oam_ram.clone(),
-        }
-    }
-
     pub fn new(cart: Cart, io: Io) -> Self {
         Self {
             cart,

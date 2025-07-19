@@ -38,6 +38,7 @@ use crate::cpu::instructions::{ConditionType, FetchedData};
 use crate::cpu::stack::Stack;
 use crate::cpu::{Cpu, CpuCallback};
 use std::fmt::Display;
+use crate::bus::Bus;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData);
@@ -226,7 +227,7 @@ impl Instruction {
         callback: &mut impl CpuCallback,
     ) {
         if ConditionType::check_cond(&cpu.registers, cond) {
-            callback.m_cycles(1, &mut cpu.bus); // internal: branch decision?
+            callback.m_cycles(1); // internal: branch decision?
             if push_pc {
                 Stack::push16(cpu, cpu.registers.pc, callback);
             }
@@ -235,7 +236,7 @@ impl Instruction {
         }
     }
 
-    pub fn to_asm_string(&self, cpu: &Cpu, fetched_data: &FetchedData) -> String {
+    pub fn to_asm_string(&self, cpu: &Cpu, fetched_data: &FetchedData, bus: &Bus) -> String {
         match self.get_address_mode() {
             AddressMode::IMP => format!("{:?}", self.get_type()),
             AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
@@ -283,7 +284,7 @@ impl Instruction {
                 format!(
                     "{:?} ${:02X},{:?}",
                     self.get_type(),
-                    cpu.bus.read(cpu.registers.pc - 1),
+                    bus.read(cpu.registers.pc - 1),
                     r2
                 )
             }

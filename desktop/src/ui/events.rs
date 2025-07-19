@@ -81,12 +81,12 @@ impl Ui {
         is_down: bool,
     ) -> Option<UiEvent> {
         match button {
-            sdl2::controller::Button::DPadUp => emu.cpu.bus.io.joypad.up = is_down,
-            sdl2::controller::Button::DPadDown => emu.cpu.bus.io.joypad.down = is_down,
-            sdl2::controller::Button::DPadLeft => emu.cpu.bus.io.joypad.left = is_down,
-            sdl2::controller::Button::DPadRight => emu.cpu.bus.io.joypad.right = is_down,
-            sdl2::controller::Button::B => emu.cpu.bus.io.joypad.b = is_down,
-            sdl2::controller::Button::A => emu.cpu.bus.io.joypad.a = is_down,
+            sdl2::controller::Button::DPadUp => emu.runtime.bus.io.joypad.up = is_down,
+            sdl2::controller::Button::DPadDown => emu.runtime.bus.io.joypad.down = is_down,
+            sdl2::controller::Button::DPadLeft => emu.runtime.bus.io.joypad.left = is_down,
+            sdl2::controller::Button::DPadRight => emu.runtime.bus.io.joypad.right = is_down,
+            sdl2::controller::Button::B => emu.runtime.bus.io.joypad.b = is_down,
+            sdl2::controller::Button::A => emu.runtime.bus.io.joypad.a = is_down,
             sdl2::controller::Button::Y => {
                 return if is_down {
                     Some(UiEvent::Rewind)
@@ -99,9 +99,9 @@ impl Ui {
                     self.next_palette(emu)
                 }
             }
-            sdl2::controller::Button::Start => emu.cpu.bus.io.joypad.start = is_down,
-            sdl2::controller::Button::Back => emu.cpu.bus.io.joypad.select = is_down,
-            sdl2::controller::Button::Guide => emu.cpu.bus.io.joypad.select = is_down,
+            sdl2::controller::Button::Start => emu.runtime.bus.io.joypad.start = is_down,
+            sdl2::controller::Button::Back => emu.runtime.bus.io.joypad.select = is_down,
+            sdl2::controller::Button::Guide => emu.runtime.bus.io.joypad.select = is_down,
             sdl2::controller::Button::LeftShoulder => {
                 return if is_down {
                     Some(UiEvent::ModeChanged(RunMode::Slow))
@@ -150,14 +150,14 @@ impl Ui {
         is_down: bool,
     ) -> Option<UiEvent> {
         match keycode {
-            Keycode::UP => emu.cpu.bus.io.joypad.up = is_down,
-            Keycode::DOWN => emu.cpu.bus.io.joypad.down = is_down,
-            Keycode::LEFT => emu.cpu.bus.io.joypad.left = is_down,
-            Keycode::RIGHT => emu.cpu.bus.io.joypad.right = is_down,
-            Keycode::Z => emu.cpu.bus.io.joypad.b = is_down,
-            Keycode::X => emu.cpu.bus.io.joypad.a = is_down,
-            Keycode::Return => emu.cpu.bus.io.joypad.start = is_down,
-            Keycode::BACKSPACE => emu.cpu.bus.io.joypad.select = is_down,
+            Keycode::UP => emu.runtime.bus.io.joypad.up = is_down,
+            Keycode::DOWN => emu.runtime.bus.io.joypad.down = is_down,
+            Keycode::LEFT => emu.runtime.bus.io.joypad.left = is_down,
+            Keycode::RIGHT => emu.runtime.bus.io.joypad.right = is_down,
+            Keycode::Z => emu.runtime.bus.io.joypad.b = is_down,
+            Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
+            Keycode::Return => emu.runtime.bus.io.joypad.start = is_down,
+            Keycode::BACKSPACE => emu.runtime.bus.io.joypad.select = is_down,
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
                     Some(UiEvent::Rewind)

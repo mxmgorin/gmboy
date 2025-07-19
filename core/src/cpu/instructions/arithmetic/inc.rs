@@ -14,7 +14,7 @@ impl ExecutableInstruction for IncInstruction {
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if r.is_16bit() {
-                    callback.m_cycles(1, &mut cpu.bus);
+                    callback.m_cycles(1);
                 }
 
                 cpu.registers.set_register(r, value);

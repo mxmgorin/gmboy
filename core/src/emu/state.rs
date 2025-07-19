@@ -1,5 +1,4 @@
 use crate::bus::Bus;
-use crate::cart::mbc::MbcVariant;
 use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -28,9 +27,8 @@ pub enum SaveStateEvent {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmuSaveState {
-    pub cpu_without_bus: Cpu,
-    pub bus_without_cart: Bus,
-    pub cart_mbc: MbcVariant,
+    pub cpu: Cpu,
+    pub bus: Bus,
 }
 
 impl EmuSaveState {

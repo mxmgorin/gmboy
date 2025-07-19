@@ -14,11 +14,12 @@ pub fn run_blargg_rom_serial(
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
     let cart = Cart::new(read_bytes(path.as_path())?)?;
-    let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
+    let mut cpu = Cpu::default();
     let instant = Instant::now();
     let mut ctx = TestCpuCtx {
         clock: Default::default(),
         debugger: Debugger::new(CpuLogType::None, true),
+        bus: Bus::new(cart, Default::default()),
     };
 
     loop {
@@ -44,19 +45,20 @@ pub fn run_blargg_rom_memory(
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
     let cart = Cart::new(read_bytes(path.as_path())?)?;
-    let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
+    let mut cpu = Cpu::default();
     let instant = Instant::now();
     let mut ctx = TestCpuCtx {
         clock: Default::default(),
         debugger: Debugger::new(CpuLogType::None, false),
+        bus: Bus::new(cart, Default::default()),
     };
 
     loop {
         cpu.step(&mut ctx)?;
-        let b1 = cpu.bus.read(0xA001);
-        let b2 = cpu.bus.read(0xA002);
-        let b3 = cpu.bus.read(0xA003);
-        let result = cpu.bus.read(0xA000);
+        let b1 = ctx.bus.read(0xA001);
+        let b2 = ctx.bus.read(0xA002);
+        let b3 = ctx.bus.read(0xA003);
+        let result = ctx.bus.read(0xA000);
 
         if b1 == 0xDE && b2 == 0xB0 && b3 == 0x61 && result != 0x80 {
             match result {

@@ -6,15 +6,15 @@ impl Stack {
     /// Costs 1 M-Cycle.
     pub fn push(cpu: &mut Cpu, value: u8, callback: &mut impl CpuCallback) {
         cpu.registers.sp = cpu.registers.sp.wrapping_sub(1);
-        cpu.bus.write(cpu.registers.sp, value);
-        callback.m_cycles(1, &mut cpu.bus);
+        callback.get_bus_mut().write(cpu.registers.sp, value);
+        callback.m_cycles(1);
     }
 
     /// Costs 1 M-Cycle.
     pub fn pop(cpu: &mut Cpu, callback: &mut impl CpuCallback) -> u8 {
-        let value = cpu.bus.read(cpu.registers.sp);
+        let value = callback.get_bus_mut().read(cpu.registers.sp);
         cpu.registers.sp = cpu.registers.sp.wrapping_add(1);
-        callback.m_cycles(1, &mut cpu.bus);
+        callback.m_cycles(1);
 
         value
     }

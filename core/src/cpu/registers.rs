@@ -84,13 +84,6 @@ impl Display for Flags {
 
 impl Default for Registers {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Registers {
-    pub fn new() -> Self {
-        // values after boot rom
         Self {
             a: 0x01,
             flags: Flags::boot(),
@@ -104,7 +97,9 @@ impl Registers {
             pc: 0x100,
         }
     }
+}
 
+impl Registers {
     pub fn read_register(&self, register_type: RegisterType) -> u16 {
         match register_type {
             RegisterType::A => self.a as u16,
@@ -186,7 +181,7 @@ mod tests {
 
     #[test]
     fn test_get_flag_z() {
-        let mut regs = Registers::new();
+        let mut regs = Registers::default();
         regs.flags.byte = 0b10000000;
         assert!(regs.flags.get_z());
 
@@ -196,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_get_flag_c() {
-        let mut regs = Registers::new();
+        let mut regs = Registers::default();
         regs.flags.byte = 0b00010000;
         assert!(regs.flags.get_c());
 
@@ -206,7 +201,7 @@ mod tests {
 
     #[test]
     fn test_set_flags() {
-        let mut regs = Registers::new();
+        let mut regs = Registers::default();
         regs.flags.byte = 0b10000000;
 
         regs.flags.set(None, None, None, Some(true));

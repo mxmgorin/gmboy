@@ -30,7 +30,7 @@ pub struct Emu {
     pub config: EmuConfig,
     pub state: EmuState,
     pub cpu: Cpu,
-    runtime: EmuRuntime,    
+    pub runtime: EmuRuntime,
     speed_multiplier: f64,
     prev_frame: usize,
     last_fps_timestamp: Duration,
@@ -48,8 +48,8 @@ impl Emu {
         let bus = Bus::with_bytes(vec![], Io::new(lcd));
 
         Ok(Self {
-            cpu: Cpu::new(bus),
-            runtime: EmuRuntime::new(debugger),
+            cpu: Cpu::default(),
+            runtime: EmuRuntime::new(debugger, bus),
             speed_multiplier: 1.0,
             state: EmuState::Paused,
             config,
@@ -91,7 +91,7 @@ impl Emu {
             }
 
             if !self.config.is_muted && EmuState::Running(RunMode::Normal) == self.state {
-                callback.update_audio(self.cpu.bus.io.apu.take_output());
+                callback.update_audio(self.runtime.bus.io.apu.take_output());
             }
         }
 
@@ -128,9 +128,8 @@ impl Emu {
 
     pub fn create_save_state(&self, cpu: &Cpu) -> EmuSaveState {
         EmuSaveState {
-            cpu_without_bus: cpu.clone_without_bus(),
-            bus_without_cart: cpu.bus.clone_without_cart(),
-            cart_mbc: cpu.bus.cart.mbc.clone(),
+            cpu: cpu.clone(),
+            bus: self.runtime.bus.clone(),
         }
     }
 
@@ -141,7 +140,7 @@ impl Emu {
             return Err(format!("Invalid cart_file_path: {cart_file_path:?}"));
         };
 
-        if let Some(bytes) = self.cpu.bus.cart.dump_ram() {
+        if let Some(bytes) = self.runtime.bus.cart.dump_ram() {
             if let Err(err) = BatterySave::from_bytes(bytes)
                 .save_file(name)
                 .map_err(|e| e.to_string())
@@ -181,9 +180,9 @@ impl Emu {
             return;
         };
 
-        let io = Io::new(Lcd::new(self.cpu.bus.io.lcd.current_pallet));
-        let bus = Bus::new(cart, io);
-        self.cpu = Cpu::new(bus);
+        let io = Io::new(Lcd::new(self.runtime.bus.io.lcd.current_pallet));
+        self.runtime.bus = Bus::new(cart, io);
+        self.cpu = Cpu::default();
         self.state = EmuState::Running(RunMode::Normal);
         self.reset();
 
@@ -200,13 +199,11 @@ impl Emu {
     }
 
     pub fn load_save_state(&mut self, save_state: EmuSaveState) {
-        let mut state_cpu = save_state.cpu_without_bus; // reconstruct cpu
-        state_cpu.bus = save_state.bus_without_cart;
-        state_cpu.bus.io.joypad = Joypad::default(); // reset controls
-        state_cpu.bus.cart.mbc = save_state.cart_mbc; // reconstruct cart
-        state_cpu.bus.cart.data = self.cpu.bus.cart.data.clone();
-
-        self.cpu = state_cpu;
+        self.runtime.bus = save_state.bus;
+        self.runtime.bus.io.joypad = Joypad::default(); // reset controls
+        
+        self.cpu = save_state.cpu;
+        
         self.reset();
     }
 

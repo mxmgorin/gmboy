@@ -323,10 +323,15 @@ mod tests {
     #[test]
     fn test_fetch_imp() {
         let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
+        let mut cpu = Cpu::default();
         let mode = AddressMode::IMP;
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback {
+            m_cycles_count: 0,
+            bus: Bus::new(
+                cart.clone(),
+                Default::default())
+        });
 
         assert_eq!(data.value, 0);
     }
@@ -334,13 +339,18 @@ mod tests {
     #[test]
     fn test_fetch_r() {
         let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
+        let mut cpu = Cpu::default();
 
         for reg_type in RegisterType::get_all().iter().cloned() {
             cpu.registers.set_register(reg_type, 23);
             let mode = AddressMode::R(reg_type);
 
-            let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
+            let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback {
+                m_cycles_count: 0,
+                bus: Bus::new(
+                    cart.clone(),
+                    Default::default())
+            });
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -350,13 +360,18 @@ mod tests {
     #[test]
     fn test_fetch_r_r() {
         let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
+        let mut cpu = Cpu::default();
 
         for reg_type in RegisterType::get_all().iter().cloned() {
             cpu.registers.set_register(reg_type, 23);
             let mode = AddressMode::R_R(RegisterType::BC, reg_type);
 
-            let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
+            let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback {
+                m_cycles_count: 0,
+                bus: Bus::new(
+                    cart.clone(),
+                    Default::default())
+            });
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -370,11 +385,16 @@ mod tests {
         let mut bytes = vec![0u8; 8000].into_boxed_slice();
         bytes[pc] = value;
         let cart = Cart::new(bytes).unwrap();
-        let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
+        let mut cpu = Cpu::default();
         cpu.registers.pc = pc as u16;
         let mode = AddressMode::R_D8(RegisterType::A);
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback {
+            m_cycles_count: 0,
+            bus: Bus::new(
+                cart,
+                Default::default())
+        });
 
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
@@ -396,14 +416,16 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(
-            Cart::new(bytes.into_boxed_slice()).unwrap(),
-            Default::default(),
-        ));
+        let mut cpu = Cpu::default();
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback {
+            m_cycles_count: 0,
+            bus: Bus::new(
+                Cart::new(bytes.into_boxed_slice()).unwrap(),
+                Default::default())
+        });
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);
@@ -424,14 +446,17 @@ mod tests {
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
-        let mut cpu = Cpu::new(Bus::new(
-            Cart::new(bytes.into_boxed_slice()).unwrap(),
-            Default::default(),
-        ));
+        let mut cpu = Cpu::default();
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
+        let cart = Cart::new(bytes.into_boxed_slice()).unwrap();
 
-        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback::default());
+        let data = AddressMode::fetch_data(&mut cpu, mode, &mut CounterCpuCallback  {
+            m_cycles_count: 0,
+            bus: Bus::new(
+                cart.clone(),
+                Default::default())
+        });
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);

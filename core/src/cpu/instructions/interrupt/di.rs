@@ -7,8 +7,8 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct DiInstruction;
 
 impl ExecutableInstruction for DiInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
-        cpu.bus.io.interrupts.ime = false;
+    fn execute(&self, _cpu: &mut Cpu, callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
+        callback.get_bus_mut().io.interrupts.ime = false;
     }
 
     fn get_address_mode(&self) -> AddressMode {

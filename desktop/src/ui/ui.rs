@@ -315,7 +315,7 @@ impl Ui {
         );
         let pallet = &self.config.graphics.pallets[self.config.graphics.selected_pallet_idx];
         self.curr_palette = into_pallet(&pallet.hex_colors);
-        emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
+        emu.runtime.bus.io.lcd.set_pallet(self.curr_palette);
     }
 
     pub fn toggle_fullscreen(&mut self) {

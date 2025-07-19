@@ -18,7 +18,7 @@ impl ExecutableInstruction for PushInstruction {
             unreachable!();
         };
 
-        callback.m_cycles(1, &mut cpu.bus);
+        callback.m_cycles(1);
 
         let hi = (cpu.registers.read_register(r) >> 8) & 0xFF;
         Stack::push(cpu, hi as u8, callback);

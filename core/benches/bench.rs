@@ -19,7 +19,7 @@ pub fn instructions(cpu: &mut Cpu, ctx: &mut CounterCpuCallback) {
         }
 
         cpu.registers.pc = 0;
-        cpu.bus.write(0, opcode as u8);
+        ctx.bus.write(0, opcode as u8);
         cpu.step(ctx).unwrap();
     }
 }
@@ -60,12 +60,15 @@ pub fn ppu_tick(ppu: &mut Ppu, bus: &mut Bus) {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut callback = CounterCpuCallback::default();
-    let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000], Default::default())); // Pre-allocate memory
+    let mut callback = CounterCpuCallback {
+        m_cycles_count: 0,
+        bus: Bus::with_bytes(vec![10; 100000], Default::default()),
+    };
+    let mut cpu = Cpu::default(); // Pre-allocate memory
     let mut timer = Timer::default();
 
     c.bench_function("timer tick", |b| {
-        b.iter(|| timer_tick(&mut timer, &mut cpu.bus.io.interrupts))
+        b.iter(|| timer_tick(&mut timer, &mut callback.bus.io.interrupts))
     });
     c.bench_function("fetch data", |b| {
         b.iter(|| fetch_data(&mut cpu, &mut callback))

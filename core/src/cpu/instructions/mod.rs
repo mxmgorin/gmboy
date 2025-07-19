@@ -56,9 +56,19 @@ mod tests {
         3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4,
     ];
 
-    #[derive(Debug, Default)]
+    #[derive(Debug)]
     pub struct Callback {
         pub t_cycles: usize,
+        bus: Bus,
+    }
+
+    impl Default for Callback {
+        fn default() -> Self {
+            Self {
+                t_cycles: 0,
+                bus: Bus::with_bytes(vec![0; 100000], Default::default())
+            }
+        }
     }
 
     impl Callback {
@@ -68,23 +78,27 @@ mod tests {
     }
 
     impl CpuCallback for Callback {
-        fn m_cycles(&mut self, m_cycles: usize, _bus: &mut Bus) {
+        fn m_cycles(&mut self, m_cycles: usize) {
             self.t_cycles += m_cycles * 4;
         }
 
         fn update_serial(&mut self, _cpu: &mut Cpu) {}
 
         fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
+
+        fn get_bus_mut(&mut self) -> &mut Bus {
+            &mut self.bus
+        }
     }
 
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
+        let mut cpu = Cpu::default();
         let mut callback = Callback::default();
         cpu.registers.pc = 0;
         callback.t_cycles = 0;
-        cpu.bus.write(0, opcode as u8);
+        callback.get_bus_mut().write(0, opcode as u8);
         cpu.step(&mut callback).unwrap();
 
         assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
@@ -92,7 +106,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_call() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
+        let mut cpu = Cpu::default();
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Call(instr) = *instr else {
                 continue;
@@ -101,7 +115,7 @@ mod tests {
 
             cpu.registers.pc = 0;
             callback.t_cycles = 0;
-            cpu.bus.write(0, opcode as u8);
+            callback.get_bus_mut().write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(
@@ -121,7 +135,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jp() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
+        let mut cpu = Cpu::default();
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jp(instr) = *instr else {
                 continue;
@@ -130,7 +144,7 @@ mod tests {
             let mut callback = Callback::default();
             cpu.registers.pc = 0;
             callback.t_cycles = 0;
-            cpu.bus.write(0, opcode as u8);
+            callback.get_bus_mut().write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(
@@ -154,7 +168,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jr() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
+        let mut cpu = Cpu::default();
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jr(instr) = *instr else {
                 continue;
@@ -163,7 +177,7 @@ mod tests {
             let mut callback = Callback::default();
             cpu.registers.pc = 0;
             callback.t_cycles = 0;
-            cpu.bus.write(0, opcode as u8);
+            callback.get_bus_mut().write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, &mut callback, condition_type, 3, 2);
@@ -177,7 +191,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_ret() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
+        let mut cpu = Cpu::default();
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Ret(instr) = *instr else {
                 continue;
@@ -186,7 +200,7 @@ mod tests {
             let mut callback = Callback::default();
             cpu.registers.pc = 0;
             callback.t_cycles = 0;
-            cpu.bus.write(0, opcode as u8);
+            callback.get_bus_mut().write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
                 assert_for_condition(&mut cpu, &mut callback, condition_type, 5, 2);
@@ -200,7 +214,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
+        let mut cpu = Cpu::default();
         let mut callback = Callback::default();
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
@@ -221,7 +235,7 @@ mod tests {
 
             cpu.registers.pc = 0;
             callback.t_cycles = 0;
-            cpu.bus.write(0, opcode as u8);
+            callback.get_bus_mut().write(0, opcode as u8);
             cpu.step(&mut callback).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
             let actual = callback.t_cycles / 4;

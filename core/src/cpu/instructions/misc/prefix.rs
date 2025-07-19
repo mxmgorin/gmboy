@@ -175,7 +175,7 @@ impl ExecutableInstruction for PrefixInstruction {
             }
         }
 
-        callback.m_cycles(1, &mut cpu.bus);
+        callback.m_cycles(1);
     }
 
     fn get_address_mode(&self) -> AddressMode {
