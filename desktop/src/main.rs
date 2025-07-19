@@ -54,9 +54,7 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
         emu.load_cart_file(cart_path);
     }
 
-    loop {
-        ui.handle_events(emu);
-
+    while ui.handle_events(emu) {
         if emu.ctx.state == EmuState::Paused {
             let text = if emu.ctx.config.last_cart_path.is_none() {
                 "DROP FILE"
@@ -66,10 +64,6 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
             ui.draw_text(text, emu.ctx.config.graphics.text_scale);
             thread::sleep(Duration::from_millis(100));
             continue;
-        }
-
-        if ui.quit {
-            break;
         }
 
         emu.handle_state();

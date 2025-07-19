@@ -35,8 +35,7 @@ pub struct Ui {
 
     audio: GameAudio,
     pub curr_palette: [PixelColor; 4],
-    pub show_fps: bool,
-    pub quit: bool,
+    show_fps: bool,
 }
 
 impl EmuCallback for Ui {
@@ -136,7 +135,6 @@ impl Ui {
 
             _sdl_context: sdl_context,
             show_fps: config.show_fps,
-            quit: false,
         };
 
         ui.set_scale(config.scale)?;
@@ -232,7 +230,8 @@ impl Ui {
         self.main_canvas.present();
     }
 
-    pub fn handle_events(&mut self, emu: &mut Emu) {
+    /// Polls and handles events. Returns false on quit.
+    pub fn handle_events(&mut self, emu: &mut Emu) -> bool {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
                 Event::ControllerDeviceAdded { which, .. } => {
@@ -248,7 +247,6 @@ impl Ui {
                 Event::DropFile { filename, .. } => {
                     self.on_event(emu, UiEvent::FileDropped(filename.into()))
                 }
-                Event::Quit { .. } => self.on_event(emu, UiEvent::Quit),
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
@@ -285,6 +283,7 @@ impl Ui {
                 Event::MouseButtonDown { .. } => {
                     self.on_event(emu, UiEvent::PickFile);
                 }
+                Event::Quit { .. } => return false,
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -294,13 +293,15 @@ impl Ui {
                         if window.canvas.window().id() == window_id {
                             self.debug_window = None;
                         } else {
-                            self.on_event(emu, UiEvent::Quit);
+                            return false
                         }
                     }
                 }
                 _ => {}
             }
         }
+
+        true
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {

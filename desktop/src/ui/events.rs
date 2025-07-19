@@ -3,12 +3,10 @@ use crate::Emu;
 use core::emu::ctx::EmuState;
 use core::emu::ctx::RunMode;
 use core::emu::save_state::SaveStateEvent;
-use core::ppu::lcd::Lcd;
 use sdl2::keyboard::Keycode;
 use std::path::PathBuf;
 
 pub enum UiEvent {
-    Quit,
     Pause,
     FileDropped(PathBuf),
     Restart,
@@ -21,7 +19,6 @@ pub enum UiEvent {
 impl Ui {
     pub fn on_event(&mut self, emu: &mut Emu, event: UiEvent) {
         match event {
-            UiEvent::Quit => self.quit = true,
             UiEvent::FileDropped(path) => emu.load_cart_file(path),
             UiEvent::Pause => {
                 if emu.ctx.state == EmuState::Paused {
@@ -104,14 +101,14 @@ impl Ui {
 
         let is_down = value > THRESHOLD;
 
+        if is_down {
+            return None;
+        }
+
         if axis_idx == LEFT {
-            if !is_down {
-                return Some(UiEvent::SaveState(SaveStateEvent::Load, 1));
-            }
+            return Some(UiEvent::SaveState(SaveStateEvent::Load, 1));
         } else if axis_idx == RIGHT {
-            if !is_down {
-                return Some(UiEvent::SaveState(SaveStateEvent::Create, 1));
-            }
+            return Some(UiEvent::SaveState(SaveStateEvent::Create, 1));
         }
 
         None
