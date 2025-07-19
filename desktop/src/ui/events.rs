@@ -18,8 +18,8 @@ pub enum UiEvent {
 }
 
 impl Ui {
-    pub fn handle_save_state(emu: &mut Emu, event: SaveStateEvent, index: usize) {
-        let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
+    pub fn handle_save_state(&self, emu: &mut Emu, event: SaveStateEvent, index: usize) {
+        let name = self.config.get_last_cart_file_stem().unwrap();
 
         match event {
             SaveStateEvent::Create => {
@@ -44,7 +44,10 @@ impl Ui {
 
     pub fn on_event(&mut self, emu: &mut Emu, event: UiEvent) {
         match event {
-            UiEvent::FileDropped(path) => emu.load_cart_file(&path),
+            UiEvent::FileDropped(path) => {
+                emu.load_cart_file(&path, self.config.load_save_state_at_start);
+                self.config.last_cart_path = path.to_str().map(|s| s.to_string());
+            }
             UiEvent::Pause => {
                 if emu.ctx.state == EmuState::Paused {
                     emu.ctx.state = EmuState::Running(RunMode::Normal);
@@ -53,17 +56,21 @@ impl Ui {
                 }
             }
             UiEvent::Restart => {
-                if let Some(path) = emu.ctx.config.last_cart_path.clone() {
-                    emu.load_cart_file(&PathBuf::from(path));
+                if let Some(path) = self.config.last_cart_path.clone() {
+                    emu.load_cart_file(&PathBuf::from(path), self.config.load_save_state_at_start);
                 }
             }
             UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),
-            UiEvent::Mute => emu.ctx.config.emulation.is_muted = !emu.ctx.config.emulation.is_muted,
-            UiEvent::SaveState(event, index) => Ui::handle_save_state(emu, event, index),
+            UiEvent::Mute => {
+                self.config.emulation.is_muted = !self.config.emulation.is_muted;
+                emu.ctx.config.is_muted = self.config.emulation.is_muted;
+            },
+            UiEvent::SaveState(event, index) => self.handle_save_state(emu, event, index),
             UiEvent::PickFile => {
                 if emu.ctx.state == EmuState::Paused {
                     if let Some(path) = rfd::FileDialog::new().pick_file() {
-                        emu.load_cart_file(&path);
+                        emu.load_cart_file(&path, self.config.load_save_state_at_start);
+                        self.config.last_cart_path = path.to_str().map(|s| s.to_string());
                     }
                 }
             }
@@ -188,19 +195,19 @@ impl Ui {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    emu.ctx.config.graphics.scale += 1.0;
-                    self.set_scale(emu.ctx.config.graphics.scale).unwrap();
+                    self.config.graphics.scale += 1.0;
+                    self.set_scale(self.config.graphics.scale).unwrap();
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    emu.ctx.config.graphics.scale -= 1.0;
-                    self.set_scale(emu.ctx.config.graphics.scale).unwrap();
+                    self.config.graphics.scale -= 1.0;
+                    self.set_scale(self.config.graphics.scale).unwrap();
                 }
             }
             Keycode::F => {
                 if !is_down {
-                    self.toggle_fullscreen(&mut emu.ctx.config.graphics);
+                    self.toggle_fullscreen();
                 }
             }
             Keycode::M => {

@@ -58,8 +58,12 @@ impl CartHeader {
             old_licensee_code: rom_bytes[0x014B].into(),
             mask_rom_version: Self::get_rom_version(rom_bytes),
             header_checksum: Self::get_header_checksum(rom_bytes),
-            global_checksum: u16::from_be_bytes(rom_bytes[0x014E..0x0150].try_into().unwrap()),
+            global_checksum: Self::parse_global_checksum(rom_bytes),
         })
+    }
+
+    pub fn parse_global_checksum(rom_bytes: &[u8]) -> u16 {
+        u16::from_be_bytes(rom_bytes[0x014E..0x0150].try_into().unwrap())
     }
 
     pub fn parse_title(rom_bytes: &[u8]) -> String {

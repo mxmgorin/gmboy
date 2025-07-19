@@ -10,7 +10,7 @@ use crate::emu::save_state::EmuSaveState;
 use crate::into_pallet;
 use crate::ppu::tile::Pixel;
 use crate::ppu::CYCLES_PER_FRAME;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::{Duration, Instant};
 use std::{fs, thread};
 
@@ -31,23 +31,12 @@ pub trait EmuCallback {
 impl Emu {
     pub fn new(config: EmuConfig) -> Result<Self, String> {
         let mut bus = Bus::with_bytes(vec![]);
-        let palette =
-            into_pallet(&config.graphics.pallets[config.graphics.selected_pallet_idx].hex_colors);
-        bus.io.lcd.set_pallet(palette);
-        let mut emu = Self {
+        bus.io.lcd.set_pallet(into_pallet(&config.pallet));
+
+        Ok(Self {
             cpu: Cpu::new(bus),
             ctx: EmuCtx::new(config),
-        };
-
-        if let Some(cart_path) = &emu.ctx.config.last_cart_path {
-            let cart_path = PathBuf::from(cart_path.clone());
-
-            if cart_path.exists() {
-                emu.load_cart_file(&cart_path);
-            }
-        }
-
-        Ok(emu)
+        })
     }
 
     /// Runs emulation for one frame. Return false when paused.
@@ -82,7 +71,7 @@ impl Emu {
                 }
             }
 
-            if !self.ctx.config.emulation.is_muted
+            if !self.ctx.config.is_muted
                 && EmuState::Running(RunMode::Normal) == self.ctx.state
             {
                 callback.update_audio(self.cpu.bus.io.apu.take_output());
@@ -104,8 +93,8 @@ impl Emu {
     fn calc_emulated_time(&mut self, mode: RunMode) -> Duration {
         let speed_multiplier = match mode {
             RunMode::Normal => 1.0,
-            RunMode::Slow => self.ctx.config.emulation.slow_speed / 100.0,
-            RunMode::Turbo => self.ctx.config.emulation.turbo_speed / 100.0,
+            RunMode::Slow => self.ctx.config.slow_speed / 100.0,
+            RunMode::Turbo => self.ctx.config.turbo_speed / 100.0,
         };
 
         if self.ctx.speed_multiplier != speed_multiplier {
@@ -128,34 +117,36 @@ impl Emu {
         }
     }
 
-    pub fn save_files(self) {
-        if let Err(err) = self.ctx.config.save_file().map_err(|e| e.to_string()) {
-            eprint!("Failed config.save: {err}");
-        }
+    pub fn save_files(self, cart_file_path: &Path) -> Result<(), String> {
+        let name = cart_file_path.file_stem().unwrap().to_str();
 
-        let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+        let Some(name) = name else {
+            return Err(format!("Invalid cart_file_path: {cart_file_path:?}"));
+        };
 
         if let Some(bytes) = self.cpu.bus.cart.dump_ram() {
             if let Err(err) = BatterySave::from_bytes(bytes)
-                .save_file(&name)
+                .save_file(name)
                 .map_err(|e| e.to_string())
             {
                 eprint!("Failed BatterySave: {err}");
             };
         }
 
-        if let Err(err) = self.create_save_state(&self.cpu).save_file(&name, 0) {
+        if let Err(err) = self.create_save_state(&self.cpu).save_file(name, 0) {
             eprintln!("Failed save_state: {err}");
         }
+
+        Ok(())
     }
 
     pub fn push_rewind(&mut self) {
         let now = Instant::now();
 
-        if self.ctx.config.emulation.rewind_size > 0
+        if self.ctx.config.rewind_size > 0
             && now.duration_since(self.ctx.last_rewind_save).as_secs_f32() >= 2.0
         {
-            if self.ctx.rewind_buffer.len() > self.ctx.config.emulation.rewind_size {
+            if self.ctx.rewind_buffer.len() > self.ctx.config.rewind_size {
                 self.ctx.rewind_buffer.pop_front();
             }
 
@@ -166,8 +157,8 @@ impl Emu {
         }
     }
 
-    pub fn load_cart_file(&mut self, path: &Path) {
-        let cart = read_cart(path).map_err(|e| e.to_string());
+    pub fn load_cart_file(&mut self, path: &Path, save_state: bool) {
+        let cart = read_cart_file(path).map_err(|e| e.to_string());
 
         let Ok(cart) = cart else {
             eprintln!("Failed read_cart: {}", cart.unwrap_err());
@@ -178,13 +169,12 @@ impl Emu {
         let mut bus = Bus::new(cart);
         bus.io.lcd.set_pallet(current_pallet);
         self.cpu = Cpu::new(bus);
-        self.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
         self.ctx.state = EmuState::Running(RunMode::Normal);
         self.ctx.reset();
 
-        if self.ctx.config.load_save_state_at_start {
-            let name = self.ctx.config.get_last_cart_file_stem().unwrap();
-            let save_state = EmuSaveState::load_file(&name, 0);
+        if save_state {
+            let name = path.file_stem().unwrap().to_str().expect("cart is valid");
+            let save_state = EmuSaveState::load_file(name, 0);
 
             if let Ok(save_state) = save_state {
                 self.load_save_state(save_state);
@@ -206,15 +196,11 @@ impl Emu {
     }
 }
 
-pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
-    let bytes = read_bytes(file_path).map_err(|e| e.to_string())?;
+pub fn read_cart_file(path: &Path) -> Result<Cart, String> {
+    let bytes = read_bytes(path).map_err(|e| e.to_string())?;
     let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
     _ = print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
-    let file_name = file_path
-        .file_stem()
-        .expect("we read file")
-        .to_str()
-        .unwrap();
+    let file_name = path.file_stem().expect("we read file").to_str().unwrap();
 
     let Ok(save) = BatterySave::load_file(file_name) else {
         return Ok(cart);

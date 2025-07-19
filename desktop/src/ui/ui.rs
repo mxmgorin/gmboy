@@ -1,11 +1,11 @@
-use core::into_pallet;
+use crate::config::DesktopEmuConfig;
 use crate::ui::audio::GameAudio;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::UiEvent;
 use crate::ui::text::*;
 use crate::Emu;
-use core::emu::config::GraphicsConfig;
 use core::emu::EmuCallback;
+use core::into_pallet;
 use core::ppu::tile::{Pixel, PixelColor, TileData};
 use core::ppu::{LCD_X_RES, LCD_Y_RES};
 use sdl2::controller::GameController;
@@ -35,7 +35,7 @@ pub struct Ui {
 
     audio: GameAudio,
     pub curr_palette: [PixelColor; 4],
-    show_fps: bool,
+    pub config: DesktopEmuConfig,
 }
 
 impl EmuCallback for Ui {
@@ -69,10 +69,10 @@ impl Layout {
 }
 
 impl Ui {
-    pub fn new(config: GraphicsConfig, debug: bool) -> Result<Self, String> {
+    pub fn new(config: DesktopEmuConfig, debug: bool) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
-        let layout = Layout::new(config.scale);
+        let layout = Layout::new(config.graphics.scale);
 
         let main_window = video_subsystem
             .window("GMBoy", layout.win_width, layout.win_height)
@@ -86,7 +86,7 @@ impl Ui {
             .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
             .unwrap();
 
-        if config.is_fullscreen {
+        if config.graphics.is_fullscreen {
             main_canvas
                 .window_mut()
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)?;
@@ -120,13 +120,17 @@ impl Ui {
                 game_controllers.push(controller);
             }
         }
+        let scale = config.graphics.scale;
+
         let mut ui = Ui {
             event_pump: sdl_context.event_pump()?,
             game_controller_subsystem,
             main_canvas,
             debug_window,
             layout,
-            curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
+            curr_palette: into_pallet(
+                &config.graphics.pallets[config.graphics.selected_pallet_idx].hex_colors,
+            ),
             texture,
             overlay_texture,
             fps_texture,
@@ -134,10 +138,10 @@ impl Ui {
             game_controllers,
 
             _sdl_context: sdl_context,
-            show_fps: config.show_fps,
+            config,
         };
 
-        ui.set_scale(config.scale)?;
+        ui.set_scale(scale)?;
 
         Ok(ui)
     }
@@ -162,14 +166,14 @@ impl Ui {
         }
     }
 
-    pub fn draw_text(&mut self, text: &str, scale: usize) {
+    pub fn draw_text(&mut self, text: &str) {
         self.main_canvas.clear();
 
         let (win_width, win_height) = self.main_canvas.window().size();
-        let text_width = calc_text_width(text, scale);
+        let text_width = calc_text_width(text, self.config.graphics.text_scale);
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
-        let y = (LCD_Y_RES as u32 as usize - get_text_height(scale)) / 2;
+        let y = (LCD_Y_RES as u32 as usize - get_text_height(self.config.graphics.text_scale)) / 2;
 
         fill_texture(&mut self.overlay_texture, self.curr_palette[3]);
 
@@ -179,7 +183,7 @@ impl Ui {
             self.curr_palette[0],
             x,
             y,
-            scale,
+            self.config.graphics.text_scale,
         );
         let dest_rect = calculate_scaled_rect(win_width, win_height);
 
@@ -217,7 +221,7 @@ impl Ui {
             .copy(&self.texture, None, Some(dest_rect))
             .unwrap();
 
-        if self.show_fps {
+        if self.config.graphics.show_fps {
             let text = fps.to_string();
             fill_texture(&mut self.fps_texture, PixelColor::from_hex(0));
             draw_text(&mut self.fps_texture, &text, text_color, 5, 5, 1);
@@ -293,7 +297,7 @@ impl Ui {
                         if window.canvas.window().id() == window_id {
                             self.debug_window = None;
                         } else {
-                            return false
+                            return false;
                         }
                     }
                 }
@@ -305,21 +309,23 @@ impl Ui {
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
-        emu.ctx.config.graphics.selected_pallet_idx = get_next_pallet_idx(
-            emu.ctx.config.graphics.selected_pallet_idx,
-            emu.ctx.config.graphics.pallets.len() - 1,
+        self.config.graphics.selected_pallet_idx = get_next_pallet_idx(
+            self.config.graphics.selected_pallet_idx,
+            self.config.graphics.pallets.len() - 1,
         );
+        let pallet = &self.config.graphics.pallets[self.config.graphics.selected_pallet_idx];
         self.curr_palette = into_pallet(
-            &emu.ctx.config.graphics.pallets[emu.ctx.config.graphics.selected_pallet_idx]
-                .hex_colors,
+            &pallet.hex_colors,
         );
         emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
+        self.config.emulation.pallet = pallet.hex_colors.clone();
+        emu.ctx.config.pallet = pallet.hex_colors.clone();
     }
 
-    pub fn toggle_fullscreen(&mut self, config: &mut GraphicsConfig) {
-        config.is_fullscreen = !config.is_fullscreen;
+    pub fn toggle_fullscreen(&mut self) {
+        self.config.graphics.is_fullscreen = !self.config.graphics.is_fullscreen;
 
-        if config.is_fullscreen {
+        if self.config.graphics.is_fullscreen {
             self.main_canvas
                 .window_mut()
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)

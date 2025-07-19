@@ -20,8 +20,8 @@ pub struct EmuSaveState {
 }
 
 impl EmuSaveState {
-    pub fn save_file(&self, game_name: &str, index: usize) -> Result<(), String> {
-        let path = Self::generate_path(game_name, index);
+    pub fn save_file(&self, name: &str, index: usize) -> Result<(), String> {
+        let path = Self::generate_path(name, index);
 
         if let Some(parent) = Path::new(&path).parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -34,8 +34,8 @@ impl EmuSaveState {
         Ok(())
     }
 
-    pub fn load_file(game_name: &str, index: usize) -> Result<Self, String> {
-        let path = Self::generate_path(game_name, index);
+    pub fn load_file(name: &str, index: usize) -> Result<Self, String> {
+        let path = Self::generate_path(name, index);
         let mut file = File::open(path).map_err(|e| e.to_string())?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;

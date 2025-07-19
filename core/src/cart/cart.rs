@@ -65,6 +65,13 @@ impl Cart {
         })
     }
 
+    pub fn generate_name(&self) -> String {
+        let global_checksum = CartHeader::parse_global_checksum(&self.data.bytes);
+        let title = self.data.get_title();
+        
+        format!("{title}-{global_checksum}")
+    }
+
     pub fn read(&self, address: u16) -> u8 {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
@@ -131,12 +138,12 @@ impl CartData {
     }
 
     pub fn checksum_valid(&self) -> bool {
-        let checksum = self.calc_checksum();
+        let checksum = self.calc_header_checksum();
 
         CartHeader::get_header_checksum(&self.bytes) == checksum
     }
 
-    pub fn calc_checksum(&self) -> u8 {
+    pub fn calc_header_checksum(&self) -> u8 {
         const END: usize = 0x014C;
 
         if self.bytes.len() < END {
