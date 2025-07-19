@@ -52,11 +52,19 @@ impl Clock {
     }
 }
 
-pub fn spin_wait(duration: Duration) {
+const SLEEP_DURATION: Duration = Duration::from_millis(3);
+
+pub fn sleep_spin(duration: Duration) {
     let start = Instant::now();
 
+    // Sleep to avoid overshooting
+    if duration > SLEEP_DURATION {
+        thread::sleep(duration - SLEEP_DURATION);
+    }
+
+    // Spin the rest to get close to the target duration
     while start.elapsed() < duration {
         std::hint::spin_loop();
-        thread::yield_now();
+        //thread::yield_now();
     }
 }

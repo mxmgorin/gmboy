@@ -1,4 +1,4 @@
-use crate::auxiliary::clock::spin_wait;
+use crate::auxiliary::clock::sleep_spin;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
@@ -101,7 +101,7 @@ impl Emu {
         let emulated_time = self.calc_emulated_time(mode);
 
         if emulated_time > real_elapsed {
-            spin_wait(emulated_time - real_elapsed);
+            sleep_spin(emulated_time - real_elapsed);
         }
 
         Ok(true)

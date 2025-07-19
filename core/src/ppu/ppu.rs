@@ -1,4 +1,4 @@
-use crate::auxiliary::clock::{spin_wait, Tickable};
+use crate::auxiliary::clock::{sleep_spin, Tickable};
 use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
@@ -151,7 +151,7 @@ impl Ppu {
 
     pub fn limit(&self) {
         if self.last_frame_duration < self.target_frame_duration {
-            spin_wait(self.target_frame_duration - self.last_frame_duration);
+            sleep_spin(self.target_frame_duration - self.last_frame_duration);
         }
     }
 }
