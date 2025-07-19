@@ -13,8 +13,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-const _CYCLES_PER_SECOND: usize = 4_194_304;
-const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
+const CYCLES_PER_SECOND: usize = 4_194_304;
+const NANOS_PER_SECOND: usize = 1_000_000_000;
+const CYCLE_TIME: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
 
 pub struct Emu {
     pub ctx: EmuCtx,

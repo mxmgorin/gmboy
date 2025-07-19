@@ -21,7 +21,7 @@ fn main() {
 
     let config = if config_path.exists() {
         EmuConfig::from_file(config_path.to_str().unwrap())
-            .expect(&format!("Failed to parse {config_path:?}"))
+            .unwrap_or_else(|_| panic!("Failed to parse {config_path:?}"))
     } else {
         let config = EmuConfig::default();
 
@@ -59,14 +59,13 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
     loop {
         ui.handle_events(emu);
 
-        if emu.ctx.state == EmuState::Paused || emu.ctx.config.last_cart_path.is_none() {
-            let text = if emu.ctx.state == EmuState::Paused {
-                "PAUSED"
-            } else {
+        if emu.ctx.state == EmuState::Paused {
+            let text = if emu.ctx.config.last_cart_path.is_none() {
                 "DROP FILE"
+            } else {
+                "PAUSED"
             };
             ui.draw_text(text, emu.ctx.config.graphics.text_scale);
-            ui.handle_events(emu);
             thread::sleep(Duration::from_millis(100));
             continue;
         }
