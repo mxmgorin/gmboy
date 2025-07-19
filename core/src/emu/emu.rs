@@ -10,9 +10,9 @@ use crate::emu::save_state::EmuSaveState;
 use crate::into_pallet;
 use crate::ppu::tile::Pixel;
 use crate::ppu::CYCLES_PER_FRAME;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
+use std::{fs, thread};
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
@@ -41,30 +41,27 @@ impl Emu {
         })
     }
 
-    fn calc_emulated_time(&mut self) -> Duration {
-        let speed_multiplier = if let EmuState::Running(mode) = &self.ctx.state {
-            match mode {
-                RunMode::Rewind | RunMode::Normal => 1.0,
-                RunMode::Slow => self.ctx.config.emulation.slow_speed / 100.0,
-                RunMode::Turbo => self.ctx.config.emulation.turbo_speed / 100.0,
+    /// Runs emulation for one frame. Return false when paused.
+    pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<bool, String> {
+        match self.ctx.state {
+            EmuState::Paused => Ok(false),
+            EmuState::Rewind => {
+                if let Some(state) = self.ctx.rewind_buffer.pop_back() {
+                    self.load_save_state(state);
+                    thread::sleep(Duration::from_millis(100));
+                }
+
+                self.emulate_frame(RunMode::Normal, callback)
             }
-        } else {
-            1.0
-        };
-
-        if self.ctx.speed_multiplier != speed_multiplier {
-            self.ctx.clock.reset();
+            EmuState::Running(mode) => self.emulate_frame(mode, callback),
         }
-
-        self.ctx.speed_multiplier = speed_multiplier;
-
-        let emulated_time_ns =
-            (self.ctx.clock.t_cycles as f64 * CYCLE_TIME / speed_multiplier).round() as u64;
-
-        Duration::from_nanos(emulated_time_ns)
     }
 
-    pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<(), String> {
+    fn emulate_frame(
+        &mut self,
+        mode: RunMode,
+        callback: &mut impl EmuCallback,
+    ) -> Result<bool, String> {
         let prev_m_cycles = self.ctx.clock.get_m_cycles();
 
         while self.ctx.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
@@ -86,13 +83,32 @@ impl Emu {
         callback.update_video(&self.ctx.ppu.pipeline.buffer, self.ctx.ppu.fps);
         self.ctx.prev_frame = self.ctx.ppu.current_frame;
         let real_elapsed = self.ctx.clock.start_time.elapsed();
-        let emulated_time = self.calc_emulated_time();
+        let emulated_time = self.calc_emulated_time(mode);
 
         if emulated_time > real_elapsed {
             spin_wait(emulated_time - real_elapsed);
         }
 
-        Ok(())
+        Ok(true)
+    }
+
+    fn calc_emulated_time(&mut self, mode: RunMode) -> Duration {
+        let speed_multiplier = match mode {
+            RunMode::Normal => 1.0,
+            RunMode::Slow => self.ctx.config.emulation.slow_speed / 100.0,
+            RunMode::Turbo => self.ctx.config.emulation.turbo_speed / 100.0,
+        };
+
+        if self.ctx.speed_multiplier != speed_multiplier {
+            self.ctx.clock.reset();
+        }
+
+        self.ctx.speed_multiplier = speed_multiplier;
+
+        let emulated_time_ns =
+            (self.ctx.clock.t_cycles as f64 * CYCLE_TIME / speed_multiplier).round() as u64;
+
+        Duration::from_nanos(emulated_time_ns)
     }
 
     pub fn create_save_state(&self, cpu: &Cpu) -> EmuSaveState {
@@ -141,11 +157,6 @@ impl Emu {
         }
     }
 
-    pub fn handle_state(&mut self) {
-        EmuState::handle_pending_save_state(self);
-        EmuState::handle_rewind(self);
-    }
-
     pub fn load_cart_file(&mut self, path: PathBuf) {
         let cart = read_cart(&path).map_err(|e| e.to_string());
 
@@ -167,23 +178,23 @@ impl Emu {
             let save_state = EmuSaveState::load_file(&name, 0);
 
             if let Ok(save_state) = save_state {
-                load_save_state(self, save_state);
+                self.load_save_state(save_state);
             } else {
                 eprintln!("Failed load save_state: {}", save_state.unwrap_err());
             };
         }
     }
-}
 
-pub fn load_save_state(emu: &mut Emu, save_state: EmuSaveState) {
-    let mut state_cpu = save_state.cpu_without_bus; // reconstruct cpu
-    state_cpu.bus = save_state.bus_without_cart;
-    state_cpu.bus.io.joypad = Joypad::default(); // reset controls
-    state_cpu.bus.cart.mbc = save_state.cart_mbc; // reconstruct cart
-    state_cpu.bus.cart.data = emu.cpu.bus.cart.data.clone();
+    pub fn load_save_state(&mut self, save_state: EmuSaveState) {
+        let mut state_cpu = save_state.cpu_without_bus; // reconstruct cpu
+        state_cpu.bus = save_state.bus_without_cart;
+        state_cpu.bus.io.joypad = Joypad::default(); // reset controls
+        state_cpu.bus.cart.mbc = save_state.cart_mbc; // reconstruct cart
+        state_cpu.bus.cart.data = self.cpu.bus.cart.data.clone();
 
-    emu.cpu = state_cpu;
-    emu.ctx.reset();
+        self.cpu = state_cpu;
+        self.ctx.reset();
+    }
 }
 
 pub fn read_cart(file_path: &Path) -> Result<Cart, String> {

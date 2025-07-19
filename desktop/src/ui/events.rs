@@ -8,6 +8,7 @@ use std::path::PathBuf;
 
 pub enum UiEvent {
     Pause,
+    Rewind,
     FileDropped(PathBuf),
     Restart,
     ModeChanged(RunMode),
@@ -17,6 +18,30 @@ pub enum UiEvent {
 }
 
 impl Ui {
+    pub fn handle_save_state(emu: &mut Emu, event: SaveStateEvent, index: usize) {
+        let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
+
+        match event {
+            SaveStateEvent::Create => {
+                let save_state = emu.create_save_state(&emu.cpu);
+
+                if let Err(err) = save_state.save_file(&name, index) {
+                    eprintln!("Failed save_state: {err}",);
+                }
+            }
+            SaveStateEvent::Load => {
+                let save_state = core::emu::ctx::EmuSaveState::load_file(&name, index);
+
+                let Ok(save_state) = save_state else {
+                    eprintln!("Failed load save_state: {}", save_state.unwrap_err());
+                    return;
+                };
+
+                emu.load_save_state(save_state);
+            }
+        }
+    }
+
     pub fn on_event(&mut self, emu: &mut Emu, event: UiEvent) {
         match event {
             UiEvent::FileDropped(path) => emu.load_cart_file(path),
@@ -34,7 +59,7 @@ impl Ui {
             }
             UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),
             UiEvent::Mute => emu.ctx.config.emulation.is_muted = !emu.ctx.config.emulation.is_muted,
-            UiEvent::SaveState(event, index) => emu.ctx.pending_save_state = Some((event, index)),
+            UiEvent::SaveState(event, index) => Ui::handle_save_state(emu, event, index),
             UiEvent::PickFile => {
                 if emu.ctx.state == EmuState::Paused {
                     if let Some(path) = rfd::FileDialog::new().pick_file() {
@@ -42,6 +67,7 @@ impl Ui {
                     }
                 }
             }
+            UiEvent::Rewind => emu.ctx.state = EmuState::Rewind,
         }
     }
 
@@ -60,7 +86,7 @@ impl Ui {
             sdl2::controller::Button::A => emu.cpu.bus.io.joypad.a = is_down,
             sdl2::controller::Button::Y => {
                 return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Rewind))
+                    Some(UiEvent::Rewind)
                 } else {
                     Some(UiEvent::ModeChanged(RunMode::Normal))
                 }
@@ -131,7 +157,7 @@ impl Ui {
             Keycode::BACKSPACE => emu.cpu.bus.io.joypad.select = is_down,
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Rewind))
+                    Some(UiEvent::Rewind)
                 } else {
                     Some(UiEvent::ModeChanged(RunMode::Normal))
                 }

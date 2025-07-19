@@ -55,7 +55,7 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
     }
 
     while ui.handle_events(emu) {
-        if emu.ctx.state == EmuState::Paused {
+        if !emu.run_frame(ui)? {
             let text = if emu.ctx.config.last_cart_path.is_none() {
                 "DROP FILE"
             } else {
@@ -66,8 +66,6 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
             continue;
         }
 
-        emu.handle_state();
-        emu.run_frame(ui)?;
         emu.push_rewind();
         ui.draw_debug(emu.cpu.bus.video_ram.iter_tiles());
     }

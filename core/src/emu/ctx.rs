@@ -3,11 +3,9 @@ use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::emu::config::EmuConfig;
-use crate::emu::save_state::{EmuSaveState, SaveStateEvent};
-use crate::emu::{load_save_state, Emu};
+pub use crate::emu::save_state::{EmuSaveState, SaveStateEvent};
 use crate::ppu::Ppu;
 use std::collections::VecDeque;
-use std::thread;
 use std::time::{Duration, Instant};
 
 pub struct EmuCtx {
@@ -21,7 +19,6 @@ pub struct EmuCtx {
     pub last_fps_timestamp: Duration,
     pub rewind_buffer: VecDeque<EmuSaveState>,
     pub last_rewind_save: Instant,
-    pub pending_save_state: Option<(SaveStateEvent, usize)>,
 }
 
 impl EmuCtx {
@@ -37,7 +34,6 @@ impl EmuCtx {
             last_fps_timestamp: Default::default(),
             rewind_buffer: Default::default(),
             last_rewind_save: Instant::now(),
-            pending_save_state: None,
         }
     }
 
@@ -77,53 +73,16 @@ impl CpuCallback for EmuCtx {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum RunMode {
     Normal,
     Slow,
     Turbo,
-    Rewind,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum EmuState {
     Running(RunMode),
     Paused,
-}
-
-impl EmuState {
-    pub fn handle_pending_save_state(emu: &mut Emu) {
-        if let Some((event, index)) = emu.ctx.pending_save_state.take() {
-            let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
-
-            match event {
-                SaveStateEvent::Create => {
-                    let save_state = emu.create_save_state(&emu.cpu);
-
-                    if let Err(err) = save_state.save_file(&name, index) {
-                        eprintln!("Failed save_state: {:?}", err);
-                    }
-                }
-                SaveStateEvent::Load => {
-                    let save_state = EmuSaveState::load_file(&name, index);
-
-                    let Ok(save_state) = save_state else {
-                        eprintln!("Failed load save_state: {:?}", save_state);
-                        return;
-                    };
-
-                    load_save_state(emu, save_state);
-                }
-            }
-        }
-    }
-
-    pub fn handle_rewind(emu: &mut Emu) {
-        if let EmuState::Running(RunMode::Rewind) = &emu.ctx.state {
-            if let Some(state) = emu.ctx.rewind_buffer.pop_back() {
-                load_save_state(emu, state);
-                thread::sleep(Duration::from_millis(100));
-            }
-        }
-    }
+    Rewind,
 }
