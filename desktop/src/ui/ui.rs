@@ -79,15 +79,27 @@ impl Ui {
             .resizable()
             .build()
             .unwrap();
-        let main_canvas = main_window.into_canvas().build().unwrap();
+        let mut main_canvas = main_window.into_canvas().build().unwrap();
         let texture_creator = main_canvas.texture_creator();
         let texture = texture_creator
             .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
             .unwrap();
 
-        let (x, y) = main_canvas.window().position();
-        let mut debug_window = DebugWindow::new(&video_subsystem);
-        debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
+        if config.is_fullscreen {
+            main_canvas
+                .window_mut()
+                .set_fullscreen(sdl2::video::FullscreenType::Desktop)?;
+        }
+
+        let debug_window = if debug {
+            let (x, y) = main_canvas.window().position();
+            let mut debug_window = DebugWindow::new(&video_subsystem);
+            debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
+
+            Some(debug_window)
+        } else {
+            None
+        };
 
         let mut overlay_texture = texture_creator
             .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
@@ -107,12 +119,11 @@ impl Ui {
                 game_controllers.push(controller);
             }
         }
-
-        Ok(Ui {
+        let mut ui = Ui {
             event_pump: sdl_context.event_pump()?,
             game_controller_subsystem,
             canvas: main_canvas,
-            debug_window: if debug { Some(debug_window) } else { None },
+            debug_window,
             layout,
             curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
             texture,
@@ -123,11 +134,14 @@ impl Ui {
 
             _sdl_context: sdl_context,
             show_fps: config.show_fps,
-        })
+        };
+
+        ui.set_scale(config.scale)?;
+
+        Ok(ui)
     }
 
-    pub fn set_scale(&mut self, scale: f32, config: &mut GraphicsConfig) -> Result<(), String> {
-        config.scale = scale;
+    pub fn set_scale(&mut self, scale: f32) -> Result<(), String> {
         self.layout = Layout::new(scale);
         let window = self.canvas.window_mut();
         window
@@ -291,8 +305,10 @@ impl Ui {
             emu.ctx.config.graphics.selected_pallet_idx,
             emu.ctx.config.graphics.pallets.len() - 1,
         );
-        self.curr_palette =
-            into_pallet(&emu.ctx.config.graphics.pallets[emu.ctx.config.graphics.selected_pallet_idx].hex_colors);
+        self.curr_palette = into_pallet(
+            &emu.ctx.config.graphics.pallets[emu.ctx.config.graphics.selected_pallet_idx]
+                .hex_colors,
+        );
         emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
     }
 

@@ -116,7 +116,12 @@ impl Ui {
         None
     }
 
-    pub fn handle_key(&mut self, emu: &mut Emu, keycode: Keycode, is_down: bool) -> Option<UiEvent> {
+    pub fn handle_key(
+        &mut self,
+        emu: &mut Emu,
+        keycode: Keycode,
+        is_down: bool,
+    ) -> Option<UiEvent> {
         match keycode {
             Keycode::UP => emu.cpu.bus.io.joypad.up = is_down,
             Keycode::DOWN => emu.cpu.bus.io.joypad.down = is_down,
@@ -159,12 +164,14 @@ impl Ui {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    self.set_scale(emu.ctx.config.graphics.scale + 1.0, &mut emu.ctx.config.graphics).unwrap();
+                    emu.ctx.config.graphics.scale += 1.0;
+                    self.set_scale(emu.ctx.config.graphics.scale).unwrap();
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    self.set_scale(emu.ctx.config.graphics.scale - 1.0, &mut emu.ctx.config.graphics).unwrap();
+                    emu.ctx.config.graphics.scale -= 1.0;
+                    self.set_scale(emu.ctx.config.graphics.scale).unwrap();
                 }
             }
             Keycode::F => {
