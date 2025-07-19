@@ -89,7 +89,6 @@ pub enum RunMode {
 pub enum EmuState {
     Running(RunMode),
     Paused,
-    Quit,
 }
 
 impl EmuState {

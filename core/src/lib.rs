@@ -1,3 +1,5 @@
+use crate::ppu::tile::PixelColor;
+
 pub mod apu;
 pub mod auxiliary;
 pub mod bus;
@@ -59,6 +61,15 @@ pub fn hex_to_rgba(color: u32) -> (u8, u8, u8, u8) {
     let blue = (color & 0xFF) as u8; // Extract blue
 
     (red, green, blue, alpha)
+}
+
+pub fn into_pallet(hex_colors: &[String]) -> [PixelColor; 4] {
+    let colors: Vec<PixelColor> = hex_colors
+        .iter()
+        .map(|hex| PixelColor::from_hex(u32::from_str_radix(hex, 16).unwrap()))
+        .collect();
+
+    colors[..4].try_into().unwrap()
 }
 
 #[cfg(test)]

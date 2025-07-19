@@ -47,13 +47,11 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
     if let Some(cart_path) = &emu.ctx.config.last_cart_path {
         if Path::new(cart_path).exists() {
             emu.load_cart_file(cart_path.into());
-            emu.cpu.bus.io.lcd.set_pallet(ui.curr_palette);
         }
     }
 
     if let Some(cart_path) = cart_path {
         emu.load_cart_file(cart_path);
-        emu.cpu.bus.io.lcd.set_pallet(ui.curr_palette);
     }
 
     loop {
@@ -70,7 +68,7 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
             continue;
         }
 
-        if emu.ctx.state == EmuState::Quit {
+        if ui.quit {
             break;
         }
 

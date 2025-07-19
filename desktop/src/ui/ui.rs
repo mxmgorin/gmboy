@@ -1,3 +1,4 @@
+use core::into_pallet;
 use crate::ui::audio::GameAudio;
 use crate::ui::debug_window::DebugWindow;
 use crate::ui::events::UiEvent;
@@ -32,9 +33,10 @@ pub struct Ui {
     layout: Layout,
     game_controllers: Vec<GameController>,
 
-    pub audio: GameAudio,
+    audio: GameAudio,
     pub curr_palette: [PixelColor; 4],
     pub show_fps: bool,
+    pub quit: bool,
 }
 
 impl EmuCallback for Ui {
@@ -134,6 +136,7 @@ impl Ui {
 
             _sdl_context: sdl_context,
             show_fps: config.show_fps,
+            quit: false,
         };
 
         ui.set_scale(config.scale)?;
@@ -350,15 +353,6 @@ fn calculate_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let y = ((window_height - new_height) / 2) as i32;
 
     Rect::new(x, y, new_width, new_height)
-}
-
-pub fn into_pallet(hex_colors: &[String]) -> [PixelColor; 4] {
-    let colors: Vec<PixelColor> = hex_colors
-        .iter()
-        .map(|hex| PixelColor::from_hex(u32::from_str_radix(hex, 16).unwrap()))
-        .collect();
-
-    colors[..4].try_into().unwrap()
 }
 
 pub fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {

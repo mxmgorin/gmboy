@@ -3,6 +3,7 @@ use crate::Emu;
 use core::emu::ctx::EmuState;
 use core::emu::ctx::RunMode;
 use core::emu::save_state::SaveStateEvent;
+use core::ppu::lcd::Lcd;
 use sdl2::keyboard::Keycode;
 use std::path::PathBuf;
 
@@ -20,7 +21,7 @@ pub enum UiEvent {
 impl Ui {
     pub fn on_event(&mut self, emu: &mut Emu, event: UiEvent) {
         match event {
-            UiEvent::Quit => emu.ctx.state = EmuState::Quit,
+            UiEvent::Quit => self.quit = true,
             UiEvent::FileDropped(path) => emu.load_cart_file(path),
             UiEvent::Pause => {
                 if emu.ctx.state == EmuState::Paused {
@@ -40,7 +41,7 @@ impl Ui {
             UiEvent::PickFile => {
                 if emu.ctx.state == EmuState::Paused {
                     if let Some(path) = rfd::FileDialog::new().pick_file() {
-                        emu.load_cart_file(path)
+                        emu.load_cart_file(path);
                     }
                 }
             }

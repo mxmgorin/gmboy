@@ -7,7 +7,8 @@ use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
 use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
 use crate::emu::save_state::EmuSaveState;
-use crate::ppu::tile::{Pixel};
+use crate::into_pallet;
+use crate::ppu::tile::Pixel;
 use crate::ppu::CYCLES_PER_FRAME;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -29,8 +30,13 @@ pub trait EmuCallback {
 
 impl Emu {
     pub fn new(config: EmuConfig) -> Result<Self, String> {
+        let mut bus = Bus::with_bytes(vec![]);
+        let palette =
+            into_pallet(&config.graphics.pallets[config.graphics.selected_pallet_idx].hex_colors);
+        bus.io.lcd.set_pallet(palette);
+
         Ok(Self {
-            cpu: Cpu::new(Bus::with_bytes(vec![])),
+            cpu: Cpu::new(bus),
             ctx: EmuCtx::new(config),
         })
     }
