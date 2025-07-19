@@ -24,7 +24,7 @@ pub struct Ui {
     game_controller_subsystem: GameControllerSubsystem,
     event_pump: EventPump,
 
-    canvas: Canvas<Window>,
+    main_canvas: Canvas<Window>,
     texture: Texture,
     overlay_texture: Texture,
     fps_texture: Texture,
@@ -122,7 +122,7 @@ impl Ui {
         let mut ui = Ui {
             event_pump: sdl_context.event_pump()?,
             game_controller_subsystem,
-            canvas: main_canvas,
+            main_canvas,
             debug_window,
             layout,
             curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
@@ -143,7 +143,7 @@ impl Ui {
 
     pub fn set_scale(&mut self, scale: f32) -> Result<(), String> {
         self.layout = Layout::new(scale);
-        let window = self.canvas.window_mut();
+        let window = self.main_canvas.window_mut();
         window
             .set_size(self.layout.win_width, self.layout.win_height)
             .map_err(|e| e.to_string())?;
@@ -162,9 +162,9 @@ impl Ui {
     }
 
     pub fn draw_text(&mut self, text: &str, scale: usize) {
-        self.canvas.clear();
+        self.main_canvas.clear();
 
-        let (win_width, win_height) = self.canvas.window().size();
+        let (win_width, win_height) = self.main_canvas.window().size();
         let text_width = calc_text_width(text, scale);
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
@@ -182,15 +182,15 @@ impl Ui {
         );
         let dest_rect = calculate_scaled_rect(win_width, win_height);
 
-        self.canvas
+        self.main_canvas
             .copy(&self.overlay_texture, None, Some(dest_rect))
             .unwrap();
 
-        self.canvas.present();
+        self.main_canvas.present();
     }
 
     pub fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize, text_color: PixelColor) {
-        self.canvas.clear();
+        self.main_canvas.clear();
 
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
@@ -208,11 +208,11 @@ impl Ui {
             })
             .unwrap();
 
-        let (win_width, win_height) = self.canvas.window().size();
+        let (win_width, win_height) = self.main_canvas.window().size();
         let dest_rect = calculate_scaled_rect(win_width, win_height);
 
         // Copy the texture while maintaining aspect ratio
-        self.canvas
+        self.main_canvas
             .copy(&self.texture, None, Some(dest_rect))
             .unwrap();
 
@@ -221,12 +221,12 @@ impl Ui {
             fill_texture(&mut self.fps_texture, PixelColor::from_hex(0));
             draw_text(&mut self.fps_texture, &text, text_color, 5, 5, 1);
 
-            self.canvas
+            self.main_canvas
                 .copy(&self.fps_texture, None, Some(Rect::new(0, 0, 80, 80)))
                 .unwrap();
         }
 
-        self.canvas.present();
+        self.main_canvas.present();
     }
 
     pub fn handle_events(&mut self, emu: &mut Emu) {
@@ -316,12 +316,12 @@ impl Ui {
         config.is_fullscreen = !config.is_fullscreen;
 
         if config.is_fullscreen {
-            self.canvas
+            self.main_canvas
                 .window_mut()
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)
                 .unwrap();
         } else {
-            self.canvas
+            self.main_canvas
                 .window_mut()
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
