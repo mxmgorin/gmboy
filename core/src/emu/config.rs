@@ -16,7 +16,7 @@ impl EmuConfig {
     pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
         let path = Path::new(self.last_cart_path.as_ref()?);
 
-        Some(path.file_stem().unwrap().to_string_lossy())
+        Some(path.file_stem()?.to_string_lossy())
     }
 }
 
