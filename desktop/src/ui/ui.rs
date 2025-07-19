@@ -1,17 +1,14 @@
 use crate::ui::audio::GameAudio;
 use crate::ui::debug_window::DebugWindow;
-use crate::ui::events::{UiEvent, UiEventHandler};
+use crate::ui::events::UiEvent;
 use crate::ui::text::*;
-use core::bus::Bus;
+use crate::Emu;
 use core::emu::config::GraphicsConfig;
-use core::emu::ctx::RunMode;
-use core::emu::save_state::SaveStateEvent;
 use core::emu::EmuCallback;
 use core::ppu::tile::{Pixel, PixelColor, TileData};
 use core::ppu::{LCD_X_RES, LCD_Y_RES};
 use sdl2::controller::GameController;
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
@@ -36,14 +33,13 @@ pub struct Ui {
     game_controllers: Vec<GameController>,
 
     pub audio: GameAudio,
-
-    pub config: GraphicsConfig,
     pub curr_palette: [PixelColor; 4],
+    pub show_fps: bool,
 }
 
 impl EmuCallback for Ui {
     fn update_video(&mut self, buffer: &[Pixel], fps: usize) {
-        self.draw_main(buffer, fps);
+        self.draw_main(buffer, fps, self.curr_palette[3]);
     }
 
     fn update_audio(&mut self, output: &[f32]) {
@@ -119,7 +115,6 @@ impl Ui {
             debug_window: if debug { Some(debug_window) } else { None },
             layout,
             curr_palette: into_pallet(&config.pallets[config.selected_pallet_idx].hex_colors),
-            config,
             texture,
             overlay_texture,
             fps_texture,
@@ -127,11 +122,12 @@ impl Ui {
             game_controllers,
 
             _sdl_context: sdl_context,
+            show_fps: config.show_fps,
         })
     }
 
-    fn set_scale(&mut self, scale: f32) -> Result<(), String> {
-        self.config.scale = scale;
+    pub fn set_scale(&mut self, scale: f32, config: &mut GraphicsConfig) -> Result<(), String> {
+        config.scale = scale;
         self.layout = Layout::new(scale);
         let window = self.canvas.window_mut();
         window
@@ -151,11 +147,10 @@ impl Ui {
         }
     }
 
-    pub fn draw_text(&mut self, text: &str) {
+    pub fn draw_text(&mut self, text: &str, scale: usize) {
         self.canvas.clear();
 
         let (win_width, win_height) = self.canvas.window().size();
-        let scale = self.config.text_scale;
         let text_width = calc_text_width(text, scale);
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
@@ -180,7 +175,7 @@ impl Ui {
         self.canvas.present();
     }
 
-    pub fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize) {
+    pub fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize, text_color: PixelColor) {
         self.canvas.clear();
 
         self.texture
@@ -207,10 +202,10 @@ impl Ui {
             .copy(&self.texture, None, Some(dest_rect))
             .unwrap();
 
-        if self.config.show_fps {
+        if self.show_fps {
             let text = fps.to_string();
             fill_texture(&mut self.fps_texture, PixelColor::from_hex(0));
-            draw_text(&mut self.fps_texture, &text, self.curr_palette[3], 5, 5, 1);
+            draw_text(&mut self.fps_texture, &text, text_color, 5, 5, 1);
 
             self.canvas
                 .copy(&self.fps_texture, None, Some(Rect::new(0, 0, 80, 80)))
@@ -220,58 +215,58 @@ impl Ui {
         self.canvas.present();
     }
 
-    pub fn handle_events(&mut self, bus: &mut Bus, event_handler: &mut impl UiEventHandler) {
+    pub fn handle_events(&mut self, emu: &mut Emu) {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
                 Event::ControllerDeviceAdded { which, .. } => {
                     if let Ok(controller) = self.game_controller_subsystem.open(which) {
                         self.game_controllers.push(controller);
-                        println!("Controller {} connected", which);
+                        println!("Controller {which} connected");
                     }
                 }
                 Event::ControllerDeviceRemoved { which, .. } => {
                     self.game_controllers.retain(|c| c.instance_id() != which);
-                    println!("Controller {} disconnected", which);
+                    println!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
-                    event_handler.on_event(bus, UiEvent::FileDropped(filename.into()))
+                    self.on_event(emu, UiEvent::FileDropped(filename.into()))
                 }
-                Event::Quit { .. } => event_handler.on_event(bus, UiEvent::Quit),
+                Event::Quit { .. } => self.on_event(emu, UiEvent::Quit),
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => {
-                    if let Some(evt) = self.handle_key(bus, keycode, true) {
-                        event_handler.on_event(bus, evt);
+                    if let Some(evt) = self.handle_key(emu, keycode, true) {
+                        self.on_event(emu, evt);
                     }
                 }
                 Event::KeyUp {
                     keycode: Some(keycode),
                     ..
                 } => {
-                    if let Some(evt) = self.handle_key(bus, keycode, false) {
-                        event_handler.on_event(bus, evt);
+                    if let Some(evt) = self.handle_key(emu, keycode, false) {
+                        self.on_event(emu, evt);
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
-                    if let Some(evt) = self.handle_controller_button(bus, button, true) {
-                        event_handler.on_event(bus, evt);
+                    if let Some(evt) = self.handle_controller_button(emu, button, true) {
+                        self.on_event(emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
-                    if let Some(evt) = self.handle_controller_button(bus, button, false) {
-                        event_handler.on_event(bus, evt);
+                    if let Some(evt) = self.handle_controller_button(emu, button, false) {
+                        self.on_event(emu, evt);
                     }
                 }
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
                     if let Some(evt) = self.handle_joy_axis(axis_idx, value) {
-                        event_handler.on_event(bus, evt);
+                        self.on_event(emu, evt);
                     }
                 }
                 Event::MouseButtonDown { .. } => {
-                    event_handler.on_event(bus, UiEvent::PickFile);
+                    self.on_event(emu, UiEvent::PickFile);
                 }
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
@@ -282,7 +277,7 @@ impl Ui {
                         if window.canvas.window().id() == window_id {
                             self.debug_window = None;
                         } else {
-                            event_handler.on_event(bus, UiEvent::Quit);
+                            self.on_event(emu, UiEvent::Quit);
                         }
                     }
                 }
@@ -291,245 +286,20 @@ impl Ui {
         }
     }
 
-    fn handle_controller_button(
-        &mut self,
-        bus: &mut Bus,
-        button: sdl2::controller::Button,
-        is_down: bool,
-    ) -> Option<UiEvent> {
-        match button {
-            sdl2::controller::Button::DPadUp => bus.io.joypad.up = is_down,
-            sdl2::controller::Button::DPadDown => bus.io.joypad.down = is_down,
-            sdl2::controller::Button::DPadLeft => bus.io.joypad.left = is_down,
-            sdl2::controller::Button::DPadRight => bus.io.joypad.right = is_down,
-            sdl2::controller::Button::B => bus.io.joypad.b = is_down,
-            sdl2::controller::Button::A => bus.io.joypad.a = is_down,
-            sdl2::controller::Button::Y => {
-                return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Rewind))
-                } else {
-                    Some(UiEvent::ModeChanged(RunMode::Normal))
-                }
-            }
-            sdl2::controller::Button::X => {
-                if !is_down {
-                    self.next_palette(bus)
-                }
-            }
-            sdl2::controller::Button::Start => bus.io.joypad.start = is_down,
-            sdl2::controller::Button::Back => bus.io.joypad.select = is_down,
-            sdl2::controller::Button::Guide => bus.io.joypad.select = is_down,
-            sdl2::controller::Button::LeftShoulder => {
-                return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Slow))
-                } else {
-                    Some(UiEvent::ModeChanged(RunMode::Normal))
-                }
-            }
-            sdl2::controller::Button::RightShoulder => {
-                return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Turbo))
-                } else {
-                    Some(UiEvent::ModeChanged(RunMode::Normal))
-                }
-            }
-
-            _ => (), // Ignore other keycodes
-        }
-
-        None
+    pub fn next_palette(&mut self, emu: &mut Emu) {
+        emu.ctx.config.graphics.selected_pallet_idx = get_next_pallet_idx(
+            emu.ctx.config.graphics.selected_pallet_idx,
+            emu.ctx.config.graphics.pallets.len() - 1,
+        );
+        self.curr_palette =
+            into_pallet(&emu.ctx.config.graphics.pallets[emu.ctx.config.graphics.selected_pallet_idx].hex_colors);
+        emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
     }
 
-    fn handle_joy_axis(&mut self, axis_idx: u8, value: i16) -> Option<UiEvent> {
-        const LEFT: u8 = 2;
-        const RIGHT: u8 = 5;
-        const THRESHOLD: i16 = 20_000;
+    pub fn toggle_fullscreen(&mut self, config: &mut GraphicsConfig) {
+        config.is_fullscreen = !config.is_fullscreen;
 
-        let is_down = value > THRESHOLD;
-
-        if axis_idx == LEFT {
-            if !is_down {
-                return Some(UiEvent::SaveState(SaveStateEvent::Load, 1));
-            }
-        } else if axis_idx == RIGHT {
-            if !is_down {
-                return Some(UiEvent::SaveState(SaveStateEvent::Create, 1));
-            }
-        }
-
-        None
-    }
-
-    fn handle_key(&mut self, bus: &mut Bus, keycode: Keycode, is_down: bool) -> Option<UiEvent> {
-        match keycode {
-            Keycode::UP => bus.io.joypad.up = is_down,
-            Keycode::DOWN => bus.io.joypad.down = is_down,
-            Keycode::LEFT => bus.io.joypad.left = is_down,
-            Keycode::RIGHT => bus.io.joypad.right = is_down,
-            Keycode::Z => bus.io.joypad.b = is_down,
-            Keycode::X => bus.io.joypad.a = is_down,
-            Keycode::Return => bus.io.joypad.start = is_down,
-            Keycode::BACKSPACE => bus.io.joypad.select = is_down,
-            Keycode::LCTRL | Keycode::RCTRL => {
-                return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Rewind))
-                } else {
-                    Some(UiEvent::ModeChanged(RunMode::Normal))
-                }
-            }
-            Keycode::TAB => {
-                return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Turbo))
-                } else {
-                    Some(UiEvent::ModeChanged(RunMode::Normal))
-                }
-            }
-            Keycode::LSHIFT | Keycode::RSHIFT => {
-                return if is_down {
-                    Some(UiEvent::ModeChanged(RunMode::Slow))
-                } else {
-                    Some(UiEvent::ModeChanged(RunMode::Normal))
-                }
-            }
-            Keycode::SPACE => {
-                if !is_down {
-                    return Some(UiEvent::Pause);
-                }
-            }
-            Keycode::R => {
-                if !is_down {
-                    return Some(UiEvent::Restart);
-                }
-            }
-            Keycode::EQUALS => {
-                if !is_down {
-                    self.set_scale(self.config.scale + 1.0).unwrap();
-                    return Some(UiEvent::ConfigChanged(self.config.clone()));
-                }
-            }
-            Keycode::MINUS => {
-                if !is_down {
-                    self.set_scale(self.config.scale - 1.0).unwrap();
-                    return Some(UiEvent::ConfigChanged(self.config.clone()));
-                }
-            }
-            Keycode::F => {
-                if !is_down {
-                    self.toggle_fullscreen();
-                    return Some(UiEvent::ConfigChanged(self.config.clone()));
-                }
-            }
-            Keycode::M => {
-                if !is_down {
-                    return Some(UiEvent::Mute);
-                }
-            }
-            Keycode::P => {
-                if !is_down {
-                    self.next_palette(bus);
-                    return Some(UiEvent::ConfigChanged(self.config.clone()));
-                }
-            }
-            Keycode::NUM_1 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 1));
-                }
-            }
-            Keycode::NUM_2 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 2));
-                }
-            }
-            Keycode::NUM_3 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 3));
-                }
-            }
-            Keycode::NUM_4 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 4));
-                }
-            }
-            Keycode::NUM_5 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 5));
-                }
-            }
-            Keycode::NUM_6 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 6));
-                }
-            }
-            Keycode::NUM_7 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 7));
-                }
-            }
-            Keycode::NUM_8 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 8));
-                }
-            }
-            Keycode::NUM_9 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Create, 9));
-                }
-            }
-            Keycode::F1 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 1));
-                }
-            }
-            Keycode::F2 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 2));
-                }
-            }
-            Keycode::F3 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 3));
-                }
-            }
-            Keycode::F4 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 4));
-                }
-            }
-            Keycode::F5 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 5));
-                }
-            }
-            Keycode::F6 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 6));
-                }
-            }
-            Keycode::F7 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 7));
-                }
-            }
-            Keycode::F8 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 8));
-                }
-            }
-            Keycode::F9 => {
-                if !is_down {
-                    return Some(UiEvent::SaveState(SaveStateEvent::Load, 9));
-                }
-            }
-            _ => (), // Ignore other keycodes
-        }
-
-        None
-    }
-
-    fn toggle_fullscreen(&mut self) {
-        self.config.is_fullscreen = !self.config.is_fullscreen;
-
-        if self.config.is_fullscreen {
+        if config.is_fullscreen {
             self.canvas
                 .window_mut()
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)
@@ -540,16 +310,6 @@ impl Ui {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
-    }
-
-    fn next_palette(&mut self, bus: &mut Bus) {
-        self.config.selected_pallet_idx = get_next_pallet_idx(
-            self.config.selected_pallet_idx,
-            self.config.pallets.len() - 1,
-        );
-        self.curr_palette =
-            into_pallet(&self.config.pallets[self.config.selected_pallet_idx].hex_colors);
-        bus.io.lcd.set_pallet(self.curr_palette);
     }
 }
 

@@ -4,11 +4,9 @@ use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::{CpuLogType, Debugger};
 use crate::emu::config::EmuConfig;
 use crate::emu::save_state::{EmuSaveState, SaveStateEvent};
-use crate::emu::{load_save_state, read_cart, Emu};
-use crate::ppu::tile::PixelColor;
+use crate::emu::{load_save_state, Emu};
 use crate::ppu::Ppu;
 use std::collections::VecDeque;
-use std::path::PathBuf;
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -33,7 +31,7 @@ impl EmuCtx {
             clock: Clock::default(),
             debugger: Some(Debugger::new(CpuLogType::None, false)),
             speed_multiplier: 1.0,
-            state: EmuState::WaitCart,
+            state: EmuState::Paused,
             config,
             prev_frame: 0,
             last_fps_timestamp: Default::default(),
@@ -89,43 +87,12 @@ pub enum RunMode {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EmuState {
-    WaitCart,
     Running(RunMode),
     Paused,
-    LoadCart(PathBuf),
     Quit,
 }
 
 impl EmuState {
-    pub fn handle_load_cart(emu: &mut Emu, pallet: [PixelColor; 4]) {
-        if let EmuState::LoadCart(path) = &emu.ctx.state {
-            let cart = read_cart(path).map_err(|e| e.to_string());
-
-            let Ok(cart) = cart else {
-                eprintln!("Failed read_cart: {}", cart.unwrap_err());
-                return;
-            };
-
-            let mut bus = Bus::new(cart);
-            bus.io.lcd.set_pallet(pallet);
-            emu.cpu = Cpu::new(bus);
-            emu.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
-            emu.ctx.state = EmuState::Running(RunMode::Normal);
-            emu.ctx.reset();
-
-            if emu.ctx.config.load_save_state_at_start {
-                let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
-                let save_state = EmuSaveState::load_file(&name, 0);
-
-                if let Ok(save_state) = save_state {
-                    load_save_state(emu, save_state);
-                } else {
-                    eprintln!("Failed load save_state: {:?}", save_state);
-                };
-            }
-        }
-    }
-
     pub fn handle_pending_save_state(emu: &mut Emu) {
         if let Some((event, index)) = emu.ctx.pending_save_state.take() {
             let name = emu.ctx.config.get_last_cart_file_stem().unwrap();

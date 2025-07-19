@@ -7,10 +7,10 @@ use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
 use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
 use crate::emu::save_state::EmuSaveState;
-use crate::ppu::tile::{Pixel, PixelColor};
+use crate::ppu::tile::{Pixel};
 use crate::ppu::CYCLES_PER_FRAME;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 const _CYCLES_PER_SECOND: usize = 4_194_304;
@@ -134,10 +134,37 @@ impl Emu {
         }
     }
 
-    pub fn handle_state(&mut self, pallet: [PixelColor; 4]) {
+    pub fn handle_state(&mut self) {
         EmuState::handle_pending_save_state(self);
-        EmuState::handle_load_cart(self, pallet);
         EmuState::handle_rewind(self);
+    }
+
+    pub fn load_cart_file(&mut self, path: PathBuf) {
+        let cart = read_cart(&path).map_err(|e| e.to_string());
+
+        let Ok(cart) = cart else {
+            eprintln!("Failed read_cart: {}", cart.unwrap_err());
+            return;
+        };
+
+        let current_pallet = self.cpu.bus.io.lcd.current_pallet;
+        let mut bus = Bus::new(cart);
+        bus.io.lcd.set_pallet(current_pallet);
+        self.cpu = Cpu::new(bus);
+        self.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
+        self.ctx.state = EmuState::Running(RunMode::Normal);
+        self.ctx.reset();
+
+        if self.ctx.config.load_save_state_at_start {
+            let name = self.ctx.config.get_last_cart_file_stem().unwrap();
+            let save_state = EmuSaveState::load_file(&name, 0);
+
+            if let Ok(save_state) = save_state {
+                load_save_state(self, save_state);
+            } else {
+                eprintln!("Failed load save_state: {:?}", save_state);
+            };
+        }
     }
 }
 

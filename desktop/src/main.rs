@@ -46,25 +46,27 @@ fn main() {
 fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(), String> {
     if let Some(cart_path) = &emu.ctx.config.last_cart_path {
         if Path::new(cart_path).exists() {
-            emu.ctx.state = EmuState::LoadCart(cart_path.into());
+            emu.load_cart_file(cart_path.into());
+            emu.cpu.bus.io.lcd.set_pallet(ui.curr_palette);
         }
     }
 
     if let Some(cart_path) = cart_path {
-        emu.ctx.state = EmuState::LoadCart(cart_path);
+        emu.load_cart_file(cart_path);
+        emu.cpu.bus.io.lcd.set_pallet(ui.curr_palette);
     }
 
     loop {
-        ui.handle_events(&mut emu.cpu.bus, &mut emu.ctx);
+        ui.handle_events(emu);
 
-        if emu.ctx.state == EmuState::Paused || emu.ctx.state == EmuState::WaitCart {
+        if emu.ctx.state == EmuState::Paused || emu.ctx.config.last_cart_path.is_none() {
             let text = if emu.ctx.state == EmuState::Paused {
                 "PAUSED"
             } else {
                 "DROP FILE"
             };
-            ui.draw_text(text);
-            ui.handle_events(&mut emu.cpu.bus, &mut emu.ctx);
+            ui.draw_text(text, emu.ctx.config.graphics.text_scale);
+            ui.handle_events(emu);
             thread::sleep(Duration::from_millis(100));
             continue;
         }
@@ -73,7 +75,7 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
             break;
         }
 
-        emu.handle_state(ui.curr_palette);
+        emu.handle_state();
         emu.run_frame(ui)?;
         emu.push_rewind();
         ui.draw_debug(emu.cpu.bus.video_ram.iter_tiles());
