@@ -34,11 +34,20 @@ impl Emu {
         let palette =
             into_pallet(&config.graphics.pallets[config.graphics.selected_pallet_idx].hex_colors);
         bus.io.lcd.set_pallet(palette);
-
-        Ok(Self {
+        let mut emu = Self {
             cpu: Cpu::new(bus),
             ctx: EmuCtx::new(config),
-        })
+        };
+
+        if let Some(cart_path) = &emu.ctx.config.last_cart_path {
+            let cart_path = PathBuf::from(cart_path.clone());
+
+            if cart_path.exists() {
+                emu.load_cart_file(&cart_path);
+            }
+        }
+
+        Ok(emu)
     }
 
     /// Runs emulation for one frame. Return false when paused.
@@ -157,8 +166,8 @@ impl Emu {
         }
     }
 
-    pub fn load_cart_file(&mut self, path: PathBuf) {
-        let cart = read_cart(&path).map_err(|e| e.to_string());
+    pub fn load_cart_file(&mut self, path: &Path) {
+        let cart = read_cart(path).map_err(|e| e.to_string());
 
         let Ok(cart) = cart else {
             eprintln!("Failed read_cart: {}", cart.unwrap_err());

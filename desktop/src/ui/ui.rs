@@ -1,5 +1,3 @@
-use std::thread;
-use std::time::Duration;
 use core::into_pallet;
 use crate::ui::audio::GameAudio;
 use crate::ui::debug_window::DebugWindow;

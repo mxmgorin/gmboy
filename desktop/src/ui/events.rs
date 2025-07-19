@@ -44,7 +44,7 @@ impl Ui {
 
     pub fn on_event(&mut self, emu: &mut Emu, event: UiEvent) {
         match event {
-            UiEvent::FileDropped(path) => emu.load_cart_file(path),
+            UiEvent::FileDropped(path) => emu.load_cart_file(&path),
             UiEvent::Pause => {
                 if emu.ctx.state == EmuState::Paused {
                     emu.ctx.state = EmuState::Running(RunMode::Normal);
@@ -53,8 +53,8 @@ impl Ui {
                 }
             }
             UiEvent::Restart => {
-                if let Some(path) = &emu.ctx.config.last_cart_path {
-                    emu.load_cart_file(PathBuf::from(path));
+                if let Some(path) = emu.ctx.config.last_cart_path.clone() {
+                    emu.load_cart_file(&PathBuf::from(path));
                 }
             }
             UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),
@@ -63,7 +63,7 @@ impl Ui {
             UiEvent::PickFile => {
                 if emu.ctx.state == EmuState::Paused {
                     if let Some(path) = rfd::FileDialog::new().pick_file() {
-                        emu.load_cart_file(path);
+                        emu.load_cart_file(&path);
                     }
                 }
             }

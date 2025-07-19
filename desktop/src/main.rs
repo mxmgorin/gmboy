@@ -1,8 +1,7 @@
 use crate::ui::Ui;
 use core::emu::config::EmuConfig;
-use core::emu::ctx::EmuState;
 use core::emu::Emu;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 use std::time::Duration;
 use std::{env, thread};
 
@@ -15,7 +14,8 @@ fn main() {
         env::var("CART_PATH").ok()
     } else {
         Some(args.remove(1))
-    };
+    }
+    .map(PathBuf::from);
 
     let config_path = EmuConfig::default_path();
 
@@ -36,24 +36,20 @@ fn main() {
     let mut ui = Ui::new(config.graphics.clone(), false).unwrap();
     let mut emu = Emu::new(config).unwrap();
 
-    if let Err(err) = run_emu(&mut emu, &mut ui, cart_path.map(|x| x.into())) {
+    if let Some(cart_path) = cart_path {
+        if cart_path.exists() {
+            emu.load_cart_file(&cart_path);
+        }
+    }
+
+    if let Err(err) = run_emu(&mut emu, &mut ui) {
         eprintln!("Run failed: {err}");
     }
 
     emu.save_files();
 }
 
-fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(), String> {
-    if let Some(cart_path) = &emu.ctx.config.last_cart_path {
-        if Path::new(cart_path).exists() {
-            emu.load_cart_file(cart_path.into());
-        }
-    }
-
-    if let Some(cart_path) = cart_path {
-        emu.load_cart_file(cart_path);
-    }
-
+fn run_emu(emu: &mut Emu, ui: &mut Ui) -> Result<(), String> {
     while ui.handle_events(emu) {
         if !emu.run_frame(ui)? {
             let text = if emu.ctx.config.last_cart_path.is_none() {
