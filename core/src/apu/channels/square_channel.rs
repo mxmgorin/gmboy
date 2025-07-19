@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::{NRx1, NRx2, NRx3x4};
+use crate::apu::timers::envelope_timer::EnvelopeTimer;
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
+use crate::apu::timers::sweep_timer::SweepTimer;
 use crate::apu::NR52;
 use crate::get_bit_flag;
-use crate::apu::timers::envelope_timer::EnvelopeTimer;
-use crate::apu::timers::sweep_timer::SweepTimer;
+use serde::{Deserialize, Serialize};
 
 pub const CH1_START_ADDRESS: u16 = NR10_CH1_SWEEP_ADDRESS;
 pub const CH1_END_ADDRESS: u16 = NR14_CH1_PERIOD_HIGH_CONTROL_ADDRESS;
@@ -64,7 +64,7 @@ impl DigitalSampleProducer for SquareChannel {
         }
 
         let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
-        
+
         WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] * self.envelope_timer.get_volume()
     }
 }

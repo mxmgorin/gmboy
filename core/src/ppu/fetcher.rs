@@ -122,7 +122,7 @@ impl PixelFetcher {
                             + ((self.bgw_fetched_data.map_y as u16 / TILE_HEIGHT) * 32);
                         self.bgw_fetched_data.tile_idx = bus.read(addr);
                     }
-                    
+
                     self.bgw_fetched_data.data_area = bus.io.lcd.control.bgw_data_area();
                     self.bgw_fetched_data.normalize_tile_idx();
                 }

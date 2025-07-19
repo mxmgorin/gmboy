@@ -1,11 +1,11 @@
+use crate::cart::header::RomSize;
+use crate::cart::mbc1::BankingMode;
 use crate::cart::mbc1::Mbc1;
 use crate::cart::mbc2::Mbc2;
 use crate::cart::mbc3::Mbc3;
 use crate::cart::mbc5::Mbc5;
 use crate::cart::{CartData, RAM_ADDRESS_START, RAM_BANK_SIZE, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
-use crate::cart::header::{RomSize};
-use crate::cart::mbc1::BankingMode;
 
 pub const ROM_BANK_ZERO_START_ADDR: u16 = 0x0000;
 pub const ROM_BANK_ZERO_END_ADDR: u16 = 0x3FFF;
@@ -111,7 +111,7 @@ pub struct MbcData {
     pub rom_bank_number: u16,
     pub ram_bank_number: u8,
     pub ram_enabled: bool,
-    pub rom_banks_count: usize
+    pub rom_banks_count: usize,
 }
 
 impl MbcData {

@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::{get_bit_flag, get_bit_flag16};
+use serde::{Deserialize, Serialize};
 
 pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
 pub const TIMER_TIMA_ADDRESS: u16 = 0xFF05;

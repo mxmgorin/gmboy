@@ -1,7 +1,7 @@
 use crate::cpu::instructions::RegisterType;
 use crate::{get_bit_flag, set_bit};
-use std::fmt::Display;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
 const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;

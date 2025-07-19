@@ -21,12 +21,12 @@ fn main() {
 
     let config = if config_path.exists() {
         EmuConfig::from_file(config_path.to_str().unwrap())
-            .expect(&format!("Failed to parse {:?}", config_path))
+            .expect(&format!("Failed to parse {config_path:?}"))
     } else {
         let config = EmuConfig::default();
 
         if let Err(err) = config.save_file() {
-            eprintln!("failed to create default config: {}", err);
+            eprintln!("failed to create default config: {err}");
             std::process::exit(1);
         }
 
@@ -37,7 +37,7 @@ fn main() {
     let mut emu = Emu::new(config).unwrap();
 
     if let Err(err) = run_emu(&mut emu, &mut ui, cart_path.map(|x| x.into())) {
-        eprintln!("Run failed: {}", err);
+        eprintln!("Run failed: {err}");
     }
 
     emu.save_files();
@@ -74,12 +74,9 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui, cart_path: Option<PathBuf>) -> Result<(),
         }
 
         emu.handle_state(ui.curr_palette);
-        emu.tick(ui)?;
-        emu.tick_rewind();
-
-        if emu.ctx.prev_frame != emu.ctx.ppu.current_frame {
-            ui.draw_debug(emu.cpu.bus.video_ram.iter_tiles());
-        }
+        emu.run_frame(ui)?;
+        emu.push_rewind();
+        ui.draw_debug(emu.cpu.bus.video_ram.iter_tiles());
     }
 
     Ok(())

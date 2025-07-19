@@ -1,9 +1,9 @@
+use crate::cart::header::{RamSize, RomSize};
 use crate::cart::mbc::{Mbc, MbcData};
+use crate::cart::mbc1::BankingMode;
 use crate::cart::CartData;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
-use crate::cart::header::{RamSize, RomSize};
-use crate::cart::mbc1::BankingMode;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc3 {
@@ -161,7 +161,7 @@ impl Mbc for Mbc3 {
                     0x00..=0x03 => {
                         self.data.ram_bank_number = value & 0x03;
                         self.rtc.reset_selected();
-                    },
+                    }
                     0x08..=0x0C => self.rtc.selected_register = value,
                     _ => {}
                 };
@@ -188,7 +188,10 @@ impl Mbc for Mbc3 {
 
     fn write_ram(&mut self, address: u16, value: u8) {
         if self.rtc.is_selected() {
-            return self.rtc.registers_latched.write(self.rtc.selected_register, value);
+            return self
+                .rtc
+                .registers_latched
+                .write(self.rtc.selected_register, value);
         }
 
         self.data.write_ram(address, value, BankingMode::RamBanking);

@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
@@ -6,6 +5,7 @@ use crate::ppu::tile::{
 };
 use crate::ppu::window::Window;
 use crate::{get_bit_flag, set_bit};
+use serde::{Deserialize, Serialize};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
 pub const LCD_ADDRESS_END: u16 = 0xFF4B;

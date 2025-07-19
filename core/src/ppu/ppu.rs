@@ -1,10 +1,10 @@
+use crate::auxiliary::clock::{spin_wait, Tickable};
 use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
-use crate::ppu::lcd::{PpuMode, LcdStatSrc};
 use crate::ppu::fetcher::PixelFetcher;
+use crate::ppu::lcd::{LcdStatSrc, PpuMode};
 use std::time::{Duration, Instant};
-use crate::auxiliary::clock::{spin_wait, Tickable};
 
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
@@ -17,7 +17,7 @@ pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 
 pub const CYCLES_PER_FRAME: usize = 70224;
 
 impl Tickable for Ppu {
-    fn tick(&mut self, bus: &mut Bus)  {
+    fn tick(&mut self, bus: &mut Bus) {
         self.tick(bus);
     }
 }
@@ -155,5 +155,3 @@ impl Ppu {
         }
     }
 }
-
-

@@ -1,8 +1,8 @@
+use crate::cart::header::RomSize;
 use crate::cart::mbc::{Mbc, MbcData};
-use crate::cart::{CartData};
-use serde::{Deserialize, Serialize};
-use crate::cart::header::{RomSize};
 use crate::cart::mbc1::BankingMode;
+use crate::cart::CartData;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Mbc2 {

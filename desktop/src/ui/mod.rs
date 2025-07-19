@@ -4,8 +4,8 @@ pub mod events;
 pub mod text;
 mod ui;
 
-pub use ui::*;
 use sdl2::pixels::Color;
+pub use ui::*;
 
 pub fn into_sdl_color(color_hex: u32) -> Color {
     Color::RGBA(

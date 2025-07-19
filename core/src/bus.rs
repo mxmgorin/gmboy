@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use crate::auxiliary::dma::Dma;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::Ram;
@@ -6,6 +5,7 @@ use crate::cart::Cart;
 use crate::ppu::lcd::LCD_DMA_ADDRESS;
 use crate::ppu::oam::OamRam;
 use crate::ppu::vram::{VideoRam, VRAM_ADDR_END, VRAM_ADDR_START};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BusAddrLocation {

@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::registers::NRx3x4;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PeriodTimer {

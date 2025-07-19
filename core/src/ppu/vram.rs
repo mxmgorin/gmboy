@@ -1,12 +1,12 @@
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
-use serde::ser::SerializeSeq;
-use serde::de::{Visitor, SeqAccess, Error};
-use std::fmt;
 use crate::ppu::tile::{
     TileData, TileLineData, BG_TILE_MAP_1_ADDR_END, BG_TILE_MAP_1_ADDR_START,
     BG_TILE_MAP_2_ADDR_END, BG_TILE_MAP_2_ADDR_START, TILE_BIT_SIZE, TILE_HEIGHT,
     TILE_LINE_BYTES_COUNT, TILE_SET_2_END, TILE_SET_DATA_1_START,
 };
+use serde::de::{Error, SeqAccess, Visitor};
+use serde::ser::SerializeSeq;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt;
 
 pub const VRAM_SIZE: usize = 0x2000;
 pub const VRAM_ADDR_START: u16 = 0x8000;
@@ -41,10 +41,7 @@ pub struct VideoRam {
     pub bytes: [u8; VRAM_SIZE],
 }
 
-pub fn serialize_array_vram<S>(
-    arr: &[u8; VRAM_SIZE],
-    serializer: S,
-) -> Result<S::Ok, S::Error>
+pub fn serialize_array_vram<S>(arr: &[u8; VRAM_SIZE], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -55,9 +52,7 @@ where
     seq.end()
 }
 
-pub fn deserialize_array_vram<'de, D>(
-    deserializer: D,
-) -> Result<[u8; VRAM_SIZE], D::Error>
+pub fn deserialize_array_vram<'de, D>(deserializer: D) -> Result<[u8; VRAM_SIZE], D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -76,16 +71,18 @@ where
         {
             let mut vec = Vec::with_capacity(VRAM_SIZE);
             for i in 0..VRAM_SIZE {
-                let value = seq.next_element()?.ok_or_else(|| Error::invalid_length(i, &self))?;
+                let value = seq
+                    .next_element()?
+                    .ok_or_else(|| Error::invalid_length(i, &self))?;
                 vec.push(value);
             }
-            vec.try_into().map_err(|_| Error::custom("Failed to convert Vec to array"))
+            vec.try_into()
+                .map_err(|_| Error::custom("Failed to convert Vec to array"))
         }
     }
 
     deserializer.deserialize_seq(ArrayVisitor)
 }
-
 
 impl Default for VideoRam {
     fn default() -> Self {

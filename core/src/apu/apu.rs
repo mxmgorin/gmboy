@@ -1,7 +1,11 @@
 use crate::apu::channels::channel::ChannelType;
+use crate::apu::channels::noise_channel::NR41_CH4_LENGTH_TIMER_ADDRESS;
 use crate::apu::channels::noise_channel::{NoiseChannel, CH4_END_ADDRESS, CH4_START_ADDRESS};
 use crate::apu::channels::square_channel::{
     SquareChannel, CH1_END_ADDRESS, CH1_START_ADDRESS, CH2_END_ADDRESS, CH2_START_ADDRESS,
+};
+use crate::apu::channels::square_channel::{
+    NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS, NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS,
 };
 use crate::apu::channels::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
@@ -9,15 +13,11 @@ use crate::apu::channels::wave_channel::{
 use crate::apu::dac::apply_dac;
 use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
-use crate::apu::channels::noise_channel::NR41_CH4_LENGTH_TIMER_ADDRESS;
-use crate::apu::channels::square_channel::{
-    NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS, NR21_CH2_LEN_TIMER_DUTY_CYCLE_ADDRESS,
-};
+use crate::cpu::CPU_CLOCK_SPEED;
 use crate::{get_bit_flag, set_bit};
 use serde::de::Error;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::ser::SerializeSeq;
-use crate::cpu::CPU_CLOCK_SPEED;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
 pub const AUDIO_END_ADDRESS: u16 = 0xFF26;
@@ -54,7 +54,7 @@ pub struct Apu {
     hpf: Hpf,
 }
 fn serialize_boxed_array<S>(
-    arr: &Box<[f32; AUDIO_BUFFER_SIZE]>,
+    arr: &[f32; AUDIO_BUFFER_SIZE],
     serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -147,7 +147,7 @@ impl Apu {
     }
 
     pub fn output_ready(&self) -> bool {
-        self.output_buffer_idx >= AUDIO_BUFFER_SIZE
+        self.output_buffer_idx >= AUDIO_BUFFER_SIZE / 2
     }
 
     pub fn write(&mut self, address: u16, value: u8) {

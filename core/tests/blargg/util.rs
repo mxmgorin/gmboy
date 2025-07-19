@@ -3,9 +3,9 @@ use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
 use core::debugger::{CpuLogType, Debugger};
+use core::emu::emu::read_bytes;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
-use core::emu::emu::read_bytes;
 
 pub fn run_blargg_rom_serial(
     name: &str,

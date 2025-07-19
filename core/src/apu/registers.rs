@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::{get_bit_flag, set_bit, LittleEndianBytes};
+use serde::{Deserialize, Serialize};
 
 pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;
 

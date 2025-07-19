@@ -1,5 +1,7 @@
-use std::path::{PathBuf};
-use crate::mooneye::util::{assert_result, assert_result_path, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory};
+use crate::mooneye::util::{
+    assert_result, assert_result_path, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory,
+};
+use std::path::PathBuf;
 use std::time::Duration;
 
 mod util;

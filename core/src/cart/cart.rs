@@ -31,13 +31,13 @@ impl Cart {
 
         let mbc = match cart_type {
             CartType::RomOnly => MbcVariant::NoMbc,
-            CartType::RomRam | CartType::RomRamBattery => MbcVariant::NoMbcRam(vec![0; ram_size.bytes_size()].into_boxed_slice()),
+            CartType::RomRam | CartType::RomRamBattery => {
+                MbcVariant::NoMbcRam(vec![0; ram_size.bytes_size()].into_boxed_slice())
+            }
             CartType::Mbc1 | CartType::Mbc1Ram | CartType::Mbc1RamBattery => {
                 MbcVariant::Mbc1(Mbc1::new(ram_size, rom_size, &data.bytes))
             }
-            CartType::Mbc2 | CartType::Mbc2Battery => {
-                MbcVariant::Mbc2(Mbc2::new(rom_size))
-            }
+            CartType::Mbc2 | CartType::Mbc2Battery => MbcVariant::Mbc2(Mbc2::new(rom_size)),
             CartType::Mbc5
             | CartType::Mbc5Ram
             | CartType::Mbc5Rumble
@@ -45,9 +45,7 @@ impl Cart {
             | CartType::Mbc3
             | CartType::Mbc3Ram
             | CartType::Mbc5RamBattery
-            | CartType::Mbc5RumbleRamBattery => {
-                MbcVariant::Mbc5(Mbc5::new(ram_size, rom_size))
-            }
+            | CartType::Mbc5RumbleRamBattery => MbcVariant::Mbc5(Mbc5::new(ram_size, rom_size)),
             CartType::Mbc3RamBattery
             | CartType::Mbc3TimerBattery
             | CartType::Mbc3TimerRamBattery => MbcVariant::Mbc3(Mbc3::new(ram_size, rom_size)),

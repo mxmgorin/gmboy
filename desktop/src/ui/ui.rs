@@ -5,10 +5,10 @@ use crate::ui::text::*;
 use core::bus::Bus;
 use core::emu::config::GraphicsConfig;
 use core::emu::ctx::RunMode;
-use core::ppu::{LCD_X_RES, LCD_Y_RES};
 use core::emu::save_state::SaveStateEvent;
+use core::emu::EmuCallback;
 use core::ppu::tile::{Pixel, PixelColor, TileData};
-use core::emu::{EmuCallback};
+use core::ppu::{LCD_X_RES, LCD_Y_RES};
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -21,18 +21,6 @@ use sdl2::{EventPump, GameControllerSubsystem};
 pub const SCREEN_WIDTH: u32 = 640;
 pub const SCREEN_HEIGHT: u32 = 480;
 pub const BYTES_PER_PIXEL: usize = 4;
-
-impl EmuCallback for Ui {
-    fn update_audio(&mut self, output: &[f32]) {
-        if let Err(err) = self.audio.update(output) {
-            eprintln!("Failed update_audio: {}", err);
-        }
-    }
-
-    fn update_video(&mut self, buffer: &[Pixel], fps: usize) {
-        self.draw_main(buffer, fps);
-    }
-}
 
 pub struct Ui {
     _sdl_context: sdl2::Sdl,
@@ -51,6 +39,16 @@ pub struct Ui {
 
     pub config: GraphicsConfig,
     pub curr_palette: [PixelColor; 4],
+}
+
+impl EmuCallback for Ui {
+    fn update_video(&mut self, buffer: &[Pixel], fps: usize) {
+        self.draw_main(buffer, fps);
+    }
+
+    fn update_audio(&mut self, output: &[f32]) {
+        self.audio.update(output);
+    }
 }
 
 pub struct Layout {
@@ -182,7 +180,7 @@ impl Ui {
         self.canvas.present();
     }
 
-    fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize) {
+    pub fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize) {
         self.canvas.clear();
 
         self.texture

@@ -5,10 +5,7 @@ use crate::cart::Cart;
 use crate::cpu::Cpu;
 use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
-use crate::emu::ctx::{
-    handle_load_cart_state, handle_pending_save_state, handle_rewind_state, EmuCtx, EmuState,
-    RunMode,
-};
+use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
 use crate::emu::save_state::EmuSaveState;
 use crate::ppu::tile::{Pixel, PixelColor};
 use crate::ppu::CYCLES_PER_FRAME;
@@ -19,14 +16,14 @@ use std::time::{Duration, Instant};
 const _CYCLES_PER_SECOND: usize = 4_194_304;
 const CYCLE_TIME: f64 = 238.4185791; // 1 / 4_194_304 seconds ≈ 238.41858 nanoseconds
 
-pub trait EmuCallback {
-    fn update_audio(&mut self, output: &[f32]);
-    fn update_video(&mut self, buffer: &[Pixel], fps: usize);
-}
-
 pub struct Emu {
     pub ctx: EmuCtx,
     pub cpu: Cpu,
+}
+
+pub trait EmuCallback {
+    fn update_video(&mut self, buffer: &[Pixel], fps: usize);
+    fn update_audio(&mut self, output: &[f32]);
 }
 
 impl Emu {
@@ -60,7 +57,7 @@ impl Emu {
         Duration::from_nanos(emulated_time_ns)
     }
 
-    pub fn tick(&mut self, callback: &mut impl EmuCallback) -> Result<(), String> {
+    pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<(), String> {
         let prev_m_cycles = self.ctx.clock.get_m_cycles();
 
         while self.ctx.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
@@ -74,16 +71,12 @@ impl Emu {
 
             if !self.ctx.config.emulation.is_muted
                 && EmuState::Running(RunMode::Normal) == self.ctx.state
-                && self.cpu.bus.io.apu.output_ready()
             {
                 callback.update_audio(self.cpu.bus.io.apu.take_output());
             }
         }
 
-        if self.ctx.prev_frame != self.ctx.ppu.current_frame {
-            callback.update_video(&self.ctx.ppu.pipeline.buffer, self.ctx.ppu.fps);
-        }
-
+        callback.update_video(&self.ctx.ppu.pipeline.buffer, self.ctx.ppu.fps);
         self.ctx.prev_frame = self.ctx.ppu.current_frame;
         let real_elapsed = self.ctx.clock.start_time.elapsed();
         let emulated_time = self.calc_emulated_time();
@@ -124,7 +117,7 @@ impl Emu {
         }
     }
 
-    pub fn tick_rewind(&mut self) {
+    pub fn push_rewind(&mut self) {
         let now = Instant::now();
 
         if self.ctx.config.emulation.rewind_size > 0
@@ -142,9 +135,9 @@ impl Emu {
     }
 
     pub fn handle_state(&mut self, pallet: [PixelColor; 4]) {
-        handle_pending_save_state(self);
-        handle_load_cart_state(self, pallet);
-        handle_rewind_state(self);
+        EmuState::handle_pending_save_state(self);
+        EmuState::handle_load_cart(self, pallet);
+        EmuState::handle_rewind(self);
     }
 }
 

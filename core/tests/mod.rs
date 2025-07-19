@@ -1,7 +1,7 @@
 use core::auxiliary::clock::{Clock, Tickable};
 use core::bus::Bus;
-use core::debugger::Debugger;
 use core::cpu::{Cpu, CpuCallback, DebugCtx};
+use core::debugger::Debugger;
 use core::ppu::Ppu;
 
 mod blargg;

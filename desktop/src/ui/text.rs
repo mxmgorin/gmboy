@@ -1,7 +1,7 @@
+use crate::ui::ui::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
-use crate::ui::ui::BYTES_PER_PIXEL;
 
 pub const CHAR_WIDTH: usize = 8;
 pub const CHAR_HEIGHT: usize = 8;

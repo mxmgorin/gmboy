@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Window {
@@ -14,7 +14,9 @@ pub struct Window {
 
 impl Window {
     pub fn on(&self, lcd: &Lcd) -> bool {
-        self.is_visible(lcd) && lcd.ly >= self.y && (lcd.ly as u16) < (self.y as u16 + LCD_Y_RES as u16)
+        self.is_visible(lcd)
+            && lcd.ly >= self.y
+            && (lcd.ly as u16) < (self.y as u16 + LCD_Y_RES as u16)
     }
     pub fn is_visible(&self, lcd: &Lcd) -> bool {
         lcd.control.win_enable() && self.x <= 166 && self.y < LCD_Y_RES

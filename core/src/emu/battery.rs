@@ -33,7 +33,9 @@ impl BatterySave {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
 
-        Ok(Self { ram_bytes: buffer.into_boxed_slice() })
+        Ok(Self {
+            ram_bytes: buffer.into_boxed_slice(),
+        })
     }
 
     pub fn generate_path(name: &str) -> PathBuf {

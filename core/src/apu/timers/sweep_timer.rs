@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::channels::square_channel::NR10;
 use crate::apu::registers::NRx3x4;
 use crate::apu::NR52;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct SweepTimer {

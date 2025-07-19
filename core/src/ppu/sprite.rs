@@ -83,7 +83,7 @@ impl SpriteFetcher {
             }
         }
     }
-    
+
     fn calc_sprite_x(&self, sprite_x: u8, scroll_x: u8) -> i32 {
         (sprite_x as i32 - 8) + (scroll_x as i32 % 8)
     }

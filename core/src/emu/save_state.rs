@@ -1,11 +1,11 @@
-use std::{env, fs};
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 use crate::bus::Bus;
 use crate::cart::mbc::MbcVariant;
 use crate::cpu::Cpu;
+use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 pub enum SaveStateEvent {
     Create,

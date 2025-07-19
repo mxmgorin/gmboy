@@ -1,6 +1,6 @@
+mod fetcher;
 pub mod lcd;
 pub mod oam;
-mod fetcher;
 pub mod ppu;
 mod sprite;
 pub mod tile;

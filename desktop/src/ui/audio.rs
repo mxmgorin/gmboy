@@ -37,12 +37,11 @@ impl GameAudio {
         }
     }
 
-    pub fn update(&mut self, output: &[f32]) -> Result<(), String> {
+    pub fn update(&mut self, output: &[f32]) {
         if self.device.size() < self.max_queue_size {
-            self.device.queue_audio(output)?;
+            if let Err(err) = self.device.queue_audio(output) {
+                eprintln!("Failed queue_audio: {}", err);
+            };
         }
-
-        Ok(())
     }
 }
-

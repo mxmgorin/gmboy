@@ -1,12 +1,12 @@
-use serde::{Deserialize, Serialize};
-use crate::apu::registers::{NRx2, NRx4};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::NRx1;
+use crate::apu::registers::{NRx2, NRx4};
 use crate::apu::timers::envelope_timer::EnvelopeTimer;
 use crate::apu::timers::length_timer::LengthTimer;
-use crate::{get_bit_flag};
 use crate::apu::NR52;
+use crate::get_bit_flag;
+use serde::{Deserialize, Serialize};
 
 pub const CH4_START_ADDRESS: u16 = NR41_CH4_LENGTH_TIMER_ADDRESS;
 pub const CH4_END_ADDRESS: u16 = NR44_CH4_CONTROL_ADDRESS;
@@ -83,7 +83,7 @@ impl NoiseChannel {
             NR41_CH4_LENGTH_TIMER_ADDRESS => {
                 self.nrx1_len.byte = value;
                 self.length_timer.reload(self.nrx1_len);
-            },
+            }
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => self.nrx2_envelope_and_dac.byte = value,
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte = value,
             NR44_CH4_CONTROL_ADDRESS => {
@@ -104,7 +104,7 @@ impl NoiseChannel {
 
         // If the frequency timer decrement to 0, it is reloaded with the formula
         // `divisor_code << clock_shift` and wave position is advanced by one.
-        if self.freq_timer == 0 {            
+        if self.freq_timer == 0 {
             self.reload_freq_timer();
 
             // The XOR result of the 0th and 1st bit of LFSR is computed
@@ -137,7 +137,7 @@ impl NoiseChannel {
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);
         self.lfsr = 0x7FFF;
     }
-    
+
     fn reload_freq_timer(&mut self) {
         // Reload the frequency timer with the correct divisor
         let divisor = DIVISORS[self.nr43_freq_and_rnd.clock_divider() as usize];

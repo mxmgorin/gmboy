@@ -80,6 +80,14 @@ impl CpuCallback for EmuCtx {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum RunMode {
+    Normal,
+    Slow,
+    Turbo,
+    Rewind,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum EmuState {
     WaitCart,
     Running(RunMode),
@@ -88,74 +96,68 @@ pub enum EmuState {
     Quit,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum RunMode {
-    Normal,
-    Slow,
-    Turbo,
-    Rewind,
-}
+impl EmuState {
+    pub fn handle_load_cart(emu: &mut Emu, pallet: [PixelColor; 4]) {
+        if let EmuState::LoadCart(path) = &emu.ctx.state {
+            let cart = read_cart(path).map_err(|e| e.to_string());
 
-pub fn handle_load_cart_state(emu: &mut Emu, pallet: [PixelColor; 4]) {
-    if let EmuState::LoadCart(path) = &emu.ctx.state {
-        let cart = read_cart(path).map_err(|e| e.to_string());
-
-        let Ok(cart) = cart else {
-            eprintln!("Failed read_cart: {}", cart.unwrap_err());
-            return;
-        };
-
-        let mut bus = Bus::new(cart);
-        bus.io.lcd.set_pallet(pallet);
-        emu.cpu = Cpu::new(bus);
-        emu.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
-        emu.ctx.state = EmuState::Running(RunMode::Normal);
-        emu.ctx.reset();
-
-        if emu.ctx.config.load_save_state_at_start {
-            let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
-            let save_state = EmuSaveState::load_file(&name, 0);
-
-            if let Ok(save_state) = save_state {
-                load_save_state(emu, save_state);
-            } else {
-                eprintln!("Failed load save_state: {:?}", save_state);
+            let Ok(cart) = cart else {
+                eprintln!("Failed read_cart: {}", cart.unwrap_err());
+                return;
             };
+
+            let mut bus = Bus::new(cart);
+            bus.io.lcd.set_pallet(pallet);
+            emu.cpu = Cpu::new(bus);
+            emu.ctx.config.last_cart_path = Some(path.to_string_lossy().to_string());
+            emu.ctx.state = EmuState::Running(RunMode::Normal);
+            emu.ctx.reset();
+
+            if emu.ctx.config.load_save_state_at_start {
+                let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
+                let save_state = EmuSaveState::load_file(&name, 0);
+
+                if let Ok(save_state) = save_state {
+                    load_save_state(emu, save_state);
+                } else {
+                    eprintln!("Failed load save_state: {:?}", save_state);
+                };
+            }
         }
     }
-}
 
-pub fn handle_pending_save_state(emu: &mut Emu) {
-    if let Some((event, index)) = emu.ctx.pending_save_state.take() {
-        let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
+    pub fn handle_pending_save_state(emu: &mut Emu) {
+        if let Some((event, index)) = emu.ctx.pending_save_state.take() {
+            let name = emu.ctx.config.get_last_cart_file_stem().unwrap();
 
-        match event {
-            SaveStateEvent::Create => {
-                let save_state = emu.create_save_state(&emu.cpu);
+            match event {
+                SaveStateEvent::Create => {
+                    let save_state = emu.create_save_state(&emu.cpu);
 
-                if let Err(err) = save_state.save_file(&name, index) {
-                    eprintln!("Failed save_state: {:?}", err);
+                    if let Err(err) = save_state.save_file(&name, index) {
+                        eprintln!("Failed save_state: {:?}", err);
+                    }
+                }
+                SaveStateEvent::Load => {
+                    let save_state = EmuSaveState::load_file(&name, index);
+
+                    let Ok(save_state) = save_state else {
+                        eprintln!("Failed load save_state: {:?}", save_state);
+                        return;
+                    };
+
+                    load_save_state(emu, save_state);
                 }
             }
-            SaveStateEvent::Load => {
-                let save_state = EmuSaveState::load_file(&name, index);
-
-                let Ok(save_state) = save_state else {
-                    eprintln!("Failed load save_state: {:?}", save_state);
-                    return;
-                };
-
-                load_save_state(emu, save_state);
-            }
         }
     }
-}
 
-pub fn handle_rewind_state(emu: &mut Emu) {
-    if let EmuState::Running(RunMode::Rewind) = &emu.ctx.state {
-        if let Some(state) = emu.ctx.rewind_buffer.pop_back() {
-            load_save_state(emu, state);
-            thread::sleep(Duration::from_millis(100));
+    pub fn handle_rewind(emu: &mut Emu) {
+        if let EmuState::Running(RunMode::Rewind) = &emu.ctx.state {
+            if let Some(state) = emu.ctx.rewind_buffer.pop_back() {
+                load_save_state(emu, state);
+                thread::sleep(Duration::from_millis(100));
+            }
         }
     }
 }

@@ -1,11 +1,11 @@
-use serde::{Deserialize, Serialize};
+use crate::apu::channels::wave_channel::{CH3_WAVE_RAM_END, CH3_WAVE_RAM_START};
 use crate::apu::Apu;
 use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
-use crate::apu::channels::wave_channel::{CH3_WAVE_RAM_END, CH3_WAVE_RAM_START};
 use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
+use serde::{Deserialize, Serialize};
 
 const IO_IF_UNUSED_MASK: u8 = 0b1110_0000;
 

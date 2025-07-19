@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::hex_to_rgba;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
+use serde::{Deserialize, Serialize};
 
 // Tile sets addresses
 pub const TILE_SET_DATA_1_START: u16 = VRAM_ADDR_START;

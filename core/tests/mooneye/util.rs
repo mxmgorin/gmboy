@@ -1,10 +1,10 @@
-use crate::{TestCpuCtxWithPPu};
+use crate::TestCpuCtxWithPPu;
 use core::auxiliary::clock::Clock;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
 use core::debugger::{CpuLogType, Debugger};
-use core::emu::{read_bytes};
+use core::emu::read_bytes;
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
@@ -19,10 +19,7 @@ pub fn run_mooneye_rom(
     run_mooneye_rom_path(path, timeout)
 }
 
-pub fn run_mooneye_rom_path(
-    path: PathBuf,
-    timeout: Duration,
-) -> Result<(), String> {
+pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), String> {
     let cart = Cart::new(read_bytes(path.as_path())?)?;
     let mut callback = TestCpuCtxWithPPu {
         clock: Clock::default(),

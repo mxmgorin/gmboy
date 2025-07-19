@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::dac::{DacEnable, DigitalSampleProducer};
 use crate::apu::registers::{NRx1, NRx3x4};
 use crate::apu::timers::length_timer::LengthTimer;
 use crate::apu::timers::period_timer::PeriodTimer;
 use crate::apu::NR52;
+use serde::{Deserialize, Serialize};
 
 pub const CH3_START_ADDRESS: u16 = CH3_NR30_DAC_ENABLE_ADDRESS;
 pub const CH3_END_ADDRESS: u16 = CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS;

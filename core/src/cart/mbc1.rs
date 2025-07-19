@@ -1,5 +1,5 @@
-use crate::cart::mbc::{Mbc, MbcData};
 use crate::cart::header::{RamSize, RomSize};
+use crate::cart::mbc::{Mbc, MbcData};
 use crate::cart::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 

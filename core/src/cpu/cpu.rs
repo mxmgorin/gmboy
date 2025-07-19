@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
 use crate::bus::Bus;
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
 use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
 use crate::LittleEndianBytes;
+use serde::{Deserialize, Serialize};
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 

@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::{NR50, NR51};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Mixer {
@@ -56,7 +56,10 @@ impl Mixer {
 
         let (left_sample, right_sample) = self.amplify(left_sample, right_sample);
 
-        (adjust_volume(left_sample / 4.0), adjust_volume(right_sample / 4.0))
+        (
+            adjust_volume(left_sample / 4.0),
+            adjust_volume(right_sample / 4.0),
+        )
     }
 
     fn amplify(&self, sample_left: f32, sample_right: f32) -> (f32, f32) {

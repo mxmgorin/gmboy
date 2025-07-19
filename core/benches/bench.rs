@@ -1,4 +1,3 @@
-use criterion::{criterion_group, criterion_main, Criterion};
 use core::auxiliary::timer::Timer;
 use core::bus::Bus;
 use core::cpu::instructions::{
@@ -7,6 +6,7 @@ use core::cpu::instructions::{
 use core::cpu::interrupts::Interrupts;
 use core::cpu::{CounterCpuCallback, Cpu};
 use core::ppu::Ppu;
+use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn instructions(cpu: &mut Cpu, ctx: &mut CounterCpuCallback) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {

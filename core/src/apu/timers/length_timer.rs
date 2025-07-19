@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::apu::channels::channel::ChannelType;
 use crate::apu::registers::{NRx1, NRx4};
 use crate::apu::NR52;
+use serde::{Deserialize, Serialize};
 
 //A length counter disables a channel when it decrements to zero. It contains an internal counter
 // and enabled flag. Writing a byte to NRx1 loads the counter with 64-data (256-data for wave channel).
@@ -46,7 +46,7 @@ impl LengthTimer {
     pub fn reload(&mut self, nrx1: NRx1) {
         self.counter = self.get_initial_length() - nrx1.initial_length_timer() as u16;
     }
-    
+
     pub fn reset(&mut self) {
         self.counter = self.get_initial_length();
     }
