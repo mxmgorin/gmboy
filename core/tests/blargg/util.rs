@@ -12,9 +12,9 @@ pub fn run_blargg_rom_serial(
     category: Option<BlarggRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
-    let path = get_blargg_rom_path(&format!("{}.gb", name), category);
+    let path = get_blargg_rom_path(&format!("{name}.gb"), category);
     let cart = Cart::new(read_bytes(path.as_path())?)?;
-    let mut cpu = Cpu::new(Bus::new(cart));
+    let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
     let instant = Instant::now();
     let mut ctx = TestCpuCtx {
         clock: Default::default(),
@@ -44,7 +44,7 @@ pub fn run_blargg_rom_memory(
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{}.gb", name), category);
     let cart = Cart::new(read_bytes(path.as_path())?)?;
-    let mut cpu = Cpu::new(Bus::new(cart));
+    let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
     let instant = Instant::now();
     let mut ctx = TestCpuCtx {
         clock: Default::default(),

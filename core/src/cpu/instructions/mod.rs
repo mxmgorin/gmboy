@@ -80,7 +80,7 @@ mod tests {
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
         let mut callback = Callback::default();
         cpu.registers.pc = 0;
         callback.t_cycles = 0;
@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_call() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Call(instr) = *instr else {
                 continue;
@@ -121,7 +121,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jp() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jp(instr) = *instr else {
                 continue;
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jr() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jr(instr) = *instr else {
                 continue;
@@ -177,7 +177,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_ret() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Ret(instr) = *instr else {
                 continue;
@@ -200,7 +200,7 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles() {
-        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000]));
+        let mut cpu = Cpu::new(Bus::with_bytes(vec![0; 100000], Default::default()));
         let mut callback = Callback::default();
 
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {

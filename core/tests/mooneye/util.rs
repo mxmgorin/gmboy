@@ -26,7 +26,7 @@ pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), Stri
         debugger: Debugger::new(CpuLogType::None, false),
         ppu: Default::default(),
     };
-    let mut cpu = Cpu::new(Bus::new(cart));
+    let mut cpu = Cpu::new(Bus::new(cart, Default::default()));
     let instant = Instant::now();
 
     loop {

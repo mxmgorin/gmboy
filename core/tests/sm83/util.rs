@@ -255,7 +255,7 @@ pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
 }
 
 pub fn setup_bus(test_case: &Sm83TestCase) -> Bus {
-    let mut bus = Bus::with_bytes([0; 0xFFFF + 1].into());
+    let mut bus = Bus::with_bytes([0; 0xFFFF + 1].into(), Default::default());
     for ram in test_case.initial_state.ram.iter() {
         bus.write(ram.0, ram.1);
     }

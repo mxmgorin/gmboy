@@ -6,7 +6,6 @@ pub struct EmuConfig {
     pub slow_speed: f64,
     pub turbo_speed: f64,
     pub is_muted: bool,
-    pub pallet: [String; 4],
 }
 
 impl Default for EmuConfig {
@@ -16,7 +15,6 @@ impl Default for EmuConfig {
             slow_speed: 50.0,
             turbo_speed: 300.0,
             is_muted: false,
-            pallet: EmuPallet::classic().hex_colors,
         }
     }
 }
@@ -37,6 +35,18 @@ impl EmuPallet {
                 "ff88c070".to_string(),
                 "ffe0f8d0".to_string(),
             ],
+        }
+    }
+
+    pub fn black_white() -> Self {
+        Self {
+            name: "Back and White".to_string(),
+            hex_colors:   [
+                "0xFFFFFFFF".to_string(),
+                "0xFFAAAAAA".to_string(),
+                "0xFF555555".to_string(),
+                "0xFF000000".to_string(),
+            ]
         }
     }
 

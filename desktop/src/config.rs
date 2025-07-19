@@ -1,17 +1,17 @@
+use core::emu::config::{EmuConfig, EmuPallet};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
-use core::emu::config::{EmuConfig, EmuPallet};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DesktopEmuConfig {
     pub last_cart_path: Option<String>,
     pub load_save_state_at_start: bool,
     pub emulation: EmuConfig,
-    pub graphics: UiConfig,
+    pub graphics: GraphicsConfig,
 }
 impl DesktopEmuConfig {
     pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
@@ -30,13 +30,22 @@ pub struct EmulationConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UiConfig {
+pub struct GraphicsConfig {
     pub selected_pallet_idx: usize,
     pub pallets: Vec<EmuPallet>,
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
     pub text_scale: usize,
+}
+
+impl GraphicsConfig {
+    pub fn get_current_pallet(&self) -> [core::ppu::lcd::PixelColor; 4] {
+        let idx = self.selected_pallet_idx;
+
+        core::into_pallet(&self.pallets[idx].hex_colors)
+    }
+
 }
 
 impl DesktopEmuConfig {
@@ -73,7 +82,7 @@ impl Default for DesktopEmuConfig {
             last_cart_path: None,
             load_save_state_at_start: false,
             emulation: Default::default(),
-            graphics: UiConfig {
+            graphics: GraphicsConfig {
                 selected_pallet_idx: 0,
                 pallets: EmuPallet::default_pallets(),
                 scale: 5.0,

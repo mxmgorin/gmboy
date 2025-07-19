@@ -318,8 +318,6 @@ impl Ui {
             &pallet.hex_colors,
         );
         emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
-        emu.ctx.config.pallet = pallet.hex_colors.clone();
-        self.sync_settings(emu);
     }
 
     pub fn toggle_fullscreen(&mut self) {

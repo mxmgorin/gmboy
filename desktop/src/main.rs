@@ -34,7 +34,7 @@ fn main() {
         config
     };
 
-    let mut emu = Emu::new(config.emulation.clone()).unwrap();
+    let mut emu = Emu::new(config.emulation.clone(), config.graphics.get_current_pallet()).unwrap();
     let mut ui = Ui::new(config, false).unwrap();
 
     if let Some(cart_path) = cart_path {

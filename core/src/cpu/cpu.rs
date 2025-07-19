@@ -4,6 +4,8 @@ use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
 use crate::LittleEndianBytes;
 use serde::{Deserialize, Serialize};
+use crate::auxiliary::io::Io;
+use crate::ppu::lcd::Lcd;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
@@ -47,7 +49,7 @@ pub struct Cpu {
 impl Cpu {
     pub fn clone_without_bus(&self) -> Self {
         Self {
-            bus: Bus::with_bytes(vec![]),
+            bus: Bus::with_bytes(vec![], Io::new(Lcd::new(self.bus.io.lcd.current_pallet))),
             registers: self.registers.clone(),
             enabling_ime: self.enabling_ime,
             current_opcode: self.current_opcode,

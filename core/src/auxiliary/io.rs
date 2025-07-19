@@ -34,7 +34,7 @@ impl From<u16> for IoAddress {
 // unreadable so they return 1. Some exceptions are:
 // - Unknown purpose (if any) registers. Some bits of them can be read and written.
 // - The IE register (only the 5 lower bits are used, but the upper 3 can hold any value).
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
@@ -44,20 +44,18 @@ pub struct Io {
     pub apu: Apu,
 }
 
-impl Default for Io {
-    fn default() -> Self {
+impl Io {
+    pub fn new(lcd: Lcd) -> Self {
         Io {
-            serial: Serial::new(),
+            serial: Serial::default(),
             timer: Timer::default(),
-            interrupts: Interrupts::new(),
-            lcd: Lcd::default(),
+            interrupts: Interrupts::default(),
+            lcd,
             joypad: Default::default(),
             apu: Default::default(),
         }
     }
-}
-
-impl Io {
+    
     pub fn read(&self, address: u16) -> u8 {
         let location = IoAddress::from(address);
 
@@ -99,25 +97,17 @@ impl Io {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Serial {
     /// FF01 — SB: Serial transfer data
     sb: u8,
     /// FF02 — SC: Serial transfer control
     sc: u8,
 }
-impl Default for Serial {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 
 impl Serial {
-    pub fn new() -> Serial {
-        Self { sb: 0, sc: 0 }
-    }
 
     pub fn has_data(&self) -> bool {
         self.sc == 0x81

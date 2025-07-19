@@ -80,11 +80,11 @@ impl Bus {
         }
     }
 
-    pub fn new(cart: Cart) -> Self {
+    pub fn new(cart: Cart, io: Io) -> Self {
         Self {
             cart,
             ram: Ram::default(),
-            io: Io::default(),
+            io,
             flat_mem: None,
             dma: Default::default(),
             video_ram: Default::default(),
@@ -93,9 +93,9 @@ impl Bus {
     }
 
     /// Creates with just array as memory. Use only for tests.
-    pub fn with_bytes(bytes: Vec<u8>) -> Self {
+    pub fn with_bytes(bytes: Vec<u8>, io: Io) -> Self {
         let cart = Cart::new(vec![0; 0x2000].into_boxed_slice()).unwrap();
-        let mut obj = Self::new(cart);
+        let mut obj = Self::new(cart, io);
         obj.flat_mem = Some(bytes);
 
         obj

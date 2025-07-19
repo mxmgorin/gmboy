@@ -18,7 +18,7 @@ pub enum InterruptType {
     Joypad = 16,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Interrupts {
     /// Interrupt flags
     pub int_flags: u8,
@@ -28,21 +28,7 @@ pub struct Interrupts {
     pub ie_register: u8,
 }
 
-impl Default for Interrupts {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Interrupts {
-    pub fn new() -> Self {
-        Self {
-            int_flags: 0,
-            ime: false,
-            ie_register: 0,
-        }
-    }
-
     pub fn get_pending(&mut self) -> Option<(u16, InterruptType)> {
         for (address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
             if self.is_pending(interrupt_type) {
@@ -83,7 +69,7 @@ pub mod tests {
 
     #[test]
     pub fn test_check_interrupts_enabled() {
-        let mut interrupts = Interrupts::new();
+        let mut interrupts = Interrupts::default();
         interrupts.ie_register = 0xFF;
 
         for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
@@ -94,7 +80,7 @@ pub mod tests {
 
     #[test]
     pub fn test_check_interrupts_disabled() {
-        let interrupts = Interrupts::new();
+        let interrupts = Interrupts::default();
 
         for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
             assert!(!interrupts.is_pending(interrupt_type));
@@ -103,7 +89,7 @@ pub mod tests {
 
     #[test]
     pub fn test_interrupts() {
-        let mut interrupts = Interrupts::new();
+        let mut interrupts = Interrupts::default();
 
         for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
             assert!(!interrupts.is_pending(interrupt_type));

@@ -61,7 +61,7 @@ pub fn ppu_tick(ppu: &mut Ppu, bus: &mut Bus) {
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut callback = CounterCpuCallback::default();
-    let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000])); // Pre-allocate memory
+    let mut cpu = Cpu::new(Bus::with_bytes(vec![10; 100000], Default::default())); // Pre-allocate memory
     let mut timer = Timer::default();
 
     c.bench_function("timer tick", |b| {
@@ -75,7 +75,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| instructions(&mut cpu, &mut callback))
     });
 
-    let mut bus = Bus::with_bytes(vec![10; 100000]);
+    let mut bus = Bus::with_bytes(vec![10; 100000], Default::default());
     let mut ppu = Ppu::default();
     c.bench_function("ppu tick", |b| b.iter(|| ppu_tick(&mut ppu, &mut bus)));
 }

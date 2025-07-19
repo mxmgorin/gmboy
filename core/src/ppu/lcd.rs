@@ -1,11 +1,12 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::ppu::tile::{
+pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
     TILE_SET_DATA_2_START,
 };
 use crate::ppu::window::Window;
-use crate::{get_bit_flag, set_bit};
+use crate::{get_bit_flag, into_pallet, set_bit};
 use serde::{Deserialize, Serialize};
+use crate::emu::config::EmuPallet;
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
 pub const LCD_ADDRESS_END: u16 = 0xFF4B;
@@ -24,23 +25,6 @@ pub const LCD_OBJ_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
 const LCD_STATUS_UNUSED_MASK: u8 = 0b1000_0000;
-
-pub const BLACK_WHITE_PALLET: [PixelColor; 4] = [
-    PixelColor::from_hex(0xFFFFFFFF),
-    PixelColor::from_hex(0xFFAAAAAA),
-    PixelColor::from_hex(0xFF555555),
-    PixelColor::from_hex(0xFF000000),
-];
-
-pub const HOLLOW_PALLET: [PixelColor; 4] = [
-    PixelColor::from_hex(0xFF0F0F1B),
-    PixelColor::from_hex(0xFF566A75),
-    PixelColor::from_hex(0xFFC6B7BE),
-    PixelColor::from_hex(0xFFFAFBF6),
-];
-
-// todo: move pallets to file conf
-pub const PALLETS: [[PixelColor; 4]; 2] = [BLACK_WHITE_PALLET, HOLLOW_PALLET];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[repr(C)]
@@ -66,7 +50,8 @@ pub struct Lcd {
 
 impl Default for Lcd {
     fn default() -> Self {
-        let current_pallet = BLACK_WHITE_PALLET;
+        let current_pallet = into_pallet(&EmuPallet::classic().hex_colors);
+        
         Self {
             control: LcdControl::default(),
             status: LcdStatus::default(),
@@ -87,6 +72,25 @@ impl Default for Lcd {
 }
 
 impl Lcd {
+    pub fn new(pallet: [PixelColor; 4]) -> Self {
+        Self {
+            control: LcdControl::default(),
+            status: LcdStatus::default(),
+            scroll_y: 0,
+            scroll_x: 0,
+            ly: 0,
+            ly_compare: 0,
+            dma_byte: 0,
+            bg_palette: 0xFC,
+            obj_palette: [0xFF, 0xFF],
+            window: Window::default(),
+            current_pallet: pallet,
+            bg_colors: pallet,
+            sp1_colors: pallet,
+            sp2_colors: pallet,
+        }
+    }
+    
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,

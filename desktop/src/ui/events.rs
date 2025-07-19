@@ -57,7 +57,7 @@ impl Ui {
             }
             UiEvent::Restart => {
                 if let Some(path) = self.config.last_cart_path.clone() {
-                    emu.load_cart_file(&PathBuf::from(path), self.config.load_save_state_at_start);
+                    emu.load_cart_file(&PathBuf::from(path), false);
                 }
             }
             UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),

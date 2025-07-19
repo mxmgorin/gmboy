@@ -1,4 +1,5 @@
 use crate::auxiliary::clock::spin_wait;
+use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
 use crate::cart::Cart;
@@ -7,8 +8,8 @@ use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
 use crate::emu::ctx::{EmuCtx, EmuState, RunMode};
 use crate::emu::save_state::EmuSaveState;
-use crate::into_pallet;
-use crate::ppu::tile::Pixel;
+use crate::ppu::lcd::Lcd;
+use crate::ppu::tile::{Pixel, PixelColor};
 use crate::ppu::CYCLES_PER_FRAME;
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -29,9 +30,9 @@ pub trait EmuCallback {
 }
 
 impl Emu {
-    pub fn new(config: EmuConfig) -> Result<Self, String> {
-        let mut bus = Bus::with_bytes(vec![]);
-        bus.io.lcd.set_pallet(into_pallet(&config.pallet));
+    pub fn new(config: EmuConfig, pallet: [PixelColor; 4]) -> Result<Self, String> {
+        let lcd = Lcd::new(pallet);
+        let bus = Bus::with_bytes(vec![], Io::new(lcd));
 
         Ok(Self {
             cpu: Cpu::new(bus),
@@ -71,9 +72,7 @@ impl Emu {
                 }
             }
 
-            if !self.ctx.config.is_muted
-                && EmuState::Running(RunMode::Normal) == self.ctx.state
-            {
+            if !self.ctx.config.is_muted && EmuState::Running(RunMode::Normal) == self.ctx.state {
                 callback.update_audio(self.cpu.bus.io.apu.take_output());
             }
         }
@@ -165,9 +164,8 @@ impl Emu {
             return;
         };
 
-        let current_pallet = self.cpu.bus.io.lcd.current_pallet;
-        let mut bus = Bus::new(cart);
-        bus.io.lcd.set_pallet(current_pallet);
+        let io = Io::new(Lcd::new(self.cpu.bus.io.lcd.current_pallet));
+        let bus = Bus::new(cart, io);
         self.cpu = Cpu::new(bus);
         self.ctx.state = EmuState::Running(RunMode::Normal);
         self.ctx.reset();
