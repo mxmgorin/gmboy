@@ -1,6 +1,5 @@
 use crate::ui::Ui;
 use crate::Emu;
-use core::emu::config::GraphicsConfig;
 use core::emu::ctx::EmuState;
 use core::emu::ctx::RunMode;
 use core::emu::save_state::SaveStateEvent;
@@ -12,7 +11,6 @@ pub enum UiEvent {
     Pause,
     FileDropped(PathBuf),
     Restart,
-    ConfigChanged(GraphicsConfig),
     ModeChanged(RunMode),
     Mute,
     SaveState(SaveStateEvent, usize),
@@ -36,7 +34,6 @@ impl Ui {
                     emu.load_cart_file(PathBuf::from(path));
                 }
             }
-            UiEvent::ConfigChanged(config) => emu.ctx.config.graphics = config,
             UiEvent::ModeChanged(mode) => emu.ctx.state = EmuState::Running(mode),
             UiEvent::Mute => emu.ctx.config.emulation.is_muted = !emu.ctx.config.emulation.is_muted,
             UiEvent::SaveState(event, index) => emu.ctx.pending_save_state = Some((event, index)),
@@ -163,19 +160,16 @@ impl Ui {
             Keycode::EQUALS => {
                 if !is_down {
                     self.set_scale(emu.ctx.config.graphics.scale + 1.0, &mut emu.ctx.config.graphics).unwrap();
-                    return Some(UiEvent::ConfigChanged(emu.ctx.config.graphics.clone()));
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
                     self.set_scale(emu.ctx.config.graphics.scale - 1.0, &mut emu.ctx.config.graphics).unwrap();
-                    return Some(UiEvent::ConfigChanged(emu.ctx.config.graphics.clone()));
                 }
             }
             Keycode::F => {
                 if !is_down {
                     self.toggle_fullscreen(&mut emu.ctx.config.graphics);
-                    return Some(UiEvent::ConfigChanged(emu.ctx.config.graphics.clone()));
                 }
             }
             Keycode::M => {
@@ -186,7 +180,6 @@ impl Ui {
             Keycode::P => {
                 if !is_down {
                     self.next_palette(emu);
-                    return Some(UiEvent::ConfigChanged(emu.ctx.config.graphics.clone()));
                 }
             }
             Keycode::NUM_1 => {
