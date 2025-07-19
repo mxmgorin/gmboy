@@ -113,7 +113,7 @@ impl Emu {
         }
 
         if let Err(err) = self.create_save_state(&self.cpu).save_file(&name, 0) {
-            eprintln!("Failed save_state: {:?}", err);
+            eprintln!("Failed save_state: {err}");
         }
     }
 
@@ -162,7 +162,7 @@ impl Emu {
             if let Ok(save_state) = save_state {
                 load_save_state(self, save_state);
             } else {
-                eprintln!("Failed load save_state: {:?}", save_state);
+                eprintln!("Failed load save_state: {}", save_state.unwrap_err());
             };
         }
     }
@@ -182,7 +182,7 @@ pub fn load_save_state(emu: &mut Emu, save_state: EmuSaveState) {
 pub fn read_cart(file_path: &Path) -> Result<Cart, String> {
     let bytes = read_bytes(file_path).map_err(|e| e.to_string())?;
     let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
-    _ = print_cart(&cart).map_err(|e| println!("Failed to print cart: {}", e));
+    _ = print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
     let file_name = file_path
         .file_stem()
         .expect("we read file")
@@ -203,7 +203,7 @@ fn print_cart(cart: &Cart) -> Result<(), String> {
     println!("\t Title          : {}", cart.data.get_title());
     println!("\t Type           : {:?}", cart.data.get_cart_type()?);
     println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
-    println!("\t ROM bytes       : {:?}", cart.data.bytes.len());
+    println!("\t ROM bytes      : {:?}", cart.data.bytes.len());
     println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);
     println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
     println!("\t Checksum Valid : {}", cart.data.checksum_valid());
@@ -213,10 +213,10 @@ fn print_cart(cart: &Cart) -> Result<(), String> {
 
 pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
     if !file_path.exists() {
-        return Err(format!("File not found: {:?}", file_path));
+        return Err(format!("File not found: {file_path:?}"));
     }
 
     fs::read(file_path)
         .map(|x| x.into_boxed_slice())
-        .map_err(|e| format!("Failed to read file: {}", e))
+        .map_err(|e| format!("Failed to read file: {e}"))
 }
