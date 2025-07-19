@@ -318,8 +318,8 @@ impl Ui {
             &pallet.hex_colors,
         );
         emu.cpu.bus.io.lcd.set_pallet(self.curr_palette);
-        self.config.emulation.pallet = pallet.hex_colors.clone();
         emu.ctx.config.pallet = pallet.hex_colors.clone();
+        self.sync_settings(emu);
     }
 
     pub fn toggle_fullscreen(&mut self) {
@@ -336,6 +336,10 @@ impl Ui {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
+    }
+
+    pub fn sync_settings(&mut self, emu: &mut Emu) {
+        self.config.emulation = emu.ctx.config.clone();
     }
 }
 
