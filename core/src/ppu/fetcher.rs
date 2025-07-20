@@ -38,7 +38,7 @@ impl BgwFetchedData {
 pub struct PixelFetcher {
     pub pushed_x: u8,
     pub sprite_fetcher: SpriteFetcher,
-    pub buffer: Vec<Pixel>,
+    pub buffer: Box<[Pixel]>,
 
     fetch_step: FetchStep,
     line_x: u8,
@@ -58,7 +58,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize],
+            buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize].into_boxed_slice(),
             sprite_fetcher: Default::default(),
         }
     }
