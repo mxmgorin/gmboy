@@ -94,7 +94,7 @@ impl Bus {
 
     /// Creates with just array as memory. Use only for tests.
     pub fn with_bytes(bytes: Vec<u8>, io: Io) -> Self {
-        let cart = Cart::new(vec![0; 0x2000].into_boxed_slice()).unwrap();
+        let cart = Cart::empty();
         let mut obj = Self::new(cart, io);
         obj.flat_mem = Some(bytes);
 

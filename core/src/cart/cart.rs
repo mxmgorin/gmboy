@@ -45,6 +45,10 @@ impl Cart {
             mbc: self.mbc.clone(),
         }
     }
+    
+    pub fn is_empty(&self) -> bool {
+        self.data.bytes.is_empty()
+    }
 
     pub fn empty() -> Self {
         Self {
