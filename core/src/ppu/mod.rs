@@ -6,5 +6,6 @@ mod sprite;
 pub mod tile;
 pub mod vram;
 mod window;
+mod fifo;
 
 pub use ppu::*;

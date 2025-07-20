@@ -1,10 +1,9 @@
 use crate::bus::Bus;
+use crate::ppu::fifo::PixelFifo;
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
-use std::collections::VecDeque;
 
-pub const MAX_FIFO_SIZE: usize = 8;
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
 #[derive(Debug, Clone, Default)]
@@ -44,7 +43,7 @@ pub struct PixelFetcher {
     line_x: u8,
     fetch_x: u8,
     fifo_x: u8,
-    pixel_fifo: VecDeque<Pixel>,
+    pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
 }
 
@@ -52,13 +51,14 @@ impl Default for PixelFetcher {
     fn default() -> PixelFetcher {
         Self {
             fetch_step: FetchStep::Tile,
-            pixel_fifo: VecDeque::with_capacity(MAX_FIFO_SIZE),
+            pixel_fifo: Default::default(),
             line_x: 0,
             pushed_x: 0,
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize].into_boxed_slice(),
+            buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize]
+                .into_boxed_slice(),
             sprite_fetcher: Default::default(),
         }
     }
@@ -74,9 +74,7 @@ impl PixelFetcher {
     }
 
     fn try_fifo_pop(&mut self, bus: &Bus) {
-        if self.pixel_fifo.len() > MAX_FIFO_SIZE {
-            let pixel = self.pixel_fifo.pop_front().unwrap();
-
+        if let Some(pixel) = self.pixel_fifo.pop() {
             // Check if we are in the window or background layer
             // For the window layer, bypass scroll_x to avoid horizontal scrolling
             if self.bgw_fetched_data.is_window {
@@ -155,7 +153,7 @@ impl PixelFetcher {
     }
 
     fn try_fifo_push(&mut self, bus: &Bus) -> bool {
-        if self.pixel_fifo.len() > MAX_FIFO_SIZE {
+        if self.pixel_fifo.is_full() {
             return false;
         }
 
@@ -187,7 +185,7 @@ impl PixelFetcher {
             let pixel = sprite_pixel.unwrap_or(bgw_pixel);
 
             if x >= 0 {
-                self.pixel_fifo.push_back(pixel);
+                self.pixel_fifo.push(pixel);
                 self.fifo_x += 1;
             }
         }
