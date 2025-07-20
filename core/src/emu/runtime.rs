@@ -25,12 +25,6 @@ impl EmuRuntime {
         }
     }
 
-    pub fn reset(&mut self) {
-        self.clock = Clock::default();
-    }
-}
-
-impl EmuRuntime {
     pub fn run_frame(
         &mut self,
         cpu: &mut Cpu,

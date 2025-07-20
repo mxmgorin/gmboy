@@ -1,4 +1,4 @@
-use crate::auxiliary::clock::{sleep_spin, Tickable};
+use crate::auxiliary::clock::{Tickable};
 use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
@@ -29,7 +29,6 @@ pub struct Ppu {
     pub prev_frame_duration: Duration,
     pub frame_start_duration: Duration,
     pub last_frame_duration: Duration,
-    pub target_frame_duration: Duration,
     pub frame_count: usize,
     pub fps: usize,
     pub timer: Instant,
@@ -44,7 +43,6 @@ impl Default for Ppu {
             prev_frame_duration: Default::default(),
             frame_start_duration: Default::default(),
             last_frame_duration: Default::default(),
-            target_frame_duration: Default::default(), // no frame limit
             frame_count: 0,
             fps: 0,
             timer: Instant::now(),
@@ -54,10 +52,6 @@ impl Default for Ppu {
 }
 
 impl Ppu {
-    pub fn reset_frame_duration(&mut self) {
-        self.target_frame_duration = FRAME_DURATION;
-    }
-
     pub fn tick(&mut self, bus: &mut Bus) {
         self.line_ticks += 1;
 
@@ -126,7 +120,6 @@ impl Ppu {
 
                 self.current_frame += 1;
                 self.calc_fps();
-                self.limit();
                 self.prev_frame_duration = self.timer.elapsed();
             } else {
                 io.lcd.status.set_ppu_mode(PpuMode::Oam);
@@ -147,11 +140,5 @@ impl Ppu {
         }
 
         self.frame_count += 1;
-    }
-
-    pub fn limit(&self) {
-        if self.last_frame_duration < self.target_frame_duration {
-            sleep_spin(self.target_frame_duration - self.last_frame_duration);
-        }
     }
 }

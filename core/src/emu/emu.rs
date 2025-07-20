@@ -1,4 +1,3 @@
-use crate::auxiliary::clock::sleep_spin;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
@@ -30,8 +29,7 @@ pub struct Emu {
     pub state: EmuState,
     pub cpu: Cpu,
     pub runtime: EmuRuntime,
-    speed_multiplier: f64,
-    last_fps_timestamp: Duration,
+    prev_speed_multiplier: f64,
     rewind_buffer: VecDeque<EmuSaveState>,
     last_rewind_save: Instant,
 }
@@ -48,10 +46,9 @@ impl Emu {
         Ok(Self {
             cpu: Cpu::default(),
             runtime: EmuRuntime::new(debugger, bus),
-            speed_multiplier: 1.0,
+            prev_speed_multiplier: 1.0,
             state: EmuState::Paused,
             config,
-            last_fps_timestamp: Default::default(),
             rewind_buffer: Default::default(),
             last_rewind_save: Instant::now(),
         })
@@ -60,32 +57,54 @@ impl Emu {
     /// Runs emulation for one frame. Return false when paused.
     pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<bool, String> {
         let mode = match self.state {
-            EmuState::Paused => return Ok(false),
+            EmuState::Paused => {
+                thread::sleep(Duration::from_millis(100));
+                self.runtime.clock.reset();
+
+                return Ok(false);
+            }
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
                     self.load_save_state(state);
                     thread::sleep(Duration::from_millis(100));
                 }
 
-                self.runtime.run_frame(&mut self.cpu, RunMode::Normal, true, callback)?;
+                self.runtime
+                    .run_frame(&mut self.cpu, RunMode::Normal, true, callback)?;
 
                 RunMode::Normal
             }
             EmuState::Running(mode) => {
-                self.runtime.run_frame(&mut self.cpu, mode, self.config.is_muted, callback)?;
+                self.runtime
+                    .run_frame(&mut self.cpu, mode, self.config.is_muted, callback)?;
 
                 mode
-            },
+            }
         };
 
         let real_elapsed = self.runtime.clock.start_time.elapsed();
         let emulated_time = self.calc_emulated_time(mode);
 
         if emulated_time > real_elapsed {
-            sleep_spin(emulated_time - real_elapsed);
+            self.sleep_spin(emulated_time - real_elapsed);
         }
 
         Ok(true)
+    }
+
+    fn sleep_spin(&self, duration: Duration) {
+        let start = Instant::now();
+
+        // Sleep to avoid overshooting
+        if duration > self.config.spin_duration {
+            thread::sleep(duration - self.config.spin_duration);
+        }
+
+        // Spin the rest to get close to the target duration
+        while start.elapsed() < duration {
+            std::hint::spin_loop();
+            //thread::yield_now();
+        }
     }
 
     fn calc_emulated_time(&mut self, mode: RunMode) -> Duration {
@@ -95,11 +114,11 @@ impl Emu {
             RunMode::Turbo => self.config.turbo_speed / 100.0,
         };
 
-        if self.speed_multiplier != speed_multiplier {
+        if self.prev_speed_multiplier != speed_multiplier {
             self.runtime.clock.reset();
         }
 
-        self.speed_multiplier = speed_multiplier;
+        self.prev_speed_multiplier = speed_multiplier;
 
         let emulated_time_ns =
             (self.runtime.clock.t_cycles as f64 * CYCLE_TIME / speed_multiplier).round() as u64;
@@ -166,7 +185,7 @@ impl Emu {
         self.runtime.bus = Bus::new(cart, io);
         self.cpu = Cpu::default();
         self.state = EmuState::Running(RunMode::Normal);
-        self.reset();
+        self.runtime.clock.reset();
         self.rewind_buffer.clear();
 
         if save_state {
@@ -192,13 +211,7 @@ impl Emu {
         self.runtime.bus.io.joypad = Joypad::default(); // reset controls
 
         self.cpu = save_state.cpu;
-
-        self.reset();
-    }
-
-    pub fn reset(&mut self) {
-        self.runtime.reset();
-        self.last_fps_timestamp = Default::default();
+        self.runtime.clock.reset();
     }
 }
 

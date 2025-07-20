@@ -2,8 +2,7 @@ use crate::config::DesktopEmuConfig;
 use crate::ui::Ui;
 use core::emu::Emu;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
-use std::{env, thread};
+use std::{env};
 
 mod config;
 pub mod ui;
@@ -80,7 +79,6 @@ fn run_emu(emu: &mut Emu, ui: &mut Ui) -> Result<(), String> {
                 "PAUSED"
             };
             ui.draw_text(text);
-            thread::sleep(Duration::from_millis(100));
             continue;
         }
 

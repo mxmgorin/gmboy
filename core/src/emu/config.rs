@@ -1,3 +1,4 @@
+use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -6,15 +7,17 @@ pub struct EmuConfig {
     pub slow_speed: f64,
     pub turbo_speed: f64,
     pub is_muted: bool,
+    pub spin_duration: Duration,
 }
 
 impl Default for EmuConfig {
     fn default() -> Self {
         Self {
-            rewind_size: 4000,
+            rewind_size: 200,
             slow_speed: 50.0,
             turbo_speed: 300.0,
             is_muted: false,
+            spin_duration: Duration::from_millis(2),
         }
     }
 }

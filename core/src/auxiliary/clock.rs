@@ -1,7 +1,6 @@
 use crate::auxiliary::dma::Dma;
 use crate::bus::Bus;
-use std::thread;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 
 pub const T_CYCLES_PER_M_CYCLE: usize = 4;
 
@@ -49,22 +48,5 @@ impl Clock {
             ppu.tick(bus);
             bus.io.apu.tick();
         }
-    }
-}
-
-const SLEEP_DURATION: Duration = Duration::from_millis(3);
-
-pub fn sleep_spin(duration: Duration) {
-    let start = Instant::now();
-
-    // Sleep to avoid overshooting
-    if duration > SLEEP_DURATION {
-        thread::sleep(duration - SLEEP_DURATION);
-    }
-
-    // Spin the rest to get close to the target duration
-    while start.elapsed() < duration {
-        std::hint::spin_loop();
-        //thread::yield_now();
     }
 }
