@@ -52,7 +52,7 @@ impl Default for PixelFetcher {
     fn default() -> PixelFetcher {
         Self {
             fetch_step: FetchStep::Tile,
-            pixel_fifo: Default::default(),
+            pixel_fifo: VecDeque::with_capacity(MAX_FIFO_SIZE),
             line_x: 0,
             pushed_x: 0,
             fetch_x: 0,
