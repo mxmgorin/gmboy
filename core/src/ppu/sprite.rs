@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
+use crate::ppu::fetcher::{MAX_FIFO_SIZE, MAX_FIFO_SPRITES_SIZE};
 use crate::ppu::lcd::Lcd;
 use crate::ppu::oam::OamEntry;
 use crate::ppu::tile::{
@@ -12,12 +12,23 @@ pub struct SpriteFetchedData {
     pub tile_line: TileLineData,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct SpriteFetcher {
     pub line_sprites: Vec<OamEntry>,
     pub fetched_sprites_count: usize,
     pub fetched_sprites: [OamEntry; 3], //entries fetched during pipeline.
     pub fetched_sprite_data: [SpriteFetchedData; 3],
+}
+
+impl Default for SpriteFetcher {
+    fn default() -> Self {
+        Self {
+            line_sprites: Vec::with_capacity(MAX_FIFO_SIZE),
+            fetched_sprites_count: 0,
+            fetched_sprites: Default::default(),
+            fetched_sprite_data: Default::default(),
+        }
+    }
 }
 
 impl SpriteFetcher {
