@@ -164,7 +164,9 @@ impl Ui {
             sdl2::video::WindowPos::Centered,
             sdl2::video::WindowPos::Centered,
         );
-
+        
+        println!("Set scale: {}", scale);
+        
         Ok(())
     }
 
@@ -328,6 +330,8 @@ impl Ui {
         let pallet = &self.config.graphics.pallets[self.config.graphics.selected_pallet_idx];
         self.curr_palette = into_pallet(&pallet.hex_colors);
         emu.runtime.bus.io.lcd.set_pallet(self.curr_palette);
+        
+        println!("Select pallet: {}", pallet.name);
     }
 
     pub fn toggle_fullscreen(&mut self) {

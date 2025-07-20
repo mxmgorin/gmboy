@@ -57,27 +57,35 @@ impl EmuPallet {
         }
     }
 
+    pub fn forgotten_swamp() -> Self {
+        Self {
+            name: "Forgotten Swamp".to_string(),
+            hex_colors: [
+                "ffd1ada1".to_string(),
+                "ff4d7d65".to_string(),
+                "ff593a5f".to_string(),
+                "ff3b252e".to_string(),
+            ],
+        }
+    }
+
+    pub fn crimson() -> Self {
+        Self {
+            name: "Crimson".to_string(),
+            hex_colors: [
+                "ffeff9d6".to_string(),
+                "ffba5044".to_string(),
+                "ff7a1c4b".to_string(),
+                "ff1b0326".to_string(),
+            ],
+        }
+    }
+
     pub fn default_pallets() -> Vec<EmuPallet> {
         vec![
+            EmuPallet::crimson(),
+            EmuPallet::forgotten_swamp(),
             EmuPallet::classic(),
-            EmuPallet {
-                name: "Forgotten Swamp".to_string(),
-                hex_colors: [
-                    "ffd1ada1".to_string(),
-                    "ff4d7d65".to_string(),
-                    "ff593a5f".to_string(),
-                    "ff3b252e".to_string(),
-                ],
-            },
-            EmuPallet {
-                name: "Kirokaze".to_string(),
-                hex_colors: [
-                    "ff332c50".to_string(),
-                    "ff46878f".to_string(),
-                    "ff94e344".to_string(),
-                    "ffe2f3e4".to_string(),
-                ],
-            },
             EmuPallet {
                 name: "Rustic".to_string(),
                 hex_colors: [
@@ -94,24 +102,6 @@ impl EmuPallet {
                     "ffd68e49".to_string(),
                     "ff308013".to_string(),
                     "ff400c01".to_string(),
-                ],
-            },
-            EmuPallet {
-                name: "Kirokaze".to_string(),
-                hex_colors: [
-                    "ff332c50".to_string(),
-                    "ff46878f".to_string(),
-                    "ff94e344".to_string(),
-                    "ffe2f3e4".to_string(),
-                ],
-            },
-            EmuPallet {
-                name: "Ice Cream".to_string(),
-                hex_colors: [
-                    "ff7c3f58".to_string(),
-                    "ffeb6b6f".to_string(),
-                    "fff9a875".to_string(),
-                    "fffff6d3".to_string(),
                 ],
             },
             EmuPallet {
@@ -151,15 +141,6 @@ impl EmuPallet {
                 ],
             },
             EmuPallet {
-                name: "Crimson".to_string(),
-                hex_colors: [
-                    "ffeff9d6".to_string(),
-                    "ffba5044".to_string(),
-                    "ff7a1c4b".to_string(),
-                    "ff1b0326".to_string(),
-                ],
-            },
-            EmuPallet {
                 name: "SpaceHaze".to_string(),
                 hex_colors: [
                     "fff8e3c4".to_string(),
@@ -169,39 +150,12 @@ impl EmuPallet {
                 ],
             },
             EmuPallet {
-                name: "Velvet Cherry".to_string(),
-                hex_colors: [
-                    "ff2d162c".to_string(),
-                    "ff412752".to_string(),
-                    "ff683a68".to_string(),
-                    "ff9775a6".to_string(),
-                ],
-            },
-            EmuPallet {
                 name: "Nintendo Super Gameboy".to_string(),
                 hex_colors: [
                     "ff331e50".to_string(),
                     "ffa63725".to_string(),
                     "ffd68e49".to_string(),
                     "fff7e7c6".to_string(),
-                ],
-            },
-            EmuPallet {
-                name: "Fiery Plague".to_string(),
-                hex_colors: [
-                    "ff1a2129".to_string(),
-                    "ff312137".to_string(),
-                    "ff512839".to_string(),
-                    "ff713141".to_string(),
-                ],
-            },
-            EmuPallet {
-                name: "Coldfire".to_string(),
-                hex_colors: [
-                    "ff46425e".to_string(),
-                    "ff5b768d".to_string(),
-                    "ffd17c7c".to_string(),
-                    "fff6c6a8".to_string(),
                 ],
             },
         ]
