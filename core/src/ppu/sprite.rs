@@ -14,16 +14,16 @@ pub struct SpriteFetchedData {
 
 #[derive(Debug, Clone, Default)]
 pub struct SpriteFetcher {
-    pub line_sprite_idx: usize,
+    pub line_sprites_count: usize,
     pub line_sprites: [OamEntry; MAX_FIFO_SPRITES_SIZE],
     pub fetched_sprites_count: usize,
-    pub fetched_sprites: [OamEntry; 3], //entries fetched during pipeline.
+    pub fetched_sprites: [OamEntry; 3], // entries fetched during pipeline.
     pub fetched_sprite_data: [SpriteFetchedData; 3],
 }
 
 impl SpriteFetcher {
     pub fn load_line_sprites(&mut self, bus: &mut Bus) {
-        self.line_sprite_idx = 0;
+        self.line_sprites_count = 0;
         let cur_y: i32 = bus.io.lcd.ly as i32;
         let sprite_height = bus.io.lcd.control.obj_height() as i32;
 
@@ -33,7 +33,7 @@ impl SpriteFetcher {
                 continue;
             }
 
-            if self.line_sprite_idx >= MAX_FIFO_SPRITES_SIZE {
+            if self.line_sprites_count >= MAX_FIFO_SPRITES_SIZE {
                 // Already reached max sprites per scanline (Game Boy limit = 10)
                 break;
             }
@@ -43,18 +43,18 @@ impl SpriteFetcher {
                 let mut inserted = false;
 
                 // Iterate through sorted list to insert at correct position
-                for i in 0..self.line_sprite_idx {
+                for i in 0..self.line_sprites_count {
                     let current_entry = &self.line_sprites[i];
 
                     if ram_entry.x < current_entry.x && ram_entry.x != current_entry.x {
                         // Sort by X first, then by OAM index if X is the same
 
-                        for j in (i..self.line_sprite_idx).rev() {
+                        for j in (i..self.line_sprites_count).rev() {
                             self.line_sprites[j + 1] = self.line_sprites[j];
                         }
 
                         self.line_sprites[i] = ram_entry.to_owned();
-                        self.line_sprite_idx += 1;
+                        self.line_sprites_count += 1;
                         inserted = true;
                         break;
                     }
@@ -62,8 +62,8 @@ impl SpriteFetcher {
 
                 if !inserted {
                     // If no earlier insertion, push to the back
-                    self.line_sprites[self.line_sprite_idx] = ram_entry.to_owned();
-                    self.line_sprite_idx += 1;
+                    self.line_sprites[self.line_sprites_count] = ram_entry.to_owned();
+                    self.line_sprites_count += 1;
                 }
             }
         }
@@ -73,7 +73,7 @@ impl SpriteFetcher {
         self.fetched_sprites_count = 0;
         let fetch_x = fetch_x as i32;
 
-        for idx in 0..self.line_sprite_idx {
+        for idx in 0..self.line_sprites_count {
             let sprite = self.line_sprites[idx];
             let sp_x = self.calc_sprite_x(sprite.x, scroll_x);
 

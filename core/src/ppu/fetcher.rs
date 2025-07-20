@@ -70,10 +70,10 @@ impl PixelFetcher {
             self.fetch(bus);
         }
 
-        self.push_pixel(bus);
+        self.try_fifo_pop(bus);
     }
 
-    fn push_pixel(&mut self, bus: &Bus) {
+    fn try_fifo_pop(&mut self, bus: &Bus) {
         if self.pixel_fifo.len() > MAX_FIFO_SIZE {
             let pixel = self.pixel_fifo.pop_front().unwrap();
 
@@ -147,14 +147,14 @@ impl PixelFetcher {
             }
             FetchStep::Idle => self.fetch_step = FetchStep::Push,
             FetchStep::Push => {
-                if self.try_fifo_add(bus) {
+                if self.try_fifo_push(bus) {
                     self.fetch_step = FetchStep::Tile;
                 }
             }
         }
     }
 
-    fn try_fifo_add(&mut self, bus: &Bus) -> bool {
+    fn try_fifo_push(&mut self, bus: &Bus) -> bool {
         if self.pixel_fifo.len() > MAX_FIFO_SIZE {
             return false;
         }
