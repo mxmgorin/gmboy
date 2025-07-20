@@ -120,8 +120,9 @@ impl Emu {
 
         self.prev_speed_multiplier = speed_multiplier;
 
-        let emulated_duration_ns =
-            (self.runtime.clock.t_cycles as f64 * CYCLE_DURATION_NS / speed_multiplier).round() as u64;
+        let emulated_duration_ns = (self.runtime.clock.t_cycles as f64 * CYCLE_DURATION_NS
+            / speed_multiplier)
+            .round() as u64;
 
         Duration::from_nanos(emulated_duration_ns)
     }
@@ -160,16 +161,18 @@ impl Emu {
     }
 
     pub fn push_rewind(&mut self) {
-        let now = Instant::now();
-        let duration = now.duration_since(self.last_rewind_save_time);
+        if self.config.rewind_size > 0 {
+            let now = Instant::now();
+            let duration = now.duration_since(self.last_rewind_save_time);
 
-        if self.config.rewind_size > 0 && duration >= self.config.rewind_interval {
-            if self.rewind_buffer.len() > self.config.rewind_size {
-                self.rewind_buffer.pop_front();
+            if duration >= self.config.rewind_interval {
+                if self.rewind_buffer.len() > self.config.rewind_size {
+                    self.rewind_buffer.pop_front();
+                }
+
+                self.rewind_buffer.push_back(self.create_save_state());
+                self.last_rewind_save_time = now;
             }
-
-            self.rewind_buffer.push_back(self.create_save_state());
-            self.last_rewind_save_time = now;
         }
     }
 
