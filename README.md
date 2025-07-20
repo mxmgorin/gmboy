@@ -26,25 +26,31 @@ It's not just an emulator — it's a playground for experimentation.
 
 ## Features
 
+- **Config Management**  
+  A `config.json` file lets you customize settings by editing it directly. It is created on first run in the app folder.
+
 - **Multiple Palettes**  
-  Includes different color palettes with ability to add through config file.
+  Includes different color palettes with ability to add via the config file.
 
 - **Slow and Turbo Modes**  
-  Ability to slow down and speed up emulation.
+  Ability to slow down or speed up emulation. Speed is adjustable via the config file.
 
 - **Rewind**  
-  Go back in time! Undo your actions and retry sections without restarting.
+  Undo your actions and retry sections without restarting. Buffer size is adjustable via the config file.
 
-- **Save states**  
-  Save your game progress and resume from the exact same point at any time — no need to rely on in-game save systems.
+- **Save States**  
+  Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config file.
 
 - **Tests**  
-  Integrated SM83 json tests, blargg tests, mooneye test suite (throught `cargo test`).
+  Integrated SM83 json tests, blargg tests, mooneye test suite (via `cargo test`).
+
+- **Tile Viewer**  
+  Visualize and inspect background and sprite tile data in real time. Toggle it via the config file.
 
 ## Test Results
 
 - ### SM83: 
-Passes all of 356 000 tests successfully ✅
+Passes all of 356 000 tests ✅
 
 - ### Blargg
 
