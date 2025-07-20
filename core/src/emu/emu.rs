@@ -11,7 +11,6 @@ use crate::emu::runtime::EmuRuntime;
 use crate::emu::state::{EmuSaveState, EmuState, RunMode};
 use crate::ppu::lcd::Lcd;
 use crate::ppu::tile::{Pixel, PixelColor};
-use crate::ppu::CYCLES_PER_FRAME;
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -32,7 +31,6 @@ pub struct Emu {
     pub cpu: Cpu,
     pub runtime: EmuRuntime,
     speed_multiplier: f64,
-    prev_frame: usize,
     last_fps_timestamp: Duration,
     rewind_buffer: VecDeque<EmuSaveState>,
     last_rewind_save: Instant,
@@ -53,7 +51,6 @@ impl Emu {
             speed_multiplier: 1.0,
             state: EmuState::Paused,
             config,
-            prev_frame: 0,
             last_fps_timestamp: Default::default(),
             rewind_buffer: Default::default(),
             last_rewind_save: Instant::now(),
@@ -62,41 +59,25 @@ impl Emu {
 
     /// Runs emulation for one frame. Return false when paused.
     pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<bool, String> {
-        match self.state {
-            EmuState::Paused => Ok(false),
+        let mode = match self.state {
+            EmuState::Paused => return Ok(false),
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
                     self.load_save_state(state);
                     thread::sleep(Duration::from_millis(100));
                 }
 
-                self.emulate_frame(RunMode::Normal, callback)
+                self.runtime.run_frame(&mut self.cpu, RunMode::Normal, true, callback)?;
+
+                RunMode::Normal
             }
-            EmuState::Running(mode) => self.emulate_frame(mode, callback),
-        }
-    }
+            EmuState::Running(mode) => {
+                self.runtime.run_frame(&mut self.cpu, mode, self.config.is_muted, callback)?;
 
-    fn emulate_frame(
-        &mut self,
-        mode: RunMode,
-        callback: &mut impl EmuCallback,
-    ) -> Result<bool, String> {
-        let prev_m_cycles = self.runtime.clock.get_m_cycles();
+                mode
+            },
+        };
 
-        while self.runtime.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
-            self.cpu.step(&mut self.runtime)?;
-
-            if let Some(debugger) = self.runtime.debugger.as_mut() {
-                debugger.print_serial()
-            }
-
-            if !self.config.is_muted && EmuState::Running(RunMode::Normal) == self.state {
-                callback.update_audio(self.runtime.bus.io.apu.take_output());
-            }
-        }
-
-        callback.update_video(&self.runtime.ppu.pipeline.buffer, self.runtime.ppu.fps);
-        self.prev_frame = self.runtime.ppu.current_frame;
         let real_elapsed = self.runtime.clock.start_time.elapsed();
         let emulated_time = self.calc_emulated_time(mode);
 
@@ -217,7 +198,6 @@ impl Emu {
 
     pub fn reset(&mut self) {
         self.runtime.reset();
-        self.prev_frame = 0;
         self.last_fps_timestamp = Default::default();
     }
 }

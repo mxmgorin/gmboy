@@ -1,10 +1,13 @@
-use crate::auxiliary::clock::Clock;
+use crate::auxiliary::clock::{Clock};
 use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateEvent};
-use crate::ppu::Ppu;
+use crate::emu::state::{RunMode};
+use crate::emu::EmuCallback;
+use crate::ppu::{Ppu, CYCLES_PER_FRAME};
 
+/// Contains all runnable components.
 pub struct EmuRuntime {
     pub bus: Bus,
     pub ppu: Ppu,
@@ -24,6 +27,34 @@ impl EmuRuntime {
 
     pub fn reset(&mut self) {
         self.clock = Clock::default();
+    }
+}
+
+impl EmuRuntime {
+    pub fn run_frame(
+        &mut self,
+        cpu: &mut Cpu,
+        mode: RunMode,
+        is_muted: bool,
+        callback: &mut impl EmuCallback,
+    ) -> Result<(), String> {
+        let prev_m_cycles = self.clock.get_m_cycles();
+
+        while self.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
+            cpu.step(self)?;
+
+            if let Some(debugger) = self.debugger.as_mut() {
+                debugger.print_serial()
+            }
+
+            if mode == RunMode::Normal && !is_muted && self.bus.io.apu.output_ready() {
+                callback.update_audio(self.bus.io.apu.take_output());
+            }
+        }
+
+        callback.update_video(&self.ppu.pipeline.buffer, self.ppu.fps);
+
+        Ok(())
     }
 }
 
