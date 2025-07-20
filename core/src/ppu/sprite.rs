@@ -6,7 +6,6 @@ use crate::ppu::tile::{
     get_color_index, Pixel, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
     TILE_SET_DATA_1_START,
 };
-use std::collections::VecDeque;
 
 #[derive(Debug, Clone, Default, Copy)]
 pub struct SpriteFetchedData {
@@ -15,7 +14,7 @@ pub struct SpriteFetchedData {
 
 #[derive(Debug, Clone, Default)]
 pub struct SpriteFetcher {
-    pub line_sprites: VecDeque<OamEntry>,
+    pub line_sprites: Vec<OamEntry>,
     pub fetched_sprites_count: usize,
     pub fetched_sprites: [OamEntry; 3], //entries fetched during pipeline.
     pub fetched_sprite_data: [SpriteFetchedData; 3],
@@ -56,7 +55,7 @@ impl SpriteFetcher {
 
                 if !inserted {
                     // If no earlier insertion, push to the back
-                    self.line_sprites.push_back(ram_entry.to_owned());
+                    self.line_sprites.push(ram_entry.to_owned());
                 }
             }
         }
