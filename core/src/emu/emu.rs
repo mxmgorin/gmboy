@@ -48,9 +48,9 @@ impl Emu {
             runtime: EmuRuntime::new(debugger, bus),
             prev_speed_multiplier: 1.0,
             state: EmuState::Paused,
-            config,
-            rewind_buffer: Default::default(),
+            rewind_buffer: VecDeque::with_capacity(config.rewind_size),
             last_rewind_save: Instant::now(),
+            config,
         })
     }
 
