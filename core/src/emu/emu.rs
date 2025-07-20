@@ -17,7 +17,7 @@ use std::{fs, mem, thread};
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
-const CYCLE_TIME: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
+const CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
 
 pub trait EmuCallback {
     fn update_video(&mut self, buffer: &[u32], fps: usize);
@@ -120,10 +120,10 @@ impl Emu {
 
         self.prev_speed_multiplier = speed_multiplier;
 
-        let emulated_time_ns =
-            (self.runtime.clock.t_cycles as f64 * CYCLE_TIME / speed_multiplier).round() as u64;
+        let emulated_duration_ns =
+            (self.runtime.clock.t_cycles as f64 * CYCLE_DURATION_NS / speed_multiplier).round() as u64;
 
-        Duration::from_nanos(emulated_time_ns)
+        Duration::from_nanos(emulated_duration_ns)
     }
 
     pub fn create_save_state(&self) -> EmuSaveState {
