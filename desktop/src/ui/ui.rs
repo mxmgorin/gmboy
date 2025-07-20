@@ -6,7 +6,7 @@ use crate::ui::text::*;
 use crate::Emu;
 use core::emu::EmuCallback;
 use core::into_pallet;
-use core::ppu::tile::{Pixel, PixelColor, TileData};
+use core::ppu::tile::{PixelColor, TileData};
 use core::ppu::{LCD_X_RES, LCD_Y_RES};
 use sdl2::controller::GameController;
 use sdl2::event::Event;
@@ -39,7 +39,7 @@ pub struct Ui {
 }
 
 impl EmuCallback for Ui {
-    fn update_video(&mut self, buffer: &[Pixel], fps: usize) {
+    fn update_video(&mut self, buffer: &[u32], fps: usize) {
         self.draw_main(buffer, fps, self.curr_palette[3]);
     }
 
@@ -83,7 +83,11 @@ impl Ui {
         let mut main_canvas = main_window.into_canvas().build().unwrap();
         let texture_creator = main_canvas.texture_creator();
         let texture = texture_creator
-            .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
+            .create_texture_streaming(
+                PixelFormatEnum::ARGB8888,
+                LCD_X_RES as u32,
+                LCD_Y_RES as u32,
+            )
             .unwrap();
 
         if config.graphics.is_fullscreen {
@@ -103,11 +107,15 @@ impl Ui {
         };
 
         let mut overlay_texture = texture_creator
-            .create_texture_streaming(PixelFormatEnum::RGBA32, LCD_X_RES as u32, LCD_Y_RES as u32)
+            .create_texture_streaming(
+                PixelFormatEnum::ARGB8888,
+                LCD_X_RES as u32,
+                LCD_Y_RES as u32,
+            )
             .unwrap();
         overlay_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let mut fps_texture = texture_creator
-            .create_texture_streaming(PixelFormatEnum::RGBA32, 50, 50)
+            .create_texture_streaming(PixelFormatEnum::ARGB8888, 50, 50)
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
@@ -194,20 +202,24 @@ impl Ui {
         self.main_canvas.present();
     }
 
-    pub fn draw_main(&mut self, pixel_buffer: &[Pixel], fps: usize, text_color: PixelColor) {
+    pub fn draw_main(&mut self, pixel_buffer: &[u32], fps: usize, text_color: PixelColor) {
         self.main_canvas.clear();
 
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                // use u32 for less indexing
+                let pitch_u32 = pitch / 4;
+                let buffer_u32 = unsafe {
+                    std::slice::from_raw_parts_mut(
+                        buffer.as_mut_ptr() as *mut u32,
+                        buffer.len() / 4,
+                    )
+                };
+
                 for y in 0..LCD_Y_RES as usize {
                     for x in 0..LCD_X_RES as usize {
-                        let pixel = pixel_buffer[x + (y * LCD_X_RES as usize)];
-                        let (r, g, b, a) = pixel.color.as_rgba();
-                        let offset = (y * pitch) + (x * BYTES_PER_PIXEL);
-                        buffer[offset] = r;
-                        buffer[offset + 1] = g;
-                        buffer[offset + 2] = b;
-                        buffer[offset + 3] = a;
+                        let offset = y * pitch_u32 + x;
+                        buffer_u32[offset] = pixel_buffer[x + y * LCD_X_RES as usize];
                     }
                 }
             })
@@ -223,7 +235,7 @@ impl Ui {
 
         if self.config.graphics.show_fps {
             let text = fps.to_string();
-            fill_texture(&mut self.fps_texture, PixelColor::from_hex(0));
+            fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
             draw_text(&mut self.fps_texture, &text, text_color, 5, 5, 1);
 
             self.main_canvas

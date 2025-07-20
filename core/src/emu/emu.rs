@@ -9,7 +9,7 @@ use crate::emu::config::EmuConfig;
 use crate::emu::runtime::EmuRuntime;
 use crate::emu::state::{EmuSaveState, EmuState, RunMode};
 use crate::ppu::lcd::Lcd;
-use crate::ppu::tile::{Pixel, PixelColor};
+use crate::ppu::tile::{PixelColor};
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -20,7 +20,7 @@ const NANOS_PER_SECOND: usize = 1_000_000_000;
 const CYCLE_TIME: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
 
 pub trait EmuCallback {
-    fn update_video(&mut self, buffer: &[Pixel], fps: usize);
+    fn update_video(&mut self, buffer: &[u32], fps: usize);
     fn update_audio(&mut self, output: &[f32]);
 }
 

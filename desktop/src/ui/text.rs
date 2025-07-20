@@ -73,9 +73,9 @@ pub fn draw_text(
 
                                     let text_offset = (py * pitch) + (px * BYTES_PER_PIXEL);
                                     let (r, g, b, a) = color.as_rgba();
-                                    buffer[text_offset] = r;
+                                    buffer[text_offset] = b;
                                     buffer[text_offset + 1] = g;
-                                    buffer[text_offset + 2] = b;
+                                    buffer[text_offset + 2] = r;
                                     buffer[text_offset + 3] = a;
                                 }
                             }

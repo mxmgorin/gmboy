@@ -37,7 +37,7 @@ impl BgwFetchedData {
 pub struct PixelFetcher {
     pub pushed_x: u8,
     pub sprite_fetcher: SpriteFetcher,
-    pub buffer: Box<[Pixel]>,
+    pub buffer: Box<[u32]>,
 
     fetch_step: FetchStep,
     line_x: u8,
@@ -57,7 +57,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![Pixel::default(); LCD_Y_RES as usize * LCD_X_RES as usize]
+            buffer: vec![0; LCD_Y_RES as usize * LCD_X_RES as usize]
                 .into_boxed_slice(),
             sprite_fetcher: Default::default(),
         }
@@ -81,14 +81,14 @@ impl PixelFetcher {
                 // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
                 let index = (self.pushed_x as usize)
                     .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
-                self.buffer[index] = pixel;
+                self.buffer[index] = pixel.color.as_argb_u32();
                 self.pushed_x += 1;
             } else {
                 // For the background layer, apply scroll_x for horizontal scrolling
                 if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
                     let index = (self.pushed_x as usize)
                         .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
-                    self.buffer[index] = pixel;
+                    self.buffer[index] = pixel.color.as_argb_u32();
                     self.pushed_x += 1;
                 }
             }

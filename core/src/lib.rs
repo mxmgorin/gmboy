@@ -54,11 +54,11 @@ pub fn struct_to_bytes_mut<T>(s: &mut T) -> &mut [u8] {
     unsafe { std::slice::from_raw_parts_mut(ptr, size) }
 }
 
-pub fn hex_to_rgba(color: u32) -> (u8, u8, u8, u8) {
-    let alpha = ((color >> 24) & 0xFF) as u8; // Extract alpha
-    let red = ((color >> 16) & 0xFF) as u8; // Extract red
-    let green = ((color >> 8) & 0xFF) as u8; // Extract green
-    let blue = (color & 0xFF) as u8; // Extract blue
+pub fn hex_to_rgba(argb: u32) -> (u8, u8, u8, u8) {
+    let alpha = ((argb >> 24) & 0xFF) as u8; // Extract alpha
+    let red = ((argb >> 16) & 0xFF) as u8; // Extract red
+    let green = ((argb >> 8) & 0xFF) as u8; // Extract green
+    let blue = (argb & 0xFF) as u8; // Extract blue
 
     (red, green, blue, alpha)
 }
@@ -66,7 +66,7 @@ pub fn hex_to_rgba(color: u32) -> (u8, u8, u8, u8) {
 pub fn into_pallet(hex_colors: &[String]) -> [PixelColor; 4] {
     let colors: Vec<PixelColor> = hex_colors
         .iter()
-        .map(|hex| PixelColor::from_hex(u32::from_str_radix(hex, 16).unwrap()))
+        .map(|hex| PixelColor::from_u32(u32::from_str_radix(hex, 16).unwrap()))
         .collect();
 
     colors[..4].try_into().unwrap()

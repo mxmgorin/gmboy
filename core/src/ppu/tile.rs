@@ -139,20 +139,26 @@ impl Iterator for TileLineIterator {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelColor {
-    hex: u32,
+    argb: u32,
 }
 
 impl PixelColor {
-    pub const fn from_hex(hex: u32) -> PixelColor {
-        PixelColor { hex }
+    pub const fn from_u32(argb: u32) -> PixelColor {
+        PixelColor { argb }
     }
 
-    pub fn as_hex(&self) -> u32 {
-        self.hex
+    pub fn from_hex(hex: &str) -> PixelColor {
+        let u32 = u32::from_str_radix(hex, 16).unwrap();
+
+        Self::from_u32(u32)
+    }
+
+    pub fn as_argb_u32(&self) -> u32 {
+        self.argb
     }
 
     pub fn as_rgba(&self) -> (u8, u8, u8, u8) {
-        hex_to_rgba(self.hex)
+        hex_to_rgba(self.argb)
     }
 }
 
