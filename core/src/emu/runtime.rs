@@ -5,7 +5,7 @@ use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateEvent};
 use crate::emu::state::{RunMode};
 use crate::emu::EmuCallback;
-use crate::ppu::{Ppu, CYCLES_PER_FRAME};
+use crate::ppu::{Ppu};
 
 /// Contains all runnable components.
 pub struct EmuRuntime {
@@ -32,9 +32,9 @@ impl EmuRuntime {
         is_muted: bool,
         callback: &mut impl EmuCallback,
     ) -> Result<(), String> {
-        let prev_m_cycles = self.clock.get_m_cycles();
+        let start_frame = self.ppu.current_frame;
 
-        while self.clock.get_m_cycles() - prev_m_cycles < CYCLES_PER_FRAME {
+        while start_frame == self.ppu.current_frame {
             cpu.step(self)?;
 
             if let Some(debugger) = self.debugger.as_mut() {

@@ -14,7 +14,6 @@ pub const TARGET_FPS_F: f64 = 59.7;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = FRAME_DURATION.as_millis() as u64;
 pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
 pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
-pub const CYCLES_PER_FRAME: usize = 70224;
 
 impl Tickable for Ppu {
     fn tick(&mut self, bus: &mut Bus) {
