@@ -9,7 +9,7 @@ use crate::emu::config::EmuConfig;
 use crate::emu::runtime::EmuRuntime;
 use crate::emu::state::{EmuSaveState, EmuState, RunMode};
 use crate::ppu::lcd::Lcd;
-use crate::ppu::tile::{PixelColor};
+use crate::ppu::tile::PixelColor;
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
@@ -27,8 +27,8 @@ pub trait EmuCallback {
 pub struct Emu {
     pub config: EmuConfig,
     pub state: EmuState,
-    pub cpu: Cpu,
     pub runtime: EmuRuntime,
+    cpu: Cpu,
     prev_speed_multiplier: f64,
     rewind_buffer: VecDeque<EmuSaveState>,
     last_rewind_save_time: Instant,
@@ -46,7 +46,7 @@ impl Emu {
         Ok(Self {
             cpu: Cpu::default(),
             runtime: EmuRuntime::new(debugger, bus),
-            prev_speed_multiplier: 1.0,
+            prev_speed_multiplier: config.normal_speed,
             state: EmuState::Paused,
             rewind_buffer: VecDeque::with_capacity(config.rewind_size),
             last_rewind_save_time: Instant::now(),
@@ -109,9 +109,9 @@ impl Emu {
 
     fn calc_emulated_time(&mut self, mode: RunMode) -> Duration {
         let speed_multiplier = match mode {
-            RunMode::Normal => 1.0,
-            RunMode::Slow => self.config.slow_speed / 100.0,
-            RunMode::Turbo => self.config.turbo_speed / 100.0,
+            RunMode::Normal => self.config.normal_speed,
+            RunMode::Slow => self.config.slow_speed,
+            RunMode::Turbo => self.config.turbo_speed,
         };
 
         if self.prev_speed_multiplier != speed_multiplier {
@@ -126,15 +126,15 @@ impl Emu {
         Duration::from_nanos(emulated_time_ns)
     }
 
-    pub fn create_save_state(&self, cpu: &Cpu) -> EmuSaveState {
+    pub fn create_save_state(&self) -> EmuSaveState {
         EmuSaveState {
-            cpu: cpu.clone(),
+            cpu: self.cpu.clone(),
             bus_without_cart: self.runtime.bus.clone_empty_cart(),
             cart_save_state: self.runtime.bus.cart.create_save_state(),
         }
     }
 
-    pub fn save_files(&self, cart_file_path: &Path) -> Result<(), String> {
+    pub fn save_files(&self, cart_file_path: &Path, save_state: bool) -> Result<(), String> {
         let name = cart_file_path.file_stem().unwrap().to_str();
 
         let Some(name) = name else {
@@ -150,8 +150,10 @@ impl Emu {
             };
         }
 
-        if let Err(err) = self.create_save_state(&self.cpu).save_file(name, 0) {
-            eprintln!("Failed save_state: {err}");
+        if save_state {
+            if let Err(err) = self.create_save_state().save_file(name, 0) {
+                eprintln!("Failed save_state: {err}");
+            }
         }
 
         Ok(())
@@ -164,13 +166,12 @@ impl Emu {
             .time
             .duration_since(self.last_rewind_save_time);
 
-        if self.config.rewind_size > 0 && duration.as_secs() >= 2 {
+        if self.config.rewind_size > 0 && duration >= self.config.rewind_interval {
             if self.rewind_buffer.len() > self.config.rewind_size {
                 self.rewind_buffer.pop_front();
             }
 
-            self.rewind_buffer
-                .push_back(self.create_save_state(&self.cpu));
+            self.rewind_buffer.push_back(self.create_save_state());
             self.last_rewind_save_time = self.runtime.clock.time;
         }
     }

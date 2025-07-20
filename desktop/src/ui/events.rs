@@ -22,7 +22,7 @@ impl Ui {
 
         match event {
             SaveStateEvent::Create => {
-                let save_state = emu.create_save_state(&emu.cpu);
+                let save_state = emu.create_save_state();
 
                 if let Err(err) = save_state.save_file(&name, index) {
                     eprintln!("Failed save_state: {err}",);
@@ -44,7 +44,7 @@ impl Ui {
     pub fn on_event(&mut self, emu: &mut Emu, event: UiEvent) {
         match event {
             UiEvent::FileDropped(path) => {
-                emu.load_cart_file(&path, self.config.load_save_state_at_start);
+                emu.load_cart_file(&path, self.config.save_state_on_exit);
                 self.config.last_cart_path = path.to_str().map(|s| s.to_string());
             }
             UiEvent::Pause => {
@@ -65,7 +65,7 @@ impl Ui {
             UiEvent::PickFile => {
                 if emu.state == EmuState::Paused {
                     if let Some(path) = rfd::FileDialog::new().pick_file() {
-                        emu.load_cart_file(&path, self.config.load_save_state_at_start);
+                        emu.load_cart_file(&path, self.config.save_state_on_exit);
                         self.config.last_cart_path = path.to_str().map(|s| s.to_string());
                     }
                 }

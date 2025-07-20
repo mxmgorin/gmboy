@@ -11,7 +11,7 @@ pub struct DesktopEmuConfig {
     emulation: EmuConfig, // only for deserialization
 
     pub last_cart_path: Option<String>,
-    pub load_save_state_at_start: bool,
+    pub save_state_on_exit: bool,
     pub graphics: GraphicsConfig,
 }
 
@@ -90,7 +90,7 @@ impl Default for DesktopEmuConfig {
     fn default() -> Self {
         Self {
             last_cart_path: None,
-            load_save_state_at_start: false,
+            save_state_on_exit: false,
             emulation: Default::default(),
             graphics: GraphicsConfig {
                 selected_pallet_idx: 0,

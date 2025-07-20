@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EmuConfig {
     pub rewind_size: usize,
+    pub rewind_interval: Duration,
+    pub normal_speed: f64,
     pub slow_speed: f64,
     pub turbo_speed: f64,
     pub is_muted: bool,
@@ -14,10 +16,12 @@ impl Default for EmuConfig {
     fn default() -> Self {
         Self {
             rewind_size: 120,
-            slow_speed: 50.0,
-            turbo_speed: 300.0,
+            rewind_interval: Duration::from_secs(5),
+            normal_speed: 1.0,
+            slow_speed: 0.5,
+            turbo_speed: 5.0,
             is_muted: false,
-            spin_duration: Duration::from_millis(2),
+            spin_duration: Duration::from_millis(1),
         }
     }
 }

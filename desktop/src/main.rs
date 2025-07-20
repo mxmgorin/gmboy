@@ -43,13 +43,13 @@ fn main() {
 
     if let Some(cart_path) = cart_path {
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, ui.config.load_save_state_at_start);
+            emu.load_cart_file(&cart_path, ui.config.save_state_on_exit);
         }
     } else if let Some(cart_path) = &ui.config.last_cart_path {
         let cart_path = PathBuf::from(cart_path.clone());
 
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, ui.config.load_save_state_at_start);
+            emu.load_cart_file(&cart_path, ui.config.save_state_on_exit);
         }
     }
 
@@ -58,7 +58,7 @@ fn main() {
     }
 
     if let Some(cart_path) = &ui.config.last_cart_path {
-        if let Err(err) = emu.save_files(Path::new(cart_path)) {
+        if let Err(err) = emu.save_files(Path::new(cart_path), ui.config.save_state_on_exit) {
             eprint!("Failed save_files: {err}");
         }
     }
