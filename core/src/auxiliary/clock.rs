@@ -11,14 +11,14 @@ pub trait Tickable {
 
 #[derive(Debug, Clone)]
 pub struct Clock {
-    pub start_time: Instant,
+    pub time: Instant,
     pub t_cycles: usize,
 }
 
 impl Default for Clock {
     fn default() -> Self {
         Self {
-            start_time: Instant::now(),
+            time: Instant::now(),
             t_cycles: 0,
         }
     }
@@ -27,7 +27,7 @@ impl Default for Clock {
 impl Clock {
     pub fn reset(&mut self) {
         self.t_cycles = 0;
-        self.start_time = Instant::now();
+        self.time = Instant::now();
     }
 
     pub fn m_cycles(&mut self, m_cycles: usize, bus: &mut Bus, ppu: &mut impl Tickable) {

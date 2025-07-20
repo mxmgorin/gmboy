@@ -31,7 +31,7 @@ pub struct Emu {
     pub runtime: EmuRuntime,
     prev_speed_multiplier: f64,
     rewind_buffer: VecDeque<EmuSaveState>,
-    last_rewind_save: Instant,
+    last_rewind_save_time: Instant,
 }
 
 impl Emu {
@@ -49,7 +49,7 @@ impl Emu {
             prev_speed_multiplier: 1.0,
             state: EmuState::Paused,
             rewind_buffer: VecDeque::with_capacity(config.rewind_size),
-            last_rewind_save: Instant::now(),
+            last_rewind_save_time: Instant::now(),
             config,
         })
     }
@@ -82,7 +82,7 @@ impl Emu {
             }
         };
 
-        let real_elapsed = self.runtime.clock.start_time.elapsed();
+        let real_elapsed = self.runtime.clock.time.elapsed();
         let emulated_time = self.calc_emulated_time(mode);
 
         if emulated_time > real_elapsed {
@@ -158,18 +158,20 @@ impl Emu {
     }
 
     pub fn push_rewind(&mut self) {
-        let now = Instant::now();
+        let duration = self
+            .runtime
+            .clock
+            .time
+            .duration_since(self.last_rewind_save_time);
 
-        if self.config.rewind_size > 0
-            && now.duration_since(self.last_rewind_save).as_secs_f32() >= 2.0
-        {
+        if self.config.rewind_size > 0 && duration.as_secs() >= 2 {
             if self.rewind_buffer.len() > self.config.rewind_size {
                 self.rewind_buffer.pop_front();
             }
 
             self.rewind_buffer
                 .push_back(self.create_save_state(&self.cpu));
-            self.last_rewind_save = now;
+            self.last_rewind_save_time = self.runtime.clock.time;
         }
     }
 

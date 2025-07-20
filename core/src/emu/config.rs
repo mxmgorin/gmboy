@@ -13,7 +13,7 @@ pub struct EmuConfig {
 impl Default for EmuConfig {
     fn default() -> Self {
         Self {
-            rewind_size: 200,
+            rewind_size: 120,
             slow_speed: 50.0,
             turbo_speed: 300.0,
             is_muted: false,
