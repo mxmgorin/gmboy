@@ -39,7 +39,7 @@ fn main() {
         None,
     )
     .unwrap();
-    let mut ui = Ui::new(config, false).unwrap();
+    let mut ui = Ui::new(config).unwrap();
 
     if let Some(cart_path) = cart_path {
         if cart_path.exists() {

@@ -47,6 +47,7 @@ pub struct GraphicsConfig {
     pub is_fullscreen: bool,
     pub show_fps: bool,
     pub text_scale: usize,
+    pub tile_viewer: bool,
 }
 
 impl GraphicsConfig {
@@ -96,8 +97,9 @@ impl Default for DesktopEmuConfig {
                 pallets: EmuPallet::default_pallets(),
                 scale: 5.0,
                 is_fullscreen: false,
-                show_fps: true,
+                show_fps: false,
                 text_scale: 1,
+                tile_viewer: false,
             },
         }
     }

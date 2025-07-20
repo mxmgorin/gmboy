@@ -69,7 +69,7 @@ impl Layout {
 }
 
 impl Ui {
-    pub fn new(config: DesktopEmuConfig, debug: bool) -> Result<Self, String> {
+    pub fn new(config: DesktopEmuConfig) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
         let layout = Layout::new(config.graphics.scale);
@@ -96,7 +96,7 @@ impl Ui {
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)?;
         }
 
-        let debug_window = if debug {
+        let debug_window = if config.graphics.tile_viewer {
             let (x, y) = main_canvas.window().position();
             let mut debug_window = DebugWindow::new(&video_subsystem);
             debug_window.set_position(x + SCREEN_WIDTH as i32 + 10, y);
