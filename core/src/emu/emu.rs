@@ -160,11 +160,8 @@ impl Emu {
     }
 
     pub fn push_rewind(&mut self) {
-        let duration = self
-            .runtime
-            .clock
-            .time
-            .duration_since(self.last_rewind_save_time);
+        let now = Instant::now();
+        let duration = now.duration_since(self.last_rewind_save_time);
 
         if self.config.rewind_size > 0 && duration >= self.config.rewind_interval {
             if self.rewind_buffer.len() > self.config.rewind_size {
@@ -172,7 +169,7 @@ impl Emu {
             }
 
             self.rewind_buffer.push_back(self.create_save_state());
-            self.last_rewind_save_time = self.runtime.clock.time;
+            self.last_rewind_save_time = now;
         }
     }
 
