@@ -63,6 +63,7 @@ impl Ui {
             UiEvent::Mute => emu.config.is_muted = !emu.config.is_muted,
             UiEvent::SaveState(event, index) => self.handle_save_state(emu, event, index),
             UiEvent::PickFile => {
+                #[cfg(feature = "filepicker")]
                 if emu.state == EmuState::Paused {
                     if let Some(path) = tinyfiledialogs::open_file_dialog("Select ROM", "", None) {
                         emu.load_cart_file(Path::new(&path), self.config.save_state_on_exit);
