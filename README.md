@@ -1,8 +1,8 @@
 ## 🎮 gmboy
 
 `gmboy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works.  
-Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage.
-It's not just an emulator — it's a playground for experimentation.
+Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. It's not just an emulator — it's a playground for experimentation. 
+Most Game Boy functionality is already implemented with good accuracy, as verified by community-made test suites. Most games should run correctly, though some bugs are still expected.
 
 ## Supports
 
@@ -36,7 +36,7 @@ It's not just an emulator — it's a playground for experimentation.
   Ability to slow down or speed up emulation. Speed is adjustable via the config file.
 
 - **Rewind**  
-  Undo your actions and retry sections without restarting. Buffer size is adjustable via the config file.
+  Undo your actions and retry sections without restarting. Adjustable via the config file.
 
 - **Save States**  
   Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config file.
