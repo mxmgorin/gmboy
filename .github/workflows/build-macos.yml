@@ -18,6 +18,13 @@ jobs:
       - name: Install SDL2
         run: brew install sdl2 zip
 
+      - name: Set environment variables for SDL2
+        run: |
+          echo "LIBRARY_PATH=$(brew --prefix sdl2)/lib" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$(brew --prefix sdl2)/lib/pkgconfig" >> $GITHUB_ENV
+          echo "CFLAGS=-I$(brew --prefix sdl2)/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$(brew --prefix sdl2)/lib" >> $GITHUB_ENV
+
       - name: Build for macOS
         run: cargo build --release
 
@@ -34,4 +41,5 @@ jobs:
         with:
           files: dist/gmboy-macos.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
