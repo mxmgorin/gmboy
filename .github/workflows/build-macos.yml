@@ -1,0 +1,37 @@
+name: Build macos release
+
+on:
+  push:
+    branches:
+      - "*"
+  release:
+    types: [published]
+
+jobs:
+  build-macos:
+    if: github.event_name == 'release'
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install SDL2
+        run: brew install sdl2 zip
+
+      - name: Build for macOS
+        run: cargo build --release
+
+      - name: Prepare macOS release
+        run: |
+          mkdir -p dist
+          cp target/release/gmboy dist/
+
+      - name: Zip macOS release
+        run: cd dist && zip -r gmboy-macos.zip .
+
+      - name: Upload macOS zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/gmboy-macos.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
