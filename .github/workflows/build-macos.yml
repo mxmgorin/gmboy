@@ -33,7 +33,6 @@ jobs:
           mkdir -p dist
           cp target/release/gmboy dist/
 
-
       - name: Prepare macOS release as .app bundle
         run: |
           mkdir -p dist/gmboy.app/Contents/MacOS
