@@ -1,0 +1,44 @@
+name: Build linux ARM release
+
+on:
+  push:
+    branches:
+      - "*"
+  release:
+    types: [published]
+
+jobs:
+  build-arm:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu zip
+          rustup target add aarch64-unknown-linux-gnu
+
+      - name: Build for ARM
+        env:
+          CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+        run: cargo build --release --target=aarch64-unknown-linux-gnu
+
+      - name: Prepare ARM release
+        run: |
+          mkdir -p dist
+          cp target/aarch64-unknown-linux-gnu/release/gmboy dist/
+
+      - name: Zip ARM release
+        run: cd dist && zip -r gmboy-linux-arm.zip .
+
+      - name: Upload ARM zip to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/gmboy-limnux-arm.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+
