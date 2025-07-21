@@ -32,14 +32,6 @@ impl DesktopEmuConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct EmulationConfig {
-    pub rewind_size: usize,
-    pub slow_speed: f64,
-    pub turbo_speed: f64,
-    pub is_muted: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GraphicsConfig {
     pub selected_pallet_idx: usize,
     pub pallets: Vec<EmuPallet>,
