@@ -9,7 +9,6 @@ on:
 
 jobs:
   build-macos:
-    if: github.event_name == 'release'
     runs-on: macos-latest
 
     steps:
@@ -37,7 +36,10 @@ jobs:
         run: |
           mkdir -p dist/gmboy.app/Contents/MacOS
           mkdir -p dist/gmboy.app/Contents/Resources
+          mkdir -p dist/gmboy.app/Contents/Frameworks
           cp target/release/gmboy dist/gmboy.app/Contents/MacOS/gmboy
+          install_name_tool -change $(brew --prefix sdl2)/lib/libSDL2-2.0.0.dylib @executable_path/../Frameworks/libSDL2-2.0.0.dylib dist/gmboy.app/Contents/MacOS/gmboy
+          
           cat > dist/gmboy.app/Contents/Info.plist <<EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -48,7 +50,7 @@ jobs:
               <key>CFBundleDisplayName</key>
               <string>gmboy</string>
               <key>CFBundleIdentifier</key>
-              <string>com.yourdomain.gmboy</string>
+              <string>com.troidem.gmboy</string>
               <key>CFBundleVersion</key>
               <string>0.1</string>
               <key>CFBundleExecutable</key>
