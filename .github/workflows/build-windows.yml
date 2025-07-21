@@ -1,4 +1,4 @@
-name: Build windlows release
+name: Build windows release
 
 on:
   push:
