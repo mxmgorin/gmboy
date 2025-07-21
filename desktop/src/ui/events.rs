@@ -3,7 +3,7 @@ use crate::Emu;
 use core::emu::state::{RunMode, EmuState};
 use core::emu::state::SaveStateEvent;
 use sdl2::keyboard::Keycode;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub enum UiEvent {
     Pause,
@@ -64,9 +64,9 @@ impl Ui {
             UiEvent::SaveState(event, index) => self.handle_save_state(emu, event, index),
             UiEvent::PickFile => {
                 if emu.state == EmuState::Paused {
-                    if let Some(path) = rfd::FileDialog::new().pick_file() {
-                        emu.load_cart_file(&path, self.config.save_state_on_exit);
-                        self.config.last_cart_path = path.to_str().map(|s| s.to_string());
+                    if let Some(path) = tinyfiledialogs::open_file_dialog("Select ROM", "", None) {
+                        emu.load_cart_file(Path::new(&path), self.config.save_state_on_exit);
+                        self.config.last_cart_path = Some(path);
                     }
                 }
             }
