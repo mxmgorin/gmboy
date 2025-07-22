@@ -112,11 +112,11 @@ impl App {
         }
     }
 
-    pub fn draw_text(&mut self, lines: &[&str]) {
+    pub fn draw_text(&mut self, lines: &[&str], center: bool) {
         let bg_color = self.curr_palette[3];
         let color = self.curr_palette[0];
         self.renderer
-            .draw_text_lines(lines, self.config.graphics.text_scale, color, bg_color);
+            .draw_text_lines(lines, self.config.graphics.text_scale, color, bg_color, center);
 
         self.renderer.present();
     }

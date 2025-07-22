@@ -76,11 +76,11 @@ fn run_emu(emu: &mut Emu, app: &mut App) -> Result<(), String> {
     while app.handle_events(emu) {
         if !emu.run_frame(app)? {
             let lines = if app.config.last_cart_path.is_none() {
-                &["WAITING FILE", "DROP OR PICK",]
+                &["NO GAME FILE", "DROP OR PICK IT"]
             } else {
                 &["PAUSED", ""]
             };
-            app.draw_text(lines);
+            app.draw_text(lines, true);
             continue;
         }
 
