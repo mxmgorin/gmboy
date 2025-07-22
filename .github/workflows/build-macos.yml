@@ -62,6 +62,12 @@ jobs:
             </dict>
           </plist>
 
+      - name: Verify .app Bundle Structure
+        run: |
+          test -f dist/gmboy.app/Contents/MacOS/gmboy || (echo "Missing binary!" && exit 1)
+          test -f dist/gmboy.app/Contents/Info.plist || (echo "Missing Info.plist!" && exit 1)
+          echo "Bundle looks OK"
+
       - name: Zip bundle
         run: cd dist && zip -r gmboy-macos.zip gmboy.app
 
