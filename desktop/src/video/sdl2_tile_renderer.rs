@@ -7,21 +7,21 @@ use sdl2::render::Canvas;
 use sdl2::video::{Window, WindowPos};
 use sdl2::VideoSubsystem;
 
-pub const SCALE: u32 = 5;
-pub const SPACER: i32 = (8 * SCALE) as i32;
-pub const TILE_ROWS: i32 = 24;
-pub const TILE_COLS: i32 = 16;
-pub const Y_SPACER: i32 = SCALE as i32;
-pub const X_DRAW_START: i32 = (SCALE / 2) as i32;
+const SCALE: u32 = 5;
+const SPACER: i32 = (8 * SCALE) as i32;
+const TILE_ROWS: i32 = 24;
+const TILE_COLS: i32 = 16;
+const Y_SPACER: i32 = SCALE as i32;
+const X_DRAW_START: i32 = (SCALE / 2) as i32;
 
-pub struct DebugWindow {
-    pub canvas: Canvas<Window>,
-    tiles_map_rects: [Vec<Rect>; 4],
+pub struct Sdl2TileRenderer {
+    canvas: Canvas<Window>,
+    rect_groups: [Vec<Rect>; 4],
     tiles: [TileData; TILES_COUNT],
 }
 
-impl DebugWindow {
-    pub fn new(video_subsystem: &VideoSubsystem) -> DebugWindow {
+impl Sdl2TileRenderer {
+    pub fn new(video_subsystem: &VideoSubsystem) -> Sdl2TileRenderer {
         let tile_grid_width =
             TILE_COLS as u32 * TILE_WIDTH as u32 * SCALE + (TILE_COLS as u32 * SCALE);
         let tile_grid_height = TILE_ROWS as u32 * TILE_HEIGHT as u32 * SCALE + 122;
@@ -34,11 +34,15 @@ impl DebugWindow {
 
         Self {
             canvas: debug_window.into_canvas().build().unwrap(),
-            tiles_map_rects: allocate_rects_group(
+            rect_groups: allocate_rect_groups(
                 TILES_COUNT * TILE_LINE_BYTES_COUNT * TILE_BITS_COUNT as usize * 4,
             ),
             tiles: [TileData::default(); TILES_COUNT],
         }
+    }
+
+    pub fn get_window_id(&self) -> u32 {
+        self.canvas.window().id()
     }
 
     pub fn set_position(&mut self, x: i32, y: i32) {
@@ -55,7 +59,7 @@ impl DebugWindow {
         let mut col_x_draw = X_DRAW_START;
         let mut row_y_draw: i32 = 0;
         let mut tile_num = 0;
-        let mut rects_count: [usize; 4] = [0; 4];
+        let mut rect_counts: [usize; 4] = [0; 4];
         self.canvas.set_draw_color(Color::RGB(18, 18, 18));
         self.canvas.fill_rect(None).unwrap();
 
@@ -66,11 +70,11 @@ impl DebugWindow {
                 for (line_y, line) in tile.lines.iter().enumerate() {
                     for (color_x, color_id) in line.iter_color_ids().enumerate() {
                         let color_index = color_id as usize;
-                        let rect = &mut self.tiles_map_rects[color_index][rects_count[color_index]];
+                        let rect = &mut self.rect_groups[color_index][rect_counts[color_index]];
                         rect.x =
                             col_x_draw + (col * SCALE as i32) + (color_x as i32 * SCALE as i32);
                         rect.y = row_y_draw + (row + SCALE as i32) + (line_y as i32 * SCALE as i32);
-                        rects_count[color_index] += 1;
+                        rect_counts[color_index] += 1;
                     }
                 }
 
@@ -82,13 +86,14 @@ impl DebugWindow {
             col_x_draw = X_DRAW_START;
         }
 
-        fill_rects(&mut self.canvas, &self.tiles_map_rects, rects_count);
+        fill_rect_groups(&mut self.canvas, &self.rect_groups, rect_counts);
         self.canvas.present();
     }
 }
 
-pub fn allocate_rects_group(len: usize) -> [Vec<Rect>; 4] {
+fn allocate_rect_groups(len: usize) -> [Vec<Rect>; 4] {
     let mut recs = Vec::with_capacity(len);
+
     for _ in 0..recs.capacity() {
         recs.push(Rect::new(0, 0, SCALE, SCALE));
     }
@@ -96,25 +101,14 @@ pub fn allocate_rects_group(len: usize) -> [Vec<Rect>; 4] {
     [recs.clone(), recs.clone(), recs.clone(), recs]
 }
 
-pub fn _set_tile_recs(recs: &mut [Vec<Rect>; 4], tile: TileData, x: i32, y: i32) -> [usize; 4] {
-    let mut rects_count: [usize; 4] = [0; 4];
-
-    for (line_y, lines) in tile.lines.iter().enumerate() {
-        for (bit, color_id) in lines.iter_color_ids().enumerate() {
-            let rect = &mut recs[color_id as usize][rects_count[color_id as usize]];
-            rect.x = x + (bit as i32 * SCALE as i32);
-            rect.y = y + (line_y as i32 * SCALE as i32);
-            rects_count[color_id as usize] += 1;
-        }
-    }
-
-    rects_count
-}
-
-pub fn fill_rects(canvas: &mut Canvas<Window>, recs: &[Vec<Rect>; 4], rects_count: [usize; 4]) {
-    for (color_id, rects) in recs.iter().enumerate() {
+fn fill_rect_groups(
+    canvas: &mut Canvas<Window>,
+    item_groups: &[Vec<Rect>; 4],
+    count: [usize; 4],
+) {
+    for (color_id, items) in item_groups.iter().enumerate() {
         canvas.set_draw_color(SDL_COLORS[color_id]);
-        canvas.fill_rects(&rects[..rects_count[color_id]]).unwrap();
+        canvas.fill_rects(&items[..count[color_id]]).unwrap();
     }
 }
 

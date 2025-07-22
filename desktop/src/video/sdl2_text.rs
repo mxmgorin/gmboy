@@ -1,12 +1,12 @@
-use crate::ui::ui::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
 
-pub const CHAR_WIDTH: usize = 8;
-pub const CHAR_HEIGHT: usize = 8;
-pub const CHAR_SPACING: usize = 2;
-pub const _CHAR_COLOR: Color = Color::WHITE;
+const CHAR_WIDTH: usize = 8;
+const CHAR_HEIGHT: usize = 8;
+const CHAR_SPACING: usize = 2;
+const _CHAR_COLOR: Color = Color::WHITE;
+const BYTES_PER_PIXEL: usize = 4;
 
 /// Calculate the text width based on character count, scale, and character width
 pub fn calc_text_width(text: &str, scale: usize) -> usize {

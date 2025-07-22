@@ -1,11 +1,13 @@
 use crate::config::DesktopEmuConfig;
-use crate::ui::Ui;
+use crate::ui::App;
 use core::emu::Emu;
 use std::path::{Path, PathBuf};
 use std::{env};
 
 mod config;
-pub mod ui;
+mod video;
+mod audio;
+mod ui;
 
 fn main() {
     let mut args: Vec<String> = env::args().collect();
@@ -39,51 +41,51 @@ fn main() {
         None,
     )
     .unwrap();
-    let mut ui = Ui::new(config).unwrap();
+    let mut app = App::new(config).unwrap();
 
     if let Some(cart_path) = cart_path {
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, ui.config.save_state_on_exit);
+            emu.load_cart_file(&cart_path, app.config.save_state_on_exit);
         }
-    } else if let Some(cart_path) = &ui.config.last_cart_path {
+    } else if let Some(cart_path) = &app.config.last_cart_path {
         let cart_path = PathBuf::from(cart_path.clone());
 
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, ui.config.save_state_on_exit);
+            emu.load_cart_file(&cart_path, app.config.save_state_on_exit);
         }
     }
 
-    if let Err(err) = run_emu(&mut emu, &mut ui) {
+    if let Err(err) = run_emu(&mut emu, &mut app) {
         eprintln!("Failed run_emu: {err}");
     }
 
-    if let Some(cart_path) = &ui.config.last_cart_path {
-        if let Err(err) = emu.save_files(Path::new(cart_path), ui.config.save_state_on_exit) {
+    if let Some(cart_path) = &app.config.last_cart_path {
+        if let Err(err) = emu.save_files(Path::new(cart_path), app.config.save_state_on_exit) {
             eprint!("Failed save_files: {err}");
         }
     }
 
-    ui.config.set_emulation(emu.config);
+    app.config.set_emulation(emu.config);
 
-    if let Err(err) = ui.config.save_file().map_err(|e| e.to_string()) {
+    if let Err(err) = app.config.save_file().map_err(|e| e.to_string()) {
         eprint!("Failed config.save: {err}");
     }
 }
 
-fn run_emu(emu: &mut Emu, ui: &mut Ui) -> Result<(), String> {
-    while ui.handle_events(emu) {
-        if !emu.run_frame(ui)? {
-            let text = if ui.config.last_cart_path.is_none() {
+fn run_emu(emu: &mut Emu, app: &mut App) -> Result<(), String> {
+    while app.handle_events(emu) {
+        if !emu.run_frame(app)? {
+            let text = if app.config.last_cart_path.is_none() {
                 "DROP FILE"
             } else {
                 "PAUSED"
             };
-            ui.draw_text(text);
+            app.draw_text(text);
             continue;
         }
 
         emu.push_rewind();
-        ui.draw_debug(emu.runtime.bus.video_ram.iter_tiles());
+        app.draw_debug(emu.runtime.bus.video_ram.iter_tiles());
     }
 
     Ok(())
