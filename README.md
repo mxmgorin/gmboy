@@ -1,8 +1,10 @@
 ## 🎮 gmboy
 
-`gmboy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works.  
-Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. It's not just an emulator — it's a playground for experimentation. 
-Most Game Boy functionality is already implemented with good accuracy, as verified by community-made test suites. Most games should run correctly, though some bugs are still expected.
+`gmboy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. 
+
+Most Game Boy functionality is implemented with good accuracy (verified by community-made tests). Most games should run correctly, though some bugs are still expected.
+
+Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) of gmboy from the releases page.
 
 ## Supports
 
@@ -16,7 +18,7 @@ Most Game Boy functionality is already implemented with good accuracy, as verifi
   Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
 
 - **Cartridge MBCs**  
-  Supports ROM loading with No MBC, MBC1, MBC2, MBC3, MBC5 mappers.
+  Supports ROM loading with No MBC, MBC1, MBC1M, MBC2, MBC3, MBC5 mappers.
 
 - **SRAM Battery Saves**  
   Persistent save data using battery-backed SRAM.
