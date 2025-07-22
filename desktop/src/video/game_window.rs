@@ -14,8 +14,6 @@ pub struct GameWindow {
     texture: Texture,
     fps_rect: Rect,
     game_rect: Rect,
-    // todo: remove and draw to one texture
-    overlay_texture: Texture,
 }
 
 impl GameWindow {
@@ -38,21 +36,11 @@ impl GameWindow {
             )
             .unwrap();
         texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-
-        let mut overlay_texture = texture_creator
-            .create_texture_streaming(
-                PixelFormatEnum::ARGB8888,
-                LCD_X_RES as u32,
-                LCD_Y_RES as u32,
-            )
-            .unwrap();
-        overlay_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let (win_width, win_height) = canvas.window().size();
 
         Ok(Self {
             canvas,
             texture,
-            overlay_texture,
             fps_rect: Rect::new(0, 0, 80, 80),
             game_rect: new_scaled_rect(win_width, win_height),
         })
@@ -104,18 +92,15 @@ impl GameWindow {
             (None, calc_text_width_str(lines[0], scale))
         };
         let text_height = calc_text_height(scale) * lines.len();
-        let (win_width, win_height) = self.canvas.window().size();
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
         let y = (LCD_Y_RES as u32 as usize - text_height) / 2;
 
-        fill_texture(&mut self.overlay_texture, bg_color);
-
-        draw_text_lines(&mut self.overlay_texture, lines, color, x, y, scale, center);
-        let dest_rect = new_scaled_rect(win_width, win_height);
+        fill_texture(&mut self.texture, bg_color);
+        draw_text_lines(&mut self.texture, lines, color, x, y, scale, center);
 
         self.canvas
-            .copy(&self.overlay_texture, None, Some(dest_rect))
+            .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
     }
 
