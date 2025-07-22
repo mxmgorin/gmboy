@@ -22,6 +22,7 @@ const CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f6
 pub trait EmuCallback {
     fn update_video(&mut self, buffer: &[u32], fps: usize);
     fn update_audio(&mut self, output: &[f32]);
+    fn paused(&mut self);
 }
 
 pub struct Emu {
@@ -55,13 +56,14 @@ impl Emu {
     }
 
     /// Runs emulation for one frame. Return false when paused.
-    pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<bool, String> {
+    pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<(), String> {
         let mode = match self.state {
             EmuState::Paused => {
                 thread::sleep(Duration::from_millis(100));
                 self.runtime.clock.reset();
+                callback.paused();
 
-                return Ok(false);
+                return Ok(());
             }
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
@@ -77,6 +79,7 @@ impl Emu {
             EmuState::Running(mode) => {
                 self.runtime
                     .run_frame(&mut self.cpu, mode, self.config.is_muted, callback)?;
+                self.push_rewind();
 
                 mode
             }
@@ -89,7 +92,7 @@ impl Emu {
             self.sleep_spin(emulated_time - real_elapsed);
         }
 
-        Ok(true)
+        Ok(())
     }
 
     fn sleep_spin(&self, duration: Duration) {
@@ -135,7 +138,7 @@ impl Emu {
         }
     }
 
-    pub fn push_rewind(&mut self) {
+    fn push_rewind(&mut self) {
         if self.config.rewind_size > 0 {
             let now = Instant::now();
             let duration = now.duration_since(self.last_rewind_save_time);

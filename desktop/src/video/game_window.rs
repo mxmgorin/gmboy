@@ -9,33 +9,18 @@ use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
 
-struct Layout {
-    pub win_width: u32,
-    pub win_height: u32,
-}
-
-impl Layout {
-    pub fn new(scale: u32) -> Self {
-        Self {
-            win_width: LCD_X_RES as u32 * scale,
-            win_height: LCD_Y_RES as u32 * scale,
-        }
-    }
-}
-
-pub struct MainWindow {
+pub struct GameWindow {
     canvas: Canvas<Window>,
     texture: Texture,
+    // todo: remove these and draw to one texture
     fps_texture: Texture,
     overlay_texture: Texture,
-    layout: Layout,
 }
 
-impl MainWindow {
+impl GameWindow {
     pub fn new(scale: u32, video_subsystem: &VideoSubsystem) -> Result<Self, String> {
-        let layout = Layout::new(scale);
         let window = video_subsystem
-            .window("GMBoy", layout.win_width, layout.win_height)
+            .window("GMBoy", calc_win_width(scale), calc_win_height(scale))
             .position_centered()
             .resizable()
             .build()
@@ -65,7 +50,6 @@ impl MainWindow {
 
         Ok(Self {
             canvas,
-            layout,
             texture,
             fps_texture,
             overlay_texture,
@@ -96,7 +80,7 @@ impl MainWindow {
             .unwrap();
 
         let (win_width, win_height) = self.canvas.window().size();
-        let dest_rect = calculate_scaled_rect(win_width, win_height);
+        let dest_rect = new_scaled_rect(win_width, win_height);
 
         // Copy the texture while maintaining aspect ratio
         self.canvas
@@ -129,7 +113,7 @@ impl MainWindow {
         fill_texture(&mut self.overlay_texture, bg_color);
 
         draw_text_lines(&mut self.overlay_texture, lines, color, x, y, scale, center);
-        let dest_rect = calculate_scaled_rect(win_width, win_height);
+        let dest_rect = new_scaled_rect(win_width, win_height);
 
         self.canvas
             .copy(&self.overlay_texture, None, Some(dest_rect))
@@ -151,10 +135,9 @@ impl MainWindow {
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
-        self.layout = Layout::new(scale);
         let window = self.canvas.window_mut();
         window
-            .set_size(self.layout.win_width, self.layout.win_height)
+            .set_size(calc_win_width(scale), calc_win_height(scale))
             .map_err(|e| e.to_string())?;
         window.set_position(
             sdl2::video::WindowPos::Centered,
@@ -183,7 +166,15 @@ impl MainWindow {
     }
 }
 
-fn calculate_scaled_rect(window_width: u32, window_height: u32) -> Rect {
+fn calc_win_height(scale: u32) -> u32 {
+    LCD_Y_RES as u32 * scale
+}
+
+fn calc_win_width(scale: u32) -> u32 {
+    LCD_X_RES as u32 * scale
+}
+
+fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let screen_aspect = window_width as f32 / window_height as f32;
     let game_aspect = LCD_X_RES as f32 / LCD_Y_RES as f32;
 

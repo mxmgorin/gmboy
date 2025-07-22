@@ -1,8 +1,8 @@
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
-use crate::video::main_window::MainWindow;
-use crate::video::tile_window::TileWindow;
+use crate::video::game_window::GameWindow;
+use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
 use core::emu::state::RunMode;
@@ -11,7 +11,7 @@ use core::emu::EmuCallback;
 use core::into_palette;
 use core::ppu::tile::PixelColor;
 use sdl2::Sdl;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 pub enum AppEvent {
     Pause,
@@ -26,7 +26,7 @@ pub enum AppEvent {
 
 pub struct App {
     audio: AppAudio,
-    window: MainWindow,
+    window: GameWindow,
 
     pub tiles_window: Option<TileWindow>,
     pub curr_palette: [PixelColor; 4],
@@ -47,12 +47,20 @@ impl EmuCallback for App {
     fn update_audio(&mut self, output: &[f32]) {
         self.audio.queue(output);
     }
+
+    fn paused(&mut self) {
+        if self.config.last_cart_path.is_none() {
+            self.draw_text(&["NO GAME FILE", "DROP OR PICK IT"], true);
+        } else {
+            self.draw_text(&["PAUSED"], true);
+        }
+    }
 }
 
 impl App {
     pub fn new(sdl: &mut Sdl, config: AppConfig) -> Result<Self, String> {
         let video_subsystem = sdl.video()?;
-        let mut renderer = MainWindow::new(config.interface.scale as u32, &video_subsystem)?;
+        let mut renderer = GameWindow::new(config.interface.scale as u32, &video_subsystem)?;
         renderer.set_fullscreen(config.interface.is_fullscreen);
 
         let debug_window = if config.interface.tile_viewer {
@@ -79,20 +87,10 @@ impl App {
     /// Execution loop
     pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
         while input.handle_events(self, emu) {
-            if !emu.run_frame(self)? {
-                let lines = if self.config.last_cart_path.is_none() {
-                    &["NO GAME FILE", "DROP OR PICK IT"]
-                } else {
-                    &["PAUSED", ""]
-                };
-                self.draw_text(lines, true);
-                continue;
-            }
+            emu.run_frame(self)?;
 
-            emu.push_rewind();
-
-            if let Some(debug_window) = self.tiles_window.as_mut() {
-                debug_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
+            if let Some(tiles_window) = self.tiles_window.as_mut() {
+                tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
             }
         }
 
@@ -140,7 +138,7 @@ impl App {
     }
 
     pub fn handle_save_state(&self, emu: &mut Emu, event: SaveStateEvent, index: usize) {
-        let name = self.config.get_last_cart_file_stem().unwrap();
+        let name = self.config.get_last_file_stem().unwrap();
 
         match event {
             SaveStateEvent::Create => {
@@ -168,13 +166,13 @@ impl App {
 
     pub fn save_files(&mut self, emu: &mut Emu) -> Result<(), String> {
         // save config
-        self.config.set_emulation(emu.config.clone());
+        self.config.set_emu(emu.config.clone());
         if let Err(err) = self.config.save_file().map_err(|e| e.to_string()) {
             eprint!("Failed config.save: {err}");
         }
 
         // save sram for battery emulation
-        let name = self.config.get_last_cart_file_stem().unwrap();
+        let name = self.config.get_last_file_stem().unwrap();
 
         if let Some(bytes) = emu.runtime.bus.cart.dump_ram() {
             let battery = BatterySave::from_bytes(bytes)

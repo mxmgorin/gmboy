@@ -14,9 +14,9 @@ mod video;
 fn main() {
     let args: Vec<String> = env::args().collect();
     let config = get_config();
-    let emu_config = config.clone_emulation();
+    let emu_config = config.get_emu();
     let emu_palette = config.interface.get_current_palette();
-    let mut emu = Emu::new(emu_config, emu_palette, None).unwrap();
+    let mut emu = Emu::new(emu_config.clone(), emu_palette, None).unwrap();
     load_cart(&config, &mut emu, args);
     let mut sdl = sdl2::init().unwrap();
     let mut app = App::new(&mut sdl, config).unwrap();

@@ -16,17 +16,17 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
+    pub fn get_last_file_stem(&self) -> Option<Cow<str>> {
         let path = Path::new(self.last_cart_path.as_ref()?);
 
         Some(path.file_stem()?.to_string_lossy())
     }
 
-    pub fn clone_emulation(&self) -> EmuConfig {
-        self.emulation.clone()
+    pub fn get_emu(&self) -> &EmuConfig {
+        &self.emulation
     }
 
-    pub fn set_emulation(&mut self, config: EmuConfig) {
+    pub fn set_emu(&mut self, config: EmuConfig) {
         self.emulation = config;
     }
 }
