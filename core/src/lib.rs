@@ -63,7 +63,7 @@ pub fn hex_to_rgba(argb: u32) -> (u8, u8, u8, u8) {
     (red, green, blue, alpha)
 }
 
-pub fn into_pallet(hex_colors: &[String]) -> [PixelColor; 4] {
+pub fn into_palette(hex_colors: &[String]) -> [PixelColor; 4] {
     let colors: Vec<PixelColor> = hex_colors
         .iter()
         .map(|hex| PixelColor::from_u32(u32::from_str_radix(hex, 16).unwrap()))

@@ -1,4 +1,4 @@
-use core::emu::config::{EmuConfig, EmuPallet};
+use core::emu::config::{EmuConfig, ColorPalette};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fs::File;
@@ -7,15 +7,15 @@ use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DesktopEmuConfig {
+pub struct AppConfig {
     emulation: EmuConfig, // only for deserialization
 
     pub last_cart_path: Option<String>,
     pub save_state_on_exit: bool,
-    pub graphics: GraphicsConfig,
+    pub interface: InterfaceConfig,
 }
 
-impl DesktopEmuConfig {
+impl AppConfig {
     pub fn get_last_cart_file_stem(&self) -> Option<Cow<str>> {
         let path = Path::new(self.last_cart_path.as_ref()?);
 
@@ -32,9 +32,9 @@ impl DesktopEmuConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GraphicsConfig {
-    pub selected_pallet_idx: usize,
-    pub pallets: Vec<EmuPallet>,
+pub struct InterfaceConfig {
+    pub selected_palette_idx: usize,
+    pub palettes: Vec<ColorPalette>,
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
@@ -42,15 +42,15 @@ pub struct GraphicsConfig {
     pub tile_viewer: bool,
 }
 
-impl GraphicsConfig {
+impl InterfaceConfig {
     pub fn get_current_pallet(&self) -> [core::ppu::lcd::PixelColor; 4] {
-        let idx = self.selected_pallet_idx;
+        let idx = self.selected_palette_idx;
 
-        core::into_pallet(&self.pallets[idx].hex_colors)
+        core::into_palette(&self.palettes[idx].hex_colors)
     }
 }
 
-impl DesktopEmuConfig {
+impl AppConfig {
     pub fn from_file(path: &str) -> io::Result<Self> {
         let data = fs::read_to_string(path)?;
         let config: Self = serde_json::from_str(&data)?;
@@ -59,7 +59,7 @@ impl DesktopEmuConfig {
     }
 
     pub fn save_file(&self) -> Result<(), io::Error> {
-        let save_path = DesktopEmuConfig::default_path();
+        let save_path = AppConfig::default_path();
 
         // Open file in write mode, truncating (overwriting) any existing content
         let mut file = File::create(save_path)?;
@@ -78,15 +78,15 @@ impl DesktopEmuConfig {
     }
 }
 
-impl Default for DesktopEmuConfig {
+impl Default for AppConfig {
     fn default() -> Self {
         Self {
             last_cart_path: None,
             save_state_on_exit: false,
             emulation: Default::default(),
-            graphics: GraphicsConfig {
-                selected_pallet_idx: 0,
-                pallets: EmuPallet::default_pallets(),
+            interface: InterfaceConfig {
+                selected_palette_idx: 0,
+                palettes: ColorPalette::default_pallets(),
                 scale: 5.0,
                 is_fullscreen: false,
                 show_fps: false,

@@ -1,5 +1,5 @@
 use crate::audio::Sdl2Audio;
-use crate::config::DesktopEmuConfig;
+use crate::config::AppConfig;
 use crate::video::sdl2_renderer::Sdl2Renderer;
 use crate::video::sdl2_tile_renderer::Sdl2TileRenderer;
 use crate::Emu;
@@ -7,7 +7,7 @@ use core::emu::state::EmuState;
 use core::emu::state::RunMode;
 use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
-use core::into_pallet;
+use core::into_palette;
 use core::ppu::tile::{PixelColor, TileData};
 use sdl2::controller::GameController;
 use sdl2::event::Event;
@@ -34,7 +34,7 @@ pub struct App {
     game_controllers: Vec<GameController>,
     audio: Sdl2Audio,
     pub curr_palette: [PixelColor; 4],
-    pub config: DesktopEmuConfig,
+    pub config: AppConfig,
     renderer: Sdl2Renderer,
 }
 
@@ -42,7 +42,7 @@ impl EmuCallback for App {
     fn update_video(&mut self, buffer: &[u32], fps: usize) {
         self.renderer.draw_buffer(buffer);
 
-        if self.config.graphics.show_fps {
+        if self.config.interface.show_fps {
             self.renderer.draw_fps(fps, self.curr_palette[3]);
         }
 
@@ -55,14 +55,14 @@ impl EmuCallback for App {
 }
 
 impl App {
-    pub fn new(config: DesktopEmuConfig) -> Result<Self, String> {
+    pub fn new(config: AppConfig) -> Result<Self, String> {
         let sdl_context = sdl2::init()?;
         let video_subsystem = sdl_context.video()?;
-        let scale = config.graphics.scale;
+        let scale = config.interface.scale;
         let mut renderer = Sdl2Renderer::new(scale as u32, &video_subsystem)?;
-        renderer.set_fullscreen(config.graphics.is_fullscreen);
+        renderer.set_fullscreen(config.interface.is_fullscreen);
 
-        let debug_window = if config.graphics.tile_viewer {
+        let debug_window = if config.interface.tile_viewer {
             let (x, y) = renderer.position();
             let mut debug_window = Sdl2TileRenderer::new(&video_subsystem);
             debug_window.set_position(x + 640, y);
@@ -86,8 +86,8 @@ impl App {
             event_pump: sdl_context.event_pump()?,
             game_controller_subsystem,
             debug_window,
-            curr_palette: into_pallet(
-                &config.graphics.pallets[config.graphics.selected_pallet_idx].hex_colors,
+            curr_palette: into_palette(
+                &config.interface.palettes[config.interface.selected_palette_idx].hex_colors,
             ),
             audio: Sdl2Audio::new(&sdl_context),
             game_controllers,
@@ -117,7 +117,7 @@ impl App {
         let color = self.curr_palette[0];
         self.renderer.draw_text_lines(
             lines,
-            self.config.graphics.text_scale,
+            self.config.interface.text_scale,
             color,
             bg_color,
             center,
@@ -127,21 +127,21 @@ impl App {
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
-        self.config.graphics.selected_pallet_idx = get_next_pallet_idx(
-            self.config.graphics.selected_pallet_idx,
-            self.config.graphics.pallets.len() - 1,
+        self.config.interface.selected_palette_idx = get_next_pallet_idx(
+            self.config.interface.selected_palette_idx,
+            self.config.interface.palettes.len() - 1,
         );
-        let pallet = &self.config.graphics.pallets[self.config.graphics.selected_pallet_idx];
-        self.curr_palette = into_pallet(&pallet.hex_colors);
+        let pallet = &self.config.interface.palettes[self.config.interface.selected_palette_idx];
+        self.curr_palette = into_palette(&pallet.hex_colors);
         emu.runtime.bus.io.lcd.set_pallet(self.curr_palette);
 
         println!("Select pallet: {}", pallet.name);
     }
 
     pub fn toggle_fullscreen(&mut self) {
-        self.config.graphics.is_fullscreen = !self.config.graphics.is_fullscreen;
+        self.config.interface.is_fullscreen = !self.config.interface.is_fullscreen;
         self.renderer
-            .set_fullscreen(self.config.graphics.is_fullscreen);
+            .set_fullscreen(self.config.interface.is_fullscreen);
     }
 
     /// Polls and handles events. Returns false on quit.
@@ -398,14 +398,14 @@ impl App {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    self.config.graphics.scale += 1.0;
-                    self.set_scale(self.config.graphics.scale).unwrap();
+                    self.config.interface.scale += 1.0;
+                    self.set_scale(self.config.interface.scale).unwrap();
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    self.config.graphics.scale -= 1.0;
-                    self.set_scale(self.config.graphics.scale).unwrap();
+                    self.config.interface.scale -= 1.0;
+                    self.set_scale(self.config.interface.scale).unwrap();
                 }
             }
             Keycode::F => {

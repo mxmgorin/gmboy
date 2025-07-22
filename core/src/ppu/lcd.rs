@@ -1,11 +1,11 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::emu::config::EmuPallet;
+use crate::emu::config::ColorPalette;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
     TILE_SET_DATA_2_START,
 };
 use crate::ppu::window::Window;
-use crate::{get_bit_flag, into_pallet, set_bit};
+use crate::{get_bit_flag, into_palette, set_bit};
 use serde::{Deserialize, Serialize};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
@@ -50,24 +50,9 @@ pub struct Lcd {
 
 impl Default for Lcd {
     fn default() -> Self {
-        let current_pallet = into_pallet(&EmuPallet::classic().hex_colors);
+        let palette = into_palette(&ColorPalette::classic().hex_colors);
 
-        Self {
-            control: LcdControl::default(),
-            status: LcdStatus::default(),
-            scroll_y: 0,
-            scroll_x: 0,
-            ly: 0,
-            ly_compare: 0,
-            dma_byte: 0,
-            bg_palette: 0xFC,
-            obj_palette: [0xFF, 0xFF],
-            window: Window::default(),
-            current_pallet,
-            bg_colors: current_pallet,
-            sp1_colors: current_pallet,
-            sp2_colors: current_pallet,
-        }
+        Self::new(palette)
     }
 }
 

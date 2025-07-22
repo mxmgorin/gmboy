@@ -1,4 +1,4 @@
-use crate::config::DesktopEmuConfig;
+use crate::config::AppConfig;
 use crate::app::App;
 use core::emu::Emu;
 use std::path::{Path, PathBuf};
@@ -19,13 +19,13 @@ fn main() {
     }
     .map(PathBuf::from);
 
-    let config_path = DesktopEmuConfig::default_path();
+    let config_path = AppConfig::default_path();
 
     let config = if config_path.exists() {
-        DesktopEmuConfig::from_file(config_path.to_str().unwrap())
+        AppConfig::from_file(config_path.to_str().unwrap())
             .unwrap_or_else(|_| panic!("Failed to parse {config_path:?}"))
     } else {
-        let config = DesktopEmuConfig::default();
+        let config = AppConfig::default();
 
         if let Err(err) = config.save_file() {
             eprintln!("failed to create default config: {err}");
@@ -37,7 +37,7 @@ fn main() {
 
     let mut emu = Emu::new(
         config.clone_emulation(),
-        config.graphics.get_current_pallet(),
+        config.interface.get_current_pallet(),
         None,
     )
     .unwrap();
