@@ -1,11 +1,15 @@
 name: Build macOS Release
 
 on:
+  push:
+    branches:
+      - "*"
   release:
     types: [published]
 
 jobs:
   build-macos:
+    if: github.event_name == 'release'
     runs-on: macos-latest
 
     steps:
