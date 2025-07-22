@@ -1,10 +1,11 @@
-use core::emu::state::EmuState;
-use core::emu::state::SaveStateEvent;
-use core::emu::state::RunMode;
+use crate::audio::Sdl2Audio;
 use crate::config::DesktopEmuConfig;
-use crate::video::sdl2_tile_renderer::Sdl2TileRenderer;
 use crate::video::sdl2_renderer::Sdl2Renderer;
+use crate::video::sdl2_tile_renderer::Sdl2TileRenderer;
 use crate::Emu;
+use core::emu::state::EmuState;
+use core::emu::state::RunMode;
+use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
 use core::into_pallet;
 use core::ppu::tile::{PixelColor, TileData};
@@ -13,7 +14,6 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::{EventPump, GameControllerSubsystem};
 use std::path::{Path, PathBuf};
-use crate::audio::Sdl2Audio;
 
 pub enum AppEvent {
     Pause,
@@ -115,8 +115,13 @@ impl App {
     pub fn draw_text(&mut self, lines: &[&str], center: bool) {
         let bg_color = self.curr_palette[3];
         let color = self.curr_palette[0];
-        self.renderer
-            .draw_text_lines(lines, self.config.graphics.text_scale, color, bg_color, center);
+        self.renderer.draw_text_lines(
+            lines,
+            self.config.graphics.text_scale,
+            color,
+            bg_color,
+            center,
+        );
 
         self.renderer.present();
     }
@@ -262,7 +267,11 @@ impl App {
             {
                 #[cfg(feature = "filepicker")]
                 if emu.state == EmuState::Paused {
-                    if let Some(path) = tinyfiledialogs::open_file_dialog("Select ROM", "", None) {
+                    if let Some(path) = tinyfiledialogs::open_file_dialog(
+                        "Select Game Boy ROM",
+                        "",
+                        Some((&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)")),
+                    ) {
                         emu.load_cart_file(Path::new(&path), self.config.save_state_on_exit);
                         self.config.last_cart_path = Some(path);
                     }
