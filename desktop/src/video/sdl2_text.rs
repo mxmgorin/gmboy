@@ -7,6 +7,7 @@ const CHAR_HEIGHT: usize = 8;
 const CHAR_SPACING: usize = 2;
 const _CHAR_COLOR: Color = Color::WHITE;
 const BYTES_PER_PIXEL: usize = 4;
+const LINE_SPACING: usize = 3;
 
 /// Calculate the text width based on character count, scale, and character width
 pub fn calc_text_width(text: &str, scale: usize) -> usize {
@@ -32,9 +33,9 @@ pub fn fill_texture(texture: &mut Texture, color: PixelColor) {
         .unwrap();
 }
 
-pub fn draw_text(
+pub fn draw_text_lines(
     texture: &mut Texture,
-    text: &str,
+    lines: &[&str],
     color: PixelColor,
     x: usize,
     y: usize,
@@ -42,53 +43,57 @@ pub fn draw_text(
 ) {
     texture
         .with_lock(None, |buffer: &mut [u8], pitch: usize| {
-            let mut x_offset = x;
-            for c in text.chars() {
-                if c == ' ' {
-                    x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING; // Move forward for space
-                    continue;
-                }
+            for (line_index, line) in lines.iter().enumerate() {
+                let mut x_offset = x;
+                let y_offset = y + line_index * ((CHAR_HEIGHT * scale) + LINE_SPACING);
 
-                let Some(char_index) = get_font_index(c) else {
-                    continue;
-                };
+                for c in line.chars() {
+                    if c == ' ' {
+                        x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                        continue;
+                    }
 
-                if char_index >= FONT.len() {
-                    x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
-                    continue;
-                }
+                    let Some(char_index) = get_font_index(c) else {
+                        continue;
+                    };
 
-                let bitmap = FONT[char_index];
+                    if char_index >= FONT.len() {
+                        x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                        continue;
+                    }
 
-                for (row, pixel) in bitmap.iter().enumerate() {
-                    for col in 0..CHAR_WIDTH {
-                        if (pixel >> (7 - col)) & 1 == 1 {
-                            let text_pixel_x = x_offset + (col * scale);
-                            let text_pixel_y = y + (row * scale);
+                    let bitmap = FONT[char_index];
 
-                            for dy in 0..scale {
-                                for dx in 0..scale {
-                                    let px = text_pixel_x + dx;
-                                    let py = text_pixel_y + dy;
+                    for (row, pixel) in bitmap.iter().enumerate() {
+                        for col in 0..CHAR_WIDTH {
+                            if (pixel >> (7 - col)) & 1 == 1 {
+                                let text_pixel_x = x_offset + (col * scale);
+                                let text_pixel_y = y_offset + (row * scale);
 
-                                    let text_offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                                    let (r, g, b, a) = color.as_rgba();
-                                    buffer[text_offset] = b;
-                                    buffer[text_offset + 1] = g;
-                                    buffer[text_offset + 2] = r;
-                                    buffer[text_offset + 3] = a;
+                                for dy in 0..scale {
+                                    for dx in 0..scale {
+                                        let px = text_pixel_x + dx;
+                                        let py = text_pixel_y + dy;
+
+                                        let text_offset = (py * pitch) + (px * BYTES_PER_PIXEL);
+                                        let (r, g, b, a) = color.as_rgba();
+                                        buffer[text_offset] = b;
+                                        buffer[text_offset + 1] = g;
+                                        buffer[text_offset + 2] = r;
+                                        buffer[text_offset + 3] = a;
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                // Move to the next character with spacing
-                x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                    x_offset += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                }
             }
         })
         .unwrap();
 }
+
 
 fn get_font_index(c: char) -> Option<usize> {
     match c {

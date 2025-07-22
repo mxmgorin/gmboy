@@ -1,5 +1,5 @@
 use crate::config::DesktopEmuConfig;
-use crate::ui::App;
+use crate::app::App;
 use core::emu::Emu;
 use std::path::{Path, PathBuf};
 use std::{env};
@@ -7,7 +7,7 @@ use std::{env};
 mod config;
 mod video;
 mod audio;
-mod ui;
+mod app;
 
 fn main() {
     let mut args: Vec<String> = env::args().collect();
@@ -75,12 +75,12 @@ fn main() {
 fn run_emu(emu: &mut Emu, app: &mut App) -> Result<(), String> {
     while app.handle_events(emu) {
         if !emu.run_frame(app)? {
-            let text = if app.config.last_cart_path.is_none() {
-                "DROP FILE"
+            let lines = if app.config.last_cart_path.is_none() {
+                &["WAITING FILE", "DROP OR PICK",]
             } else {
-                "PAUSED"
+                &["PAUSED", ""]
             };
-            app.draw_text(text);
+            app.draw_text(lines);
             continue;
         }
 

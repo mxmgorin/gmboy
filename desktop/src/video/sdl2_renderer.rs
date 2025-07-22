@@ -1,4 +1,4 @@
-use crate::video::sdl2_text::{calc_text_width, draw_text, fill_texture, get_text_height};
+use crate::video::sdl2_text::{calc_text_width, draw_text_lines, fill_texture, get_text_height};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -103,18 +103,24 @@ impl Sdl2Renderer {
             .unwrap();
     }
 
-    pub fn draw_text(&mut self, text: &str, scale: usize, color: PixelColor, bg_color: PixelColor) {
+    pub fn draw_text_lines(
+        &mut self,
+        lines: &[&str],
+        scale: usize,
+        color: PixelColor,
+        bg_color: PixelColor,
+    ) {
         self.canvas.clear();
-
+        let text_height = get_text_height(scale) * lines.len();
         let (win_width, win_height) = self.canvas.window().size();
-        let text_width = calc_text_width(text, scale);
+        let text_width = calc_text_width(lines[0], scale);
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
-        let y = (LCD_Y_RES as u32 as usize - get_text_height(scale)) / 2;
+        let y = (LCD_Y_RES as u32 as usize - text_height) / 2;
 
         fill_texture(&mut self.overlay_texture, bg_color);
 
-        draw_text(&mut self.overlay_texture, text, color, x, y, scale);
+        draw_text_lines(&mut self.overlay_texture, lines, color, x, y, scale);
         let dest_rect = calculate_scaled_rect(win_width, win_height);
 
         self.canvas
@@ -125,7 +131,7 @@ impl Sdl2Renderer {
     pub fn draw_fps(&mut self, fps: usize, color: PixelColor) {
         let text = fps.to_string();
         fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
-        draw_text(&mut self.fps_texture, &text, color, 5, 5, 1);
+        draw_text_lines(&mut self.fps_texture, &[&text], color, 5, 5, 1);
 
         self.canvas
             .copy(&self.fps_texture, None, Some(Rect::new(0, 0, 80, 80)))
