@@ -22,7 +22,10 @@ fn main() {
     let mut app = App::new(&mut sdl, config).unwrap();
     let mut input = InputHandler::new(&sdl).unwrap();
 
-    app.run(&mut emu, &mut input).unwrap();
+    if let Err(err) = app.run(&mut emu, &mut input) {
+        eprintln!("Failed app run: {err}");
+    }
+
     app.save_files(&mut emu).unwrap()
 }
 
