@@ -38,7 +38,7 @@ impl EmuCallback for App {
         self.window.draw_buffer(buffer);
 
         if self.config.interface.show_fps {
-            self.window.draw_fps(fps, self.curr_palette[3]);
+            self.window.draw_fps(fps, self.config.interface.text_scale, self.curr_palette[3]);
         }
 
         self.window.present();

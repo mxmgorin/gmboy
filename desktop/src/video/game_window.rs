@@ -12,28 +12,32 @@ use sdl2::VideoSubsystem;
 pub struct GameWindow {
     canvas: Canvas<Window>,
     texture: Texture,
-    // todo: remove these and draw to one texture
-    fps_texture: Texture,
+    fps_rect: Rect,
+    game_rect: Rect,
+    // todo: remove and draw to one texture
     overlay_texture: Texture,
 }
 
 impl GameWindow {
     pub fn new(scale: u32, video_subsystem: &VideoSubsystem) -> Result<Self, String> {
+        let win_width = calc_win_width(scale);
+        let win_height = calc_win_height(scale);
         let window = video_subsystem
-            .window("GMBoy", calc_win_width(scale), calc_win_height(scale))
+            .window("GMBoy", win_width, win_height)
             .position_centered()
             .resizable()
             .build()
             .unwrap();
         let canvas = window.into_canvas().build().unwrap();
         let texture_creator = canvas.texture_creator();
-        let texture = texture_creator
+        let mut texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
                 LCD_X_RES as u32,
                 LCD_Y_RES as u32,
             )
             .unwrap();
+        texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         let mut overlay_texture = texture_creator
             .create_texture_streaming(
@@ -43,16 +47,14 @@ impl GameWindow {
             )
             .unwrap();
         overlay_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-        let mut fps_texture = texture_creator
-            .create_texture_streaming(PixelFormatEnum::ARGB8888, 50, 50)
-            .unwrap();
-        fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+        let (win_width, win_height) = canvas.window().size();
 
         Ok(Self {
             canvas,
             texture,
-            fps_texture,
             overlay_texture,
+            fps_rect: Rect::new(0, 0, 80, 80),
+            game_rect: new_scaled_rect(win_width, win_height),
         })
     }
 
@@ -79,12 +81,9 @@ impl GameWindow {
             })
             .unwrap();
 
-        let (win_width, win_height) = self.canvas.window().size();
-        let dest_rect = new_scaled_rect(win_width, win_height);
-
         // Copy the texture while maintaining aspect ratio
         self.canvas
-            .copy(&self.texture, None, Some(dest_rect))
+            .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
     }
 
@@ -120,13 +119,13 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: usize, color: PixelColor) {
+    pub fn draw_fps(&mut self, fps: usize, scale: usize, color: PixelColor) {
         let text = fps.to_string();
-        fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.fps_texture, &[&text], color, 5, 5, 1, None);
+        fill_texture(&mut self.texture, PixelColor::from_u32(0));
+        draw_text_lines(&mut self.texture, &[&text], color, 5, 5, scale * 3, None);
 
         self.canvas
-            .copy(&self.fps_texture, None, Some(Rect::new(0, 0, 80, 80)))
+            .copy(&self.texture, None, Some(self.fps_rect))
             .unwrap();
     }
 
