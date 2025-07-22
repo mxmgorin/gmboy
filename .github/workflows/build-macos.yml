@@ -29,47 +29,13 @@ jobs:
             target/aarch64-apple-darwin/release/gmboy \
             target/x86_64-apple-darwin/release/gmboy
 
-      - name: Copy binary into .app
+      - name: Prepare macOS release files
         run: |
-          set -e
-          echo "Listing universal target output:"
-          ls -lh target/universal/release/
-          file target/universal/release/gmboy
-          mkdir -p dist/gmboy.app/Contents/MacOS
-          cp target/universal/release/gmboy dist/gmboy.app/Contents/MacOS/gmboy
-          chmod +x dist/gmboy.app/Contents/MacOS/gmboy
-
-      - name: Create .app bundle
-        run: |
-          mkdir -p dist/gmboy.app/Contents/Resources
-          cat > dist/gmboy.app/Contents/Info.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleName</key>
-            <string>gmboy</string>
-            <key>CFBundleDisplayName</key>
-            <string>gmboy</string>
-            <key>CFBundleIdentifier</key>
-            <string>com.troidem.gmboy</string>
-            <key>CFBundleVersion</key>
-            <string>0.1</string>
-            <key>CFBundleExecutable</key>
-            <string>gmboy</string>
-            <key>CFBundlePackageType</key>
-            <string>APPL</string>
-            </dict>
-          </plist>
-
-      - name: Verify .app Bundle Structure
-        run: |
-          test -f dist/gmboy.app/Contents/MacOS/gmboy || (echo "Missing binary!" && exit 1)
-          test -f dist/gmboy.app/Contents/Info.plist || (echo "Missing Info.plist!" && exit 1)
-          echo "Bundle looks OK"
+          mkdir -p dist
+          cp target/universal/release/gmboy dist/
 
       - name: Zip bundle
-        run: cd dist && zip -r gmboy-macos.zip gmboy.app
+        run: cd dist && zip -r gmboy-macos.zip .
 
       - name: Upload as GitHub Actions Artifact
         uses: actions/upload-artifact@v4
