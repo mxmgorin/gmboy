@@ -37,10 +37,10 @@ impl Sdl2Audio {
         }
     }
 
-    pub fn update(&mut self, output: &[f32]) {
+    pub fn queue(&mut self, output: &[f32]) {
         if self.device.size() < self.max_queue_size {
             if let Err(err) = self.device.queue_audio(output) {
-                eprintln!("Failed queue_audio: {}", err);
+                eprintln!("Failed queue_audio: {err}");
             };
         }
     }

@@ -50,7 +50,7 @@ impl EmuCallback for App {
     }
 
     fn update_audio(&mut self, output: &[f32]) {
-        self.audio.update(output);
+        self.audio.queue(output);
     }
 }
 
