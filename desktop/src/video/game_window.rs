@@ -127,6 +127,8 @@ impl GameWindow {
             sdl2::video::WindowPos::Centered,
             sdl2::video::WindowPos::Centered,
         );
+        let (win_width, win_height) = self.canvas.window().size();
+        self.game_rect = new_scaled_rect(win_width, win_height);
 
         Ok(())
     }
@@ -143,6 +145,9 @@ impl GameWindow {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
+
+        let (win_width, win_height) = self.canvas.window().size();
+        self.game_rect = new_scaled_rect(win_width, win_height);
     }
 
     pub fn get_position(&self) -> (i32, i32) {
