@@ -7,9 +7,11 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+
 jobs:
   build-macos:
-    if: github.event_name == 'release'
     runs-on: macos-latest
 
     steps:
@@ -41,31 +43,30 @@ jobs:
         run: |
           mkdir -p dist/gmboy.app/Contents/Resources
           cat > dist/gmboy.app/Contents/Info.plist <<EOF
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-            <dict>
-              <key>CFBundleName</key>
-              <string>gmboy</string>
-              <key>CFBundleDisplayName</key>
-              <string>gmboy</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.troidem.gmboy</string>
-              <key>CFBundleVersion</key>
-              <string>0.1</string>
-              <key>CFBundleExecutable</key>
-              <string>gmboy</string>
-              <key>CFBundlePackageType</key>
-              <string>APPL</string>
-              </dict>
-            </plist>
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>
+            <string>gmboy</string>
+            <key>CFBundleDisplayName</key>
+            <string>gmboy</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.troidem.gmboy</string>
+            <key>CFBundleVersion</key>
+            <string>0.1</string>
+            <key>CFBundleExecutable</key>
+            <string>gmboy</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            </dict>
+          </plist>
 
       - name: Zip bundle
         run: cd dist && zip -r gmboy-macos.zip gmboy.app
 
-      - name: Upload Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload as GitHub Actions Artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: dist/gmboy-macos.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          name: gmboy-macos
+          path: dist/gmboy-macos.zip
