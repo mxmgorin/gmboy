@@ -85,7 +85,7 @@ fn run_emu(emu: &mut Emu, app: &mut App) -> Result<(), String> {
         }
 
         emu.push_rewind();
-        app.draw_debug(emu.runtime.bus.video_ram.iter_tiles());
+        app.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
     }
 
     Ok(())

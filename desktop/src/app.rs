@@ -106,7 +106,7 @@ impl App {
         Ok(())
     }
 
-    pub fn draw_debug(&mut self, tiles: impl Iterator<Item = TileData>) {
+    pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
         if let Some(debug_window) = self.debug_window.as_mut() {
             debug_window.draw_tiles(tiles);
         }
