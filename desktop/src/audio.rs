@@ -2,13 +2,13 @@ use core::apu::{AUDIO_BUFFER_SIZE, SAMPLING_FREQ};
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
 
-pub struct Sdl2Audio {
+pub struct AppAudio {
     device: AudioQueue<f32>,
     max_queue_size: u32,
     _audio_subsystem: AudioSubsystem,
 }
 
-impl Sdl2Audio {
+impl AppAudio {
     pub fn new(sdl: &Sdl) -> Self {
         let audio_subsystem = sdl.audio().unwrap();
         let desired_spec = AudioSpecDesired {

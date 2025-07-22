@@ -66,7 +66,7 @@ impl Emu {
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
                     self.load_save_state(state);
-                    thread::sleep(Duration::from_millis(100));
+                    thread::sleep(Duration::from_millis(500));
                 }
 
                 self.runtime
@@ -133,31 +133,6 @@ impl Emu {
             bus_without_cart: self.runtime.bus.clone_empty_cart(),
             cart_save_state: self.runtime.bus.cart.create_save_state(),
         }
-    }
-
-    pub fn save_files(&self, cart_file_path: &Path, save_state: bool) -> Result<(), String> {
-        let name = cart_file_path.file_stem().unwrap().to_str();
-
-        let Some(name) = name else {
-            return Err(format!("Invalid cart_file_path: {cart_file_path:?}"));
-        };
-
-        if let Some(bytes) = self.runtime.bus.cart.dump_ram() {
-            if let Err(err) = BatterySave::from_bytes(bytes)
-                .save_file(name)
-                .map_err(|e| e.to_string())
-            {
-                eprint!("Failed BatterySave: {err}");
-            };
-        }
-
-        if save_state {
-            if let Err(err) = self.create_save_state().save_file(name, 0) {
-                eprintln!("Failed save_state: {err}");
-            }
-        }
-
-        Ok(())
     }
 
     pub fn push_rewind(&mut self) {

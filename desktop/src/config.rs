@@ -43,7 +43,7 @@ pub struct InterfaceConfig {
 }
 
 impl InterfaceConfig {
-    pub fn get_current_pallet(&self) -> [core::ppu::lcd::PixelColor; 4] {
+    pub fn get_current_palette(&self) -> [core::ppu::lcd::PixelColor; 4] {
         let idx = self.selected_palette_idx;
 
         core::into_palette(&self.palettes[idx].hex_colors)

@@ -1,4 +1,5 @@
-use crate::video::sdl2_text::{calc_text_width_str, draw_text_lines, fill_texture, get_text_height, CenterText};
+use crate::video::draw_text::{calc_text_height, calc_text_width_str, draw_text_lines, CenterText};
+use crate::video::fill_texture;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -8,7 +9,7 @@ use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
 
-pub struct Layout {
+struct Layout {
     pub win_width: u32,
     pub win_height: u32,
 }
@@ -22,7 +23,7 @@ impl Layout {
     }
 }
 
-pub struct Sdl2Renderer {
+pub struct MainWindow {
     canvas: Canvas<Window>,
     texture: Texture,
     fps_texture: Texture,
@@ -30,7 +31,7 @@ pub struct Sdl2Renderer {
     layout: Layout,
 }
 
-impl Sdl2Renderer {
+impl MainWindow {
     pub fn new(scale: u32, video_subsystem: &VideoSubsystem) -> Result<Self, String> {
         let layout = Layout::new(scale);
         let window = video_subsystem
@@ -119,7 +120,7 @@ impl Sdl2Renderer {
         } else {
             (None, calc_text_width_str(lines[0], scale))
         };
-        let text_height = get_text_height(scale) * lines.len();
+        let text_height = calc_text_height(scale) * lines.len();
         let (win_width, win_height) = self.canvas.window().size();
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
@@ -177,7 +178,7 @@ impl Sdl2Renderer {
         }
     }
 
-    pub fn position(&self) -> (i32, i32) {
+    pub fn get_position(&self) -> (i32, i32) {
         self.canvas.window().position()
     }
 }
