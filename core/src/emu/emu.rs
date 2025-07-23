@@ -5,7 +5,7 @@ use crate::cart::Cart;
 use crate::cpu::Cpu;
 use crate::debugger::Debugger;
 use crate::emu::battery::BatterySave;
-use crate::emu::config::{ColorPalette, EmuConfig};
+use crate::emu::config::{EmuConfig};
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
 use crate::ppu::lcd::Lcd;

@@ -25,19 +25,19 @@ impl Default for EmuConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ColorPalette {
+pub struct EmuPalette {
     pub name: String,
     pub hex_colors: [String; 4],
 }
 
-impl ColorPalette {
-    pub fn default_palettes() -> Vec<ColorPalette> {
+impl EmuPalette {
+    pub fn default_palettes() -> Vec<EmuPalette> {
         vec![
-            ColorPalette::crimson(),
-            ColorPalette::forgotten_swamp(),
-            ColorPalette::classic(),
-            ColorPalette::rustic(),
-            ColorPalette {
+            EmuPalette::crimson(),
+            EmuPalette::forgotten_swamp(),
+            EmuPalette::classic(),
+            EmuPalette::rustic(),
+            EmuPalette {
                 name: "Swamp".to_string(),
                 hex_colors: [
                     "fffafca4".to_string(),
@@ -46,7 +46,7 @@ impl ColorPalette {
                     "ff400c01".to_string(),
                 ],
             },
-            ColorPalette {
+            EmuPalette {
                 name: "2bit demichrome".to_string(),
                 hex_colors: [
                     "ff211e20".to_string(),
@@ -55,7 +55,7 @@ impl ColorPalette {
                     "ffe9efec".to_string(),
                 ],
             },
-            ColorPalette {
+            EmuPalette {
                 name: "Mist".to_string(),
                 hex_colors: [
                     "ff2d1b00".to_string(),
@@ -64,7 +64,7 @@ impl ColorPalette {
                     "ffc4f0c2".to_string(),
                 ],
             },
-            ColorPalette {
+            EmuPalette {
                 name: "AYY4".to_string(),
                 hex_colors: [
                     "ff00303b".to_string(),
@@ -73,7 +73,7 @@ impl ColorPalette {
                     "fff1f2da".to_string(),
                 ],
             },
-            ColorPalette {
+            EmuPalette {
                 name: "Wish".to_string(),
                 hex_colors: [
                     "ff622e4c".to_string(),
@@ -82,7 +82,7 @@ impl ColorPalette {
                     "ff8be5ff".to_string(),
                 ],
             },
-            ColorPalette {
+            EmuPalette {
                 name: "SpaceHaze".to_string(),
                 hex_colors: [
                     "fff8e3c4".to_string(),
@@ -91,7 +91,7 @@ impl ColorPalette {
                     "ff0b0630".to_string(),
                 ],
             },
-            ColorPalette {
+            EmuPalette {
                 name: "Nintendo Super Gameboy".to_string(),
                 hex_colors: [
                     "ff331e50".to_string(),
@@ -119,10 +119,10 @@ impl ColorPalette {
         Self {
             name: "Back and White".to_string(),
             hex_colors: [
-                "0xFFFFFFFF".to_string(),
-                "0xFFAAAAAA".to_string(),
-                "0xFF555555".to_string(),
-                "0xFF000000".to_string(),
+                "ffffffff".to_string(),
+                "FFAAAAAA".to_string(),
+                "FF555555".to_string(),
+                "FF000000".to_string(),
             ],
         }
     }
@@ -152,7 +152,7 @@ impl ColorPalette {
     }
 
     pub fn rustic() -> Self {
-        ColorPalette {
+        EmuPalette {
             name: "Rustic".to_string(),
             hex_colors: [
                 "ff2c2137".to_string(),

@@ -1,5 +1,6 @@
 use core::apu::apu::ApuConfig;
-use core::emu::config::{ColorPalette, EmuConfig};
+use core::emu::config::{EmuConfig, EmuPalette};
+use core::ppu::tile::PixelColor;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fs::File;
@@ -55,8 +56,9 @@ impl AudioConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InterfaceConfig {
+    pub color_schema: InterfaceColorSchema,
     pub selected_palette_idx: usize,
-    pub palettes: Vec<ColorPalette>,
+    pub palettes: Vec<EmuPalette>,
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
@@ -64,11 +66,34 @@ pub struct InterfaceConfig {
     pub tile_viewer: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InterfaceColorSchema {
+    pub bg_hex: String,
+    pub text_hex: String,
+}
+
+impl InterfaceColorSchema {
+    pub fn from_palette(palette: &EmuPalette) -> Self {
+        InterfaceColorSchema {
+            bg_hex: palette.hex_colors[3].clone(),
+            text_hex: palette.hex_colors[0].clone(),
+        }
+    }
+
+    pub fn get_text_color(&self) -> PixelColor {
+        PixelColor::from_hex(self.text_hex.as_str())
+    }
+
+    pub fn get_bg_color(&self) -> PixelColor {
+        PixelColor::from_hex(self.text_hex.as_str())
+    }
+}
+
 impl InterfaceConfig {
-    pub fn get_current_palette(&self) -> [core::ppu::lcd::PixelColor; 4] {
+    pub fn get_current_palette(&self) -> [PixelColor; 4] {
         let idx = self.selected_palette_idx;
 
-        core::into_palette(&self.palettes[idx].hex_colors)
+        core::into_pixel_colors(&self.palettes[idx].hex_colors)
     }
 }
 
@@ -103,14 +128,16 @@ impl AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         let apu_config = ApuConfig::default();
+        let palettes = EmuPalette::default_palettes();
 
         Self {
             last_cart_path: None,
             save_state_on_exit: false,
             emulation: Default::default(),
             interface: InterfaceConfig {
+                color_schema: InterfaceColorSchema::from_palette(&palettes[0]),
                 selected_palette_idx: 0,
-                palettes: ColorPalette::default_palettes(),
+                palettes,
                 scale: 5.0,
                 is_fullscreen: false,
                 show_fps: false,

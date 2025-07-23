@@ -1,18 +1,17 @@
-use core::emu::runtime::RunMode;
 use crate::audio::AppAudio;
-use crate::config::AppConfig;
+use crate::config::{AppConfig, InterfaceColorSchema};
 use crate::input::InputHandler;
 use crate::video::game_window::GameWindow;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
+use core::emu::runtime::EmuRuntime;
+use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
-use core::emu::runtime::EmuRuntime;
-use core::into_palette;
-use core::ppu::tile::PixelColor;
+use core::into_pixel_colors;
 use sdl2::Sdl;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 pub enum AppEvent {
     Pause,
@@ -30,7 +29,6 @@ pub struct App {
     window: GameWindow,
 
     pub tiles_window: Option<TileWindow>,
-    pub curr_palette: [PixelColor; 4],
     pub config: AppConfig,
 }
 
@@ -39,7 +37,11 @@ impl EmuCallback for App {
         self.window.draw_buffer(buffer);
 
         if self.config.interface.show_fps {
-            self.window.draw_fps(runtime.ppu.fps, self.config.interface.text_scale, self.curr_palette[3]);
+            self.window.draw_fps(
+                runtime.ppu.fps,
+                self.config.interface.text_scale,
+                self.config.interface.color_schema.get_text_color(),
+            );
         }
 
         self.window.present();
@@ -49,7 +51,7 @@ impl EmuCallback for App {
         if self.config.audio.mute {
             return;
         }
-        
+
         if self.config.audio.mute_turbo && runtime.mode == RunMode::Turbo {
             return;
         }
@@ -57,7 +59,7 @@ impl EmuCallback for App {
         if self.config.audio.mute_slow && runtime.mode == RunMode::Slow {
             return;
         }
-        
+
         self.audio.queue(output);
     }
 
@@ -88,9 +90,6 @@ impl App {
 
         Ok(Self {
             tiles_window: debug_window,
-            curr_palette: into_palette(
-                &config.interface.palettes[config.interface.selected_palette_idx].hex_colors,
-            ),
             audio: AppAudio::new(sdl, &config.audio),
             config,
             window: renderer,
@@ -119,13 +118,11 @@ impl App {
     }
 
     fn draw_text(&mut self, lines: &[&str], center: bool) {
-        let bg_color = self.curr_palette[3];
-        let color = self.curr_palette[0];
         self.window.draw_text_lines(
             lines,
             self.config.interface.text_scale,
-            color,
-            bg_color,
+            self.config.interface.color_schema.get_text_color(),
+            self.config.interface.color_schema.get_bg_color(),
             center,
         );
 
@@ -137,11 +134,15 @@ impl App {
             self.config.interface.selected_palette_idx,
             self.config.interface.palettes.len() - 1,
         );
-        let pallet = &self.config.interface.palettes[self.config.interface.selected_palette_idx];
-        self.curr_palette = into_palette(&pallet.hex_colors);
-        emu.runtime.bus.io.lcd.set_pallet(self.curr_palette);
+        let palette = &self.config.interface.palettes[self.config.interface.selected_palette_idx];
+        emu.runtime
+            .bus
+            .io
+            .lcd
+            .set_pallet(into_pixel_colors(&palette.hex_colors));
+        self.config.interface.color_schema = InterfaceColorSchema::from_palette(palette);
 
-        println!("Current palette: {}", pallet.name);
+        println!("Current palette: {}", palette.name);
     }
 
     pub fn toggle_fullscreen(&mut self) {
