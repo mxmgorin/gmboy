@@ -68,7 +68,7 @@ impl Emu {
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
                     self.load_save_state(state);
-                    thread::sleep(Duration::from_millis(500));
+                    thread::sleep(Duration::from_millis(333));
                 }
 
                 self.runtime.run_frame(&mut self.cpu, callback)?;
