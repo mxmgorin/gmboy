@@ -1,30 +1,10 @@
-## 🎮 gmboy
+## 🎮 GMBoy
 
-`gmboy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. 
+`GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. 
 
-Most Game Boy functionality is implemented with good accuracy (verified by community-made tests). Most games should run correctly, though some bugs are still expected.
+The emulator implements most Game Boy functionality with good accuracy, as confirmed by community test suites like blargg's and [mooneye](https://github.com/Gekkio/mooneye-test-suite). While most games should run correctly, some issues may still occur.
 
-Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) of gmboy from the releases page.
-
-## Supports
-
--  **Full CPU Emulation**  
-   Complete implementation of the Sharp LR35902 instruction set with accurate instruction and sub-instruction timing.
-
-- **Full PPU Emulation (Graphics)**  
-  Rendering of background, window, and sprites.
-
-- **Full APU Emulation (Audio)**  
-  Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
-
-- **Cartridge MBCs**  
-  Supports ROM loading with No MBC, MBC1, MBC1M, MBC2, MBC3, MBC5 mappers.
-
-- **SRAM Battery Saves**  
-  Persistent save data using battery-backed SRAM.
-
-- **Input Handling**  
-  Emulates all standard Game Boy button inputs (D-Pad, A, B, Start, Select).
+Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) of `GMBoy` from the releases page.
 
 ## Features
 
@@ -49,9 +29,80 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 - **Tile Viewer**  
   Visualize and inspect background and sprite tile data in real time. Toggle it via the config file.
 
+## ⌨️ Keybindings
+
+| Function                      | Keyboard                          | Gamepad           |
+|-------------------------------|-----------------------------------|-------------------|
+| D-pad Up                      | Arrow Up                          | D-pad Up          |
+| D-pad Down                    | Arrow Down                        | D-pad Down        |
+| D-pad Left                    | Arrow Left                        | D-pad Left        |
+| D-pad Right                   | Arrow Right                       | D-pad Right       |
+| B                             | Z                                 | B                 |
+| A                             | X                                 | A                 |
+| Start                         | Enter (Return)                    | Start             |
+| Select                        | Backspace                         | Select            |
+| Toggle **Rewind** (hold)      | Left Ctrl / Right Ctrl            | Y                 |
+| Toggle **Turbo** (hold)       | Tab                               | Right Shoulder    |
+| Toggle **Slow motion** (hold) | Left Shift / Right Shift          | Left Shoulder     |
+| Pause                         | Space                             |                   |
+| Restart                       | R                                 |                   |
+| Screen scale up               | + (Equals)                        |                   |
+| Screen scale down             | - (Minus)                         |                   |
+| Fullscreen Toggle             | F                                 |                   |
+| Mute audio                    | M                                 |                   |
+| Cycle color palettes          | P                                 | X                 |
+| Load save state (1–9)         | F1–F19                            | Right Trigger (1) |
+| Create save state (1–9)       | 1–9                               | Left Trigger (1)  |
+
+## Implemented
+
+-  **Full CPU Emulation**  
+   Complete implementation of the Sharp LR35902 instruction set with accurate instruction and sub-instruction timing.
+
+- **Full PPU Emulation (Graphics)**  
+  Rendering of background, window, and sprites.
+
+- **Full APU Emulation (Audio)**  
+  Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
+
+- **Cartridge MBCs**  
+  Supports ROM loading with No MBC, MBC1, MBC1M, MBC2, MBC3, MBC5 mappers.
+
+- **SRAM Battery Saves**  
+  Persistent save data using battery-backed SRAM.
+
+- **Input Handling**  
+  Emulates all standard Game Boy button inputs (D-Pad, A, B, Start, Select).
+
+## 🛠️ Building
+
+First, make sure you have Rust installed. If you don't, install it with:
+````
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+````
+Then, install dependencies: **SDL2**
+
+Arch Linux:
+```bash
+sudo pacman -S sdl2
+````
+
+After that, you should be able to build:
+```bash
+cargo build --release
+```
+## Planned features
+
+- [ ] GBC mode
+- [ ] Re-mappable keybindings
+- [ ] Emulator menu (with settings etc.)
+- [ ] Accuracy improvements, bug fixes
+- [ ] Shaders
+- [ ] Web, android builds
+
 ## Test Results
 
-- ### SM83: 
+- ### SM83:
 Passes all of 356 000 tests ✅
 
 - ### Blargg
@@ -74,7 +125,7 @@ Passes all of 356 000 tests ✅
 - ### Mooneye
 
 - acceptance
- 
+
 | General & OAM DMA            | Timing                       | Timer Accuracy                 |
 |------------------------------|------------------------------|-------------------------------|
 | oam_dma/oam_dma_timing.gb ✅  | call_cc_timing.gb ✅          | div_write.gb ✅             |
@@ -119,63 +170,6 @@ Passes all of 356 000 tests ✅
 | rom_16Mb.gb ✅               |                   |                    |
 | rom_512kb.gb ✅              |                   |                    |
 
-## ⌨️ Keybindings
-
-- ### Controls
-
-| Key               | Action      |
-|-------------------|-------------|
-| Arrow Up          | Dpad Up     |
-| Arrow Down        | Dpad Down   |
-| Arrow Left        | Dpad Left   |
-| Arrow Right       | Dpad Right  |
-| Z                 | B           |
-| X                 | A           |
-| Enter (Return)    | Start       |
-| Backspace         | Select      |
-
-- ### Emulator Functions
-
-| Action                        | Keyboard                            | Gamepad           |
-|-------------------------------|-------------------------------------|-------------------|
-| Toggle **Rewind** (hold)      | Left Ctrl / Right Ctrl              | Y                 |
-| Toggle **Turbo** (hold)       | Tab                                 | Right Shoulder    |
-| Toggle **Slow motion** (hold) | Left Shift / Right Shift           | Left Shoulder     |
-| Pause                         | Space                               |                   |
-| Restart                       | R                                   |                   |
-| Increase screen scale         | + (Equals)                          |                   |
-| Decrease screen scale         | - (Minus)                           |                   |
-| Toggle fullscreen             | F                                   |                   |
-| Mute audio                    | M                                   |                   |
-| Cycle color palettes          | P                                   | X                 |
-| Load save state (1-9)         | F1–F19                              | Right Trigger (1) |
-| Create save state (1-9)       | 1–9                                 | Left Trigger (1)  |
-
-## 🛠️ Building
-
-First, make sure you have Rust installed. If you don't, install it with:
-````
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-````
-Then, install dependencies: **SDL2**
-
-Arch Linux:
-```bash
-sudo pacman -S sdl2
-````
-
-After that, you should be able to build:
-```bash
-cargo build --release
-```
-## Planned features
-
-- [ ] GBC mode
-- [ ] Re-mappable keybindings
-- [ ] Emulator menu (with settings etc.)
-- [ ] Accuracy improvements, bug fixes
-- [ ] Shaders
-- [ ] Web, android builds
 
 ## References
 
