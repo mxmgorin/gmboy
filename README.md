@@ -1,8 +1,8 @@
 ## GMBoy
 
-`GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. 
+`GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it emphasizes clean code, hardware understanding, and aims for high accuracy, test coverage, and good performance. 
 
-The emulator implements most Game Boy functionality with good accuracy, as confirmed by community test suites like blargg's and [mooneye](https://github.com/Gekkio/mooneye-test-suite). While most games should run correctly, some issues may still occur.
+The emulator implements most Game Boy functionality and accuracy is verified by community test suites like blargg's and [mooneye](https://github.com/Gekkio/mooneye-test-suite). While most games should run correctly, some issues may still occur.
 
 Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) of `GMBoy` from the releases page.
 
@@ -54,7 +54,7 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 | Load save state (1–9)   | F1–F19                   | Right Trigger (1) |
 | Create save state (1–9) | 1–9                      | Left Trigger (1)  |
 
-## Implemented
+## Supports
 
 -  **Full CPU Emulation**  
    Complete implementation of the Sharp LR35902 instruction set with accurate instruction and sub-instruction timing.
@@ -93,12 +93,13 @@ cargo build --release
 ```
 ## Planned features
 
-- [ ] GBC mode
-- [ ] Re-mappable keybindings
-- [ ] Emulator menu (with settings etc.)
-- [ ] Accuracy improvements, bug fixes
-- [ ] Shaders
-- [ ] Web, android builds
+- GBC mode
+- Re-mappable keybindings
+- Emulator menu (with settings etc.)
+- Accuracy improvements, bug fixes
+- Shaders
+- Web, android builds
+- Audio visualizer
 
 ## Test Results
 
