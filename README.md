@@ -1,4 +1,4 @@
-## 🎮 GMBoy
+## GMBoy
 
 `GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it’s a project about clean code, deep hardware understanding, and striving for high accuracy and test coverage. 
 
@@ -29,30 +29,30 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 - **Tile Viewer**  
   Visualize and inspect background and sprite tile data in real time. Toggle it via the config file.
 
-## ⌨️ Keybindings
+## Keybindings
 
-| Function                      | Keyboard                          | Gamepad           |
-|-------------------------------|-----------------------------------|-------------------|
-| D-pad Up                      | Arrow Up                          | D-pad Up          |
-| D-pad Down                    | Arrow Down                        | D-pad Down        |
-| D-pad Left                    | Arrow Left                        | D-pad Left        |
-| D-pad Right                   | Arrow Right                       | D-pad Right       |
-| B                             | Z                                 | B                 |
-| A                             | X                                 | A                 |
-| Start                         | Enter (Return)                    | Start             |
-| Select                        | Backspace                         | Select            |
-| Toggle **Rewind** (hold)      | Left Ctrl / Right Ctrl            | Y                 |
-| Toggle **Turbo** (hold)       | Tab                               | Right Shoulder    |
-| Toggle **Slow motion** (hold) | Left Shift / Right Shift          | Left Shoulder     |
-| Pause                         | Space                             |                   |
-| Restart                       | R                                 |                   |
-| Screen scale up               | + (Equals)                        |                   |
-| Screen scale down             | - (Minus)                         |                   |
-| Fullscreen Toggle             | F                                 |                   |
-| Mute audio                    | M                                 |                   |
-| Cycle color palettes          | P                                 | X                 |
-| Load save state (1–9)         | F1–F19                            | Right Trigger (1) |
-| Create save state (1–9)       | 1–9                               | Left Trigger (1)  |
+| Action                        | ⌨️ Keyboard              | 🎮 Gamepad        |
+|-------------------------------|--------------------------|-------------------|
+| D-pad Up                      | Arrow Up                 | D-pad Up          |
+| D-pad Down                    | Arrow Down               | D-pad Down        |
+| D-pad Left                    | Arrow Left               | D-pad Left        |
+| D-pad Right                   | Arrow Right              | D-pad Right       |
+| B                             | Z                        | B                 |
+| A                             | X                        | A                 |
+| Start                         | Enter (Return)           | Start             |
+| Select                        | Backspace                | Select            |
+| Toggle **Rewind** (hold)      | Left Ctrl / Right Ctrl   | Y                 |
+| Toggle **Turbo** (hold)       | Tab                      | Right Shoulder    |
+| Toggle **Slow motion** (hold) | Left Shift / Right Shift | Left Shoulder     |
+| Pause                         | Space                    |                   |
+| Restart                       | R                        |                   |
+| Screen scale up               | + (Equals)               |                   |
+| Screen scale down             | - (Minus)                |                   |
+| Fullscreen Toggle             | F                        |                   |
+| Mute audio                    | M                        |                   |
+| Cycle color palettes          | P                        | X                 |
+| Load save state (1–9)         | F1–F19                   | Right Trigger (1) |
+| Create save state (1–9)       | 1–9                      | Left Trigger (1)  |
 
 ## Implemented
 
