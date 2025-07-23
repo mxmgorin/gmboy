@@ -49,14 +49,14 @@ impl InputHandler {
                     println!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
-                    self.on_event(app, emu, AppEvent::FileDropped(filename.into()))
+                    self.handle_event(app, emu, AppEvent::FileDropped(filename.into()))
                 }
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => {
                     if let Some(evt) = self.handle_key(app, emu, keycode, true) {
-                        self.on_event(app, emu, evt);
+                        self.handle_event(app, emu, evt);
                     }
                 }
                 Event::KeyUp {
@@ -64,28 +64,28 @@ impl InputHandler {
                     ..
                 } => {
                     if let Some(evt) = self.handle_key(app, emu, keycode, false) {
-                        self.on_event(app, emu, evt);
+                        self.handle_event(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
                     if let Some(evt) = self.handle_controller_button(app, emu, button, true) {
-                        self.on_event(app, emu, evt);
+                        self.handle_event(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
                     if let Some(evt) = self.handle_controller_button(app, emu, button, false) {
-                        self.on_event(app, emu, evt);
+                        self.handle_event(app, emu, evt);
                     }
                 }
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
                     if let Some(evt) = self.handle_joy_axis(axis_idx, value) {
-                        self.on_event(app, emu, evt);
+                        self.handle_event(app, emu, evt);
                     }
                 }
                 Event::MouseButtonDown { .. } => {
-                    self.on_event(app, emu, AppEvent::PickFile);
+                    self.handle_event(app, emu, AppEvent::PickFile);
                 }
                 Event::Quit { .. } => return false,
                 Event::Window {
@@ -108,7 +108,7 @@ impl InputHandler {
         true
     }
 
-    pub fn on_event(&mut self, app: &mut App, emu: &mut Emu, event: AppEvent) {
+    pub fn handle_event(&mut self, app: &mut App, emu: &mut Emu, event: AppEvent) {
         match event {
             AppEvent::FileDropped(path) => {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
