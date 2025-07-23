@@ -15,7 +15,7 @@ impl Default for EmuConfig {
     fn default() -> Self {
         Self {
             rewind_size: 120,
-            rewind_interval: Duration::from_secs(5),
+            rewind_interval: Duration::from_secs(2),
             normal_speed: 1.0,
             slow_speed: 0.5,
             turbo_speed: 5.0,
