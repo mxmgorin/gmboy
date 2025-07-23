@@ -51,12 +51,14 @@ impl EmuRuntime {
                 debugger.print_serial()
             }
 
-            if self.mode == RunMode::Normal && self.bus.io.apu.output_ready() {
-                callback.update_audio(self.bus.io.apu.take_output());
+            if self.mode == RunMode::Normal && self.bus.io.apu.buffer_ready() {
+                let output = self.bus.io.apu.get_buffer();
+                callback.update_audio(output, self);
+                self.bus.io.apu.buffer_idx = 0;
             }
         }
 
-        callback.update_video(&self.ppu.pipeline.buffer, self.ppu.fps);
+        callback.update_video(&self.ppu.pipeline.buffer, self);
 
         Ok(())
     }

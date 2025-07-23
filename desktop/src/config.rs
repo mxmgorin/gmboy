@@ -35,6 +35,8 @@ impl AppConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AudioConfig {
     pub mute: bool,
+    pub mute_turbo: bool,
+    pub mute_slow: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -101,6 +103,8 @@ impl Default for AppConfig {
             },
             audio: AudioConfig {
                 mute: false,
+                mute_turbo: true,
+                mute_slow: true,
             },
         }
     }

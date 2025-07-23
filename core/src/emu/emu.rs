@@ -20,8 +20,8 @@ const NANOS_PER_SECOND: usize = 1_000_000_000;
 const CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
 
 pub trait EmuCallback {
-    fn update_video(&mut self, buffer: &[u32], fps: usize);
-    fn update_audio(&mut self, output: &[f32]);
+    fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime);
+    fn update_audio(&mut self, output: &[f32], runtime: &EmuRuntime);
     fn paused(&mut self);
 }
 

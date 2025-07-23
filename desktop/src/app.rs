@@ -8,6 +8,7 @@ use crate::Emu;
 use core::emu::battery::BatterySave;
 use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
+use core::emu::runtime::EmuRuntime;
 use core::into_palette;
 use core::ppu::tile::PixelColor;
 use sdl2::Sdl;
@@ -34,18 +35,26 @@ pub struct App {
 }
 
 impl EmuCallback for App {
-    fn update_video(&mut self, buffer: &[u32], fps: usize) {
+    fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
         self.window.draw_buffer(buffer);
 
         if self.config.interface.show_fps {
-            self.window.draw_fps(fps, self.config.interface.text_scale, self.curr_palette[3]);
+            self.window.draw_fps(runtime.ppu.fps, self.config.interface.text_scale, self.curr_palette[3]);
         }
 
         self.window.present();
     }
 
-    fn update_audio(&mut self, output: &[f32]) {
+    fn update_audio(&mut self, output: &[f32], runtime: &EmuRuntime) {
         if self.config.audio.mute {
+            return;
+        }
+        
+        if self.config.audio.mute_turbo && runtime.mode == RunMode::Turbo {
+            return;
+        }
+
+        if self.config.audio.mute_slow && runtime.mode == RunMode::Slow {
             return;
         }
         

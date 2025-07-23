@@ -49,8 +49,8 @@ pub struct Apu {
         serialize_with = "serialize_boxed_array",
         deserialize_with = "deserialize_boxed_array"
     )]
-    output_buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
-    output_buffer_idx: usize,
+    buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
+    pub buffer_idx: usize,
     hpf: Hpf,
 }
 fn serialize_boxed_array<S>(
@@ -101,8 +101,8 @@ impl Default for Apu {
             mixer: Default::default(),
             frame_sequencer_step: 0,
             ticks_count: 0,
-            output_buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
-            output_buffer_idx: 0,
+            buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
+            buffer_idx: 0,
             hpf: Hpf::new(SAMPLING_FREQ as i32),
         }
     }
@@ -122,8 +122,8 @@ impl Apu {
         let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQ as u32;
 
         if self.ticks_count % ticks_per_sample == 0 {
-            if self.output_buffer_idx >= AUDIO_BUFFER_SIZE {
-                self.output_buffer_idx = 0;
+            if self.buffer_idx >= AUDIO_BUFFER_SIZE {
+                self.buffer_idx = 0;
             }
 
             (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
@@ -133,21 +133,18 @@ impl Apu {
             let (output_left, output_right) = self.mixer.mix();
 
             let (output_left, output_right) = self.hpf.apply_filter(output_left, output_right);
-            self.output_buffer[self.output_buffer_idx] = output_left;
-            self.output_buffer[self.output_buffer_idx + 1] = output_right;
-            self.output_buffer_idx += 2;
+            self.buffer[self.buffer_idx] = output_left;
+            self.buffer[self.buffer_idx + 1] = output_right;
+            self.buffer_idx += 2;
         }
     }
 
-    pub fn take_output(&mut self) -> &[f32] {
-        let buffer = &self.output_buffer[0..self.output_buffer_idx];
-        self.output_buffer_idx = 0;
-
-        buffer
+    pub fn get_buffer(&self) -> &[f32] {
+        &self.buffer[0..self.buffer_idx]
     }
 
-    pub fn output_ready(&self) -> bool {
-        self.output_buffer_idx >= AUDIO_BUFFER_SIZE / 2
+    pub fn buffer_ready(&self) -> bool {
+        self.buffer_idx >= AUDIO_BUFFER_SIZE / 2
     }
 
     pub fn write(&mut self, address: u16, value: u8) {
