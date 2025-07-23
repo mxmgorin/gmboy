@@ -23,7 +23,7 @@ const CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f6
 pub trait EmuCallback {
     fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime);
     fn update_audio(&mut self, output: &[f32], runtime: &EmuRuntime);
-    fn paused(&mut self);
+    fn paused(&mut self, runtime: &EmuRuntime);
 }
 
 pub struct Emu {
@@ -64,7 +64,7 @@ impl Emu {
             EmuState::Paused => {
                 thread::sleep(Duration::from_millis(100));
                 self.runtime.clock.reset();
-                callback.paused();
+                callback.paused(&self.runtime);
 
                 return Ok(());
             }

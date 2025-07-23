@@ -1,5 +1,5 @@
 use crate::audio::AppAudio;
-use crate::config::{AppConfig, InterfaceColorSchema};
+use crate::config::AppConfig;
 use crate::input::InputHandler;
 use crate::video::game_window::GameWindow;
 use crate::video::tiles_window::TileWindow;
@@ -10,6 +10,7 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
 use core::into_pixel_colors;
+use core::ppu::tile::PixelColor;
 use sdl2::Sdl;
 use std::path::PathBuf;
 
@@ -40,7 +41,7 @@ impl EmuCallback for App {
             self.window.draw_fps(
                 runtime.ppu.fps,
                 self.config.interface.text_scale,
-                self.config.interface.color_schema.get_text_color(),
+                runtime.bus.io.lcd.current_pallet[0],
             );
         }
 
@@ -63,11 +64,19 @@ impl EmuCallback for App {
         self.audio.queue(output);
     }
 
-    fn paused(&mut self) {
+    fn paused(&mut self, runtime: &EmuRuntime) {
+        let text_color = runtime.bus.io.lcd.current_pallet[0];
+        let bg_color = runtime.bus.io.lcd.current_pallet[3];
+
         if self.config.last_cart_path.is_none() {
-            self.draw_text(&["NO GAME FILE", "DROP OR PICK IT"], true);
+            self.draw_text(
+                &["NO GAME FILE", "DROP OR PICK IT"],
+                text_color,
+                bg_color,
+                true,
+            );
         } else {
-            self.draw_text(&["PAUSED"], true);
+            self.draw_text(&["PAUSED"], text_color, bg_color, true);
         }
     }
 }
@@ -117,12 +126,18 @@ impl App {
         Ok(())
     }
 
-    fn draw_text(&mut self, lines: &[&str], center: bool) {
+    fn draw_text(
+        &mut self,
+        lines: &[&str],
+        text_color: PixelColor,
+        bg_color: PixelColor,
+        center: bool,
+    ) {
         self.window.draw_text_lines(
             lines,
             self.config.interface.text_scale,
-            self.config.interface.color_schema.get_text_color(),
-            self.config.interface.color_schema.get_bg_color(),
+            text_color,
+            bg_color,
             center,
         );
 
@@ -140,7 +155,6 @@ impl App {
             .io
             .lcd
             .set_pallet(into_pixel_colors(&palette.hex_colors));
-        self.config.interface.color_schema = InterfaceColorSchema::from_palette(palette);
 
         println!("Current palette: {}", palette.name);
     }

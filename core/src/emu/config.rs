@@ -56,33 +56,6 @@ impl EmuPalette {
                 ],
             },
             EmuPalette {
-                name: "Mist".to_string(),
-                hex_colors: [
-                    "ff2d1b00".to_string(),
-                    "ff1e606e".to_string(),
-                    "ff5ab9a8".to_string(),
-                    "ffc4f0c2".to_string(),
-                ],
-            },
-            EmuPalette {
-                name: "AYY4".to_string(),
-                hex_colors: [
-                    "ff00303b".to_string(),
-                    "ffff7777".to_string(),
-                    "ffffce96".to_string(),
-                    "fff1f2da".to_string(),
-                ],
-            },
-            EmuPalette {
-                name: "Wish".to_string(),
-                hex_colors: [
-                    "ff622e4c".to_string(),
-                    "ff7550e8".to_string(),
-                    "ff608fcf".to_string(),
-                    "ff8be5ff".to_string(),
-                ],
-            },
-            EmuPalette {
                 name: "SpaceHaze".to_string(),
                 hex_colors: [
                     "fff8e3c4".to_string(),

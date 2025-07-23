@@ -56,7 +56,6 @@ impl AudioConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InterfaceConfig {
-    pub color_schema: InterfaceColorSchema,
     pub selected_palette_idx: usize,
     pub palettes: Vec<EmuPalette>,
     pub scale: f32,
@@ -64,29 +63,6 @@ pub struct InterfaceConfig {
     pub show_fps: bool,
     pub text_scale: usize,
     pub tile_viewer: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InterfaceColorSchema {
-    pub bg_hex: String,
-    pub text_hex: String,
-}
-
-impl InterfaceColorSchema {
-    pub fn from_palette(palette: &EmuPalette) -> Self {
-        InterfaceColorSchema {
-            bg_hex: palette.hex_colors[3].clone(),
-            text_hex: palette.hex_colors[0].clone(),
-        }
-    }
-
-    pub fn get_text_color(&self) -> PixelColor {
-        PixelColor::from_hex(self.text_hex.as_str())
-    }
-
-    pub fn get_bg_color(&self) -> PixelColor {
-        PixelColor::from_hex(self.text_hex.as_str())
-    }
 }
 
 impl InterfaceConfig {
@@ -135,7 +111,6 @@ impl Default for AppConfig {
             save_state_on_exit: false,
             emulation: Default::default(),
             interface: InterfaceConfig {
-                color_schema: InterfaceColorSchema::from_palette(&palettes[0]),
                 selected_palette_idx: 0,
                 palettes,
                 scale: 5.0,
