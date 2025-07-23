@@ -126,7 +126,10 @@ impl InputHandler {
                     emu.load_cart_file(&PathBuf::from(path), false);
                 }
             }
-            AppEvent::ModeChanged(mode) => emu.runtime.set_mode(mode),
+            AppEvent::ModeChanged(mode) => {
+                emu.state = EmuState::Running;
+                emu.runtime.set_mode(mode);
+            },
             AppEvent::Mute => emu.config.is_muted = !emu.config.is_muted,
             AppEvent::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppEvent::PickFile =>

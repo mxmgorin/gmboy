@@ -137,8 +137,10 @@ impl Emu {
         if self.config.rewind_size > 0 {
             let now = Instant::now();
             let duration = now.duration_since(self.last_rewind_save_time);
+            println!("{:?}", duration);
 
             if duration >= self.config.rewind_interval {
+                println!("push rewind");
                 if self.rewind_buffer.len() > self.config.rewind_size {
                     self.rewind_buffer.pop_front();
                 }
