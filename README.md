@@ -53,6 +53,8 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 | Change color palette    | P                        | X                 |
 | Load save state (1–9)   | F1–F19                   | Right Trigger (1) |
 | Create save state (1–9) | 1–9                      | Left Trigger (1)  |
+| Volume up               | F12                      |                   |
+| Volume down             | F11                      |                   |
 
 ## Supports
 

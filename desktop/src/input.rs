@@ -1,4 +1,4 @@
-use crate::app::{App, AppEvent};
+use crate::app::{change_volume, App, AppEvent};
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
@@ -129,7 +129,7 @@ impl InputHandler {
             AppEvent::ModeChanged(mode) => {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
-            },
+            }
             AppEvent::Mute => app.config.audio.mute = !app.config.audio.mute,
             AppEvent::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppEvent::PickFile =>
@@ -287,6 +287,16 @@ impl InputHandler {
             Keycode::M => {
                 if !is_down {
                     return Some(AppEvent::Mute);
+                }
+            }
+            Keycode::F11 => {
+                if !is_down {
+                    change_volume(app, emu, -0.1);
+                }
+            }
+            Keycode::F12 => {
+                if !is_down {
+                    change_volume(app, emu, 0.1);
                 }
             }
             Keycode::P => {

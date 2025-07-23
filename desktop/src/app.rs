@@ -1,4 +1,3 @@
-use core::ppu::palette::LcdPalette;
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
@@ -11,6 +10,7 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
 use core::into_pixel_colors;
+use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use sdl2::Sdl;
 use std::path::PathBuf;
@@ -32,7 +32,7 @@ pub struct App {
 
     pub tiles_window: Option<TileWindow>,
     pub config: AppConfig,
-    palettes: Box<[LcdPalette]>
+    palettes: Box<[LcdPalette]>,
 }
 
 impl EmuCallback for App {
@@ -84,7 +84,11 @@ impl EmuCallback for App {
 }
 
 impl App {
-    pub fn new(sdl: &mut Sdl, config: AppConfig, palettes: Box<[LcdPalette]>) -> Result<Self, String> {
+    pub fn new(
+        sdl: &mut Sdl,
+        config: AppConfig,
+        palettes: Box<[LcdPalette]>,
+    ) -> Result<Self, String> {
         let video_subsystem = sdl.video()?;
         let mut renderer = GameWindow::new(config.interface.scale as u32, &video_subsystem)?;
         renderer.set_fullscreen(config.interface.is_fullscreen);
@@ -224,6 +228,14 @@ impl App {
 
         Ok(())
     }
+}
+
+pub fn change_volume(app: &mut App, emu: &mut Emu, delta: f32) {
+    emu.runtime.bus.io.apu.config.volume =
+        (((emu.runtime.bus.io.apu.config.volume + delta) * 10.0).round() / 10.0).clamp(0.0, 2.0);
+    app.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
+
+    println!("Current volume: {}", app.config.audio.volume);
 }
 
 fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {

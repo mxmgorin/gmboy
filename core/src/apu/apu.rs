@@ -60,7 +60,7 @@ pub struct Apu {
     buffer: Box<[f32]>,
     pub buffer_idx: usize,
     hpf: Hpf,
-    config: ApuConfig,
+    pub config: ApuConfig,
 }
 
 impl Default for Apu {
