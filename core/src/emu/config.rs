@@ -1,5 +1,5 @@
-use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EmuConfig {
@@ -31,68 +31,12 @@ pub struct ColorPalette {
 }
 
 impl ColorPalette {
-    pub fn classic() -> Self {
-        Self {
-            name: "Classic".to_string(),
-            hex_colors: [
-                "ff081820".to_string(),
-                "ff346856".to_string(),
-                "ff88c070".to_string(),
-                "ffe0f8d0".to_string(),
-            ],
-        }
-    }
-
-    pub fn black_white() -> Self {
-        Self {
-            name: "Back and White".to_string(),
-            hex_colors: [
-                "0xFFFFFFFF".to_string(),
-                "0xFFAAAAAA".to_string(),
-                "0xFF555555".to_string(),
-                "0xFF000000".to_string(),
-            ],
-        }
-    }
-
-    pub fn forgotten_swamp() -> Self {
-        Self {
-            name: "Forgotten Swamp".to_string(),
-            hex_colors: [
-                "ffd1ada1".to_string(),
-                "ff4d7d65".to_string(),
-                "ff593a5f".to_string(),
-                "ff3b252e".to_string(),
-            ],
-        }
-    }
-
-    pub fn crimson() -> Self {
-        Self {
-            name: "Crimson".to_string(),
-            hex_colors: [
-                "ffeff9d6".to_string(),
-                "ffba5044".to_string(),
-                "ff7a1c4b".to_string(),
-                "ff1b0326".to_string(),
-            ],
-        }
-    }
-
-    pub fn default_pallets() -> Vec<ColorPalette> {
+    pub fn default_palettes() -> Vec<ColorPalette> {
         vec![
             ColorPalette::crimson(),
             ColorPalette::forgotten_swamp(),
             ColorPalette::classic(),
-            ColorPalette {
-                name: "Rustic".to_string(),
-                hex_colors: [
-                    "ff2c2137".to_string(),
-                    "ff764462".to_string(),
-                    "ffa96868".to_string(),
-                    "ffedb4a1".to_string(),
-                ],
-            },
+            ColorPalette::rustic(),
             ColorPalette {
                 name: "Swamp".to_string(),
                 hex_colors: [
@@ -157,5 +101,65 @@ impl ColorPalette {
                 ],
             },
         ]
+    }
+
+    pub fn classic() -> Self {
+        Self {
+            name: "Classic".to_string(),
+            hex_colors: [
+                "ff081820".to_string(),
+                "ff346856".to_string(),
+                "ff88c070".to_string(),
+                "ffe0f8d0".to_string(),
+            ],
+        }
+    }
+
+    pub fn black_white() -> Self {
+        Self {
+            name: "Back and White".to_string(),
+            hex_colors: [
+                "0xFFFFFFFF".to_string(),
+                "0xFFAAAAAA".to_string(),
+                "0xFF555555".to_string(),
+                "0xFF000000".to_string(),
+            ],
+        }
+    }
+
+    pub fn forgotten_swamp() -> Self {
+        Self {
+            name: "Forgotten Swamp".to_string(),
+            hex_colors: [
+                "ffd1ada1".to_string(),
+                "ff4d7d65".to_string(),
+                "ff593a5f".to_string(),
+                "ff3b252e".to_string(),
+            ],
+        }
+    }
+
+    pub fn crimson() -> Self {
+        Self {
+            name: "Crimson".to_string(),
+            hex_colors: [
+                "ffeff9d6".to_string(),
+                "ffba5044".to_string(),
+                "ff7a1c4b".to_string(),
+                "ff1b0326".to_string(),
+            ],
+        }
+    }
+
+    pub fn rustic() -> Self {
+        ColorPalette {
+            name: "Rustic".to_string(),
+            hex_colors: [
+                "ff2c2137".to_string(),
+                "ff764462".to_string(),
+                "ffa96868".to_string(),
+                "ffedb4a1".to_string(),
+            ],
+        }
     }
 }

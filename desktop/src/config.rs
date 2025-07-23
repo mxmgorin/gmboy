@@ -110,7 +110,7 @@ impl Default for AppConfig {
             emulation: Default::default(),
             interface: InterfaceConfig {
                 selected_palette_idx: 0,
-                palettes: ColorPalette::default_pallets(),
+                palettes: ColorPalette::default_palettes(),
                 scale: 5.0,
                 is_fullscreen: false,
                 show_fps: false,
