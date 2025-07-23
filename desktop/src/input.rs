@@ -115,7 +115,7 @@ impl InputHandler {
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
             }
             AppEvent::Pause => {
-                if emu.state == EmuState::Paused {
+                if emu.state == EmuState::Paused && !emu.runtime.bus.cart.is_empty() {
                     emu.state = EmuState::Running;
                 } else {
                     emu.state = EmuState::Paused;
