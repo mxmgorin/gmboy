@@ -57,7 +57,7 @@ impl Default for Lcd {
 }
 
 impl Lcd {
-    pub fn new(pallet: [PixelColor; 4]) -> Self {
+    pub fn new(colors: [PixelColor; 4]) -> Self {
         Self {
             control: LcdControl::default(),
             status: LcdStatus::default(),
@@ -69,10 +69,10 @@ impl Lcd {
             bg_palette: 0xFC,
             obj_palette: [0xFF, 0xFF],
             window: LcdWindow::default(),
-            current_colors: pallet,
-            bg_colors: pallet,
-            sp1_colors: pallet,
-            sp2_colors: pallet,
+            current_colors: colors,
+            bg_colors: colors,
+            sp1_colors: colors,
+            sp2_colors: colors,
         }
     }
 
@@ -94,8 +94,8 @@ impl Lcd {
         }
     }
 
-    pub fn set_pallet(&mut self, pallet: [PixelColor; 4]) {
-        self.current_colors = pallet;
+    pub fn set_pallet(&mut self, colors: [PixelColor; 4]) {
+        self.current_colors = colors;
 
         for (i, color) in self.current_colors.iter().enumerate() {
             self.sp1_colors[i] = *color;
