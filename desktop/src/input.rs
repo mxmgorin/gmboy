@@ -1,7 +1,7 @@
 use crate::app::{App, AppEvent};
 use crate::Emu;
+use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
-use core::emu::state::RunMode;
 use core::emu::state::SaveStateEvent;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
@@ -116,7 +116,7 @@ impl InputHandler {
             }
             AppEvent::Pause => {
                 if emu.state == EmuState::Paused {
-                    emu.state = EmuState::Running(RunMode::Normal);
+                    emu.runtime.set_mode(RunMode::Normal);
                 } else {
                     emu.state = EmuState::Paused;
                 }
@@ -126,7 +126,7 @@ impl InputHandler {
                     emu.load_cart_file(&PathBuf::from(path), false);
                 }
             }
-            AppEvent::ModeChanged(mode) => emu.state = EmuState::Running(mode),
+            AppEvent::ModeChanged(mode) => emu.runtime.set_mode(mode),
             AppEvent::Mute => emu.config.is_muted = !emu.config.is_muted,
             AppEvent::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppEvent::PickFile =>

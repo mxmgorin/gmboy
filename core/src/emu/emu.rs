@@ -6,8 +6,8 @@ use crate::cpu::Cpu;
 use crate::debugger::Debugger;
 use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
-use crate::emu::runtime::EmuRuntime;
-use crate::emu::state::{EmuSaveState, EmuState, RunMode};
+use crate::emu::runtime::{EmuRuntime, RunMode};
+use crate::emu::state::{EmuSaveState, EmuState};
 use crate::ppu::lcd::Lcd;
 use crate::ppu::tile::PixelColor;
 use std::collections::VecDeque;
@@ -57,7 +57,7 @@ impl Emu {
 
     /// Runs emulation for one frame. Return false when paused.
     pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<(), String> {
-        let mode = match self.state {
+        match self.state {
             EmuState::Paused => {
                 thread::sleep(Duration::from_millis(100));
                 self.runtime.clock.reset();
@@ -71,22 +71,17 @@ impl Emu {
                     thread::sleep(Duration::from_millis(500));
                 }
 
-                self.runtime
-                    .run_frame(&mut self.cpu, RunMode::Normal, true, callback)?;
-
-                RunMode::Normal
+                self.runtime.run_frame(&mut self.cpu, true, callback)?;
             }
-            EmuState::Running(mode) => {
+            EmuState::Running => {
                 self.runtime
-                    .run_frame(&mut self.cpu, mode, self.config.is_muted, callback)?;
+                    .run_frame(&mut self.cpu, self.config.is_muted, callback)?;
                 self.push_rewind();
-
-                mode
             }
         };
 
         let real_elapsed = self.runtime.clock.time.elapsed();
-        let emulated_time = self.calc_emulated_time(mode);
+        let emulated_time = self.calc_emulated_time();
 
         if emulated_time > real_elapsed {
             self.sleep_spin(emulated_time - real_elapsed);
@@ -110,8 +105,8 @@ impl Emu {
         }
     }
 
-    fn calc_emulated_time(&mut self, mode: RunMode) -> Duration {
-        let speed_multiplier = match mode {
+    fn calc_emulated_time(&mut self) -> Duration {
+        let speed_multiplier = match self.runtime.mode {
             RunMode::Normal => self.config.normal_speed,
             RunMode::Slow => self.config.slow_speed,
             RunMode::Turbo => self.config.turbo_speed,
@@ -165,7 +160,7 @@ impl Emu {
         let io = Io::new(Lcd::new(self.runtime.bus.io.lcd.current_pallet));
         self.runtime.bus = Bus::new(cart, io);
         self.cpu = Cpu::default();
-        self.state = EmuState::Running(RunMode::Normal);
+        self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
 

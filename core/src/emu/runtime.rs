@@ -3,12 +3,19 @@ use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateEvent};
-use crate::emu::state::{RunMode};
 use crate::emu::EmuCallback;
 use crate::ppu::{Ppu};
 
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub enum RunMode {
+    Normal,
+    Slow,
+    Turbo,
+}
+
 /// Contains all runnable components.
 pub struct EmuRuntime {
+    pub mode: RunMode,
     pub bus: Bus,
     pub ppu: Ppu,
     pub clock: Clock,
@@ -18,17 +25,21 @@ pub struct EmuRuntime {
 impl EmuRuntime {
     pub fn new(debugger: Option<Debugger>, bus: Bus) -> EmuRuntime {
         Self {
+            mode: RunMode::Normal,
             ppu: Ppu::default(),
             clock: Clock::default(),
             debugger,
             bus,
         }
     }
+    
+    pub fn set_mode(&mut self, mode: RunMode) {
+        self.mode = mode;
+    }
 
     pub fn run_frame(
         &mut self,
         cpu: &mut Cpu,
-        mode: RunMode,
         is_muted: bool,
         callback: &mut impl EmuCallback,
     ) -> Result<(), String> {
@@ -41,7 +52,7 @@ impl EmuRuntime {
                 debugger.print_serial()
             }
 
-            if mode == RunMode::Normal && !is_muted && self.bus.io.apu.output_ready() {
+            if self.mode == RunMode::Normal && !is_muted && self.bus.io.apu.output_ready() {
                 callback.update_audio(self.bus.io.apu.take_output());
             }
         }

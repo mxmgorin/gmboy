@@ -8,15 +8,8 @@ use std::{env, fs};
 use crate::cart::CartSaveState;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
-pub enum RunMode {
-    Normal,
-    Slow,
-    Turbo,
-}
-
-#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum EmuState {
-    Running(RunMode),
+    Running,
     Paused,
     Rewind,
 }

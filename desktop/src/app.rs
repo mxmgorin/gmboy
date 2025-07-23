@@ -1,3 +1,4 @@
+use core::emu::runtime::RunMode;
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
@@ -5,7 +6,6 @@ use crate::video::game_window::GameWindow;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
-use core::emu::state::RunMode;
 use core::emu::state::SaveStateEvent;
 use core::emu::EmuCallback;
 use core::into_palette;
