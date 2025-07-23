@@ -116,7 +116,7 @@ impl InputHandler {
             }
             AppEvent::Pause => {
                 if emu.state == EmuState::Paused {
-                    emu.runtime.set_mode(RunMode::Normal);
+                    emu.state = EmuState::Running;
                 } else {
                     emu.state = EmuState::Paused;
                 }
