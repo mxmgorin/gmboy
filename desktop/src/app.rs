@@ -125,10 +125,11 @@ impl App {
         Ok(())
     }
 
-    pub fn set_scale(&mut self, scale: f32) -> Result<(), String> {
-        self.window.set_scale(scale as u32)?;
+    pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
+        self.config.interface.scale += delta;
+        self.window.set_scale(self.config.interface.scale as u32)?;
 
-        println!("Current scale: {scale}");
+        println!("Current scale: {}", self.config.interface.scale);
 
         Ok(())
     }

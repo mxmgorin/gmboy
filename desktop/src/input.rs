@@ -269,14 +269,12 @@ impl InputHandler {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    app.config.interface.scale += 1.0;
-                    app.set_scale(app.config.interface.scale).unwrap();
+                    app.change_scale(1.0).unwrap();
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    app.config.interface.scale -= 1.0;
-                    app.set_scale(app.config.interface.scale).unwrap();
+                    app.change_scale(-1.0).unwrap();
                 }
             }
             Keycode::F => {
