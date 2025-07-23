@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub last_cart_path: Option<String>,
     pub save_state_on_exit: bool,
     pub interface: InterfaceConfig,
+    pub audio: AudioConfig,
 }
 
 impl AppConfig {
@@ -29,6 +30,11 @@ impl AppConfig {
     pub fn set_emu(&mut self, config: EmuConfig) {
         self.emulation = config;
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AudioConfig {
+    pub mute: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,6 +98,9 @@ impl Default for AppConfig {
                 show_fps: false,
                 text_scale: 1,
                 tile_viewer: false,
+            },
+            audio: AudioConfig {
+                mute: false,
             },
         }
     }

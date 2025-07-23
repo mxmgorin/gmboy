@@ -40,7 +40,6 @@ impl EmuRuntime {
     pub fn run_frame(
         &mut self,
         cpu: &mut Cpu,
-        is_muted: bool,
         callback: &mut impl EmuCallback,
     ) -> Result<(), String> {
         let start_frame = self.ppu.current_frame;
@@ -52,7 +51,7 @@ impl EmuRuntime {
                 debugger.print_serial()
             }
 
-            if self.mode == RunMode::Normal && !is_muted && self.bus.io.apu.output_ready() {
+            if self.mode == RunMode::Normal && self.bus.io.apu.output_ready() {
                 callback.update_audio(self.bus.io.apu.take_output());
             }
         }

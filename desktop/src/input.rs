@@ -130,7 +130,7 @@ impl InputHandler {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
             },
-            AppEvent::Mute => emu.config.is_muted = !emu.config.is_muted,
+            AppEvent::Mute => app.config.audio.mute = !app.config.audio.mute,
             AppEvent::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppEvent::PickFile =>
             {

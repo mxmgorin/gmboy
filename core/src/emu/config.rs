@@ -8,7 +8,6 @@ pub struct EmuConfig {
     pub normal_speed: f64,
     pub slow_speed: f64,
     pub turbo_speed: f64,
-    pub is_muted: bool,
     pub spin_duration: Duration,
 }
 
@@ -20,7 +19,6 @@ impl Default for EmuConfig {
             normal_speed: 1.0,
             slow_speed: 0.5,
             turbo_speed: 5.0,
-            is_muted: false,
             spin_duration: Duration::from_millis(1),
         }
     }

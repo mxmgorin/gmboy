@@ -45,6 +45,10 @@ impl EmuCallback for App {
     }
 
     fn update_audio(&mut self, output: &[f32]) {
+        if self.config.audio.mute {
+            return;
+        }
+        
         self.audio.queue(output);
     }
 
