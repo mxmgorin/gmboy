@@ -1,4 +1,5 @@
-use core::emu::config::{EmuConfig, ColorPalette};
+use core::apu::apu::ApuConfig;
+use core::emu::config::{ColorPalette, EmuConfig};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fs::File;
@@ -23,11 +24,11 @@ impl AppConfig {
         Some(path.file_stem()?.to_string_lossy())
     }
 
-    pub fn get_emu(&self) -> &EmuConfig {
+    pub fn get_emu_config(&self) -> &EmuConfig {
         &self.emulation
     }
 
-    pub fn set_emu(&mut self, config: EmuConfig) {
+    pub fn set_emu_config(&mut self, config: EmuConfig) {
         self.emulation = config;
     }
 }
@@ -37,6 +38,19 @@ pub struct AudioConfig {
     pub mute: bool,
     pub mute_turbo: bool,
     pub mute_slow: bool,
+    pub sampling_frequency: i32,
+    pub buffer_size: usize,
+    pub volume: f32,
+}
+
+impl AudioConfig {
+    pub fn get_apu_config(&self) -> ApuConfig {
+        ApuConfig {
+            sampling_frequency: self.sampling_frequency,
+            buffer_size: self.buffer_size,
+            volume: self.volume,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -88,6 +102,8 @@ impl AppConfig {
 
 impl Default for AppConfig {
     fn default() -> Self {
+        let apu_config = ApuConfig::default();
+
         Self {
             last_cart_path: None,
             save_state_on_exit: false,
@@ -105,6 +121,9 @@ impl Default for AppConfig {
                 mute: false,
                 mute_turbo: true,
                 mute_slow: true,
+                sampling_frequency: apu_config.sampling_frequency,
+                buffer_size: apu_config.buffer_size,
+                volume: apu_config.volume,
             },
         }
     }

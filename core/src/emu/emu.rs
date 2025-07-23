@@ -14,6 +14,7 @@ use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
 use std::{fs, mem, thread};
+use crate::apu::{Apu, ApuConfig};
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
@@ -39,10 +40,12 @@ impl Emu {
     pub fn new(
         config: EmuConfig,
         pallet: [PixelColor; 4],
+        apu_config: ApuConfig,
         debugger: Option<Debugger>,
     ) -> Result<Self, String> {
         let lcd = Lcd::new(pallet);
-        let bus = Bus::with_bytes(vec![], Io::new(lcd));
+        let io = Io::new(lcd, Apu::new(apu_config));
+        let bus = Bus::with_bytes(vec![], io);
 
         Ok(Self {
             cpu: Cpu::default(),
@@ -156,8 +159,7 @@ impl Emu {
             return;
         };
 
-        let io = Io::new(Lcd::new(self.runtime.bus.io.lcd.current_pallet));
-        self.runtime.bus = Bus::new(cart, io);
+        self.runtime.bus.load_cart(cart);
         self.cpu = Cpu::default();
         self.state = EmuState::Running;
         self.runtime.clock.reset();

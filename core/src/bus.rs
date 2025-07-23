@@ -91,6 +91,11 @@ impl Bus {
             oam_ram: Default::default(),
         }
     }
+    
+    pub fn load_cart(&mut self, cart: Cart) {
+        self.cart = cart;
+        self.flat_mem = None;
+    }
 
     /// Creates with just array as memory. Use only for tests.
     pub fn with_bytes(bytes: Vec<u8>, io: Io) -> Self {

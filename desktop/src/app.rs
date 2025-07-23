@@ -91,7 +91,7 @@ impl App {
             curr_palette: into_palette(
                 &config.interface.palettes[config.interface.selected_palette_idx].hex_colors,
             ),
-            audio: AppAudio::new(sdl),
+            audio: AppAudio::new(sdl, &config.audio),
             config,
             window: renderer,
         })
@@ -179,7 +179,7 @@ impl App {
 
     pub fn save_files(&mut self, emu: &mut Emu) -> Result<(), String> {
         // save config
-        self.config.set_emu(emu.config.clone());
+        self.config.set_emu_config(emu.config.clone());
         if let Err(err) = self.config.save_file().map_err(|e| e.to_string()) {
             eprint!("Failed config.save: {err}");
         }

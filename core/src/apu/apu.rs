@@ -15,22 +15,34 @@ use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
 use crate::cpu::CPU_CLOCK_SPEED;
 use crate::{get_bit_flag, set_bit};
-use serde::de::Error;
-use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
 pub const AUDIO_END_ADDRESS: u16 = 0xFF26;
 
 pub const APU_CLOCK_SPEED: u16 = 512;
-pub const SAMPLING_FREQ: u16 = 48000;
-
 pub const AUDIO_MASTER_CONTROL_ADDRESS: u16 = 0xFF26;
 pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
-pub const AUDIO_BUFFER_SIZE: usize = 512;
 
 pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ApuConfig {
+    pub sampling_frequency: i32,
+    pub buffer_size: usize,
+    pub volume: f32,
+}
+
+impl Default for ApuConfig {
+    fn default() -> Self {
+        Self {
+            sampling_frequency: 48000,
+            buffer_size: 512,
+            volume: 1.0,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Apu {
@@ -45,53 +57,20 @@ pub struct Apu {
     // other data
     frame_sequencer_step: u8,
     ticks_count: u32,
-    #[serde(
-        serialize_with = "serialize_boxed_array",
-        deserialize_with = "deserialize_boxed_array"
-    )]
-    buffer: Box<[f32; AUDIO_BUFFER_SIZE]>,
+    buffer: Box<[f32]>,
     pub buffer_idx: usize,
     hpf: Hpf,
-}
-fn serialize_boxed_array<S>(
-    arr: &[f32; AUDIO_BUFFER_SIZE],
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let mut seq = serializer.serialize_seq(Some(AUDIO_BUFFER_SIZE))?;
-    for item in arr.iter() {
-        seq.serialize_element(item)?;
-    }
-
-    seq.end()
-}
-
-fn deserialize_boxed_array<'de, D>(
-    deserializer: D,
-) -> Result<Box<[f32; AUDIO_BUFFER_SIZE]>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let vec: Vec<f32> = Deserialize::deserialize(deserializer)?;
-    if vec.len() != AUDIO_BUFFER_SIZE {
-        return Err(Error::custom(format!(
-            "Expected array of length {}, got {}",
-            AUDIO_BUFFER_SIZE,
-            vec.len()
-        )));
-    }
-
-    let boxed_array: Box<[f32; AUDIO_BUFFER_SIZE]> = vec
-        .into_boxed_slice()
-        .try_into()
-        .map_err(|_| Error::custom("Failed to convert Vec to Boxed array"))?;
-    Ok(boxed_array)
+    config: ApuConfig,
 }
 
 impl Default for Apu {
     fn default() -> Self {
+        Self::new(ApuConfig::default())
+    }
+}
+
+impl Apu {
+    pub fn new(config: ApuConfig) -> Self {
         Self {
             ch1: SquareChannel::ch1(),
             ch2: SquareChannel::ch2(),
@@ -101,14 +80,12 @@ impl Default for Apu {
             mixer: Default::default(),
             frame_sequencer_step: 0,
             ticks_count: 0,
-            buffer: Box::new([0.0; AUDIO_BUFFER_SIZE]),
+            buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
-            hpf: Hpf::new(SAMPLING_FREQ as i32),
+            hpf: Hpf::new(config.sampling_frequency),
+            config,
         }
     }
-}
-
-impl Apu {
     pub fn tick(&mut self) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.sequence_frame();
@@ -119,10 +96,10 @@ impl Apu {
         self.ch4.tick();
 
         // down sample by nearest-neighbor
-        let ticks_per_sample = CPU_CLOCK_SPEED / SAMPLING_FREQ as u32;
+        let ticks_per_sample = CPU_CLOCK_SPEED / self.config.sampling_frequency as u32;
 
         if self.ticks_count % ticks_per_sample == 0 {
-            if self.buffer_idx >= AUDIO_BUFFER_SIZE {
+            if self.buffer_idx >= self.config.buffer_size {
                 self.buffer_idx = 0;
             }
 
@@ -133,8 +110,8 @@ impl Apu {
             let (output_left, output_right) = self.mixer.mix();
 
             let (output_left, output_right) = self.hpf.apply_filter(output_left, output_right);
-            self.buffer[self.buffer_idx] = output_left;
-            self.buffer[self.buffer_idx + 1] = output_right;
+            self.buffer[self.buffer_idx] = output_left * self.config.volume;
+            self.buffer[self.buffer_idx + 1] = output_right * self.config.volume;
             self.buffer_idx += 2;
         }
     }
@@ -144,7 +121,7 @@ impl Apu {
     }
 
     pub fn buffer_ready(&self) -> bool {
-        self.buffer_idx >= AUDIO_BUFFER_SIZE / 2
+        self.buffer_idx >= self.config.buffer_size / 2
     }
 
     pub fn write(&mut self, address: u16, value: u8) {

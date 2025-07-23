@@ -45,14 +45,14 @@ pub struct Io {
 }
 
 impl Io {
-    pub fn new(lcd: Lcd) -> Self {
+    pub fn new(lcd: Lcd, apu: Apu) -> Self {
         Io {
             serial: Serial::default(),
             timer: Timer::default(),
             interrupts: Interrupts::default(),
             lcd,
             joypad: Default::default(),
-            apu: Default::default(),
+            apu,
         }
     }
 
