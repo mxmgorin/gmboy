@@ -1,4 +1,10 @@
 use crate::ppu::tile::PixelColor;
+use serde::de::DeserializeOwned;
+use serde::{Serialize};
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+use std::{env, fs, io};
 
 pub mod apu;
 pub mod auxiliary;
@@ -70,6 +76,30 @@ pub fn into_pixel_colors(hex_colors: &[String]) -> [PixelColor; 4] {
         .collect();
 
     colors[..4].try_into().unwrap()
+}
+
+pub fn read_json_file<T: DeserializeOwned>(path: &Path) -> io::Result<T> {
+    let data = fs::read_to_string(path)?;
+    let config =
+        serde_json::from_str(&data).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+    Ok(config)
+}
+
+pub fn save_json_file<T: Serialize>(path: &Path, data: &T) -> io::Result<()> {
+    let mut file = File::create(path)?;
+    let json = serde_json::to_string_pretty(data)?;
+
+    file.write_all(json.as_bytes())
+}
+
+pub fn get_exe_path() -> PathBuf {
+    let exe_path = env::current_exe().expect("Failed to get executable path");
+
+    exe_path
+        .parent()
+        .expect("Failed to get executable directory")
+        .to_path_buf()
 }
 
 #[cfg(test)]

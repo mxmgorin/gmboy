@@ -12,7 +12,7 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
   A `config.json` file lets you customize settings by editing it directly. It is created on first run in the app folder.
 
 - **Multiple Palettes**  
-  Includes different color palettes with ability to add via the config file.
+  Includes different color palettes with ability to add by editing the file.
 
 - **Slow and Turbo Modes**  
   Ability to slow down or speed up emulation. Speed is adjustable via the config file.

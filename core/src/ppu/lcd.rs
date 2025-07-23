@@ -1,12 +1,12 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::emu::config::EmuPalette;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
     TILE_SET_DATA_2_START,
 };
-use crate::ppu::window::Window;
+use crate::ppu::window::LcdWindow;
 use crate::{get_bit_flag, into_pixel_colors, set_bit};
 use serde::{Deserialize, Serialize};
+use crate::ppu::palette::LcdPalette;
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
 pub const LCD_ADDRESS_END: u16 = 0xFF4B;
@@ -39,18 +39,18 @@ pub struct Lcd {
     pub dma_byte: u8,
     pub bg_palette: u8,
     pub obj_palette: [u8; 2],
-    pub window: Window,
+    pub window: LcdWindow,
 
     // Other data
     pub bg_colors: [PixelColor; 4],
     pub sp1_colors: [PixelColor; 4],
     pub sp2_colors: [PixelColor; 4],
-    pub current_pallet: [PixelColor; 4],
+    pub current_colors: [PixelColor; 4],
 }
 
 impl Default for Lcd {
     fn default() -> Self {
-        let palette = into_pixel_colors(&EmuPalette::classic().hex_colors);
+        let palette = into_pixel_colors(&LcdPalette::classic().hex_colors);
 
         Self::new(palette)
     }
@@ -68,8 +68,8 @@ impl Lcd {
             dma_byte: 0,
             bg_palette: 0xFC,
             obj_palette: [0xFF, 0xFF],
-            window: Window::default(),
-            current_pallet: pallet,
+            window: LcdWindow::default(),
+            current_colors: pallet,
             bg_colors: pallet,
             sp1_colors: pallet,
             sp2_colors: pallet,
@@ -95,9 +95,9 @@ impl Lcd {
     }
 
     pub fn set_pallet(&mut self, pallet: [PixelColor; 4]) {
-        self.current_pallet = pallet;
+        self.current_colors = pallet;
 
-        for (i, color) in self.current_pallet.iter().enumerate() {
+        for (i, color) in self.current_colors.iter().enumerate() {
             self.sp1_colors[i] = *color;
             self.sp2_colors[i] = *color;
             self.bg_colors[i] = *color;
@@ -111,10 +111,10 @@ impl Lcd {
             _ => &mut self.bg_colors,
         };
 
-        colors[0] = self.current_pallet[(palette_data & 0b11) as usize];
-        colors[1] = self.current_pallet[((palette_data >> 2) & 0b11) as usize];
-        colors[2] = self.current_pallet[((palette_data >> 4) & 0b11) as usize];
-        colors[3] = self.current_pallet[((palette_data >> 6) & 0b11) as usize];
+        colors[0] = self.current_colors[(palette_data & 0b11) as usize];
+        colors[1] = self.current_colors[((palette_data >> 2) & 0b11) as usize];
+        colors[2] = self.current_colors[((palette_data >> 4) & 0b11) as usize];
+        colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
     }
 
     pub fn write(&mut self, address: u16, value: u8) {

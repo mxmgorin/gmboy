@@ -1,3 +1,4 @@
+use core::ppu::palette::LcdPalette;
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
@@ -31,6 +32,7 @@ pub struct App {
 
     pub tiles_window: Option<TileWindow>,
     pub config: AppConfig,
+    palettes: Box<[LcdPalette]>
 }
 
 impl EmuCallback for App {
@@ -41,7 +43,7 @@ impl EmuCallback for App {
             self.window.draw_fps(
                 runtime.ppu.fps,
                 self.config.interface.text_scale,
-                runtime.bus.io.lcd.current_pallet[0],
+                runtime.bus.io.lcd.current_colors[0],
             );
         }
 
@@ -65,8 +67,8 @@ impl EmuCallback for App {
     }
 
     fn paused(&mut self, runtime: &EmuRuntime) {
-        let text_color = runtime.bus.io.lcd.current_pallet[0];
-        let bg_color = runtime.bus.io.lcd.current_pallet[3];
+        let text_color = runtime.bus.io.lcd.current_colors[0];
+        let bg_color = runtime.bus.io.lcd.current_colors[3];
 
         if self.config.last_cart_path.is_none() {
             self.draw_text(
@@ -82,7 +84,7 @@ impl EmuCallback for App {
 }
 
 impl App {
-    pub fn new(sdl: &mut Sdl, config: AppConfig) -> Result<Self, String> {
+    pub fn new(sdl: &mut Sdl, config: AppConfig, palettes: Box<[LcdPalette]>) -> Result<Self, String> {
         let video_subsystem = sdl.video()?;
         let mut renderer = GameWindow::new(config.interface.scale as u32, &video_subsystem)?;
         renderer.set_fullscreen(config.interface.is_fullscreen);
@@ -102,6 +104,7 @@ impl App {
             audio: AppAudio::new(sdl, &config.audio),
             config,
             window: renderer,
+            palettes,
         })
     }
 
@@ -147,9 +150,9 @@ impl App {
     pub fn next_palette(&mut self, emu: &mut Emu) {
         self.config.interface.selected_palette_idx = get_next_pallet_idx(
             self.config.interface.selected_palette_idx,
-            self.config.interface.palettes.len() - 1,
+            self.palettes.len() - 1,
         );
-        let palette = &self.config.interface.palettes[self.config.interface.selected_palette_idx];
+        let palette = &self.palettes[self.config.interface.selected_palette_idx];
         emu.runtime
             .bus
             .io

@@ -1,3 +1,4 @@
+use core::ppu::palette::LcdPalette;
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
@@ -16,11 +17,12 @@ fn main() {
     let config = get_config();
     let emu_config = config.get_emu_config();
     let apu_config = config.audio.get_apu_config();
-    let emu_palette = config.interface.get_current_palette();
+    let palettes = get_palettes();
+    let emu_palette = config.interface.get_current_palette(&palettes);
     let mut emu = Emu::new(emu_config.clone(), emu_palette, apu_config, None).unwrap();
     load_cart(&config, &mut emu, args);
     let mut sdl = sdl2::init().unwrap();
-    let mut app = App::new(&mut sdl, config).unwrap();
+    let mut app = App::new(&mut sdl, config, palettes).unwrap();
     let mut input = InputHandler::new(&sdl).unwrap();
 
     if let Err(err) = app.run(&mut emu, &mut input) {
@@ -66,5 +68,18 @@ fn get_config() -> AppConfig {
         }
 
         config
+    }
+}
+
+fn get_palettes() -> Box<[LcdPalette]> {
+    let path = LcdPalette::default_palettes_path();
+
+    if path.exists() {
+        core::read_json_file(&path).unwrap()
+    } else {
+        let palettes = LcdPalette::default_palettes().into_boxed_slice();
+        LcdPalette::save_palettes_file(&palettes).unwrap();
+
+        palettes
     }
 }

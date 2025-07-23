@@ -4,7 +4,7 @@ use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct Window {
+pub struct LcdWindow {
     // registers
     pub y: u8,
     pub x: u8,
@@ -12,7 +12,7 @@ pub struct Window {
     pub line_number: u8,
 }
 
-impl Window {
+impl LcdWindow {
     pub fn on(&self, lcd: &Lcd) -> bool {
         self.is_visible(lcd)
             && lcd.ly >= self.y

@@ -1,5 +1,6 @@
 use core::apu::apu::ApuConfig;
-use core::emu::config::{EmuConfig, EmuPalette};
+use core::emu::config::EmuConfig;
+use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -57,7 +58,6 @@ impl AudioConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InterfaceConfig {
     pub selected_palette_idx: usize,
-    pub palettes: Vec<EmuPalette>,
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
@@ -66,10 +66,10 @@ pub struct InterfaceConfig {
 }
 
 impl InterfaceConfig {
-    pub fn get_current_palette(&self) -> [PixelColor; 4] {
+    pub fn get_current_palette(&self, palettes: &[LcdPalette]) -> [PixelColor; 4] {
         let idx = self.selected_palette_idx;
 
-        core::into_pixel_colors(&self.palettes[idx].hex_colors)
+        core::into_pixel_colors(&palettes[idx].hex_colors)
     }
 }
 
@@ -104,7 +104,6 @@ impl AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         let apu_config = ApuConfig::default();
-        let palettes = EmuPalette::default_palettes();
 
         Self {
             last_cart_path: None,
@@ -112,7 +111,6 @@ impl Default for AppConfig {
             emulation: Default::default(),
             interface: InterfaceConfig {
                 selected_palette_idx: 0,
-                palettes,
                 scale: 5.0,
                 is_fullscreen: false,
                 show_fps: false,
