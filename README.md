@@ -31,28 +31,28 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 
 ## Keybindings
 
-| Action                        | ⌨️ Keyboard              | 🎮 Gamepad        |
-|-------------------------------|--------------------------|-------------------|
-| D-pad Up                      | Arrow Up                 | D-pad Up          |
-| D-pad Down                    | Arrow Down               | D-pad Down        |
-| D-pad Left                    | Arrow Left               | D-pad Left        |
-| D-pad Right                   | Arrow Right              | D-pad Right       |
-| B                             | Z                        | B                 |
-| A                             | X                        | A                 |
-| Start                         | Enter (Return)           | Start             |
-| Select                        | Backspace                | Select            |
-| Toggle **Rewind** (hold)      | Left Ctrl / Right Ctrl   | Y                 |
-| Toggle **Turbo** (hold)       | Tab                      | Right Shoulder    |
-| Toggle **Slow motion** (hold) | Left Shift / Right Shift | Left Shoulder     |
-| Pause                         | Space                    |                   |
-| Restart                       | R                        |                   |
-| Screen scale up               | + (Equals)               |                   |
-| Screen scale down             | - (Minus)                |                   |
-| Fullscreen Toggle             | F                        |                   |
-| Mute audio                    | M                        |                   |
-| Cycle color palettes          | P                        | X                 |
-| Load save state (1–9)         | F1–F19                   | Right Trigger (1) |
-| Create save state (1–9)       | 1–9                      | Left Trigger (1)  |
+| Action                  | ⌨️ Keyboard              | 🎮 Gamepad        |
+|-------------------------|--------------------------|-------------------|
+| D-pad Up                | Arrow Up                 | D-pad Up          |
+| D-pad Down              | Arrow Down               | D-pad Down        |
+| D-pad Left              | Arrow Left               | D-pad Left        |
+| D-pad Right             | Arrow Right              | D-pad Right       |
+| B                       | Z                        | B                 |
+| A                       | X                        | A                 |
+| Start                   | Enter (Return)           | Start             |
+| Select                  | Backspace                | Select            |
+| Rewind (hold)           | Left Ctrl / Right Ctrl   | Y                 |
+| Turbo mode (hold)       | Tab                      | Right Shoulder    |
+| Slow mode (hold)        | Left Shift / Right Shift | Left Shoulder     |
+| Pause                   | Space                    |                   |
+| Restart                 | R                        |                   |
+| Screen scale up         | + (Equals)               |                   |
+| Screen scale down       | - (Minus)                |                   |
+| Fullscreen Toggle       | F                        |                   |
+| Mute audio              | M                        |                   |
+| Change color palette    | P                        | X                 |
+| Load save state (1–9)   | F1–F19                   | Right Trigger (1) |
+| Create save state (1–9) | 1–9                      | Left Trigger (1)  |
 
 ## Implemented
 
