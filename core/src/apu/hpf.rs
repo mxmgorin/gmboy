@@ -15,7 +15,7 @@ pub struct Hpf {
 }
 
 impl Hpf {
-    pub fn new(sampling_freq: i32) -> Hpf {
+    pub fn new(sampling_freq: u32) -> Hpf {
         Self {
             left_capacitor: 0.0,
             right_capacitor: 0.0,
@@ -49,7 +49,7 @@ impl Hpf {
 }
 
 /// 0.999958 and 0.998943 for MGB&CGB
-fn calc_charge_factor(sampling_freq: i32) -> f32 {
+fn calc_charge_factor(sampling_freq: u32) -> f32 {
     0.999958_f32.powf(4194304.0 / sampling_freq as f32)
 }
 
@@ -62,11 +62,10 @@ mod tests {
         let output_rate = 44100;
         let expected_factor = 0.996;
         let calculated_factor = calc_charge_factor(output_rate);
+
         assert!(
             (calculated_factor - expected_factor).abs() < 0.001,
-            "Expected {}, got {}",
-            expected_factor,
-            calculated_factor
+            "Expected {expected_factor}, got {calculated_factor}",
         );
     }
 }

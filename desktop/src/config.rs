@@ -40,7 +40,7 @@ pub struct AudioConfig {
     pub mute: bool,
     pub mute_turbo: bool,
     pub mute_slow: bool,
-    pub sampling_frequency: i32,
+    pub sampling_frequency: u32,
     pub buffer_size: usize,
     pub volume: f32,
 }

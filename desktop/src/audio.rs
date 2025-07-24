@@ -12,7 +12,7 @@ impl AppAudio {
     pub fn new(sdl: &Sdl, config: &AudioConfig) -> Self {
         let audio_subsystem = sdl.audio().unwrap();
         let desired_spec = AudioSpecDesired {
-            freq: Some(config.sampling_frequency),
+            freq: Some(config.sampling_frequency as i32),
             channels: Some(2),
             samples: Some(config.buffer_size as u16),
         };

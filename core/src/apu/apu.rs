@@ -29,7 +29,7 @@ pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApuConfig {
-    pub sampling_frequency: i32,
+    pub sampling_frequency: u32,
     pub buffer_size: usize,
     pub volume: f32,
 }
@@ -100,7 +100,7 @@ impl Apu {
         self.ch4.tick();
 
         // down sample by nearest-neighbor
-        let ticks_per_sample = CPU_CLOCK_SPEED / self.config.sampling_frequency as u32;
+        let ticks_per_sample = CPU_CLOCK_SPEED / self.config.sampling_frequency;
 
         if self.ticks_count % ticks_per_sample == 0 {
             if self.buffer_idx >= self.config.buffer_size {
