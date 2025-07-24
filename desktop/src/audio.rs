@@ -1,3 +1,4 @@
+use core::apu::SAMPLING_FREQUENCY;
 use crate::config::AudioConfig;
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
@@ -12,7 +13,7 @@ impl AppAudio {
     pub fn new(sdl: &Sdl, config: &AudioConfig) -> Self {
         let audio_subsystem = sdl.audio().unwrap();
         let desired_spec = AudioSpecDesired {
-            freq: Some(config.sampling_frequency as i32),
+            freq: Some(SAMPLING_FREQUENCY as i32),
             channels: Some(2),
             samples: Some(config.buffer_size as u16),
         };

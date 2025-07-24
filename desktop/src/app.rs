@@ -232,8 +232,7 @@ impl App {
 }
 
 pub fn change_volume(app: &mut App, emu: &mut Emu, delta: f32) {
-    emu.runtime.bus.io.apu.config.volume =
-        (((emu.runtime.bus.io.apu.config.volume + delta) * 10.0).round() / 10.0).clamp(0.0, 2.0);
+    emu.runtime.bus.io.apu.config.change_volume(delta);
     app.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
 
     println!("Current volume: {}", app.config.audio.volume);

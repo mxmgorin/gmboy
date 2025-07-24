@@ -40,18 +40,13 @@ pub struct AudioConfig {
     pub mute: bool,
     pub mute_turbo: bool,
     pub mute_slow: bool,
-    pub sampling_frequency: u32,
     pub buffer_size: usize,
     pub volume: f32,
 }
 
 impl AudioConfig {
     pub fn get_apu_config(&self) -> ApuConfig {
-        ApuConfig {
-            sampling_frequency: self.sampling_frequency,
-            buffer_size: self.buffer_size,
-            volume: self.volume,
-        }
+        ApuConfig::new(self.buffer_size, self.volume)
     }
 }
 
@@ -121,7 +116,6 @@ impl Default for AppConfig {
                 mute: false,
                 mute_turbo: true,
                 mute_slow: true,
-                sampling_frequency: apu_config.sampling_frequency,
                 buffer_size: apu_config.buffer_size,
                 volume: apu_config.volume,
             },

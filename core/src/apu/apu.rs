@@ -26,21 +26,31 @@ pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
 
 pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
+pub const SAMPLING_FREQUENCY: u32 = 44_100; // native is 41_943
+const TICKS_PER_SAMPLE: u32 = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApuConfig {
-    pub sampling_frequency: u32,
     pub buffer_size: usize,
     pub volume: f32,
 }
 
+impl ApuConfig {
+    pub fn new(buffer_size: usize, volume: f32) -> Self {
+        Self {
+            buffer_size,
+            volume,
+        }
+    }
+
+    pub fn change_volume(&mut self, delta: f32) {
+        self.volume = (((self.volume + delta) * 10.0).round() / 10.0).clamp(0.0, 2.0);
+    }
+}
+
 impl Default for ApuConfig {
     fn default() -> Self {
-        Self {
-            sampling_frequency: 48000,
-            buffer_size: 512,
-            volume: 1.0,
-        }
+        Self::new(512, 1.0)
     }
 }
 
@@ -57,8 +67,8 @@ pub struct Apu {
     // other data
     frame_sequencer_step: u8,
     ticks_count: u32,
-    buffer: Box<[f32]>,
     buffer_idx: usize,
+    buffer: Box<[f32]>,
     hpf: Hpf,
     pub config: ApuConfig,
 }
@@ -86,7 +96,7 @@ impl Apu {
             ticks_count: 0,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
-            hpf: Hpf::new(config.sampling_frequency),
+            hpf: Hpf::new(SAMPLING_FREQUENCY),
             config,
         }
     }
@@ -100,9 +110,7 @@ impl Apu {
         self.ch4.tick();
 
         // down sample by nearest-neighbor
-        let ticks_per_sample = CPU_CLOCK_SPEED / self.config.sampling_frequency;
-
-        if self.ticks_count % ticks_per_sample == 0 {
+        if self.ticks_count % TICKS_PER_SAMPLE == 0 {
             if self.buffer_idx >= self.config.buffer_size {
                 self.clear_buffer();
             }
