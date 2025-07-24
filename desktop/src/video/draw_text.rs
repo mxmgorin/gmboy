@@ -24,11 +24,11 @@ pub fn calc_text_height(scale: usize) -> usize {
 }
 
 #[derive(Clone, Copy)]
-pub struct CenterText {
+pub struct CenterAlignedText {
     pub longest_text_width: usize,
 }
 
-impl CenterText {
+impl CenterAlignedText {
     pub fn new(lines: &[&str], scale: usize) -> Self {
         let len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
 
@@ -45,10 +45,10 @@ pub fn draw_text_lines(
     x: usize, // left edge of the whole block
     y: usize,
     scale: usize,
-    center: Option<CenterText>,
+    align_center: Option<CenterAlignedText>,
 ) {
     // Compute widest line (in pixels)
-    let max_line_width = if let Some(center) = center {
+    let max_line_width = if let Some(center) = align_center {
         center.longest_text_width
     } else {
         0
@@ -71,7 +71,7 @@ pub fn draw_text_lines(
                 }
 
                 // Shift shorter lines right to center under longest
-                let x_offset = if center.is_some() {
+                let x_offset = if align_center.is_some() {
                     x + (max_line_width - line_width) / 2
                 } else {
                     x

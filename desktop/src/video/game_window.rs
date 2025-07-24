@@ -1,4 +1,4 @@
-use crate::video::draw_text::{calc_text_height, calc_text_width_str, draw_text_lines, CenterText};
+use crate::video::draw_text::{calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText};
 use crate::video::fill_texture;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
@@ -83,11 +83,11 @@ impl GameWindow {
         scale: usize,
         color: PixelColor,
         bg_color: PixelColor,
-        center: bool,
+        align_center: bool,
     ) {
         self.canvas.clear();
-        let (center, text_width) = if center {
-            let center = CenterText::new(lines, scale);
+        let (align_center, text_width) = if align_center {
+            let center = CenterAlignedText::new(lines, scale);
 
             (Some(center), center.longest_text_width)
         } else {
@@ -99,7 +99,7 @@ impl GameWindow {
         let y = (LCD_Y_RES as u32 as usize - text_height) / 2;
 
         fill_texture(&mut self.texture, bg_color);
-        draw_text_lines(&mut self.texture, lines, color, x, y, scale, center);
+        draw_text_lines(&mut self.texture, lines, color, x, y, scale, align_center);
 
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))

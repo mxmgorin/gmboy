@@ -141,14 +141,14 @@ impl App {
         lines: &[&str],
         text_color: PixelColor,
         bg_color: PixelColor,
-        center: bool,
+        align_center: bool,
     ) {
         self.window.draw_text_lines(
             lines,
             self.config.interface.text_scale,
             text_color,
             bg_color,
-            center,
+            align_center,
         );
 
         self.window.present();
