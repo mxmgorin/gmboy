@@ -112,6 +112,13 @@ pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
         .map_err(|e| format!("Failed to read file: {e}"))
 }
 
+pub fn get_next_wrapped(curr_idx: usize, max_idx: usize) -> usize {
+    if curr_idx < max_idx {
+        curr_idx + 1
+    } else {
+        0
+    }
+}
 #[cfg(test)]
 pub mod tests {
     use super::*;

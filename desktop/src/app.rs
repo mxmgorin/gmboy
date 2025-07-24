@@ -80,7 +80,7 @@ impl EmuCallback for App {
                 true,
             );
         } else {
-            self.draw_text(&["PAUSED"], text_color, bg_color, true);
+            self.draw_text(&["PAUSED"], text_color, bg_color, false);
         }
     }
 }
@@ -155,7 +155,7 @@ impl App {
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
-        self.config.interface.selected_palette_idx = get_next_pallet_idx(
+        self.config.interface.selected_palette_idx = core::get_next_wrapped(
             self.config.interface.selected_palette_idx,
             self.palettes.len() - 1,
         );
@@ -238,12 +238,4 @@ pub fn change_volume(app: &mut App, emu: &mut Emu, delta: f32) {
     app.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
 
     println!("Current volume: {}", app.config.audio.volume);
-}
-
-fn get_next_pallet_idx(curr_idx: usize, max_idx: usize) -> usize {
-    if curr_idx < max_idx {
-        curr_idx + 1
-    } else {
-        0
-    }
 }
