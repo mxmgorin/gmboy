@@ -39,13 +39,13 @@ pub struct Emu {
 impl Emu {
     pub fn new(
         config: EmuConfig,
-        pallet: [PixelColor; 4],
+        colors: [PixelColor; 4],
         apu_config: ApuConfig,
         debugger: Option<Debugger>,
     ) -> Result<Self, String> {
-        let lcd = Lcd::new(pallet);
+        let lcd = Lcd::new(colors);
         let io = Io::new(lcd, Apu::new(apu_config));
-        let bus = Bus::with_bytes(vec![], io);
+        let bus = Bus::new(Cart::empty(), io);
 
         Ok(Self {
             cpu: Cpu::default(),
