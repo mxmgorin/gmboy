@@ -64,24 +64,20 @@ pub fn get_cart() -> Cart {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let cart = Cart::new(vec![0; 100000].into_boxed_slice()).unwrap();
-    let bus = Bus::new(cart, Default::default());
-    let mut callback = CounterCpuCallback {
-        m_cycles_count: 0,
-        bus: bus.clone(),
-    };
-    let mut cpu = Cpu::default();
-    let mut timer = Timer::default();
-
-    c.bench_function("timer_tick", |b| {
-        b.iter(|| timer_tick(&mut timer, &mut callback.bus.io.interrupts))
-    });
-    c.bench_function("fetch_data", |b| {
-        b.iter(|| fetch_data(&mut cpu, &mut callback))
-    });
-    c.bench_function("execute", |b| b.iter(|| execute(&mut cpu, &mut callback)));
-    c.bench_function("cpu_step", |b| {
-        b.iter(|| instructions(&mut cpu, &mut callback))
+    c.bench_function("timer_tick_5_000_000", |b| {
+        b.iter_batched(
+            || {
+                let timer = Timer::default();
+                let interrupts = Interrupts::default();
+                (timer, interrupts)
+            },
+            |(mut timer, mut interrupts)| {
+                for _ in 0..5_000_000 {
+                    timer.tick(&mut interrupts);
+                }
+            },
+            BatchSize::SmallInput,
+        );
     });
 
     c.bench_function("ppu_tick_5_000_000", |b| {
@@ -102,9 +98,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("apu_tick_5_000_000", |b| {
         b.iter_batched(
-            || {
-                Apu::default()
-            },
+            Apu::default,
             |mut apu| {
                 for _ in 0..5_000_000 {
                     apu.tick();
