@@ -84,7 +84,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| instructions(&mut cpu, &mut callback))
     });
 
-    c.bench_function("ppu_tick_1_000_000", |b| {
+    c.bench_function("ppu_tick_5_000_000", |b| {
         b.iter_batched(
             || {
                 let ppu = Ppu::default();
@@ -92,7 +92,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 (ppu, bus)
             },
             |(mut ppu, mut bus)| {
-                for _ in 0..1_000_000 {
+                for _ in 0..5_000_000 {
                     ppu.tick(&mut bus);
                 }
             },

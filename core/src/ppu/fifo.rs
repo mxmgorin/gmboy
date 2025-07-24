@@ -24,14 +24,24 @@ impl Default for PixelFifo {
 
 impl PixelFifo {
     pub fn push(&mut self, pixel: Pixel) {
-        self.buffer[self.tail] = pixel;
+        // SAFETY:
+        // - we change tail only here and don't give any mut reference
+        unsafe {
+            *self.buffer.get_unchecked_mut(self.tail) = pixel;
+        }
+
         self.tail = (self.tail + 1) % BUFFER_SIZE;
         self.size += 1;
     }
 
     pub fn pop(&mut self) -> Option<Pixel> {
         if self.size > MAX_FIFO_SIZE {
-            let pixel = self.buffer[self.head];
+            // SAFETY:
+            // - we change head only here and don't give any mut reference
+            // - buffer size is bigger than `MAX_FIFO_SIZE`
+            let pixel = unsafe {
+                self.buffer.get_unchecked(self.head).to_owned()
+            };
             self.head = (self.head + 1) % BUFFER_SIZE;
             self.size -= 1;
 
