@@ -4,7 +4,7 @@ use sdl2::render::Texture;
 pub mod game_window;
 pub mod draw_text;
 pub mod tiles_window;
-mod font;
+mod char;
 
 const BYTES_PER_PIXEL: usize = 4;
 

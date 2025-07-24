@@ -2,7 +2,7 @@ use core::ppu::tile::PixelColor;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
 use crate::video::BYTES_PER_PIXEL;
-use crate::video::font::{get_font_index, FONT};
+use crate::video::char::get_char_bitmap;
 
 const CHAR_WIDTH: usize = 8;
 const CHAR_HEIGHT: usize = 8;
@@ -59,11 +59,13 @@ pub fn draw_text_lines(
             for (line_index, line) in lines.iter().enumerate() {
                 // Compute this line's width
                 let mut line_width = 0;
+
                 for c in line.chars() {
-                    if c == ' ' || get_font_index(c).is_some() {
+                    if c == ' ' || get_char_bitmap(c).is_some() {
                         line_width += (CHAR_WIDTH * scale) + CHAR_SPACING;
                     }
                 }
+
                 if line_width >= CHAR_SPACING {
                     line_width -= CHAR_SPACING;
                 }
@@ -84,16 +86,10 @@ pub fn draw_text_lines(
                         continue;
                     }
 
-                    let Some(char_index) = get_font_index(c) else {
+                    let Some(bitmap) = get_char_bitmap(c) else {
+                        //cursor_x += (CHAR_WIDTH * scale) + CHAR_SPACING;
                         continue;
                     };
-
-                    if char_index >= FONT.len() {
-                        cursor_x += (CHAR_WIDTH * scale) + CHAR_SPACING;
-                        continue;
-                    }
-
-                    let bitmap = FONT[char_index];
 
                     for (row, pixel) in bitmap.iter().enumerate() {
                         for col in 0..CHAR_WIDTH {
