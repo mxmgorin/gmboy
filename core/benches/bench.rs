@@ -1,13 +1,15 @@
-use core::cart::Cart;
 use core::auxiliary::timer::Timer;
 use core::bus::Bus;
+use core::cart::Cart;
 use core::cpu::instructions::{
     AddressMode, ExecutableInstruction, Instruction, INSTRUCTIONS_BY_OPCODES,
 };
 use core::cpu::interrupts::Interrupts;
 use core::cpu::{CounterCpuCallback, Cpu};
+use core::emu::read_bytes;
 use core::ppu::Ppu;
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
+use std::path::PathBuf;
 
 pub fn instructions(cpu: &mut Cpu, ctx: &mut CounterCpuCallback) {
     for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
@@ -54,18 +56,18 @@ pub fn timer_tick(timer: &mut Timer, interrupts: &mut Interrupts) {
     }
 }
 
-pub fn ppu_tick(ppu: &mut Ppu, bus: &mut Bus) {
-    for _ in 0..1000 {
-        ppu.tick(bus);
-    }
+pub fn get_cart() -> Cart {
+    let path = PathBuf::from("benches").join("roms").join("dmg-acid2.gb");
+
+    Cart::new(read_bytes(&path).unwrap()).unwrap()
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
     let cart = Cart::new(vec![0; 100000].into_boxed_slice()).unwrap();
-    let mut bus = Bus::new(cart, Default::default());
+    let bus = Bus::new(cart, Default::default());
     let mut callback = CounterCpuCallback {
         m_cycles_count: 0,
-        bus: bus.clone()
+        bus: bus.clone(),
     };
     let mut cpu = Cpu::default();
     let mut timer = Timer::default();
@@ -81,8 +83,21 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| instructions(&mut cpu, &mut callback))
     });
 
-    let mut ppu = Ppu::default();
-    c.bench_function("ppu_tick", |b| b.iter(|| ppu_tick(&mut ppu, &mut bus)));
+    c.bench_function("ppu_tick_1_000_000", |b| {
+        b.iter_batched(
+            || {
+                let ppu = Ppu::default();
+                let bus = Bus::new(get_cart(), Default::default());
+                (ppu, bus)
+            },
+            |(mut ppu, mut bus)| {
+                for _ in 0..1_000_000 {
+                    ppu.tick(&mut bus);
+                }
+            },
+            BatchSize::SmallInput,
+        );
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

@@ -14,7 +14,7 @@ pub fn run_mooneye_rom(
     category: Option<MooneyeRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
-    let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
+    let path = get_mooneye_rom_path(&format!("{name}.gb"), category);
 
     run_mooneye_rom_path(path, timeout)
 }
