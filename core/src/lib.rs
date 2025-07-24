@@ -102,6 +102,16 @@ pub fn get_exe_path() -> PathBuf {
         .to_path_buf()
 }
 
+pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
+    if !file_path.exists() {
+        return Err(format!("File not found: {file_path:?}"));
+    }
+
+    fs::read(file_path)
+        .map(|x| x.into_boxed_slice())
+        .map_err(|e| format!("Failed to read file: {e}"))
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

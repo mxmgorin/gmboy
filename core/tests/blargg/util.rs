@@ -3,7 +3,6 @@ use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
 use core::debugger::{CpuLogType, Debugger};
-use core::emu::emu::read_bytes;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -13,7 +12,7 @@ pub fn run_blargg_rom_serial(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
-    let cart = Cart::new(read_bytes(path.as_path())?)?;
+    let cart = Cart::new(core::read_bytes(path.as_path())?)?;
     let mut cpu = Cpu::default();
     let instant = Instant::now();
     let mut ctx = TestCpuCtx {
@@ -43,8 +42,8 @@ pub fn run_blargg_rom_memory(
     category: Option<BlarggRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
-    let path = get_blargg_rom_path(&format!("{}.gb", name), category);
-    let cart = Cart::new(read_bytes(path.as_path())?)?;
+    let path = get_blargg_rom_path(&format!("{name}.gb"), category);
+    let cart = Cart::new(core::read_bytes(path.as_path())?)?;
     let mut cpu = Cpu::default();
     let instant = Instant::now();
     let mut ctx = TestCpuCtx {

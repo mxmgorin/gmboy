@@ -13,8 +13,9 @@ use crate::ppu::tile::PixelColor;
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
-use std::{fs, mem, thread};
+use std::{mem, thread};
 use crate::apu::{Apu, ApuConfig};
+use crate::read_bytes;
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
@@ -218,14 +219,4 @@ fn print_cart(cart: &Cart) -> Result<(), String> {
     println!("\t Checksum Valid : {}", cart.data.checksum_valid());
 
     Ok(())
-}
-
-pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
-    if !file_path.exists() {
-        return Err(format!("File not found: {file_path:?}"));
-    }
-
-    fs::read(file_path)
-        .map(|x| x.into_boxed_slice())
-        .map_err(|e| format!("Failed to read file: {e}"))
 }
