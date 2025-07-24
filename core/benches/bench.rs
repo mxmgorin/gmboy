@@ -1,3 +1,4 @@
+use core::cart::Cart;
 use core::auxiliary::timer::Timer;
 use core::bus::Bus;
 use core::cpu::instructions::{
@@ -60,27 +61,28 @@ pub fn ppu_tick(ppu: &mut Ppu, bus: &mut Bus) {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    let cart = Cart::new(vec![0; 100000].into_boxed_slice()).unwrap();
+    let mut bus = Bus::new(cart, Default::default());
     let mut callback = CounterCpuCallback {
         m_cycles_count: 0,
-        bus: Bus::with_bytes(vec![10; 100000], Default::default()),
+        bus: bus.clone()
     };
-    let mut cpu = Cpu::default(); // Pre-allocate memory
+    let mut cpu = Cpu::default();
     let mut timer = Timer::default();
 
-    c.bench_function("timer tick", |b| {
+    c.bench_function("timer_tick", |b| {
         b.iter(|| timer_tick(&mut timer, &mut callback.bus.io.interrupts))
     });
-    c.bench_function("fetch data", |b| {
+    c.bench_function("fetch_data", |b| {
         b.iter(|| fetch_data(&mut cpu, &mut callback))
     });
     c.bench_function("execute", |b| b.iter(|| execute(&mut cpu, &mut callback)));
-    c.bench_function("cpu step", |b| {
+    c.bench_function("cpu_step", |b| {
         b.iter(|| instructions(&mut cpu, &mut callback))
     });
 
-    let mut bus = Bus::with_bytes(vec![10; 100000], Default::default());
     let mut ppu = Ppu::default();
-    c.bench_function("ppu tick", |b| b.iter(|| ppu_tick(&mut ppu, &mut bus)));
+    c.bench_function("ppu_tick", |b| b.iter(|| ppu_tick(&mut ppu, &mut bus)));
 }
 
 criterion_group!(benches, criterion_benchmark);
