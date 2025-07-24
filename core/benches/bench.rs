@@ -1,3 +1,4 @@
+use core::apu::Apu;
 use core::auxiliary::timer::Timer;
 use core::bus::Bus;
 use core::cart::Cart;
@@ -93,6 +94,20 @@ fn criterion_benchmark(c: &mut Criterion) {
             |(mut ppu, mut bus)| {
                 for _ in 0..1_000_000 {
                     ppu.tick(&mut bus);
+                }
+            },
+            BatchSize::SmallInput,
+        );
+    });
+
+    c.bench_function("apu_tick_1_000_000", |b| {
+        b.iter_batched(
+            || {
+                Apu::default()
+            },
+            |mut apu| {
+                for _ in 0..1_000_000 {
+                    apu.tick();
                 }
             },
             BatchSize::SmallInput,
