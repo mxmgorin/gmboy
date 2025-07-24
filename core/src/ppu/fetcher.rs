@@ -35,7 +35,6 @@ impl BgwFetchedData {
 
 #[derive(Debug, Clone)]
 pub struct PixelFetcher {
-    pub pushed_x: u8,
     pub sprite_fetcher: SpriteFetcher,
     pub buffer: Box<[u32]>,
 
@@ -45,6 +44,7 @@ pub struct PixelFetcher {
     fifo_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
+    pushed_x: u8,
 }
 
 impl Default for PixelFetcher {
@@ -81,20 +81,25 @@ impl PixelFetcher {
                 // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
                 let index = (self.pushed_x as usize)
                     .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
-                self.buffer[index] = pixel.color.as_argb_u32();
-                self.pushed_x += 1;
+                self.push_buffer(index, pixel);
             } else {
                 // For the background layer, apply scroll_x for horizontal scrolling
                 if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
                     let index = (self.pushed_x as usize)
                         .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
-                    self.buffer[index] = pixel.color.as_argb_u32();
-                    self.pushed_x += 1;
+                    self.push_buffer(index, pixel);
                 }
             }
 
             self.line_x += 1;
         }
+    }
+
+    fn push_buffer(&mut self, index: usize, pixel: Pixel) {
+        unsafe {
+            *self.buffer.get_unchecked_mut(index) = pixel.color.as_argb_u32();
+        }
+        self.pushed_x += 1;
     }
 
     fn fetch(&mut self, bus: &Bus) {
@@ -203,6 +208,10 @@ impl PixelFetcher {
 
     pub fn clear(&mut self) {
         self.pixel_fifo.clear();
+    }
+
+    pub fn is_full(&self) -> bool {
+        self.pushed_x >= LCD_X_RES
     }
 }
 

@@ -82,7 +82,7 @@ impl Ppu {
     fn mode_transfer(&mut self, bus: &mut Bus) {
         self.pipeline.process(bus, self.line_ticks);
 
-        if self.pipeline.pushed_x >= LCD_X_RES {
+        if self.pipeline.is_full() {
             self.pipeline.clear();
             bus.io.lcd.status.set_ppu_mode(PpuMode::HBlank);
 
