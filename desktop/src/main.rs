@@ -49,7 +49,7 @@ fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let mut ppu = Ppu::default();
 
     if config.interface.show_fps {
-        ppu.toggle_fps_counter();
+        ppu.toggle_fps();
     }
 
     let debugger = None;

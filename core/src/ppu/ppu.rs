@@ -21,41 +21,21 @@ impl Tickable for Ppu {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Ppu {
-    pub current_frame: usize,
-    pub line_ticks: usize,
-    pub prev_frame_duration: Duration,
-    pub frame_start_duration: Duration,
-    pub last_frame_duration: Duration,
-    pub frame_count: usize,
-    pub fps_counter: Option<FpsCounter>,
-    pub timer: Instant,
-    pub pipeline: PixelFetcher,
-}
+    line_ticks: usize,
 
-impl Default for Ppu {
-    fn default() -> Self {
-        Self {
-            current_frame: 0,
-            line_ticks: 0,
-            prev_frame_duration: Default::default(),
-            frame_start_duration: Default::default(),
-            last_frame_duration: Default::default(),
-            frame_count: 0,
-            timer: Instant::now(),
-            pipeline: Default::default(),
-            fps_counter: None,
-        }
-    }
+    pub current_frame: usize,
+    pub pipeline: PixelFetcher,
+    pub fps: Option<Fps>,
 }
 
 impl Ppu {
-    pub fn toggle_fps_counter(&mut self) {
-        if self.fps_counter.is_some() {
-            self.fps_counter = None;
+    pub fn toggle_fps(&mut self) {
+        if self.fps.is_some() {
+            self.fps = None;
         } else {
-            self.fps_counter = Some(FpsCounter::default());
+            self.fps = Some(Fps::default());
         }
     }
 
@@ -126,10 +106,9 @@ impl Ppu {
                 }
 
                 self.current_frame += 1;
-                self.prev_frame_duration = self.timer.elapsed();
 
-                if let Some(fps_counter) = self.fps_counter.as_mut() {
-                    fps_counter.update()
+                if let Some(fps) = self.fps.as_mut() {
+                    fps.update()
                 }
             } else {
                 io.lcd.status.set_ppu_mode(PpuMode::Oam);
@@ -141,7 +120,7 @@ impl Ppu {
 }
 
 #[derive(Debug, Clone)]
-pub struct FpsCounter {
+pub struct Fps {
     timer: Instant,
     prev_frame_time: Duration,
     last_fps_update: Duration,
@@ -151,7 +130,7 @@ pub struct FpsCounter {
     fps_str: String,
 }
 
-impl Default for FpsCounter {
+impl Default for Fps {
     fn default() -> Self {
         Self {
             timer: Instant::now(),
@@ -165,7 +144,7 @@ impl Default for FpsCounter {
     }
 }
 
-impl FpsCounter {
+impl Fps {
     pub fn update(&mut self) {
         let now = self.timer.elapsed();
         let frame_time = (now - self.prev_frame_time).as_secs_f32();
@@ -188,7 +167,7 @@ impl FpsCounter {
         }
     }
 
-    pub fn fps_str(&self) -> &str {
+    pub fn display(&self) -> &str {
         &self.fps_str
     }
 }

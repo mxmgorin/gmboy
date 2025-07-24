@@ -40,9 +40,9 @@ impl EmuCallback for App {
         self.window.draw_buffer(buffer);
 
         if self.config.interface.show_fps {
-            if let Some(fps_counter) = &runtime.ppu.fps_counter {
+            if let Some(fps) = &runtime.ppu.fps {
                 self.window.draw_fps(
-                    fps_counter.fps_str(),
+                    fps.display(),
                     self.config.interface.text_scale,
                     runtime.bus.io.lcd.current_colors[0],
                 );
