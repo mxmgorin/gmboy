@@ -90,7 +90,9 @@ impl Cpu {
         self.handle_interrupts(callback);
 
         if self.is_halted {
-            if !callback.get_bus_mut().io.interrupts.ime && callback.get_bus_mut().io.interrupts.any_is_pending() {
+            if !callback.get_bus_mut().io.interrupts.ime
+                && callback.get_bus_mut().io.interrupts.any_is_pending()
+            {
                 // HALT bug: continue executing instructions
                 self.is_halted = false;
             }
@@ -146,7 +148,11 @@ impl Cpu {
                 callback.m_cycles(2);
 
                 self.is_halted = false;
-                callback.get_bus_mut().io.interrupts.acknowledge_interrupt(it);
+                callback
+                    .get_bus_mut()
+                    .io
+                    .interrupts
+                    .acknowledge_interrupt(it);
                 Instruction::goto_addr(self, None, addr, true, callback);
 
                 callback.m_cycles(1);

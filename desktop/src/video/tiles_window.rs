@@ -101,11 +101,7 @@ fn allocate_rect_groups(len: usize) -> [Vec<Rect>; 4] {
     [recs.clone(), recs.clone(), recs.clone(), recs]
 }
 
-fn fill_rect_groups(
-    canvas: &mut Canvas<Window>,
-    item_groups: &[Vec<Rect>; 4],
-    count: [usize; 4],
-) {
+fn fill_rect_groups(canvas: &mut Canvas<Window>, item_groups: &[Vec<Rect>; 4], count: [usize; 4]) {
     for (color_id, items) in item_groups.iter().enumerate() {
         canvas.set_draw_color(SDL_COLORS[color_id]);
         canvas.fill_rects(&items[..count[color_id]]).unwrap();

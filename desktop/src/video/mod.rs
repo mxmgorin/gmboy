@@ -1,10 +1,10 @@
 use core::ppu::tile::PixelColor;
 use sdl2::render::Texture;
 
-pub mod game_window;
-pub mod draw_text;
-pub mod tiles_window;
 mod char;
+pub mod draw_text;
+pub mod game_window;
+pub mod tiles_window;
 
 const BYTES_PER_PIXEL: usize = 4;
 

@@ -1,6 +1,6 @@
 use crate::ppu::tile::PixelColor;
 use serde::de::DeserializeOwned;
-use serde::{Serialize};
+use serde::Serialize;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};

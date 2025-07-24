@@ -66,7 +66,7 @@ mod tests {
         fn default() -> Self {
             Self {
                 t_cycles: 0,
-                bus: Bus::with_bytes(vec![0; 100000], Default::default())
+                bus: Bus::with_bytes(vec![0; 100000], Default::default()),
             }
         }
     }

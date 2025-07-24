@@ -1,5 +1,5 @@
-use core::apu::SAMPLING_FREQUENCY;
 use crate::config::AudioConfig;
+use core::apu::SAMPLING_FREQUENCY;
 use sdl2::audio::{AudioQueue, AudioSpecDesired};
 use sdl2::{AudioSubsystem, Sdl};
 

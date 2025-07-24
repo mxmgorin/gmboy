@@ -1,8 +1,15 @@
-use core::ppu::palette::LcdPalette;
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
+use core::apu::Apu;
+use core::auxiliary::io::Io;
+use core::bus::Bus;
+use core::cart::Cart;
+use core::emu::runtime::EmuRuntime;
 use core::emu::Emu;
+use core::ppu::lcd::Lcd;
+use core::ppu::palette::LcdPalette;
+use core::ppu::Ppu;
 use std::env;
 use std::path::PathBuf;
 
@@ -15,12 +22,11 @@ mod video;
 fn main() {
     let args: Vec<String> = env::args().collect();
     let config = get_config();
-    let emu_config = config.get_emu_config();
-    let apu_config = config.audio.get_apu_config();
     let palettes = get_palettes();
-    let emu_palette = config.interface.get_current_palette(&palettes);
-    let mut emu = Emu::new(emu_config.clone(), emu_palette, apu_config, None).unwrap();
+
+    let mut emu = new_emu(&config, &palettes);
     load_cart(&config, &mut emu, args);
+
     let mut sdl = sdl2::init().unwrap();
     let mut app = App::new(&mut sdl, config, palettes).unwrap();
     let mut input = InputHandler::new(&sdl).unwrap();
@@ -30,6 +36,26 @@ fn main() {
     }
 
     app.save_files(&mut emu).unwrap()
+}
+
+fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
+    let emu_config = config.get_emu_config();
+    let apu_config = config.audio.get_apu_config();
+    let colors = config.interface.get_current_palette(palettes);
+
+    let lcd = Lcd::new(colors);
+    let apu = Apu::new(apu_config);
+    let bus = Bus::new(Cart::empty(), Io::new(lcd, apu));
+    let mut ppu = Ppu::default();
+
+    if config.interface.show_fps {
+        ppu.toggle_fps_counter();
+    }
+
+    let debugger = None;
+    let runtime = EmuRuntime::new(ppu, bus, debugger);
+
+    Emu::new(emu_config.clone(), runtime).unwrap()
 }
 
 fn load_cart(config: &AppConfig, emu: &mut Emu, mut args: Vec<String>) {

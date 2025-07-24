@@ -1,8 +1,8 @@
 use crate::auxiliary::clock::Clock;
+use crate::bus::Bus;
 use crate::cpu::instructions::{FetchedData, Instruction};
 use crate::cpu::{Cpu, DebugCtx};
 use std::borrow::Cow;
-use crate::bus::Bus;
 
 #[derive(Debug, Clone)]
 pub struct Debugger {

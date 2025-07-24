@@ -1,21 +1,15 @@
-use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
-use crate::bus::Bus;
 use crate::cart::Cart;
 use crate::cpu::Cpu;
-use crate::debugger::Debugger;
 use crate::emu::battery::BatterySave;
-use crate::emu::config::{EmuConfig};
+use crate::emu::config::EmuConfig;
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
-use crate::ppu::lcd::Lcd;
-use crate::ppu::tile::PixelColor;
+use crate::read_bytes;
 use std::collections::VecDeque;
 use std::path::Path;
 use std::time::{Duration, Instant};
 use std::{mem, thread};
-use crate::apu::{Apu, ApuConfig};
-use crate::read_bytes;
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
@@ -38,19 +32,10 @@ pub struct Emu {
 }
 
 impl Emu {
-    pub fn new(
-        config: EmuConfig,
-        colors: [PixelColor; 4],
-        apu_config: ApuConfig,
-        debugger: Option<Debugger>,
-    ) -> Result<Self, String> {
-        let lcd = Lcd::new(colors);
-        let io = Io::new(lcd, Apu::new(apu_config));
-        let bus = Bus::new(Cart::empty(), io);
-
+    pub fn new(config: EmuConfig, runtime: EmuRuntime) -> Result<Self, String> {
         Ok(Self {
             cpu: Cpu::default(),
-            runtime: EmuRuntime::new(debugger, bus),
+            runtime,
             prev_speed_multiplier: config.normal_speed,
             state: EmuState::Paused,
             rewind_buffer: VecDeque::with_capacity(config.rewind_size),

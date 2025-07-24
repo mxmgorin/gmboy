@@ -12,7 +12,10 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
 
     let mut bus = setup_bus(test_case);
     let mut cpu = setup_cpu(test_case, &mut bus);
-    let mut ctx = CounterCpuCallback { m_cycles_count: 0, bus };
+    let mut ctx = CounterCpuCallback {
+        m_cycles_count: 0,
+        bus,
+    };
     cpu.step(&mut ctx).unwrap();
 
     let result = test_case.validate_final_state(&cpu, &ctx.bus);
@@ -102,7 +105,6 @@ impl Sm83TestCase {
     pub fn from_json(json: &str) -> Sm83TestCase {
         serde_json::from_str(json).unwrap()
     }
-
 
     pub fn validate_final_state(&self, cpu: &Cpu, bus: &Bus) -> Result<(), String> {
         if cpu.registers.a != self.final_state.a {

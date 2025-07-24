@@ -69,7 +69,6 @@ impl GameWindow {
                             .copy_from_slice(&pixel_buffer[src..src + LCD_X_RES as usize]);
                     }
                 }
-
             })
             .unwrap();
 
@@ -107,10 +106,9 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: usize, scale: usize, color: PixelColor) {
-        let text = fps.to_string();
+    pub fn draw_fps(&mut self, fps: &str, scale: usize, color: PixelColor) {
         fill_texture(&mut self.texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.texture, &[&text], color, 5, 5, scale * 3, None);
+        draw_text_lines(&mut self.texture, &[fps], color, 5, 5, scale * 3, None);
 
         self.canvas
             .copy(&self.texture, None, Some(self.fps_rect))

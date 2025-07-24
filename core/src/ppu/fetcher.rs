@@ -57,8 +57,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![0; LCD_Y_RES as usize * LCD_X_RES as usize]
-                .into_boxed_slice(),
+            buffer: vec![0; LCD_Y_RES as usize * LCD_X_RES as usize].into_boxed_slice(),
             sprite_fetcher: Default::default(),
         }
     }

@@ -1,11 +1,11 @@
 use crate::bus::Bus;
+use crate::cart::CartSaveState;
 use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
-use crate::cart::CartSaveState;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum EmuState {

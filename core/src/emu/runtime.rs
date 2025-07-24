@@ -1,10 +1,10 @@
-use crate::auxiliary::clock::{Clock};
+use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateEvent};
 use crate::emu::EmuCallback;
-use crate::ppu::{Ppu};
+use crate::ppu::Ppu;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum RunMode {
@@ -23,16 +23,16 @@ pub struct EmuRuntime {
 }
 
 impl EmuRuntime {
-    pub fn new(debugger: Option<Debugger>, bus: Bus) -> EmuRuntime {
+    pub fn new(ppu: Ppu, bus: Bus, debugger: Option<Debugger>) -> EmuRuntime {
         Self {
             mode: RunMode::Normal,
-            ppu: Ppu::default(),
+            ppu,
             clock: Clock::default(),
             debugger,
             bus,
         }
     }
-    
+
     pub fn set_mode(&mut self, mode: RunMode) {
         self.mode = mode;
     }

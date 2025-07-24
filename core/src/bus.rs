@@ -91,7 +91,7 @@ impl Bus {
             oam_ram: Default::default(),
         }
     }
-    
+
     pub fn load_cart(&mut self, cart: Cart) {
         self.cart = cart;
         self.flat_mem = None;

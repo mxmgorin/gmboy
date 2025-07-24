@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::ppu::fetcher::{MAX_FIFO_SPRITES_SIZE};
+use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::oam::OamEntry;
 use crate::ppu::tile::{

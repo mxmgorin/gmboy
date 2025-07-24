@@ -1,3 +1,4 @@
+use crate::bus::Bus;
 use crate::cpu::instructions::address_mode::AddressMode;
 use crate::cpu::instructions::arithmetic::adc::AdcInstruction;
 use crate::cpu::instructions::arithmetic::add::AddInstruction;
@@ -38,7 +39,6 @@ use crate::cpu::instructions::{ConditionType, FetchedData};
 use crate::cpu::stack::Stack;
 use crate::cpu::{Cpu, CpuCallback};
 use std::fmt::Display;
-use crate::bus::Bus;
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData);

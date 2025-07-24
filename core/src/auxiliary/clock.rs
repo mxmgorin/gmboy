@@ -1,6 +1,6 @@
 use crate::auxiliary::dma::Dma;
 use crate::bus::Bus;
-use std::time::{Instant};
+use std::time::Instant;
 
 pub const T_CYCLES_PER_M_CYCLE: usize = 4;
 

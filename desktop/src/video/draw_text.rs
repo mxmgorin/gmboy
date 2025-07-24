@@ -1,8 +1,8 @@
+use crate::video::char::get_char_bitmap;
+use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::pixels::Color;
 use sdl2::render::Texture;
-use crate::video::BYTES_PER_PIXEL;
-use crate::video::char::get_char_bitmap;
 
 const CHAR_WIDTH: usize = 8;
 const CHAR_HEIGHT: usize = 8;

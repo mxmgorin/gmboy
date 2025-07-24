@@ -39,9 +39,7 @@ impl PixelFifo {
             // SAFETY:
             // - we change head only here and don't give any mut reference
             // - buffer size is bigger than `MAX_FIFO_SIZE`
-            let pixel = unsafe {
-                self.buffer.get_unchecked(self.head).to_owned()
-            };
+            let pixel = unsafe { self.buffer.get_unchecked(self.head).to_owned() };
             self.head = (self.head + 1) % BUFFER_SIZE;
             self.size -= 1;
 
