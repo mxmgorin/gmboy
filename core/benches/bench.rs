@@ -1,10 +1,10 @@
-use core::read_bytes;
 use core::apu::Apu;
 use core::auxiliary::timer::Timer;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::interrupts::Interrupts;
 use core::ppu::Ppu;
+use core::read_bytes;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::path::PathBuf;
 
@@ -53,6 +53,18 @@ fn criterion_benchmark(c: &mut Criterion) {
             |mut apu| {
                 for _ in 0..5_000_000 {
                     apu.tick();
+                }
+            },
+            BatchSize::SmallInput,
+        );
+    });
+
+    c.bench_function("apu_push_buffer_5_000_000", |b| {
+        b.iter_batched(
+            Apu::default,
+            |mut apu| {
+                for i in 0..5_000_000 {
+                    apu.push_buffer(i as f32, i as f32);
                 }
             },
             BatchSize::SmallInput,

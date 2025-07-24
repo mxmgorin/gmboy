@@ -111,10 +111,6 @@ impl Apu {
 
         // down sample by nearest-neighbor
         if self.ticks_count % TICKS_PER_SAMPLE == 0 {
-            if self.buffer_idx >= self.config.buffer_size {
-                self.clear_buffer();
-            }
-
             (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
             (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
             (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
@@ -122,13 +118,13 @@ impl Apu {
             let (output_left, output_right) = self.mixer.mix();
 
             let (output_left, output_right) = self.hpf.apply_filter(output_left, output_right);
-            self.push_buffer_packed(output_left, output_right);
+            self.push_buffer(output_left, output_right);
         }
     }
 
-    fn push_buffer_packed(&mut self, output_left: f32, output_right: f32) {
-        debug_assert!(self.buffer_idx + 1 < self.buffer.len());
-        debug_assert!(self.buffer.len() % 2 == 0);
+    pub fn push_buffer(&mut self, output_left: f32, output_right: f32) {
+        let buffer_len = self.buffer.len();
+        debug_assert!(buffer_len % 2 == 0);
 
         // SAFETY:
         // - `buffer` is aligned to `f32`, which guarantees at least 4-byte alignment.
@@ -137,10 +133,7 @@ impl Apu {
         // - `buffer.len()` is guaranteed to be even (checked at creation), so dividing by 2
         //   to reinterpret as `u64` slices is safe and valid.
         let buffer_u64 = unsafe {
-            std::slice::from_raw_parts_mut(
-                self.buffer.as_mut_ptr() as *mut u64,
-                self.buffer.len() / 2,
-            )
+            std::slice::from_raw_parts_mut(self.buffer.as_mut_ptr() as *mut u64, buffer_len / 2)
         };
 
         // SAFETY:
@@ -149,16 +142,24 @@ impl Apu {
         //   preserving their exact bit pattern without changing the data.
         // - All bit patterns are valid for both `f32` and `u64`, so this is safe and defined behavior.
         // - Endianness affects byte order but does not affect safety or correctness for raw packing.
-        // - Use this only for packing/unpacking bits; do not perform arithmetic on the packed `u64`.
         let packed = unsafe {
-            // Bit cast two f32s into one u64
             std::mem::transmute::<[f32; 2], u64>([
                 output_left * self.config.volume,
                 output_right * self.config.volume,
             ])
         };
 
-        buffer_u64[self.buffer_idx / 2] = packed;
+        if self.buffer_idx >= buffer_len {
+            self.clear_buffer();
+        }
+
+        // SAFETY:
+        // - `self.buffer_idx` is always even and within bounds of `buffer_u64`.
+        // - this is the only place where `buffer_idx` is written to.
+        unsafe {
+            *buffer_u64.get_unchecked_mut(self.buffer_idx / 2) = packed;
+        }
+
         self.buffer_idx += 2;
     }
 
