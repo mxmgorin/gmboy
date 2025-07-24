@@ -51,7 +51,6 @@ impl GameWindow {
 
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
-                // use u32 for less indexing
                 let pitch_u32 = pitch / 4;
                 let buffer_u32 = unsafe {
                     std::slice::from_raw_parts_mut(
@@ -60,16 +59,20 @@ impl GameWindow {
                     )
                 };
 
-                for y in 0..LCD_Y_RES as usize {
-                    for x in 0..LCD_X_RES as usize {
-                        let offset = y * pitch_u32 + x;
-                        buffer_u32[offset] = pixel_buffer[x + y * LCD_X_RES as usize];
+                if pitch_u32 == LCD_X_RES as usize {
+                    buffer_u32.copy_from_slice(pixel_buffer);
+                } else {
+                    for y in 0..LCD_Y_RES as usize {
+                        let dst = y * pitch_u32;
+                        let src = y * LCD_X_RES as usize;
+                        buffer_u32[dst..dst + LCD_X_RES as usize]
+                            .copy_from_slice(&pixel_buffer[src..src + LCD_X_RES as usize]);
                     }
                 }
+
             })
             .unwrap();
 
-        // Copy the texture while maintaining aspect ratio
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
