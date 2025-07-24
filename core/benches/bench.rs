@@ -100,13 +100,13 @@ fn criterion_benchmark(c: &mut Criterion) {
         );
     });
 
-    c.bench_function("apu_tick_1_000_000", |b| {
+    c.bench_function("apu_tick_5_000_000", |b| {
         b.iter_batched(
             || {
                 Apu::default()
             },
             |mut apu| {
-                for _ in 0..1_000_000 {
+                for _ in 0..5_000_000 {
                     apu.tick();
                 }
             },

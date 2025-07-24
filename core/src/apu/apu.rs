@@ -58,7 +58,7 @@ pub struct Apu {
     frame_sequencer_step: u8,
     ticks_count: u32,
     buffer: Box<[f32]>,
-    pub buffer_idx: usize,
+    buffer_idx: usize,
     hpf: Hpf,
     pub config: ApuConfig,
 }
@@ -70,7 +70,11 @@ impl Default for Apu {
 }
 
 impl Apu {
-    pub fn new(config: ApuConfig) -> Self {
+    pub fn new(mut config: ApuConfig) -> Self {
+        if config.buffer_size % 2 != 0 {
+            config.buffer_size += 1; // we need even buffer
+        }
+
         Self {
             ch1: SquareChannel::ch1(),
             ch2: SquareChannel::ch2(),
@@ -100,7 +104,7 @@ impl Apu {
 
         if self.ticks_count % ticks_per_sample == 0 {
             if self.buffer_idx >= self.config.buffer_size {
-                self.buffer_idx = 0;
+                self.clear_buffer();
             }
 
             (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
@@ -110,14 +114,52 @@ impl Apu {
             let (output_left, output_right) = self.mixer.mix();
 
             let (output_left, output_right) = self.hpf.apply_filter(output_left, output_right);
-            self.buffer[self.buffer_idx] = output_left * self.config.volume;
-            self.buffer[self.buffer_idx + 1] = output_right * self.config.volume;
-            self.buffer_idx += 2;
+            self.push_buffer_packed(output_left, output_right);
         }
+    }
+
+    fn push_buffer_packed(&mut self, output_left: f32, output_right: f32) {
+        debug_assert!(self.buffer_idx + 1 < self.buffer.len());
+        debug_assert!(self.buffer.len() % 2 == 0);
+
+        // SAFETY:
+        // - `buffer` is aligned to `f32`, which guarantees at least 4-byte alignment.
+        // - we create the buffer using `into_boxed_slice` (or `Vec<f32>`), the allocator
+        //   ensures the alignment is at least 8 bytes, which is sufficient for `u64`.
+        // - `buffer.len()` is guaranteed to be even (checked at creation), so dividing by 2
+        //   to reinterpret as `u64` slices is safe and valid.
+        let buffer_u64 = unsafe {
+            std::slice::from_raw_parts_mut(
+                self.buffer.as_mut_ptr() as *mut u64,
+                self.buffer.len() / 2,
+            )
+        };
+
+        // SAFETY:
+        // - `[f32; 2]` and `u64` have the same size (8 bytes).
+        // - `transmute` here performs a bitwise reinterpretation of the two floats as a single u64,
+        //   preserving their exact bit pattern without changing the data.
+        // - All bit patterns are valid for both `f32` and `u64`, so this is safe and defined behavior.
+        // - Endianness affects byte order but does not affect safety or correctness for raw packing.
+        // - Use this only for packing/unpacking bits; do not perform arithmetic on the packed `u64`.
+        let packed = unsafe {
+            // Bit cast two f32s into one u64
+            std::mem::transmute::<[f32; 2], u64>([
+                output_left * self.config.volume,
+                output_right * self.config.volume,
+            ])
+        };
+
+        buffer_u64[self.buffer_idx / 2] = packed;
+        self.buffer_idx += 2;
     }
 
     pub fn get_buffer(&self) -> &[f32] {
         &self.buffer[0..self.buffer_idx]
+    }
+
+    pub fn clear_buffer(&mut self) {
+        self.buffer_idx = 0;
     }
 
     pub fn buffer_ready(&self) -> bool {

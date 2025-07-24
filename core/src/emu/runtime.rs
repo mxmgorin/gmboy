@@ -54,7 +54,7 @@ impl EmuRuntime {
             if self.bus.io.apu.buffer_ready() {
                 let output = self.bus.io.apu.get_buffer();
                 callback.update_audio(output, self);
-                self.bus.io.apu.buffer_idx = 0;
+                self.bus.io.apu.clear_buffer();
             }
         }
 
