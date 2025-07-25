@@ -35,7 +35,8 @@ impl LcdPalette {
             LcdPalette::red_is_dead(),
             LcdPalette::rabbit_5pm(),
             LcdPalette::blueberry(),
-
+            LcdPalette::peach_blizzard(),
+            LcdPalette::m_gb(),
             LcdPalette {
                 name: "Swamp".to_string(),
                 hex_colors: [
@@ -125,6 +126,19 @@ impl LcdPalette {
                 "ff6c2e53".to_string(),
                 "ffaa73e0".to_string(),
                 "ffb0ecf9".to_string(),
+            ],
+        }
+    }
+
+    // Created by Retronika
+    pub fn m_gb() -> Self {
+        Self {
+            name: "M-GB".to_string(),
+            hex_colors: [
+                "ffdbd3c9".to_string(),
+                "ffa3bfa2".to_string(),
+                "ff788f97".to_string(),
+                "ff546a76".to_string(),
             ],
         }
     }
