@@ -1,4 +1,4 @@
-use crate::app::{change_volume, App, AppCommand, AppState};
+use crate::app::{change_volume, App, AppCommand, AppState, ChangeAppConfigCommand};
 use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::runtime::RunMode;
@@ -133,7 +133,6 @@ impl InputHandler {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
             }
-            AppCommand::Mute => app.config.audio.mute = !app.config.audio.mute,
             AppCommand::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppCommand::PickFile =>
             {
@@ -153,25 +152,32 @@ impl InputHandler {
             }
             AppCommand::Rewind => emu.state = EmuState::Rewind,
             AppCommand::Quit => app.state = AppState::Quitting,
-            AppCommand::NextPalette => app.next_palette(emu),
-            AppCommand::ToggleFps => {
-                emu.runtime.ppu.toggle_fps();
-                app.config.interface.show_fps = !app.config.interface.show_fps;
-            }
-            AppCommand::ToggleFullscreen => app.toggle_fullscreen(),
-            AppCommand::ChangeVolume(x) => change_volume(app, emu, x),
-            AppCommand::ChangeScale(x) => app.change_scale(x).unwrap(),
-            AppCommand::ToggleTileWindow => app.toggle_tile_window(),
-            AppCommand::ChangeSpinDuration(x) => {
-                if x < 0 {
-                    emu.config.spin_duration =
-                        emu.config.spin_duration.sub(Duration::from_nanos(x.unsigned_abs() as u64));
-                } else {
-                    emu.config.spin_duration =
-                        emu.config.spin_duration.add(Duration::from_nanos(x as u64));
+            AppCommand::ChangeConfig(cmd) => match cmd {
+                ChangeAppConfigCommand::Volume(x) => change_volume(app, emu, x),
+                ChangeAppConfigCommand::Scale(x) => app.change_scale(x).unwrap(),
+                ChangeAppConfigCommand::ToggleTileWindow => app.toggle_tile_window(),
+                ChangeAppConfigCommand::ToggleFullscreen => app.toggle_fullscreen(),
+                ChangeAppConfigCommand::ToggleFps => {
+                    emu.runtime.ppu.toggle_fps();
+                    app.config.interface.show_fps = !app.config.interface.show_fps;
                 }
-                app.config.emulation.spin_duration = emu.config.spin_duration;
-            }
+                ChangeAppConfigCommand::SpinDuration(x) => {
+                    if x < 0 {
+                        emu.config.spin_duration = emu
+                            .config
+                            .spin_duration
+                            .sub(Duration::from_nanos(x.unsigned_abs() as u64));
+                    } else {
+                        emu.config.spin_duration =
+                            emu.config.spin_duration.add(Duration::from_nanos(x as u64));
+                    }
+                    app.config.emulation.spin_duration = emu.config.spin_duration;
+                }
+                ChangeAppConfigCommand::NextPalette => app.next_palette(emu),
+                ChangeAppConfigCommand::ToggleMute => {
+                    app.config.audio.mute = !app.config.audio.mute
+                }
+            },
         }
     }
 
@@ -366,12 +372,12 @@ impl InputHandler {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    return Some(AppCommand::ChangeScale(1.0));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(1.0)));
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    return Some(AppCommand::ChangeScale(-1.0));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(-1.0)));
                 }
             }
             Keycode::F => {
@@ -381,22 +387,22 @@ impl InputHandler {
             }
             Keycode::M => {
                 if !is_down {
-                    return Some(AppCommand::Mute);
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleMute));
                 }
             }
             Keycode::F11 => {
                 if !is_down {
-                    return Some(AppCommand::ChangeVolume(-0.05));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(-0.05)));
                 }
             }
             Keycode::F12 => {
                 if !is_down {
-                    return Some(AppCommand::ChangeVolume(0.05));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(0.05)));
                 }
             }
             Keycode::P => {
                 if !is_down {
-                    return Some(AppCommand::NextPalette);
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::NextPalette));
                 }
             }
             Keycode::NUM_1 => {

@@ -25,17 +25,21 @@ pub enum AppCommand {
     LoadFile(PathBuf),
     Restart,
     ChangeMode(RunMode),
-    Mute,
     SaveState(SaveStateCommand, usize),
     PickFile,
     Quit,
-    NextPalette,
-    ToggleFps,
-    ToggleFullscreen,
-    ChangeVolume(f32),
-    ChangeScale(f32),
+    ChangeConfig(ChangeAppConfigCommand)
+}
+
+pub enum ChangeAppConfigCommand {
+    Volume(f32),
+    Scale(f32),
     ToggleTileWindow,
-    ChangeSpinDuration(i32),
+    ToggleFullscreen,
+    ToggleFps,
+    SpinDuration(i32),
+    NextPalette,
+    ToggleMute
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

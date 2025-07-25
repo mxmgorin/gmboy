@@ -1,4 +1,4 @@
-use crate::app::AppCommand;
+use crate::app::{AppCommand, ChangeAppConfigCommand};
 use crate::config::AppConfig;
 use std::collections::VecDeque;
 use std::mem;
@@ -24,13 +24,13 @@ pub enum AppMenuItem {
     SpinDuration,
 }
 
-fn developer_menu()  -> Box<[AppMenuItem]> {
+fn developer_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::ToggleTileWindow,
         AppMenuItem::SpinDuration,
         AppMenuItem::Back,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 fn start_menu() -> Box<[AppMenuItem]> {
@@ -131,8 +131,15 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Scale => Some(AppCommand::ChangeScale(1.0)),
-            AppMenuItem::SpinDuration => Some(AppCommand::ChangeSpinDuration(500)),
+            AppMenuItem::Scale => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(1.0)))
+            }
+            AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::SpinDuration(500),
+            )),
+            AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
+                0.05,
+            ))),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -143,7 +150,6 @@ impl AppMenu {
             | AppMenuItem::ToggleFps
             | AppMenuItem::ToggleFullscreen
             | AppMenuItem::AudioMenu
-            | AppMenuItem::Volume
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::ToggleTileWindow => None,
         }
@@ -163,8 +169,15 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Volume => Some(AppCommand::ChangeVolume(-0.05)),
-            AppMenuItem::Scale => Some(AppCommand::ChangeScale(-1.0)),
+            AppMenuItem::Scale => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(
+                -1.0,
+            ))),
+            AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::SpinDuration(-500),
+            )),
+            AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
+                -0.05,
+            ))),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -177,7 +190,6 @@ impl AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::ToggleTileWindow => None,
-            AppMenuItem::SpinDuration => Some(AppCommand::ChangeSpinDuration(-500)),
         }
     }
 
@@ -218,9 +230,9 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::NextPalette => Some(AppCommand::NextPalette),
-            AppMenuItem::ToggleFps => Some(AppCommand::ToggleFps),
-            AppMenuItem::ToggleFullscreen => Some(AppCommand::ToggleFullscreen),
+            AppMenuItem::NextPalette => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::NextPalette)),
+            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleFps)),
+            AppMenuItem::ToggleFullscreen => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleFullscreen)),
             AppMenuItem::AudioMenu => {
                 self.next_items(audio_menu());
 
@@ -232,8 +244,8 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::ToggleTileWindow => Some(AppCommand::ToggleTileWindow),
-            AppMenuItem::SpinDuration => None
+            AppMenuItem::ToggleTileWindow => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleTileWindow)),
+            AppMenuItem::SpinDuration => None,
         }
     }
 
@@ -268,8 +280,12 @@ impl AppMenuItem {
                 format!("Scale({})", config.interface.scale)
             }
             AppMenuItem::DeveloperMenu => "Developer".to_string(),
-            AppMenuItem::ToggleTileWindow => format!("Tile Window{}", get_suffix(config.interface.tile_window)),
-            AppMenuItem::SpinDuration => format!("Spin({})", config.get_emu_config().spin_duration.as_nanos())
+            AppMenuItem::ToggleTileWindow => {
+                format!("Tile Window{}", get_suffix(config.interface.tile_window))
+            }
+            AppMenuItem::SpinDuration => {
+                format!("Spin({})", config.get_emu_config().spin_duration.as_nanos())
+            }
         }
     }
 }
