@@ -1,10 +1,14 @@
+use crate::apu::Apu;
+use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
+use crate::bus::Bus;
 use crate::cart::Cart;
 use crate::cpu::Cpu;
 use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
+use crate::ppu::lcd::Lcd;
 use crate::read_bytes;
 use std::collections::VecDeque;
 use std::path::Path;
@@ -137,12 +141,14 @@ impl Emu {
             return;
         };
 
-        self.runtime.bus.load_cart(cart);
+        let apu = Apu::new(self.runtime.bus.io.apu.config.clone());
+        let lcd = Lcd::new(self.runtime.bus.io.lcd.current_colors);
+        let io = Io::new(lcd, apu);
+        self.runtime.bus = Bus::new(cart, io);
         self.cpu = Cpu::default();
         self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
-        self.runtime.bus.io.joypad.reset();
 
         if save_state {
             let name = path.file_stem().unwrap().to_str().expect("cart is valid");
