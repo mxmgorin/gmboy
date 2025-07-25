@@ -166,7 +166,7 @@ impl AppMenu {
                 Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(1.0)))
             }
             AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::SpinDuration(500),
+                ChangeAppConfigCommand::SpinDuration(1),
             )),
             AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
                 0.05,
@@ -198,7 +198,7 @@ impl AppMenu {
                 ChangeAppConfigCommand::RewindSize(5),
             )),
             AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::RewindInterval(1),
+                ChangeAppConfigCommand::RewindInterval(1_000_000),
             )),
             AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCommand::AudioBufferSize(2),
@@ -226,7 +226,7 @@ impl AppMenu {
                 -1.0,
             ))),
             AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::SpinDuration(-500),
+                ChangeAppConfigCommand::SpinDuration(-1),
             )),
             AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
                 -0.05,
@@ -258,7 +258,7 @@ impl AppMenu {
                 ChangeAppConfigCommand::RewindSize(-5),
             )),
             AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::RewindInterval(-1),
+                ChangeAppConfigCommand::RewindInterval(-1_000_000),
             )),
             AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCommand::AudioBufferSize(-2),

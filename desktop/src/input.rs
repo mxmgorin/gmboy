@@ -162,15 +162,7 @@ impl InputHandler {
                     app.config.interface.show_fps = !app.config.interface.show_fps;
                 }
                 ChangeAppConfigCommand::SpinDuration(x) => {
-                    if x < 0 {
-                        emu.config.spin_duration = emu
-                            .config
-                            .spin_duration
-                            .sub(Duration::from_nanos(x.unsigned_abs() as u64));
-                    } else {
-                        emu.config.spin_duration =
-                            emu.config.spin_duration.add(Duration::from_nanos(x as u64));
-                    }
+                    emu.config.spin_duration = core::change_duration(emu.config.spin_duration, x);
                     app.config.emulation.spin_duration = emu.config.spin_duration;
                 }
                 ChangeAppConfigCommand::NextPalette => app.next_palette(emu),
@@ -178,53 +170,44 @@ impl InputHandler {
                     app.config.audio.mute = !app.config.audio.mute
                 }
                 ChangeAppConfigCommand::NormalSpeed(x) => {
-                    emu.config.normal_speed = core::add_f64_rounded(emu.config.normal_speed, x as f64);
+                    emu.config.normal_speed =
+                        core::change_f64_rounded(emu.config.normal_speed, x as f64).max(0.1);
                     app.config.emulation.normal_speed = emu.config.normal_speed;
                 }
                 ChangeAppConfigCommand::TurboSpeed(x) => {
-                    emu.config.turbo_speed = core::add_f64_rounded(emu.config.turbo_speed, x as f64);
+                    emu.config.turbo_speed =
+                        core::change_f64_rounded(emu.config.turbo_speed, x as f64).max(0.1);
                     app.config.emulation.turbo_speed = emu.config.turbo_speed;
                 }
                 ChangeAppConfigCommand::SlowSpeed(x) => {
-                    emu.config.slow_speed = core::add_f64_rounded(emu.config.slow_speed, x as f64);
+                    emu.config.slow_speed =
+                        core::change_f64_rounded(emu.config.slow_speed, x as f64).max(0.1);
                     app.config.emulation.slow_speed = emu.config.slow_speed;
                 }
                 ChangeAppConfigCommand::RewindSize(x) => {
-                    if x < 0 {
-                        emu.config.rewind_size -= x as usize;
-                    } else {
-                        emu.config.rewind_size += x as usize;
-                    }
+                    emu.config.rewind_size = core::change_usize(emu.config.rewind_size, x).clamp(0, 10_000);
                     app.config.emulation.rewind_size = emu.config.rewind_size;
                 }
                 ChangeAppConfigCommand::RewindInterval(x) => {
-                    if x < 0 {
-                        emu.config.rewind_interval = emu
-                            .config
-                            .rewind_interval
-                            .sub(Duration::from_nanos(x.unsigned_abs() as u64));
-                    } else {
-                        emu.config.rewind_interval = emu
-                            .config
-                            .rewind_interval
-                            .add(Duration::from_nanos(x as u64));
-                    }
+                    emu.config.rewind_interval =
+                        core::change_duration(emu.config.rewind_interval, x);
                     app.config.emulation.rewind_interval = emu.config.rewind_interval;
                 }
                 ChangeAppConfigCommand::SaveStateOnExit => {
                     app.config.save_state_on_exit = !app.config.save_state_on_exit
                 }
                 ChangeAppConfigCommand::AudioBufferSize(x) => {
-                    if x < 0 {
-                        emu.runtime.bus.io.apu.config.buffer_size -= x.unsigned_abs() as usize;
-                    } else {
-                        emu.runtime.bus.io.apu.config.buffer_size += x as usize;
-                    }
+                    emu.runtime.bus.io.apu.config.buffer_size =
+                        core::change_usize(emu.runtime.bus.io.apu.config.buffer_size, x).clamp(0, 20_000);
                     emu.runtime.bus.io.apu.update_buffer_size();
                     app.config.audio.buffer_size = emu.runtime.bus.io.apu.config.buffer_size;
                 }
-                ChangeAppConfigCommand::MuteTurbo => app.config.audio.mute_turbo = !app.config.audio.mute_turbo,
-                ChangeAppConfigCommand::MuteSlow => app.config.audio.mute_slow = !app.config.audio.mute_slow,
+                ChangeAppConfigCommand::MuteTurbo => {
+                    app.config.audio.mute_turbo = !app.config.audio.mute_turbo
+                }
+                ChangeAppConfigCommand::MuteSlow => {
+                    app.config.audio.mute_slow = !app.config.audio.mute_slow
+                }
             },
         }
     }

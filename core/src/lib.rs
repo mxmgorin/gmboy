@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
+use std::ops::{Add, Sub};
+use std::time::Duration;
 
 pub mod apu;
 pub mod auxiliary;
@@ -128,12 +130,28 @@ pub fn move_prev_wrapped(curr_idx: usize, max_idx: usize) -> usize {
     }
 }
 
-pub fn add_f32_rounded(value: f32, delta: f32) -> f32 {
+pub fn change_f32_rounded(value: f32, delta: f32) -> f32 {
     ((value + delta) * 100.0).round() / 100.0
 }
 
-pub fn add_f64_rounded(value: f64, delta: f64) -> f64 {
+pub fn change_f64_rounded(value: f64, delta: f64) -> f64 {
     ((value + delta) * 100.0).round() / 100.0
+}
+
+pub fn change_duration(value: Duration, millis: i32) -> Duration {
+    if millis < 0 {
+        value.saturating_sub(Duration::from_micros(millis.unsigned_abs() as u64))
+    } else {
+        value.saturating_add(Duration::from_micros(millis as u64))
+    }
+}
+
+pub fn change_usize(value: usize, delta: i32) -> usize {
+    if delta < 0 {
+        value - delta.unsigned_abs() as usize
+    } else {
+        value + delta as usize
+    }
 }
 
 #[cfg(test)]
