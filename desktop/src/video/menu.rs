@@ -4,6 +4,8 @@ use std::fmt;
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
     Resume,
+    SaveState(usize),
+    LoadState(usize),
     OpenRom,
     Exit,
 }
@@ -13,7 +15,14 @@ fn start() -> Box<[AppMenuItem]> {
 }
 
 fn pause() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::Resume, AppMenuItem::OpenRom, AppMenuItem::Exit].into_boxed_slice()
+    vec![
+        AppMenuItem::Resume,
+        AppMenuItem::SaveState(0),
+        AppMenuItem::LoadState(0),
+        AppMenuItem::OpenRom,
+        AppMenuItem::Exit,
+    ]
+    .into_boxed_slice()
 }
 
 pub struct AppMenu {
@@ -58,17 +67,26 @@ impl AppMenu {
             AppMenuItem::Resume => Some(AppCommand::TogglePause),
             AppMenuItem::OpenRom => Some(AppCommand::PickFile),
             AppMenuItem::Exit => Some(AppCommand::Quit),
+            AppMenuItem::SaveState(i) => Some(AppCommand::SaveState(
+                core::emu::state::SaveStateCommand::Create,
+                i,
+            )),
+            AppMenuItem::LoadState(i) => Some(AppCommand::SaveState(
+                core::emu::state::SaveStateCommand::Load,
+                i,
+            )),
         }
     }
 }
 
 impl fmt::Display for AppMenuItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let text = match self {
-            AppMenuItem::Resume => "RESUME",
-            AppMenuItem::OpenRom => "OPEN ROM",
-            AppMenuItem::Exit => "EXIT",
-        };
-        write!(f, "{text}")
+        match self {
+            AppMenuItem::Resume => write!(f, "Resume"),
+            AppMenuItem::OpenRom => write!(f, "Open Rom"),
+            AppMenuItem::Exit => write!(f, "Exit"),
+            AppMenuItem::SaveState(i) => write!(f, "Save ({i})"),
+            AppMenuItem::LoadState(i) => write!(f, "Load ({i})"),
+        }
     }
 }

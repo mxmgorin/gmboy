@@ -2,7 +2,7 @@ use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::Debugger;
-pub use crate::emu::state::{EmuSaveState, SaveStateEvent};
+pub use crate::emu::state::{EmuSaveState, SaveStateCommand};
 use crate::emu::EmuCallback;
 use crate::ppu::Ppu;
 

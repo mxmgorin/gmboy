@@ -13,7 +13,7 @@ pub enum EmuState {
     Rewind,
 }
 
-pub enum SaveStateEvent {
+pub enum SaveStateCommand {
     Create,
     Load,
 }

@@ -8,7 +8,7 @@ use crate::Emu;
 use core::emu::battery::BatterySave;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
-use core::emu::state::SaveStateEvent;
+use core::emu::state::SaveStateCommand;
 use core::emu::EmuCallback;
 use core::into_pixel_colors;
 use core::ppu::palette::LcdPalette;
@@ -25,7 +25,7 @@ pub enum AppCommand {
     Restart,
     ModeChanged(RunMode),
     Mute,
-    SaveState(SaveStateEvent, usize),
+    SaveState(SaveStateCommand, usize),
     PickFile,
     Quit,
 }
@@ -196,11 +196,11 @@ impl App {
             .set_fullscreen(self.config.interface.is_fullscreen);
     }
 
-    pub fn handle_save_state(&self, emu: &mut Emu, event: SaveStateEvent, index: usize) {
+    pub fn handle_save_state(&self, emu: &mut Emu, event: SaveStateCommand, index: usize) {
         let name = self.config.get_last_file_stem().unwrap();
 
         match event {
-            SaveStateEvent::Create => {
+            SaveStateCommand::Create => {
                 let save_state = emu.create_save_state();
 
                 if let Err(err) = save_state.save_file(&name, index) {
@@ -209,7 +209,7 @@ impl App {
 
                 println!("Saved save state: {index}");
             }
-            SaveStateEvent::Load => {
+            SaveStateCommand::Load => {
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, index);
 
                 let Ok(save_state) = save_state else {

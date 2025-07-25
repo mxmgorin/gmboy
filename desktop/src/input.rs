@@ -3,7 +3,7 @@ use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
-use core::emu::state::SaveStateEvent;
+use core::emu::state::SaveStateCommand;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -232,9 +232,9 @@ impl InputHandler {
         }
 
         if axis_idx == LEFT {
-            return Some(AppCommand::SaveState(SaveStateEvent::Load, 1));
+            return Some(AppCommand::SaveState(SaveStateCommand::Load, 1));
         } else if axis_idx == RIGHT {
-            return Some(AppCommand::SaveState(SaveStateEvent::Create, 1));
+            return Some(AppCommand::SaveState(SaveStateCommand::Create, 1));
         }
 
         None
@@ -348,92 +348,92 @@ impl InputHandler {
             }
             Keycode::NUM_1 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 1));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 1));
                 }
             }
             Keycode::NUM_2 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 2));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 2));
                 }
             }
             Keycode::NUM_3 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 3));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 3));
                 }
             }
             Keycode::NUM_4 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 4));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 4));
                 }
             }
             Keycode::NUM_5 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 5));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 5));
                 }
             }
             Keycode::NUM_6 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 6));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 6));
                 }
             }
             Keycode::NUM_7 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 7));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 7));
                 }
             }
             Keycode::NUM_8 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 8));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 8));
                 }
             }
             Keycode::NUM_9 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 9));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 9));
                 }
             }
             Keycode::F1 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 1));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 1));
                 }
             }
             Keycode::F2 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 2));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 2));
                 }
             }
             Keycode::F3 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 3));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 3));
                 }
             }
             Keycode::F4 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 4));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 4));
                 }
             }
             Keycode::F5 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 5));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 5));
                 }
             }
             Keycode::F6 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 6));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 6));
                 }
             }
             Keycode::F7 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 7));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 7));
                 }
             }
             Keycode::F8 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 8));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 8));
                 }
             }
             Keycode::F9 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 9));
+                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 9));
                 }
             }
             _ => (), // Ignore other keycodes
