@@ -2,6 +2,7 @@ use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
 use crate::video::game_window::GameWindow;
+use crate::video::menu::AppMenu;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
@@ -14,6 +15,8 @@ use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use sdl2::Sdl;
 use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
 
 pub enum AppEvent {
     Pause,
@@ -24,15 +27,25 @@ pub enum AppEvent {
     Mute,
     SaveState(SaveStateEvent, usize),
     PickFile,
+    Quit,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum AppState {
+    Paused,
+    Running,
+    Quitting,
 }
 
 pub struct App {
     audio: AppAudio,
     window: GameWindow,
+    palettes: Box<[LcdPalette]>,
 
+    pub state: AppState,
     pub tiles_window: Option<TileWindow>,
     pub config: AppConfig,
-    palettes: Box<[LcdPalette]>,
+    pub menu: AppMenu,
 }
 
 impl EmuCallback for App {
@@ -67,22 +80,6 @@ impl EmuCallback for App {
 
         self.audio.queue(output);
     }
-
-    fn paused(&mut self, runtime: &EmuRuntime) {
-        let text_color = runtime.bus.io.lcd.current_colors[0];
-        let bg_color = runtime.bus.io.lcd.current_colors[3];
-
-        if self.config.last_cart_path.is_none() {
-            self.draw_text(
-                &["NO GAME FILE", "DROP OR PICK IT"],
-                text_color,
-                bg_color,
-                true,
-            );
-        } else {
-            self.draw_text(&["PAUSED"], text_color, bg_color, false);
-        }
-    }
 }
 
 impl App {
@@ -111,16 +108,31 @@ impl App {
             config,
             window: renderer,
             palettes,
+            menu: AppMenu::default(),
+            state: AppState::Paused,
         })
     }
 
     /// Execution loop
     pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
-        while input.handle_events(self, emu) {
+        self.state = AppState::Running;
+
+        while self.state != AppState::Quitting {
+            input.handle_events(self, emu);
             emu.run_frame(self)?;
 
             if let Some(tiles_window) = self.tiles_window.as_mut() {
                 tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
+            }
+
+            while self.state == AppState::Paused {
+                input.handle_events(self, emu);
+                emu.runtime.clock.reset();
+                let text_color = emu.runtime.bus.io.lcd.current_colors[0];
+                let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
+                self.draw_menu(text_color, bg_color);
+
+                thread::sleep(Duration::from_millis(100));
             }
         }
 
@@ -134,6 +146,13 @@ impl App {
         println!("Current scale: {}", self.config.interface.scale);
 
         Ok(())
+    }
+
+    fn draw_menu(&mut self, text_color: PixelColor, bg_color: PixelColor) {
+        let items = self.menu.get_items();
+        let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
+
+        self.draw_text(&items, text_color, bg_color, true);
     }
 
     fn draw_text(
@@ -155,7 +174,7 @@ impl App {
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
-        self.config.interface.selected_palette_idx = core::get_next_wrapped(
+        self.config.interface.selected_palette_idx = core::move_next_wrapped(
             self.config.interface.selected_palette_idx,
             self.palettes.len() - 1,
         );

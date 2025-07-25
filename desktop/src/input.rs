@@ -1,4 +1,4 @@
-use crate::app::{change_volume, App, AppEvent};
+use crate::app::{change_volume, App, AppEvent, AppState};
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
@@ -35,7 +35,7 @@ impl InputHandler {
     }
 
     /// Polls and handles events. Returns false on quit.
-    pub fn handle_events(&mut self, app: &mut App, emu: &mut Emu) -> bool {
+    pub fn handle_events(&mut self, app: &mut App, emu: &mut Emu) {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
                 Event::ControllerDeviceAdded { which, .. } => {
@@ -87,7 +87,7 @@ impl InputHandler {
                 Event::MouseButtonDown { .. } => {
                     self.handle_event(app, emu, AppEvent::PickFile);
                 }
-                Event::Quit { .. } => return false,
+                Event::Quit { .. } => self.handle_event(app, emu, AppEvent::Quit),
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -97,15 +97,13 @@ impl InputHandler {
                         if window.get_window_id() == window_id {
                             app.tiles_window = None;
                         } else {
-                            return false;
+                            self.handle_event(app, emu, AppEvent::Quit);
                         }
                     }
                 }
                 _ => {}
             }
         }
-
-        true
     }
 
     pub fn handle_event(&mut self, app: &mut App, emu: &mut Emu, event: AppEvent) {
@@ -115,10 +113,10 @@ impl InputHandler {
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
             }
             AppEvent::Pause => {
-                if emu.state == EmuState::Paused && !emu.runtime.bus.cart.is_empty() {
-                    emu.state = EmuState::Running;
+                if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
+                    app.state = AppState::Running;
                 } else {
-                    emu.state = EmuState::Paused;
+                    app.state = AppState::Paused;
                 }
             }
             AppEvent::Restart => {
@@ -135,7 +133,7 @@ impl InputHandler {
             AppEvent::PickFile =>
             {
                 #[cfg(feature = "filepicker")]
-                if emu.state == EmuState::Paused {
+                if app.state == AppState::Paused {
                     if let Some(path) = tinyfiledialogs::open_file_dialog(
                         "Select Game Boy ROM",
                         "",
@@ -147,6 +145,7 @@ impl InputHandler {
                 }
             }
             AppEvent::Rewind => emu.state = EmuState::Rewind,
+            AppEvent::Quit => app.state = AppState::Quitting,
         }
     }
 
@@ -158,8 +157,20 @@ impl InputHandler {
         is_down: bool,
     ) -> Option<AppEvent> {
         match button {
-            sdl2::controller::Button::DPadUp => emu.runtime.bus.io.joypad.up = is_down,
-            sdl2::controller::Button::DPadDown => emu.runtime.bus.io.joypad.down = is_down,
+            sdl2::controller::Button::DPadUp => {
+                if app.state == AppState::Paused && !is_down {
+                    app.menu.move_up();
+                } else {
+                    emu.runtime.bus.io.joypad.up = is_down;
+                }
+            }
+            sdl2::controller::Button::DPadDown => {
+                if app.state == AppState::Paused && !is_down {
+                    app.menu.move_down();
+                } else {
+                    emu.runtime.bus.io.joypad.down = is_down;
+                }
+            }
             sdl2::controller::Button::DPadLeft => emu.runtime.bus.io.joypad.left = is_down,
             sdl2::controller::Button::DPadRight => emu.runtime.bus.io.joypad.right = is_down,
             sdl2::controller::Button::B => emu.runtime.bus.io.joypad.b = is_down,
@@ -228,13 +239,31 @@ impl InputHandler {
         is_down: bool,
     ) -> Option<AppEvent> {
         match keycode {
-            Keycode::UP => emu.runtime.bus.io.joypad.up = is_down,
-            Keycode::DOWN => emu.runtime.bus.io.joypad.down = is_down,
+            Keycode::UP => {
+                if app.state == AppState::Paused && !is_down {
+                    app.menu.move_up();
+                } else {
+                    emu.runtime.bus.io.joypad.up = is_down;
+                }
+            }
+            Keycode::DOWN => {
+                if app.state == AppState::Paused && !is_down{
+                    app.menu.move_down();
+                } else {
+                    emu.runtime.bus.io.joypad.down = is_down;
+                }
+            }
             Keycode::LEFT => emu.runtime.bus.io.joypad.left = is_down,
             Keycode::RIGHT => emu.runtime.bus.io.joypad.right = is_down,
             Keycode::Z => emu.runtime.bus.io.joypad.b = is_down,
             Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
-            Keycode::Return => emu.runtime.bus.io.joypad.start = is_down,
+            Keycode::Return => {
+                if app.state == AppState::Paused && !is_down {
+                    return Some(app.menu.get_event());
+                } else {
+                    emu.runtime.bus.io.joypad.start = is_down;
+                }
+            },
             Keycode::BACKSPACE => emu.runtime.bus.io.joypad.select = is_down,
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
@@ -257,7 +286,7 @@ impl InputHandler {
                     Some(AppEvent::ModeChanged(RunMode::Normal))
                 }
             }
-            Keycode::SPACE => {
+            Keycode::ESCAPE => {
                 if !is_down {
                     return Some(AppEvent::Pause);
                 }

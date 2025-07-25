@@ -5,6 +5,7 @@ mod char;
 pub mod draw_text;
 pub mod game_window;
 pub mod tiles_window;
+pub mod menu;
 
 const BYTES_PER_PIXEL: usize = 4;
 

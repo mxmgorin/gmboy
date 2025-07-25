@@ -112,16 +112,39 @@ pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
         .map_err(|e| format!("Failed to read file: {e}"))
 }
 
-pub fn get_next_wrapped(curr_idx: usize, max_idx: usize) -> usize {
+pub fn move_next_wrapped(curr_idx: usize, max_idx: usize) -> usize {
     if curr_idx < max_idx {
         curr_idx + 1
     } else {
         0
     }
 }
+
+pub fn move_prev_wrapped(curr_idx: usize, max_idx: usize) -> usize {
+    if curr_idx > 0 {
+        curr_idx - 1
+    } else {
+        max_idx
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;
+
+    #[test]
+    fn test_get_next_wrapped() {
+        assert_eq!(move_next_wrapped(0, 2), 1);
+        assert_eq!(move_next_wrapped(1, 2), 2);
+        assert_eq!(move_next_wrapped(2, 2), 0);
+    }
+
+    #[test]
+    fn test_get_prev_wrapped() {
+        assert_eq!(move_prev_wrapped(0, 2), 2);
+        assert_eq!(move_prev_wrapped(1, 2), 0);
+        assert_eq!(move_prev_wrapped(2, 2), 1);
+    }
 
     #[test]
     fn test_get_bit_flag_1() {

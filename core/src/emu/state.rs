@@ -10,7 +10,6 @@ use std::{env, fs};
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum EmuState {
     Running,
-    Paused,
     Rewind,
 }
 
