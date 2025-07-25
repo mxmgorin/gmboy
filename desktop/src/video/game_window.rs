@@ -97,8 +97,8 @@ impl GameWindow {
         };
         let text_height = calc_text_height(size) * lines.len();
         // Calculate the x and y positions to center the text
-        let x = (LCD_X_RES as u32 as usize - text_width) / 2;
-        let y = (LCD_Y_RES as u32 as usize - text_height) / 2;
+        let x = (LCD_X_RES as usize - text_width) / 2;
+        let y = (LCD_Y_RES as usize - text_height) / 2;
 
         fill_texture(&mut self.texture, bg_color);
         draw_text_lines(&mut self.texture, lines, color, x, y, size, 1, align_center);
