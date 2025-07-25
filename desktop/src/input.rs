@@ -274,7 +274,7 @@ impl InputHandler {
             }
             sdl2::controller::Button::A => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.select();
+                    return app.menu.select();
                 } else {
                     emu.runtime.bus.io.joypad.a = is_down
                 }
