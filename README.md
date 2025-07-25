@@ -4,7 +4,7 @@
 
 The emulator implements most Game Boy functionality and accuracy is verified by community test suites like blargg's and [mooneye](https://github.com/Gekkio/mooneye-test-suite). While most games should run correctly, some issues may still occur.
 
-Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) of `GMBoy` from the releases page.
+Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) from the releases page.
 
 ## Features
 
