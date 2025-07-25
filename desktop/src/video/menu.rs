@@ -1,5 +1,6 @@
 use crate::app::AppCommand;
-use std::fmt;
+use std::collections::VecDeque;
+use std::{fmt, mem};
 
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
@@ -7,11 +8,28 @@ pub enum AppMenuItem {
     SaveState(usize),
     LoadState(usize),
     OpenRom,
+    Options,
+    Interface,
+    Back,
     Exit,
+    NextPalette,
 }
 
 fn start() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::OpenRom, AppMenuItem::Exit].into_boxed_slice()
+    vec![
+        AppMenuItem::OpenRom,
+        AppMenuItem::Options,
+        AppMenuItem::Exit,
+    ]
+    .into_boxed_slice()
+}
+
+fn options() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::Interface, AppMenuItem::Back].into_boxed_slice()
+}
+
+fn interface() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::NextPalette, AppMenuItem::Back].into_boxed_slice()
 }
 
 fn pause() -> Box<[AppMenuItem]> {
@@ -20,12 +38,14 @@ fn pause() -> Box<[AppMenuItem]> {
         AppMenuItem::SaveState(0),
         AppMenuItem::LoadState(0),
         AppMenuItem::OpenRom,
+        AppMenuItem::Options,
         AppMenuItem::Exit,
     ]
     .into_boxed_slice()
 }
 
 pub struct AppMenu {
+    prev_items: VecDeque<Box<[AppMenuItem]>>,
     items: Box<[AppMenuItem]>,
     selected_index: usize,
 }
@@ -33,6 +53,7 @@ pub struct AppMenu {
 impl AppMenu {
     pub fn new(with_cart: bool) -> Self {
         Self {
+            prev_items: VecDeque::with_capacity(4),
             items: if with_cart { pause() } else { start() },
             selected_index: 0,
         }
@@ -96,7 +117,14 @@ impl AppMenu {
         }
     }
 
-    pub fn select(&self) -> Option<AppCommand> {
+    pub fn cancel(&mut self) {
+        if let Some(prev) = self.prev_items.pop_back() {
+            self.selected_index = 0;
+            self.items = prev;
+        }
+    }
+
+    pub fn select(&mut self) -> Option<AppCommand> {
         let item = self.items[self.selected_index];
 
         match item {
@@ -111,7 +139,29 @@ impl AppMenu {
                 core::emu::state::SaveStateCommand::Load,
                 i,
             )),
+            AppMenuItem::Options => {
+                self.next_items(options());
+
+                None
+            }
+            AppMenuItem::Interface => {
+                self.next_items(interface());
+
+                None
+            }
+            AppMenuItem::Back => {
+                self.cancel();
+
+                None
+            }
+            AppMenuItem::NextPalette => Some(AppCommand::NextPalette),
         }
+    }
+
+    fn next_items(&mut self, items: Box<[AppMenuItem]>) {
+        let prev = mem::replace(&mut self.items, items);
+        self.selected_index = 0;
+        self.prev_items.push_front(prev);
     }
 }
 
@@ -123,6 +173,10 @@ impl fmt::Display for AppMenuItem {
             AppMenuItem::Exit => write!(f, "Exit"),
             AppMenuItem::SaveState(i) => write!(f, "Save ({i})"),
             AppMenuItem::LoadState(i) => write!(f, "Load ({i})"),
+            AppMenuItem::Options => write!(f, "Options"),
+            AppMenuItem::Interface => write!(f, "Interface"),
+            AppMenuItem::Back => write!(f, "Back"),
+            AppMenuItem::NextPalette => write!(f, "Next Palette"),
         }
     }
 }

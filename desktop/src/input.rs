@@ -49,14 +49,14 @@ impl InputHandler {
                     println!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
-                    self.handle_command(app, emu, AppCommand::FileDropped(filename.into()))
+                    self.execute_command(app, emu, AppCommand::FileDropped(filename.into()))
                 }
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => {
                     if let Some(evt) = self.handle_key(app, emu, keycode, true) {
-                        self.handle_command(app, emu, evt);
+                        self.execute_command(app, emu, evt);
                     }
                 }
                 Event::KeyUp {
@@ -64,30 +64,30 @@ impl InputHandler {
                     ..
                 } => {
                     if let Some(evt) = self.handle_key(app, emu, keycode, false) {
-                        self.handle_command(app, emu, evt);
+                        self.execute_command(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
                     if let Some(evt) = self.handle_controller_button(app, emu, button, true) {
-                        self.handle_command(app, emu, evt);
+                        self.execute_command(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
                     if let Some(evt) = self.handle_controller_button(app, emu, button, false) {
-                        self.handle_command(app, emu, evt);
+                        self.execute_command(app, emu, evt);
                     }
                 }
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
                     if let Some(evt) = self.handle_joy_axis(axis_idx, value) {
-                        self.handle_command(app, emu, evt);
+                        self.execute_command(app, emu, evt);
                     }
                 }
                 Event::MouseButtonDown { .. } => {
-                    self.handle_command(app, emu, AppCommand::PickFile);
+                    self.execute_command(app, emu, AppCommand::PickFile);
                 }
-                Event::Quit { .. } => self.handle_command(app, emu, AppCommand::Quit),
+                Event::Quit { .. } => self.execute_command(app, emu, AppCommand::Quit),
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -97,7 +97,7 @@ impl InputHandler {
                         if window.get_window_id() == window_id {
                             app.tiles_window = None;
                         } else {
-                            self.handle_command(app, emu, AppCommand::Quit);
+                            self.execute_command(app, emu, AppCommand::Quit);
                         }
                     }
                 }
@@ -106,7 +106,7 @@ impl InputHandler {
         }
     }
 
-    pub fn handle_command(&mut self, app: &mut App, emu: &mut Emu, event: AppCommand) {
+    pub fn execute_command(&mut self, app: &mut App, emu: &mut Emu, event: AppCommand) {
         match event {
             AppCommand::FileDropped(path) => {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
@@ -148,6 +148,7 @@ impl InputHandler {
             }
             AppCommand::Rewind => emu.state = EmuState::Rewind,
             AppCommand::Quit => app.state = AppState::Quitting,
+            AppCommand::NextPalette => app.next_palette(emu),
         }
     }
 
@@ -187,8 +188,20 @@ impl InputHandler {
                     emu.runtime.bus.io.joypad.right = is_down
                 }
             }
-            sdl2::controller::Button::B => emu.runtime.bus.io.joypad.b = is_down,
-            sdl2::controller::Button::A => emu.runtime.bus.io.joypad.a = is_down,
+            sdl2::controller::Button::B => {
+                if app.state == AppState::Paused && !is_down {
+                    app.menu.cancel();
+                } else {
+                    emu.runtime.bus.io.joypad.b = is_down
+                }
+            },
+            sdl2::controller::Button::A => {
+                if app.state == AppState::Paused && !is_down {
+                    app.menu.select();
+                } else {
+                    emu.runtime.bus.io.joypad.a = is_down
+                }
+            },
             sdl2::controller::Button::Y => {
                 return if is_down {
                     Some(AppCommand::Rewind)
@@ -290,7 +303,13 @@ impl InputHandler {
                     emu.runtime.bus.io.joypad.start = is_down;
                 }
             }
-            Keycode::BACKSPACE => emu.runtime.bus.io.joypad.select = is_down,
+            Keycode::BACKSPACE => {
+                if app.state == AppState::Paused && !is_down {
+                    app.menu.cancel();
+                } else {
+                    emu.runtime.bus.io.joypad.select = is_down
+                }
+            },
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
                     Some(AppCommand::Rewind)
@@ -354,7 +373,7 @@ impl InputHandler {
             }
             Keycode::P => {
                 if !is_down {
-                    app.next_palette(emu);
+                    return Some(AppCommand::NextPalette);
                 }
             }
             Keycode::NUM_1 => {

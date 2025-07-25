@@ -28,6 +28,7 @@ pub enum AppCommand {
     SaveState(SaveStateCommand, usize),
     PickFile,
     Quit,
+    NextPalette,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
