@@ -1,16 +1,14 @@
-use crate::app::{change_volume, App, AppCommand, AppState, ChangeAppConfigCommand};
+use crate::app::{change_volume, App, AppCommand, AppState, ChangeAppConfigCmd};
 use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
-use core::emu::state::SaveStateCommand;
+use core::emu::state::SaveStateCmd;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
-use std::ops::{Add, Sub};
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -153,59 +151,61 @@ impl InputHandler {
             AppCommand::Rewind => emu.state = EmuState::Rewind,
             AppCommand::Quit => app.state = AppState::Quitting,
             AppCommand::ChangeConfig(cmd) => match cmd {
-                ChangeAppConfigCommand::Volume(x) => change_volume(app, emu, x),
-                ChangeAppConfigCommand::Scale(x) => app.change_scale(x).unwrap(),
-                ChangeAppConfigCommand::TileWindow => app.toggle_tile_window(),
-                ChangeAppConfigCommand::Fullscreen => app.toggle_fullscreen(),
-                ChangeAppConfigCommand::Fps => {
+                ChangeAppConfigCmd::Volume(x) => change_volume(app, emu, x),
+                ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
+                ChangeAppConfigCmd::TileWindow => app.toggle_tile_window(),
+                ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
+                ChangeAppConfigCmd::Fps => {
                     emu.runtime.ppu.toggle_fps();
                     app.config.interface.show_fps = !app.config.interface.show_fps;
                 }
-                ChangeAppConfigCommand::SpinDuration(x) => {
+                ChangeAppConfigCmd::SpinDuration(x) => {
                     emu.config.spin_duration = core::change_duration(emu.config.spin_duration, x);
                     app.config.emulation.spin_duration = emu.config.spin_duration;
                 }
-                ChangeAppConfigCommand::NextPalette => app.next_palette(emu),
-                ChangeAppConfigCommand::ToggleMute => {
+                ChangeAppConfigCmd::NextPalette => app.next_palette(emu),
+                ChangeAppConfigCmd::ToggleMute => {
                     app.config.audio.mute = !app.config.audio.mute
                 }
-                ChangeAppConfigCommand::NormalSpeed(x) => {
+                ChangeAppConfigCmd::NormalSpeed(x) => {
                     emu.config.normal_speed =
                         core::change_f64_rounded(emu.config.normal_speed, x as f64).max(0.1);
                     app.config.emulation.normal_speed = emu.config.normal_speed;
                 }
-                ChangeAppConfigCommand::TurboSpeed(x) => {
+                ChangeAppConfigCmd::TurboSpeed(x) => {
                     emu.config.turbo_speed =
                         core::change_f64_rounded(emu.config.turbo_speed, x as f64).max(0.1);
                     app.config.emulation.turbo_speed = emu.config.turbo_speed;
                 }
-                ChangeAppConfigCommand::SlowSpeed(x) => {
+                ChangeAppConfigCmd::SlowSpeed(x) => {
                     emu.config.slow_speed =
                         core::change_f64_rounded(emu.config.slow_speed, x as f64).max(0.1);
                     app.config.emulation.slow_speed = emu.config.slow_speed;
                 }
-                ChangeAppConfigCommand::RewindSize(x) => {
-                    emu.config.rewind_size = core::change_usize(emu.config.rewind_size, x).clamp(0, 10_000);
+                ChangeAppConfigCmd::RewindSize(x) => {
+                    emu.config.rewind_size =
+                        core::change_usize(emu.config.rewind_size, x).clamp(0, 500);
                     app.config.emulation.rewind_size = emu.config.rewind_size;
                 }
-                ChangeAppConfigCommand::RewindInterval(x) => {
+                ChangeAppConfigCmd::RewindInterval(x) => {
                     emu.config.rewind_interval =
                         core::change_duration(emu.config.rewind_interval, x);
                     app.config.emulation.rewind_interval = emu.config.rewind_interval;
                 }
-                ChangeAppConfigCommand::SaveStateOnExit => {
+                ChangeAppConfigCmd::SaveStateOnExit => {
                     app.config.save_state_on_exit = !app.config.save_state_on_exit
                 }
-                ChangeAppConfigCommand::AudioBufferSize(x) => {
+                ChangeAppConfigCmd::AudioBufferSize(x) => {
                     emu.runtime.bus.io.apu.config.buffer_size =
-                        core::change_usize(emu.runtime.bus.io.apu.config.buffer_size, x).clamp(0, 20_000);
+                        core::change_usize(emu.runtime.bus.io.apu.config.buffer_size, x)
+                            .clamp(0, 2560);
                     emu.runtime.bus.io.apu.update_buffer_size();
                     app.config.audio.buffer_size = emu.runtime.bus.io.apu.config.buffer_size;
                 }
-                ChangeAppConfigCommand::MuteTurbo => {
+                ChangeAppConfigCmd::MuteTurbo => {
                     app.config.audio.mute_turbo = !app.config.audio.mute_turbo
                 }
-                ChangeAppConfigCommand::MuteSlow => {
+                ChangeAppConfigCmd::MuteSlow => {
                     app.config.audio.mute_slow = !app.config.audio.mute_slow
                 }
             },
@@ -310,9 +310,9 @@ impl InputHandler {
         }
 
         if axis_idx == LEFT {
-            return Some(AppCommand::SaveState(SaveStateCommand::Load, 1));
+            return Some(AppCommand::SaveState(SaveStateCmd::Load, 1));
         } else if axis_idx == RIGHT {
-            return Some(AppCommand::SaveState(SaveStateCommand::Create, 1));
+            return Some(AppCommand::SaveState(SaveStateCmd::Create, 1));
         }
 
         None
@@ -403,12 +403,12 @@ impl InputHandler {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(1.0)));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(1.0)));
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(
                         -1.0,
                     )));
                 }
@@ -420,19 +420,19 @@ impl InputHandler {
             }
             Keycode::M => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleMute));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::ToggleMute));
                 }
             }
             Keycode::F11 => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(
                         -0.05,
                     )));
                 }
             }
             Keycode::F12 => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(
                         0.05,
                     )));
                 }
@@ -440,98 +440,98 @@ impl InputHandler {
             Keycode::P => {
                 if !is_down {
                     return Some(AppCommand::ChangeConfig(
-                        ChangeAppConfigCommand::NextPalette,
+                        ChangeAppConfigCmd::NextPalette,
                     ));
                 }
             }
             Keycode::NUM_1 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 1));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 1));
                 }
             }
             Keycode::NUM_2 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 2));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 2));
                 }
             }
             Keycode::NUM_3 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 3));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 3));
                 }
             }
             Keycode::NUM_4 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 4));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 4));
                 }
             }
             Keycode::NUM_5 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 5));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 5));
                 }
             }
             Keycode::NUM_6 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 6));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 6));
                 }
             }
             Keycode::NUM_7 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 7));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 7));
                 }
             }
             Keycode::NUM_8 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 8));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 8));
                 }
             }
             Keycode::NUM_9 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Create, 9));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Create, 9));
                 }
             }
             Keycode::F1 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 1));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 1));
                 }
             }
             Keycode::F2 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 2));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 2));
                 }
             }
             Keycode::F3 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 3));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 3));
                 }
             }
             Keycode::F4 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 4));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 4));
                 }
             }
             Keycode::F5 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 5));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 5));
                 }
             }
             Keycode::F6 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 6));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 6));
                 }
             }
             Keycode::F7 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 7));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 7));
                 }
             }
             Keycode::F8 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 8));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 8));
                 }
             }
             Keycode::F9 => {
                 if !is_down {
-                    return Some(AppCommand::SaveState(SaveStateCommand::Load, 9));
+                    return Some(AppCommand::SaveState(SaveStateCmd::Load, 9));
                 }
             }
             _ => (), // Ignore other keycodes
