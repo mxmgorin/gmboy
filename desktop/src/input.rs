@@ -1,4 +1,5 @@
 use crate::app::{change_volume, App, AppCommand, AppState};
+use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
@@ -111,11 +112,14 @@ impl InputHandler {
             AppCommand::FileDropped(path) => {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
+                app.state = AppState::Running;
             }
-            AppCommand::Pause => {
+            AppCommand::TogglePause => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
+                    app.menu = None;
                     app.state = AppState::Running;
                 } else {
+                    app.menu = Some(AppMenu::new(!emu.runtime.bus.cart.is_empty()));
                     app.state = AppState::Paused;
                 }
             }
@@ -141,6 +145,7 @@ impl InputHandler {
                     ) {
                         emu.load_cart_file(Path::new(&path), app.config.save_state_on_exit);
                         app.config.last_cart_path = Some(path);
+                        app.state = AppState::Running;
                     }
                 }
             }
@@ -159,14 +164,18 @@ impl InputHandler {
         match button {
             sdl2::controller::Button::DPadUp => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_up();
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_up();
+                    }
                 } else {
                     emu.runtime.bus.io.joypad.up = is_down;
                 }
             }
             sdl2::controller::Button::DPadDown => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_down();
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_down();
+                    }
                 } else {
                     emu.runtime.bus.io.joypad.down = is_down;
                 }
@@ -241,14 +250,18 @@ impl InputHandler {
         match keycode {
             Keycode::UP => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_up();
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_up();
+                    }
                 } else {
                     emu.runtime.bus.io.joypad.up = is_down;
                 }
             }
             Keycode::DOWN => {
-                if app.state == AppState::Paused && !is_down{
-                    app.menu.move_down();
+                if app.state == AppState::Paused && !is_down {
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_down();
+                    }
                 } else {
                     emu.runtime.bus.io.joypad.down = is_down;
                 }
@@ -259,11 +272,13 @@ impl InputHandler {
             Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
             Keycode::Return => {
                 if app.state == AppState::Paused && !is_down {
-                    return app.menu.select();
+                    if let Some(menu) = app.menu.as_mut() {
+                        return menu.select();
+                    }
                 } else {
                     emu.runtime.bus.io.joypad.start = is_down;
                 }
-            },
+            }
             Keycode::BACKSPACE => emu.runtime.bus.io.joypad.select = is_down,
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
@@ -288,7 +303,7 @@ impl InputHandler {
             }
             Keycode::ESCAPE => {
                 if !is_down {
-                    return Some(AppCommand::Pause);
+                    return Some(AppCommand::TogglePause);
                 }
             }
             Keycode::R => {

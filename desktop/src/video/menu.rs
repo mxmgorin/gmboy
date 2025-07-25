@@ -3,36 +3,33 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
+    Resume,
     OpenRom,
     Exit,
 }
 
-impl fmt::Display for AppMenuItem {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let text = match self {
-            AppMenuItem::OpenRom => "OPEN ROM",
-            AppMenuItem::Exit => "EXIT",
-        };
-        write!(f, "{text}")
-    }
+fn start() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::OpenRom, AppMenuItem::Exit].into_boxed_slice()
+}
+
+fn pause() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::Resume, AppMenuItem::OpenRom, AppMenuItem::Exit].into_boxed_slice()
 }
 
 pub struct AppMenu {
-    items: Vec<AppMenuItem>,
+    items: Box<[AppMenuItem]>,
     selected_index: usize,
 }
 
-impl Default for AppMenu {
-    fn default() -> Self {
+impl AppMenu {
+    pub fn new(with_cart: bool) -> Self {
         Self {
-            items: vec![AppMenuItem::OpenRom, AppMenuItem::Exit],
+            items: if with_cart { pause() } else { start() },
             selected_index: 0,
         }
     }
-}
 
-impl AppMenu {
-    pub fn get_items(&self) -> Vec<String> {
+    pub fn get_items(&self) -> Box<[String]> {
         self.items
             .iter()
             .enumerate()
@@ -58,8 +55,20 @@ impl AppMenu {
         let item = self.items[self.selected_index];
 
         match item {
+            AppMenuItem::Resume => Some(AppCommand::TogglePause),
             AppMenuItem::OpenRom => Some(AppCommand::PickFile),
             AppMenuItem::Exit => Some(AppCommand::Quit),
         }
+    }
+}
+
+impl fmt::Display for AppMenuItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let text = match self {
+            AppMenuItem::Resume => "RESUME",
+            AppMenuItem::OpenRom => "OPEN ROM",
+            AppMenuItem::Exit => "EXIT",
+        };
+        write!(f, "{text}")
     }
 }

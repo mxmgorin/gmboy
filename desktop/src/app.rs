@@ -19,7 +19,7 @@ use std::thread;
 use std::time::Duration;
 
 pub enum AppCommand {
-    Pause,
+    TogglePause,
     Rewind,
     FileDropped(PathBuf),
     Restart,
@@ -45,7 +45,7 @@ pub struct App {
     pub state: AppState,
     pub tiles_window: Option<TileWindow>,
     pub config: AppConfig,
-    pub menu: AppMenu,
+    pub menu: Option<AppMenu>,
 }
 
 impl EmuCallback for App {
@@ -105,26 +105,19 @@ impl App {
         Ok(Self {
             tiles_window: debug_window,
             audio: AppAudio::new(sdl, &config.audio),
-            config,
             window: renderer,
-            palettes,
-            menu: AppMenu::default(),
+            menu: Some(AppMenu::new(config.last_cart_path.is_some())),
             state: AppState::Paused,
+            palettes,
+            config,
         })
     }
 
     /// Execution loop
     pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
-        self.state = AppState::Running;
+        self.state = AppState::Paused;
 
         while self.state != AppState::Quitting {
-            input.handle_events(self, emu);
-            emu.run_frame(self)?;
-
-            if let Some(tiles_window) = self.tiles_window.as_mut() {
-                tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
-            }
-
             while self.state == AppState::Paused {
                 input.handle_events(self, emu);
                 emu.runtime.clock.reset();
@@ -133,6 +126,13 @@ impl App {
                 self.draw_menu(text_color, bg_color);
 
                 thread::sleep(Duration::from_millis(100));
+            }
+
+            input.handle_events(self, emu);
+            emu.run_frame(self)?;
+
+            if let Some(tiles_window) = self.tiles_window.as_mut() {
+                tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
             }
         }
 
@@ -149,10 +149,12 @@ impl App {
     }
 
     fn draw_menu(&mut self, text_color: PixelColor, bg_color: PixelColor) {
-        let items = self.menu.get_items();
-        let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
+        if let Some(menu) = &self.menu {
+            let items = menu.get_items();
+            let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
-        self.draw_text(&items, text_color, bg_color, true);
+            self.draw_text(&items, text_color, bg_color, true);
+        }
     }
 
     fn draw_text(
