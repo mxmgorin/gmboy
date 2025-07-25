@@ -1,4 +1,5 @@
 use crate::app::{change_volume, App, AppCommand, AppState};
+use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
@@ -7,7 +8,9 @@ use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
+use std::ops::{Add, Sub};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -93,9 +96,9 @@ impl InputHandler {
                     window_id,
                     ..
                 } => {
-                    if let Some(window) = app.tiles_window.as_mut() {
+                    if let Some(window) = app.tile_window.as_mut() {
                         if window.get_window_id() == window_id {
-                            app.tiles_window = None;
+                            app.toggle_tile_window();
                         } else {
                             self.execute_command(app, emu, AppCommand::Quit);
                         }
@@ -112,6 +115,7 @@ impl InputHandler {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
                 app.state = AppState::Running;
+                app.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
             }
             AppCommand::TogglePause => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
@@ -143,6 +147,7 @@ impl InputHandler {
                         emu.load_cart_file(Path::new(&path), app.config.save_state_on_exit);
                         app.config.last_cart_path = Some(path);
                         app.state = AppState::Running;
+                        app.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
                     }
                 }
             }
@@ -155,6 +160,18 @@ impl InputHandler {
             }
             AppCommand::ToggleFullscreen => app.toggle_fullscreen(),
             AppCommand::ChangeVolume(x) => change_volume(app, emu, x),
+            AppCommand::ChangeScale(x) => app.change_scale(x).unwrap(),
+            AppCommand::ToggleTileWindow => app.toggle_tile_window(),
+            AppCommand::ChangeSpinDuration(x) => {
+                if x < 0 {
+                    emu.config.spin_duration =
+                        emu.config.spin_duration.sub(Duration::from_nanos(x.unsigned_abs() as u64));
+                } else {
+                    emu.config.spin_duration =
+                        emu.config.spin_duration.add(Duration::from_nanos(x as u64));
+                }
+                app.config.emulation.spin_duration = emu.config.spin_duration;
+            }
         }
     }
 
@@ -349,12 +366,12 @@ impl InputHandler {
             }
             Keycode::EQUALS => {
                 if !is_down {
-                    app.change_scale(1.0).unwrap();
+                    return Some(AppCommand::ChangeScale(1.0));
                 }
             }
             Keycode::MINUS => {
                 if !is_down {
-                    app.change_scale(-1.0).unwrap();
+                    return Some(AppCommand::ChangeScale(-1.0));
                 }
             }
             Keycode::F => {

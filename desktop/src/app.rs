@@ -1,6 +1,7 @@
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::InputHandler;
+use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
 use crate::video::tiles_window::TileWindow;
@@ -13,11 +14,10 @@ use core::emu::EmuCallback;
 use core::into_pixel_colors;
 use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
-use sdl2::Sdl;
+use sdl2::{Sdl, VideoSubsystem};
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
-use crate::video::draw_text::FontSize;
 
 pub enum AppCommand {
     TogglePause,
@@ -33,6 +33,9 @@ pub enum AppCommand {
     ToggleFps,
     ToggleFullscreen,
     ChangeVolume(f32),
+    ChangeScale(f32),
+    ToggleTileWindow,
+    ChangeSpinDuration(i32),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -43,12 +46,12 @@ pub enum AppState {
 }
 
 pub struct App {
+    video_subsystem: VideoSubsystem,
     audio: AppAudio,
     window: GameWindow,
     palettes: Box<[LcdPalette]>,
-
+    pub tile_window: Option<TileWindow>,
     pub state: AppState,
-    pub tiles_window: Option<TileWindow>,
     pub config: AppConfig,
     pub menu: AppMenu,
 }
@@ -94,11 +97,11 @@ impl App {
         palettes: Box<[LcdPalette]>,
     ) -> Result<Self, String> {
         let video_subsystem = sdl.video()?;
-        let mut renderer = GameWindow::new(config.interface.scale as u32, &video_subsystem)?;
-        renderer.set_fullscreen(config.interface.is_fullscreen);
+        let mut game_window = GameWindow::new(config.interface.scale as u32, &video_subsystem)?;
+        game_window.set_fullscreen(config.interface.is_fullscreen);
 
-        let debug_window = if config.interface.tile_viewer {
-            let (x, y) = renderer.get_position();
+        let tile_window = if config.interface.tile_window {
+            let (x, y) = game_window.get_position();
             let mut debug_window = TileWindow::new(&video_subsystem);
             debug_window.set_position(x + 640, y);
 
@@ -108,14 +111,25 @@ impl App {
         };
 
         Ok(Self {
-            tiles_window: debug_window,
+            video_subsystem,
+            tile_window,
             audio: AppAudio::new(sdl, &config.audio),
-            window: renderer,
+            window: game_window,
             menu: AppMenu::new(config.last_cart_path.is_some()),
             state: AppState::Paused,
             palettes,
             config,
         })
+    }
+
+    pub fn toggle_tile_window(&mut self) {
+        if self.tile_window.is_some() {
+            self.tile_window = None;
+            self.config.interface.tile_window = false;
+        } else {
+            self.tile_window = Some(TileWindow::new(&self.video_subsystem));
+            self.config.interface.tile_window = true;
+        }
     }
 
     /// Execution loop
@@ -130,7 +144,7 @@ impl App {
             input.handle_events(self, emu);
             emu.run_frame(self)?;
 
-            if let Some(tiles_window) = self.tiles_window.as_mut() {
+            if let Some(tiles_window) = self.tile_window.as_mut() {
                 tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
             }
         }
@@ -171,13 +185,8 @@ impl App {
         bg_color: PixelColor,
         align_center: bool,
     ) {
-        self.window.draw_text_lines(
-            lines,
-            FontSize::Small,
-            text_color,
-            bg_color,
-            align_center,
-        );
+        self.window
+            .draw_text_lines(lines, FontSize::Small, text_color, bg_color, align_center);
 
         self.window.present();
     }

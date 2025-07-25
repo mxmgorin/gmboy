@@ -18,6 +18,19 @@ pub enum AppMenuItem {
     ToggleFullscreen,
     AudioMenu,
     Volume,
+    Scale,
+    DeveloperMenu,
+    ToggleTileWindow,
+    SpinDuration,
+}
+
+fn developer_menu()  -> Box<[AppMenuItem]> {
+    vec![
+        AppMenuItem::ToggleTileWindow,
+        AppMenuItem::SpinDuration,
+        AppMenuItem::Back,
+    ]
+        .into_boxed_slice()
 }
 
 fn start_menu() -> Box<[AppMenuItem]> {
@@ -30,7 +43,13 @@ fn start_menu() -> Box<[AppMenuItem]> {
 }
 
 fn options_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::InterfaceMenu, AppMenuItem::AudioMenu, AppMenuItem::Back].into_boxed_slice()
+    vec![
+        AppMenuItem::InterfaceMenu,
+        AppMenuItem::AudioMenu,
+        AppMenuItem::DeveloperMenu,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 fn interface_menu() -> Box<[AppMenuItem]> {
@@ -38,6 +57,7 @@ fn interface_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::NextPalette,
         AppMenuItem::ToggleFullscreen,
         AppMenuItem::ToggleFps,
+        AppMenuItem::Scale,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
@@ -111,10 +131,21 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Volume => {
-                Some(AppCommand::ChangeVolume(0.05))
-            }
-            _ => None,
+            AppMenuItem::Scale => Some(AppCommand::ChangeScale(1.0)),
+            AppMenuItem::SpinDuration => Some(AppCommand::ChangeSpinDuration(500)),
+            AppMenuItem::Resume
+            | AppMenuItem::OpenRom
+            | AppMenuItem::OptionsMenu
+            | AppMenuItem::InterfaceMenu
+            | AppMenuItem::Back
+            | AppMenuItem::Exit
+            | AppMenuItem::NextPalette
+            | AppMenuItem::ToggleFps
+            | AppMenuItem::ToggleFullscreen
+            | AppMenuItem::AudioMenu
+            | AppMenuItem::Volume
+            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::ToggleTileWindow => None,
         }
     }
 
@@ -132,10 +163,21 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Volume => {
-                Some(AppCommand::ChangeVolume(-0.05))
-            }
-            _ => None,
+            AppMenuItem::Volume => Some(AppCommand::ChangeVolume(-0.05)),
+            AppMenuItem::Scale => Some(AppCommand::ChangeScale(-1.0)),
+            AppMenuItem::Resume
+            | AppMenuItem::OpenRom
+            | AppMenuItem::OptionsMenu
+            | AppMenuItem::InterfaceMenu
+            | AppMenuItem::Back
+            | AppMenuItem::Exit
+            | AppMenuItem::NextPalette
+            | AppMenuItem::ToggleFps
+            | AppMenuItem::ToggleFullscreen
+            | AppMenuItem::AudioMenu
+            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::ToggleTileWindow => None,
+            AppMenuItem::SpinDuration => Some(AppCommand::ChangeSpinDuration(-500)),
         }
     }
 
@@ -184,7 +226,14 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Volume => None,
+            AppMenuItem::Volume | AppMenuItem::Scale => None,
+            AppMenuItem::DeveloperMenu => {
+                self.next_items(developer_menu());
+
+                None
+            }
+            AppMenuItem::ToggleTileWindow => Some(AppCommand::ToggleTileWindow),
+            AppMenuItem::SpinDuration => None
         }
     }
 
@@ -215,6 +264,12 @@ impl AppMenuItem {
             AppMenuItem::Volume => {
                 format!("Volume({})", (config.audio.volume * 100.0) as i32)
             }
+            AppMenuItem::Scale => {
+                format!("Scale({})", config.interface.scale)
+            }
+            AppMenuItem::DeveloperMenu => "Developer".to_string(),
+            AppMenuItem::ToggleTileWindow => format!("Tile Window{}", get_suffix(config.interface.tile_window)),
+            AppMenuItem::SpinDuration => format!("Spin({})", config.get_emu_config().spin_duration.as_nanos())
         }
     }
 }

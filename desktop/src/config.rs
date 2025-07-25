@@ -11,7 +11,7 @@ use std::{env, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
-    emulation: EmuConfig, // only for deserialization
+    pub emulation: EmuConfig, // only for deserialization
 
     pub last_cart_path: Option<String>,
     pub save_state_on_exit: bool,
@@ -56,7 +56,7 @@ pub struct InterfaceConfig {
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
-    pub tile_viewer: bool,
+    pub tile_window: bool,
 }
 
 impl InterfaceConfig {
@@ -108,7 +108,7 @@ impl Default for AppConfig {
                 scale: 5.0,
                 is_fullscreen: false,
                 show_fps: false,
-                tile_viewer: false,
+                tile_window: false,
             },
             audio: AudioConfig {
                 mute: false,
