@@ -180,8 +180,24 @@ impl InputHandler {
                     emu.runtime.bus.io.joypad.down = is_down;
                 }
             }
-            sdl2::controller::Button::DPadLeft => emu.runtime.bus.io.joypad.left = is_down,
-            sdl2::controller::Button::DPadRight => emu.runtime.bus.io.joypad.right = is_down,
+            sdl2::controller::Button::DPadLeft => {
+                if app.state == AppState::Paused && !is_down {
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_left();
+                    }
+                } else {
+                    emu.runtime.bus.io.joypad.left = is_down
+                }
+            },
+            sdl2::controller::Button::DPadRight => {
+                if app.state == AppState::Paused && !is_down {
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_right();
+                    }
+                } else {
+                    emu.runtime.bus.io.joypad.right = is_down
+                }
+            },
             sdl2::controller::Button::B => emu.runtime.bus.io.joypad.b = is_down,
             sdl2::controller::Button::A => emu.runtime.bus.io.joypad.a = is_down,
             sdl2::controller::Button::Y => {
@@ -266,8 +282,24 @@ impl InputHandler {
                     emu.runtime.bus.io.joypad.down = is_down;
                 }
             }
-            Keycode::LEFT => emu.runtime.bus.io.joypad.left = is_down,
-            Keycode::RIGHT => emu.runtime.bus.io.joypad.right = is_down,
+            Keycode::LEFT => {
+                if app.state == AppState::Paused && !is_down {
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_left();
+                    }
+                } else {
+                    emu.runtime.bus.io.joypad.left = is_down
+                }
+            },
+            Keycode::RIGHT => {
+                if app.state == AppState::Paused && !is_down {
+                    if let Some(menu) = app.menu.as_mut() {
+                        menu.move_right();
+                    }
+                } else {
+                    emu.runtime.bus.io.joypad.right = is_down
+                }
+            },
             Keycode::Z => emu.runtime.bus.io.joypad.b = is_down,
             Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
             Keycode::Return => {

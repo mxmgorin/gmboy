@@ -60,6 +60,42 @@ impl AppMenu {
         self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
     }
 
+    pub fn move_right(&mut self) -> Option<AppCommand> {
+        let item = self.items.get_mut(self.selected_index).unwrap();
+
+        match item {
+            AppMenuItem::SaveState(i) => {
+                *i = core::move_next_wrapped(*i, 99);
+
+                None
+            }
+            AppMenuItem::LoadState(i) => {
+                *i = core::move_next_wrapped(*i, 99);
+
+                None
+            }
+            _ => None,
+        }
+    }
+
+    pub fn move_left(&mut self) -> Option<AppCommand> {
+        let item = self.items.get_mut(self.selected_index).unwrap();
+
+        match item {
+            AppMenuItem::SaveState(i) => {
+                *i = core::move_prev_wrapped(*i, 99);
+
+                None
+            }
+            AppMenuItem::LoadState(i) => {
+                *i = core::move_prev_wrapped(*i, 99);
+
+                None
+            }
+            _ => None,
+        }
+    }
+
     pub fn select(&self) -> Option<AppCommand> {
         let item = self.items[self.selected_index];
 

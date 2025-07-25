@@ -196,7 +196,7 @@ impl App {
             .set_fullscreen(self.config.interface.is_fullscreen);
     }
 
-    pub fn handle_save_state(&self, emu: &mut Emu, event: SaveStateCommand, index: usize) {
+    pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCommand, index: usize) {
         let name = self.config.get_last_file_stem().unwrap();
 
         match event {
@@ -204,10 +204,12 @@ impl App {
                 let save_state = emu.create_save_state();
 
                 if let Err(err) = save_state.save_file(&name, index) {
-                    eprintln!("Failed save_state: {err}",);
+                    eprintln!("Failed save_state: {err}");
+                    return;
                 }
 
                 println!("Saved save state: {index}");
+                self.state = AppState::Running;
             }
             SaveStateCommand::Load => {
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, index);
@@ -219,6 +221,7 @@ impl App {
 
                 emu.load_save_state(save_state);
                 println!("Loaded save state: {index}");
+                self.state = AppState::Running;
             }
         }
     }
