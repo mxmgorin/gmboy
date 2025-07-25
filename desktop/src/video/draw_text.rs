@@ -1,26 +1,19 @@
-use crate::video::char::get_char_bitmap;
 use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
-use sdl2::pixels::Color;
 use sdl2::render::Texture;
-
-const CHAR_WIDTH: usize = 8;
-const CHAR_HEIGHT: usize = 8;
-const CHAR_SPACING: usize = 2;
-const _CHAR_COLOR: Color = Color::WHITE;
-const LINE_SPACING: usize = 3;
+use crate::video::char::get_char_bitmap;
 
 /// Calculate the text width based on character count, scale, and character width
-pub fn calc_text_width_str(text: &str, scale: usize) -> usize {
-    calc_text_width(text.len(), scale)
+pub fn calc_text_width_str(text: &str, size: FontSize) -> usize {
+    calc_text_width(text.len(), size)
 }
 
-pub fn calc_text_width(len: usize, scale: usize) -> usize {
-    len * CHAR_WIDTH * scale + (len - 1) * CHAR_SPACING * scale
+pub fn calc_text_width(len: usize, size: FontSize) -> usize {
+    len * size.width() + (len - 1) * size.spacing()
 }
 
-pub fn calc_text_height(scale: usize) -> usize {
-    CHAR_HEIGHT * scale
+pub fn calc_text_height(size: FontSize) -> usize {
+    size.height()
 }
 
 #[derive(Clone, Copy)]
@@ -29,11 +22,11 @@ pub struct CenterAlignedText {
 }
 
 impl CenterAlignedText {
-    pub fn new(lines: &[&str], scale: usize) -> Self {
+    pub fn new(lines: &[&str], size: FontSize) -> Self {
         let len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
 
         Self {
-            longest_text_width: calc_text_width(len, scale),
+            longest_text_width: calc_text_width(len, size),
         }
     }
 }
@@ -44,6 +37,7 @@ pub fn draw_text_lines(
     color: PixelColor,
     x: usize, // left edge of the whole block
     y: usize,
+    size: FontSize,
     scale: usize,
     align_center: Option<CenterAlignedText>,
 ) {
@@ -61,13 +55,13 @@ pub fn draw_text_lines(
                 let mut line_width = 0;
 
                 for c in line.chars() {
-                    if c == ' ' || get_char_bitmap(c).is_some() {
-                        line_width += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                    if c == ' ' || get_char_bitmap(c, size).is_some() {
+                        line_width += (size.width() * scale) + size.spacing();
                     }
                 }
 
-                if line_width >= CHAR_SPACING {
-                    line_width -= CHAR_SPACING;
+                if line_width >= size.spacing() {
+                    line_width -= size.spacing();
                 }
 
                 // Shift shorter lines right to center under longest
@@ -77,23 +71,23 @@ pub fn draw_text_lines(
                     x
                 };
 
-                let y_offset = y + line_index * ((CHAR_HEIGHT * scale) + LINE_SPACING);
+                let y_offset = y + line_index * ((size.height() * scale) + size.spacing());
                 let mut cursor_x = x_offset;
 
                 for c in line.chars() {
                     if c == ' ' {
-                        cursor_x += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                        cursor_x += (size.width() * scale) + size.spacing();
                         continue;
                     }
 
-                    let Some(bitmap) = get_char_bitmap(c) else {
+                    let Some(bitmap) = get_char_bitmap(c, size) else {
                         //cursor_x += (CHAR_WIDTH * scale) + CHAR_SPACING;
                         continue;
                     };
 
                     for (row, pixel) in bitmap.iter().enumerate() {
-                        for col in 0..CHAR_WIDTH {
-                            if (pixel >> (7 - col)) & 1 == 1 {
+                        for col in 0..size.width() {
+                            if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
                                 let text_pixel_x = cursor_x + (col * scale);
                                 let text_pixel_y = y_offset + (row * scale);
 
@@ -114,9 +108,39 @@ pub fn draw_text_lines(
                         }
                     }
 
-                    cursor_x += (CHAR_WIDTH * scale) + CHAR_SPACING;
+                    cursor_x += (size.width() * scale) + size.spacing();
                 }
             }
         })
         .unwrap();
 }
+
+#[derive(Clone, Copy)]
+pub enum FontSize {
+    Normal,
+    Small
+}
+
+impl FontSize {
+    fn height(self) -> usize {
+        match self {
+            FontSize::Normal => 8,
+            FontSize::Small => 6,
+        }
+    }
+
+    fn width(self) -> usize {
+        match self {
+            FontSize::Normal => 8,
+            FontSize::Small => 5,
+        }
+    }
+
+    fn spacing(self) -> usize {
+        match self {
+            FontSize::Normal => 2,
+            FontSize::Small => 1,
+        }
+    }
+}
+

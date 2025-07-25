@@ -1,4 +1,14 @@
-pub fn get_char_bitmap(c: char) -> Option<[u8; 8]> {
+use crate::video::draw_text::FontSize;
+
+pub fn get_char_bitmap(c: char, size: FontSize) -> Option<Box<[u8]>> {
+    match size {
+        FontSize::Normal => get_normal_char_bitmap(c).map(Box::from),
+        FontSize::Small => get_small_char_bitmap(c).map(Box::from),
+    }
+}
+
+pub fn get_normal_char_bitmap(c: char) -> Option<[u8; 8]> {
+
     match c {
         // A-Z
         'A' => Some([
@@ -270,6 +280,14 @@ pub fn get_char_bitmap(c: char) -> Option<[u8; 8]> {
             0b00011000, 0b00000100, 0b00000010, 0b00000010, 0b00000010, 0b00000100, 0b00011000,
             0b00000000,
         ]),
+        _ => None,
+    }
+}
+
+fn get_small_char_bitmap(c: char) -> Option<[u8; 6]> {
+    match c {
+        'A' => Some([0b01110, 0b10001, 0b11111, 0b10001, 0b10001, 0b00000]),
+        // ...
         _ => None,
     }
 }

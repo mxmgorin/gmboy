@@ -13,6 +13,8 @@ pub enum AppMenuItem {
     Back,
     Exit,
     NextPalette,
+    ToggleFps,
+    ToggleFullscreen,
 }
 
 fn start() -> Box<[AppMenuItem]> {
@@ -29,7 +31,13 @@ fn options() -> Box<[AppMenuItem]> {
 }
 
 fn interface() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::NextPalette, AppMenuItem::Back].into_boxed_slice()
+    vec![
+        AppMenuItem::NextPalette,
+        //AppMenuItem::ToggleFullscreen,
+        AppMenuItem::ToggleFps,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 fn pause() -> Box<[AppMenuItem]> {
@@ -155,6 +163,8 @@ impl AppMenu {
                 None
             }
             AppMenuItem::NextPalette => Some(AppCommand::NextPalette),
+            AppMenuItem::ToggleFps => Some(AppCommand::ToggleFps),
+            AppMenuItem::ToggleFullscreen => Some(AppCommand::ToggleFullscreen),
         }
     }
 
@@ -177,6 +187,8 @@ impl fmt::Display for AppMenuItem {
             AppMenuItem::Interface => write!(f, "Interface"),
             AppMenuItem::Back => write!(f, "Back"),
             AppMenuItem::NextPalette => write!(f, "Next Palette"),
+            AppMenuItem::ToggleFps => write!(f, "Toggle FPS"),
+            AppMenuItem::ToggleFullscreen => write!(f, "Toggle Fullscreen"),
         }
     }
 }

@@ -1,4 +1,6 @@
-use crate::video::draw_text::{calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText};
+use crate::video::draw_text::{
+    calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
+};
 use crate::video::fill_texture;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
@@ -14,6 +16,7 @@ pub struct GameWindow {
     texture: Texture,
     fps_rect: Rect,
     game_rect: Rect,
+    text_rect: Rect,
 }
 
 impl GameWindow {
@@ -43,6 +46,7 @@ impl GameWindow {
             texture,
             fps_rect: Rect::new(0, 0, 80, 80),
             game_rect: new_scaled_rect(win_width, win_height),
+            text_rect: new_scaled_rect(win_width / 2, win_height / 2),
         })
     }
 
@@ -80,35 +84,35 @@ impl GameWindow {
     pub fn draw_text_lines(
         &mut self,
         lines: &[&str],
-        scale: usize,
+        size: FontSize,
         color: PixelColor,
         bg_color: PixelColor,
         align_center: bool,
     ) {
         self.canvas.clear();
         let (align_center, text_width) = if align_center {
-            let center = CenterAlignedText::new(lines, scale);
+            let center = CenterAlignedText::new(lines, size);
 
             (Some(center), center.longest_text_width)
         } else {
-            (None, calc_text_width_str(lines[0], scale))
+            (None, calc_text_width_str(lines[0], size))
         };
-        let text_height = calc_text_height(scale) * lines.len();
+        let text_height = calc_text_height(size) * lines.len();
         // Calculate the x and y positions to center the text
         let x = (LCD_X_RES as u32 as usize - text_width) / 2;
         let y = (LCD_Y_RES as u32 as usize - text_height) / 2;
 
         fill_texture(&mut self.texture, bg_color);
-        draw_text_lines(&mut self.texture, lines, color, x, y, scale, align_center);
+        draw_text_lines(&mut self.texture, lines, color, x, y, size, 1, align_center);
 
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: &str, scale: usize, color: PixelColor) {
+    pub fn draw_fps(&mut self, fps: &str, size: FontSize, color: PixelColor) {
         fill_texture(&mut self.texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.texture, &[fps], color, 5, 5, scale * 3, None);
+        draw_text_lines(&mut self.texture, &[fps], color, 5, 5, size, 3, None);
 
         self.canvas
             .copy(&self.texture, None, Some(self.fps_rect))

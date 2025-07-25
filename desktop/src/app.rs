@@ -17,6 +17,7 @@ use sdl2::Sdl;
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+use crate::video::draw_text::FontSize;
 
 pub enum AppCommand {
     TogglePause,
@@ -29,6 +30,8 @@ pub enum AppCommand {
     PickFile,
     Quit,
     NextPalette,
+    ToggleFps,
+    ToggleFullscreen,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -57,7 +60,7 @@ impl EmuCallback for App {
             if let Some(fps) = &runtime.ppu.fps {
                 self.window.draw_fps(
                     fps.display(),
-                    self.config.interface.text_scale,
+                    FontSize::Normal,
                     runtime.bus.io.lcd.current_colors[0],
                 );
             }
@@ -120,13 +123,7 @@ impl App {
 
         while self.state != AppState::Quitting {
             while self.state == AppState::Paused {
-                input.handle_events(self, emu);
-                emu.runtime.clock.reset();
-                let text_color = emu.runtime.bus.io.lcd.current_colors[0];
-                let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
-                self.draw_menu(text_color, bg_color);
-
-                thread::sleep(Duration::from_millis(100));
+                self.paused(emu, input);
             }
 
             input.handle_events(self, emu);
@@ -138,6 +135,16 @@ impl App {
         }
 
         Ok(())
+    }
+
+    pub fn paused(&mut self, emu: &mut Emu, input: &mut InputHandler) {
+        input.handle_events(self, emu);
+        emu.runtime.clock.reset();
+        let text_color = emu.runtime.bus.io.lcd.current_colors[0];
+        let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
+        self.draw_menu(text_color, bg_color);
+
+        thread::sleep(Duration::from_millis(100));
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
@@ -165,7 +172,7 @@ impl App {
     ) {
         self.window.draw_text_lines(
             lines,
-            self.config.interface.text_scale,
+            FontSize::Normal,
             text_color,
             bg_color,
             align_center,
