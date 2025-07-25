@@ -24,10 +24,18 @@ impl LcdPalette {
 
     pub fn default_palettes() -> Vec<LcdPalette> {
         vec![
+            LcdPalette::nostalgia(),
             LcdPalette::crimson(),
             LcdPalette::forgotten_swamp(),
-            LcdPalette::classic(),
-            LcdPalette::rustic(),
+            LcdPalette::bit2_matrix(),
+            LcdPalette::purple_dawn(),
+            LcdPalette::cave_4(),
+            LcdPalette::gb_mcebuius(),
+            LcdPalette::candy_pop(),
+            LcdPalette::red_is_dead(),
+            LcdPalette::rabbit_5pm(),
+            LcdPalette::blueberry(),
+
             LcdPalette {
                 name: "Swamp".to_string(),
                 hex_colors: [
@@ -55,26 +63,132 @@ impl LcdPalette {
                     "ff0b0630".to_string(),
                 ],
             },
-            LcdPalette {
-                name: "Nintendo Super Gameboy".to_string(),
-                hex_colors: [
-                    "ff331e50".to_string(),
-                    "ffa63725".to_string(),
-                    "ffd68e49".to_string(),
-                    "fff7e7c6".to_string(),
-                ],
-            },
         ]
     }
 
-    pub fn classic() -> Self {
+    pub fn nostalgia() -> Self {
         Self {
-            name: "Classic".to_string(),
+            name: "Nostalgia".to_string(),
             hex_colors: [
-                "ff081820".to_string(),
-                "ff346856".to_string(),
-                "ff88c070".to_string(),
-                "ffe0f8d0".to_string(),
+                "ffd0d058".to_string(),
+                "ffa0a840".to_string(),
+                "ff708028".to_string(),
+                "ff405010".to_string(),
+            ],
+        }
+    }
+
+    pub fn bit2_matrix() -> Self {
+        Self {
+            name: "2 bit matrix".to_string(),
+            hex_colors: [
+                "fff2fff2".to_string(),
+                "ffadd9bc".to_string(),
+                "ff5b8c7c".to_string(),
+                "ff0d1a1a".to_string(),
+            ],
+        }
+    }
+
+    // Created by WildLeoKnight
+    pub fn purple_dawn() -> Self {
+        Self {
+            name: "Purple dawn".to_string(),
+            hex_colors: [
+                "ffeefded".to_string(),
+                "ff9a7bbc".to_string(),
+                "ff2d757e".to_string(),
+                "ff001b2e".to_string(),
+            ],
+        }
+    }
+
+    // Created by Qirlfriend
+    pub fn peach_blizzard() -> Self {
+        Self {
+            name: "Peach blizzard".to_string(),
+            hex_colors: [
+                "fffbd6ad".to_string(),
+                "fff19386".to_string(),
+                "ffa54371".to_string(),
+                "ff4c388a".to_string(),
+            ],
+        }
+    }
+
+    // Created by Isa
+    pub fn blueberry() -> Self {
+        Self {
+            name: "Blueberry".to_string(),
+            hex_colors: [
+                "ff280b0b".to_string(),
+                "ff6c2e53".to_string(),
+                "ffaa73e0".to_string(),
+                "ffb0ecf9".to_string(),
+            ],
+        }
+    }
+
+    // Created by RABBITKNG
+    pub fn rabbit_5pm() -> Self {
+        Self {
+            name: "Rabbit 5pm".to_string(),
+            hex_colors: [
+                "ffffe7cd".to_string(),
+                "ffe4a39f".to_string(),
+                "ff629098".to_string(),
+                "ff4c3457".to_string(),
+            ],
+        }
+    }
+
+    pub fn candy_pop() -> Self {
+        Self {
+            name: "Candy pop!".to_string(),
+            hex_colors: [
+                "ff301221".to_string(),
+                "ff854576".to_string(),
+                "ff9e81d0".to_string(),
+                "ffeebff5".to_string(),
+            ],
+        }
+    }
+
+    // Created by Devine Devine
+    pub fn red_is_dead() -> Self {
+        Self {
+            name: "Red is dead".to_string(),
+            hex_colors: [
+                "fffffcfe".to_string(),
+                "ffff0015".to_string(),
+                "ff860020".to_string(),
+                "ff11070a".to_string(),
+            ],
+        }
+    }
+
+    // Created by Polyducks
+    pub fn cave_4() -> Self {
+        Self {
+            name: "Cave4".to_string(),
+            hex_colors: [
+                "ffe4cbbf".to_string(),
+                "ff938282".to_string(),
+                "ff4f4e80".to_string(),
+                "ff2c0016".to_string(),
+            ],
+        }
+    }
+
+    // Created by RABBITKNG
+    pub fn gb_mcebuius() -> Self {
+        Self {
+            name: "Mcebuius".to_string(),
+            hex_colors: [
+                "fff1e0cd".to_string(),
+                "ffffa49a".to_string(),
+                "ffda3467".to_string(),
+                "ff35333f".to_string(),
             ],
         }
     }

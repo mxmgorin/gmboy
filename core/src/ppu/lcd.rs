@@ -50,7 +50,7 @@ pub struct Lcd {
 
 impl Default for Lcd {
     fn default() -> Self {
-        let palette = into_pixel_colors(&LcdPalette::classic().hex_colors);
+        let palette = into_pixel_colors(&LcdPalette::nostalgia().hex_colors);
 
         Self::new(palette)
     }
