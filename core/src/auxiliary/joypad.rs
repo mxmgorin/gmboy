@@ -46,4 +46,17 @@ impl Joypad {
         self.directions_selected = (value & 0x10) == 0;
         self.actions_selected = (value & 0x20) == 0;
     }
+
+    pub fn reset(&mut self) {
+        self.start = false;
+        self.select = false;
+        self.a = false;
+        self.b = false;
+        self.up = false;
+        self.down = false;
+        self.left = false;
+        self.right = false;
+        self.directions_selected = false;
+        self.actions_selected = false;
+    }
 }

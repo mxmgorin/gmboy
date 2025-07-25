@@ -142,6 +142,7 @@ impl Emu {
         self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
+        self.runtime.bus.io.joypad.reset();
 
         if save_state {
             let name = path.file_stem().unwrap().to_str().expect("cart is valid");

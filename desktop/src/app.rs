@@ -175,7 +175,7 @@ impl App {
             let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
             self.draw_menu(text_color, bg_color);
 
-            thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(50));
         }
     }
 

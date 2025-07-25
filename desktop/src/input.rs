@@ -115,6 +115,7 @@ impl InputHandler {
             }
             AppCommand::TogglePause => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
+                    emu.runtime.bus.io.joypad.reset();
                     app.state = AppState::Running;
                 } else {
                     app.state = AppState::Paused;
@@ -123,6 +124,7 @@ impl InputHandler {
             AppCommand::RestartGame => {
                 if let Some(path) = app.config.last_cart_path.clone() {
                     emu.load_cart_file(&PathBuf::from(path), false);
+                    
                     app.state = AppState::Running;
                 }
             }
