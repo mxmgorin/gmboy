@@ -85,9 +85,6 @@ impl InputHandler {
                         self.execute_command(app, emu, evt);
                     }
                 }
-                Event::MouseButtonDown { .. } => {
-                    self.execute_command(app, emu, AppCommand::PickFile);
-                }
                 Event::Quit { .. } => self.execute_command(app, emu, AppCommand::Quit),
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
