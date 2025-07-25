@@ -18,7 +18,7 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
-pub enum AppEvent {
+pub enum AppCommand {
     Pause,
     Rewind,
     FileDropped(PathBuf),

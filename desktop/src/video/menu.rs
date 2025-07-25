@@ -1,4 +1,4 @@
-use crate::app::AppEvent;
+use crate::app::AppCommand;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -54,12 +54,12 @@ impl AppMenu {
         self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
     }
 
-    pub fn get_event(&self) -> AppEvent {
+    pub fn select(&self) -> Option<AppCommand> {
         let item = self.items[self.selected_index];
 
         match item {
-            AppMenuItem::OpenRom => AppEvent::PickFile,
-            AppMenuItem::Exit => AppEvent::Quit,
+            AppMenuItem::OpenRom => Some(AppCommand::PickFile),
+            AppMenuItem::Exit => Some(AppCommand::Quit),
         }
     }
 }

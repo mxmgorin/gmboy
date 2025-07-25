@@ -1,4 +1,4 @@
-use crate::app::{change_volume, App, AppEvent, AppState};
+use crate::app::{change_volume, App, AppCommand, AppState};
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
@@ -49,14 +49,14 @@ impl InputHandler {
                     println!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
-                    self.handle_event(app, emu, AppEvent::FileDropped(filename.into()))
+                    self.handle_command(app, emu, AppCommand::FileDropped(filename.into()))
                 }
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => {
                     if let Some(evt) = self.handle_key(app, emu, keycode, true) {
-                        self.handle_event(app, emu, evt);
+                        self.handle_command(app, emu, evt);
                     }
                 }
                 Event::KeyUp {
@@ -64,30 +64,30 @@ impl InputHandler {
                     ..
                 } => {
                     if let Some(evt) = self.handle_key(app, emu, keycode, false) {
-                        self.handle_event(app, emu, evt);
+                        self.handle_command(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
                     if let Some(evt) = self.handle_controller_button(app, emu, button, true) {
-                        self.handle_event(app, emu, evt);
+                        self.handle_command(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
                     if let Some(evt) = self.handle_controller_button(app, emu, button, false) {
-                        self.handle_event(app, emu, evt);
+                        self.handle_command(app, emu, evt);
                     }
                 }
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
                     if let Some(evt) = self.handle_joy_axis(axis_idx, value) {
-                        self.handle_event(app, emu, evt);
+                        self.handle_command(app, emu, evt);
                     }
                 }
                 Event::MouseButtonDown { .. } => {
-                    self.handle_event(app, emu, AppEvent::PickFile);
+                    self.handle_command(app, emu, AppCommand::PickFile);
                 }
-                Event::Quit { .. } => self.handle_event(app, emu, AppEvent::Quit),
+                Event::Quit { .. } => self.handle_command(app, emu, AppCommand::Quit),
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -97,7 +97,7 @@ impl InputHandler {
                         if window.get_window_id() == window_id {
                             app.tiles_window = None;
                         } else {
-                            self.handle_event(app, emu, AppEvent::Quit);
+                            self.handle_command(app, emu, AppCommand::Quit);
                         }
                     }
                 }
@@ -106,31 +106,31 @@ impl InputHandler {
         }
     }
 
-    pub fn handle_event(&mut self, app: &mut App, emu: &mut Emu, event: AppEvent) {
+    pub fn handle_command(&mut self, app: &mut App, emu: &mut Emu, event: AppCommand) {
         match event {
-            AppEvent::FileDropped(path) => {
+            AppCommand::FileDropped(path) => {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
             }
-            AppEvent::Pause => {
+            AppCommand::Pause => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
                     app.state = AppState::Running;
                 } else {
                     app.state = AppState::Paused;
                 }
             }
-            AppEvent::Restart => {
+            AppCommand::Restart => {
                 if let Some(path) = app.config.last_cart_path.clone() {
                     emu.load_cart_file(&PathBuf::from(path), false);
                 }
             }
-            AppEvent::ModeChanged(mode) => {
+            AppCommand::ModeChanged(mode) => {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
             }
-            AppEvent::Mute => app.config.audio.mute = !app.config.audio.mute,
-            AppEvent::SaveState(event, index) => app.handle_save_state(emu, event, index),
-            AppEvent::PickFile =>
+            AppCommand::Mute => app.config.audio.mute = !app.config.audio.mute,
+            AppCommand::SaveState(event, index) => app.handle_save_state(emu, event, index),
+            AppCommand::PickFile =>
             {
                 #[cfg(feature = "filepicker")]
                 if app.state == AppState::Paused {
@@ -144,8 +144,8 @@ impl InputHandler {
                     }
                 }
             }
-            AppEvent::Rewind => emu.state = EmuState::Rewind,
-            AppEvent::Quit => app.state = AppState::Quitting,
+            AppCommand::Rewind => emu.state = EmuState::Rewind,
+            AppCommand::Quit => app.state = AppState::Quitting,
         }
     }
 
@@ -155,7 +155,7 @@ impl InputHandler {
         emu: &mut Emu,
         button: sdl2::controller::Button,
         is_down: bool,
-    ) -> Option<AppEvent> {
+    ) -> Option<AppCommand> {
         match button {
             sdl2::controller::Button::DPadUp => {
                 if app.state == AppState::Paused && !is_down {
@@ -177,9 +177,9 @@ impl InputHandler {
             sdl2::controller::Button::A => emu.runtime.bus.io.joypad.a = is_down,
             sdl2::controller::Button::Y => {
                 return if is_down {
-                    Some(AppEvent::Rewind)
+                    Some(AppCommand::Rewind)
                 } else {
-                    Some(AppEvent::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ModeChanged(RunMode::Normal))
                 }
             }
             sdl2::controller::Button::X => {
@@ -192,16 +192,16 @@ impl InputHandler {
             sdl2::controller::Button::Guide => emu.runtime.bus.io.joypad.select = is_down,
             sdl2::controller::Button::LeftShoulder => {
                 return if is_down {
-                    Some(AppEvent::ModeChanged(RunMode::Slow))
+                    Some(AppCommand::ModeChanged(RunMode::Slow))
                 } else {
-                    Some(AppEvent::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ModeChanged(RunMode::Normal))
                 }
             }
             sdl2::controller::Button::RightShoulder => {
                 return if is_down {
-                    Some(AppEvent::ModeChanged(RunMode::Turbo))
+                    Some(AppCommand::ModeChanged(RunMode::Turbo))
                 } else {
-                    Some(AppEvent::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ModeChanged(RunMode::Normal))
                 }
             }
 
@@ -211,7 +211,7 @@ impl InputHandler {
         None
     }
 
-    pub fn handle_joy_axis(&mut self, axis_idx: u8, value: i16) -> Option<AppEvent> {
+    pub fn handle_joy_axis(&mut self, axis_idx: u8, value: i16) -> Option<AppCommand> {
         const LEFT: u8 = 2;
         const RIGHT: u8 = 5;
         const THRESHOLD: i16 = 20_000;
@@ -223,9 +223,9 @@ impl InputHandler {
         }
 
         if axis_idx == LEFT {
-            return Some(AppEvent::SaveState(SaveStateEvent::Load, 1));
+            return Some(AppCommand::SaveState(SaveStateEvent::Load, 1));
         } else if axis_idx == RIGHT {
-            return Some(AppEvent::SaveState(SaveStateEvent::Create, 1));
+            return Some(AppCommand::SaveState(SaveStateEvent::Create, 1));
         }
 
         None
@@ -237,7 +237,7 @@ impl InputHandler {
         emu: &mut Emu,
         keycode: Keycode,
         is_down: bool,
-    ) -> Option<AppEvent> {
+    ) -> Option<AppCommand> {
         match keycode {
             Keycode::UP => {
                 if app.state == AppState::Paused && !is_down {
@@ -259,7 +259,7 @@ impl InputHandler {
             Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
             Keycode::Return => {
                 if app.state == AppState::Paused && !is_down {
-                    return Some(app.menu.get_event());
+                    return app.menu.select();
                 } else {
                     emu.runtime.bus.io.joypad.start = is_down;
                 }
@@ -267,33 +267,33 @@ impl InputHandler {
             Keycode::BACKSPACE => emu.runtime.bus.io.joypad.select = is_down,
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
-                    Some(AppEvent::Rewind)
+                    Some(AppCommand::Rewind)
                 } else {
-                    Some(AppEvent::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ModeChanged(RunMode::Normal))
                 }
             }
             Keycode::TAB => {
                 return if is_down {
-                    Some(AppEvent::ModeChanged(RunMode::Turbo))
+                    Some(AppCommand::ModeChanged(RunMode::Turbo))
                 } else {
-                    Some(AppEvent::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ModeChanged(RunMode::Normal))
                 }
             }
             Keycode::LSHIFT | Keycode::RSHIFT => {
                 return if is_down {
-                    Some(AppEvent::ModeChanged(RunMode::Slow))
+                    Some(AppCommand::ModeChanged(RunMode::Slow))
                 } else {
-                    Some(AppEvent::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ModeChanged(RunMode::Normal))
                 }
             }
             Keycode::ESCAPE => {
                 if !is_down {
-                    return Some(AppEvent::Pause);
+                    return Some(AppCommand::Pause);
                 }
             }
             Keycode::R => {
                 if !is_down {
-                    return Some(AppEvent::Restart);
+                    return Some(AppCommand::Restart);
                 }
             }
             Keycode::EQUALS => {
@@ -313,7 +313,7 @@ impl InputHandler {
             }
             Keycode::M => {
                 if !is_down {
-                    return Some(AppEvent::Mute);
+                    return Some(AppCommand::Mute);
                 }
             }
             Keycode::F11 => {
@@ -333,92 +333,92 @@ impl InputHandler {
             }
             Keycode::NUM_1 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 1));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 1));
                 }
             }
             Keycode::NUM_2 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 2));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 2));
                 }
             }
             Keycode::NUM_3 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 3));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 3));
                 }
             }
             Keycode::NUM_4 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 4));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 4));
                 }
             }
             Keycode::NUM_5 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 5));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 5));
                 }
             }
             Keycode::NUM_6 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 6));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 6));
                 }
             }
             Keycode::NUM_7 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 7));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 7));
                 }
             }
             Keycode::NUM_8 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 8));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 8));
                 }
             }
             Keycode::NUM_9 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Create, 9));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Create, 9));
                 }
             }
             Keycode::F1 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 1));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 1));
                 }
             }
             Keycode::F2 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 2));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 2));
                 }
             }
             Keycode::F3 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 3));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 3));
                 }
             }
             Keycode::F4 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 4));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 4));
                 }
             }
             Keycode::F5 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 5));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 5));
                 }
             }
             Keycode::F6 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 6));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 6));
                 }
             }
             Keycode::F7 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 7));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 7));
                 }
             }
             Keycode::F8 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 8));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 8));
                 }
             }
             Keycode::F9 => {
                 if !is_down {
-                    return Some(AppEvent::SaveState(SaveStateEvent::Load, 9));
+                    return Some(AppCommand::SaveState(SaveStateEvent::Load, 9));
                 }
             }
             _ => (), // Ignore other keycodes
