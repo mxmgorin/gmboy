@@ -23,15 +23,16 @@ pub enum AppCommand {
     TogglePause,
     Rewind,
     LoadFile(PathBuf),
-    Restart,
+    RestartGame,
     ChangeMode(RunMode),
     SaveState(SaveStateCmd, usize),
     PickFile,
     Quit,
-    ChangeConfig(ChangeAppConfigCmd)
+    ChangeConfig(ChangeAppConfigCmd),
 }
 
 pub enum ChangeAppConfigCmd {
+    Default,
     Volume(f32),
     Scale(f32),
     TileWindow,
@@ -39,6 +40,7 @@ pub enum ChangeAppConfigCmd {
     Fps,
     SpinDuration(i32),
     NextPalette,
+    PrevPalette,
     ToggleMute,
     NormalSpeed(f32),
     TurboSpeed(f32),
@@ -209,6 +211,18 @@ impl App {
             self.config.interface.selected_palette_idx,
             self.palettes.len() - 1,
         );
+        self.update_palette(emu);
+    }
+
+    pub fn prev_palette(&mut self, emu: &mut Emu) {
+        self.config.interface.selected_palette_idx = core::move_prev_wrapped(
+            self.config.interface.selected_palette_idx,
+            self.palettes.len() - 1,
+        );
+        self.update_palette(emu);
+    }
+
+    fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
         emu.runtime
             .bus

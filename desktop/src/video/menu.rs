@@ -13,7 +13,7 @@ pub enum AppMenuItem {
     InterfaceMenu,
     Back,
     Exit,
-    NextPalette,
+    Palette,
     ToggleFps,
     ToggleFullscreen,
     AudioMenu,
@@ -32,6 +32,8 @@ pub enum AppMenuItem {
     AudioBufferSize,
     MuteTurbo,
     MuteSlow,
+    DefaultConfig,
+    RestartGame,
 }
 
 fn system_menu() -> Box<[AppMenuItem]> {
@@ -71,6 +73,7 @@ fn options_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::AudioMenu,
         AppMenuItem::SystemMenu,
         AppMenuItem::DeveloperMenu,
+        AppMenuItem::DefaultConfig,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
@@ -78,7 +81,7 @@ fn options_menu() -> Box<[AppMenuItem]> {
 
 fn interface_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::NextPalette,
+        AppMenuItem::Palette,
         AppMenuItem::ToggleFullscreen,
         AppMenuItem::ToggleFps,
         AppMenuItem::Scale,
@@ -92,6 +95,7 @@ fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::Resume,
         AppMenuItem::SaveState(0),
         AppMenuItem::LoadState(0),
+        AppMenuItem::RestartGame,
         AppMenuItem::OpenRom,
         AppMenuItem::OptionsMenu,
         AppMenuItem::Exit,
@@ -177,9 +181,7 @@ impl AppMenu {
             AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::SaveStateOnExit,
             )),
-            AppMenuItem::NextPalette => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette))
-            }
+            AppMenuItem::Palette => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -190,13 +192,13 @@ impl AppMenu {
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::NormalSpeed(0.05),
+                ChangeAppConfigCmd::NormalSpeed(0.1),
             )),
             AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::TurboSpeed(0.05),
+                ChangeAppConfigCmd::TurboSpeed(0.1),
             )),
             AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::SlowSpeed(0.05),
+                ChangeAppConfigCmd::SlowSpeed(0.1),
             )),
             AppMenuItem::RewindSize => {
                 Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::RewindSize(25)))
@@ -209,6 +211,8 @@ impl AppMenu {
             )),
             AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::DefaultConfig => None,
+            AppMenuItem::RestartGame => None,
         }
     }
 
@@ -243,24 +247,24 @@ impl AppMenu {
             AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::SaveStateOnExit,
             )),
+            AppMenuItem::Palette => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
             | AppMenuItem::Exit
-            | AppMenuItem::NextPalette
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::NormalSpeed(-0.05),
+                ChangeAppConfigCmd::NormalSpeed(-0.1),
             )),
             AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::TurboSpeed(-0.05),
+                ChangeAppConfigCmd::TurboSpeed(-0.1),
             )),
             AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::SlowSpeed(-0.05),
+                ChangeAppConfigCmd::SlowSpeed(-0.1),
             )),
             AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::RewindSize(-25),
@@ -273,6 +277,8 @@ impl AppMenu {
             )),
             AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::DefaultConfig => None,
+            AppMenuItem::RestartGame => None,
         }
     }
 
@@ -313,9 +319,7 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::NextPalette => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette))
-            }
+            AppMenuItem::Palette => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
             AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
                 Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
@@ -351,6 +355,8 @@ impl AppMenu {
             AppMenuItem::AudioBufferSize => None,
             AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::DefaultConfig => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Default)),
+            AppMenuItem::RestartGame => Some(AppCommand::RestartGame),
         }
     }
 
@@ -372,7 +378,7 @@ impl AppMenuItem {
             AppMenuItem::OptionsMenu => "Options".to_string(),
             AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
-            AppMenuItem::NextPalette => "Next Palette".to_string(),
+            AppMenuItem::Palette => format!("Palette({})", config.interface.selected_palette_idx),
             AppMenuItem::ToggleFps => format!("FPS{}", get_suffix(config.interface.show_fps)),
             AppMenuItem::ToggleFullscreen => {
                 format!("Fullscreen{}", get_suffix(config.interface.is_fullscreen))
@@ -397,13 +403,13 @@ impl AppMenuItem {
                 get_suffix(config.save_state_on_exit)
             ),
             AppMenuItem::NormalSpeed => {
-                format!("Normal Speed({})", config.emulation.normal_speed * 100.0)
+                format!("Normal Speed(x{})", config.emulation.normal_speed)
             }
             AppMenuItem::TurboSpeed => {
-                format!("Turbo Speed({})", config.emulation.turbo_speed * 100.0)
+                format!("Turbo Speed(x{})", config.emulation.turbo_speed)
             }
             AppMenuItem::SlowSpeed => {
-                format!("Slow Speed({})", config.emulation.slow_speed * 100.0)
+                format!("Slow Speed(x{})", config.emulation.slow_speed)
             }
             AppMenuItem::RewindSize => format!("Rewind Size({})", config.emulation.rewind_size),
             AppMenuItem::RewindInterval => format!(
@@ -413,6 +419,8 @@ impl AppMenuItem {
             AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
             AppMenuItem::MuteTurbo => format!("Mute Turbo{}", get_suffix(config.audio.mute_turbo)),
             AppMenuItem::MuteSlow => format!("Mute Slow{}", get_suffix(config.audio.mute_slow)),
+            AppMenuItem::DefaultConfig => "Reset Default".to_string(),
+            AppMenuItem::RestartGame => "Restart".to_string(),
         }
     }
 }

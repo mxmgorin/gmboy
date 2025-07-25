@@ -9,6 +9,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
 use std::path::{Path, PathBuf};
+use crate::config::AppConfig;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -119,9 +120,10 @@ impl InputHandler {
                     app.state = AppState::Paused;
                 }
             }
-            AppCommand::Restart => {
+            AppCommand::RestartGame => {
                 if let Some(path) = app.config.last_cart_path.clone() {
                     emu.load_cart_file(&PathBuf::from(path), false);
+                    app.state = AppState::Running;
                 }
             }
             AppCommand::ChangeMode(mode) => {
@@ -161,22 +163,23 @@ impl InputHandler {
                     app.config.emulation.spin_duration = emu.config.spin_duration;
                 }
                 ChangeAppConfigCmd::NextPalette => app.next_palette(emu),
+                ChangeAppConfigCmd::PrevPalette => app.prev_palette(emu),
                 ChangeAppConfigCmd::ToggleMute => {
                     app.config.audio.mute = !app.config.audio.mute
                 }
                 ChangeAppConfigCmd::NormalSpeed(x) => {
                     emu.config.normal_speed =
-                        core::change_f64_rounded(emu.config.normal_speed, x as f64).max(0.1);
+                        core::change_f64_rounded(emu.config.normal_speed, x as f64).max(0.05);
                     app.config.emulation.normal_speed = emu.config.normal_speed;
                 }
                 ChangeAppConfigCmd::TurboSpeed(x) => {
                     emu.config.turbo_speed =
-                        core::change_f64_rounded(emu.config.turbo_speed, x as f64).max(0.1);
+                        core::change_f64_rounded(emu.config.turbo_speed, x as f64).max(0.05);
                     app.config.emulation.turbo_speed = emu.config.turbo_speed;
                 }
                 ChangeAppConfigCmd::SlowSpeed(x) => {
                     emu.config.slow_speed =
-                        core::change_f64_rounded(emu.config.slow_speed, x as f64).max(0.1);
+                        core::change_f64_rounded(emu.config.slow_speed, x as f64).max(0.05);
                     app.config.emulation.slow_speed = emu.config.slow_speed;
                 }
                 ChangeAppConfigCmd::RewindSize(x) => {
@@ -204,6 +207,10 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::MuteSlow => {
                     app.config.audio.mute_slow = !app.config.audio.mute_slow
+                }
+                ChangeAppConfigCmd::Default => {
+                    app.config = AppConfig::default();
+                    emu.config = app.config.emulation.clone();
                 }
             },
         }
@@ -395,7 +402,7 @@ impl InputHandler {
             }
             Keycode::R => {
                 if !is_down {
-                    return Some(AppCommand::Restart);
+                    return Some(AppCommand::RestartGame);
                 }
             }
             Keycode::EQUALS => {
