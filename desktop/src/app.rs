@@ -172,7 +172,7 @@ impl App {
     ) {
         self.window.draw_text_lines(
             lines,
-            FontSize::Normal,
+            FontSize::Small,
             text_color,
             bg_color,
             align_center,

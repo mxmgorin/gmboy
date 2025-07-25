@@ -71,7 +71,7 @@ pub fn draw_text_lines(
                     x
                 };
 
-                let y_offset = y + line_index * ((size.height() * scale) + size.spacing());
+                let y_offset = y + line_index * ((size.height() * scale) + size.line_spacing());
                 let mut cursor_x = x_offset;
 
                 for c in line.chars() {
@@ -140,6 +140,13 @@ impl FontSize {
         match self {
             FontSize::Normal => 2,
             FontSize::Small => 1,
+        }
+    }
+
+    fn line_spacing(self) -> usize {
+        match self {
+            FontSize::Normal => 2,
+            FontSize::Small => 2,
         }
     }
 }
