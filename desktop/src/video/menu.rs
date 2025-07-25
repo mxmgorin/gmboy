@@ -20,7 +20,7 @@ pub enum AppMenuItem {
     Volume,
     Scale,
     DeveloperMenu,
-    ToggleTileWindow,
+    TileWindow,
     SpinDuration,
     SystemMenu,
     SaveStateOnExit,
@@ -49,7 +49,7 @@ fn system_menu() -> Box<[AppMenuItem]> {
 
 fn developer_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::ToggleTileWindow,
+        AppMenuItem::TileWindow,
         AppMenuItem::SpinDuration,
         AppMenuItem::Back,
     ]
@@ -67,9 +67,9 @@ fn start_menu() -> Box<[AppMenuItem]> {
 
 fn options_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::SystemMenu,
         AppMenuItem::InterfaceMenu,
         AppMenuItem::AudioMenu,
+        AppMenuItem::SystemMenu,
         AppMenuItem::DeveloperMenu,
         AppMenuItem::Back,
     ]
@@ -162,29 +162,33 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Scale => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(1.0)))
-            }
+            AppMenuItem::Scale => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::SpinDuration(1),
             )),
-            AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(
-                0.05,
-            ))),
+            AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(0.05))),
+            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::ToggleFullscreen => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+            }
+            AppMenuItem::TileWindow => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+            }
+            AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCmd::SaveStateOnExit,
+            )),
+            AppMenuItem::NextPalette => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette))
+            }
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
             | AppMenuItem::Exit
-            | AppMenuItem::NextPalette
-            | AppMenuItem::ToggleFps
-            | AppMenuItem::ToggleFullscreen
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
-            | AppMenuItem::ToggleTileWindow
-            | AppMenuItem::SystemMenu
-            | AppMenuItem::SaveStateOnExit => None,
+            | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::NormalSpeed(0.05),
             )),
@@ -194,17 +198,17 @@ impl AppMenu {
             AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::SlowSpeed(0.05),
             )),
-            AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::RewindSize(25),
-            )),
+            AppMenuItem::RewindSize => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::RewindSize(25)))
+            }
             AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::RewindInterval(1_000_000),
             )),
             AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::AudioBufferSize(2),
             )),
-            AppMenuItem::MuteTurbo => None,
-            AppMenuItem::MuteSlow => None,
+            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
         }
     }
 
@@ -222,15 +226,23 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Scale => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(
-                -1.0,
-            ))),
+            AppMenuItem::Scale => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::SpinDuration(-1),
             )),
-            AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(
-                -0.05,
-            ))),
+            AppMenuItem::Volume => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05)))
+            }
+            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::ToggleFullscreen => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+            }
+            AppMenuItem::TileWindow => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+            }
+            AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCmd::SaveStateOnExit,
+            )),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -238,13 +250,9 @@ impl AppMenu {
             | AppMenuItem::Back
             | AppMenuItem::Exit
             | AppMenuItem::NextPalette
-            | AppMenuItem::ToggleFps
-            | AppMenuItem::ToggleFullscreen
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
-            | AppMenuItem::ToggleTileWindow
-            | AppMenuItem::SystemMenu
-            | AppMenuItem::SaveStateOnExit => None,
+            | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::NormalSpeed(-0.05),
             )),
@@ -263,8 +271,8 @@ impl AppMenu {
             AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCmd::AudioBufferSize(-2),
             )),
-            AppMenuItem::MuteTurbo => None,
-            AppMenuItem::MuteSlow => None,
+            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
         }
     }
 
@@ -305,9 +313,9 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::NextPalette => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::NextPalette,
-            )),
+            AppMenuItem::NextPalette => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette))
+            }
             AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
                 Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
@@ -323,7 +331,7 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::ToggleTileWindow => {
+            AppMenuItem::TileWindow => {
                 Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::TileWindow))
             }
             AppMenuItem::SpinDuration => None,
@@ -341,12 +349,8 @@ impl AppMenu {
             AppMenuItem::RewindSize => None,
             AppMenuItem::RewindInterval => None,
             AppMenuItem::AudioBufferSize => None,
-            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::MuteTurbo,
-            )),
-            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCmd::MuteSlow,
-            )),
+            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
         }
     }
 
@@ -381,7 +385,7 @@ impl AppMenuItem {
                 format!("Scale({})", config.interface.scale)
             }
             AppMenuItem::DeveloperMenu => "Developer".to_string(),
-            AppMenuItem::ToggleTileWindow => {
+            AppMenuItem::TileWindow => {
                 format!("Tile Window{}", get_suffix(config.interface.tile_window))
             }
             AppMenuItem::SpinDuration => {

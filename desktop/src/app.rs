@@ -176,7 +176,7 @@ impl App {
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
-        self.config.interface.scale += delta;
+        self.config.interface.scale = (self.config.interface.scale + delta).max(0.0);
         self.window.set_scale(self.config.interface.scale as u32)?;
 
         println!("Current scale: {}", self.config.interface.scale);
