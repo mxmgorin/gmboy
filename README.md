@@ -44,7 +44,7 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 | Rewind (hold)           | Left Ctrl / Right Ctrl   | Y                 |
 | Turbo mode (hold)       | Tab                      | Right Shoulder    |
 | Slow mode (hold)        | Left Shift / Right Shift | Left Shoulder     |
-| Pause                   | Space                    |                   |
+| Pause                   | Esc                      |                   |
 | Restart                 | R                        |                   |
 | Screen scale up         | + (Equals)               |                   |
 | Screen scale down       | - (Minus)                |                   |
