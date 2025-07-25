@@ -1,5 +1,4 @@
 use crate::app::{change_volume, App, AppCommand, AppState};
-use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::EmuState;
@@ -116,10 +115,8 @@ impl InputHandler {
             }
             AppCommand::TogglePause => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
-                    app.menu = None;
                     app.state = AppState::Running;
                 } else {
-                    app.menu = Some(AppMenu::new(!emu.runtime.bus.cart.is_empty()));
                     app.state = AppState::Paused;
                 }
             }
@@ -164,40 +161,32 @@ impl InputHandler {
         match button {
             sdl2::controller::Button::DPadUp => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_up();
-                    }
+                    app.menu.move_up();
                 } else {
                     emu.runtime.bus.io.joypad.up = is_down;
                 }
             }
             sdl2::controller::Button::DPadDown => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_down();
-                    }
+                    app.menu.move_down();
                 } else {
                     emu.runtime.bus.io.joypad.down = is_down;
                 }
             }
             sdl2::controller::Button::DPadLeft => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_left();
-                    }
+                    app.menu.move_left();
                 } else {
                     emu.runtime.bus.io.joypad.left = is_down
                 }
-            },
+            }
             sdl2::controller::Button::DPadRight => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_right();
-                    }
+                    app.menu.move_right();
                 } else {
                     emu.runtime.bus.io.joypad.right = is_down
                 }
-            },
+            }
             sdl2::controller::Button::B => emu.runtime.bus.io.joypad.b = is_down,
             sdl2::controller::Button::A => emu.runtime.bus.io.joypad.a = is_down,
             sdl2::controller::Button::Y => {
@@ -266,47 +255,37 @@ impl InputHandler {
         match keycode {
             Keycode::UP => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_up();
-                    }
+                    app.menu.move_up();
                 } else {
                     emu.runtime.bus.io.joypad.up = is_down;
                 }
             }
             Keycode::DOWN => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_down();
-                    }
+                    app.menu.move_down();
                 } else {
                     emu.runtime.bus.io.joypad.down = is_down;
                 }
             }
             Keycode::LEFT => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_left();
-                    }
+                    app.menu.move_left();
                 } else {
                     emu.runtime.bus.io.joypad.left = is_down
                 }
-            },
+            }
             Keycode::RIGHT => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        menu.move_right();
-                    }
+                    app.menu.move_right();
                 } else {
                     emu.runtime.bus.io.joypad.right = is_down
                 }
-            },
+            }
             Keycode::Z => emu.runtime.bus.io.joypad.b = is_down,
             Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
             Keycode::Return => {
                 if app.state == AppState::Paused && !is_down {
-                    if let Some(menu) = app.menu.as_mut() {
-                        return menu.select();
-                    }
+                    return app.menu.select();
                 } else {
                     emu.runtime.bus.io.joypad.start = is_down;
                 }

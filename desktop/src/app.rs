@@ -45,7 +45,7 @@ pub struct App {
     pub state: AppState,
     pub tiles_window: Option<TileWindow>,
     pub config: AppConfig,
-    pub menu: Option<AppMenu>,
+    pub menu: AppMenu,
 }
 
 impl EmuCallback for App {
@@ -106,7 +106,7 @@ impl App {
             tiles_window: debug_window,
             audio: AppAudio::new(sdl, &config.audio),
             window: renderer,
-            menu: Some(AppMenu::new(config.last_cart_path.is_some())),
+            menu: AppMenu::new(config.last_cart_path.is_some()),
             state: AppState::Paused,
             palettes,
             config,
@@ -149,12 +149,10 @@ impl App {
     }
 
     fn draw_menu(&mut self, text_color: PixelColor, bg_color: PixelColor) {
-        if let Some(menu) = &self.menu {
-            let items = menu.get_items();
-            let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
+        let items = self.menu.get_items();
+        let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
-            self.draw_text(&items, text_color, bg_color, true);
-        }
+        self.draw_text(&items, text_color, bg_color, true);
     }
 
     fn draw_text(
