@@ -9,7 +9,7 @@ pub fn get_char_bitmap(c: char, size: FontSize) -> Option<Box<[u8]>> {
 
 fn get_small_char_bitmap(c: char) -> Option<[u8; 6]> {
     match c {
-        'A' => Some([0b01110, 0b10001, 0b11111, 0b10001, 0b10001, 0b00000]),
+        'A' => Some([0b01110, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001]),
         'B' => Some([0b11110, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110]),
         'C' => Some([0b01110, 0b10001, 0b10000, 0b10000, 0b10001, 0b01110]),
         'D' => Some([0b11100, 0b10010, 0b10001, 0b10001, 0b10010, 0b11100]),

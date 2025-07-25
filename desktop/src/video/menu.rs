@@ -9,29 +9,31 @@ pub enum AppMenuItem {
     SaveState(usize),
     LoadState(usize),
     OpenRom,
-    Options,
-    Interface,
+    OptionsMenu,
+    InterfaceMenu,
     Back,
     Exit,
     NextPalette,
     ToggleFps,
     ToggleFullscreen,
+    AudioMenu,
+    Volume,
 }
 
-fn start() -> Box<[AppMenuItem]> {
+fn start_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::OpenRom,
-        AppMenuItem::Options,
+        AppMenuItem::OptionsMenu,
         AppMenuItem::Exit,
     ]
     .into_boxed_slice()
 }
 
-fn options() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::Interface, AppMenuItem::Back].into_boxed_slice()
+fn options_menu() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::InterfaceMenu, AppMenuItem::AudioMenu, AppMenuItem::Back].into_boxed_slice()
 }
 
-fn interface() -> Box<[AppMenuItem]> {
+fn interface_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::NextPalette,
         AppMenuItem::ToggleFullscreen,
@@ -41,16 +43,20 @@ fn interface() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-fn pause() -> Box<[AppMenuItem]> {
+fn game_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::Resume,
         AppMenuItem::SaveState(0),
         AppMenuItem::LoadState(0),
         AppMenuItem::OpenRom,
-        AppMenuItem::Options,
+        AppMenuItem::OptionsMenu,
         AppMenuItem::Exit,
     ]
     .into_boxed_slice()
+}
+
+fn audio_menu() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::Volume, AppMenuItem::Back].into_boxed_slice()
 }
 
 pub struct AppMenu {
@@ -63,7 +69,7 @@ impl AppMenu {
     pub fn new(with_cart: bool) -> Self {
         Self {
             prev_items: VecDeque::with_capacity(4),
-            items: if with_cart { pause() } else { start() },
+            items: if with_cart { game_menu() } else { start_menu() },
             selected_index: 0,
         }
     }
@@ -105,6 +111,9 @@ impl AppMenu {
 
                 None
             }
+            AppMenuItem::Volume => {
+                Some(AppCommand::ChangeVolume(0.05))
+            }
             _ => None,
         }
     }
@@ -122,6 +131,9 @@ impl AppMenu {
                 *i = core::move_prev_wrapped(*i, 99);
 
                 None
+            }
+            AppMenuItem::Volume => {
+                Some(AppCommand::ChangeVolume(-0.05))
             }
             _ => None,
         }
@@ -149,13 +161,13 @@ impl AppMenu {
                 core::emu::state::SaveStateCommand::Load,
                 i,
             )),
-            AppMenuItem::Options => {
-                self.next_items(options());
+            AppMenuItem::OptionsMenu => {
+                self.next_items(options_menu());
 
                 None
             }
-            AppMenuItem::Interface => {
-                self.next_items(interface());
+            AppMenuItem::InterfaceMenu => {
+                self.next_items(interface_menu());
 
                 None
             }
@@ -167,6 +179,12 @@ impl AppMenu {
             AppMenuItem::NextPalette => Some(AppCommand::NextPalette),
             AppMenuItem::ToggleFps => Some(AppCommand::ToggleFps),
             AppMenuItem::ToggleFullscreen => Some(AppCommand::ToggleFullscreen),
+            AppMenuItem::AudioMenu => {
+                self.next_items(audio_menu());
+
+                None
+            }
+            AppMenuItem::Volume => None,
         }
     }
 
@@ -183,15 +201,19 @@ impl AppMenuItem {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open Rom".to_string(),
             AppMenuItem::Exit => "Exit".to_string(),
-            AppMenuItem::SaveState(i) => format!("Save ({i})"),
-            AppMenuItem::LoadState(i) => format!("Load ({i})"),
-            AppMenuItem::Options => "Options".to_string(),
-            AppMenuItem::Interface => "Interface".to_string(),
+            AppMenuItem::SaveState(i) => format!("Save({i})"),
+            AppMenuItem::LoadState(i) => format!("Load({i})"),
+            AppMenuItem::OptionsMenu => "Options".to_string(),
+            AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
             AppMenuItem::NextPalette => "Next Palette".to_string(),
             AppMenuItem::ToggleFps => format!("FPS{}", get_suffix(config.interface.show_fps)),
             AppMenuItem::ToggleFullscreen => {
                 format!("Fullscreen{}", get_suffix(config.interface.is_fullscreen))
+            }
+            AppMenuItem::AudioMenu => "Audio".to_string(),
+            AppMenuItem::Volume => {
+                format!("Volume({})", (config.audio.volume * 100.0) as i32)
             }
         }
     }

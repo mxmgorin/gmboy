@@ -56,7 +56,6 @@ pub struct InterfaceConfig {
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
-    pub text_scale: usize,
     pub tile_viewer: bool,
 }
 
@@ -109,7 +108,6 @@ impl Default for AppConfig {
                 scale: 5.0,
                 is_fullscreen: false,
                 show_fps: false,
-                text_scale: 1,
                 tile_viewer: false,
             },
             audio: AudioConfig {

@@ -49,7 +49,7 @@ impl InputHandler {
                     println!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
-                    self.execute_command(app, emu, AppCommand::FileDropped(filename.into()))
+                    self.execute_command(app, emu, AppCommand::LoadFile(filename.into()))
                 }
                 Event::KeyDown {
                     keycode: Some(keycode),
@@ -108,7 +108,7 @@ impl InputHandler {
 
     pub fn execute_command(&mut self, app: &mut App, emu: &mut Emu, event: AppCommand) {
         match event {
-            AppCommand::FileDropped(path) => {
+            AppCommand::LoadFile(path) => {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
                 app.state = AppState::Running;
@@ -125,7 +125,7 @@ impl InputHandler {
                     emu.load_cart_file(&PathBuf::from(path), false);
                 }
             }
-            AppCommand::ModeChanged(mode) => {
+            AppCommand::ChangeMode(mode) => {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
             }
@@ -152,8 +152,9 @@ impl InputHandler {
             AppCommand::ToggleFps => {
                 emu.runtime.ppu.toggle_fps();
                 app.config.interface.show_fps = !app.config.interface.show_fps;
-            },
+            }
             AppCommand::ToggleFullscreen => app.toggle_fullscreen(),
+            AppCommand::ChangeVolume(x) => change_volume(app, emu, x),
         }
     }
 
@@ -181,14 +182,14 @@ impl InputHandler {
             }
             sdl2::controller::Button::DPadLeft => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_left();
+                    return app.menu.move_left();
                 } else {
                     emu.runtime.bus.io.joypad.left = is_down
                 }
             }
             sdl2::controller::Button::DPadRight => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_right();
+                    return app.menu.move_right();
                 } else {
                     emu.runtime.bus.io.joypad.right = is_down
                 }
@@ -199,19 +200,19 @@ impl InputHandler {
                 } else {
                     emu.runtime.bus.io.joypad.b = is_down
                 }
-            },
+            }
             sdl2::controller::Button::A => {
                 if app.state == AppState::Paused && !is_down {
                     app.menu.select();
                 } else {
                     emu.runtime.bus.io.joypad.a = is_down
                 }
-            },
+            }
             sdl2::controller::Button::Y => {
                 return if is_down {
                     Some(AppCommand::Rewind)
                 } else {
-                    Some(AppCommand::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ChangeMode(RunMode::Normal))
                 }
             }
             sdl2::controller::Button::X => {
@@ -224,16 +225,16 @@ impl InputHandler {
             sdl2::controller::Button::Guide => emu.runtime.bus.io.joypad.select = is_down,
             sdl2::controller::Button::LeftShoulder => {
                 return if is_down {
-                    Some(AppCommand::ModeChanged(RunMode::Slow))
+                    Some(AppCommand::ChangeMode(RunMode::Slow))
                 } else {
-                    Some(AppCommand::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ChangeMode(RunMode::Normal))
                 }
             }
             sdl2::controller::Button::RightShoulder => {
                 return if is_down {
-                    Some(AppCommand::ModeChanged(RunMode::Turbo))
+                    Some(AppCommand::ChangeMode(RunMode::Turbo))
                 } else {
-                    Some(AppCommand::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ChangeMode(RunMode::Normal))
                 }
             }
 
@@ -287,14 +288,14 @@ impl InputHandler {
             }
             Keycode::LEFT => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_left();
+                    return app.menu.move_left();
                 } else {
                     emu.runtime.bus.io.joypad.left = is_down
                 }
             }
             Keycode::RIGHT => {
                 if app.state == AppState::Paused && !is_down {
-                    app.menu.move_right();
+                    return app.menu.move_right();
                 } else {
                     emu.runtime.bus.io.joypad.right = is_down
                 }
@@ -314,26 +315,26 @@ impl InputHandler {
                 } else {
                     emu.runtime.bus.io.joypad.select = is_down
                 }
-            },
+            }
             Keycode::LCTRL | Keycode::RCTRL => {
                 return if is_down {
                     Some(AppCommand::Rewind)
                 } else {
-                    Some(AppCommand::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ChangeMode(RunMode::Normal))
                 }
             }
             Keycode::TAB => {
                 return if is_down {
-                    Some(AppCommand::ModeChanged(RunMode::Turbo))
+                    Some(AppCommand::ChangeMode(RunMode::Turbo))
                 } else {
-                    Some(AppCommand::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ChangeMode(RunMode::Normal))
                 }
             }
             Keycode::LSHIFT | Keycode::RSHIFT => {
                 return if is_down {
-                    Some(AppCommand::ModeChanged(RunMode::Slow))
+                    Some(AppCommand::ChangeMode(RunMode::Slow))
                 } else {
-                    Some(AppCommand::ModeChanged(RunMode::Normal))
+                    Some(AppCommand::ChangeMode(RunMode::Normal))
                 }
             }
             Keycode::ESCAPE => {
@@ -368,12 +369,12 @@ impl InputHandler {
             }
             Keycode::F11 => {
                 if !is_down {
-                    change_volume(app, emu, -0.1);
+                    return Some(AppCommand::ChangeVolume(-0.05));
                 }
             }
             Keycode::F12 => {
                 if !is_down {
-                    change_volume(app, emu, 0.1);
+                    return Some(AppCommand::ChangeVolume(0.05));
                 }
             }
             Keycode::P => {

@@ -22,9 +22,9 @@ use crate::video::draw_text::FontSize;
 pub enum AppCommand {
     TogglePause,
     Rewind,
-    FileDropped(PathBuf),
+    LoadFile(PathBuf),
     Restart,
-    ModeChanged(RunMode),
+    ChangeMode(RunMode),
     Mute,
     SaveState(SaveStateCommand, usize),
     PickFile,
@@ -32,6 +32,7 @@ pub enum AppCommand {
     NextPalette,
     ToggleFps,
     ToggleFullscreen,
+    ChangeVolume(f32),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

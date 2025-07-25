@@ -44,7 +44,7 @@ impl ApuConfig {
     }
 
     pub fn change_volume(&mut self, delta: f32) {
-        self.volume = (((self.volume + delta) * 10.0).round() / 10.0).clamp(0.0, 2.0);
+        self.volume = (((self.volume + delta) * 100.0).round() / 100.0).clamp(0.0, 2.0);
     }
 }
 
