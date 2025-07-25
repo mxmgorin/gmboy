@@ -155,9 +155,9 @@ impl InputHandler {
             AppCommand::ChangeConfig(cmd) => match cmd {
                 ChangeAppConfigCommand::Volume(x) => change_volume(app, emu, x),
                 ChangeAppConfigCommand::Scale(x) => app.change_scale(x).unwrap(),
-                ChangeAppConfigCommand::ToggleTileWindow => app.toggle_tile_window(),
-                ChangeAppConfigCommand::ToggleFullscreen => app.toggle_fullscreen(),
-                ChangeAppConfigCommand::ToggleFps => {
+                ChangeAppConfigCommand::TileWindow => app.toggle_tile_window(),
+                ChangeAppConfigCommand::Fullscreen => app.toggle_fullscreen(),
+                ChangeAppConfigCommand::Fps => {
                     emu.runtime.ppu.toggle_fps();
                     app.config.interface.show_fps = !app.config.interface.show_fps;
                 }
@@ -177,19 +177,19 @@ impl InputHandler {
                 ChangeAppConfigCommand::ToggleMute => {
                     app.config.audio.mute = !app.config.audio.mute
                 }
-                ChangeAppConfigCommand::ChangeNormalSpeed(x) => {
+                ChangeAppConfigCommand::NormalSpeed(x) => {
                     emu.config.normal_speed = core::add_f64_rounded(emu.config.normal_speed, x as f64);
                     app.config.emulation.normal_speed = emu.config.normal_speed;
                 }
-                ChangeAppConfigCommand::ChangeTurboSpeed(x) => {
+                ChangeAppConfigCommand::TurboSpeed(x) => {
                     emu.config.turbo_speed = core::add_f64_rounded(emu.config.turbo_speed, x as f64);
                     app.config.emulation.turbo_speed = emu.config.turbo_speed;
                 }
-                ChangeAppConfigCommand::ChangeSlowSpeed(x) => {
+                ChangeAppConfigCommand::SlowSpeed(x) => {
                     emu.config.slow_speed = core::add_f64_rounded(emu.config.slow_speed, x as f64);
                     app.config.emulation.slow_speed = emu.config.slow_speed;
                 }
-                ChangeAppConfigCommand::ChangeRewindSize(x) => {
+                ChangeAppConfigCommand::RewindSize(x) => {
                     if x < 0 {
                         emu.config.rewind_size -= x as usize;
                     } else {
@@ -197,7 +197,7 @@ impl InputHandler {
                     }
                     app.config.emulation.rewind_size = emu.config.rewind_size;
                 }
-                ChangeAppConfigCommand::ChangeRewindInterval(x) => {
+                ChangeAppConfigCommand::RewindInterval(x) => {
                     if x < 0 {
                         emu.config.rewind_interval = emu
                             .config
@@ -211,9 +211,20 @@ impl InputHandler {
                     }
                     app.config.emulation.rewind_interval = emu.config.rewind_interval;
                 }
-                ChangeAppConfigCommand::ToggleSaveStateOnExit => {
+                ChangeAppConfigCommand::SaveStateOnExit => {
                     app.config.save_state_on_exit = !app.config.save_state_on_exit
                 }
+                ChangeAppConfigCommand::AudioBufferSize(x) => {
+                    if x < 0 {
+                        emu.runtime.bus.io.apu.config.buffer_size -= x.unsigned_abs() as usize;
+                    } else {
+                        emu.runtime.bus.io.apu.config.buffer_size += x as usize;
+                    }
+                    emu.runtime.bus.io.apu.update_buffer_size();
+                    app.config.audio.buffer_size = emu.runtime.bus.io.apu.config.buffer_size;
+                }
+                ChangeAppConfigCommand::MuteTurbo => app.config.audio.mute_turbo = !app.config.audio.mute_turbo,
+                ChangeAppConfigCommand::MuteSlow => app.config.audio.mute_slow = !app.config.audio.mute_slow,
             },
         }
     }

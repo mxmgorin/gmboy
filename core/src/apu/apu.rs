@@ -101,6 +101,12 @@ impl Apu {
             config,
         }
     }
+    
+    pub fn update_buffer_size(&mut self) {
+        self.buffer = vec![0.0; self.config.buffer_size].into_boxed_slice();
+        self.clear_buffer();
+    }
+    
     pub fn tick(&mut self) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.sequence_frame();

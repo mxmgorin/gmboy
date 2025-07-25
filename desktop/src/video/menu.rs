@@ -29,6 +29,9 @@ pub enum AppMenuItem {
     SlowSpeed,
     RewindSize,
     RewindInterval,
+    AudioBufferSize,
+    MuteTurbo,
+    MuteSlow,
 }
 
 fn system_menu() -> Box<[AppMenuItem]> {
@@ -97,7 +100,14 @@ fn game_menu() -> Box<[AppMenuItem]> {
 }
 
 fn audio_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::Volume, AppMenuItem::Back].into_boxed_slice()
+    vec![
+        AppMenuItem::Volume,
+        AppMenuItem::AudioBufferSize,
+        AppMenuItem::MuteTurbo,
+        AppMenuItem::MuteSlow,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 pub struct AppMenu {
@@ -176,20 +186,25 @@ impl AppMenu {
             | AppMenuItem::SystemMenu
             | AppMenuItem::SaveStateOnExit => None,
             AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeNormalSpeed(0.05),
+                ChangeAppConfigCommand::NormalSpeed(0.05),
             )),
             AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeTurboSpeed(0.05),
+                ChangeAppConfigCommand::TurboSpeed(0.05),
             )),
             AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeSlowSpeed(0.05),
+                ChangeAppConfigCommand::SlowSpeed(0.05),
             )),
             AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeRewindSize(5),
+                ChangeAppConfigCommand::RewindSize(5),
             )),
             AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeRewindInterval(1),
-            ))
+                ChangeAppConfigCommand::RewindInterval(1),
+            )),
+            AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::AudioBufferSize(2),
+            )),
+            AppMenuItem::MuteTurbo => None,
+            AppMenuItem::MuteSlow => None,
         }
     }
 
@@ -231,20 +246,25 @@ impl AppMenu {
             | AppMenuItem::SystemMenu
             | AppMenuItem::SaveStateOnExit => None,
             AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeNormalSpeed(-0.05),
+                ChangeAppConfigCommand::NormalSpeed(-0.05),
             )),
             AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeTurboSpeed(-0.05),
+                ChangeAppConfigCommand::TurboSpeed(-0.05),
             )),
             AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeSlowSpeed(-0.05),
+                ChangeAppConfigCommand::SlowSpeed(-0.05),
             )),
             AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeRewindSize(-5),
+                ChangeAppConfigCommand::RewindSize(-5),
             )),
             AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ChangeRewindInterval(-1),
-            ))
+                ChangeAppConfigCommand::RewindInterval(-1),
+            )),
+            AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::AudioBufferSize(-2),
+            )),
+            AppMenuItem::MuteTurbo => None,
+            AppMenuItem::MuteSlow => None,
         }
     }
 
@@ -288,12 +308,10 @@ impl AppMenu {
             AppMenuItem::NextPalette => Some(AppCommand::ChangeConfig(
                 ChangeAppConfigCommand::NextPalette,
             )),
-            AppMenuItem::ToggleFps => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleFps))
+            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Fps)),
+            AppMenuItem::ToggleFullscreen => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Fullscreen))
             }
-            AppMenuItem::ToggleFullscreen => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ToggleFullscreen,
-            )),
             AppMenuItem::AudioMenu => {
                 self.next_items(audio_menu());
 
@@ -305,9 +323,9 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::ToggleTileWindow => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ToggleTileWindow,
-            )),
+            AppMenuItem::ToggleTileWindow => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::TileWindow))
+            }
             AppMenuItem::SpinDuration => None,
             AppMenuItem::SystemMenu => {
                 self.next_items(system_menu());
@@ -315,13 +333,20 @@ impl AppMenu {
                 None
             }
             AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
-                ChangeAppConfigCommand::ToggleSaveStateOnExit,
+                ChangeAppConfigCommand::SaveStateOnExit,
             )),
             AppMenuItem::NormalSpeed => None,
             AppMenuItem::TurboSpeed => None,
             AppMenuItem::SlowSpeed => None,
             AppMenuItem::RewindSize => None,
             AppMenuItem::RewindInterval => None,
+            AppMenuItem::AudioBufferSize => None,
+            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::MuteTurbo,
+            )),
+            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::MuteSlow,
+            )),
         }
     }
 
@@ -381,6 +406,9 @@ impl AppMenuItem {
                 "Rewind Interval({})",
                 config.emulation.rewind_interval.as_secs()
             ),
+            AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
+            AppMenuItem::MuteTurbo => format!("Mute Turbo{}", get_suffix(config.audio.mute_turbo)),
+            AppMenuItem::MuteSlow => format!("Mute Slow{}", get_suffix(config.audio.mute_slow)),
         }
     }
 }
