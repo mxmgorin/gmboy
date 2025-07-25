@@ -9,25 +9,25 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 ## Features
 
 - **Config Management**  
-  A `config.json` file lets you customize settings by editing it directly. It is created on first run in the app folder.
+  Customize the config.json file via a built-in menu or by editing it manually.
 
 - **Multiple Palettes**  
-  Includes different color palettes with ability to add by editing the file.
+  Includes different color palettes with ability to add by editing the palettes.json file.
 
 - **Slow and Turbo Modes**  
-  Ability to slow down or speed up emulation. Speed is adjustable via the config file.
+  Ability to slow down or speed up emulation. Speed is adjustable via the config.
 
 - **Rewind**  
-  Undo your actions and retry sections without restarting. Adjustable via the config file.
+  Undo your actions and retry sections without restarting. Adjustable via the config.
 
 - **Save States**  
-  Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config file.
+  Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config.
 
 - **Tests**  
   Integrated SM83 json tests, blargg tests, mooneye test suite (via `cargo test`).
 
 - **Tile Viewer**  
-  Visualize and inspect background and sprite tile data in real time. Toggle it via the config file.
+  Visualize and inspect background and sprite tile data in real time. Toggle it via the config.
 
 ## Keybindings
 
@@ -97,11 +97,11 @@ cargo build --release
 
 - GBC mode
 - Re-mappable keybindings
-- Emulator menu (with settings etc.)
 - Accuracy improvements, bug fixes
 - Shaders
-- Web, android builds
+- Web, android, arm builds
 - Audio visualizer
+- Palette loader
 
 ## Test Results
 
