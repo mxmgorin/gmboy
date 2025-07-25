@@ -157,7 +157,7 @@ impl App {
     }
 
     fn draw_menu(&mut self, text_color: PixelColor, bg_color: PixelColor) {
-        let items = self.menu.get_items();
+        let items = self.menu.get_items(&self.config);
         let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
         self.draw_text(&items, text_color, bg_color, true);

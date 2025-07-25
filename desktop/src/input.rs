@@ -149,7 +149,10 @@ impl InputHandler {
             AppCommand::Rewind => emu.state = EmuState::Rewind,
             AppCommand::Quit => app.state = AppState::Quitting,
             AppCommand::NextPalette => app.next_palette(emu),
-            AppCommand::ToggleFps => emu.runtime.ppu.toggle_fps(),
+            AppCommand::ToggleFps => {
+                emu.runtime.ppu.toggle_fps();
+                app.config.interface.show_fps = !app.config.interface.show_fps;
+            },
             AppCommand::ToggleFullscreen => app.toggle_fullscreen(),
         }
     }

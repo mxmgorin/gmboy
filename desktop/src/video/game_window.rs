@@ -16,7 +16,6 @@ pub struct GameWindow {
     texture: Texture,
     fps_rect: Rect,
     game_rect: Rect,
-    text_rect: Rect,
 }
 
 impl GameWindow {
@@ -46,7 +45,6 @@ impl GameWindow {
             texture,
             fps_rect: Rect::new(0, 0, 80, 80),
             game_rect: new_scaled_rect(win_width, win_height),
-            text_rect: new_scaled_rect(win_width / 2, win_height / 2),
         })
     }
 

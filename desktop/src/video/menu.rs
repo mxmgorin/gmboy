@@ -1,6 +1,7 @@
 use crate::app::AppCommand;
+use crate::config::AppConfig;
 use std::collections::VecDeque;
-use std::{fmt, mem};
+use std::mem;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
@@ -33,7 +34,7 @@ fn options() -> Box<[AppMenuItem]> {
 fn interface() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::NextPalette,
-        //AppMenuItem::ToggleFullscreen,
+        AppMenuItem::ToggleFullscreen,
         AppMenuItem::ToggleFps,
         AppMenuItem::Back,
     ]
@@ -67,15 +68,16 @@ impl AppMenu {
         }
     }
 
-    pub fn get_items(&self) -> Box<[String]> {
+    pub fn get_items(&self, config: &AppConfig) -> Box<[String]> {
         self.items
             .iter()
             .enumerate()
             .map(|(i, line)| {
+                let line = line.to_string(config);
                 if i == self.selected_index {
                     format!(">{line}<")
                 } else {
-                    line.to_string()
+                    line
                 }
             })
             .collect()
@@ -175,20 +177,30 @@ impl AppMenu {
     }
 }
 
-impl fmt::Display for AppMenuItem {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl AppMenuItem {
+    pub fn to_string(self, config: &AppConfig) -> String {
         match self {
-            AppMenuItem::Resume => write!(f, "Resume"),
-            AppMenuItem::OpenRom => write!(f, "Open Rom"),
-            AppMenuItem::Exit => write!(f, "Exit"),
-            AppMenuItem::SaveState(i) => write!(f, "Save ({i})"),
-            AppMenuItem::LoadState(i) => write!(f, "Load ({i})"),
-            AppMenuItem::Options => write!(f, "Options"),
-            AppMenuItem::Interface => write!(f, "Interface"),
-            AppMenuItem::Back => write!(f, "Back"),
-            AppMenuItem::NextPalette => write!(f, "Next Palette"),
-            AppMenuItem::ToggleFps => write!(f, "Toggle FPS"),
-            AppMenuItem::ToggleFullscreen => write!(f, "Toggle Fullscreen"),
+            AppMenuItem::Resume => "Resume".to_string(),
+            AppMenuItem::OpenRom => "Open Rom".to_string(),
+            AppMenuItem::Exit => "Exit".to_string(),
+            AppMenuItem::SaveState(i) => format!("Save ({i})"),
+            AppMenuItem::LoadState(i) => format!("Load ({i})"),
+            AppMenuItem::Options => "Options".to_string(),
+            AppMenuItem::Interface => "Interface".to_string(),
+            AppMenuItem::Back => "Back".to_string(),
+            AppMenuItem::NextPalette => "Next Palette".to_string(),
+            AppMenuItem::ToggleFps => format!("FPS{}", get_suffix(config.interface.show_fps)),
+            AppMenuItem::ToggleFullscreen => {
+                format!("Fullscreen{}", get_suffix(config.interface.is_fullscreen))
+            }
         }
+    }
+}
+
+fn get_suffix(enabled: bool) -> &'static str {
+    if enabled {
+        "(●)"
+    } else {
+        ""
     }
 }
