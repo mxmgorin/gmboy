@@ -152,29 +152,31 @@ impl App {
         self.state = AppState::Paused;
 
         while self.state != AppState::Quitting {
-            while self.state == AppState::Paused {
-                self.paused(emu, input);
-            }
+            if self.state == AppState::Paused {
+                self.run_pause(emu, input);
+            } else {
+                input.handle_events(self, emu);
+                emu.run_frame(self)?;
 
-            input.handle_events(self, emu);
-            emu.run_frame(self)?;
-
-            if let Some(tiles_window) = self.tile_window.as_mut() {
-                tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
+                if let Some(tiles_window) = self.tile_window.as_mut() {
+                    tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
+                }
             }
         }
 
         Ok(())
     }
 
-    pub fn paused(&mut self, emu: &mut Emu, input: &mut InputHandler) {
-        input.handle_events(self, emu);
-        emu.runtime.clock.reset();
-        let text_color = emu.runtime.bus.io.lcd.current_colors[0];
-        let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
-        self.draw_menu(text_color, bg_color);
+    pub fn run_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
+        while self.state == AppState::Paused {
+            input.handle_events(self, emu);
+            emu.runtime.clock.reset();
+            let text_color = emu.runtime.bus.io.lcd.current_colors[0];
+            let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
+            self.draw_menu(text_color, bg_color);
 
-        thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(100));
+        }
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
@@ -276,9 +278,13 @@ impl App {
             eprint!("Failed config.save: {err}");
         }
 
-        // save sram for battery emulation
-        let name = self.config.get_last_file_stem().unwrap();
+        let name = self.config.get_last_file_stem();
 
+        let Some(name) = name else {
+            return Err("Failed get_last_file_stem: not found".to_string());
+        };
+
+        // save sram for battery emulation
         if let Some(bytes) = emu.runtime.bus.cart.dump_ram() {
             let battery = BatterySave::from_bytes(bytes)
                 .save_file(&name)
@@ -289,7 +295,7 @@ impl App {
             };
         }
 
-        // save state on exit
+        // save state
         if self.config.save_state_on_exit {
             if let Err(err) = emu.create_save_state().save_file(&name, 0) {
                 eprintln!("Failed save_state: {err}");

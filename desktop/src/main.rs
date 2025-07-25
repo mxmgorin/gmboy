@@ -35,7 +35,9 @@ fn main() {
         eprintln!("Failed app run: {err}");
     }
 
-    app.save_files(&mut emu).unwrap()
+    if let Err(err) = app.save_files(&mut emu) {
+        eprintln!("Failed app.save_files: {err}");
+    }
 }
 
 fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
