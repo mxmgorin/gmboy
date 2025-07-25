@@ -39,7 +39,13 @@ pub enum ChangeAppConfigCommand {
     ToggleFps,
     SpinDuration(i32),
     NextPalette,
-    ToggleMute
+    ToggleMute,
+    ChangeNormalSpeed(f32),
+    ChangeTurboSpeed(f32),
+    ChangeSlowSpeed(f32),
+    ChangeRewindSize(i32),
+    ChangeRewindInterval(i32),
+    ToggleSaveStateOnExit,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

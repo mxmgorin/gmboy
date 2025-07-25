@@ -177,6 +177,43 @@ impl InputHandler {
                 ChangeAppConfigCommand::ToggleMute => {
                     app.config.audio.mute = !app.config.audio.mute
                 }
+                ChangeAppConfigCommand::ChangeNormalSpeed(x) => {
+                    emu.config.normal_speed = core::add_f64_rounded(emu.config.normal_speed, x as f64);
+                    app.config.emulation.normal_speed = emu.config.normal_speed;
+                }
+                ChangeAppConfigCommand::ChangeTurboSpeed(x) => {
+                    emu.config.turbo_speed = core::add_f64_rounded(emu.config.turbo_speed, x as f64);
+                    app.config.emulation.turbo_speed = emu.config.turbo_speed;
+                }
+                ChangeAppConfigCommand::ChangeSlowSpeed(x) => {
+                    emu.config.slow_speed = core::add_f64_rounded(emu.config.slow_speed, x as f64);
+                    app.config.emulation.slow_speed = emu.config.slow_speed;
+                }
+                ChangeAppConfigCommand::ChangeRewindSize(x) => {
+                    if x < 0 {
+                        emu.config.rewind_size -= x as usize;
+                    } else {
+                        emu.config.rewind_size += x as usize;
+                    }
+                    app.config.emulation.rewind_size = emu.config.rewind_size;
+                }
+                ChangeAppConfigCommand::ChangeRewindInterval(x) => {
+                    if x < 0 {
+                        emu.config.rewind_interval = emu
+                            .config
+                            .rewind_interval
+                            .sub(Duration::from_nanos(x.unsigned_abs() as u64));
+                    } else {
+                        emu.config.rewind_interval = emu
+                            .config
+                            .rewind_interval
+                            .add(Duration::from_nanos(x as u64));
+                    }
+                    app.config.emulation.rewind_interval = emu.config.rewind_interval;
+                }
+                ChangeAppConfigCommand::ToggleSaveStateOnExit => {
+                    app.config.save_state_on_exit = !app.config.save_state_on_exit
+                }
             },
         }
     }
@@ -377,7 +414,9 @@ impl InputHandler {
             }
             Keycode::MINUS => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(-1.0)));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Scale(
+                        -1.0,
+                    )));
                 }
             }
             Keycode::F => {
@@ -392,17 +431,23 @@ impl InputHandler {
             }
             Keycode::F11 => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(-0.05)));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
+                        -0.05,
+                    )));
                 }
             }
             Keycode::F12 => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(0.05)));
+                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::Volume(
+                        0.05,
+                    )));
                 }
             }
             Keycode::P => {
                 if !is_down {
-                    return Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::NextPalette));
+                    return Some(AppCommand::ChangeConfig(
+                        ChangeAppConfigCommand::NextPalette,
+                    ));
                 }
             }
             Keycode::NUM_1 => {

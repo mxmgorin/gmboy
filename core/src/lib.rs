@@ -128,6 +128,14 @@ pub fn move_prev_wrapped(curr_idx: usize, max_idx: usize) -> usize {
     }
 }
 
+pub fn add_f32_rounded(value: f32, delta: f32) -> f32 {
+    ((value + delta) * 100.0).round() / 100.0
+}
+
+pub fn add_f64_rounded(value: f64, delta: f64) -> f64 {
+    ((value + delta) * 100.0).round() / 100.0
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;

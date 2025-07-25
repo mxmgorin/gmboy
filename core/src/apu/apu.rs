@@ -14,7 +14,7 @@ use crate::apu::dac::apply_dac;
 use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
 use crate::cpu::CPU_CLOCK_SPEED;
-use crate::{get_bit_flag, set_bit};
+use crate::{add_f32_rounded, get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
 pub const AUDIO_START_ADDRESS: u16 = 0xFF10;
@@ -44,7 +44,8 @@ impl ApuConfig {
     }
 
     pub fn change_volume(&mut self, delta: f32) {
-        self.volume = (((self.volume + delta) * 100.0).round() / 100.0).clamp(0.0, 2.0);
+        let val = add_f32_rounded(self.volume, delta);
+        self.volume = val.clamp(0.0, 2.0);
     }
 }
 

@@ -22,6 +22,26 @@ pub enum AppMenuItem {
     DeveloperMenu,
     ToggleTileWindow,
     SpinDuration,
+    SystemMenu,
+    SaveStateOnExit,
+    NormalSpeed,
+    TurboSpeed,
+    SlowSpeed,
+    RewindSize,
+    RewindInterval,
+}
+
+fn system_menu() -> Box<[AppMenuItem]> {
+    vec![
+        AppMenuItem::SaveStateOnExit,
+        AppMenuItem::NormalSpeed,
+        AppMenuItem::TurboSpeed,
+        AppMenuItem::SlowSpeed,
+        AppMenuItem::RewindSize,
+        AppMenuItem::RewindInterval,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 fn developer_menu() -> Box<[AppMenuItem]> {
@@ -44,6 +64,7 @@ fn start_menu() -> Box<[AppMenuItem]> {
 
 fn options_menu() -> Box<[AppMenuItem]> {
     vec![
+        AppMenuItem::SystemMenu,
         AppMenuItem::InterfaceMenu,
         AppMenuItem::AudioMenu,
         AppMenuItem::DeveloperMenu,
@@ -101,7 +122,7 @@ impl AppMenu {
             .map(|(i, line)| {
                 let line = line.to_string(config);
                 if i == self.selected_index {
-                    format!(">{line}<")
+                    format!("> {line} <")
                 } else {
                     line
                 }
@@ -151,7 +172,24 @@ impl AppMenu {
             | AppMenuItem::ToggleFullscreen
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
-            | AppMenuItem::ToggleTileWindow => None,
+            | AppMenuItem::ToggleTileWindow
+            | AppMenuItem::SystemMenu
+            | AppMenuItem::SaveStateOnExit => None,
+            AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeNormalSpeed(0.05),
+            )),
+            AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeTurboSpeed(0.05),
+            )),
+            AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeSlowSpeed(0.05),
+            )),
+            AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeRewindSize(5),
+            )),
+            AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeRewindInterval(1),
+            ))
         }
     }
 
@@ -189,7 +227,24 @@ impl AppMenu {
             | AppMenuItem::ToggleFullscreen
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
-            | AppMenuItem::ToggleTileWindow => None,
+            | AppMenuItem::ToggleTileWindow
+            | AppMenuItem::SystemMenu
+            | AppMenuItem::SaveStateOnExit => None,
+            AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeNormalSpeed(-0.05),
+            )),
+            AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeTurboSpeed(-0.05),
+            )),
+            AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeSlowSpeed(-0.05),
+            )),
+            AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeRewindSize(-5),
+            )),
+            AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ChangeRewindInterval(-1),
+            ))
         }
     }
 
@@ -230,9 +285,15 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::NextPalette => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::NextPalette)),
-            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleFps)),
-            AppMenuItem::ToggleFullscreen => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleFullscreen)),
+            AppMenuItem::NextPalette => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::NextPalette,
+            )),
+            AppMenuItem::ToggleFps => {
+                Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleFps))
+            }
+            AppMenuItem::ToggleFullscreen => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ToggleFullscreen,
+            )),
             AppMenuItem::AudioMenu => {
                 self.next_items(audio_menu());
 
@@ -244,8 +305,23 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::ToggleTileWindow => Some(AppCommand::ChangeConfig(ChangeAppConfigCommand::ToggleTileWindow)),
+            AppMenuItem::ToggleTileWindow => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ToggleTileWindow,
+            )),
             AppMenuItem::SpinDuration => None,
+            AppMenuItem::SystemMenu => {
+                self.next_items(system_menu());
+
+                None
+            }
+            AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
+                ChangeAppConfigCommand::ToggleSaveStateOnExit,
+            )),
+            AppMenuItem::NormalSpeed => None,
+            AppMenuItem::TurboSpeed => None,
+            AppMenuItem::SlowSpeed => None,
+            AppMenuItem::RewindSize => None,
+            AppMenuItem::RewindInterval => None,
         }
     }
 
@@ -286,6 +362,25 @@ impl AppMenuItem {
             AppMenuItem::SpinDuration => {
                 format!("Spin({})", config.get_emu_config().spin_duration.as_nanos())
             }
+            AppMenuItem::SystemMenu => "System".to_string(),
+            AppMenuItem::SaveStateOnExit => format!(
+                "Save State On Exit{}",
+                get_suffix(config.save_state_on_exit)
+            ),
+            AppMenuItem::NormalSpeed => {
+                format!("Normal Speed({})", config.emulation.normal_speed * 100.0)
+            }
+            AppMenuItem::TurboSpeed => {
+                format!("Turbo Speed({})", config.emulation.turbo_speed * 100.0)
+            }
+            AppMenuItem::SlowSpeed => {
+                format!("Slow Speed({})", config.emulation.slow_speed * 100.0)
+            }
+            AppMenuItem::RewindSize => format!("Rewind Size({})", config.emulation.rewind_size),
+            AppMenuItem::RewindInterval => format!(
+                "Rewind Interval({})",
+                config.emulation.rewind_interval.as_secs()
+            ),
         }
     }
 }
