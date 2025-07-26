@@ -27,7 +27,7 @@ impl ButtonState {
 }
 
 pub struct GamepadState {
-    states: Vec<ButtonState>,
+    states: Box<[ButtonState]>,
     combo_interval: Duration,
 }
 
@@ -38,7 +38,7 @@ impl GamepadState {
                 ButtonState::new(Button::Start),
                 ButtonState::new(Button::Back),
                 ButtonState::new(Button::Guide),
-            ],
+            ].into_boxed_slice(),
             combo_interval,
         }
     }
