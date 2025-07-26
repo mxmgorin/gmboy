@@ -6,7 +6,7 @@ pub mod draw_text;
 pub mod game_window;
 pub mod tiles_window;
 pub mod menu;
-pub mod popup;
+pub mod notification;
 
 const BYTES_PER_PIXEL: usize = 4;
 

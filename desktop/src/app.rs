@@ -4,7 +4,7 @@ use crate::input::handler::InputHandler;
 use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
-use crate::video::popup::Notifications;
+use crate::video::notification::Notifications;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
@@ -80,7 +80,7 @@ pub struct App {
 impl EmuCallback for App {
     fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
         self.window.draw_buffer(buffer);
-        self.draw_notifications();
+        self.draw_notification();
 
         if self.config.interface.show_fps {
             if let Some(fps) = &runtime.ppu.fps {
@@ -182,14 +182,14 @@ impl App {
             input.handle_events(self, emu);
             emu.runtime.clock.reset();
             self.draw_menu();
-            self.draw_notifications();
+            self.draw_notification();
 
             self.window.present();
             thread::sleep(Duration::from_millis(33));
         }
     }
 
-    pub fn draw_notifications(&mut self) {
+    pub fn draw_notification(&mut self) {
         let items = self.notifications.update_and_get();
 
         if items.is_empty() {
