@@ -1,6 +1,6 @@
-use std::time::{Duration, Instant};
+use crate::app::AppCmd;
 use sdl2::controller::Button;
-use crate::app::{AppCmd};
+use std::time::{Duration, Instant};
 
 pub struct ButtonState {
     pub pressed: bool,
@@ -26,33 +26,36 @@ impl ButtonState {
     }
 }
 
-pub struct GamepadState {
+pub struct ComboTracker {
     states: Box<[ButtonState]>,
     combo_interval: Duration,
 }
 
-impl GamepadState {
+impl ComboTracker {
     pub fn new(combo_interval: Duration) -> Self {
         Self {
             states: vec![
                 ButtonState::new(Button::Start),
                 ButtonState::new(Button::Back),
                 ButtonState::new(Button::Guide),
-            ].into_boxed_slice(),
+            ]
+            .into_boxed_slice(),
             combo_interval,
         }
     }
 
-    pub fn update(&mut self, button: Button, pressed: bool) {
+    pub fn update(&mut self, button: Button, pressed: bool) -> Option<AppCmd> {
         for state in self.states.iter_mut() {
             if state.button == button {
                 state.update(pressed);
-                break;
+                return self.find();
             }
         }
+
+        None
     }
 
-    pub fn handle_combo(&self) -> Option<AppCmd> {
+    fn find(&self) -> Option<AppCmd> {
         if self.combo_2(Button::Back, Button::Start) || self.combo_2(Button::Guide, Button::Start) {
             return Some(AppCmd::TogglePause);
         }
@@ -61,7 +64,7 @@ impl GamepadState {
     }
 
     /// Generic function to check any 2-button combo
-    pub fn combo_2(&self, b1: Button, b2: Button) -> bool {
+    fn combo_2(&self, b1: Button, b2: Button) -> bool {
         let mut state_1: Option<&ButtonState> = None;
         let mut state_2: Option<&ButtonState> = None;
 

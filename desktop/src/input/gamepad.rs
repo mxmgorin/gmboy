@@ -1,19 +1,18 @@
 use crate::app::{App, AppCmd, AppState};
-use crate::input::state::GamepadState;
+use crate::input::combo::ComboTracker;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
 
 pub fn handle_gamepad(
-    state: &mut GamepadState,
+    state: &mut ComboTracker,
     app: &mut App,
     emu: &mut Emu,
     button: Button,
     is_pressed: bool,
 ) -> Option<AppCmd> {
-    state.update(button, is_pressed);
-    let combo_cmd = state.handle_combo();
+    let combo_cmd = state.update(button, is_pressed);
 
     if combo_cmd.is_some() {
         return combo_cmd;
@@ -79,12 +78,18 @@ pub fn handle_gamepad(
         Button::Guide => emu.runtime.bus.io.joypad.select = is_pressed,
         Button::LeftShoulder => {
             if !is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, app.config.current_load_index));
+                return Some(AppCmd::SaveState(
+                    SaveStateCmd::Load,
+                    app.config.current_load_index,
+                ));
             }
         }
         Button::RightShoulder => {
             if !is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, app.config.current_save_index));
+                return Some(AppCmd::SaveState(
+                    SaveStateCmd::Create,
+                    app.config.current_save_index,
+                ));
             }
         }
 

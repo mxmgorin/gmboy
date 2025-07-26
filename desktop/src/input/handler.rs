@@ -2,7 +2,7 @@ use crate::app::{change_volume, App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::{AppConfig, InputConfig};
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
-use crate::input::state::GamepadState;
+use crate::input::combo::ComboTracker;
 use crate::Emu;
 use core::emu::state::EmuState;
 use sdl2::controller::GameController;
@@ -14,7 +14,7 @@ pub struct InputHandler {
     event_pump: EventPump,
     game_controllers: Vec<GameController>,
     game_controller_subsystem: GameControllerSubsystem,
-    gamepad_state: GamepadState,
+    combo_tracker: ComboTracker,
 }
 
 impl InputHandler {
@@ -33,7 +33,7 @@ impl InputHandler {
             event_pump: sdl.event_pump()?,
             game_controllers,
             game_controller_subsystem,
-            gamepad_state: GamepadState::new(config.combo_interval),
+            combo_tracker: ComboTracker::new(config.combo_interval),
         })
     }
 
@@ -72,14 +72,14 @@ impl InputHandler {
                 }
                 Event::ControllerButtonDown { button, .. } => {
                     if let Some(evt) =
-                        handle_gamepad(&mut self.gamepad_state, app, emu, button, true)
+                        handle_gamepad(&mut self.combo_tracker, app, emu, button, true)
                     {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
                     if let Some(evt) =
-                        handle_gamepad(&mut self.gamepad_state, app, emu, button, false)
+                        handle_gamepad(&mut self.combo_tracker, app, emu, button, false)
                     {
                         self.handle_cmd(app, emu, evt);
                     }
@@ -212,7 +212,7 @@ impl InputHandler {
                 ChangeAppConfigCmd::ComboInterval(x) => {
                     app.config.input.combo_interval =
                         core::change_duration(app.config.input.combo_interval, x);
-                    self.gamepad_state = GamepadState::new(app.config.input.combo_interval);
+                    self.combo_tracker = ComboTracker::new(app.config.input.combo_interval);
                 }
                 ChangeAppConfigCmd::SaveIndex(x) => app.config.current_save_index = x,
                 ChangeAppConfigCmd::LoadIndex(x) => app.config.current_load_index = x,

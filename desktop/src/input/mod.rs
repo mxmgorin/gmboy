@@ -1,4 +1,4 @@
 pub mod handler;
-pub mod state;
+pub mod combo;
 pub mod gamepad;
 pub mod keyboard;
