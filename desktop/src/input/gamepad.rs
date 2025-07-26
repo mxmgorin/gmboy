@@ -1,4 +1,8 @@
-use crate::app::{App, AppCmd, AppState};
+use crate::app::{App, AppCmd};
+use crate::input::button::{
+    handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
+    handle_up,
+};
 use crate::input::combo::ComboTracker;
 use crate::Emu;
 use core::emu::runtime::RunMode;
@@ -19,48 +23,15 @@ pub fn handle_gamepad(
     }
 
     match button {
-        Button::DPadUp => {
-            if app.state == AppState::Paused && !is_pressed {
-                app.menu.move_up();
-            } else {
-                emu.runtime.bus.io.joypad.up = is_pressed;
-            }
-        }
-        Button::DPadDown => {
-            if app.state == AppState::Paused && !is_pressed {
-                app.menu.move_down();
-            } else {
-                emu.runtime.bus.io.joypad.down = is_pressed;
-            }
-        }
-        Button::DPadLeft => {
-            if app.state == AppState::Paused && !is_pressed {
-                return app.menu.move_left(&app.config);
-            } else {
-                emu.runtime.bus.io.joypad.left = is_pressed
-            }
-        }
-        Button::DPadRight => {
-            if app.state == AppState::Paused && !is_pressed {
-                return app.menu.move_right(&app.config);
-            } else {
-                emu.runtime.bus.io.joypad.right = is_pressed
-            }
-        }
-        Button::B => {
-            if app.state == AppState::Paused && !is_pressed {
-                app.menu.cancel();
-            } else {
-                emu.runtime.bus.io.joypad.b = is_pressed
-            }
-        }
-        Button::A => {
-            if app.state == AppState::Paused && !is_pressed {
-                return app.menu.select(&app.config);
-            } else {
-                emu.runtime.bus.io.joypad.a = is_pressed
-            }
-        }
+        Button::Start => return handle_start(is_pressed, app, emu),
+        Button::Back => return handle_select(is_pressed, app, emu),
+        Button::Guide => return handle_select(is_pressed, app, emu),
+        Button::DPadUp => handle_up(is_pressed, app, emu),
+        Button::DPadDown => handle_down(is_pressed, app, emu),
+        Button::DPadLeft => return handle_left(is_pressed, app, emu),
+        Button::DPadRight => return handle_right(is_pressed, app, emu),
+        Button::B => handle_b(is_pressed, app, emu),
+        Button::A => return handle_a(is_pressed, app, emu),
         Button::Y => {
             return if is_pressed {
                 Some(AppCmd::Rewind)
@@ -73,9 +44,6 @@ pub fn handle_gamepad(
                 app.next_palette(emu)
             }
         }
-        Button::Start => emu.runtime.bus.io.joypad.start = is_pressed,
-        Button::Back => emu.runtime.bus.io.joypad.select = is_pressed,
-        Button::Guide => emu.runtime.bus.io.joypad.select = is_pressed,
         Button::LeftShoulder => {
             if !is_pressed {
                 return Some(AppCmd::SaveState(

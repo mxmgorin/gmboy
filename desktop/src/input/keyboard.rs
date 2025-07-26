@@ -1,4 +1,8 @@
-use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
+use crate::app::{App, AppCmd, ChangeAppConfigCmd};
+use crate::input::button::{
+    handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
+    handle_up,
+};
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
@@ -11,50 +15,14 @@ pub fn handle_keyboard(
     is_down: bool,
 ) -> Option<AppCmd> {
     match keycode {
-        Keycode::UP => {
-            if app.state == AppState::Paused && !is_down {
-                app.menu.move_up();
-            } else {
-                emu.runtime.bus.io.joypad.up = is_down;
-            }
-        }
-        Keycode::DOWN => {
-            if app.state == AppState::Paused && !is_down {
-                app.menu.move_down();
-            } else {
-                emu.runtime.bus.io.joypad.down = is_down;
-            }
-        }
-        Keycode::LEFT => {
-            if app.state == AppState::Paused && !is_down {
-                return app.menu.move_left(&app.config);
-            } else {
-                emu.runtime.bus.io.joypad.left = is_down
-            }
-        }
-        Keycode::RIGHT => {
-            if app.state == AppState::Paused && !is_down {
-                return app.menu.move_right(&app.config);
-            } else {
-                emu.runtime.bus.io.joypad.right = is_down
-            }
-        }
-        Keycode::Z => emu.runtime.bus.io.joypad.b = is_down,
-        Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
-        Keycode::Return => {
-            if app.state == AppState::Paused && !is_down {
-                return app.menu.select(&app.config);
-            } else {
-                emu.runtime.bus.io.joypad.start = is_down;
-            }
-        }
-        Keycode::BACKSPACE => {
-            if app.state == AppState::Paused && !is_down {
-                app.menu.cancel();
-            } else {
-                emu.runtime.bus.io.joypad.select = is_down
-            }
-        }
+        Keycode::UP => handle_up(is_down, app, emu),
+        Keycode::DOWN => handle_down(is_down, app, emu),
+        Keycode::LEFT => return handle_left(is_down, app, emu),
+        Keycode::RIGHT => return handle_right(is_down, app, emu),
+        Keycode::Z => handle_b(is_down, app, emu),
+        Keycode::X => return handle_a(is_down, app, emu),
+        Keycode::Return => return handle_start(is_down, app, emu),
+        Keycode::BACKSPACE => return handle_select(is_down, app, emu),
         Keycode::LCTRL | Keycode::RCTRL => {
             return if is_down {
                 Some(AppCmd::Rewind)
@@ -211,7 +179,7 @@ pub fn handle_keyboard(
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 9));
             }
         }
-        _ => (), // Ignore other keycodes
+        _ => (),
     }
 
     None
