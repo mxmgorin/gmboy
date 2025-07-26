@@ -23,7 +23,7 @@ pub enum AppMenuItem {
     TileWindow,
     SpinDuration,
     SystemMenu,
-    SaveStateOnExit,
+    AutoSaveState,
     NormalSpeed,
     TurboSpeed,
     SlowSpeed,
@@ -45,7 +45,7 @@ fn input_menu() -> Box<[AppMenuItem]> {
 
 fn system_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::SaveStateOnExit,
+        AppMenuItem::AutoSaveState,
         AppMenuItem::NormalSpeed,
         AppMenuItem::TurboSpeed,
         AppMenuItem::SlowSpeed,
@@ -185,8 +185,8 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
             AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
-            AppMenuItem::SaveStateOnExit => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveStateOnExit))
+            AppMenuItem::AutoSaveState => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AutoSaveState))
             }
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
             AppMenuItem::Resume
@@ -254,8 +254,8 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
             AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
-            AppMenuItem::SaveStateOnExit => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveStateOnExit))
+            AppMenuItem::AutoSaveState => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AutoSaveState))
             }
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
             AppMenuItem::Resume
@@ -359,8 +359,8 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::SaveStateOnExit => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveStateOnExit))
+            AppMenuItem::AutoSaveState => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AutoSaveState))
             }
             AppMenuItem::NormalSpeed => None,
             AppMenuItem::TurboSpeed => None,
@@ -425,8 +425,8 @@ impl AppMenuItem {
                 )
             }
             AppMenuItem::SystemMenu => "System".to_string(),
-            AppMenuItem::SaveStateOnExit => {
-                format!("Save On Exit{}", get_suffix(config.save_on_exit))
+            AppMenuItem::AutoSaveState => {
+                format!("Auto Save State{}", get_suffix(config.auto_save_state))
             }
             AppMenuItem::NormalSpeed => {
                 format!("Normal Speed(x{})", config.emulation.normal_speed)

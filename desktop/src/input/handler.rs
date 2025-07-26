@@ -3,7 +3,6 @@ use crate::config::{AppConfig, InputConfig};
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
 use crate::input::state::GamepadState;
-use crate::video::menu::AppMenu;
 use crate::Emu;
 use core::emu::state::EmuState;
 use sdl2::controller::GameController;
@@ -114,10 +113,7 @@ impl InputHandler {
     pub fn handle_cmd(&mut self, app: &mut App, emu: &mut Emu, event: AppCmd) {
         match event {
             AppCmd::LoadFile(path) => {
-                emu.load_cart_file(&path, app.config.save_on_exit);
-                app.config.last_cart_path = path.to_str().map(|s| s.to_string());
-                app.state = AppState::Running;
-                app.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
+                app.load_cart_file(emu, &path);
             }
             AppCmd::TogglePause => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
@@ -129,9 +125,7 @@ impl InputHandler {
             }
             AppCmd::RestartGame => {
                 if let Some(path) = app.config.last_cart_path.clone() {
-                    emu.load_cart_file(&PathBuf::from(path), false);
-
-                    app.state = AppState::Running;
+                    app.load_cart_file(emu, &PathBuf::from(path));
                 }
             }
             AppCmd::ChangeMode(mode) => {
@@ -148,10 +142,7 @@ impl InputHandler {
                         "",
                         Some((&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)")),
                     ) {
-                        emu.load_cart_file(Path::new(&path), app.config.save_on_exit);
-                        app.config.last_cart_path = Some(path);
-                        app.state = AppState::Running;
-                        app.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
+                        app.load_cart_file(emu, Path::new(&path));
                     }
                 }
             }
@@ -198,8 +189,8 @@ impl InputHandler {
                         core::change_duration(emu.config.rewind_interval, x);
                     app.config.emulation.rewind_interval = emu.config.rewind_interval;
                 }
-                ChangeAppConfigCmd::SaveStateOnExit => {
-                    app.config.save_on_exit = !app.config.save_on_exit
+                ChangeAppConfigCmd::AutoSaveState => {
+                    app.config.auto_save_state = !app.config.auto_save_state
                 }
                 ChangeAppConfigCmd::AudioBufferSize(x) => {
                     emu.runtime.bus.io.apu.config.buffer_size =

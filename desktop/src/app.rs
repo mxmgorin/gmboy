@@ -14,9 +14,11 @@ use core::emu::EmuCallback;
 use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use sdl2::{Sdl, VideoSubsystem};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+
+pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
 pub enum AppCmd {
     TogglePause,
@@ -46,7 +48,7 @@ pub enum ChangeAppConfigCmd {
     SlowSpeed(f32),
     RewindSize(i32),
     RewindInterval(i32),
-    SaveStateOnExit,
+    AutoSaveState,
     AudioBufferSize(i32),
     MuteTurbo,
     MuteSlow,
@@ -243,12 +245,13 @@ impl App {
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: usize) {
         let name = self.config.get_last_file_stem().unwrap();
+        let index = index.to_string();
 
         match event {
             SaveStateCmd::Create => {
                 let save_state = emu.create_save_state();
 
-                if let Err(err) = save_state.save_file(&name, index) {
+                if let Err(err) = save_state.save_file(&name, &index) {
                     eprintln!("Failed save_state: {err}");
                     return;
                 }
@@ -257,7 +260,7 @@ impl App {
                 self.state = AppState::Running;
             }
             SaveStateCmd::Load => {
-                let save_state = core::emu::runtime::EmuSaveState::load_file(&name, index);
+                let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
 
                 let Ok(save_state) = save_state else {
                     eprintln!("Failed load save_state: {}", save_state.unwrap_err());
@@ -295,14 +298,31 @@ impl App {
             };
         }
 
-        // save state
-        if self.config.save_on_exit {
-            if let Err(err) = emu.create_save_state().save_file(&name, 0) {
+        if self.config.auto_save_state {
+            if let Err(err) = emu.create_save_state().save_file(&name, AUTO_SAVE_STATE_SUFFIX) {
                 eprintln!("Failed save_state: {err}");
             }
         }
 
         Ok(())
+    }
+    
+    pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) {
+        emu.load_cart_file(path);
+        self.config.last_cart_path = path.to_str().map(|s| s.to_string());
+        self.state = AppState::Running;
+        self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
+
+        if self.config.auto_save_state {
+            let name = path.file_stem().unwrap().to_str().expect("cart is valid");
+            let save_state = core::emu::state::EmuSaveState::load_file(name, AUTO_SAVE_STATE_SUFFIX);
+
+            if let Ok(save_state) = save_state {
+                emu.load_save_state(save_state);
+            } else {
+                eprintln!("Failed load save_state: {}", save_state.unwrap_err());
+            };
+        }
     }
 }
 

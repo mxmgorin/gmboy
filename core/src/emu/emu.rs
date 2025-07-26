@@ -133,7 +133,7 @@ impl Emu {
         }
     }
 
-    pub fn load_cart_file(&mut self, path: &Path, save_state: bool) {
+    pub fn load_cart_file(&mut self, path: &Path) {
         let cart = read_cart_file(path).map_err(|e| e.to_string());
 
         let Ok(cart) = cart else {
@@ -149,17 +149,6 @@ impl Emu {
         self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
-
-        if save_state {
-            let name = path.file_stem().unwrap().to_str().expect("cart is valid");
-            let save_state = EmuSaveState::load_file(name, 0);
-
-            if let Ok(save_state) = save_state {
-                self.load_save_state(save_state);
-            } else {
-                eprintln!("Failed load save_state: {}", save_state.unwrap_err());
-            };
-        }
     }
 
     pub fn load_save_state(&mut self, save_state: EmuSaveState) {

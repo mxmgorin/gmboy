@@ -10,7 +10,7 @@ use core::emu::Emu;
 use core::ppu::lcd::Lcd;
 use core::ppu::palette::LcdPalette;
 use core::ppu::Ppu;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::{env, fs};
 
 mod app;
@@ -23,13 +23,11 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let config = get_config();
     let palettes = get_palettes();
-
     let mut emu = new_emu(&config, &palettes);
-    load_cart(&config, &mut emu, args);
-
     let mut sdl = sdl2::init().unwrap();
     let mut input = InputHandler::new(&sdl, &config.input).unwrap();
     let mut app = App::new(&mut sdl, config, palettes).unwrap();
+    load_cart(&mut app, &mut emu, args);
 
     if let Err(err) = app.run(&mut emu, &mut input) {
         eprintln!("Failed app run: {err}");
@@ -60,7 +58,7 @@ fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     Emu::new(emu_config.clone(), runtime).unwrap()
 }
 
-fn load_cart(config: &AppConfig, emu: &mut Emu, mut args: Vec<String>) {
+fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
     let cart_path = if args.len() < 2 {
         env::var("CART_PATH").ok()
     } else {
@@ -70,13 +68,13 @@ fn load_cart(config: &AppConfig, emu: &mut Emu, mut args: Vec<String>) {
 
     if let Some(cart_path) = cart_path {
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, config.save_on_exit);
+            app.load_cart_file(emu, &cart_path);
         }
-    } else if let Some(cart_path) = &config.last_cart_path {
+    } else if let Some(cart_path) = &app.config.last_cart_path {
         let cart_path = PathBuf::from(cart_path.clone());
 
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, config.save_on_exit);
+            app.load_cart_file(emu, &cart_path);
         }
     }
 }

@@ -15,7 +15,7 @@ pub struct AppConfig {
     pub emulation: EmuConfig, // only for deserialization
 
     pub last_cart_path: Option<String>,
-    pub save_on_exit: bool,
+    pub auto_save_state: bool,
     pub current_save_index: usize,
     pub current_load_index: usize,
     pub interface: InterfaceConfig,
@@ -117,7 +117,7 @@ impl Default for AppConfig {
 
         Self {
             last_cart_path: None,
-            save_on_exit: false,
+            auto_save_state: false,
             current_save_index: 0,
             current_load_index: 0,
             emulation: Default::default(),

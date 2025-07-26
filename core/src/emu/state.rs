@@ -26,8 +26,8 @@ pub struct EmuSaveState {
 }
 
 impl EmuSaveState {
-    pub fn save_file(&self, name: &str, index: usize) -> Result<(), String> {
-        let path = Self::generate_path(name, index);
+    pub fn save_file(&self, name: &str, suffix: &str) -> Result<(), String> {
+        let path = Self::generate_path(name, suffix);
 
         if let Some(parent) = Path::new(&path).parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
@@ -40,8 +40,8 @@ impl EmuSaveState {
         Ok(())
     }
 
-    pub fn load_file(name: &str, index: usize) -> Result<Self, String> {
-        let path = Self::generate_path(name, index);
+    pub fn load_file(name: &str, suffix: &str) -> Result<Self, String> {
+        let path = Self::generate_path(name, suffix);
         let mut file = File::open(path).map_err(|e| e.to_string())?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
@@ -50,7 +50,7 @@ impl EmuSaveState {
         Ok(decoded)
     }
 
-    pub fn generate_path(game_name: &str, index: usize) -> PathBuf {
+    pub fn generate_path(game_name: &str, suffix: &str) -> PathBuf {
         let exe_path = env::current_exe().expect("Failed to get executable path");
         let exe_dir = exe_path
             .parent()
@@ -58,6 +58,6 @@ impl EmuSaveState {
 
         exe_dir
             .join("save_states")
-            .join(format!("{game_name}_{index}.state"))
+            .join(format!("{game_name}_{suffix}.state"))
     }
 }
