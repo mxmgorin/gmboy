@@ -75,6 +75,13 @@ impl Lcd {
             sp2_colors: colors,
         }
     }
+    
+    pub fn apply_colors(&mut self, colors: [PixelColor; 4]) {
+        self.current_colors = colors;
+        self.bg_colors = colors;
+        self.sp1_colors = colors;
+        self.sp2_colors = colors;
+    }
 
     pub fn read(&self, address: u16) -> u8 {
         match address {

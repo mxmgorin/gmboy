@@ -274,6 +274,9 @@ impl App {
                 };
 
                 emu.load_save_state(save_state);
+                emu.runtime.bus.io.lcd.apply_colors(self.config.interface.get_palette_colors(&self.palettes));
+                emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
+
                 let msg = format!("Loaded save state: {index}");
                 self.notifications.add(msg);
                 self.state = AppState::Running;
@@ -322,6 +325,8 @@ impl App {
         let is_reload = self.config.last_cart_path == path_str && !emu.runtime.bus.cart.is_empty();
         self.config.last_cart_path = path_str;
         emu.load_cart_file(path);
+        emu.runtime.bus.io.lcd.apply_colors(self.config.interface.get_palette_colors(&self.palettes));
+        emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
         self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
 
