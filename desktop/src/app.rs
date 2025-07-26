@@ -368,11 +368,12 @@ impl App {
             };
         }
     }
-}
 
-pub fn change_volume(app: &mut App, emu: &mut Emu, delta: f32) {
-    emu.runtime.bus.io.apu.config.change_volume(delta);
-    app.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
+    pub fn change_volume(&mut self, emu: &mut Emu, delta: f32) {
+        emu.runtime.bus.io.apu.config.change_volume(delta);
+        self.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
 
-    println!("Current volume: {}", app.config.audio.volume);
+        let msg = format!("Volume: {}", self.config.audio.volume * 100.0);
+        self.popups.show(msg);
+    }
 }

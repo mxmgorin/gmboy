@@ -1,4 +1,4 @@
-use crate::app::{change_volume, App, AppCmd, AppState, ChangeAppConfigCmd};
+use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::{AppConfig, InputConfig};
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
@@ -149,7 +149,7 @@ impl InputHandler {
             AppCmd::Rewind => emu.state = EmuState::Rewind,
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::ChangeConfig(cmd) => match cmd {
-                ChangeAppConfigCmd::Volume(x) => change_volume(app, emu, x),
+                ChangeAppConfigCmd::Volume(x) => app.change_volume(emu, x),
                 ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
                 ChangeAppConfigCmd::TileWindow => app.toggle_tile_window(),
                 ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
