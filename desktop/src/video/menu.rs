@@ -1,4 +1,4 @@
-use crate::app::{AppCommand, ChangeAppConfigCmd};
+use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::AppConfig;
 use std::collections::VecDeque;
 use std::mem;
@@ -152,7 +152,7 @@ impl AppMenu {
         self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
     }
 
-    pub fn move_right(&mut self) -> Option<AppCommand> {
+    pub fn move_right(&mut self) -> Option<AppCmd> {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
@@ -166,22 +166,22 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Scale => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
-            AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
+            AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
+            AppMenuItem::SpinDuration => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SpinDuration(1),
             )),
-            AppMenuItem::Volume => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(0.05))),
-            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05))),
+            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
             AppMenuItem::TileWindow => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow))
             }
-            AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
+            AppMenuItem::SaveStateOnExit => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SaveStateOnExit,
             )),
-            AppMenuItem::Palette => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
+            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -191,32 +191,32 @@ impl AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
-            AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
+            AppMenuItem::NormalSpeed => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::NormalSpeed(0.1),
             )),
-            AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
+            AppMenuItem::TurboSpeed => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::TurboSpeed(0.1),
             )),
-            AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
+            AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SlowSpeed(0.1),
             )),
             AppMenuItem::RewindSize => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::RewindSize(25)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::RewindSize(25)))
             }
-            AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
+            AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::RewindInterval(1_000_000),
             )),
-            AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
+            AppMenuItem::AudioBufferSize => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::AudioBufferSize(2),
             )),
-            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
-            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::DefaultConfig => None,
             AppMenuItem::RestartGame => None,
         }
     }
 
-    pub fn move_left(&mut self) -> Option<AppCommand> {
+    pub fn move_left(&mut self) -> Option<AppCmd> {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
@@ -230,24 +230,24 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Scale => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
-            AppMenuItem::SpinDuration => Some(AppCommand::ChangeConfig(
+            AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
+            AppMenuItem::SpinDuration => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SpinDuration(-1),
             )),
             AppMenuItem::Volume => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05)))
             }
-            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
             AppMenuItem::TileWindow => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow))
             }
-            AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
+            AppMenuItem::SaveStateOnExit => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SaveStateOnExit,
             )),
-            AppMenuItem::Palette => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
+            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -257,26 +257,26 @@ impl AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
-            AppMenuItem::NormalSpeed => Some(AppCommand::ChangeConfig(
+            AppMenuItem::NormalSpeed => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::NormalSpeed(-0.1),
             )),
-            AppMenuItem::TurboSpeed => Some(AppCommand::ChangeConfig(
+            AppMenuItem::TurboSpeed => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::TurboSpeed(-0.1),
             )),
-            AppMenuItem::SlowSpeed => Some(AppCommand::ChangeConfig(
+            AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SlowSpeed(-0.1),
             )),
-            AppMenuItem::RewindSize => Some(AppCommand::ChangeConfig(
+            AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::RewindSize(-25),
             )),
-            AppMenuItem::RewindInterval => Some(AppCommand::ChangeConfig(
+            AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::RewindInterval(-1_000_000),
             )),
-            AppMenuItem::AudioBufferSize => Some(AppCommand::ChangeConfig(
+            AppMenuItem::AudioBufferSize => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::AudioBufferSize(-2),
             )),
-            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
-            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::DefaultConfig => None,
             AppMenuItem::RestartGame => None,
         }
@@ -289,18 +289,18 @@ impl AppMenu {
         }
     }
 
-    pub fn select(&mut self) -> Option<AppCommand> {
+    pub fn select(&mut self) -> Option<AppCmd> {
         let item = self.items[self.selected_index];
 
         match item {
-            AppMenuItem::Resume => Some(AppCommand::TogglePause),
-            AppMenuItem::OpenRom => Some(AppCommand::PickFile),
-            AppMenuItem::Exit => Some(AppCommand::Quit),
-            AppMenuItem::SaveState(i) => Some(AppCommand::SaveState(
+            AppMenuItem::Resume => Some(AppCmd::TogglePause),
+            AppMenuItem::OpenRom => Some(AppCmd::PickFile),
+            AppMenuItem::Exit => Some(AppCmd::Quit),
+            AppMenuItem::SaveState(i) => Some(AppCmd::SaveState(
                 core::emu::state::SaveStateCmd::Create,
                 i,
             )),
-            AppMenuItem::LoadState(i) => Some(AppCommand::SaveState(
+            AppMenuItem::LoadState(i) => Some(AppCmd::SaveState(
                 core::emu::state::SaveStateCmd::Load,
                 i,
             )),
@@ -319,10 +319,10 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::Palette => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
-            AppMenuItem::ToggleFps => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
+            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
             AppMenuItem::AudioMenu => {
                 self.next_items(audio_menu());
@@ -336,7 +336,7 @@ impl AppMenu {
                 None
             }
             AppMenuItem::TileWindow => {
-                Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow))
             }
             AppMenuItem::SpinDuration => None,
             AppMenuItem::SystemMenu => {
@@ -344,7 +344,7 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::SaveStateOnExit => Some(AppCommand::ChangeConfig(
+            AppMenuItem::SaveStateOnExit => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::SaveStateOnExit,
             )),
             AppMenuItem::NormalSpeed => None,
@@ -353,10 +353,10 @@ impl AppMenu {
             AppMenuItem::RewindSize => None,
             AppMenuItem::RewindInterval => None,
             AppMenuItem::AudioBufferSize => None,
-            AppMenuItem::MuteTurbo => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
-            AppMenuItem::MuteSlow => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
-            AppMenuItem::DefaultConfig => Some(AppCommand::ChangeConfig(ChangeAppConfigCmd::Default)),
-            AppMenuItem::RestartGame => Some(AppCommand::RestartGame),
+            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::DefaultConfig => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Default)),
+            AppMenuItem::RestartGame => Some(AppCmd::RestartGame),
         }
     }
 

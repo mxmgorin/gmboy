@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
-pub enum AppCommand {
+pub enum AppCmd {
     TogglePause,
     Rewind,
     LoadFile(PathBuf),
@@ -175,7 +175,7 @@ impl App {
             let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
             self.draw_menu(text_color, bg_color);
 
-            thread::sleep(Duration::from_millis(50));
+            thread::sleep(Duration::from_millis(33));
         }
     }
 
