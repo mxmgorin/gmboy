@@ -1,6 +1,5 @@
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
-use crate::input::InputHandler;
 use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
@@ -18,6 +17,7 @@ use sdl2::{Sdl, VideoSubsystem};
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
+use crate::input::handler::InputHandler;
 
 pub enum AppCmd {
     TogglePause,

@@ -1,6 +1,5 @@
 use crate::app::App;
 use crate::config::AppConfig;
-use crate::input::InputHandler;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
@@ -12,6 +11,7 @@ use core::ppu::palette::LcdPalette;
 use core::ppu::Ppu;
 use std::env;
 use std::path::PathBuf;
+use crate::input::handler::InputHandler;
 
 mod app;
 mod audio;
