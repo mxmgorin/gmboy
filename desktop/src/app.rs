@@ -292,7 +292,6 @@ impl App {
 
                 let msg = format!("Saved save state: {index}");
                 self.popups.show(msg);
-                self.state = AppState::Running;
             }
             SaveStateCmd::Load => {
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
