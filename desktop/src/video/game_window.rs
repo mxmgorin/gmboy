@@ -19,6 +19,7 @@ pub struct GameWindow {
     game_rect: Rect,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
+    font_size: FontSize,
 }
 
 impl GameWindow {
@@ -64,6 +65,7 @@ impl GameWindow {
             game_rect: new_scaled_rect(canvas_win_width, canvas_win_height),
             text_color,
             bg_color,
+            font_size: FontSize::Small,
         })
     }
 
@@ -98,22 +100,16 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_text_lines(
-        &mut self,
-        lines: &[&str],
-        size: FontSize,
-        center: bool,
-        align_center: bool,
-    ) {
+    pub fn draw_text_lines(&mut self, lines: &[&str], center: bool, align_center: bool) {
         self.canvas.clear();
         let (align_center, text_width) = if align_center {
-            let center = CenterAlignedText::new(lines, size);
+            let center = CenterAlignedText::new(lines, self.font_size);
 
             (Some(center), center.longest_text_width)
         } else {
-            (None, calc_text_width_str(lines[0], size))
+            (None, calc_text_width_str(lines[0], self.font_size))
         };
-        let text_height = calc_text_height(size) * lines.len();
+        let text_height = calc_text_height(self.font_size) * lines.len();
         let mut x = LCD_X_RES as usize - text_width;
         let mut y = LCD_Y_RES as usize - text_height;
 
@@ -130,7 +126,7 @@ impl GameWindow {
             None,
             x,
             y,
-            size,
+            self.font_size,
             1,
             align_center,
         );
@@ -140,30 +136,7 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: &str, size: FontSize) {
-        fill_texture(&mut self.notification_texture, PixelColor::from_u32(0));
-        draw_text_lines(
-            &mut self.notification_texture,
-            &[fps],
-            self.text_color,
-            Some(self.bg_color),
-            5,
-            5,
-            size,
-            2,
-            None,
-        );
-
-        self.canvas
-            .copy(
-                &self.notification_texture,
-                None,
-                Some(self.notification_rect),
-            )
-            .unwrap();
-    }
-
-    pub fn draw_notification(&mut self, lines: &[&str], size: FontSize) {
+    pub fn draw_notification(&mut self, lines: &[&str]) {
         fill_texture(&mut self.notification_texture, PixelColor::from_u32(0));
         draw_text_lines(
             &mut self.notification_texture,
@@ -172,7 +145,7 @@ impl GameWindow {
             Some(self.bg_color),
             5,
             20,
-            size,
+            self.font_size,
             2,
             None,
         );

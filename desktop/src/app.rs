@@ -1,7 +1,6 @@
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
-use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
 use crate::video::notification::Notifications;
@@ -13,6 +12,7 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::EmuCallback;
 use core::ppu::palette::LcdPalette;
+use core::ppu::Fps;
 use sdl2::{Sdl, VideoSubsystem};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -80,13 +80,7 @@ pub struct App {
 impl EmuCallback for App {
     fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
         self.window.draw_buffer(buffer);
-        self.draw_notification();
-
-        if self.config.interface.show_fps {
-            if let Some(fps) = &runtime.ppu.fps {
-                self.window.draw_fps(fps.get(), FontSize::Small);
-            }
-        }
+        self.draw_notification(runtime.ppu.fps.as_ref());
 
         self.window.present();
     }
@@ -182,22 +176,23 @@ impl App {
             input.handle_events(self, emu);
             emu.runtime.clock.reset();
             self.draw_menu();
-            self.draw_notification();
+            self.draw_notification(emu.runtime.ppu.fps.as_ref());
 
             self.window.present();
             thread::sleep(Duration::from_millis(33));
         }
     }
 
-    pub fn draw_notification(&mut self) {
-        let items = self.notifications.update_and_get();
+    pub fn draw_notification(&mut self, fps: Option<&Fps>) {
+        let lines = self.notifications.update_and_get();
 
-        if items.is_empty() {
-            return;
+        if lines.is_empty() {
+            if let Some(fps) = &fps {
+                self.window.draw_notification(&[fps.get()]);
+            }
+        } else {
+            self.window.draw_notification(lines);
         }
-
-        self.window
-            .draw_notification(items, FontSize::Small);
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
@@ -211,23 +206,8 @@ impl App {
 
     fn draw_menu(&mut self) {
         let items = self.menu.get_items(&self.config);
-        let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
-
-        self.draw_text(&items, true, true);
-    }
-
-    fn draw_text(&mut self, lines: &[&str], center: bool, align_center: bool) {
-        if lines.is_empty() {
-            return;
-        }
-
-        self.window.draw_text_lines(
-            lines,
-            FontSize::Small,
-
-            center,
-            align_center,
-        );
+        let lines: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
+        self.window.draw_text_lines(&lines, true, true);
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {

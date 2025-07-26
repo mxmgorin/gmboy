@@ -42,6 +42,10 @@ pub fn draw_text_lines(
     scale: usize,
     align_center: Option<CenterAlignedText>,
 ) {
+    if lines.is_empty() {
+        return;
+    }
+
     const PADDING: usize = 4;
 
     let max_line_width = if let Some(center) = align_center {
