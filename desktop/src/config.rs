@@ -124,7 +124,7 @@ impl Default for FrameAdditiveBlend {
     fn default() -> Self {
         Self {
             fade: 0.65,
-            intensity: 0.45,
+            intensity: 0.35,
         }
     }
 }
