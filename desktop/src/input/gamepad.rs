@@ -78,17 +78,13 @@ pub fn handle_gamepad(
         Button::Back => emu.runtime.bus.io.joypad.select = is_pressed,
         Button::Guide => emu.runtime.bus.io.joypad.select = is_pressed,
         Button::LeftShoulder => {
-            return if is_pressed {
-                Some(AppCmd::ChangeMode(RunMode::Slow))
-            } else {
-                Some(AppCmd::ChangeMode(RunMode::Normal))
+            if !is_pressed {
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, 1));
             }
         }
         Button::RightShoulder => {
-            return if is_pressed {
-                Some(AppCmd::ChangeMode(RunMode::Turbo))
-            } else {
-                Some(AppCmd::ChangeMode(RunMode::Normal))
+            if !is_pressed {
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, 1));
             }
         }
 
@@ -102,17 +98,20 @@ pub fn handle_gamepad_axis(axis_idx: u8, value: i16) -> Option<AppCmd> {
     const LEFT: u8 = 2;
     const RIGHT: u8 = 5;
     const THRESHOLD: i16 = 30_000;
-
-    let is_down = value > THRESHOLD;
-
-    if is_down {
-        return None;
-    }
+    let is_pressed = value > THRESHOLD;
 
     if axis_idx == LEFT {
-        return Some(AppCmd::SaveState(SaveStateCmd::Load, 1));
+        return if is_pressed {
+            Some(AppCmd::ChangeMode(RunMode::Slow))
+        } else {
+            Some(AppCmd::ChangeMode(RunMode::Normal))
+        };
     } else if axis_idx == RIGHT {
-        return Some(AppCmd::SaveState(SaveStateCmd::Create, 1));
+        return if is_pressed {
+            Some(AppCmd::ChangeMode(RunMode::Turbo))
+        } else {
+            Some(AppCmd::ChangeMode(RunMode::Normal))
+        };
     }
 
     None
