@@ -198,10 +198,7 @@ impl App {
             return;
         }
 
-        let popups: Vec<&str> = self.popups.get()
-            .iter()
-            .map(|x| x.text.as_str())
-            .collect();
+        let popups: Vec<&str> = self.popups.update_and_get();
         let text_color = runtime.bus.io.lcd.current_colors[0];
         let bg_color = runtime.bus.io.lcd.current_colors[3];
 
@@ -212,7 +209,7 @@ impl App {
         self.config.interface.scale = (self.config.interface.scale + delta).max(0.0);
         self.window.set_scale(self.config.interface.scale as u32)?;
         let msg = format!("Scale: {}", self.config.interface.scale);
-        self.popups.show(msg);
+        self.popups.add(msg);
 
         Ok(())
     }
@@ -268,7 +265,7 @@ impl App {
         emu.runtime.bus.io.lcd.set_pallet(colors);
 
         let msg = format!("Palette: {}", palette.name);
-        self.popups.show(msg);
+        self.popups.add(msg);
     }
 
     pub fn toggle_fullscreen(&mut self) {
@@ -291,7 +288,7 @@ impl App {
                 }
 
                 let msg = format!("Saved save state: {index}");
-                self.popups.show(msg);
+                self.popups.add(msg);
             }
             SaveStateCmd::Load => {
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
@@ -303,7 +300,7 @@ impl App {
 
                 emu.load_save_state(save_state);
                 let msg = format!("Loaded save state: {index}");
-                self.popups.show(msg);
+                self.popups.add(msg);
                 self.state = AppState::Running;
             }
         }
@@ -371,6 +368,6 @@ impl App {
         self.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
 
         let msg = format!("Volume: {}", self.config.audio.volume * 100.0);
-        self.popups.show(msg);
+        self.popups.add(msg);
     }
 }
