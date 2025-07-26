@@ -37,6 +37,7 @@ pub enum AppMenuItem {
     InputMenu,
     ComboInterval,
     PaletteInverted,
+    FrameBlendAlpha,
 }
 
 fn input_menu() -> Box<[AppMenuItem]> {
@@ -91,6 +92,7 @@ fn interface_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::Palette,
         AppMenuItem::PaletteInverted,
+        AppMenuItem::FrameBlendAlpha,
         AppMenuItem::ToggleFullscreen,
         AppMenuItem::ToggleFps,
         AppMenuItem::Scale,
@@ -227,6 +229,9 @@ impl AppMenu {
             AppMenuItem::PaletteInverted => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
+            AppMenuItem::FrameBlendAlpha => Some(AppCmd::ChangeConfig(
+                ChangeAppConfigCmd::FrameBlendAlpha(0.1),
+            )),
         }
     }
 
@@ -296,6 +301,9 @@ impl AppMenu {
             AppMenuItem::PaletteInverted => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
+            AppMenuItem::FrameBlendAlpha => Some(AppCmd::ChangeConfig(
+                ChangeAppConfigCmd::FrameBlendAlpha(-0.1),
+            )),
         }
     }
 
@@ -381,6 +389,7 @@ impl AppMenu {
             AppMenuItem::PaletteInverted => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
+            AppMenuItem::FrameBlendAlpha => None,
         }
     }
 
@@ -456,6 +465,9 @@ impl AppMenuItem {
                 "Palette Inverted{}",
                 get_suffix(config.interface.is_palette_inverted)
             ),
+            AppMenuItem::FrameBlendAlpha => {
+                format!("Frame Blend Alpha({})", config.interface.frame_blend_alpha)
+            }
         }
     }
 }

@@ -55,6 +55,7 @@ pub enum ChangeAppConfigCmd {
     SaveIndex(usize),
     LoadIndex(usize),
     PaletteInverted,
+    FrameBlendAlpha(f32),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -67,7 +68,7 @@ pub enum AppState {
 pub struct App {
     video_subsystem: VideoSubsystem,
     audio: AppAudio,
-    window: GameWindow,
+    pub window: GameWindow,
     palettes: Box<[LcdPalette]>,
     pub tile_window: Option<TileWindow>,
     pub state: AppState,
@@ -114,6 +115,7 @@ impl App {
             &video_subsystem,
             palette[0],
             palette[3],
+            config.interface.frame_blend_alpha
         )?;
         game_window.set_fullscreen(config.interface.is_fullscreen);
 
@@ -232,7 +234,11 @@ impl App {
         self.window.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
 
-        let suffix = if self.config.interface.is_palette_inverted { " (inverted)" } else { "" };
+        let suffix = if self.config.interface.is_palette_inverted {
+            " (inverted)"
+        } else {
+            ""
+        };
         let msg = format!("Palette: {}{}", palette.name, suffix);
         self.notifications.add(msg);
     }

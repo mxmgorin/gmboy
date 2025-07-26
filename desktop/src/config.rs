@@ -67,6 +67,7 @@ pub struct InterfaceConfig {
     pub show_fps: bool,
     pub tile_window: bool,
     pub is_palette_inverted: bool,
+    pub frame_blend_alpha: f32,
 }
 
 impl InterfaceConfig {
@@ -128,6 +129,7 @@ impl Default for AppConfig {
                 show_fps: false,
                 tile_window: false,
                 is_palette_inverted: false,
+                frame_blend_alpha: 0.5,
             },
             audio: AudioConfig {
                 mute: false,
