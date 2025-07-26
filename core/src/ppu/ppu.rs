@@ -160,7 +160,7 @@ impl Fps {
                 0.0
             };
 
-            self.fps_str = format!("{:.1}", self.fps);
+            self.fps_str = format!("{:.2}", self.fps);
             self.last_fps_update = now;
             self.frame_count = 0;
             self.frame_accum = 0.0;
