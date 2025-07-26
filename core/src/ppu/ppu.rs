@@ -27,7 +27,7 @@ pub struct Ppu {
 
     pub current_frame: usize,
     pub pipeline: PixelFetcher,
-    pub fps: Option<Fps>,
+    fps: Option<Fps>,
 }
 
 impl Ppu {
@@ -37,6 +37,10 @@ impl Ppu {
         } else {
             self.fps = Some(Fps::default());
         }
+    }
+    
+    pub fn get_fps(&self) -> Option<&str> {
+        self.fps.as_ref().map(|x| x.get())
     }
 
     pub fn tick(&mut self, bus: &mut Bus) {

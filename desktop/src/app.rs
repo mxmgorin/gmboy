@@ -80,7 +80,7 @@ pub struct App {
 impl EmuCallback for App {
     fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
         self.window.draw_buffer(buffer);
-        self.draw_notification(runtime.ppu.fps.as_ref());
+        self.draw_notification(runtime.ppu.get_fps());
 
         self.window.present();
     }
@@ -176,19 +176,19 @@ impl App {
             input.handle_events(self, emu);
             emu.runtime.clock.reset();
             self.draw_menu();
-            self.draw_notification(emu.runtime.ppu.fps.as_ref());
+            self.draw_notification(None);
 
             self.window.present();
             thread::sleep(Duration::from_millis(33));
         }
     }
 
-    pub fn draw_notification(&mut self, fps: Option<&Fps>) {
+    pub fn draw_notification(&mut self, fps: Option<&str>) {
         let lines = self.notifications.update_and_get();
 
         if lines.is_empty() {
             if let Some(fps) = &fps {
-                self.window.draw_notification(&[fps.get()]);
+                self.window.draw_notification(&[fps]);
             }
         } else {
             self.window.draw_notification(lines);
