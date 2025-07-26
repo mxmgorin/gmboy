@@ -52,6 +52,8 @@ pub enum ChangeAppConfigCmd {
     MuteTurbo,
     MuteSlow,
     ComboInterval(i32),
+    SaveIndex(usize),
+    LoadIndex(usize),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -297,7 +299,7 @@ impl App {
         }
 
         // save state
-        if self.config.save_state_on_exit {
+        if self.config.save_on_exit {
             if let Err(err) = emu.create_save_state().save_file(&name, 0) {
                 eprintln!("Failed save_state: {err}");
             }

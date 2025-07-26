@@ -36,14 +36,14 @@ pub fn handle_gamepad(
         }
         Button::DPadLeft => {
             if app.state == AppState::Paused && !is_pressed {
-                return app.menu.move_left();
+                return app.menu.move_left(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.left = is_pressed
             }
         }
         Button::DPadRight => {
             if app.state == AppState::Paused && !is_pressed {
-                return app.menu.move_right();
+                return app.menu.move_right(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.right = is_pressed
             }
@@ -57,7 +57,7 @@ pub fn handle_gamepad(
         }
         Button::A => {
             if app.state == AppState::Paused && !is_pressed {
-                return app.menu.select();
+                return app.menu.select(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.a = is_pressed
             }
@@ -79,12 +79,12 @@ pub fn handle_gamepad(
         Button::Guide => emu.runtime.bus.io.joypad.select = is_pressed,
         Button::LeftShoulder => {
             if !is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 1));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, app.config.current_load_index));
             }
         }
         Button::RightShoulder => {
             if !is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 1));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, app.config.current_save_index));
             }
         }
 

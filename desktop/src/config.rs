@@ -15,7 +15,9 @@ pub struct AppConfig {
     pub emulation: EmuConfig, // only for deserialization
 
     pub last_cart_path: Option<String>,
-    pub save_state_on_exit: bool,
+    pub save_on_exit: bool,
+    pub current_save_index: usize,
+    pub current_load_index: usize,
     pub interface: InterfaceConfig,
     pub audio: AudioConfig,
     pub input: InputConfig,
@@ -108,7 +110,9 @@ impl Default for AppConfig {
 
         Self {
             last_cart_path: None,
-            save_state_on_exit: false,
+            save_on_exit: false,
+            current_save_index: 0,
+            current_load_index: 0,
             emulation: Default::default(),
             interface: InterfaceConfig {
                 selected_palette_idx: 0,

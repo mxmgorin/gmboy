@@ -27,14 +27,14 @@ pub fn handle_keyboard(
         }
         Keycode::LEFT => {
             if app.state == AppState::Paused && !is_down {
-                return app.menu.move_left();
+                return app.menu.move_left(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.left = is_down
             }
         }
         Keycode::RIGHT => {
             if app.state == AppState::Paused && !is_down {
-                return app.menu.move_right();
+                return app.menu.move_right(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.right = is_down
             }
@@ -43,7 +43,7 @@ pub fn handle_keyboard(
         Keycode::X => emu.runtime.bus.io.joypad.a = is_down,
         Keycode::Return => {
             if app.state == AppState::Paused && !is_down {
-                return app.menu.select();
+                return app.menu.select(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.start = is_down;
             }

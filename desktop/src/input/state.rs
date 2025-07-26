@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 use sdl2::controller::Button;
-use crate::app::AppCmd;
+use crate::app::{AppCmd};
 
 pub struct ButtonState {
     pub pressed: bool,

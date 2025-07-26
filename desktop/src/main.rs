@@ -70,13 +70,13 @@ fn load_cart(config: &AppConfig, emu: &mut Emu, mut args: Vec<String>) {
 
     if let Some(cart_path) = cart_path {
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, config.save_state_on_exit);
+            emu.load_cart_file(&cart_path, config.save_on_exit);
         }
     } else if let Some(cart_path) = &config.last_cart_path {
         let cart_path = PathBuf::from(cart_path.clone());
 
         if cart_path.exists() {
-            emu.load_cart_file(&cart_path, config.save_state_on_exit);
+            emu.load_cart_file(&cart_path, config.save_on_exit);
         }
     }
 }

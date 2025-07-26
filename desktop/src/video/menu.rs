@@ -6,8 +6,8 @@ use std::mem;
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
     Resume,
-    SaveState(usize),
-    LoadState(usize),
+    SaveState,
+    LoadState,
     OpenRom,
     OptionsMenu,
     InterfaceMenu,
@@ -104,8 +104,8 @@ fn interface_menu() -> Box<[AppMenuItem]> {
 fn game_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::Resume,
-        AppMenuItem::SaveState(0),
-        AppMenuItem::LoadState(0),
+        AppMenuItem::SaveState,
+        AppMenuItem::LoadState,
         AppMenuItem::RestartGame,
         AppMenuItem::OpenRom,
         AppMenuItem::OptionsMenu,
@@ -163,19 +163,19 @@ impl AppMenu {
         self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
     }
 
-    pub fn move_right(&mut self) -> Option<AppCmd> {
+    pub fn move_right(&mut self, config: &AppConfig) -> Option<AppCmd> {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
-            AppMenuItem::SaveState(i) => {
-                *i = core::move_next_wrapped(*i, 99);
+            AppMenuItem::SaveState => {
+                let i = core::move_next_wrapped(config.current_save_index, 99);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveIndex(i)))
             }
-            AppMenuItem::LoadState(i) => {
-                *i = core::move_next_wrapped(*i, 99);
+            AppMenuItem::LoadState => {
+                let i = core::move_next_wrapped(config.current_load_index, 99);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => Some(AppCmd::ChangeConfig(
@@ -231,19 +231,19 @@ impl AppMenu {
         }
     }
 
-    pub fn move_left(&mut self) -> Option<AppCmd> {
+    pub fn move_left(&mut self, config: &AppConfig) -> Option<AppCmd> {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
-            AppMenuItem::SaveState(i) => {
-                *i = core::move_prev_wrapped(*i, 99);
+            AppMenuItem::SaveState => {
+                let i = core::move_prev_wrapped(config.current_save_index, 99);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveIndex(i)))
             }
-            AppMenuItem::LoadState(i) => {
-                *i = core::move_prev_wrapped(*i, 99);
+            AppMenuItem::LoadState => {
+                let i = core::move_prev_wrapped(config.current_load_index, 99);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => Some(AppCmd::ChangeConfig(
@@ -308,20 +308,20 @@ impl AppMenu {
         }
     }
 
-    pub fn select(&mut self) -> Option<AppCmd> {
+    pub fn select(&mut self, config: &AppConfig) -> Option<AppCmd> {
         let item = self.items[self.selected_index];
 
         match item {
             AppMenuItem::Resume => Some(AppCmd::TogglePause),
             AppMenuItem::OpenRom => Some(AppCmd::PickFile),
             AppMenuItem::Quit => Some(AppCmd::Quit),
-            AppMenuItem::SaveState(i) => Some(AppCmd::SaveState(
+            AppMenuItem::SaveState => Some(AppCmd::SaveState(
                 core::emu::state::SaveStateCmd::Create,
-                i,
+                config.current_save_index,
             )),
-            AppMenuItem::LoadState(i) => Some(AppCmd::SaveState(
+            AppMenuItem::LoadState => Some(AppCmd::SaveState(
                 core::emu::state::SaveStateCmd::Load,
-                i,
+                config.current_load_index,
             )),
             AppMenuItem::OptionsMenu => {
                 self.next_items(options_menu());
@@ -398,8 +398,8 @@ impl AppMenuItem {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open Rom".to_string(),
             AppMenuItem::Quit => "Quit".to_string(),
-            AppMenuItem::SaveState(i) => format!("Save({i})"),
-            AppMenuItem::LoadState(i) => format!("Load({i})"),
+            AppMenuItem::SaveState => format!("Save({})", config.current_save_index),
+            AppMenuItem::LoadState => format!("Load({})", config.current_load_index),
             AppMenuItem::OptionsMenu => "Options".to_string(),
             AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
@@ -425,7 +425,7 @@ impl AppMenuItem {
             AppMenuItem::SystemMenu => "System".to_string(),
             AppMenuItem::SaveStateOnExit => format!(
                 "Save State On Exit{}",
-                get_suffix(config.save_state_on_exit)
+                get_suffix(config.save_on_exit)
             ),
             AppMenuItem::NormalSpeed => {
                 format!("Normal Speed(x{})", config.emulation.normal_speed)

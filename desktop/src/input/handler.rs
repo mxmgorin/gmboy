@@ -114,7 +114,7 @@ impl InputHandler {
     pub fn handle_cmd(&mut self, app: &mut App, emu: &mut Emu, event: AppCmd) {
         match event {
             AppCmd::LoadFile(path) => {
-                emu.load_cart_file(&path, app.config.save_state_on_exit);
+                emu.load_cart_file(&path, app.config.save_on_exit);
                 app.config.last_cart_path = path.to_str().map(|s| s.to_string());
                 app.state = AppState::Running;
                 app.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
@@ -148,7 +148,7 @@ impl InputHandler {
                         "",
                         Some((&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)")),
                     ) {
-                        emu.load_cart_file(Path::new(&path), app.config.save_state_on_exit);
+                        emu.load_cart_file(Path::new(&path), app.config.save_on_exit);
                         app.config.last_cart_path = Some(path);
                         app.state = AppState::Running;
                         app.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
@@ -199,7 +199,7 @@ impl InputHandler {
                     app.config.emulation.rewind_interval = emu.config.rewind_interval;
                 }
                 ChangeAppConfigCmd::SaveStateOnExit => {
-                    app.config.save_state_on_exit = !app.config.save_state_on_exit
+                    app.config.save_on_exit = !app.config.save_on_exit
                 }
                 ChangeAppConfigCmd::AudioBufferSize(x) => {
                     emu.runtime.bus.io.apu.config.buffer_size =
@@ -223,6 +223,8 @@ impl InputHandler {
                         core::change_duration(app.config.input.combo_interval, x);
                     self.gamepad_state = GamepadState::new(app.config.input.combo_interval);
                 }
+                ChangeAppConfigCmd::SaveIndex(x) => app.config.current_save_index = x,
+                ChangeAppConfigCmd::LoadIndex(x) => app.config.current_load_index = x,
             },
         }
     }
