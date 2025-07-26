@@ -1,3 +1,4 @@
+use crate::config::{FrameAdditiveBlend, FrameBlendType, FrameLinearBlend};
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
@@ -21,8 +22,7 @@ pub struct GameWindow {
     pub bg_color: PixelColor,
     font_size: FontSize,
     prev_framebuffer: Box<[u32]>,
-    /// (0.0..1.0), smaller = stronger ghosting
-    pub frame_blend_alpha: f32,
+    pub frame_blend_type: FrameBlendType,
 }
 
 impl GameWindow {
@@ -31,7 +31,7 @@ impl GameWindow {
         video_subsystem: &VideoSubsystem,
         text_color: PixelColor,
         bg_color: PixelColor,
-        frame_blend_alpha: f32,
+        frame_blend_type: FrameBlendType,
     ) -> Result<Self, String> {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
@@ -71,14 +71,57 @@ impl GameWindow {
             bg_color,
             font_size: FontSize::Small,
             prev_framebuffer: Box::new([]),
-            frame_blend_alpha,
+            frame_blend_type,
         })
     }
 
-    fn linear_alpha_blend(&mut self, pixel_buffer: &[u32]) -> bool {
-        if self.frame_blend_alpha >= 1.0 {
+    fn frame_blend(&mut self, pixel_buffer: &[u32]) -> bool {
+        match &self.frame_blend_type {
+            FrameBlendType::None => false,
+            FrameBlendType::Linear(x) => self.linear_alpha_blend(pixel_buffer, *x),
+            FrameBlendType::Additive(x) => self.addictive_blend(pixel_buffer, *x),
+        }
+    }
+
+    fn addictive_blend(&mut self, pixel_buffer: &[u32], frame_blend: FrameAdditiveBlend) -> bool {
+        let fade = frame_blend.fade;
+        let intensity = frame_blend.intensity;
+
+        if self.prev_framebuffer.len() != pixel_buffer.len() {
+            self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
+        } else {
+            for (i, curr) in pixel_buffer.iter().enumerate() {
+                let prev = self.prev_framebuffer[i];
+                let curr = *curr;
+
+                // Extract previous channels and fade
+                let pr = ((prev >> 16) & 0xFF) as f32 * fade;
+                let pg = ((prev >> 8) & 0xFF) as f32 * fade;
+                let pb = (prev & 0xFF) as f32 * fade;
+
+                // Extract current channels
+                let cr = ((curr >> 16) & 0xFF) as f32 * intensity;
+                let cg = ((curr >> 8) & 0xFF) as f32 * intensity;
+                let cb = (curr & 0xFF) as f32 * intensity;
+
+                // Add and clamp to 255
+                let r = (pr + cr).min(255.0) as u32;
+                let g = (pg + cg).min(255.0) as u32;
+                let b = (pb + cb).min(255.0) as u32;
+
+                self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
+            }
+        }
+
+        true
+    }
+
+    fn linear_alpha_blend(&mut self, pixel_buffer: &[u32], frame_blend: FrameLinearBlend) -> bool {
+        if frame_blend.alpha >= 1.0 {
             return false;
         }
+
+        let frame_blend_alpha = frame_blend.alpha;
 
         if self.prev_framebuffer.len() != pixel_buffer.len() {
             // Initialize prev_framebuffer on first run
@@ -101,14 +144,10 @@ impl GameWindow {
                 let cb = (curr & 0xFF) as f32;
 
                 // Blend components
-                let a = (ca * self.frame_blend_alpha + pa * (1.0 - self.frame_blend_alpha)).round()
-                    as u32;
-                let r = (cr * self.frame_blend_alpha + pr * (1.0 - self.frame_blend_alpha)).round()
-                    as u32;
-                let g = (cg * self.frame_blend_alpha + pg * (1.0 - self.frame_blend_alpha)).round()
-                    as u32;
-                let b = (cb * self.frame_blend_alpha + pb * (1.0 - self.frame_blend_alpha)).round()
-                    as u32;
+                let a = (ca * frame_blend_alpha + pa * (1.0 - frame_blend_alpha)).round() as u32;
+                let r = (cr * frame_blend_alpha + pr * (1.0 - frame_blend_alpha)).round() as u32;
+                let g = (cg * frame_blend_alpha + pg * (1.0 - frame_blend_alpha)).round() as u32;
+                let b = (cb * frame_blend_alpha + pb * (1.0 - frame_blend_alpha)).round() as u32;
 
                 self.prev_framebuffer[i] = (a << 24) | (r << 16) | (g << 8) | b;
             }
@@ -118,7 +157,7 @@ impl GameWindow {
     }
 
     pub fn draw_buffer(&mut self, pixel_buffer: &[u32]) {
-        let pixel_buffer = if self.linear_alpha_blend(pixel_buffer) {
+        let pixel_buffer = if self.frame_blend(pixel_buffer) {
             &self.prev_framebuffer
         } else {
             pixel_buffer

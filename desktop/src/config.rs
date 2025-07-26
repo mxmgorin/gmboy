@@ -60,6 +60,76 @@ impl AudioConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FrameBlendType {
+    None,
+    Linear(FrameLinearBlend),
+    Additive(FrameAdditiveBlend),
+}
+
+impl FrameBlendType {
+    pub fn get_name(&self) -> &str {
+        match self {
+            FrameBlendType::Linear(_) => "Linear",
+            FrameBlendType::Additive(_) => "Additive",
+            FrameBlendType::None => "None",
+        }
+    }
+
+    pub fn get_linear_alpha(&self) -> f32 {
+        match self {
+            FrameBlendType::None => 0.0,
+            FrameBlendType::Linear(x) => x.alpha,
+            FrameBlendType::Additive(_) => 0.0,
+        }
+    }
+
+    pub fn get_addictive_fade(&self) -> f32 {
+        match self {
+            FrameBlendType::None => 0.0,
+            FrameBlendType::Linear(_) => 0.0,
+            FrameBlendType::Additive(x) => x.fade,
+        }
+    }
+
+    pub fn get_addictive_intensity(&self) -> f32 {
+        match self {
+            FrameBlendType::None => 0.0,
+            FrameBlendType::Linear(_) => 0.0,
+            FrameBlendType::Additive(x) => x.intensity,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct FrameLinearBlend {
+    /// (0.0..1.0), smaller = stronger ghosting
+    pub alpha: f32,
+}
+
+impl Default for FrameLinearBlend {
+    fn default() -> Self {
+        Self { alpha: 0.45 }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct FrameAdditiveBlend {
+    /// controls trail persistence
+    pub fade: f32,
+    /// controls how strong new pixels add
+    pub intensity: f32,
+}
+
+impl Default for FrameAdditiveBlend {
+    fn default() -> Self {
+        Self {
+            fade: 0.65,
+            intensity: 0.45,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InterfaceConfig {
     pub selected_palette_idx: usize,
     pub scale: f32,
@@ -67,7 +137,7 @@ pub struct InterfaceConfig {
     pub show_fps: bool,
     pub tile_window: bool,
     pub is_palette_inverted: bool,
-    pub frame_blend_alpha: f32,
+    pub frame_blend_type: FrameBlendType,
 }
 
 impl InterfaceConfig {
@@ -129,7 +199,7 @@ impl Default for AppConfig {
                 show_fps: false,
                 tile_window: false,
                 is_palette_inverted: false,
-                frame_blend_alpha: 0.5,
+                frame_blend_type: FrameBlendType::None,
             },
             audio: AudioConfig {
                 mute: false,

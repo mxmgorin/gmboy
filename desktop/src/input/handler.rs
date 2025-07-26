@@ -4,7 +4,6 @@ use crate::input::combo::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
 use crate::Emu;
-use core::change_f32_rounded;
 use core::emu::state::EmuState;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
@@ -222,10 +221,9 @@ impl InputHandler {
                         !app.config.interface.is_palette_inverted;
                     app.update_palette(emu);
                 }
-                ChangeAppConfigCmd::FrameBlendAlpha(x) => {
-                    app.config.interface.frame_blend_alpha =
-                        change_f32_rounded(app.config.interface.frame_blend_alpha, x).clamp(0.1, 1.0);
-                    app.window.frame_blend_alpha = app.config.interface.frame_blend_alpha;
+                ChangeAppConfigCmd::FrameBlendType(x) => {
+                    app.config.interface.frame_blend_type = x;
+                    app.window.frame_blend_type = app.config.interface.frame_blend_type.clone();
                 }
             },
         }
