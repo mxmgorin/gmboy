@@ -198,13 +198,10 @@ impl App {
             return;
         }
 
-        let popups = self
-            .popups
-            .get()
+        let popups: Vec<&str> = self.popups.get()
             .iter()
-            .map(|x| x.text.clone())
-            .collect::<Vec<_>>();
-        let popups = popups.iter().map(|x| x.as_str()).collect::<Vec<_>>();
+            .map(|x| x.text.as_str())
+            .collect();
         let text_color = runtime.bus.io.lcd.current_colors[0];
         let bg_color = runtime.bus.io.lcd.current_colors[3];
 
