@@ -12,7 +12,7 @@ pub enum AppMenuItem {
     OptionsMenu,
     InterfaceMenu,
     Back,
-    Exit,
+    Quit,
     Palette,
     ToggleFps,
     ToggleFullscreen,
@@ -72,7 +72,7 @@ fn start_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::OpenRom,
         AppMenuItem::OptionsMenu,
-        AppMenuItem::Exit,
+        AppMenuItem::Quit,
     ]
     .into_boxed_slice()
 }
@@ -109,7 +109,7 @@ fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::RestartGame,
         AppMenuItem::OpenRom,
         AppMenuItem::OptionsMenu,
-        AppMenuItem::Exit,
+        AppMenuItem::Quit,
     ]
     .into_boxed_slice()
 }
@@ -198,7 +198,7 @@ impl AppMenu {
             | AppMenuItem::OptionsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
-            | AppMenuItem::Exit
+            | AppMenuItem::Quit
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
@@ -268,7 +268,7 @@ impl AppMenu {
             | AppMenuItem::OptionsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
-            | AppMenuItem::Exit
+            | AppMenuItem::Quit
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
@@ -314,7 +314,7 @@ impl AppMenu {
         match item {
             AppMenuItem::Resume => Some(AppCmd::TogglePause),
             AppMenuItem::OpenRom => Some(AppCmd::PickFile),
-            AppMenuItem::Exit => Some(AppCmd::Quit),
+            AppMenuItem::Quit => Some(AppCmd::Quit),
             AppMenuItem::SaveState(i) => Some(AppCmd::SaveState(
                 core::emu::state::SaveStateCmd::Create,
                 i,
@@ -397,7 +397,7 @@ impl AppMenuItem {
         match self {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open Rom".to_string(),
-            AppMenuItem::Exit => "Exit".to_string(),
+            AppMenuItem::Quit => "Quit".to_string(),
             AppMenuItem::SaveState(i) => format!("Save({i})"),
             AppMenuItem::LoadState(i) => format!("Load({i})"),
             AppMenuItem::OptionsMenu => "Options".to_string(),
@@ -413,7 +413,7 @@ impl AppMenuItem {
                 format!("Volume({})", (config.audio.volume * 100.0) as i32)
             }
             AppMenuItem::Scale => {
-                format!("Scale({})", config.interface.scale)
+                format!("Scale(x{})", config.interface.scale)
             }
             AppMenuItem::DeveloperMenu => "Developer".to_string(),
             AppMenuItem::TileWindow => {
@@ -438,7 +438,7 @@ impl AppMenuItem {
             }
             AppMenuItem::RewindSize => format!("Rewind Size({})", config.emulation.rewind_size),
             AppMenuItem::RewindInterval => format!(
-                "Rewind Interval({}secs)",
+                "Rewind Interval({}s)",
                 config.emulation.rewind_interval.as_secs()
             ),
             AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
