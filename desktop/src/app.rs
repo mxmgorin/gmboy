@@ -54,6 +54,7 @@ pub enum ChangeAppConfigCmd {
     ComboInterval(i32),
     SaveIndex(usize),
     LoadIndex(usize),
+    PaletteInverted,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -227,13 +228,19 @@ impl App {
         self.update_palette(emu);
     }
 
-    fn update_palette(&mut self, emu: &mut Emu) {
+    pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
+        let mut colors = into_pixel_colors(&palette.hex_colors);
+        
+        if self.config.interface.is_palette_inverted {
+            colors.reverse();
+        }
+        
         emu.runtime
             .bus
             .io
             .lcd
-            .set_pallet(into_pixel_colors(&palette.hex_colors));
+            .set_pallet(colors);
 
         println!("Current palette: {}", palette.name);
     }

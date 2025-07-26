@@ -225,6 +225,11 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::SaveIndex(x) => app.config.current_save_index = x,
                 ChangeAppConfigCmd::LoadIndex(x) => app.config.current_load_index = x,
+                ChangeAppConfigCmd::PaletteInverted => {
+                    app.config.interface.is_palette_inverted =
+                        !app.config.interface.is_palette_inverted;
+                    app.update_palette(emu);
+                }
             },
         }
     }

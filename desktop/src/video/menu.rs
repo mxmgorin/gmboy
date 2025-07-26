@@ -36,14 +36,11 @@ pub enum AppMenuItem {
     RestartGame,
     InputMenu,
     ComboInterval,
+    PaletteInverted,
 }
 
 fn input_menu() -> Box<[AppMenuItem]> {
-    vec![
-        AppMenuItem::ComboInterval,
-        AppMenuItem::Back,
-    ]
-        .into_boxed_slice()
+    vec![AppMenuItem::ComboInterval, AppMenuItem::Back].into_boxed_slice()
 }
 
 fn system_menu() -> Box<[AppMenuItem]> {
@@ -93,6 +90,7 @@ fn options_menu() -> Box<[AppMenuItem]> {
 fn interface_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::Palette,
+        AppMenuItem::PaletteInverted,
         AppMenuItem::ToggleFullscreen,
         AppMenuItem::ToggleFps,
         AppMenuItem::Scale,
@@ -178,20 +176,18 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
-            AppMenuItem::SpinDuration => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SpinDuration(1),
-            )),
+            AppMenuItem::SpinDuration => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(1)))
+            }
             AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05))),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
-            AppMenuItem::TileWindow => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
+            AppMenuItem::SaveStateOnExit => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveStateOnExit))
             }
-            AppMenuItem::SaveStateOnExit => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SaveStateOnExit,
-            )),
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
@@ -202,24 +198,24 @@ impl AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
-            AppMenuItem::NormalSpeed => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::NormalSpeed(0.1),
-            )),
-            AppMenuItem::TurboSpeed => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::TurboSpeed(0.1),
-            )),
-            AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SlowSpeed(0.1),
-            )),
+            AppMenuItem::NormalSpeed => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
+            }
+            AppMenuItem::TurboSpeed => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TurboSpeed(0.1)))
+            }
+            AppMenuItem::SlowSpeed => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SlowSpeed(0.1)))
+            }
             AppMenuItem::RewindSize => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::RewindSize(25)))
             }
             AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::RewindInterval(1_000_000),
             )),
-            AppMenuItem::AudioBufferSize => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::AudioBufferSize(2),
-            )),
+            AppMenuItem::AudioBufferSize => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AudioBufferSize(2)))
+            }
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::DefaultConfig => None,
@@ -227,7 +223,10 @@ impl AppMenu {
             AppMenuItem::InputMenu => None,
             AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::ComboInterval(5_000),
-            ))
+            )),
+            AppMenuItem::PaletteInverted => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+            }
         }
     }
 
@@ -246,22 +245,18 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
-            AppMenuItem::SpinDuration => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SpinDuration(-1),
-            )),
-            AppMenuItem::Volume => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05)))
+            AppMenuItem::SpinDuration => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(-1)))
             }
+            AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05))),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
             }
-            AppMenuItem::TileWindow => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow))
+            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
+            AppMenuItem::SaveStateOnExit => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveStateOnExit))
             }
-            AppMenuItem::SaveStateOnExit => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SaveStateOnExit,
-            )),
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
@@ -272,18 +267,18 @@ impl AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::DeveloperMenu
             | AppMenuItem::SystemMenu => None,
-            AppMenuItem::NormalSpeed => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::NormalSpeed(-0.1),
-            )),
-            AppMenuItem::TurboSpeed => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::TurboSpeed(-0.1),
-            )),
-            AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SlowSpeed(-0.1),
-            )),
-            AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::RewindSize(-25),
-            )),
+            AppMenuItem::NormalSpeed => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
+            }
+            AppMenuItem::TurboSpeed => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TurboSpeed(-0.1)))
+            }
+            AppMenuItem::SlowSpeed => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SlowSpeed(-0.1)))
+            }
+            AppMenuItem::RewindSize => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::RewindSize(-25)))
+            }
             AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::RewindInterval(-1_000_000),
             )),
@@ -297,7 +292,10 @@ impl AppMenu {
             AppMenuItem::InputMenu => None,
             AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
                 ChangeAppConfigCmd::ComboInterval(-5_000),
-            ))
+            )),
+            AppMenuItem::PaletteInverted => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+            }
         }
     }
 
@@ -354,18 +352,16 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::TileWindow => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow))
-            }
+            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
             AppMenuItem::SpinDuration => None,
             AppMenuItem::SystemMenu => {
                 self.next_items(system_menu());
 
                 None
             }
-            AppMenuItem::SaveStateOnExit => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::SaveStateOnExit,
-            )),
+            AppMenuItem::SaveStateOnExit => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveStateOnExit))
+            }
             AppMenuItem::NormalSpeed => None,
             AppMenuItem::TurboSpeed => None,
             AppMenuItem::SlowSpeed => None,
@@ -382,6 +378,9 @@ impl AppMenu {
                 None
             }
             AppMenuItem::ComboInterval => None,
+            AppMenuItem::PaletteInverted => {
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+            }
         }
     }
 
@@ -420,13 +419,15 @@ impl AppMenuItem {
                 format!("Tile Window{}", get_suffix(config.interface.tile_window))
             }
             AppMenuItem::SpinDuration => {
-                format!("Spin Interval({}ns)", config.get_emu_config().spin_duration.as_nanos())
+                format!(
+                    "Spin Interval({}ns)",
+                    config.get_emu_config().spin_duration.as_nanos()
+                )
             }
             AppMenuItem::SystemMenu => "System".to_string(),
-            AppMenuItem::SaveStateOnExit => format!(
-                "Save State On Exit{}",
-                get_suffix(config.save_on_exit)
-            ),
+            AppMenuItem::SaveStateOnExit => {
+                format!("Save State On Exit{}", get_suffix(config.save_on_exit))
+            }
             AppMenuItem::NormalSpeed => {
                 format!("Normal Speed(x{})", config.emulation.normal_speed)
             }
@@ -450,7 +451,11 @@ impl AppMenuItem {
             AppMenuItem::ComboInterval => format!(
                 "Combo Interval({}ms)",
                 config.input.combo_interval.as_millis()
-            )
+            ),
+            AppMenuItem::PaletteInverted => format!(
+                "Palette Inverted{}",
+                get_suffix(config.interface.is_palette_inverted)
+            ),
         }
     }
 }

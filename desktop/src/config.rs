@@ -66,6 +66,7 @@ pub struct InterfaceConfig {
     pub is_fullscreen: bool,
     pub show_fps: bool,
     pub tile_window: bool,
+    pub is_palette_inverted: bool,
 }
 
 impl InterfaceConfig {
@@ -77,7 +78,7 @@ impl InterfaceConfig {
 }
 
 impl AppConfig {
-    pub fn from_file(path: &str) -> io::Result<Self> {
+    pub fn from_file(path: &Path) -> io::Result<Self> {
         let data = fs::read_to_string(path)?;
         let config: Self = serde_json::from_str(&data)?;
 
@@ -120,6 +121,7 @@ impl Default for AppConfig {
                 is_fullscreen: false,
                 show_fps: false,
                 tile_window: false,
+                is_palette_inverted: false,
             },
             audio: AudioConfig {
                 mute: false,
