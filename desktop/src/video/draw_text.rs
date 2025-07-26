@@ -152,6 +152,7 @@ pub fn draw_text_lines(
 }
 
 #[derive(Clone, Copy)]
+#[allow(dead_code)]
 pub enum FontSize {
     Normal,
     Small,

@@ -12,7 +12,6 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::EmuCallback;
 use core::ppu::palette::LcdPalette;
-use core::ppu::Fps;
 use sdl2::{Sdl, VideoSubsystem};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -179,7 +178,7 @@ impl App {
             self.draw_notification(None);
 
             self.window.present();
-            thread::sleep(Duration::from_millis(33));
+            thread::sleep(Duration::from_millis(30));
         }
     }
 
@@ -233,7 +232,8 @@ impl App {
         self.window.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
 
-        let msg = format!("Palette: {}", palette.name);
+        let suffix = if self.config.interface.is_palette_inverted { " (inverted)" } else { "" };
+        let msg = format!("Palette: {}{}", palette.name, suffix);
         self.notifications.add(msg);
     }
 
