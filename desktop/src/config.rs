@@ -7,8 +7,8 @@ use std::borrow::Cow;
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::{env, fs, io};
 use std::time::Duration;
+use std::{env, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -70,10 +70,16 @@ pub struct InterfaceConfig {
 }
 
 impl InterfaceConfig {
-    pub fn get_current_palette(&self, palettes: &[LcdPalette]) -> [PixelColor; 4] {
+    pub fn get_palette_colors(&self, palettes: &[LcdPalette]) -> [PixelColor; 4] {
         let idx = self.selected_palette_idx;
 
-        core::into_pixel_colors(&palettes[idx].hex_colors)
+        let mut colors = core::into_pixel_colors(&palettes[idx].hex_colors);
+
+        if self.is_palette_inverted {
+            colors.reverse();
+        }
+
+        colors
     }
 }
 

@@ -43,7 +43,7 @@ fn main() {
 fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let emu_config = config.get_emu_config();
     let apu_config = config.audio.get_apu_config();
-    let colors = config.interface.get_current_palette(palettes);
+    let colors = config.interface.get_palette_colors(palettes);
 
     let lcd = Lcd::new(colors);
     let apu = Apu::new(apu_config);

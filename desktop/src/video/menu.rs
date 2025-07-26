@@ -76,10 +76,10 @@ fn start_menu() -> Box<[AppMenuItem]> {
 
 fn options_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::SystemMenu,
-        AppMenuItem::InputMenu,
-        AppMenuItem::AudioMenu,
         AppMenuItem::InterfaceMenu,
+        AppMenuItem::AudioMenu,
+        AppMenuItem::InputMenu,
+        AppMenuItem::SystemMenu,
         AppMenuItem::DeveloperMenu,
         AppMenuItem::DefaultConfig,
         AppMenuItem::Back,
@@ -426,7 +426,7 @@ impl AppMenuItem {
             }
             AppMenuItem::SystemMenu => "System".to_string(),
             AppMenuItem::SaveStateOnExit => {
-                format!("Save State On Exit{}", get_suffix(config.save_on_exit))
+                format!("Save On Exit{}", get_suffix(config.save_on_exit))
             }
             AppMenuItem::NormalSpeed => {
                 format!("Normal Speed(x{})", config.emulation.normal_speed)

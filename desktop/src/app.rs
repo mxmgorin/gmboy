@@ -1,5 +1,6 @@
 use crate::audio::AppAudio;
 use crate::config::AppConfig;
+use crate::input::handler::InputHandler;
 use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
@@ -10,14 +11,12 @@ use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::EmuCallback;
-use core::into_pixel_colors;
 use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use sdl2::{Sdl, VideoSubsystem};
 use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
-use crate::input::handler::InputHandler;
 
 pub enum AppCmd {
     TogglePause,
@@ -230,17 +229,8 @@ impl App {
 
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
-        let mut colors = into_pixel_colors(&palette.hex_colors);
-        
-        if self.config.interface.is_palette_inverted {
-            colors.reverse();
-        }
-        
-        emu.runtime
-            .bus
-            .io
-            .lcd
-            .set_pallet(colors);
+        let colors = self.config.interface.get_palette_colors(&self.palettes);
+        emu.runtime.bus.io.lcd.set_pallet(colors);
 
         println!("Current palette: {}", palette.name);
     }
