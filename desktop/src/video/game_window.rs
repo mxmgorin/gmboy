@@ -229,6 +229,25 @@ impl GameWindow {
             .unwrap();
     }
 
+    pub fn draw_fps(&mut self, fps: &str) {
+        fill_texture(&mut self.texture, PixelColor::from_u32(0));
+        draw_text_lines(
+            &mut self.texture,
+            &[fps],
+            self.text_color,
+            Some(self.bg_color),
+            10,
+            10,
+            self.font_size,
+            4,
+            None,
+        );
+
+        self.canvas
+            .copy(&self.texture, None, Some(Rect::new(0,0, 80, 80)))
+            .unwrap();
+    }
+
     pub fn draw_notification(&mut self, lines: &[&str]) {
         fill_texture(&mut self.notification_texture, PixelColor::from_u32(0));
         draw_text_lines(

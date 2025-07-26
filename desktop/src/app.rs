@@ -188,8 +188,8 @@ impl App {
         let lines = self.notifications.update_and_get();
 
         if lines.is_empty() {
-            if let Some(fps) = &fps {
-                self.window.draw_notification(&[fps]);
+            if let Some(fps) = fps {
+                self.window.draw_fps(fps);
             }
         } else {
             self.window.draw_notification(lines);
