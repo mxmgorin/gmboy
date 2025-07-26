@@ -1,61 +1,57 @@
 use std::time::{Duration, Instant};
 
-struct PopupMessage {
+struct Notification {
     pub text: String,
     pub created_at: Instant,
 }
 
-pub struct Popups {
-    messages: Vec<PopupMessage>,
+pub struct Notifications {
+    items: Vec<Notification>,
     duration: Duration,
-    refs: Vec<*const str>, // internal buffer for active popup messages
+    buffer: Vec<*const str>, // internal buffer for active popup messages
 }
 
-impl Popups {
+impl Notifications {
     pub fn new(duration: Duration) -> Self {
         Self {
-            messages: Vec::with_capacity(4),
+            items: Vec::with_capacity(4),
             duration,
-            refs: Vec::with_capacity(4),
+            buffer: Vec::with_capacity(4),
         }
     }
 
     pub fn add(&mut self, text: impl Into<String>) {
-        self.messages.push(PopupMessage {
+        self.items.push(Notification {
             text: text.into(),
             created_at: Instant::now(),
         });
     }
 
-    pub fn update(&mut self) {
-        let now = Instant::now();
-        self.messages
-            .retain(|msg| now.duration_since(msg.created_at) < self.duration);
-    }
-
     pub fn update_and_get(&mut self) -> &[&str] {
+        if self.items.is_empty() {
+            return &[];
+        }
+
         let now = Instant::now();
-        self.refs.clear();
+        self.buffer.clear();
 
         let mut i = 0;
-        while i < self.messages.len() {
-            if now.duration_since(self.messages[i].created_at) < self.duration {
+        while i < self.items.len() {
+            if now.duration_since(self.items[i].created_at) < self.duration {
                 // Store raw pointer to &str
-                let ptr: *const str = self.messages[i].text.as_str();
-                self.refs.push(ptr);
+                let ptr: *const str = self.items[i].text.as_str();
+                self.buffer.push(ptr);
                 i += 1;
             } else {
-                self.messages.swap_remove(i);
+                self.items.swap_remove(i);
             }
         }
 
         // SAFETY:
         // all pointers in `self.refs` point to valid strings in `self.messages`
         // Convert &[ *const str ] -> &[ &str ] by transmuting each element
-        unsafe { std::slice::from_raw_parts(self.refs.as_ptr() as *const &str, self.refs.len()) }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.messages.is_empty()
+        unsafe {
+            std::slice::from_raw_parts(self.buffer.as_ptr() as *const &str, self.buffer.len())
+        }
     }
 }

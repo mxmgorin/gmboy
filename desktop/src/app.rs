@@ -4,7 +4,7 @@ use crate::input::handler::InputHandler;
 use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
-use crate::video::popup::Popups;
+use crate::video::popup::Notifications;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
@@ -13,7 +13,6 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::EmuCallback;
 use core::ppu::palette::LcdPalette;
-use core::ppu::tile::PixelColor;
 use sdl2::{Sdl, VideoSubsystem};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -75,22 +74,17 @@ pub struct App {
     pub state: AppState,
     pub config: AppConfig,
     pub menu: AppMenu,
-    popups: Popups,
+    notifications: Notifications,
 }
 
 impl EmuCallback for App {
     fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
         self.window.draw_buffer(buffer);
-        self.draw_popups(runtime);
+        self.draw_notifications();
 
         if self.config.interface.show_fps {
             if let Some(fps) = &runtime.ppu.fps {
-                self.window.draw_fps(
-                    fps.display(),
-                    FontSize::Small,
-                    runtime.bus.io.lcd.current_colors[0],
-                    runtime.bus.io.lcd.current_colors[3],
-                );
+                self.window.draw_fps(fps.get(), FontSize::Small);
             }
         }
 
@@ -120,8 +114,14 @@ impl App {
         config: AppConfig,
         palettes: Box<[LcdPalette]>,
     ) -> Result<Self, String> {
+        let palette = config.interface.get_palette_colors(&palettes);
         let video_subsystem = sdl.video()?;
-        let mut game_window = GameWindow::new(config.interface.scale as u32, &video_subsystem)?;
+        let mut game_window = GameWindow::new(
+            config.interface.scale as u32,
+            &video_subsystem,
+            palette[0],
+            palette[3],
+        )?;
         game_window.set_fullscreen(config.interface.is_fullscreen);
 
         let tile_window = if config.interface.tile_window {
@@ -143,7 +143,7 @@ impl App {
             state: AppState::Paused,
             palettes,
             config,
-            popups: Popups::new(Duration::from_secs(3)),
+            notifications: Notifications::new(Duration::from_secs(3)),
         })
     }
 
@@ -181,54 +181,42 @@ impl App {
         while self.state == AppState::Paused {
             input.handle_events(self, emu);
             emu.runtime.clock.reset();
-            let text_color = emu.runtime.bus.io.lcd.current_colors[0];
-            let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
-            self.draw_menu(text_color, bg_color);
-            self.draw_popups(&emu.runtime);
+            self.draw_menu();
+            self.draw_notifications();
 
             self.window.present();
             thread::sleep(Duration::from_millis(33));
         }
     }
 
-    pub fn draw_popups(&mut self, runtime: &EmuRuntime) {
-        self.popups.update();
+    pub fn draw_notifications(&mut self) {
+        let items = self.notifications.update_and_get();
 
-        if self.popups.is_empty() {
+        if items.is_empty() {
             return;
         }
 
-        let popups = self.popups.update_and_get();
-        let text_color = runtime.bus.io.lcd.current_colors[0];
-        let bg_color = runtime.bus.io.lcd.current_colors[3];
         self.window
-            .draw_popup(popups, FontSize::Small, text_color, bg_color);
+            .draw_notification(items, FontSize::Small);
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
         self.config.interface.scale = (self.config.interface.scale + delta).max(0.0);
         self.window.set_scale(self.config.interface.scale as u32)?;
         let msg = format!("Scale: {}", self.config.interface.scale);
-        self.popups.add(msg);
+        self.notifications.add(msg);
 
         Ok(())
     }
 
-    fn draw_menu(&mut self, text_color: PixelColor, bg_color: PixelColor) {
+    fn draw_menu(&mut self) {
         let items = self.menu.get_items(&self.config);
         let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
-        self.draw_text(&items, text_color, bg_color, true, true);
+        self.draw_text(&items, true, true);
     }
 
-    fn draw_text(
-        &mut self,
-        lines: &[&str],
-        text_color: PixelColor,
-        bg_color: PixelColor,
-        center: bool,
-        align_center: bool,
-    ) {
+    fn draw_text(&mut self, lines: &[&str], center: bool, align_center: bool) {
         if lines.is_empty() {
             return;
         }
@@ -236,8 +224,7 @@ impl App {
         self.window.draw_text_lines(
             lines,
             FontSize::Small,
-            text_color,
-            bg_color,
+
             center,
             align_center,
         );
@@ -262,10 +249,12 @@ impl App {
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
         let colors = self.config.interface.get_palette_colors(&self.palettes);
+        self.window.text_color = colors[0];
+        self.window.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
 
         let msg = format!("Palette: {}", palette.name);
-        self.popups.add(msg);
+        self.notifications.add(msg);
     }
 
     pub fn toggle_fullscreen(&mut self) {
@@ -288,7 +277,7 @@ impl App {
                 }
 
                 let msg = format!("Saved save state: {index}");
-                self.popups.add(msg);
+                self.notifications.add(msg);
             }
             SaveStateCmd::Load => {
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
@@ -300,7 +289,7 @@ impl App {
 
                 emu.load_save_state(save_state);
                 let msg = format!("Loaded save state: {index}");
-                self.popups.add(msg);
+                self.notifications.add(msg);
                 self.state = AppState::Running;
             }
         }
@@ -368,6 +357,6 @@ impl App {
         self.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
 
         let msg = format!("Volume: {}", self.config.audio.volume * 100.0);
-        self.popups.add(msg);
+        self.notifications.add(msg);
     }
 }

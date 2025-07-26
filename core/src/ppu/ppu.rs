@@ -167,7 +167,7 @@ impl Fps {
         }
     }
 
-    pub fn display(&self) -> &str {
+    pub fn get(&self) -> &str {
         &self.fps_str
     }
 }

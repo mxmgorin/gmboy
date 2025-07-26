@@ -13,14 +13,21 @@ use sdl2::VideoSubsystem;
 
 pub struct GameWindow {
     canvas: Canvas<Window>,
-    pub texture: Texture,
-    pub popup_texture: Texture,
-    popup_rect: Rect,
+    texture: Texture,
+    notification_texture: Texture,
+    notification_rect: Rect,
     game_rect: Rect,
+    pub text_color: PixelColor,
+    pub bg_color: PixelColor,
 }
 
 impl GameWindow {
-    pub fn new(scale: u32, video_subsystem: &VideoSubsystem) -> Result<Self, String> {
+    pub fn new(
+        scale: u32,
+        video_subsystem: &VideoSubsystem,
+        text_color: PixelColor,
+        bg_color: PixelColor,
+    ) -> Result<Self, String> {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
         let window = video_subsystem
@@ -52,9 +59,11 @@ impl GameWindow {
         Ok(Self {
             canvas,
             texture,
-            popup_texture: pop_texture,
-            popup_rect: Rect::new(0, 0, canvas_win_width, canvas_win_height),
+            notification_texture: pop_texture,
+            notification_rect: Rect::new(0, 0, canvas_win_width, canvas_win_height),
             game_rect: new_scaled_rect(canvas_win_width, canvas_win_height),
+            text_color,
+            bg_color,
         })
     }
 
@@ -93,8 +102,6 @@ impl GameWindow {
         &mut self,
         lines: &[&str],
         size: FontSize,
-        color: PixelColor,
-        bg_color: PixelColor,
         center: bool,
         align_center: bool,
     ) {
@@ -115,29 +122,67 @@ impl GameWindow {
             y /= 2;
         }
 
-        fill_texture(&mut self.texture, bg_color);
-        draw_text_lines(&mut self.texture, lines, color, None, x, y, size, 1, align_center);
+        fill_texture(&mut self.texture, self.bg_color);
+        draw_text_lines(
+            &mut self.texture,
+            lines,
+            self.text_color,
+            None,
+            x,
+            y,
+            size,
+            1,
+            align_center,
+        );
 
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: &str, size: FontSize, color: PixelColor, bg_color: PixelColor) {
-        fill_texture(&mut self.popup_texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.popup_texture, &[fps], color, Some(bg_color), 5, 5, size, 2, None);
+    pub fn draw_fps(&mut self, fps: &str, size: FontSize) {
+        fill_texture(&mut self.notification_texture, PixelColor::from_u32(0));
+        draw_text_lines(
+            &mut self.notification_texture,
+            &[fps],
+            self.text_color,
+            Some(self.bg_color),
+            5,
+            5,
+            size,
+            2,
+            None,
+        );
 
         self.canvas
-            .copy(&self.popup_texture, None, Some(self.popup_rect))
+            .copy(
+                &self.notification_texture,
+                None,
+                Some(self.notification_rect),
+            )
             .unwrap();
     }
 
-    pub fn draw_popup(&mut self, lines: &[&str], size: FontSize, color: PixelColor, bg_color: PixelColor) {
-        fill_texture(&mut self.popup_texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.popup_texture, lines, color, Some(bg_color), 5, 20, size, 2, None);
+    pub fn draw_notification(&mut self, lines: &[&str], size: FontSize) {
+        fill_texture(&mut self.notification_texture, PixelColor::from_u32(0));
+        draw_text_lines(
+            &mut self.notification_texture,
+            lines,
+            self.text_color,
+            Some(self.bg_color),
+            5,
+            20,
+            size,
+            2,
+            None,
+        );
 
         self.canvas
-            .copy(&self.popup_texture, None, Some(self.popup_rect))
+            .copy(
+                &self.notification_texture,
+                None,
+                Some(self.notification_rect),
+            )
             .unwrap();
     }
 
