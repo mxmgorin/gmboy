@@ -10,8 +10,8 @@ use core::emu::Emu;
 use core::ppu::lcd::Lcd;
 use core::ppu::palette::LcdPalette;
 use core::ppu::Ppu;
-use std::env;
-use std::path::PathBuf;
+use std::path::{PathBuf};
+use std::{env, fs};
 
 mod app;
 mod audio;
@@ -85,17 +85,39 @@ fn get_config() -> AppConfig {
     let config_path = AppConfig::default_path();
 
     if config_path.exists() {
-        AppConfig::from_file(config_path.to_str().unwrap())
-            .unwrap_or_else(|_| panic!("Failed to parse {config_path:?}"))
-    } else {
-        let config = AppConfig::default();
+        let config = AppConfig::from_file(&config_path);
 
-        if let Err(err) = config.save_file() {
-            eprintln!("Failed to create default config: {err}");
-            std::process::exit(1);
-        }
+        let Ok(config) = config else {
+            eprintln!("Failed to parse config file: {}", config.unwrap_err());
+
+            let backup_path = config_path.with_file_name(format!(
+                "{}.bak",
+                config_path.file_name().unwrap().to_string_lossy()
+            ));
+            if let Err(rename_err) = fs::rename(config_path, &backup_path) {
+                eprintln!("Failed to rename invalid config file: {rename_err}");
+            } else {
+                eprintln!("Renamed invalid config to {:?}", backup_path);
+            }
+
+            let default_config = AppConfig::default();
+
+            if let Err(save_err) = default_config.save_file() {
+                panic!("Failed to save default config: {save_err}");
+            }
+
+            return default_config;
+        };
 
         config
+    } else {
+        let default_config = AppConfig::default();
+
+        if let Err(err) = default_config.save_file() {
+            panic!("Failed to create default config: {err}");
+        }
+
+        default_config
     }
 }
 
