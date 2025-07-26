@@ -1,7 +1,6 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::input::button::{
-    handle_a, handle_b, handle_down, handle_left, handle_right, handle_select,
-    handle_up,
+    handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_up,
 };
 use crate::Emu;
 use core::emu::runtime::RunMode;
@@ -21,15 +20,15 @@ pub fn handle_keyboard(
         Keycode::RIGHT => return handle_right(is_pressed, app, emu),
         Keycode::Z => handle_b(is_pressed, app, emu),
         Keycode::X => return handle_a(is_pressed, app, emu),
-        Keycode::Return => {
+        Keycode::Return | Keycode::S => {
             if app.state == AppState::Paused && !is_pressed {
                 return app.menu.select(&app.config);
             } else {
                 emu.runtime.bus.io.joypad.start = is_pressed;
             }
         }
-        Keycode::BACKSPACE => return handle_select(is_pressed, app, emu),
-        Keycode::LCTRL | Keycode::RCTRL => {
+        Keycode::BACKSPACE | Keycode::A => return handle_select(is_pressed, app, emu),
+        Keycode::R => {
             return if is_pressed {
                 Some(AppCmd::Rewind)
             } else {
@@ -43,21 +42,16 @@ pub fn handle_keyboard(
                 Some(AppCmd::ChangeMode(RunMode::Normal))
             }
         }
-        Keycode::LSHIFT | Keycode::RSHIFT => {
+        Keycode::SPACE => {
             return if is_pressed {
                 Some(AppCmd::ChangeMode(RunMode::Slow))
             } else {
                 Some(AppCmd::ChangeMode(RunMode::Normal))
             }
         }
-        Keycode::ESCAPE => {
+        Keycode::ESCAPE | Keycode::Q => {
             if !is_pressed {
                 return Some(AppCmd::TogglePause);
-            }
-        }
-        Keycode::R => {
-            if !is_pressed {
-                return Some(AppCmd::RestartGame);
             }
         }
         Keycode::EQUALS => {
@@ -70,14 +64,19 @@ pub fn handle_keyboard(
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0)));
             }
         }
-        Keycode::F => {
-            if !is_pressed {
-                app.toggle_fullscreen();
-            }
-        }
         Keycode::M => {
             if !is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::ToggleMute));
+            }
+        }
+        Keycode::I => {
+            if !is_pressed {
+                return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted));
+            }
+        }
+        Keycode::F10 => {
+            if !is_pressed {
+                app.toggle_fullscreen();
             }
         }
         Keycode::F11 => {

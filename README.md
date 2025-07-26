@@ -39,18 +39,19 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 | D-pad Right             | Arrow Right              | D-pad Right    |
 | B                       | Z                        | B              |
 | A                       | X                        | A              |
-| Start                   | Enter (Return)           | Start          |
-| Select                  | Backspace                | Select         |
-| Rewind (hold)           | Left Ctrl / Right Ctrl   | Y              |
+| Start                   | Enter / S                | Start          |
+| Select                  | Backspace / A            | Select         |
+| Rewind (hold)           | R                        | Y              |
 | Turbo mode (hold)       | Tab                      | Right Trigger  |
 | Slow mode (hold)        | Left Shift / Right Shift | Left Trigger   |
-| Main menu               | Esc                      | Select + Start |
-| Restart                 | R                        |                |
+| Main menu               | Esc / Q                  | Select + Start |
+| Restart                 |                          |                |
 | Screen scale up         | + (Equals)               |                |
 | Screen scale down       | - (Minus)                |                |
-| Fullscreen Toggle       | F                        |                |
+| Fullscreen Toggle       | F10                      |                |
 | Mute audio              | M                        |                |
-| Change color palette    | P                        | X              |
+| Invert palette          | I                        |                |
+| Next palette            | P                        | X              |
 | Load save state (1–9)   | F1–F19                   | Right Shoulder |
 | Create save state (1–9) | 1–9                      | Left Trigger   |
 | Volume up               | F12                      |                |
