@@ -1,20 +1,22 @@
 use std::time::{Duration, Instant};
 
-pub struct PopupMessage {
+struct PopupMessage {
     pub text: String,
     pub created_at: Instant,
 }
 
-pub struct PopupManager {
+pub struct Popups {
     messages: Vec<PopupMessage>,
     duration: Duration,
+    refs: Vec<*const str>, // internal buffer for active popup messages
 }
 
-impl PopupManager {
+impl Popups {
     pub fn new(duration: Duration) -> Self {
         Self {
-            messages: Vec::new(),
+            messages: Vec::with_capacity(4),
             duration,
+            refs: Vec::with_capacity(4),
         }
     }
 
@@ -31,25 +33,26 @@ impl PopupManager {
             .retain(|msg| now.duration_since(msg.created_at) < self.duration);
     }
 
-    pub fn update_and_get(&mut self) -> Vec<&str> {
+    pub fn update_and_get(&mut self) -> &[&str] {
         let now = Instant::now();
-        let mut i = 0;
-        let mut refs = Vec::with_capacity(self.messages.len());
+        self.refs.clear();
 
+        let mut i = 0;
         while i < self.messages.len() {
             if now.duration_since(self.messages[i].created_at) < self.duration {
-                // SAFETY:
-                // we only take a reference to `self.messages[i].text` while
-                // that element stays in place. No mutation invalidates this reference.
-                let ptr = &self.messages[i].text as *const String;
-                refs.push(unsafe { &*ptr }.as_str());
+                // Store raw pointer to &str
+                let ptr: *const str = self.messages[i].text.as_str();
+                self.refs.push(ptr);
                 i += 1;
             } else {
                 self.messages.swap_remove(i);
             }
         }
 
-        refs
+        // SAFETY:
+        // all pointers in `self.refs` point to valid strings in `self.messages`
+        // Convert &[ *const str ] -> &[ &str ] by transmuting each element
+        unsafe { std::slice::from_raw_parts(self.refs.as_ptr() as *const &str, self.refs.len()) }
     }
 
     pub fn is_empty(&self) -> bool {

@@ -4,7 +4,7 @@ use crate::input::handler::InputHandler;
 use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
-use crate::video::popup::PopupManager;
+use crate::video::popup::Popups;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
@@ -75,7 +75,7 @@ pub struct App {
     pub state: AppState,
     pub config: AppConfig,
     pub menu: AppMenu,
-    popups: PopupManager,
+    popups: Popups,
 }
 
 impl EmuCallback for App {
@@ -89,7 +89,7 @@ impl EmuCallback for App {
                     fps.display(),
                     FontSize::Small,
                     runtime.bus.io.lcd.current_colors[0],
-                    runtime.bus.io.lcd.current_colors[3]
+                    runtime.bus.io.lcd.current_colors[3],
                 );
             }
         }
@@ -143,7 +143,7 @@ impl App {
             state: AppState::Paused,
             palettes,
             config,
-            popups: PopupManager::new(Duration::from_secs(3)),
+            popups: Popups::new(Duration::from_secs(3)),
         })
     }
 
@@ -198,11 +198,11 @@ impl App {
             return;
         }
 
-        let popups: Vec<&str> = self.popups.update_and_get();
+        let popups = self.popups.update_and_get();
         let text_color = runtime.bus.io.lcd.current_colors[0];
         let bg_color = runtime.bus.io.lcd.current_colors[3];
-
-        self.window.draw_popup(&popups, FontSize::Small, text_color, bg_color);
+        self.window
+            .draw_popup(popups, FontSize::Small, text_color, bg_color);
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
