@@ -144,42 +144,42 @@ impl InputHandler {
                     println!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
-                    self.execute_command(app, emu, AppCmd::LoadFile(filename.into()))
+                    self.handle_cmd(app, emu, AppCmd::LoadFile(filename.into()))
                 }
                 Event::KeyDown {
                     keycode: Some(keycode),
                     ..
                 } => {
-                    if let Some(evt) = self.handle_key(app, emu, keycode, true) {
-                        self.execute_command(app, emu, evt);
+                    if let Some(evt) = self.handle_keyboard(app, emu, keycode, true) {
+                        self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::KeyUp {
                     keycode: Some(keycode),
                     ..
                 } => {
-                    if let Some(evt) = self.handle_key(app, emu, keycode, false) {
-                        self.execute_command(app, emu, evt);
+                    if let Some(evt) = self.handle_keyboard(app, emu, keycode, false) {
+                        self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
-                    if let Some(evt) = self.handle_controller_button(app, emu, button, true) {
-                        self.execute_command(app, emu, evt);
+                    if let Some(evt) = self.handle_gamepad_button(app, emu, button, true) {
+                        self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
-                    if let Some(evt) = self.handle_controller_button(app, emu, button, false) {
-                        self.execute_command(app, emu, evt);
+                    if let Some(evt) = self.handle_gamepad_button(app, emu, button, false) {
+                        self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
                     if let Some(evt) = self.handle_joy_axis(axis_idx, value) {
-                        self.execute_command(app, emu, evt);
+                        self.handle_cmd(app, emu, evt);
                     }
                 }
-                Event::Quit { .. } => self.execute_command(app, emu, AppCmd::Quit),
+                Event::Quit { .. } => self.handle_cmd(app, emu, AppCmd::Quit),
                 Event::Window {
                     win_event: sdl2::event::WindowEvent::Close,
                     window_id,
@@ -189,7 +189,7 @@ impl InputHandler {
                         if window.get_window_id() == window_id {
                             app.toggle_tile_window();
                         } else {
-                            self.execute_command(app, emu, AppCmd::Quit);
+                            self.handle_cmd(app, emu, AppCmd::Quit);
                         }
                     }
                 }
@@ -198,7 +198,7 @@ impl InputHandler {
         }
     }
 
-    pub fn execute_command(&mut self, app: &mut App, emu: &mut Emu, event: AppCmd) {
+    pub fn handle_cmd(&mut self, app: &mut App, emu: &mut Emu, event: AppCmd) {
         match event {
             AppCmd::LoadFile(path) => {
                 emu.load_cart_file(&path, app.config.save_state_on_exit);
@@ -309,7 +309,7 @@ impl InputHandler {
         }
     }
 
-    pub fn handle_controller_button(
+    pub fn handle_gamepad_button(
         &mut self,
         app: &mut App,
         emu: &mut Emu,
@@ -405,7 +405,7 @@ impl InputHandler {
     pub fn handle_joy_axis(&mut self, axis_idx: u8, value: i16) -> Option<AppCmd> {
         const LEFT: u8 = 2;
         const RIGHT: u8 = 5;
-        const THRESHOLD: i16 = 20_000;
+        const THRESHOLD: i16 = 30_000;
 
         let is_down = value > THRESHOLD;
 
@@ -422,7 +422,7 @@ impl InputHandler {
         None
     }
 
-    pub fn handle_key(
+    pub fn handle_keyboard(
         &mut self,
         app: &mut App,
         emu: &mut Emu,
