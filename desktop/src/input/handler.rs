@@ -1,5 +1,5 @@
 use crate::app::{change_volume, App, AppCmd, AppState, ChangeAppConfigCmd};
-use crate::config::AppConfig;
+use crate::config::{AppConfig, InputConfig};
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
 use crate::input::state::GamepadState;
@@ -19,7 +19,7 @@ pub struct InputHandler {
 }
 
 impl InputHandler {
-    pub fn new(sdl: &Sdl) -> Result<Self, String> {
+    pub fn new(sdl: &Sdl, config: &InputConfig) -> Result<Self, String> {
         let mut game_controllers = vec![];
         let game_controller_subsystem = sdl.game_controller()?;
 
@@ -34,7 +34,7 @@ impl InputHandler {
             event_pump: sdl.event_pump()?,
             game_controllers,
             game_controller_subsystem,
-            gamepad_state: GamepadState::new(),
+            gamepad_state: GamepadState::new(config.combo_interval),
         })
     }
 
@@ -217,6 +217,11 @@ impl InputHandler {
                 ChangeAppConfigCmd::Default => {
                     app.config = AppConfig::default();
                     emu.config = app.config.emulation.clone();
+                }
+                ChangeAppConfigCmd::ComboInterval(x) => {
+                    app.config.input.combo_interval =
+                        core::change_duration(app.config.input.combo_interval, x);
+                    self.gamepad_state = GamepadState::new(app.config.input.combo_interval);
                 }
             },
         }

@@ -2,8 +2,6 @@ use std::time::{Duration, Instant};
 use sdl2::controller::Button;
 use crate::app::AppCmd;
 
-const COMBO_WINDOW: Duration = Duration::from_millis(100);
-
 pub struct ButtonState {
     pub pressed: bool,
     pub last_pressed: Instant,
@@ -30,16 +28,18 @@ impl ButtonState {
 
 pub struct GamepadState {
     states: Vec<ButtonState>,
+    combo_interval: Duration,
 }
 
 impl GamepadState {
-    pub fn new() -> Self {
+    pub fn new(combo_interval: Duration) -> Self {
         Self {
             states: vec![
                 ButtonState::new(Button::Start),
                 ButtonState::new(Button::Back),
                 ButtonState::new(Button::Guide),
             ],
+            combo_interval,
         }
     }
 
@@ -85,7 +85,7 @@ impl GamepadState {
                 s2.last_pressed.duration_since(s1.last_pressed)
             };
 
-            return diff <= COMBO_WINDOW;
+            return diff <= self.combo_interval;
         }
 
         false

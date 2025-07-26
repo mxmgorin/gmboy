@@ -51,6 +51,7 @@ pub enum ChangeAppConfigCmd {
     AudioBufferSize(i32),
     MuteTurbo,
     MuteSlow,
+    ComboInterval(i32),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]

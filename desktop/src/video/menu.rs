@@ -34,6 +34,16 @@ pub enum AppMenuItem {
     MuteSlow,
     DefaultConfig,
     RestartGame,
+    InputMenu,
+    ComboInterval,
+}
+
+fn input_menu() -> Box<[AppMenuItem]> {
+    vec![
+        AppMenuItem::ComboInterval,
+        AppMenuItem::Back,
+    ]
+        .into_boxed_slice()
 }
 
 fn system_menu() -> Box<[AppMenuItem]> {
@@ -69,9 +79,10 @@ fn start_menu() -> Box<[AppMenuItem]> {
 
 fn options_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::InterfaceMenu,
-        AppMenuItem::AudioMenu,
         AppMenuItem::SystemMenu,
+        AppMenuItem::InputMenu,
+        AppMenuItem::AudioMenu,
+        AppMenuItem::InterfaceMenu,
         AppMenuItem::DeveloperMenu,
         AppMenuItem::DefaultConfig,
         AppMenuItem::Back,
@@ -213,6 +224,10 @@ impl AppMenu {
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::DefaultConfig => None,
             AppMenuItem::RestartGame => None,
+            AppMenuItem::InputMenu => None,
+            AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
+                ChangeAppConfigCmd::ComboInterval(5_000),
+            ))
         }
     }
 
@@ -279,6 +294,10 @@ impl AppMenu {
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::DefaultConfig => None,
             AppMenuItem::RestartGame => None,
+            AppMenuItem::InputMenu => None,
+            AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
+                ChangeAppConfigCmd::ComboInterval(-5_000),
+            ))
         }
     }
 
@@ -357,6 +376,12 @@ impl AppMenu {
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::DefaultConfig => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Default)),
             AppMenuItem::RestartGame => Some(AppCmd::RestartGame),
+            AppMenuItem::InputMenu => {
+                self.next_items(input_menu());
+
+                None
+            }
+            AppMenuItem::ComboInterval => None,
         }
     }
 
@@ -395,7 +420,7 @@ impl AppMenuItem {
                 format!("Tile Window{}", get_suffix(config.interface.tile_window))
             }
             AppMenuItem::SpinDuration => {
-                format!("Spin({})", config.get_emu_config().spin_duration.as_nanos())
+                format!("Spin Interval({}ns)", config.get_emu_config().spin_duration.as_nanos())
             }
             AppMenuItem::SystemMenu => "System".to_string(),
             AppMenuItem::SaveStateOnExit => format!(
@@ -413,7 +438,7 @@ impl AppMenuItem {
             }
             AppMenuItem::RewindSize => format!("Rewind Size({})", config.emulation.rewind_size),
             AppMenuItem::RewindInterval => format!(
-                "Rewind Interval({})",
+                "Rewind Interval({}secs)",
                 config.emulation.rewind_interval.as_secs()
             ),
             AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
@@ -421,6 +446,11 @@ impl AppMenuItem {
             AppMenuItem::MuteSlow => format!("Mute Slow{}", get_suffix(config.audio.mute_slow)),
             AppMenuItem::DefaultConfig => "Reset Default".to_string(),
             AppMenuItem::RestartGame => "Restart".to_string(),
+            AppMenuItem::InputMenu => "Input".to_string(),
+            AppMenuItem::ComboInterval => format!(
+                "Combo Interval({}ms)",
+                config.input.combo_interval.as_millis()
+            )
         }
     }
 }

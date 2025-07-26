@@ -137,11 +137,11 @@ pub fn change_f64_rounded(value: f64, delta: f64) -> f64 {
     ((value + delta) * 100.0).round() / 100.0
 }
 
-pub fn change_duration(value: Duration, millis: i32) -> Duration {
-    if millis < 0 {
-        value.saturating_sub(Duration::from_micros(millis.unsigned_abs() as u64))
+pub fn change_duration(value: Duration, micros: i32) -> Duration {
+    if micros < 0 {
+        value.saturating_sub(Duration::from_micros(micros.unsigned_abs() as u64))
     } else {
-        value.saturating_add(Duration::from_micros(millis as u64))
+        value.saturating_add(Duration::from_micros(micros as u64))
     }
 }
 

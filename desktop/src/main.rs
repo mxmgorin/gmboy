@@ -1,5 +1,6 @@
 use crate::app::App;
 use crate::config::AppConfig;
+use crate::input::handler::InputHandler;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
@@ -11,7 +12,6 @@ use core::ppu::palette::LcdPalette;
 use core::ppu::Ppu;
 use std::env;
 use std::path::PathBuf;
-use crate::input::handler::InputHandler;
 
 mod app;
 mod audio;
@@ -28,8 +28,8 @@ fn main() {
     load_cart(&config, &mut emu, args);
 
     let mut sdl = sdl2::init().unwrap();
+    let mut input = InputHandler::new(&sdl, &config.input).unwrap();
     let mut app = App::new(&mut sdl, config, palettes).unwrap();
-    let mut input = InputHandler::new(&sdl).unwrap();
 
     if let Err(err) = app.run(&mut emu, &mut input) {
         eprintln!("Failed app run: {err}");
