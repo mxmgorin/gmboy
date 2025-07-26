@@ -16,7 +16,6 @@ pub struct GameWindow {
     pub texture: Texture,
     pub popup_texture: Texture,
     popup_rect: Rect,
-    fps_rect: Rect,
     game_rect: Rect,
 }
 
@@ -55,7 +54,6 @@ impl GameWindow {
             texture,
             popup_texture: pop_texture,
             popup_rect: Rect::new(0, 0, canvas_win_width, canvas_win_height),
-            fps_rect: Rect::new(0, 0, 80, 80),
             game_rect: new_scaled_rect(canvas_win_width, canvas_win_height),
         })
     }
@@ -118,25 +116,25 @@ impl GameWindow {
         }
 
         fill_texture(&mut self.texture, bg_color);
-        draw_text_lines(&mut self.texture, lines, color, x, y, size, 1, align_center);
+        draw_text_lines(&mut self.texture, lines, color, None, x, y, size, 1, align_center);
 
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: &str, size: FontSize, color: PixelColor) {
-        fill_texture(&mut self.texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.texture, &[fps], color, 5, 5, size, 3, None);
+    pub fn draw_fps(&mut self, fps: &str, size: FontSize, color: PixelColor, bg_color: PixelColor) {
+        fill_texture(&mut self.popup_texture, PixelColor::from_u32(0));
+        draw_text_lines(&mut self.popup_texture, &[fps], color, Some(bg_color), 5, 5, size, 2, None);
 
         self.canvas
-            .copy(&self.texture, None, Some(self.fps_rect))
+            .copy(&self.popup_texture, None, Some(self.popup_rect))
             .unwrap();
     }
 
-    pub fn draw_popup(&mut self, lines: &[&str], size: FontSize, color: PixelColor) {
+    pub fn draw_popup(&mut self, lines: &[&str], size: FontSize, color: PixelColor, bg_color: PixelColor) {
         fill_texture(&mut self.popup_texture, PixelColor::from_u32(0));
-        draw_text_lines(&mut self.popup_texture, lines, color, 5, 20, size, 2, None);
+        draw_text_lines(&mut self.popup_texture, lines, color, Some(bg_color), 5, 20, size, 2, None);
 
         self.canvas
             .copy(&self.popup_texture, None, Some(self.popup_rect))

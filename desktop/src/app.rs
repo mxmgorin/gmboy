@@ -89,6 +89,7 @@ impl EmuCallback for App {
                     fps.display(),
                     FontSize::Small,
                     runtime.bus.io.lcd.current_colors[0],
+                    runtime.bus.io.lcd.current_colors[3]
                 );
             }
         }
@@ -205,7 +206,9 @@ impl App {
             .collect::<Vec<_>>();
         let popups = popups.iter().map(|x| x.as_str()).collect::<Vec<_>>();
         let text_color = runtime.bus.io.lcd.current_colors[0];
-        self.window.draw_popup(&popups, FontSize::Small, text_color);
+        let bg_color = runtime.bus.io.lcd.current_colors[3];
+
+        self.window.draw_popup(&popups, FontSize::Small, text_color, bg_color);
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
