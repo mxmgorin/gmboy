@@ -4,6 +4,7 @@ use crate::input::handler::InputHandler;
 use crate::video::draw_text::FontSize;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
+use crate::video::popup::PopupManager;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::emu::battery::BatterySave;
@@ -74,17 +75,19 @@ pub struct App {
     pub state: AppState,
     pub config: AppConfig,
     pub menu: AppMenu,
+    popups: PopupManager,
 }
 
 impl EmuCallback for App {
     fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
         self.window.draw_buffer(buffer);
+        self.draw_popups(runtime);
 
         if self.config.interface.show_fps {
             if let Some(fps) = &runtime.ppu.fps {
                 self.window.draw_fps(
                     fps.display(),
-                    FontSize::Normal,
+                    FontSize::Small,
                     runtime.bus.io.lcd.current_colors[0],
                 );
             }
@@ -139,6 +142,7 @@ impl App {
             state: AppState::Paused,
             palettes,
             config,
+            popups: PopupManager::new(Duration::from_secs(3)),
         })
     }
 
@@ -179,16 +183,36 @@ impl App {
             let text_color = emu.runtime.bus.io.lcd.current_colors[0];
             let bg_color = emu.runtime.bus.io.lcd.current_colors[3];
             self.draw_menu(text_color, bg_color);
+            self.draw_popups(&emu.runtime);
 
+            self.window.present();
             thread::sleep(Duration::from_millis(33));
         }
+    }
+
+    pub fn draw_popups(&mut self, runtime: &EmuRuntime) {
+        self.popups.update();
+
+        if self.popups.is_empty() {
+            return;
+        }
+
+        let popups = self
+            .popups
+            .get()
+            .iter()
+            .map(|x| x.text.clone())
+            .collect::<Vec<_>>();
+        let popups = popups.iter().map(|x| x.as_str()).collect::<Vec<_>>();
+        let text_color = runtime.bus.io.lcd.current_colors[0];
+        self.window.draw_popup(&popups, FontSize::Small, text_color);
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
         self.config.interface.scale = (self.config.interface.scale + delta).max(0.0);
         self.window.set_scale(self.config.interface.scale as u32)?;
-
-        println!("Current scale: {}", self.config.interface.scale);
+        let msg = format!("Scale: {}", self.config.interface.scale);
+        self.popups.show(msg);
 
         Ok(())
     }
@@ -197,7 +221,7 @@ impl App {
         let items = self.menu.get_items(&self.config);
         let items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
 
-        self.draw_text(&items, text_color, bg_color, true);
+        self.draw_text(&items, text_color, bg_color, true, true);
     }
 
     fn draw_text(
@@ -205,12 +229,21 @@ impl App {
         lines: &[&str],
         text_color: PixelColor,
         bg_color: PixelColor,
+        center: bool,
         align_center: bool,
     ) {
-        self.window
-            .draw_text_lines(lines, FontSize::Small, text_color, bg_color, align_center);
+        if lines.is_empty() {
+            return;
+        }
 
-        self.window.present();
+        self.window.draw_text_lines(
+            lines,
+            FontSize::Small,
+            text_color,
+            bg_color,
+            center,
+            align_center,
+        );
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
@@ -234,7 +267,8 @@ impl App {
         let colors = self.config.interface.get_palette_colors(&self.palettes);
         emu.runtime.bus.io.lcd.set_pallet(colors);
 
-        println!("Current palette: {}", palette.name);
+        let msg = format!("Palette: {}", palette.name);
+        self.popups.show(msg);
     }
 
     pub fn toggle_fullscreen(&mut self) {
@@ -256,7 +290,8 @@ impl App {
                     return;
                 }
 
-                println!("Saved save state: {index}");
+                let msg = format!("Saved save state: {index}");
+                self.popups.show(msg);
                 self.state = AppState::Running;
             }
             SaveStateCmd::Load => {
@@ -268,7 +303,8 @@ impl App {
                 };
 
                 emu.load_save_state(save_state);
-                println!("Loaded save state: {index}");
+                let msg = format!("Loaded save state: {index}");
+                self.popups.show(msg);
                 self.state = AppState::Running;
             }
         }

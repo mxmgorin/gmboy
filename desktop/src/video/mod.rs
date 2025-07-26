@@ -6,10 +6,11 @@ pub mod draw_text;
 pub mod game_window;
 pub mod tiles_window;
 pub mod menu;
+pub mod popup;
 
 const BYTES_PER_PIXEL: usize = 4;
 
-fn fill_texture(texture: &mut Texture, color: PixelColor) {
+pub fn fill_texture(texture: &mut Texture, color: PixelColor) {
     let (r, g, b, a) = color.as_rgba();
 
     texture

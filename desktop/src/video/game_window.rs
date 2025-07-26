@@ -13,7 +13,9 @@ use sdl2::VideoSubsystem;
 
 pub struct GameWindow {
     canvas: Canvas<Window>,
-    texture: Texture,
+    pub texture: Texture,
+    pub popup_texture: Texture,
+    popup_rect: Rect,
     fps_rect: Rect,
     game_rect: Rect,
 }
@@ -38,13 +40,23 @@ impl GameWindow {
             )
             .unwrap();
         texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-        let (win_width, win_height) = canvas.window().size();
+        let (canvas_win_width, canvas_win_height) = canvas.window().size();
+        let mut pop_texture = texture_creator
+            .create_texture_streaming(
+                PixelFormatEnum::ARGB8888,
+                canvas_win_width,
+                canvas_win_height,
+            )
+            .unwrap();
+        pop_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(Self {
             canvas,
             texture,
+            popup_texture: pop_texture,
+            popup_rect: Rect::new(0, 0, canvas_win_width, canvas_win_height),
             fps_rect: Rect::new(0, 0, 80, 80),
-            game_rect: new_scaled_rect(win_width, win_height),
+            game_rect: new_scaled_rect(canvas_win_width, canvas_win_height),
         })
     }
 
@@ -85,6 +97,7 @@ impl GameWindow {
         size: FontSize,
         color: PixelColor,
         bg_color: PixelColor,
+        center: bool,
         align_center: bool,
     ) {
         self.canvas.clear();
@@ -96,9 +109,13 @@ impl GameWindow {
             (None, calc_text_width_str(lines[0], size))
         };
         let text_height = calc_text_height(size) * lines.len();
-        // Calculate the x and y positions to center the text
-        let x = (LCD_X_RES as usize - text_width) / 2;
-        let y = (LCD_Y_RES as usize - text_height) / 2;
+        let mut x = LCD_X_RES as usize - text_width;
+        let mut y = LCD_Y_RES as usize - text_height;
+
+        if center {
+            x /= 2;
+            y /= 2;
+        }
 
         fill_texture(&mut self.texture, bg_color);
         draw_text_lines(&mut self.texture, lines, color, x, y, size, 1, align_center);
@@ -114,6 +131,15 @@ impl GameWindow {
 
         self.canvas
             .copy(&self.texture, None, Some(self.fps_rect))
+            .unwrap();
+    }
+
+    pub fn draw_popup(&mut self, lines: &[&str], size: FontSize, color: PixelColor) {
+        fill_texture(&mut self.popup_texture, PixelColor::from_u32(0));
+        draw_text_lines(&mut self.popup_texture, lines, color, 5, 20, size, 2, None);
+
+        self.canvas
+            .copy(&self.popup_texture, None, Some(self.popup_rect))
             .unwrap();
     }
 
