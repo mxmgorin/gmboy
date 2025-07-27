@@ -16,7 +16,7 @@ use sdl2::VideoSubsystem;
 pub struct GameWindow {
     canvas: Canvas<Window>,
     texture_creator: TextureCreator<WindowContext>,
-    texture: Texture,
+    game_texture: Texture,
     notif_texture: Texture,
     fps_texture: Texture,
     grid_texture: Texture,
@@ -49,14 +49,14 @@ impl GameWindow {
             .unwrap();
         let mut canvas = window.into_canvas().build().unwrap();
         let texture_creator = canvas.texture_creator();
-        let mut texture = texture_creator
+        let mut game_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
                 LCD_X_RES as u32,
                 LCD_Y_RES as u32,
             )
             .unwrap();
-        texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+        game_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let (canvas_win_width, canvas_win_height) = canvas.window().size();
         let game_rect = new_scaled_rect(canvas_win_width, canvas_win_height);
 
@@ -80,7 +80,7 @@ impl GameWindow {
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(Self {
-            texture,
+            game_texture,
             notif_texture,
             notif_rect,
             game_rect,
@@ -109,6 +109,7 @@ impl GameWindow {
     }
 
     pub fn draw_buffer(&mut self, pixel_buffer: &[u32]) {
+        self.clear();
         let w = LCD_X_RES as usize;
         let h = LCD_Y_RES as usize;
 
@@ -137,8 +138,7 @@ impl GameWindow {
             &self.prev_framebuffer
         };
 
-        self.canvas.clear();
-        self.texture
+        self.game_texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
                 let pitch_u32 = pitch / 4;
                 let buf_u32 = unsafe {
@@ -157,8 +157,9 @@ impl GameWindow {
             .unwrap();
 
         self.canvas
-            .copy(&self.texture, None, Some(self.game_rect))
+            .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
+
         if self.config.grid_enabled {
             self.canvas
                 .copy(&self.grid_texture, None, Some(self.game_rect))
@@ -309,7 +310,8 @@ impl GameWindow {
     }
 
     pub fn draw_text_lines(&mut self, lines: &[&str], center: bool, align_center: bool) {
-        self.canvas.clear();
+        self.clear();
+
         let (align_center, text_width) = if align_center {
             let center = CenterAlignedText::new(lines, self.font_size);
 
@@ -326,9 +328,9 @@ impl GameWindow {
             y /= 2;
         }
 
-        fill_texture(&mut self.texture, self.bg_color);
+        fill_texture(&mut self.game_texture, self.bg_color);
         draw_text_lines(
-            &mut self.texture,
+            &mut self.game_texture,
             lines,
             self.text_color,
             None,
@@ -340,8 +342,20 @@ impl GameWindow {
         );
 
         self.canvas
-            .copy(&self.texture, None, Some(self.game_rect))
+            .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
+
+        if self.config.grid_enabled {
+            self.canvas
+                .copy(&self.grid_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
+        if self.config.mask_enabled {
+            self.canvas
+                .copy(&self.subpixel_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
     }
 
     pub fn update_fps(&mut self, fps: &str) {
@@ -390,6 +404,11 @@ impl GameWindow {
 
     pub fn present(&mut self) {
         self.canvas.present();
+    }
+
+    pub fn clear(&mut self) {
+        self.canvas.set_draw_color(Color::RGB(0, 0, 0)); // black
+        self.canvas.clear();
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
