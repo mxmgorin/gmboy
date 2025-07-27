@@ -1,3 +1,4 @@
+use crate::config::VideoConfig;
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
@@ -12,7 +13,6 @@ use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
-use crate::config::VideoConfig;
 
 pub struct PixelGrid {
     pub enabled: bool,
@@ -64,6 +64,8 @@ pub struct GameWindow {
     canvas: Canvas<Window>,
     texture: Texture,
     notif_texture: Texture,
+    fps_texture: Texture,
+    fps_rect: Rect,
     notif_rect: Rect,
     game_rect: Rect,
     pub text_color: PixelColor,
@@ -111,6 +113,16 @@ impl GameWindow {
             .unwrap();
         notif_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
+        let fps_rect = Rect::new(2, 2, 70, 70);
+        let mut fps_texture = texture_creator
+            .create_texture_streaming(
+                PixelFormatEnum::ARGB8888,
+                fps_rect.width(),
+                fps_rect.height(),
+            )
+            .unwrap();
+        fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+
         Ok(Self {
             canvas,
             texture,
@@ -127,6 +139,8 @@ impl GameWindow {
                 strength: 0.3, // try 0.3-0.5 for visibility
                 softness: 1.5, // 1.0 = sharp, >2.0 = smoother
             },
+            fps_texture,
+            fps_rect,
         })
     }
 
@@ -394,22 +408,25 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: &str) {
-        fill_texture(&mut self.texture, PixelColor::from_u32(0));
+    pub fn draw_fps(&mut self, fps: &str, clear: bool) {
+        if clear {
+            fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
+        }
+
         draw_text_lines(
-            &mut self.texture,
+            &mut self.fps_texture,
             &[fps],
             self.text_color,
             Some(self.bg_color),
-            10,
-            10,
+            2,
+            2,
             self.font_size,
-            4,
+            2,
             None,
         );
 
         self.canvas
-            .copy(&self.texture, None, Some(Rect::new(0, 0, 80, 80)))
+            .copy(&self.fps_texture, None, Some(self.fps_rect))
             .unwrap();
     }
 

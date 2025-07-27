@@ -39,7 +39,7 @@ impl Ppu {
         }
     }
     
-    pub fn get_fps(&self) -> Option<&str> {
+    pub fn get_fps(&self) -> Option<(&str, bool)> {
         self.fps.as_ref().map(|x| x.get())
     }
 
@@ -132,6 +132,7 @@ pub struct Fps {
     frame_count: u32,
     fps: f32,
     fps_str: String,
+    updated: bool,
 }
 
 impl Default for Fps {
@@ -144,12 +145,15 @@ impl Default for Fps {
             frame_count: 0,
             fps: 0.0,
             fps_str: "0.0".to_string(),
+            updated: false,
         }
     }
 }
 
 impl Fps {
     pub fn update(&mut self) {
+        self.updated = false; // reset at start of update
+
         let now = self.timer.elapsed();
         let frame_time = (now - self.prev_frame_time).as_secs_f32();
         self.prev_frame_time = now;
@@ -158,12 +162,17 @@ impl Fps {
         self.frame_count += 1;
 
         if (now - self.last_fps_update).as_secs_f32() >= 1.0 {
-            self.fps = if self.frame_accum > 0.0 {
+            let new_fps = if self.frame_accum > 0.0 {
                 self.frame_count as f32 / self.frame_accum
             } else {
                 0.0
             };
 
+            if (new_fps - self.fps).abs() > f32::EPSILON {
+                self.updated = true; // mark updated only when fps changes
+            }
+
+            self.fps = new_fps;
             self.fps_str = format!("{:.2}", self.fps);
             self.last_fps_update = now;
             self.frame_count = 0;
@@ -171,7 +180,8 @@ impl Fps {
         }
     }
 
-    pub fn get(&self) -> &str {
-        &self.fps_str
+
+    pub fn get(&self) -> (&str, bool) {
+        (&self.fps_str, self.updated)
     }
 }

@@ -115,7 +115,7 @@ impl App {
             &video_subsystem,
             colors[0],
             colors[3],
-            config.video.clone()
+            config.video.clone(),
         )?;
         game_window.set_fullscreen(config.interface.is_fullscreen);
 
@@ -184,12 +184,12 @@ impl App {
         }
     }
 
-    pub fn draw_notification(&mut self, fps: Option<&str>) {
+    pub fn draw_notification(&mut self, fps: Option<(&str, bool)>) {
         let (lines, updated) = self.notifications.update_and_get();
 
         if lines.is_empty() {
-            if let Some(fps) = fps {
-                self.window.draw_fps(fps);
+            if let Some((fps, updated)) = fps {
+                self.window.draw_fps(fps, updated);
             }
         } else {
             self.window.draw_notification(lines, updated);
@@ -274,7 +274,11 @@ impl App {
                 };
 
                 emu.load_save_state(save_state);
-                emu.runtime.bus.io.lcd.apply_colors(self.config.interface.get_palette_colors(&self.palettes));
+                emu.runtime
+                    .bus
+                    .io
+                    .lcd
+                    .apply_colors(self.config.interface.get_palette_colors(&self.palettes));
                 emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
 
                 let msg = format!("Loaded save state: {index}");
@@ -325,7 +329,11 @@ impl App {
         let is_reload = self.config.last_cart_path == path_str && !emu.runtime.bus.cart.is_empty();
         self.config.last_cart_path = path_str;
         emu.load_cart_file(path);
-        emu.runtime.bus.io.lcd.apply_colors(self.config.interface.get_palette_colors(&self.palettes));
+        emu.runtime
+            .bus
+            .io
+            .lcd
+            .apply_colors(self.config.interface.get_palette_colors(&self.palettes));
         emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
         self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
