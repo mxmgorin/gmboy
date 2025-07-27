@@ -412,8 +412,11 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_notification(&mut self, lines: &[&str]) {
-        fill_texture(&mut self.notif_texture, PixelColor::from_u32(0));
+    pub fn draw_notification(&mut self, lines: &[&str], clear: bool) {
+        if clear {
+            fill_texture(&mut self.notif_texture, PixelColor::from_u32(0));
+        }
+
         draw_text_lines(
             &mut self.notif_texture,
             lines,

@@ -9,6 +9,7 @@ pub struct Notifications {
     items: Vec<Notification>,
     duration: Duration,
     buffer: Vec<*const str>, // internal buffer for active popup messages
+    updated: bool,
 }
 
 impl Notifications {
@@ -17,25 +18,31 @@ impl Notifications {
             items: Vec::with_capacity(4),
             duration,
             buffer: Vec::with_capacity(4),
+            updated: false,
         }
     }
 
     pub fn add(&mut self, text: impl Into<String>) {
+        self.updated = true;
         self.items.push(Notification {
             text: text.into(),
             created_at: Instant::now(),
         });
     }
 
-    pub fn update_and_get(&mut self) -> &[&str] {
+    pub fn update_and_get(&mut self) -> (&[&str], bool) {
         if self.items.is_empty() {
-            return &[];
+            let updated = self.updated;
+            self.updated = false;
+
+            return (&[], updated);
         }
 
         let now = Instant::now();
         self.buffer.clear();
-
+        let prev_len = self.items.len();
         let mut i = 0;
+
         while i < self.items.len() {
             if now.duration_since(self.items[i].created_at) < self.duration {
                 // Store raw pointer to &str
@@ -50,8 +57,12 @@ impl Notifications {
         // SAFETY:
         // all pointers in `self.refs` point to valid strings in `self.messages`
         // Convert &[ *const str ] -> &[ &str ] by transmuting each element
-        unsafe {
+        let result = unsafe {
             std::slice::from_raw_parts(self.buffer.as_ptr() as *const &str, self.buffer.len())
-        }
+        };
+
+        self.updated = prev_len != self.items.len();
+
+        (result, self.updated)
     }
 }

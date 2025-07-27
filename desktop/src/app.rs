@@ -186,14 +186,14 @@ impl App {
     }
 
     pub fn draw_notification(&mut self, fps: Option<&str>) {
-        let lines = self.notifications.update_and_get();
+        let (lines, updated) = self.notifications.update_and_get();
 
         if lines.is_empty() {
             if let Some(fps) = fps {
                 self.window.draw_fps(fps);
             }
         } else {
-            self.window.draw_notification(lines);
+            self.window.draw_notification(lines, updated);
         }
     }
 
