@@ -927,6 +927,9 @@ fn get_suffix(enabled: bool) -> &'static str {
     }
 }
 
+const MAX_ROMS_PER_PAGE: usize = 10;
+const MAX_ROM_CHARS: usize = 16;
+
 #[derive(Debug, Clone)]
 pub struct LibraryMenu {
     all_items: Box<[LibraryItem]>, // all ROMs
@@ -948,8 +951,8 @@ impl LibraryItem {
             .file_stem()
             .and_then(|s| s.to_str())
             .map(|s| {
-                let mut truncated: String = s.chars().take(12).collect();
-                if s.chars().count() > 12 {
+                let mut truncated: String = s.chars().take(MAX_ROM_CHARS).collect();
+                if s.chars().count() > MAX_ROM_CHARS {
                     truncated.push_str("..");
                 }
                 truncated
@@ -1021,7 +1024,7 @@ impl LibraryMenu {
     }
 
     fn update_page(&mut self) {
-        let total_pages = (self.all_items.len() + MAX_ROMS_PER_PAGE - 1) / MAX_ROMS_PER_PAGE;
+        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
         let start = self.current_page * MAX_ROMS_PER_PAGE;
         let end = usize::min(start + MAX_ROMS_PER_PAGE, self.all_items.len());
         let mut page_items: Vec<LibraryItem> = self.all_items[start..end].to_vec();
@@ -1048,8 +1051,6 @@ impl LibraryMenu {
         self.selected_index = 0;
     }
 }
-
-const MAX_ROMS_PER_PAGE: usize = 10;
 
 impl Default for LibraryMenu {
     fn default() -> Self {

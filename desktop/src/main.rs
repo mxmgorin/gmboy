@@ -76,7 +76,7 @@ fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
         let library = RomsLibrary::get_or_create();
 
         if let Some(cart_path) = library.get_last_path() {
-            let cart_path = PathBuf::from(cart_path.clone());
+            let cart_path = cart_path.clone();
 
             if cart_path.exists() {
                 app.load_cart_file(emu, &cart_path);
@@ -88,7 +88,7 @@ fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
 fn get_config() -> AppConfig {
     let config_path = AppConfig::default_path();
 
-    if config_path.exists() {
+    let config = if config_path.exists() {
         let config = AppConfig::from_file(&config_path);
 
         let Ok(config) = config else {
@@ -101,7 +101,7 @@ fn get_config() -> AppConfig {
             if let Err(rename_err) = fs::rename(config_path, &backup_path) {
                 eprintln!("Failed to rename invalid config file: {rename_err}");
             } else {
-                eprintln!("Renamed invalid config to {:?}", backup_path);
+                eprintln!("Renamed invalid config to {backup_path:?}");
             }
 
             let default_config = AppConfig::default();
@@ -122,8 +122,21 @@ fn get_config() -> AppConfig {
         }
 
         default_config
+    };
+
+    if let Some(path) = &config.rom_library_path {
+        let mut lib = RomsLibrary::get_or_create();
+
+        if let Err(err) = lib.load_from_dir(path) {
+            eprintln!("Failed load library from path: {err}");
+        }
+
+        _ = core::save_json_file(&RomsLibrary::get_path(), &lib);
     }
+
+    config
 }
+
 
 fn get_palettes() -> Box<[LcdPalette]> {
     let path = LcdPalette::default_palettes_path();

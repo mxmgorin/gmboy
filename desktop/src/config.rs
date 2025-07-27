@@ -17,6 +17,7 @@ pub struct AppConfig {
     pub auto_save_state: bool,
     pub current_save_index: usize,
     pub current_load_index: usize,
+    pub rom_library_path: Option<String>,
     pub interface: InterfaceConfig,
     pub audio: AudioConfig,
     pub input: InputConfig,
@@ -152,6 +153,7 @@ impl Default for AppConfig {
                 grid_enabled: true,
                 mask_enabled: true,
             },
+            rom_library_path: None,
         }
     }
 }
