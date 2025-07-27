@@ -7,7 +7,7 @@ use crate::video::frame_blend::{FrameBlendMode, PixelGrid};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
-use sdl2::pixels::PixelFormatEnum;
+use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
@@ -18,6 +18,7 @@ pub struct GameWindow {
     texture: Texture,
     notif_texture: Texture,
     fps_texture: Texture,
+    grid_texture: Texture,
     fps_rect: Rect,
     notif_rect: Rect,
     game_rect: Rect,
@@ -26,7 +27,6 @@ pub struct GameWindow {
     font_size: FontSize,
     prev_framebuffer: Box<[u32]>,
     pub config: VideoConfig,
-    pub grid: PixelGrid,
 }
 
 impl GameWindow {
@@ -45,7 +45,7 @@ impl GameWindow {
             .resizable()
             .build()
             .unwrap();
-        let canvas = window.into_canvas().build().unwrap();
+        let mut canvas = window.into_canvas().build().unwrap();
         let texture_creator = canvas.texture_creator();
         let mut texture = texture_creator
             .create_texture_streaming(
@@ -56,6 +56,8 @@ impl GameWindow {
             .unwrap();
         texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let (canvas_win_width, canvas_win_height) = canvas.window().size();
+        let game_rect = new_scaled_rect(canvas_win_width, canvas_win_height);
+
         let notif_rect = Rect::new(0, 0, win_width / 3, win_width / 3);
         let mut notif_texture = texture_creator
             .create_texture_streaming(
@@ -65,7 +67,6 @@ impl GameWindow {
             )
             .unwrap();
         notif_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-
         let fps_rect = Rect::new(2, 2, 70, 70);
         let mut fps_texture = texture_creator
             .create_texture_streaming(
@@ -76,60 +77,37 @@ impl GameWindow {
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
+        let mut grid_texture = texture_creator
+            .create_texture_target(PixelFormatEnum::ARGB8888, game_rect.width(), game_rect.height())
+            .unwrap();
+        canvas.with_texture_canvas(&mut grid_texture, |tex| {
+            tex.set_draw_color(Color::RGBA(32, 32, 32, 80));
+            for i in 0..=LCD_X_RES {
+                let x = (i as f32 * game_rect.width() as f32 / LCD_X_RES as f32) as i32;
+                tex.draw_line((x, 0), (x, game_rect.height() as i32)).unwrap();
+            }
+            for j in 0..=LCD_Y_RES {
+                let y = (j as f32 * game_rect.height() as f32 / LCD_Y_RES as f32) as i32;
+                tex.draw_line((0, y), (game_rect.width() as i32, y)).unwrap();
+            }
+        }).unwrap();
+        grid_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+
         Ok(Self {
             canvas,
             texture,
             notif_texture,
             notif_rect,
-            game_rect: new_scaled_rect(canvas_win_width, canvas_win_height),
+            game_rect,
             text_color,
             bg_color,
             font_size: FontSize::Small,
             prev_framebuffer: Box::new([]),
             config,
-            grid: PixelGrid {
-                enabled: false,
-                strength: 0.3, // try 0.3-0.5 for visibility
-                softness: 1.5, // 1.0 = sharp, >2.0 = smoother
-            },
             fps_texture,
             fps_rect,
+            grid_texture
         })
-    }
-
-    fn apply_pixel_grid(&self, i: usize, w: usize, color: (f32, f32, f32)) -> (f32, f32, f32) {
-        let grid = &self.grid;
-        if !grid.enabled {
-            return color;
-        }
-
-        let (mut r, mut g, mut b) = color;
-        let strength = grid.strength;
-        let softness = grid.softness;
-
-        // define how many screen pixels one GB pixel uses
-        let scale = 4.0;
-
-        // Coordinates in "screen pixels"
-        let px = ((i % w) as f32) * scale;
-        let py = ((i / w) as f32) * scale;
-
-        // Position inside the scaled pixel (0..1)
-        let subx = (px / scale) % 1.0;
-        let suby = (py / scale) % 1.0;
-
-        // Distance to nearest edge
-        let edge_dist = (subx.min(1.0 - subx) + suby.min(1.0 - suby)) * 2.0;
-        let edge = edge_dist.powf(softness);
-
-        // Darken edges
-        let mask = (1.0 - edge * strength).clamp(0.3, 1.0);
-
-        r *= mask;
-        g *= mask;
-        b *= mask;
-
-        (r, g, b)
     }
 
     pub fn draw_buffer(&mut self, pixel_buffer: &[u32]) {
@@ -183,6 +161,7 @@ impl GameWindow {
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
+        self.canvas.copy(&self.grid_texture, None, Some(self.game_rect)).unwrap();
     }
 
     pub fn compute_pixel(
@@ -307,8 +286,6 @@ impl GameWindow {
                 (lr, lg, lb)
             }
         };
-
-        (lr, lg, lb) = self.apply_pixel_grid(i, w, (lr, lg, lb));
 
         let dim = self.config.dim;
         lr *= dim;
