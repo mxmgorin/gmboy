@@ -14,6 +14,7 @@ impl RomsLibrary {
     /// Loads all `.gb` and `.gbc` files from the given directory.
     pub fn load_from_dir<P: AsRef<Path>>(&mut self, dir: P) -> std::io::Result<()> {
         let dir_path = dir.as_ref();
+        self.recent_paths.clear();
 
         if dir_path.is_dir() {
             for entry in fs::read_dir(dir_path)? {

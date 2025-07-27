@@ -30,6 +30,7 @@ pub enum AppCmd {
     PickFile,
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
+    PickRomsDir,
 }
 
 pub enum ChangeAppConfigCmd {

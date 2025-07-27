@@ -8,7 +8,7 @@ use crate::video::frame_blend::{
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use std::collections::VecDeque;
 use std::mem;
-use std::path::PathBuf;
+use std::path::{PathBuf};
 
 #[derive(Debug, Clone)]
 pub enum AppMenuItem {
@@ -57,12 +57,14 @@ pub enum AppMenuItem {
     PixelMask,
     Library,
     Roms(LibraryMenu),
+    RomsDir,
 }
 
 impl AppMenuItem {
     pub fn get_inner_mut(&mut self) -> Option<&mut LibraryMenu> {
         match self {
             AppMenuItem::Resume
+            | AppMenuItem::RomsDir
             | AppMenuItem::SaveState
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
@@ -114,6 +116,7 @@ impl AppMenuItem {
         match self {
             AppMenuItem::Resume
             | AppMenuItem::SaveState
+            | AppMenuItem::RomsDir
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
             | AppMenuItem::OptionsMenu
@@ -212,6 +215,7 @@ fn system_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::SlowSpeed,
         AppMenuItem::RewindSize,
         AppMenuItem::RewindInterval,
+        AppMenuItem::RomsDir,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
@@ -510,6 +514,7 @@ impl AppMenu {
             }
             AppMenuItem::Library => None,
             AppMenuItem::Roms(x) => x.move_right(),
+            AppMenuItem::RomsDir => None,
         }
     }
 
@@ -683,6 +688,7 @@ impl AppMenu {
             }
             AppMenuItem::Library => None,
             AppMenuItem::Roms(x) => x.move_left(),
+            AppMenuItem::RomsDir => None,
         }
     }
 
@@ -805,6 +811,7 @@ impl AppMenu {
 
                 cmd
             }
+            AppMenuItem::RomsDir => Some(AppCmd::PickRomsDir),
         }
     }
 
@@ -915,6 +922,7 @@ impl AppMenuItem {
             AppMenuItem::PixelMask => format!("Mask{}", get_suffix(config.video.mask_enabled)),
             AppMenuItem::Library => "Library".to_string(),
             AppMenuItem::Roms(x) => format!("Roms ({})", x.items.len()),
+            AppMenuItem::RomsDir => "Pick Roms Dir".to_string(),
         }
     }
 }
@@ -1036,7 +1044,7 @@ impl LibraryMenu {
 
     fn update_page(&mut self) {
         let prev_len = self.items.len();
-        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
+        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE).max(1);
         let start = self.current_page * MAX_ROMS_PER_PAGE;
         let end = usize::min(start + MAX_ROMS_PER_PAGE, self.all_items.len());
         let mut page_items: Vec<LibraryItem> = self.all_items[start..end].to_vec();

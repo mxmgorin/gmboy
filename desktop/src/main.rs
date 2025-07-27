@@ -124,7 +124,7 @@ fn get_config() -> AppConfig {
         default_config
     };
 
-    if let Some(path) = &config.rom_library_path {
+    if let Some(path) = &config.roms_dir {
         let mut lib = RomsLibrary::get_or_create();
 
         if let Err(err) = lib.load_from_dir(path) {

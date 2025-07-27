@@ -3,13 +3,13 @@ use crate::config::{AppConfig, InputConfig};
 use crate::input::combo::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
+use crate::library::RomsLibrary;
 use crate::Emu;
 use core::emu::state::EmuState;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
 use std::path::{Path, PathBuf};
-use crate::library::RomsLibrary;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -149,6 +149,21 @@ impl InputHandler {
             }
             AppCmd::Rewind => emu.state = EmuState::Rewind,
             AppCmd::Quit => app.state = AppState::Quitting,
+            AppCmd::PickRomsDir => {
+                if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
+                    let mut lib = RomsLibrary::get_or_create();
+
+                    if let Err(err) = lib.load_from_dir(&dir) {
+                        eprintln!("Failed to load ROMs library: {err}");
+                    }
+
+                    if let Err(err) = core::save_json_file(&RomsLibrary::get_path(), &lib) {
+                        eprintln!("Failed to save ROMs library: {err}");
+                    }
+
+                    app.config.roms_dir = Some(dir);
+                }
+            }
             AppCmd::ChangeConfig(cmd) => match cmd {
                 ChangeAppConfigCmd::Volume(x) => app.change_volume(emu, x),
                 ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
