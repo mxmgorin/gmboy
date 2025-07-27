@@ -401,6 +401,12 @@ impl GameWindow {
             sdl2::video::WindowPos::Centered,
             sdl2::video::WindowPos::Centered,
         );
+        self.update_game_rect();
+
+        Ok(())
+    }
+
+    fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
         self.grid_texture = generate_grid_texture(
@@ -415,8 +421,6 @@ impl GameWindow {
             self.game_rect.width(),
             self.game_rect.height(),
         );
-
-        Ok(())
     }
 
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
@@ -431,9 +435,7 @@ impl GameWindow {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
-
-        let (win_width, win_height) = self.canvas.window().size();
-        self.game_rect = new_scaled_rect(win_width, win_height);
+        self.update_game_rect();
     }
 
     pub fn get_position(&self) -> (i32, i32) {

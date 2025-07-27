@@ -106,11 +106,11 @@ impl FrameBlendMode {
 
     pub fn get_profile(&self) -> Option<&BlendProfile> {
         match self {
-            FrameBlendMode::None |
-            FrameBlendMode::Linear(_) |
-            FrameBlendMode::Additive(_) |
-            FrameBlendMode::Exponential(_) |
-            FrameBlendMode::GammaCorrected(_) => None,
+            FrameBlendMode::None
+            | FrameBlendMode::Linear(_)
+            | FrameBlendMode::Additive(_)
+            | FrameBlendMode::Exponential(_)
+            | FrameBlendMode::GammaCorrected(_) => None,
             FrameBlendMode::Accurate(x) => Some(x),
         }
     }
@@ -149,12 +149,6 @@ pub const DMG_PROFILE: BlendProfile =
     BlendProfile::new(0.35, 0.08, 0.15, BlendProfileTint::new(0.78, 0.86, 0.71));
 pub const POCKET_PROFILE: BlendProfile =
     BlendProfile::new(0.5, 0.15, 0.07, BlendProfileTint::new(1.0, 1.0, 1.0));
-
-pub struct PixelGrid {
-    pub enabled: bool,
-    pub strength: f32, // 0.0 - 1.0 darkness
-    pub softness: f32, // 0.0 = sharp edges
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BlendProfile {
