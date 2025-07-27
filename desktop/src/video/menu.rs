@@ -1,6 +1,7 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::{
-    AppConfig, FrameAdditiveBlend, FrameBlendType, FrameLinearBlend,
+    AdditiveFrameBlend, AppConfig, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
+    LinearFrameBlend,
 };
 use std::collections::VecDeque;
 use std::mem;
@@ -39,10 +40,10 @@ pub enum AppMenuItem {
     InputMenu,
     ComboInterval,
     PaletteInverted,
-    FrameBlendType,
+    FrameBlendMode,
     FrameBlendAlpha,
-    FrameBlendIntensity,
     FrameBlendFade,
+    FrameBlendDim,
 }
 
 fn input_menu() -> Box<[AppMenuItem]> {
@@ -93,18 +94,26 @@ fn options_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-fn interface_menu(frame_blend_type: &FrameBlendType) -> Box<[AppMenuItem]> {
+fn interface_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(9);
     items.push(AppMenuItem::Palette);
     items.push(AppMenuItem::PaletteInverted);
-    items.push(AppMenuItem::FrameBlendType);
+    items.push(AppMenuItem::FrameBlendMode);
 
     match frame_blend_type {
-        FrameBlendType::None => {}
-        FrameBlendType::Linear(_) => items.push(AppMenuItem::FrameBlendAlpha),
-        FrameBlendType::Additive(_) => {
+        FrameBlendMode::None => {}
+        FrameBlendMode::Linear(_) => {
+            items.push(AppMenuItem::FrameBlendAlpha);
+            items.push(AppMenuItem::FrameBlendDim);
+        }
+        FrameBlendMode::Exponential(_) => {
             items.push(AppMenuItem::FrameBlendFade);
-            items.push(AppMenuItem::FrameBlendIntensity);
+            items.push(AppMenuItem::FrameBlendDim);
+        }
+        FrameBlendMode::GammaCorrected(_) | FrameBlendMode::Additive(_) => {
+            items.push(AppMenuItem::FrameBlendFade);
+            items.push(AppMenuItem::FrameBlendAlpha);
+            items.push(AppMenuItem::FrameBlendDim);
         }
     }
 
@@ -244,52 +253,49 @@ impl AppMenu {
             AppMenuItem::PaletteInverted => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
-            AppMenuItem::FrameBlendType => {
-                let blend_type = match config.interface.frame_blend_type {
-                    FrameBlendType::None => FrameBlendType::Linear(FrameLinearBlend::default()),
-                    FrameBlendType::Linear(_) => {
-                        FrameBlendType::Additive(FrameAdditiveBlend::default())
+            AppMenuItem::FrameBlendMode => {
+                let blend_type = match config.interface.frame_blend_mode {
+                    FrameBlendMode::None => FrameBlendMode::Linear(LinearFrameBlend::default()),
+                    FrameBlendMode::Linear(_) => {
+                        FrameBlendMode::Additive(AdditiveFrameBlend::default())
                     }
-                    FrameBlendType::Additive(_) => FrameBlendType::None,
+                    FrameBlendMode::Additive(_) => {
+                        FrameBlendMode::Exponential(ExponentialFrameBlend::default())
+                    }
+                    FrameBlendMode::Exponential(_) => {
+                        FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
+                    }
+                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::None,
                 };
                 self.items = interface_menu(&blend_type);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
                     blend_type,
                 )))
             }
             AppMenuItem::FrameBlendAlpha => {
-                if let FrameBlendType::Linear(x) = &config.interface.frame_blend_type {
-                    let mut x = *x;
-                    x.alpha = core::change_f32_rounded(x.alpha, 0.05).clamp(0.0, 1.0);
-                    return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
-                        FrameBlendType::Linear(x),
-                    )));
-                }
+                let mut mode = config.interface.frame_blend_mode.clone();
+                mode.change_alpha(0.05);
 
-                None
-            },
-            AppMenuItem::FrameBlendIntensity => {
-                if let FrameBlendType::Additive(x) = &config.interface.frame_blend_type {
-                    let mut x = *x;
-                    x.intensity = core::change_f32_rounded(x.intensity, 0.05).clamp(0.0, 1.0);
-                    return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
-                        FrameBlendType::Additive(x),
-                    )));
-                }
-
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
             }
             AppMenuItem::FrameBlendFade => {
-                if let FrameBlendType::Additive(x) = &config.interface.frame_blend_type {
-                    let mut x = *x;
-                    x.fade = core::change_f32_rounded(x.fade, 0.05).clamp(0.0, 1.0);
-                    return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
-                        FrameBlendType::Additive(x),
-                    )));
-                }
+                let mut mode = config.interface.frame_blend_mode.clone();
+                mode.change_fade(0.05);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
+            }
+            AppMenuItem::FrameBlendDim => {
+                let mut mode = config.interface.frame_blend_mode.clone();
+                mode.change_dim(0.05);
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
             }
         }
     }
@@ -361,52 +367,51 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
             AppMenuItem::FrameBlendAlpha => {
-                if let FrameBlendType::Linear(x) = &config.interface.frame_blend_type {
-                    let mut x = *x;
-                    x.alpha = core::change_f32_rounded(x.alpha, -0.05).clamp(0.0, 1.0);
-                    return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
-                        FrameBlendType::Linear(x),
-                    )));
-                }
+                let mut mode = config.interface.frame_blend_mode.clone();
+                mode.change_alpha(-0.05);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
             }
-            AppMenuItem::FrameBlendType => {
-                let blend_type = match config.interface.frame_blend_type {
-                    FrameBlendType::None => FrameBlendType::Additive(FrameAdditiveBlend::default()),
-                    FrameBlendType::Linear(_) => FrameBlendType::None,
-                    FrameBlendType::Additive(_) => {
-                        FrameBlendType::Linear(FrameLinearBlend::default())
+            AppMenuItem::FrameBlendMode => {
+                let blend_type = match config.interface.frame_blend_mode {
+                    FrameBlendMode::None => {
+                        FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
                     }
+                    FrameBlendMode::Linear(_) => {
+                        FrameBlendMode::Additive(AdditiveFrameBlend::default())
+                    }
+                    FrameBlendMode::Additive(_) => {
+                        FrameBlendMode::Exponential(ExponentialFrameBlend::default())
+                    }
+                    FrameBlendMode::Exponential(_) => {
+                        FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
+                    }
+                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::None,
                 };
 
                 self.items = interface_menu(&blend_type);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
                     blend_type,
                 )))
             }
-            AppMenuItem::FrameBlendIntensity => {
-                if let FrameBlendType::Additive(x) = &config.interface.frame_blend_type {
-                    let mut x = *x;
-                    x.intensity = core::change_f32_rounded(x.intensity, -0.05).clamp(0.0, 1.0);
-                    return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
-                        FrameBlendType::Additive(x),
-                    )));
-                }
-
-                None
-            }
             AppMenuItem::FrameBlendFade => {
-                if let FrameBlendType::Additive(x) = &config.interface.frame_blend_type {
-                    let mut x = *x;
-                    x.fade = core::change_f32_rounded(x.fade, -0.05).clamp(0.0, 1.0);
-                    return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendType(
-                        FrameBlendType::Additive(x),
-                    )));
-                }
+                let mut mode = config.interface.frame_blend_mode.clone();
+                mode.change_fade(-0.05);
 
-                None
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
+            }
+            AppMenuItem::FrameBlendDim => {
+                let mut mode = config.interface.frame_blend_mode.clone();
+                mode.change_dim(-0.05);
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
             }
         }
     }
@@ -439,7 +444,7 @@ impl AppMenu {
                 None
             }
             AppMenuItem::InterfaceMenu => {
-                self.next_items(interface_menu(&config.interface.frame_blend_type));
+                self.next_items(interface_menu(&config.interface.frame_blend_mode));
 
                 None
             }
@@ -494,9 +499,9 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
             AppMenuItem::FrameBlendAlpha => None,
-            AppMenuItem::FrameBlendType => None,
-            AppMenuItem::FrameBlendIntensity => None,
+            AppMenuItem::FrameBlendMode => None,
             AppMenuItem::FrameBlendFade => None,
+            AppMenuItem::FrameBlendDim => None,
         }
     }
 
@@ -572,21 +577,23 @@ impl AppMenuItem {
                 "Palette Inverted{}",
                 get_suffix(config.interface.is_palette_inverted)
             ),
+            AppMenuItem::FrameBlendMode => format!(
+                "Frame Blend({})",
+                config.interface.frame_blend_mode.get_name()
+            ),
             AppMenuItem::FrameBlendAlpha => {
-                format!("Frame Blend Alpha({})", config.interface.frame_blend_type.get_linear_alpha())
+                format!(
+                    "Frame Alpha({})",
+                    config.interface.frame_blend_mode.get_alpha()
+                )
             }
-            AppMenuItem::FrameBlendType => format!(
-                "Frame Blend ({})",
-                config.interface.frame_blend_type.get_name()
-            ),
-            AppMenuItem::FrameBlendIntensity => format!(
-                "Frame Intensity ({})",
-                config.interface.frame_blend_type.get_addictive_intensity()
-            ),
             AppMenuItem::FrameBlendFade => format!(
-                "Frame Fade ({})",
-                config.interface.frame_blend_type.get_addictive_fade()
-            )
+                "Frame Fade({})",
+                config.interface.frame_blend_mode.get_fade()
+            ),
+            AppMenuItem::FrameBlendDim => {
+                format!("Frame Dim({})", config.interface.frame_blend_mode.get_dim())
+            }
         }
     }
 }

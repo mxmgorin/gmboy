@@ -221,9 +221,9 @@ impl InputHandler {
                         !app.config.interface.is_palette_inverted;
                     app.update_palette(emu);
                 }
-                ChangeAppConfigCmd::FrameBlendType(x) => {
-                    app.config.interface.frame_blend_type = x;
-                    app.window.frame_blend_type = app.config.interface.frame_blend_type.clone();
+                ChangeAppConfigCmd::FrameBlendMode(x) => {
+                    app.config.interface.frame_blend_mode = x;
+                    app.window.frame_blend_type = app.config.interface.frame_blend_mode.clone();
                 }
             },
         }

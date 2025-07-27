@@ -1,4 +1,4 @@
-use crate::config::{FrameAdditiveBlend, FrameBlendType, FrameLinearBlend};
+use crate::config::{FrameBlendMode};
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
@@ -22,7 +22,7 @@ pub struct GameWindow {
     pub bg_color: PixelColor,
     font_size: FontSize,
     prev_framebuffer: Box<[u32]>,
-    pub frame_blend_type: FrameBlendType,
+    pub frame_blend_type: FrameBlendMode,
 }
 
 impl GameWindow {
@@ -31,7 +31,7 @@ impl GameWindow {
         video_subsystem: &VideoSubsystem,
         text_color: PixelColor,
         bg_color: PixelColor,
-        frame_blend_type: FrameBlendType,
+        frame_blend_type: FrameBlendMode,
     ) -> Result<Self, String> {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
@@ -77,81 +77,80 @@ impl GameWindow {
     }
 
     fn frame_blend(&mut self, pixel_buffer: &[u32]) -> bool {
-        match &self.frame_blend_type {
-            FrameBlendType::None => false,
-            FrameBlendType::Linear(x) => self.linear_alpha_blend(pixel_buffer, *x),
-            FrameBlendType::Additive(x) => self.addictive_blend(pixel_buffer, *x),
-        }
-    }
-
-    fn addictive_blend(&mut self, pixel_buffer: &[u32], frame_blend: FrameAdditiveBlend) -> bool {
-        let fade = frame_blend.fade;
-        let intensity = frame_blend.intensity;
-
         if self.prev_framebuffer.len() != pixel_buffer.len() {
             self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
-        } else {
-            for (i, curr) in pixel_buffer.iter().enumerate() {
-                let prev = self.prev_framebuffer[i];
-                let curr = *curr;
-
-                // Extract previous channels and fade
-                let pr = ((prev >> 16) & 0xFF) as f32 * fade;
-                let pg = ((prev >> 8) & 0xFF) as f32 * fade;
-                let pb = (prev & 0xFF) as f32 * fade;
-
-                // Extract current channels
-                let cr = ((curr >> 16) & 0xFF) as f32 * intensity;
-                let cg = ((curr >> 8) & 0xFF) as f32 * intensity;
-                let cb = (curr & 0xFF) as f32 * intensity;
-
-                // Add and clamp to 255
-                let r = (pr + cr).min(255.0) as u32;
-                let g = (pg + cg).min(255.0) as u32;
-                let b = (pb + cb).min(255.0) as u32;
-
-                self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
-            }
         }
 
-        true
-    }
+        let dim = self.frame_blend_type.get_dim();
 
-    fn linear_alpha_blend(&mut self, pixel_buffer: &[u32], frame_blend: FrameLinearBlend) -> bool {
-        if frame_blend.alpha >= 1.0 {
-            return false;
-        }
+        for (i, curr) in pixel_buffer.iter().enumerate() {
+            let curr = *curr;
+            let prev = self.prev_framebuffer[i];
 
-        let frame_blend_alpha = frame_blend.alpha;
+            let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
 
-        if self.prev_framebuffer.len() != pixel_buffer.len() {
-            // Initialize prev_framebuffer on first run
-            self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
-        } else {
-            // Blend new frame with previous frame
-            for (i, curr) in pixel_buffer.iter().enumerate() {
-                let prev = self.prev_framebuffer[i];
-                let curr = *curr;
+            let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
 
-                // Decompose ARGB u32 pixels into components
-                let pa = ((prev >> 24) & 0xFF) as f32;
-                let pr = ((prev >> 16) & 0xFF) as f32;
-                let pg = ((prev >> 8) & 0xFF) as f32;
-                let pb = (prev & 0xFF) as f32;
+            let (r, g, b) = match &self.frame_blend_type {
+                FrameBlendMode::None => return false,
+                FrameBlendMode::Linear(x) => {
+                    let alpha = x.alpha;
+                    (
+                        ((cr as f32 * alpha + pr as f32 * (1.0 - alpha)) as u32),
+                        ((cg as f32 * alpha + pg as f32 * (1.0 - alpha)) as u32),
+                        ((cb as f32 * alpha + pb as f32 * (1.0 - alpha)) as u32),
+                    )
+                }
+                FrameBlendMode::Exponential(x) => {
+                    let fr = (pr as f32 * x.fade) as u32;
+                    let fg = (pg as f32 * x.fade) as u32;
+                    let fb = (pb as f32 * x.fade) as u32;
 
-                let ca = ((curr >> 24) & 0xFF) as f32;
-                let cr = ((curr >> 16) & 0xFF) as f32;
-                let cg = ((curr >> 8) & 0xFF) as f32;
-                let cb = (curr & 0xFF) as f32;
+                    if cr | cg | cb == 0 {
+                        (fr, fg, fb)
+                    } else {
+                        (cr, cg, cb)
+                    }
+                }
+                FrameBlendMode::Additive(x) => {
+                    let fr = (pr as f32 * x.fade + cr as f32 * x.alpha).min(255.0) as u32;
+                    let fg = (pg as f32 * x.fade + cg as f32 * x.alpha).min(255.0) as u32;
+                    let fb = (pb as f32 * x.fade + cb as f32 * x.alpha).min(255.0) as u32;
+                    (fr, fg, fb)
+                }
+                FrameBlendMode::GammaCorrected(x) => {
+                    // convert to linear
+                    let (lr, lg, lb) = (
+                        srgb_to_linear(pr as u8),
+                        srgb_to_linear(pg as u8),
+                        srgb_to_linear(pb as u8),
+                    );
+                    let (crl, cgl, cbl) = (
+                        srgb_to_linear(cr as u8),
+                        srgb_to_linear(cg as u8),
+                        srgb_to_linear(cb as u8),
+                    );
 
-                // Blend components
-                let a = (ca * frame_blend_alpha + pa * (1.0 - frame_blend_alpha)).round() as u32;
-                let r = (cr * frame_blend_alpha + pr * (1.0 - frame_blend_alpha)).round() as u32;
-                let g = (cg * frame_blend_alpha + pg * (1.0 - frame_blend_alpha)).round() as u32;
-                let b = (cb * frame_blend_alpha + pb * (1.0 - frame_blend_alpha)).round() as u32;
+                    // blend in linear space
+                    let br = lr * x.fade + crl * x.alpha;
+                    let bg = lg * x.fade + cgl * x.alpha;
+                    let bb = lb * x.fade + cbl * x.alpha;
 
-                self.prev_framebuffer[i] = (a << 24) | (r << 16) | (g << 8) | b;
-            }
+                    // convert back
+                    (
+                        linear_to_srgb(br) as u32,
+                        linear_to_srgb(bg) as u32,
+                        linear_to_srgb(bb) as u32,
+                    )
+                }
+            };
+
+            // apply final dim factor
+            let rf = ((r as f32) * dim).min(255.0) as u32;
+            let gf = ((g as f32) * dim).min(255.0) as u32;
+            let bf = ((b as f32) * dim).min(255.0) as u32;
+
+            self.prev_framebuffer[i] = (255 << 24) | (rf << 16) | (gf << 8) | bf;
         }
 
         true
@@ -245,7 +244,7 @@ impl GameWindow {
         );
 
         self.canvas
-            .copy(&self.texture, None, Some(Rect::new(0,0, 80, 80)))
+            .copy(&self.texture, None, Some(Rect::new(0, 0, 80, 80)))
             .unwrap();
     }
 
@@ -264,11 +263,7 @@ impl GameWindow {
         );
 
         self.canvas
-            .copy(
-                &self.notif_texture,
-                None,
-                Some(self.notif_rect),
-            )
+            .copy(&self.notif_texture, None, Some(self.notif_rect))
             .unwrap();
     }
 
@@ -342,4 +337,13 @@ fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let y = ((window_height - new_height) / 2) as i32;
 
     Rect::new(x, y, new_width, new_height)
+}
+
+fn srgb_to_linear(c: u8) -> f32 {
+    let cf = c as f32 / 255.0;
+    cf.powf(2.2)
+}
+
+fn linear_to_srgb(c: f32) -> u8 {
+    (c.powf(1.0 / 2.2) * 255.0).min(255.0).max(0.0) as u8
 }

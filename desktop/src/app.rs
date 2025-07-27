@@ -1,5 +1,5 @@
 use crate::audio::AppAudio;
-use crate::config::{AppConfig, FrameBlendType};
+use crate::config::{AppConfig, FrameBlendMode};
 use crate::input::handler::InputHandler;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
@@ -55,7 +55,7 @@ pub enum ChangeAppConfigCmd {
     SaveIndex(usize),
     LoadIndex(usize),
     PaletteInverted,
-    FrameBlendType(FrameBlendType),
+    FrameBlendMode(FrameBlendMode),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -115,7 +115,7 @@ impl App {
             &video_subsystem,
             colors[0],
             colors[3],
-            config.interface.frame_blend_type.clone()
+            config.interface.frame_blend_mode.clone()
         )?;
         game_window.set_fullscreen(config.interface.is_fullscreen);
 
