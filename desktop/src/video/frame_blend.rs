@@ -121,10 +121,10 @@ impl FrameBlendMode {
     pub fn get_profile(&self) -> &str {
         match self {
             FrameBlendMode::None => "",
-            FrameBlendMode::Linear(x) => "",
-            FrameBlendMode::Additive(x) => "",
-            FrameBlendMode::Exponential(x) => "",
-            FrameBlendMode::GammaCorrected(x) => "",
+            FrameBlendMode::Linear(_) => "",
+            FrameBlendMode::Additive(_) => "",
+            FrameBlendMode::Exponential(_) => "",
+            FrameBlendMode::GammaCorrected(_) => "",
             FrameBlendMode::Accurate(x) => x.name(),
         }
     }
