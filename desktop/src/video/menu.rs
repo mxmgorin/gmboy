@@ -4,9 +4,9 @@ use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
     LinearFrameBlend,
 };
+use crate::video::game_window::AccurateBlendProfile;
 use std::collections::VecDeque;
 use std::mem;
-use crate::video::game_window::LcdProfile;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
@@ -47,12 +47,13 @@ pub enum AppMenuItem {
     FrameBlendFade,
     FrameBlendDim,
     VideoMenu,
+    FrameBlendProfile,
 }
 
 fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(5);
     items.push(AppMenuItem::FrameBlendMode);
-    
+
     match frame_blend_type {
         FrameBlendMode::None => {}
         FrameBlendMode::Linear(_) => {
@@ -68,7 +69,7 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
             items.push(AppMenuItem::FrameBlendAlpha);
             items.push(AppMenuItem::FrameBlendDim);
         }
-        FrameBlendMode::Accurate(_) => {}
+        FrameBlendMode::Accurate(_) => items.push(AppMenuItem::FrameBlendProfile),
     }
 
     items.push(AppMenuItem::Back);
@@ -277,8 +278,10 @@ impl AppMenu {
                     FrameBlendMode::Exponential(_) => {
                         FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
                     }
-                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::Accurate(LcdProfile::DMG),
-                    FrameBlendMode::Accurate(_) => FrameBlendMode::None
+                    FrameBlendMode::GammaCorrected(_) => {
+                        FrameBlendMode::Accurate(AccurateBlendProfile::DMG)
+                    }
+                    FrameBlendMode::Accurate(_) => FrameBlendMode::None,
                 };
                 self.items = video_menu(&blend_type);
 
@@ -311,6 +314,20 @@ impl AppMenu {
                 )))
             }
             AppMenuItem::VideoMenu => None,
+            AppMenuItem::FrameBlendProfile => {
+                let mut mode = config.video.frame_blend_mode.clone();
+
+                if let FrameBlendMode::Accurate(x) = &mut mode {
+                    match x {
+                        AccurateBlendProfile::DMG => *x = AccurateBlendProfile::Pocket,
+                        AccurateBlendProfile::Pocket => *x = AccurateBlendProfile::DMG,
+                    }
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
+            }
         }
     }
 
@@ -390,20 +407,20 @@ impl AppMenu {
             }
             AppMenuItem::FrameBlendMode => {
                 let blend_type = match config.video.frame_blend_mode {
-                    FrameBlendMode::None => {
-                        FrameBlendMode::Accurate(LcdProfile::DMG)
-                    }
-                    FrameBlendMode::Linear(_) => {
-                        FrameBlendMode::None
-                    }
+                    FrameBlendMode::None => FrameBlendMode::Accurate(AccurateBlendProfile::DMG),
+                    FrameBlendMode::Linear(_) => FrameBlendMode::None,
                     FrameBlendMode::Additive(_) => {
                         FrameBlendMode::Linear(LinearFrameBlend::default())
                     }
                     FrameBlendMode::Exponential(_) => {
                         FrameBlendMode::Additive(AdditiveFrameBlend::default())
                     }
-                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::Exponential(ExponentialFrameBlend::default()),
-                    FrameBlendMode::Accurate(_) => FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
+                    FrameBlendMode::GammaCorrected(_) => {
+                        FrameBlendMode::Exponential(ExponentialFrameBlend::default())
+                    }
+                    FrameBlendMode::Accurate(_) => {
+                        FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
+                    }
                 };
 
                 self.items = video_menu(&blend_type);
@@ -429,6 +446,20 @@ impl AppMenu {
                 )))
             }
             AppMenuItem::VideoMenu => None,
+            AppMenuItem::FrameBlendProfile => {
+                let mut mode = config.video.frame_blend_mode.clone();
+
+                if let FrameBlendMode::Accurate(x) = &mut mode {
+                    match x {
+                        AccurateBlendProfile::DMG => *x = AccurateBlendProfile::Pocket,
+                        AccurateBlendProfile::Pocket => *x = AccurateBlendProfile::DMG,
+                    }
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
+                    mode,
+                )))
+            }
         }
     }
 
@@ -523,6 +554,7 @@ impl AppMenu {
 
                 None
             }
+            AppMenuItem::FrameBlendProfile => None,
         }
     }
 
@@ -611,6 +643,9 @@ impl AppMenuItem {
                 format!("Frame Dim({})", config.video.frame_blend_mode.get_dim())
             }
             AppMenuItem::VideoMenu => "Video".to_string(),
+            AppMenuItem::FrameBlendProfile => {
+                format!("Blend Profile({})", config.video.frame_blend_mode.get_profile())
+            }
         }
     }
 }

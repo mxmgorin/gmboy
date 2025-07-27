@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::video::game_window::LcdProfile;
+use crate::video::game_window::AccurateBlendProfile;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrameBlendMode {
@@ -8,7 +8,7 @@ pub enum FrameBlendMode {
     Additive(AdditiveFrameBlend),
     Exponential(ExponentialFrameBlend),
     GammaCorrected(GammaCorrectedFrameBlend),
-    Accurate(LcdProfile),
+    Accurate(AccurateBlendProfile),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -115,6 +115,17 @@ impl FrameBlendMode {
             FrameBlendMode::Exponential(x) => x.dim,
             FrameBlendMode::GammaCorrected(x) => x.dim,
             FrameBlendMode::Accurate(_) => 1.0
+        }
+    }
+
+    pub fn get_profile(&self) -> &str {
+        match self {
+            FrameBlendMode::None => "",
+            FrameBlendMode::Linear(x) => "",
+            FrameBlendMode::Additive(x) => "",
+            FrameBlendMode::Exponential(x) => "",
+            FrameBlendMode::GammaCorrected(x) => "",
+            FrameBlendMode::Accurate(x) => x.name(),
         }
     }
 }

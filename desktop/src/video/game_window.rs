@@ -20,9 +20,43 @@ pub struct PixelGrid {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum LcdProfile {
+pub enum AccurateBlendProfile {
     DMG,    // original Game Boy (greenish)
     Pocket, // Game Boy Pocket (neutral B/W)
+}
+
+pub struct BlendProfile {
+    pub rise: f32,
+    pub fall: f32,
+    pub bleed: f32,
+    pub tint: (f32, f32, f32),
+}
+
+impl BlendProfile {
+    pub fn new(rise: f32, fall: f32, bleed: f32, tint: (f32, f32, f32)) -> Self {
+        Self {
+            rise,
+            fall,
+            bleed,
+            tint,
+        }
+    }
+}
+
+impl AccurateBlendProfile {
+    pub fn name(&self) -> &str {
+        match self {
+            AccurateBlendProfile::DMG => "DMG",
+            AccurateBlendProfile::Pocket => "Pocket",
+        }
+    }
+
+    pub fn get(&self) -> BlendProfile {
+        match self {
+            AccurateBlendProfile::DMG => BlendProfile::new(0.35, 0.08, 0.15, (0.78, 0.86, 0.71)),
+            AccurateBlendProfile::Pocket => BlendProfile::new(0.5, 0.15, 0.07, (1.0, 1.0, 1.0)),
+        }
+    }
 }
 
 pub struct GameWindow {
@@ -97,7 +131,9 @@ impl GameWindow {
 
     fn apply_pixel_grid(&self, i: usize, w: usize, color: (f32, f32, f32)) -> (f32, f32, f32) {
         let grid = &self.grid;
-        if !grid.enabled { return color; }
+        if !grid.enabled {
+            return color;
+        }
 
         let (mut r, mut g, mut b) = color;
         let strength = grid.strength;
@@ -141,12 +177,8 @@ impl GameWindow {
             let prev = self.prev_framebuffer[i];
 
             // Extract RGB
-            let (cr, cg, cb) = ((curr >> 16) & 0xFF,
-                                (curr >> 8) & 0xFF,
-                                curr & 0xFF);
-            let (pr, pg, pb) = ((prev >> 16) & 0xFF,
-                                (prev >> 8) & 0xFF,
-                                prev & 0xFF);
+            let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
+            let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
 
             // --- Use ghosting mode to get blended pixel ---
             let (r, g, b) = self.compute_pixel(i, w, h, (pr, pg, pb), (cr, cg, cb));
@@ -161,7 +193,10 @@ impl GameWindow {
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
                 let pitch_u32 = pitch / 4;
                 let buf_u32 = unsafe {
-                    std::slice::from_raw_parts_mut(buffer.as_mut_ptr() as *mut u32, buffer.len() / 4)
+                    std::slice::from_raw_parts_mut(
+                        buffer.as_mut_ptr() as *mut u32,
+                        buffer.len() / 4,
+                    )
                 };
 
                 for y in 0..h {
@@ -172,7 +207,9 @@ impl GameWindow {
             })
             .unwrap();
 
-        self.canvas.copy(&self.texture, None, Some(self.game_rect)).unwrap();
+        self.canvas
+            .copy(&self.texture, None, Some(self.game_rect))
+            .unwrap();
     }
 
     pub fn compute_pixel(
@@ -228,8 +265,12 @@ impl GameWindow {
                 let gamma = 2.2;
                 let fade = x.fade;
 
-                fn to_linear(v: f32, g: f32) -> f32 { v.powf(g) }
-                fn to_srgb(v: f32, g: f32) -> f32 { v.powf(1.0 / g) }
+                fn to_linear(v: f32, g: f32) -> f32 {
+                    v.powf(g)
+                }
+                fn to_srgb(v: f32, g: f32) -> f32 {
+                    v.powf(1.0 / g)
+                }
 
                 let pr_l = to_linear(pr_lin, gamma);
                 let pg_l = to_linear(pg_lin, gamma);
@@ -247,10 +288,7 @@ impl GameWindow {
             }
 
             FrameBlendMode::Accurate(x) => {
-                let (rise, fall, bleed, tint) = match x {
-                    LcdProfile::DMG => (0.35, 0.08, 0.15, (0.78, 0.86, 0.71)),
-                    LcdProfile::Pocket => (0.5, 0.15, 0.07, (1.0, 1.0, 1.0)),
-                };
+                let x = x.get();
 
                 // Scanline timing & jitter
                 let y = i / w;
@@ -263,9 +301,9 @@ impl GameWindow {
                 }
 
                 // LCD response curve
-                let mut lr = lcd_step(pr_lin, cr_lin, rise, fall, scan_delay);
-                let mut lg = lcd_step(pg_lin, cg_lin, rise, fall, scan_delay);
-                let mut lb = lcd_step(pb_lin, cb_lin, rise, fall, scan_delay);
+                let mut lr = lcd_step(pr_lin, cr_lin, x.rise, x.fall, scan_delay);
+                let mut lg = lcd_step(pg_lin, cg_lin, x.rise, x.fall, scan_delay);
+                let mut lb = lcd_step(pb_lin, cb_lin, x.rise, x.fall, scan_delay);
 
                 // Pixel bleeding (left + top)
                 let left_idx = if i % w == 0 { i } else { i - 1 };
@@ -282,14 +320,14 @@ impl GameWindow {
                 let tpg = ((top >> 8) & 0xFF) as f32 / 255.0;
                 let tpb = (top & 0xFF) as f32 / 255.0;
 
-                lr = lr * (1.0 - bleed) + ((lpr + tpr) * 0.5) * bleed;
-                lg = lg * (1.0 - bleed) + ((lpg + tpg) * 0.5) * bleed;
-                lb = lb * (1.0 - bleed) + ((lpb + tpb) * 0.5) * bleed;
+                lr = lr * (1.0 - x.bleed) + ((lpr + tpr) * 0.5) * x.bleed;
+                lg = lg * (1.0 - x.bleed) + ((lpg + tpg) * 0.5) * x.bleed;
+                lb = lb * (1.0 - x.bleed) + ((lpb + tpb) * 0.5) * x.bleed;
 
                 // Tint
-                lr *= tint.0;
-                lg *= tint.1;
-                lb *= tint.2;
+                lr *= x.tint.0;
+                lg *= x.tint.1;
+                lb *= x.tint.2;
 
                 (lr, lg, lb)
             }
