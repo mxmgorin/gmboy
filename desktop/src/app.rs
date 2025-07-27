@@ -1,7 +1,7 @@
 use crate::audio::AppAudio;
 use crate::config::{AppConfig, VideoConfig};
 use crate::input::handler::InputHandler;
-use crate::library::RomsLibrary;
+use crate::roms::RomsList;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
 use crate::video::notification::Notifications;
@@ -27,10 +27,10 @@ pub enum AppCmd {
     RestartGame,
     ChangeMode(RunMode),
     SaveState(SaveStateCmd, usize),
-    PickFile,
+    SelectRom,
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
-    PickRomsDir,
+    SelectRomsDir,
 }
 
 pub enum ChangeAppConfigCmd {
@@ -123,7 +123,7 @@ impl App {
         } else {
             None
         };
-        let library = RomsLibrary::get_or_create();
+        let library = RomsList::get_or_create();
 
         Ok(Self {
             video_subsystem,
@@ -254,7 +254,7 @@ impl App {
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: usize) {
-        let library = RomsLibrary::get_or_create();
+        let library = RomsList::get_or_create();
         let name = library.get_last_file_stem().unwrap();
         let index = index.to_string();
 
@@ -300,7 +300,7 @@ impl App {
             eprint!("Failed config.save: {err}");
         }
 
-        let library = RomsLibrary::get_or_create();
+        let library = RomsList::get_or_create();
         let name = library.get_last_file_stem();
 
         let Some(name) = name else {
@@ -331,8 +331,8 @@ impl App {
     }
 
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) {
-        let lib_path = RomsLibrary::get_path();
-        let mut library = RomsLibrary::get_or_create();
+        let lib_path = RomsList::get_path();
+        let mut library = RomsList::get_or_create();
         let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
 

@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
-use crate::library::RomsLibrary;
+use crate::roms::RomsList;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
@@ -18,7 +18,7 @@ mod app;
 mod audio;
 mod config;
 mod input;
-mod library;
+mod roms;
 mod video;
 
 fn main() {
@@ -73,7 +73,7 @@ fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
             app.load_cart_file(emu, &cart_path);
         }
     } else {
-        let library = RomsLibrary::get_or_create();
+        let library = RomsList::get_or_create();
 
         if let Some(cart_path) = library.get_last_path() {
             let cart_path = cart_path.clone();
@@ -125,13 +125,13 @@ fn get_config() -> AppConfig {
     };
 
     if let Some(path) = &config.roms_dir {
-        let mut lib = RomsLibrary::get_or_create();
+        let mut lib = RomsList::get_or_create();
 
         if let Err(err) = lib.load_from_dir(path) {
             eprintln!("Failed load library from path: {err}");
         }
 
-        _ = core::save_json_file(&RomsLibrary::get_path(), &lib);
+        _ = core::save_json_file(&RomsList::get_path(), &lib);
     }
 
     config

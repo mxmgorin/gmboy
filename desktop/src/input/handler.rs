@@ -3,7 +3,7 @@ use crate::config::{AppConfig, InputConfig};
 use crate::input::combo::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
-use crate::library::RomsLibrary;
+use crate::roms::RomsList;
 use crate::Emu;
 use core::emu::state::EmuState;
 use sdl2::controller::GameController;
@@ -125,7 +125,7 @@ impl InputHandler {
                 }
             }
             AppCmd::RestartGame => {
-                if let Some(path) = RomsLibrary::get_or_create().get_last_path() {
+                if let Some(path) = RomsList::get_or_create().get_last_path() {
                     app.load_cart_file(emu, &PathBuf::from(path));
                 }
             }
@@ -134,7 +134,7 @@ impl InputHandler {
                 emu.runtime.set_mode(mode);
             }
             AppCmd::SaveState(event, index) => app.handle_save_state(emu, event, index),
-            AppCmd::PickFile =>
+            AppCmd::SelectRom =>
             {
                 #[cfg(feature = "filepicker")]
                 if app.state == AppState::Paused {
@@ -149,15 +149,15 @@ impl InputHandler {
             }
             AppCmd::Rewind => emu.state = EmuState::Rewind,
             AppCmd::Quit => app.state = AppState::Quitting,
-            AppCmd::PickRomsDir => {
+            AppCmd::SelectRomsDir => {
                 if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
-                    let mut lib = RomsLibrary::get_or_create();
+                    let mut lib = RomsList::get_or_create();
 
                     if let Err(err) = lib.load_from_dir(&dir) {
                         eprintln!("Failed to load ROMs library: {err}");
                     }
 
-                    if let Err(err) = core::save_json_file(&RomsLibrary::get_path(), &lib) {
+                    if let Err(err) = core::save_json_file(&RomsList::get_path(), &lib) {
                         eprintln!("Failed to save ROMs library: {err}");
                     }
 

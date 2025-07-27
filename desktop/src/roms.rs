@@ -5,12 +5,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct RomsLibrary {
+pub struct RomsList {
     last_path: Option<PathBuf>,
     recent_paths: HashSet<PathBuf>,
 }
 
-impl RomsLibrary {
+impl RomsList {
     /// Loads all `.gb` and `.gbc` files from the given directory.
     pub fn load_from_dir<P: AsRef<Path>>(&mut self, dir: P) -> std::io::Result<()> {
         let dir_path = dir.as_ref();
@@ -63,7 +63,7 @@ impl RomsLibrary {
         let path = Self::get_path();
 
         if path.exists() {
-            let res = core::read_json_file::<RomsLibrary>(&path);
+            let res = core::read_json_file::<RomsList>(&path);
             let Ok(lib) = res else {
                 return Default::default();
             };
@@ -81,6 +81,6 @@ impl RomsLibrary {
     pub fn get_path() -> PathBuf {
         let exe_dir = core::get_exe_path();
 
-        exe_dir.join("library.json")
+        exe_dir.join("roms.json")
     }
 }

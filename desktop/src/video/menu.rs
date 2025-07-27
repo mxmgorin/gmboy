@@ -1,6 +1,6 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::AppConfig;
-use crate::library::RomsLibrary;
+use crate::roms::RomsList;
 use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
     LinearFrameBlend,
@@ -55,13 +55,13 @@ pub enum AppMenuItem {
     FrameBlendBleed,
     PixelGrid,
     PixelMask,
-    Library,
-    Roms(LibraryMenu),
+    RomsMenu,
+    Roms(RomsMenu),
     RomsDir,
 }
 
 impl AppMenuItem {
-    pub fn get_inner_mut(&mut self) -> Option<&mut LibraryMenu> {
+    pub fn get_inner_mut(&mut self) -> Option<&mut RomsMenu> {
         match self {
             AppMenuItem::Resume
             | AppMenuItem::RomsDir
@@ -107,12 +107,12 @@ impl AppMenuItem {
             | AppMenuItem::FrameBlendBleed
             | AppMenuItem::PixelGrid
             | AppMenuItem::PixelMask
-            | AppMenuItem::Library => None,
+            | AppMenuItem::RomsMenu => None,
             AppMenuItem::Roms(x) => Some(x),
         }
     }
 
-    pub fn get_inner(&self) -> Option<&LibraryMenu> {
+    pub fn get_inner(&self) -> Option<&RomsMenu> {
         match self {
             AppMenuItem::Resume
             | AppMenuItem::SaveState
@@ -158,7 +158,7 @@ impl AppMenuItem {
             | AppMenuItem::FrameBlendBleed
             | AppMenuItem::PixelGrid
             | AppMenuItem::PixelMask
-            | AppMenuItem::Library => None,
+            | AppMenuItem::RomsMenu => None,
             AppMenuItem::Roms(x) => Some(x),
         }
     }
@@ -200,7 +200,7 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
 }
 
 fn library_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::Roms(LibraryMenu::default()), AppMenuItem::Back].into_boxed_slice()
+    vec![AppMenuItem::Roms(RomsMenu::default()), AppMenuItem::Back].into_boxed_slice()
 }
 
 fn input_menu() -> Box<[AppMenuItem]> {
@@ -233,7 +233,7 @@ fn developer_menu() -> Box<[AppMenuItem]> {
 fn start_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::OpenRom,
-        AppMenuItem::Library,
+        AppMenuItem::RomsMenu,
         AppMenuItem::OptionsMenu,
         AppMenuItem::Quit,
     ]
@@ -273,7 +273,7 @@ fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::LoadState,
         AppMenuItem::RestartGame,
         AppMenuItem::OpenRom,
-        AppMenuItem::Library,
+        AppMenuItem::RomsMenu,
         AppMenuItem::OptionsMenu,
         AppMenuItem::Quit,
     ]
@@ -512,7 +512,7 @@ impl AppMenu {
                 conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::Library => None,
+            AppMenuItem::RomsMenu => None,
             AppMenuItem::Roms(x) => x.move_right(),
             AppMenuItem::RomsDir => None,
         }
@@ -686,7 +686,7 @@ impl AppMenu {
                 conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::Library => None,
+            AppMenuItem::RomsMenu => None,
             AppMenuItem::Roms(x) => x.move_left(),
             AppMenuItem::RomsDir => None,
         }
@@ -704,7 +704,7 @@ impl AppMenu {
 
         match item {
             AppMenuItem::Resume => Some(AppCmd::TogglePause),
-            AppMenuItem::OpenRom => Some(AppCmd::PickFile),
+            AppMenuItem::OpenRom => Some(AppCmd::SelectRom),
             AppMenuItem::Quit => Some(AppCmd::Quit),
             AppMenuItem::SaveState => Some(AppCmd::SaveState(
                 core::emu::state::SaveStateCmd::Create,
@@ -797,7 +797,7 @@ impl AppMenu {
                 conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::Library => {
+            AppMenuItem::RomsMenu => {
                 self.next_items(library_menu());
 
                 None
@@ -811,7 +811,7 @@ impl AppMenu {
 
                 cmd
             }
-            AppMenuItem::RomsDir => Some(AppCmd::PickRomsDir),
+            AppMenuItem::RomsDir => Some(AppCmd::SelectRomsDir),
         }
     }
 
@@ -826,7 +826,7 @@ impl AppMenuItem {
     pub fn to_string(&self, config: &AppConfig) -> String {
         match self {
             AppMenuItem::Resume => "Resume".to_string(),
-            AppMenuItem::OpenRom => "Open Rom".to_string(),
+            AppMenuItem::OpenRom => "Open ROM".to_string(),
             AppMenuItem::Quit => "Quit".to_string(),
             AppMenuItem::SaveState => format!("Save({})", config.current_save_index),
             AppMenuItem::LoadState => format!("Load({})", config.current_load_index),
@@ -920,9 +920,9 @@ impl AppMenuItem {
             ),
             AppMenuItem::PixelGrid => format!("Grid{}", get_suffix(config.video.grid_enabled)),
             AppMenuItem::PixelMask => format!("Mask{}", get_suffix(config.video.mask_enabled)),
-            AppMenuItem::Library => "Library".to_string(),
-            AppMenuItem::Roms(x) => format!("Roms ({})", x.items.len()),
-            AppMenuItem::RomsDir => "Pick Roms Dir".to_string(),
+            AppMenuItem::RomsMenu => "ROMs".to_string(),
+            AppMenuItem::Roms(x) => format!("ROMs ({})", x.items.len()),
+            AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
         }
     }
 }
@@ -939,20 +939,20 @@ const MAX_ROMS_PER_PAGE: usize = 10;
 const MAX_ROM_CHARS: usize = 16;
 
 #[derive(Debug, Clone)]
-pub struct LibraryMenu {
-    all_items: Box<[LibraryItem]>, // all ROMs
-    items: Box<[LibraryItem]>,     // current page items (plus nav items)
+pub struct RomsMenu {
+    all_items: Box<[RomMenuItem]>, // all ROMs
+    items: Box<[RomMenuItem]>,     // current page items (plus nav items)
     selected_index: usize,
     current_page: usize,
 }
 
 #[derive(Debug, Clone)]
-pub struct LibraryItem {
+pub struct RomMenuItem {
     pub name: String,
     pub path: PathBuf,
 }
 
-impl LibraryItem {
+impl RomMenuItem {
     pub fn new(path: impl Into<PathBuf>) -> Self {
         let path = path.into();
         let name = path
@@ -971,7 +971,7 @@ impl LibraryItem {
     }
 }
 
-impl LibraryMenu {
+impl RomsMenu {
     pub fn get_items(&self) -> Box<[String]> {
         let items: Vec<_> = self
             .items
@@ -1047,14 +1047,14 @@ impl LibraryMenu {
         let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE).max(1);
         let start = self.current_page * MAX_ROMS_PER_PAGE;
         let end = usize::min(start + MAX_ROMS_PER_PAGE, self.all_items.len());
-        let mut page_items: Vec<LibraryItem> = self.all_items[start..end].to_vec();
+        let mut page_items: Vec<RomMenuItem> = self.all_items[start..end].to_vec();
 
-        page_items.push(LibraryItem {
+        page_items.push(RomMenuItem {
             name: format!("Page ({}/{})", self.current_page + 1, total_pages),
             path: Default::default(),
         });
 
-        page_items.push(LibraryItem {
+        page_items.push(RomMenuItem {
             name: "Back".to_string(),
             path: Default::default(),
         });
@@ -1067,13 +1067,13 @@ impl LibraryMenu {
     }
 }
 
-impl Default for LibraryMenu {
+impl Default for RomsMenu {
     fn default() -> Self {
-        let library = RomsLibrary::get_or_create();
+        let roms = RomsList::get_or_create();
         let mut all_items = Vec::with_capacity(12);
 
-        for path in library.get() {
-            all_items.push(LibraryItem::new(path));
+        for path in roms.get() {
+            all_items.push(RomMenuItem::new(path));
         }
 
         let mut menu = Self {
