@@ -1,4 +1,3 @@
-use crate::video::game_window::AccurateBlendProfile;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -8,7 +7,7 @@ pub enum FrameBlendMode {
     Additive(AdditiveFrameBlend),
     Exponential(ExponentialFrameBlend),
     GammaCorrected(GammaCorrectedFrameBlend),
-    Accurate(AccurateBlendProfile),
+    Accurate(BlendProfile),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -142,6 +141,59 @@ impl Default for AdditiveFrameBlend {
         Self {
             fade: 0.65,
             alpha: 0.35,
+        }
+    }
+}
+
+pub const DMG_PROFILE: BlendProfile =
+    BlendProfile::new(0.35, 0.08, 0.15, BlendProfileTint::new(0.78, 0.86, 0.71));
+pub const POCKET_PROFILE: BlendProfile =
+    BlendProfile::new(0.5, 0.15, 0.07, BlendProfileTint::new(1.0, 1.0, 1.0));
+
+pub struct PixelGrid {
+    pub enabled: bool,
+    pub strength: f32, // 0.0 - 1.0 darkness
+    pub softness: f32, // 0.0 = sharp edges
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct BlendProfile {
+    pub rise: f32,
+    pub fall: f32,
+    pub bleed: f32,
+    pub tint: BlendProfileTint,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct BlendProfileTint {
+    pub red: f32,
+    pub green: f32,
+    pub blue: f32,
+}
+
+impl BlendProfileTint {
+    pub const fn new(red: f32, green: f32, blue: f32) -> Self {
+        Self { red, green, blue }
+    }
+}
+
+impl BlendProfile {
+    pub const fn new(rise: f32, fall: f32, bleed: f32, tint: BlendProfileTint) -> Self {
+        Self {
+            rise,
+            fall,
+            bleed,
+            tint,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        if self == &DMG_PROFILE {
+            "DMG"
+        } else if self == &POCKET_PROFILE {
+            "POCKET"
+        } else {
+            "CUSTOM"
         }
     }
 }

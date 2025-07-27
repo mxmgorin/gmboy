@@ -3,7 +3,7 @@ use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
 use crate::video::fill_texture;
-use crate::video::frame_blend::FrameBlendMode;
+use crate::video::frame_blend::{FrameBlendMode, PixelGrid};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -12,53 +12,6 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
-use serde::{Deserialize, Serialize};
-
-pub struct PixelGrid {
-    pub enabled: bool,
-    pub strength: f32, // 0.0 - 1.0 darkness
-    pub softness: f32, // 0.0 = sharp edges
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum AccurateBlendProfile {
-    DMG,    // original Game Boy (greenish)
-    Pocket, // Game Boy Pocket (neutral B/W)
-}
-
-pub struct BlendProfile {
-    pub rise: f32,
-    pub fall: f32,
-    pub bleed: f32,
-    pub tint: (f32, f32, f32),
-}
-
-impl BlendProfile {
-    pub fn new(rise: f32, fall: f32, bleed: f32, tint: (f32, f32, f32)) -> Self {
-        Self {
-            rise,
-            fall,
-            bleed,
-            tint,
-        }
-    }
-}
-
-impl AccurateBlendProfile {
-    pub fn name(&self) -> &str {
-        match self {
-            AccurateBlendProfile::DMG => "DMG",
-            AccurateBlendProfile::Pocket => "Pocket",
-        }
-    }
-
-    pub fn get(&self) -> BlendProfile {
-        match self {
-            AccurateBlendProfile::DMG => BlendProfile::new(0.35, 0.08, 0.15, (0.78, 0.86, 0.71)),
-            AccurateBlendProfile::Pocket => BlendProfile::new(0.5, 0.15, 0.07, (1.0, 1.0, 1.0)),
-        }
-    }
-}
 
 pub struct GameWindow {
     canvas: Canvas<Window>,
@@ -312,8 +265,6 @@ impl GameWindow {
             }
 
             FrameBlendMode::Accurate(x) => {
-                let x = x.get();
-
                 // Scanline timing & jitter
                 let y = i / w;
                 let jitter = ((y as f32).sin() * 0.003) + 1.0;
@@ -349,9 +300,9 @@ impl GameWindow {
                 lb = lb * (1.0 - x.bleed) + ((lpb + tpb) * 0.5) * x.bleed;
 
                 // Tint
-                lr *= x.tint.0;
-                lg *= x.tint.1;
-                lb *= x.tint.2;
+                lr *= x.tint.red;
+                lg *= x.tint.green;
+                lb *= x.tint.blue;
 
                 (lr, lg, lb)
             }

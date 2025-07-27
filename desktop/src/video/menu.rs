@@ -4,7 +4,7 @@ use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
     LinearFrameBlend,
 };
-use crate::video::game_window::AccurateBlendProfile;
+use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use std::collections::VecDeque;
 use std::mem;
 
@@ -281,9 +281,7 @@ impl AppMenu {
                     FrameBlendMode::Exponential(_) => {
                         FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
                     }
-                    FrameBlendMode::GammaCorrected(_) => {
-                        FrameBlendMode::Accurate(AccurateBlendProfile::DMG)
-                    }
+                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::Accurate(DMG_PROFILE),
                     FrameBlendMode::Accurate(_) => FrameBlendMode::None,
                 };
                 self.items = video_menu(&mode);
@@ -315,9 +313,10 @@ impl AppMenu {
                 let mut conf = config.video.clone();
 
                 if let FrameBlendMode::Accurate(x) = &mut conf.frame_blend_mode {
-                    match x {
-                        AccurateBlendProfile::DMG => *x = AccurateBlendProfile::Pocket,
-                        AccurateBlendProfile::Pocket => *x = AccurateBlendProfile::DMG,
+                    if x == &DMG_PROFILE {
+                        *x = POCKET_PROFILE;
+                    } else if x == &POCKET_PROFILE {
+                        *x = DMG_PROFILE;
                     }
                 }
 
@@ -400,7 +399,7 @@ impl AppMenu {
             }
             AppMenuItem::FrameBlendMode => {
                 let blend_mode = match config.video.frame_blend_mode {
-                    FrameBlendMode::None => FrameBlendMode::Accurate(AccurateBlendProfile::DMG),
+                    FrameBlendMode::None => FrameBlendMode::Accurate(DMG_PROFILE),
                     FrameBlendMode::Linear(_) => FrameBlendMode::None,
                     FrameBlendMode::Additive(_) => {
                         FrameBlendMode::Linear(LinearFrameBlend::default())
@@ -439,9 +438,10 @@ impl AppMenu {
                 let mut conf = config.video.clone();
 
                 if let FrameBlendMode::Accurate(x) = &mut conf.frame_blend_mode {
-                    match x {
-                        AccurateBlendProfile::DMG => *x = AccurateBlendProfile::Pocket,
-                        AccurateBlendProfile::Pocket => *x = AccurateBlendProfile::DMG,
+                    if x == &DMG_PROFILE {
+                        *x = POCKET_PROFILE;
+                    } else if x == &POCKET_PROFILE {
+                        *x = DMG_PROFILE;
                     }
                 }
 
