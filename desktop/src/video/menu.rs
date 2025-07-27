@@ -509,7 +509,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::Library => None,
-            AppMenuItem::Roms(_) => None,
+            AppMenuItem::Roms(x) => x.move_right(),
         }
     }
 
@@ -682,7 +682,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::Library => None,
-            AppMenuItem::Roms(_) => None,
+            AppMenuItem::Roms(x) => x.move_left(),
         }
     }
 
@@ -989,20 +989,31 @@ impl LibraryMenu {
         self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
     }
 
+    pub fn move_left(&mut self) -> Option<AppCmd> {
+        let item = &self.items[self.selected_index];
+
+        if item.name.starts_with("Page") {
+            self.prev_page();
+        }
+
+        None
+    }
+
+    pub fn move_right(&mut self) -> Option<AppCmd> {
+        let item = &self.items[self.selected_index];
+
+        if item.name.starts_with("Page") {
+            self.next_page();
+        }
+
+        None
+    }
+
     pub fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
         let item = &self.items[self.selected_index];
 
-        match item.name.as_str() {
-            name if name.starts_with("Next Page") => {
-                self.next_page();
-                return (None, false);
-            }
-            name if name.starts_with("Prev Page") => {
-                self.prev_page();
-                return (None, false);
-            }
-            "Back" => return (None, true),
-            _ => {}
+        if item.name.starts_with("Back") {
+            return (None, true);
         }
 
         (Some(AppCmd::LoadFile(item.path.clone())), false)
@@ -1024,23 +1035,16 @@ impl LibraryMenu {
     }
 
     fn update_page(&mut self) {
+        let prev_len = self.items.len();
         let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
         let start = self.current_page * MAX_ROMS_PER_PAGE;
         let end = usize::min(start + MAX_ROMS_PER_PAGE, self.all_items.len());
         let mut page_items: Vec<LibraryItem> = self.all_items[start..end].to_vec();
 
-        if self.current_page + 1 < total_pages {
-            page_items.push(LibraryItem {
-                name: format!("Next Page ({}/{})", self.current_page + 1, total_pages),
-                path: Default::default(),
-            });
-        }
-        if self.current_page > 0 {
-            page_items.push(LibraryItem {
-                name: format!("Prev Page ({}/{})", self.current_page + 1, total_pages),
-                path: Default::default(),
-            });
-        }
+        page_items.push(LibraryItem {
+            name: format!("Page ({}/{})", self.current_page + 1, total_pages),
+            path: Default::default(),
+        });
 
         page_items.push(LibraryItem {
             name: "Back".to_string(),
@@ -1048,7 +1052,10 @@ impl LibraryMenu {
         });
 
         self.items = page_items.into_boxed_slice();
-        self.selected_index = 0;
+
+        if prev_len != self.items.len() {
+            self.selected_index = self.items.len() - 2;
+        }
     }
 }
 
