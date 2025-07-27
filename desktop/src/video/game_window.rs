@@ -3,22 +3,24 @@ use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
 use crate::video::fill_texture;
-use crate::video::frame_blend::{FrameBlendMode, PixelGrid};
+use crate::video::frame_blend::FrameBlendMode;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
-use sdl2::render::{Canvas, Texture};
-use sdl2::video::Window;
+use sdl2::render::{Canvas, Texture, TextureCreator};
+use sdl2::video::{Window, WindowContext};
 use sdl2::VideoSubsystem;
 
 pub struct GameWindow {
     canvas: Canvas<Window>,
+    texture_creator: TextureCreator<WindowContext>,
     texture: Texture,
     notif_texture: Texture,
     fps_texture: Texture,
     grid_texture: Texture,
+    subpixel_texture: Texture,
     fps_rect: Rect,
     notif_rect: Rect,
     game_rect: Rect,
@@ -77,24 +79,7 @@ impl GameWindow {
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
-        let mut grid_texture = texture_creator
-            .create_texture_target(PixelFormatEnum::ARGB8888, game_rect.width(), game_rect.height())
-            .unwrap();
-        canvas.with_texture_canvas(&mut grid_texture, |tex| {
-            tex.set_draw_color(Color::RGBA(32, 32, 32, 80));
-            for i in 0..=LCD_X_RES {
-                let x = (i as f32 * game_rect.width() as f32 / LCD_X_RES as f32) as i32;
-                tex.draw_line((x, 0), (x, game_rect.height() as i32)).unwrap();
-            }
-            for j in 0..=LCD_Y_RES {
-                let y = (j as f32 * game_rect.height() as f32 / LCD_Y_RES as f32) as i32;
-                tex.draw_line((0, y), (game_rect.width() as i32, y)).unwrap();
-            }
-        }).unwrap();
-        grid_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-
         Ok(Self {
-            canvas,
             texture,
             notif_texture,
             notif_rect,
@@ -106,7 +91,20 @@ impl GameWindow {
             config,
             fps_texture,
             fps_rect,
-            grid_texture
+            grid_texture: generate_grid_texture(
+                &mut canvas,
+                &texture_creator,
+                game_rect.width(),
+                game_rect.height(),
+            ),
+            subpixel_texture: generate_subpixel_texture(
+                &mut canvas,
+                &texture_creator,
+                game_rect.width(),
+                game_rect.height(),
+            ),
+            canvas,
+            texture_creator,
         })
     }
 
@@ -161,7 +159,12 @@ impl GameWindow {
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
-        self.canvas.copy(&self.grid_texture, None, Some(self.game_rect)).unwrap();
+        self.canvas
+            .copy(&self.grid_texture, None, Some(self.game_rect))
+            .unwrap();
+        self.canvas
+            .copy(&self.subpixel_texture, None, Some(self.game_rect))
+            .unwrap();
     }
 
     pub fn compute_pixel(
@@ -395,6 +398,18 @@ impl GameWindow {
         );
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
+        self.grid_texture = generate_grid_texture(
+            &mut self.canvas,
+            &self.texture_creator,
+            self.game_rect.width(),
+            self.game_rect.height(),
+        );
+        self.subpixel_texture = generate_subpixel_texture(
+            &mut self.canvas,
+            &self.texture_creator,
+            self.game_rect.width(),
+            self.game_rect.height(),
+        );
 
         Ok(())
     }
@@ -450,4 +465,68 @@ fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let y = ((window_height - new_height) / 2) as i32;
 
     Rect::new(x, y, new_width, new_height)
+}
+
+fn generate_subpixel_texture(
+    canvas: &mut Canvas<Window>,
+    texture_creator: &TextureCreator<WindowContext>,
+    width: u32,
+    height: u32,
+) -> Texture {
+    let mut tex = texture_creator
+        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .unwrap();
+
+    canvas
+        .with_texture_canvas(&mut tex, |subcanvas| {
+            // Define three shades for the stripe pattern
+            let colors = [
+                Color::RGBA(180, 200, 180, 40), // light
+                Color::RGBA(140, 170, 140, 40), // medium
+                Color::RGBA(100, 140, 100, 40), // dark
+            ];
+
+            let stripe_width = 1; // 1-pixel wide stripes
+            let mut x = 0;
+
+            while x < width as i32 {
+                for (i, color) in colors.iter().enumerate() {
+                    let rect = Rect::new(x + i as i32, 0, stripe_width, height);
+                    subcanvas.set_draw_color(*color);
+                    subcanvas.fill_rect(rect).unwrap();
+                }
+                x += colors.len() as i32;
+            }
+        })
+        .unwrap();
+
+    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
+    tex
+}
+
+fn generate_grid_texture(
+    canvas: &mut Canvas<Window>,
+    texture_creator: &TextureCreator<WindowContext>,
+    width: u32,
+    height: u32,
+) -> Texture {
+    let mut grid_texture = texture_creator
+        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .unwrap();
+    canvas
+        .with_texture_canvas(&mut grid_texture, |tex| {
+            tex.set_draw_color(Color::RGBA(32, 32, 32, 80));
+            for i in 0..=LCD_X_RES {
+                let x = (i as f32 * width as f32 / LCD_X_RES as f32) as i32;
+                tex.draw_line((x, 0), (x, height as i32)).unwrap();
+            }
+            for j in 0..=LCD_Y_RES {
+                let y = (j as f32 * height as f32 / LCD_Y_RES as f32) as i32;
+                tex.draw_line((0, y), (width as i32, y)).unwrap();
+            }
+        })
+        .unwrap();
+    grid_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+
+    grid_texture
 }
