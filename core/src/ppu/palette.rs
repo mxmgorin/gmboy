@@ -24,9 +24,9 @@ impl LcdPalette {
 
     pub fn default_palettes() -> Vec<LcdPalette> {
         vec![
-            LcdPalette::nostalgia(),
-            LcdPalette::crimson(),
             LcdPalette::forgotten_swamp(),
+            LcdPalette::crimson(),
+            LcdPalette::nostalgia(),
             LcdPalette::bit2_matrix(),
             LcdPalette::purple_dawn(),
             LcdPalette::cave_4(),

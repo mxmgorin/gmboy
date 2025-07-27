@@ -30,7 +30,7 @@ impl RomsList {
                     }
                 }
             }
-            self.last_path = Some(dir_path.to_path_buf());
+
         }
 
         Ok(())
