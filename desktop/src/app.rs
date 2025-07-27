@@ -336,6 +336,7 @@ impl App {
             && !emu.runtime.bus.cart.is_empty();
 
         if emu.load_cart_file(path).is_err() {
+            library.remove(path);
             return;
         }
 

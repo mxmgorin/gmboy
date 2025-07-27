@@ -15,6 +15,14 @@ impl RomsLibrary {
         self.last_path = Some(path);
     }
 
+    pub fn remove(&mut self, path: &Path) {
+        self.recent_paths.remove(path);
+
+        if self.last_path.as_deref() == Some(path) {
+            self.last_path = None;
+        }
+    }
+
     pub fn get_last_file_stem(&self) -> Option<Cow<str>> {
         let path = Path::new(self.last_path.as_ref()?);
 
