@@ -1,5 +1,6 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::AppConfig;
+use crate::library::RomsLibrary;
 use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
     LinearFrameBlend,
@@ -7,8 +8,9 @@ use crate::video::frame_blend::{
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use std::collections::VecDeque;
 use std::mem;
+use std::path::PathBuf;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum AppMenuItem {
     Resume,
     SaveState,
@@ -53,6 +55,110 @@ pub enum AppMenuItem {
     FrameBlendBleed,
     PixelGrid,
     PixelMask,
+    Library,
+    Roms(LibraryMenu),
+}
+
+impl AppMenuItem {
+    pub fn get_inner_mut(&mut self) -> Option<&mut LibraryMenu> {
+        match self {
+            AppMenuItem::Resume
+            | AppMenuItem::SaveState
+            | AppMenuItem::LoadState
+            | AppMenuItem::OpenRom
+            | AppMenuItem::OptionsMenu
+            | AppMenuItem::InterfaceMenu
+            | AppMenuItem::Back
+            | AppMenuItem::Quit
+            | AppMenuItem::Palette
+            | AppMenuItem::ToggleFps
+            | AppMenuItem::ToggleFullscreen
+            | AppMenuItem::AudioMenu
+            | AppMenuItem::Volume
+            | AppMenuItem::Scale
+            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::TileWindow
+            | AppMenuItem::SpinDuration
+            | AppMenuItem::SystemMenu
+            | AppMenuItem::AutoSaveState
+            | AppMenuItem::NormalSpeed
+            | AppMenuItem::TurboSpeed
+            | AppMenuItem::SlowSpeed
+            | AppMenuItem::RewindSize
+            | AppMenuItem::RewindInterval
+            | AppMenuItem::AudioBufferSize
+            | AppMenuItem::MuteTurbo
+            | AppMenuItem::MuteSlow
+            | AppMenuItem::DefaultConfig
+            | AppMenuItem::RestartGame
+            | AppMenuItem::InputMenu
+            | AppMenuItem::ComboInterval
+            | AppMenuItem::PaletteInverted
+            | AppMenuItem::FrameBlendMode
+            | AppMenuItem::FrameBlendAlpha
+            | AppMenuItem::FrameBlendFade
+            | AppMenuItem::FrameBlendDim
+            | AppMenuItem::VideoMenu
+            | AppMenuItem::FrameBlendProfile
+            | AppMenuItem::FrameBlendRise
+            | AppMenuItem::FrameBlendFall
+            | AppMenuItem::FrameBlendBleed
+            | AppMenuItem::PixelGrid
+            | AppMenuItem::PixelMask
+            | AppMenuItem::Library => None,
+            AppMenuItem::Roms(x) => Some(x),
+        }
+    }
+
+    pub fn get_inner(&self) -> Option<&LibraryMenu> {
+        match self {
+            AppMenuItem::Resume
+            | AppMenuItem::SaveState
+            | AppMenuItem::LoadState
+            | AppMenuItem::OpenRom
+            | AppMenuItem::OptionsMenu
+            | AppMenuItem::InterfaceMenu
+            | AppMenuItem::Back
+            | AppMenuItem::Quit
+            | AppMenuItem::Palette
+            | AppMenuItem::ToggleFps
+            | AppMenuItem::ToggleFullscreen
+            | AppMenuItem::AudioMenu
+            | AppMenuItem::Volume
+            | AppMenuItem::Scale
+            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::TileWindow
+            | AppMenuItem::SpinDuration
+            | AppMenuItem::SystemMenu
+            | AppMenuItem::AutoSaveState
+            | AppMenuItem::NormalSpeed
+            | AppMenuItem::TurboSpeed
+            | AppMenuItem::SlowSpeed
+            | AppMenuItem::RewindSize
+            | AppMenuItem::RewindInterval
+            | AppMenuItem::AudioBufferSize
+            | AppMenuItem::MuteTurbo
+            | AppMenuItem::MuteSlow
+            | AppMenuItem::DefaultConfig
+            | AppMenuItem::RestartGame
+            | AppMenuItem::InputMenu
+            | AppMenuItem::ComboInterval
+            | AppMenuItem::PaletteInverted
+            | AppMenuItem::FrameBlendMode
+            | AppMenuItem::FrameBlendAlpha
+            | AppMenuItem::FrameBlendFade
+            | AppMenuItem::FrameBlendDim
+            | AppMenuItem::VideoMenu
+            | AppMenuItem::FrameBlendProfile
+            | AppMenuItem::FrameBlendRise
+            | AppMenuItem::FrameBlendFall
+            | AppMenuItem::FrameBlendBleed
+            | AppMenuItem::PixelGrid
+            | AppMenuItem::PixelMask
+            | AppMenuItem::Library => None,
+            AppMenuItem::Roms(x) => Some(x),
+        }
+    }
 }
 
 fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
@@ -90,6 +196,10 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
+fn library_menu() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::Roms(LibraryMenu::default()), AppMenuItem::Back].into_boxed_slice()
+}
+
 fn input_menu() -> Box<[AppMenuItem]> {
     vec![AppMenuItem::ComboInterval, AppMenuItem::Back].into_boxed_slice()
 }
@@ -119,6 +229,7 @@ fn developer_menu() -> Box<[AppMenuItem]> {
 fn start_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::OpenRom,
+        AppMenuItem::Library,
         AppMenuItem::OptionsMenu,
         AppMenuItem::Quit,
     ]
@@ -158,6 +269,7 @@ fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::LoadState,
         AppMenuItem::RestartGame,
         AppMenuItem::OpenRom,
+        AppMenuItem::Library,
         AppMenuItem::OptionsMenu,
         AppMenuItem::Quit,
     ]
@@ -191,25 +303,43 @@ impl AppMenu {
     }
 
     pub fn get_items(&self, config: &AppConfig) -> Box<[String]> {
-        self.items
-            .iter()
-            .enumerate()
-            .map(|(i, line)| {
-                let line = line.to_string(config);
-                if i == self.selected_index {
-                    format!("◀{line}▶")
-                } else {
-                    line
-                }
-            })
-            .collect()
+        let mut items = Vec::with_capacity(8);
+
+        for (i, item) in self.items.iter().enumerate() {
+            if let Some(inner) = item.get_inner() {
+                return inner.get_items();
+            }
+
+            let line = item.to_string(config);
+            if i == self.selected_index {
+                items.push(format!("◀{line}▶"));
+            } else {
+                items.push(line.to_string());
+            }
+        }
+
+        items.into_boxed_slice()
     }
 
     pub fn move_up(&mut self) {
+        if let Some(curr) = self.items.get_mut(self.selected_index) {
+            if let Some(inner) = curr.get_inner_mut() {
+                inner.move_up();
+                return;
+            }
+        }
+
         self.selected_index = core::move_prev_wrapped(self.selected_index, self.items.len() - 1);
     }
 
     pub fn move_down(&mut self) {
+        if let Some(curr) = self.items.get_mut(self.selected_index) {
+            if let Some(inner) = curr.get_inner_mut() {
+                inner.move_down();
+                return;
+            }
+        }
+
         self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
     }
 
@@ -378,6 +508,8 @@ impl AppMenu {
                 conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::Library => None,
+            AppMenuItem::Roms(_) => None,
         }
     }
 
@@ -549,6 +681,8 @@ impl AppMenu {
                 conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::Library => None,
+            AppMenuItem::Roms(_) => None,
         }
     }
 
@@ -560,7 +694,7 @@ impl AppMenu {
     }
 
     pub fn select(&mut self, config: &AppConfig) -> Option<AppCmd> {
-        let item = self.items[self.selected_index];
+        let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
             AppMenuItem::Resume => Some(AppCmd::TogglePause),
@@ -657,6 +791,20 @@ impl AppMenu {
                 conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::Library => {
+                self.next_items(library_menu());
+
+                None
+            }
+            AppMenuItem::Roms(x) => {
+                let (cmd, is_back) = x.select(config);
+
+                if is_back {
+                    self.cancel();
+                }
+
+                cmd
+            }
         }
     }
 
@@ -668,7 +816,7 @@ impl AppMenu {
 }
 
 impl AppMenuItem {
-    pub fn to_string(self, config: &AppConfig) -> String {
+    pub fn to_string(&self, config: &AppConfig) -> String {
         match self {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open Rom".to_string(),
@@ -765,6 +913,8 @@ impl AppMenuItem {
             ),
             AppMenuItem::PixelGrid => format!("Grid{}", get_suffix(config.video.grid_enabled)),
             AppMenuItem::PixelMask => format!("Mask{}", get_suffix(config.video.mask_enabled)),
+            AppMenuItem::Library => "Library".to_string(),
+            AppMenuItem::Roms(x) => format!("Roms ({})", x.items.len()),
         }
     }
 }
@@ -774,5 +924,99 @@ fn get_suffix(enabled: bool) -> &'static str {
         "(●)"
     } else {
         ""
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct LibraryMenu {
+    items: Box<[LibraryItem]>,
+    selected_index: usize,
+    current_page: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct LibraryItem {
+    pub name: String,
+    pub path: PathBuf,
+}
+
+impl LibraryItem {
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        let path = path.into();
+        let name = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| {
+                let mut truncated: String = s.chars().take(12).collect();
+                if s.chars().count() > 12 {
+                    truncated.push_str("..");
+                }
+                truncated
+            })
+            .unwrap();
+
+        Self { name, path }
+    }
+}
+
+impl LibraryMenu {
+    pub fn get_items(&self) -> Box<[String]> {
+        let items: Vec<_> = self
+            .items
+            .iter()
+            .enumerate()
+            .map(|(i, line)| {
+                if i == self.selected_index {
+                    format!("◀{}▶", line.name)
+                } else {
+                    line.name.clone()
+                }
+            })
+            .collect();
+
+        items.into_boxed_slice()
+    }
+
+    pub fn move_up(&mut self) {
+        self.selected_index = core::move_prev_wrapped(self.selected_index, self.items.len() - 1);
+    }
+
+    pub fn move_down(&mut self) {
+        self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
+    }
+
+    pub fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
+        let item = self.items.get(self.selected_index).unwrap();
+
+        if item.name == "Back" {
+            return (None, true);
+        }
+
+        (Some(AppCmd::LoadFile(item.path.clone())), false)
+    }
+}
+
+const MAX_ROMS_PER_PAGE: usize = 12;
+
+impl Default for LibraryMenu {
+    fn default() -> Self {
+        let library = RomsLibrary::get_or_create();
+        let mut items = Vec::with_capacity(12);
+
+        for path in library.get() {
+            items.push(LibraryItem::new(path));
+        }
+
+
+        items.push(LibraryItem {
+            name: "Back".to_string(),
+            path: Default::default(),
+        });
+
+        Self {
+            items: items.into_boxed_slice(),
+            selected_index: 0,
+            current_page: 0,
+        }
     }
 }

@@ -20,7 +20,7 @@ impl RomsLibrary {
 
         Some(path.file_stem()?.to_string_lossy())
     }
-    
+
     pub fn get_last_path(&self) -> Option<&PathBuf> {
         self.last_path.as_ref()
     }
@@ -38,6 +38,10 @@ impl RomsLibrary {
         } else {
             Default::default()
         }
+    }
+
+    pub fn get(&self) -> &HashSet<PathBuf> {
+        &self.recent_paths
     }
 
     pub fn get_path() -> PathBuf {
