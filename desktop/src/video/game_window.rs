@@ -359,10 +359,8 @@ impl GameWindow {
             .unwrap();
     }
 
-    pub fn draw_fps(&mut self, fps: &str, clear: bool) {
-        if clear {
-            fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
-        }
+    pub fn update_fps(&mut self, fps: &str) {
+        fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
 
         draw_text_lines(
             &mut self.fps_texture,
@@ -375,16 +373,16 @@ impl GameWindow {
             2,
             None,
         );
+    }
 
+    pub fn draw_fps(&mut self) {
         self.canvas
             .copy(&self.fps_texture, None, Some(self.fps_rect))
             .unwrap();
     }
 
-    pub fn draw_notification(&mut self, lines: &[&str], clear: bool) {
-        if clear {
-            fill_texture(&mut self.notif_texture, PixelColor::from_u32(0));
-        }
+    pub fn update_notif(&mut self, lines: &[&str]) {
+        fill_texture(&mut self.notif_texture, PixelColor::from_u32(0));
 
         draw_text_lines(
             &mut self.notif_texture,
@@ -397,7 +395,9 @@ impl GameWindow {
             2,
             None,
         );
+    }
 
+    pub fn draw_notif(&mut self) {
         self.canvas
             .copy(&self.notif_texture, None, Some(self.notif_rect))
             .unwrap();

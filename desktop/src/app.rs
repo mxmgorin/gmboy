@@ -189,10 +189,18 @@ impl App {
 
         if lines.is_empty() {
             if let Some((fps, updated)) = fps {
-                self.window.draw_fps(fps, updated);
+                if updated {
+                    self.window.update_fps(fps);
+                }
+
+                self.window.draw_fps();
             }
         } else {
-            self.window.draw_notification(lines, updated);
+            if updated {
+                self.window.update_notif(lines);
+            }
+
+            self.window.draw_notif();
         }
     }
 

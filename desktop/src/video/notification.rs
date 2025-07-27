@@ -61,7 +61,7 @@ impl Notifications {
             std::slice::from_raw_parts(self.buffer.as_ptr() as *const &str, self.buffer.len())
         };
 
-        self.updated = prev_len != self.items.len();
+        self.updated = prev_len != self.items.len() || self.updated;
 
         (result, self.updated)
     }
