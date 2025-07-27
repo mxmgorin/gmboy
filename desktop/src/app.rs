@@ -10,7 +10,7 @@ use core::emu::battery::BatterySave;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
-use core::emu::EmuCallback;
+use core::emu::EmuAudioCallback;
 use core::ppu::palette::LcdPalette;
 use sdl2::{Sdl, VideoSubsystem};
 use std::path::{Path, PathBuf};
@@ -77,15 +77,8 @@ pub struct App {
     notifications: Notifications,
 }
 
-impl EmuCallback for App {
-    fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime) {
-        self.window.draw_buffer(buffer);
-        self.draw_notification(runtime.ppu.get_fps());
-
-        self.window.present();
-    }
-
-    fn update_audio(&mut self, output: &[f32], runtime: &EmuRuntime) {
+impl EmuAudioCallback for App {
+    fn update(&mut self, output: &[f32], runtime: &EmuRuntime) {
         if self.config.audio.mute {
             return;
         }
@@ -162,6 +155,9 @@ impl App {
             } else {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
+                self.window.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
+                self.draw_notification(emu.runtime.ppu.get_fps());
+                self.window.present();
 
                 if let Some(tiles_window) = self.tile_window.as_mut() {
                     tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());

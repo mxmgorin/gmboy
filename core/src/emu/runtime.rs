@@ -3,7 +3,7 @@ use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
-use crate::emu::EmuCallback;
+use crate::emu::EmuAudioCallback;
 use crate::ppu::Ppu;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
@@ -40,7 +40,7 @@ impl EmuRuntime {
     pub fn run_frame(
         &mut self,
         cpu: &mut Cpu,
-        callback: &mut impl EmuCallback,
+        callback: &mut impl EmuAudioCallback,
     ) -> Result<(), String> {
         let start_frame = self.ppu.current_frame;
 
@@ -53,12 +53,10 @@ impl EmuRuntime {
 
             if self.bus.io.apu.buffer_ready() {
                 let output = self.bus.io.apu.get_buffer();
-                callback.update_audio(output, self);
+                callback.update(output, self);
                 self.bus.io.apu.clear_buffer();
             }
         }
-
-        callback.update_video(&self.ppu.pipeline.buffer, self);
 
         Ok(())
     }

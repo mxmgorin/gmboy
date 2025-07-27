@@ -19,9 +19,8 @@ const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
 const CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
 
-pub trait EmuCallback {
-    fn update_video(&mut self, buffer: &[u32], runtime: &EmuRuntime);
-    fn update_audio(&mut self, output: &[f32], runtime: &EmuRuntime);
+pub trait EmuAudioCallback {
+    fn update(&mut self, output: &[f32], runtime: &EmuRuntime);
 }
 
 pub struct Emu {
@@ -48,12 +47,12 @@ impl Emu {
     }
 
     /// Runs emulation for one frame. Return false when paused.
-    pub fn run_frame(&mut self, callback: &mut impl EmuCallback) -> Result<(), String> {
+    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) -> Result<(), String> {
         match self.state {
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
                     self.load_save_state(state);
-                    thread::sleep(Duration::from_millis(333));
+                    thread::sleep(Duration::from_millis(250));
                 }
 
                 self.runtime.run_frame(&mut self.cpu, callback)?;
