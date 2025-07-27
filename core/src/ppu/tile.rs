@@ -41,7 +41,7 @@ pub struct PixelData {
     pub bit: u8,
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub struct Pixel {
     pub color: PixelColor,
     pub color_id: ColorId,
