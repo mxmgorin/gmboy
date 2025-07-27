@@ -1,4 +1,3 @@
-use crate::config::{FrameBlendMode};
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
@@ -11,6 +10,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
+use crate::video::frame_blend::FrameBlendMode;
 
 pub struct GameWindow {
     canvas: Canvas<Window>,

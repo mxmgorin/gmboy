@@ -222,8 +222,8 @@ impl InputHandler {
                     app.update_palette(emu);
                 }
                 ChangeAppConfigCmd::FrameBlendMode(x) => {
-                    app.config.interface.frame_blend_mode = x;
-                    app.window.frame_blend_type = app.config.interface.frame_blend_mode.clone();
+                    app.config.video.frame_blend_mode = x;
+                    app.window.frame_blend_type = app.config.video.frame_blend_mode.clone();
                 }
             },
         }

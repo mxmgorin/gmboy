@@ -7,6 +7,7 @@ pub mod game_window;
 pub mod tiles_window;
 pub mod menu;
 pub mod notification;
+pub mod frame_blend;
 
 const BYTES_PER_PIXEL: usize = 4;
 
