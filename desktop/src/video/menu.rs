@@ -6,6 +6,7 @@ use crate::video::frame_blend::{
 };
 use std::collections::VecDeque;
 use std::mem;
+use crate::video::game_window::LcdProfile;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AppMenuItem {
@@ -67,6 +68,7 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
             items.push(AppMenuItem::FrameBlendAlpha);
             items.push(AppMenuItem::FrameBlendDim);
         }
+        FrameBlendMode::Accurate(_) => {}
     }
 
     items.push(AppMenuItem::Back);
@@ -275,7 +277,8 @@ impl AppMenu {
                     FrameBlendMode::Exponential(_) => {
                         FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
                     }
-                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::None,
+                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::Accurate(LcdProfile::DMG),
+                    FrameBlendMode::Accurate(_) => FrameBlendMode::None
                 };
                 self.items = video_menu(&blend_type);
 
@@ -388,18 +391,19 @@ impl AppMenu {
             AppMenuItem::FrameBlendMode => {
                 let blend_type = match config.video.frame_blend_mode {
                     FrameBlendMode::None => {
-                        FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
+                        FrameBlendMode::Accurate(LcdProfile::DMG)
                     }
                     FrameBlendMode::Linear(_) => {
-                        FrameBlendMode::Additive(AdditiveFrameBlend::default())
+                        FrameBlendMode::None
                     }
                     FrameBlendMode::Additive(_) => {
-                        FrameBlendMode::Exponential(ExponentialFrameBlend::default())
+                        FrameBlendMode::Linear(LinearFrameBlend::default())
                     }
                     FrameBlendMode::Exponential(_) => {
-                        FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
+                        FrameBlendMode::Additive(AdditiveFrameBlend::default())
                     }
-                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::None,
+                    FrameBlendMode::GammaCorrected(_) => FrameBlendMode::Exponential(ExponentialFrameBlend::default()),
+                    FrameBlendMode::Accurate(_) => FrameBlendMode::GammaCorrected(GammaCorrectedFrameBlend::default())
                 };
 
                 self.items = video_menu(&blend_type);

@@ -223,7 +223,7 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::FrameBlendMode(x) => {
                     app.config.video.frame_blend_mode = x;
-                    app.window.frame_blend_type = app.config.video.frame_blend_mode.clone();
+                    app.window.frame_blend_mode = app.config.video.frame_blend_mode.clone();
                 }
             },
         }

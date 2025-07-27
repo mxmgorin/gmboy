@@ -2,6 +2,7 @@ use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
 use crate::video::fill_texture;
+use crate::video::frame_blend::FrameBlendMode;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -10,7 +11,19 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
-use crate::video::frame_blend::FrameBlendMode;
+use serde::{Deserialize, Serialize};
+
+pub struct PixelGrid {
+    pub enabled: bool,
+    pub strength: f32, // 0.0 - 1.0 darkness
+    pub softness: f32, // 0.0 = sharp edges
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum LcdProfile {
+    DMG,    // original Game Boy (greenish)
+    Pocket, // Game Boy Pocket (neutral B/W)
+}
 
 pub struct GameWindow {
     canvas: Canvas<Window>,
@@ -22,7 +35,8 @@ pub struct GameWindow {
     pub bg_color: PixelColor,
     font_size: FontSize,
     prev_framebuffer: Box<[u32]>,
-    pub frame_blend_type: FrameBlendMode,
+    pub frame_blend_mode: FrameBlendMode,
+    pub grid: PixelGrid,
 }
 
 impl GameWindow {
@@ -52,7 +66,7 @@ impl GameWindow {
             .unwrap();
         texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let (canvas_win_width, canvas_win_height) = canvas.window().size();
-        let notif_rect = Rect::new(0, 0, win_width / 4, win_width / 4);
+        let notif_rect = Rect::new(0, 0, win_width / 3, win_width / 3);
         let mut notif_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
@@ -72,125 +86,228 @@ impl GameWindow {
             bg_color,
             font_size: FontSize::Small,
             prev_framebuffer: Box::new([]),
-            frame_blend_type,
+            frame_blend_mode: frame_blend_type,
+            grid: PixelGrid {
+                enabled: false,
+                strength: 0.3, // try 0.3-0.5 for visibility
+                softness: 1.5, // 1.0 = sharp, >2.0 = smoother
+            },
         })
     }
 
-    fn frame_blend(&mut self, pixel_buffer: &[u32]) -> bool {
+    fn apply_pixel_grid(&self, i: usize, w: usize, color: (f32, f32, f32)) -> (f32, f32, f32) {
+        let grid = &self.grid;
+        if !grid.enabled { return color; }
+
+        let (mut r, mut g, mut b) = color;
+        let strength = grid.strength;
+        let softness = grid.softness;
+
+        // define how many screen pixels one GB pixel uses
+        let scale = 4.0;
+
+        // Coordinates in "screen pixels"
+        let px = ((i % w) as f32) * scale;
+        let py = ((i / w) as f32) * scale;
+
+        // Position inside the scaled pixel (0..1)
+        let subx = (px / scale) % 1.0;
+        let suby = (py / scale) % 1.0;
+
+        // Distance to nearest edge
+        let edge_dist = (subx.min(1.0 - subx) + suby.min(1.0 - suby)) * 2.0;
+        let edge = edge_dist.powf(softness);
+
+        // Darken edges
+        let mask = (1.0 - edge * strength).clamp(0.3, 1.0);
+
+        r *= mask;
+        g *= mask;
+        b *= mask;
+
+        (r, g, b)
+    }
+
+    pub fn draw_buffer(&mut self, pixel_buffer: &[u32]) {
+        let w = LCD_X_RES as usize;
+        let h = LCD_Y_RES as usize;
+
         if self.prev_framebuffer.len() != pixel_buffer.len() {
             self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
         }
-
-        let dim = self.frame_blend_type.get_dim();
 
         for (i, curr) in pixel_buffer.iter().enumerate() {
             let curr = *curr;
             let prev = self.prev_framebuffer[i];
 
-            let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
+            // Extract RGB
+            let (cr, cg, cb) = ((curr >> 16) & 0xFF,
+                                (curr >> 8) & 0xFF,
+                                curr & 0xFF);
+            let (pr, pg, pb) = ((prev >> 16) & 0xFF,
+                                (prev >> 8) & 0xFF,
+                                prev & 0xFF);
 
-            let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
+            // --- Use ghosting mode to get blended pixel ---
+            let (r, g, b) = self.compute_pixel(i, w, h, (pr, pg, pb), (cr, cg, cb));
 
-            let (r, g, b) = match &self.frame_blend_type {
-                FrameBlendMode::None => return false,
-                FrameBlendMode::Linear(x) => {
-                    let alpha = x.alpha;
-                    (
-                        ((cr as f32 * alpha + pr as f32 * (1.0 - alpha)) as u32),
-                        ((cg as f32 * alpha + pg as f32 * (1.0 - alpha)) as u32),
-                        ((cb as f32 * alpha + pb as f32 * (1.0 - alpha)) as u32),
-                    )
-                }
-                FrameBlendMode::Exponential(x) => {
-                    let fr = (pr as f32 * x.fade) as u32;
-                    let fg = (pg as f32 * x.fade) as u32;
-                    let fb = (pb as f32 * x.fade) as u32;
-
-                    if cr | cg | cb == 0 {
-                        (fr, fg, fb)
-                    } else {
-                        (cr, cg, cb)
-                    }
-                }
-                FrameBlendMode::Additive(x) => {
-                    let fr = (pr as f32 * x.fade + cr as f32 * x.alpha).min(255.0) as u32;
-                    let fg = (pg as f32 * x.fade + cg as f32 * x.alpha).min(255.0) as u32;
-                    let fb = (pb as f32 * x.fade + cb as f32 * x.alpha).min(255.0) as u32;
-                    (fr, fg, fb)
-                }
-                FrameBlendMode::GammaCorrected(x) => {
-                    // convert to linear
-                    let (lr, lg, lb) = (
-                        srgb_to_linear(pr as u8),
-                        srgb_to_linear(pg as u8),
-                        srgb_to_linear(pb as u8),
-                    );
-                    let (crl, cgl, cbl) = (
-                        srgb_to_linear(cr as u8),
-                        srgb_to_linear(cg as u8),
-                        srgb_to_linear(cb as u8),
-                    );
-
-                    // blend in linear space
-                    let br = lr * x.fade + crl * x.alpha;
-                    let bg = lg * x.fade + cgl * x.alpha;
-                    let bb = lb * x.fade + cbl * x.alpha;
-
-                    // convert back
-                    (
-                        linear_to_srgb(br) as u32,
-                        linear_to_srgb(bg) as u32,
-                        linear_to_srgb(bb) as u32,
-                    )
-                }
-            };
-
-            // apply final dim factor
-            let rf = ((r as f32) * dim).min(255.0) as u32;
-            let gf = ((g as f32) * dim).min(255.0) as u32;
-            let bf = ((b as f32) * dim).min(255.0) as u32;
-
-            self.prev_framebuffer[i] = (255 << 24) | (rf << 16) | (gf << 8) | bf;
+            // Store result
+            self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
         }
 
-        true
-    }
-
-    pub fn draw_buffer(&mut self, pixel_buffer: &[u32]) {
-        let pixel_buffer = if self.frame_blend(pixel_buffer) {
-            &self.prev_framebuffer
-        } else {
-            pixel_buffer
-        };
-
+        // --- Upload framebuffer to SDL2 texture ---
         self.canvas.clear();
-
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
                 let pitch_u32 = pitch / 4;
-                let buffer_u32 = unsafe {
-                    std::slice::from_raw_parts_mut(
-                        buffer.as_mut_ptr() as *mut u32,
-                        buffer.len() / 4,
-                    )
+                let buf_u32 = unsafe {
+                    std::slice::from_raw_parts_mut(buffer.as_mut_ptr() as *mut u32, buffer.len() / 4)
                 };
 
-                if pitch_u32 == LCD_X_RES as usize {
-                    buffer_u32.copy_from_slice(pixel_buffer);
-                } else {
-                    for y in 0..LCD_Y_RES as usize {
-                        let dst = y * pitch_u32;
-                        let src = y * LCD_X_RES as usize;
-                        buffer_u32[dst..dst + LCD_X_RES as usize]
-                            .copy_from_slice(&pixel_buffer[src..src + LCD_X_RES as usize]);
-                    }
+                for y in 0..h {
+                    let dst = y * pitch_u32;
+                    let src = y * w;
+                    buf_u32[dst..dst + w].copy_from_slice(&self.prev_framebuffer[src..src + w]);
                 }
             })
             .unwrap();
 
-        self.canvas
-            .copy(&self.texture, None, Some(self.game_rect))
-            .unwrap();
+        self.canvas.copy(&self.texture, None, Some(self.game_rect)).unwrap();
+    }
+
+    pub fn compute_pixel(
+        &self,
+        i: usize,
+        w: usize,
+        h: usize,
+        prev: (u32, u32, u32),
+        curr: (u32, u32, u32),
+    ) -> (u32, u32, u32) {
+        let (pr, pg, pb) = prev;
+        let (cr, cg, cb) = curr;
+
+        // Convert to linear [0..1]
+        let pr_lin = pr as f32 / 255.0;
+        let pg_lin = pg as f32 / 255.0;
+        let pb_lin = pb as f32 / 255.0;
+
+        let cr_lin = cr as f32 / 255.0;
+        let cg_lin = cg as f32 / 255.0;
+        let cb_lin = cb as f32 / 255.0;
+
+        // Final RGB values
+        let (mut lr, mut lg, mut lb) = match &self.frame_blend_mode {
+            FrameBlendMode::None => (cr_lin, cg_lin, cb_lin),
+            FrameBlendMode::Linear(x) => {
+                let a = x.alpha;
+                (
+                    pr_lin * (1.0 - a) + cr_lin * a,
+                    pg_lin * (1.0 - a) + cg_lin * a,
+                    pb_lin * (1.0 - a) + cb_lin * a,
+                )
+            }
+
+            FrameBlendMode::Exponential(x) => {
+                let fade = x.fade;
+                (
+                    pr_lin * fade + cr_lin * (1.0 - fade),
+                    pg_lin * fade + cg_lin * (1.0 - fade),
+                    pb_lin * fade + cb_lin * (1.0 - fade),
+                )
+            }
+            FrameBlendMode::Additive(x) => {
+                let fade = x.fade;
+                (
+                    (pr_lin + cr_lin).min(1.0) * fade,
+                    (pg_lin + cg_lin).min(1.0) * fade,
+                    (pb_lin + cb_lin).min(1.0) * fade,
+                )
+            }
+
+            FrameBlendMode::GammaCorrected(x) => {
+                let gamma = 2.2;
+                let fade = x.fade;
+
+                fn to_linear(v: f32, g: f32) -> f32 { v.powf(g) }
+                fn to_srgb(v: f32, g: f32) -> f32 { v.powf(1.0 / g) }
+
+                let pr_l = to_linear(pr_lin, gamma);
+                let pg_l = to_linear(pg_lin, gamma);
+                let pb_l = to_linear(pb_lin, gamma);
+
+                let cr_l = to_linear(cr_lin, gamma);
+                let cg_l = to_linear(cg_lin, gamma);
+                let cb_l = to_linear(cb_lin, gamma);
+
+                (
+                    to_srgb(pr_l * fade + cr_l * (1.0 - fade), gamma),
+                    to_srgb(pg_l * fade + cg_l * (1.0 - fade), gamma),
+                    to_srgb(pb_l * fade + cb_l * (1.0 - fade), gamma),
+                )
+            }
+
+            FrameBlendMode::Accurate(x) => {
+                let (rise, fall, bleed, tint) = match x {
+                    LcdProfile::DMG => (0.35, 0.08, 0.15, (0.78, 0.86, 0.71)),
+                    LcdProfile::Pocket => (0.5, 0.15, 0.07, (1.0, 1.0, 1.0)),
+                };
+
+                // Scanline timing & jitter
+                let y = i / w;
+                let jitter = ((y as f32).sin() * 0.003) + 1.0;
+                let scan_delay = (1.0 - (y as f32 / h as f32) * 0.2) * jitter;
+
+                fn lcd_step(prev: f32, curr: f32, rise: f32, fall: f32, delay: f32) -> f32 {
+                    let rate = if curr > prev { rise } else { fall };
+                    prev + (curr - prev) * rate * delay
+                }
+
+                // LCD response curve
+                let mut lr = lcd_step(pr_lin, cr_lin, rise, fall, scan_delay);
+                let mut lg = lcd_step(pg_lin, cg_lin, rise, fall, scan_delay);
+                let mut lb = lcd_step(pb_lin, cb_lin, rise, fall, scan_delay);
+
+                // Pixel bleeding (left + top)
+                let left_idx = if i % w == 0 { i } else { i - 1 };
+                let top_idx = if y == 0 { i } else { i - w };
+
+                let left = self.prev_framebuffer[left_idx];
+                let top = self.prev_framebuffer[top_idx];
+
+                let lpr = ((left >> 16) & 0xFF) as f32 / 255.0;
+                let lpg = ((left >> 8) & 0xFF) as f32 / 255.0;
+                let lpb = (left & 0xFF) as f32 / 255.0;
+
+                let tpr = ((top >> 16) & 0xFF) as f32 / 255.0;
+                let tpg = ((top >> 8) & 0xFF) as f32 / 255.0;
+                let tpb = (top & 0xFF) as f32 / 255.0;
+
+                lr = lr * (1.0 - bleed) + ((lpr + tpr) * 0.5) * bleed;
+                lg = lg * (1.0 - bleed) + ((lpg + tpg) * 0.5) * bleed;
+                lb = lb * (1.0 - bleed) + ((lpb + tpb) * 0.5) * bleed;
+
+                // Tint
+                lr *= tint.0;
+                lg *= tint.1;
+                lb *= tint.2;
+
+                (lr, lg, lb)
+            }
+        };
+
+        (lr, lg, lb) = self.apply_pixel_grid(i, w, (lr, lg, lb));
+
+        let dim = self.frame_blend_mode.get_dim();
+        lr *= dim;
+        lg *= dim;
+        lb *= dim;
+
+        // Convert back to 0..255
+        (
+            (lr * 255.0).clamp(0.0, 255.0) as u32,
+            (lg * 255.0).clamp(0.0, 255.0) as u32,
+            (lb * 255.0).clamp(0.0, 255.0) as u32,
+        )
     }
 
     pub fn draw_text_lines(&mut self, lines: &[&str], center: bool, align_center: bool) {
@@ -337,13 +454,4 @@ fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let y = ((window_height - new_height) / 2) as i32;
 
     Rect::new(x, y, new_width, new_height)
-}
-
-fn srgb_to_linear(c: u8) -> f32 {
-    let cf = c as f32 / 255.0;
-    cf.powf(2.2)
-}
-
-fn linear_to_srgb(c: f32) -> u8 {
-    (c.powf(1.0 / 2.2) * 255.0).min(255.0).max(0.0) as u8
 }

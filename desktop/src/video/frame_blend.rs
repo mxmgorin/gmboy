@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::video::game_window::LcdProfile;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrameBlendMode {
@@ -7,6 +8,7 @@ pub enum FrameBlendMode {
     Additive(AdditiveFrameBlend),
     Exponential(ExponentialFrameBlend),
     GammaCorrected(GammaCorrectedFrameBlend),
+    Accurate(LcdProfile),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -46,6 +48,7 @@ impl FrameBlendMode {
             FrameBlendMode::None => "None",
             FrameBlendMode::Exponential(_) => "Exponential",
             FrameBlendMode::GammaCorrected(_) => "Gamma",
+            FrameBlendMode::Accurate(_) => "Accurate"
         }
     }
 
@@ -56,6 +59,7 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => x.alpha = core::change_f32_rounded(x.alpha, v).clamp(0.0, 1.0),
             FrameBlendMode::Exponential(_) => {},
             FrameBlendMode::GammaCorrected(x) => x.alpha = core::change_f32_rounded(x.alpha, v).clamp(0.0, 1.0),
+            FrameBlendMode::Accurate(_) => {}
         }
     }
 
@@ -66,6 +70,7 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0),
             FrameBlendMode::Exponential(x) => x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0),
             FrameBlendMode::GammaCorrected(x) => x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0),
+            FrameBlendMode::Accurate(_) => {}
         }
     }
 
@@ -76,6 +81,7 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => x.dim = core::change_f32_rounded(x.dim, v).clamp(0.0, 1.0),
             FrameBlendMode::Exponential(x) => x.dim = core::change_f32_rounded(x.dim, v).clamp(0.0, 1.0),
             FrameBlendMode::GammaCorrected(x) => x.dim = core::change_f32_rounded(x.dim, v).clamp(0.0, 1.0),
+            FrameBlendMode::Accurate(_) => {}
         }
     }
 
@@ -86,6 +92,7 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => x.alpha,
             FrameBlendMode::Exponential(_) => 0.0,
             FrameBlendMode::GammaCorrected(x) => x.alpha,
+            FrameBlendMode::Accurate(_) => 0.0
         }
     }
 
@@ -96,16 +103,18 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => x.fade,
             FrameBlendMode::Exponential(x) => x.fade,
             FrameBlendMode::GammaCorrected(x) => x.fade,
+            FrameBlendMode::Accurate(_) => 0.0
         }
     }
 
     pub fn get_dim(&self) -> f32 {
         match self {
-            FrameBlendMode::None => 0.0,
+            FrameBlendMode::None => 1.0,
             FrameBlendMode::Linear(x) => x.dim,
             FrameBlendMode::Additive(x) => x.dim,
             FrameBlendMode::Exponential(x) => x.dim,
             FrameBlendMode::GammaCorrected(x) => x.dim,
+            FrameBlendMode::Accurate(_) => 1.0
         }
     }
 }
