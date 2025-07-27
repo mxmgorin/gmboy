@@ -33,6 +33,13 @@ pub struct InputConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoConfig {
     pub frame_blend_mode: FrameBlendMode,
+    pub dim: f32,
+}
+
+impl VideoConfig {
+    pub fn change_dim(&mut self, v: f32) {
+        self.dim = core::change_f32_rounded(self.dim, v).clamp(0.0, 1.0)
+    }
 }
 
 impl AppConfig {
@@ -148,6 +155,7 @@ impl Default for AppConfig {
             },
             video: VideoConfig {
                 frame_blend_mode: FrameBlendMode::None,
+                dim: 1.0,
             },
         }
     }

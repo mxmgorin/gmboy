@@ -57,19 +57,22 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
     match frame_blend_type {
         FrameBlendMode::None => {}
         FrameBlendMode::Linear(_) => {
-            items.push(AppMenuItem::FrameBlendAlpha);
             items.push(AppMenuItem::FrameBlendDim);
+            items.push(AppMenuItem::FrameBlendAlpha);
         }
         FrameBlendMode::Exponential(_) => {
-            items.push(AppMenuItem::FrameBlendFade);
             items.push(AppMenuItem::FrameBlendDim);
+            items.push(AppMenuItem::FrameBlendFade);
         }
         FrameBlendMode::GammaCorrected(_) | FrameBlendMode::Additive(_) => {
+            items.push(AppMenuItem::FrameBlendDim);
             items.push(AppMenuItem::FrameBlendFade);
             items.push(AppMenuItem::FrameBlendAlpha);
-            items.push(AppMenuItem::FrameBlendDim);
         }
-        FrameBlendMode::Accurate(_) => items.push(AppMenuItem::FrameBlendProfile),
+        FrameBlendMode::Accurate(_) => {
+            items.push(AppMenuItem::FrameBlendDim);
+            items.push(AppMenuItem::FrameBlendProfile);
+        }
     }
 
     items.push(AppMenuItem::Back);
@@ -267,7 +270,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
             AppMenuItem::FrameBlendMode => {
-                let blend_type = match config.video.frame_blend_mode {
+                let mode = match config.video.frame_blend_mode {
                     FrameBlendMode::None => FrameBlendMode::Linear(LinearFrameBlend::default()),
                     FrameBlendMode::Linear(_) => {
                         FrameBlendMode::Additive(AdditiveFrameBlend::default())
@@ -283,50 +286,42 @@ impl AppMenu {
                     }
                     FrameBlendMode::Accurate(_) => FrameBlendMode::None,
                 };
-                self.items = video_menu(&blend_type);
+                self.items = video_menu(&mode);
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode = mode;
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    blend_type,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendAlpha => {
-                let mut mode = config.video.frame_blend_mode.clone();
-                mode.change_alpha(0.05);
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode.change_alpha(0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendFade => {
-                let mut mode = config.video.frame_blend_mode.clone();
-                mode.change_fade(0.05);
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode.change_fade(0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendDim => {
-                let mut mode = config.video.frame_blend_mode.clone();
-                mode.change_dim(0.05);
+                let mut conf = config.video.clone();
+                conf.change_dim(0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::VideoMenu => None,
             AppMenuItem::FrameBlendProfile => {
-                let mut mode = config.video.frame_blend_mode.clone();
+                let mut conf = config.video.clone();
 
-                if let FrameBlendMode::Accurate(x) = &mut mode {
+                if let FrameBlendMode::Accurate(x) = &mut conf.frame_blend_mode {
                     match x {
                         AccurateBlendProfile::DMG => *x = AccurateBlendProfile::Pocket,
                         AccurateBlendProfile::Pocket => *x = AccurateBlendProfile::DMG,
                     }
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
         }
     }
@@ -398,15 +393,13 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
             }
             AppMenuItem::FrameBlendAlpha => {
-                let mut mode = config.video.frame_blend_mode.clone();
-                mode.change_alpha(-0.05);
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode.change_alpha(-0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendMode => {
-                let blend_type = match config.video.frame_blend_mode {
+                let blend_mode = match config.video.frame_blend_mode {
                     FrameBlendMode::None => FrameBlendMode::Accurate(AccurateBlendProfile::DMG),
                     FrameBlendMode::Linear(_) => FrameBlendMode::None,
                     FrameBlendMode::Additive(_) => {
@@ -423,42 +416,36 @@ impl AppMenu {
                     }
                 };
 
-                self.items = video_menu(&blend_type);
+                self.items = video_menu(&blend_mode);
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode = blend_mode;
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    blend_type,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendFade => {
-                let mut mode = config.video.frame_blend_mode.clone();
-                mode.change_fade(-0.05);
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode.change_fade(-0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendDim => {
-                let mut mode = config.video.frame_blend_mode.clone();
-                mode.change_dim(-0.05);
+                let mut conf = config.video.clone();
+                conf.change_dim(-0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::VideoMenu => None,
             AppMenuItem::FrameBlendProfile => {
-                let mut mode = config.video.frame_blend_mode.clone();
+                let mut conf = config.video.clone();
 
-                if let FrameBlendMode::Accurate(x) = &mut mode {
+                if let FrameBlendMode::Accurate(x) = &mut conf.frame_blend_mode {
                     match x {
                         AccurateBlendProfile::DMG => *x = AccurateBlendProfile::Pocket,
                         AccurateBlendProfile::Pocket => *x = AccurateBlendProfile::DMG,
                     }
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameBlendMode(
-                    mode,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
         }
     }
@@ -640,11 +627,14 @@ impl AppMenuItem {
                 format!("Frame Fade({})", config.video.frame_blend_mode.get_fade())
             }
             AppMenuItem::FrameBlendDim => {
-                format!("Frame Dim({})", config.video.frame_blend_mode.get_dim())
+                format!("Frame Dim({})", config.video.dim)
             }
             AppMenuItem::VideoMenu => "Video".to_string(),
             AppMenuItem::FrameBlendProfile => {
-                format!("Blend Profile({})", config.video.frame_blend_mode.get_profile())
+                format!(
+                    "Blend Profile({})",
+                    config.video.frame_blend_mode.get_profile()
+                )
             }
         }
     }

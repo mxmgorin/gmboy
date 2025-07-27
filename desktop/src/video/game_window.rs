@@ -12,6 +12,7 @@ use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use sdl2::VideoSubsystem;
 use serde::{Deserialize, Serialize};
+use crate::config::VideoConfig;
 
 pub struct PixelGrid {
     pub enabled: bool,
@@ -69,7 +70,7 @@ pub struct GameWindow {
     pub bg_color: PixelColor,
     font_size: FontSize,
     prev_framebuffer: Box<[u32]>,
-    pub frame_blend_mode: FrameBlendMode,
+    pub config: VideoConfig,
     pub grid: PixelGrid,
 }
 
@@ -79,7 +80,7 @@ impl GameWindow {
         video_subsystem: &VideoSubsystem,
         text_color: PixelColor,
         bg_color: PixelColor,
-        frame_blend_type: FrameBlendMode,
+        config: VideoConfig,
     ) -> Result<Self, String> {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
@@ -120,7 +121,7 @@ impl GameWindow {
             bg_color,
             font_size: FontSize::Small,
             prev_framebuffer: Box::new([]),
-            frame_blend_mode: frame_blend_type,
+            config,
             grid: PixelGrid {
                 enabled: false,
                 strength: 0.3, // try 0.3-0.5 for visibility
@@ -168,7 +169,7 @@ impl GameWindow {
         let w = LCD_X_RES as usize;
         let h = LCD_Y_RES as usize;
 
-        let pixel_buffer = if let FrameBlendMode::None = self.frame_blend_mode {
+        let pixel_buffer = if let FrameBlendMode::None = self.config.frame_blend_mode {
             pixel_buffer
         } else {
             if self.prev_framebuffer.len() != pixel_buffer.len() {
@@ -238,7 +239,7 @@ impl GameWindow {
         let cb_lin = cb as f32 / 255.0;
 
         // Final RGB values
-        let (mut lr, mut lg, mut lb) = match &self.frame_blend_mode {
+        let (mut lr, mut lg, mut lb) = match &self.config.frame_blend_mode {
             FrameBlendMode::None => (cr_lin, cg_lin, cb_lin),
             FrameBlendMode::Linear(x) => {
                 let a = x.alpha;
@@ -344,7 +345,7 @@ impl GameWindow {
 
         (lr, lg, lb) = self.apply_pixel_grid(i, w, (lr, lg, lb));
 
-        let dim = self.frame_blend_mode.get_dim();
+        let dim = self.config.dim;
         lr *= dim;
         lg *= dim;
         lb *= dim;

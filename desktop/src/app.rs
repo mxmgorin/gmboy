@@ -1,5 +1,5 @@
 use crate::audio::AppAudio;
-use crate::config::{AppConfig};
+use crate::config::{AppConfig, VideoConfig};
 use crate::input::handler::InputHandler;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
@@ -16,7 +16,6 @@ use sdl2::{Sdl, VideoSubsystem};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use crate::video::frame_blend::FrameBlendMode;
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
@@ -56,7 +55,7 @@ pub enum ChangeAppConfigCmd {
     SaveIndex(usize),
     LoadIndex(usize),
     PaletteInverted,
-    FrameBlendMode(FrameBlendMode),
+    Video(VideoConfig),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -116,7 +115,7 @@ impl App {
             &video_subsystem,
             colors[0],
             colors[3],
-            config.video.frame_blend_mode.clone()
+            config.video.clone()
         )?;
         game_window.set_fullscreen(config.interface.is_fullscreen);
 
