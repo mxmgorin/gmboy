@@ -156,8 +156,8 @@ pub struct AdditiveFrameBlend {
 impl Default for AdditiveFrameBlend {
     fn default() -> Self {
         Self {
-            fade: 0.25,
-            alpha: 0.75,
+            fade: 0.65,
+            alpha: 0.35,
             dim: 1.0,
         }
     }

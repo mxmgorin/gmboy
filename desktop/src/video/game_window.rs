@@ -258,12 +258,16 @@ impl GameWindow {
                 )
             }
             FrameBlendMode::Additive(x) => {
-                let fade = x.fade;
-                (
-                    (pr_lin + cr_lin).min(1.0) * fade,
-                    (pg_lin + cg_lin).min(1.0) * fade,
-                    (pb_lin + cb_lin).min(1.0) * fade,
-                )
+                let mut fr = pr_lin * x.fade + cr_lin * x.alpha;
+                let mut fg = pg_lin * x.fade + cg_lin * x.alpha;
+                let mut fb = pb_lin * x.fade + cb_lin * x.alpha;
+
+                // Clamp to prevent overexposure
+                fr = fr.min(1.0);
+                fg = fg.min(1.0);
+                fb = fb.min(1.0);
+
+                (fr, fg, fb)
             }
 
             FrameBlendMode::GammaCorrected(x) => {
