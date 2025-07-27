@@ -34,6 +34,8 @@ pub struct InputConfig {
 pub struct VideoConfig {
     pub frame_blend_mode: FrameBlendMode,
     pub dim: f32,
+    pub grid_enabled: bool,
+    pub mask_enabled: bool,
 }
 
 impl VideoConfig {
@@ -156,6 +158,8 @@ impl Default for AppConfig {
             video: VideoConfig {
                 frame_blend_mode: FrameBlendMode::None,
                 dim: 1.0,
+                grid_enabled: true,
+                mask_enabled: true,
             },
         }
     }

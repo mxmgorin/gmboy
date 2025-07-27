@@ -1,6 +1,9 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::AppConfig;
-use crate::video::frame_blend::{AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend, LinearFrameBlend};
+use crate::video::frame_blend::{
+    AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
+    LinearFrameBlend,
+};
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use std::collections::VecDeque;
 use std::mem;
@@ -48,10 +51,14 @@ pub enum AppMenuItem {
     FrameBlendRise,
     FrameBlendFall,
     FrameBlendBleed,
+    PixelGrid,
+    PixelMask,
 }
 
 fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
-    let mut items = Vec::with_capacity(7);
+    let mut items = Vec::with_capacity(9);
+    items.push(AppMenuItem::PixelGrid);
+    items.push(AppMenuItem::PixelMask);
     items.push(AppMenuItem::FrameBlendMode);
 
     match frame_blend_type {
@@ -75,7 +82,6 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
             items.push(AppMenuItem::FrameBlendFall);
             items.push(AppMenuItem::FrameBlendRise);
             items.push(AppMenuItem::FrameBlendBleed);
-
         }
     }
 
@@ -325,7 +331,7 @@ impl AppMenu {
                 }
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
-            },
+            }
             AppMenuItem::FrameBlendRise => {
                 let mut conf = config.video.clone();
 
@@ -360,6 +366,16 @@ impl AppMenu {
                     conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::PixelGrid => {
+                let mut conf = config.video.clone();
+                conf.grid_enabled = !conf.grid_enabled;
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::PixelMask => {
+                let mut conf = config.video.clone();
+                conf.mask_enabled = !conf.mask_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
         }
@@ -523,6 +539,16 @@ impl AppMenu {
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::PixelGrid => {
+                let mut conf = config.video.clone();
+                conf.grid_enabled = !conf.grid_enabled;
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::PixelMask => {
+                let mut conf = config.video.clone();
+                conf.mask_enabled = !conf.mask_enabled;
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
         }
     }
 
@@ -621,6 +647,16 @@ impl AppMenu {
             AppMenuItem::FrameBlendRise
             | AppMenuItem::FrameBlendFall
             | AppMenuItem::FrameBlendBleed => None,
+            AppMenuItem::PixelGrid => {
+                let mut conf = config.video.clone();
+                conf.grid_enabled = !conf.grid_enabled;
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::PixelMask => {
+                let mut conf = config.video.clone();
+                conf.mask_enabled = !conf.mask_enabled;
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
         }
     }
 
@@ -727,6 +763,8 @@ impl AppMenuItem {
                 "Frame Bleed({})",
                 config.video.frame_blend_mode.get_profile().unwrap().bleed
             ),
+            AppMenuItem::PixelGrid => format!("Grid{}", get_suffix(config.video.grid_enabled)),
+            AppMenuItem::PixelMask => format!("Mask{}", get_suffix(config.video.mask_enabled)),
         }
     }
 }

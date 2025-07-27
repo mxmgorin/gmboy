@@ -159,12 +159,17 @@ impl GameWindow {
         self.canvas
             .copy(&self.texture, None, Some(self.game_rect))
             .unwrap();
-        self.canvas
-            .copy(&self.grid_texture, None, Some(self.game_rect))
-            .unwrap();
-        self.canvas
-            .copy(&self.subpixel_texture, None, Some(self.game_rect))
-            .unwrap();
+        if self.config.grid_enabled {
+            self.canvas
+                .copy(&self.grid_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
+        if self.config.mask_enabled {
+            self.canvas
+                .copy(&self.subpixel_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
     }
 
     pub fn compute_pixel(
