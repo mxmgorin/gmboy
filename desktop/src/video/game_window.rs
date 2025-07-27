@@ -15,8 +15,8 @@ use sdl2::VideoSubsystem;
 pub struct GameWindow {
     canvas: Canvas<Window>,
     texture: Texture,
-    notification_texture: Texture,
-    notification_rect: Rect,
+    notif_texture: Texture,
+    notif_rect: Rect,
     game_rect: Rect,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
@@ -52,20 +52,21 @@ impl GameWindow {
             .unwrap();
         texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let (canvas_win_width, canvas_win_height) = canvas.window().size();
-        let mut pop_texture = texture_creator
+        let notif_rect = Rect::new(0, 0, win_width / 4, win_width / 4);
+        let mut notif_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
-                canvas_win_width,
-                canvas_win_height,
+                notif_rect.width(),
+                notif_rect.height(),
             )
             .unwrap();
-        pop_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+        notif_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(Self {
             canvas,
             texture,
-            notification_texture: pop_texture,
-            notification_rect: Rect::new(0, 0, canvas_win_width, canvas_win_height),
+            notif_texture,
+            notif_rect,
             game_rect: new_scaled_rect(canvas_win_width, canvas_win_height),
             text_color,
             bg_color,
@@ -249,9 +250,9 @@ impl GameWindow {
     }
 
     pub fn draw_notification(&mut self, lines: &[&str]) {
-        fill_texture(&mut self.notification_texture, PixelColor::from_u32(0));
+        fill_texture(&mut self.notif_texture, PixelColor::from_u32(0));
         draw_text_lines(
-            &mut self.notification_texture,
+            &mut self.notif_texture,
             lines,
             self.text_color,
             Some(self.bg_color),
@@ -264,9 +265,9 @@ impl GameWindow {
 
         self.canvas
             .copy(
-                &self.notification_texture,
+                &self.notif_texture,
                 None,
-                Some(self.notification_rect),
+                Some(self.notif_rect),
             )
             .unwrap();
     }

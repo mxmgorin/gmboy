@@ -108,13 +108,13 @@ impl App {
         config: AppConfig,
         palettes: Box<[LcdPalette]>,
     ) -> Result<Self, String> {
-        let palette = config.interface.get_palette_colors(&palettes);
+        let colors = config.interface.get_palette_colors(&palettes);
         let video_subsystem = sdl.video()?;
         let mut game_window = GameWindow::new(
             config.interface.scale as u32,
             &video_subsystem,
-            palette[0],
-            palette[3],
+            colors[0],
+            colors[3],
             config.interface.frame_blend_type.clone()
         )?;
         game_window.set_fullscreen(config.interface.is_fullscreen);
