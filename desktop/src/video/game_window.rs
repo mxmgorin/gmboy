@@ -168,26 +168,31 @@ impl GameWindow {
         let w = LCD_X_RES as usize;
         let h = LCD_Y_RES as usize;
 
-        if self.prev_framebuffer.len() != pixel_buffer.len() {
-            self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
-        }
+        let pixel_buffer = if let FrameBlendMode::None = self.frame_blend_mode {
+            pixel_buffer
+        } else {
+            if self.prev_framebuffer.len() != pixel_buffer.len() {
+                self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
+            }
 
-        for (i, curr) in pixel_buffer.iter().enumerate() {
-            let curr = *curr;
-            let prev = self.prev_framebuffer[i];
+            for (i, curr) in pixel_buffer.iter().enumerate() {
+                let curr = *curr;
+                let prev = self.prev_framebuffer[i];
 
-            // Extract RGB
-            let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
-            let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
+                // Extract RGB
+                let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
+                let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
 
-            // --- Use ghosting mode to get blended pixel ---
-            let (r, g, b) = self.compute_pixel(i, w, h, (pr, pg, pb), (cr, cg, cb));
+                // --- Use ghosting mode to get blended pixel ---
+                let (r, g, b) = self.compute_pixel(i, w, h, (pr, pg, pb), (cr, cg, cb));
 
-            // Store result
-            self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
-        }
+                // Store result
+                self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
+            }
 
-        // --- Upload framebuffer to SDL2 texture ---
+            &self.prev_framebuffer
+        };
+
         self.canvas.clear();
         self.texture
             .with_lock(None, |buffer: &mut [u8], pitch: usize| {
@@ -202,7 +207,7 @@ impl GameWindow {
                 for y in 0..h {
                     let dst = y * pitch_u32;
                     let src = y * w;
-                    buf_u32[dst..dst + w].copy_from_slice(&self.prev_framebuffer[src..src + w]);
+                    buf_u32[dst..dst + w].copy_from_slice(&pixel_buffer[src..src + w]);
                 }
             })
             .unwrap();
