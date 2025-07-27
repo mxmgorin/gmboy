@@ -158,7 +158,7 @@ impl App {
 
         while self.state != AppState::Quitting {
             if self.state == AppState::Paused {
-                self.run_pause(emu, input);
+                self.update_pause(emu, input);
             } else {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
@@ -172,16 +172,13 @@ impl App {
         Ok(())
     }
 
-    pub fn run_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
-        while self.state == AppState::Paused {
-            input.handle_events(self, emu);
-            emu.runtime.clock.reset();
-            self.draw_menu();
-            self.draw_notification(None);
-
-            self.window.present();
-            thread::sleep(Duration::from_millis(30));
-        }
+    pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
+        input.handle_events(self, emu);
+        emu.runtime.clock.reset();
+        self.draw_menu();
+        self.draw_notification(None);
+        self.window.present();
+        thread::sleep(Duration::from_millis(30));
     }
 
     pub fn draw_notification(&mut self, fps: Option<(&str, bool)>) {
