@@ -9,6 +9,7 @@ use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
 use std::path::{Path, PathBuf};
+use crate::library::RomsLibrary;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -124,7 +125,7 @@ impl InputHandler {
                 }
             }
             AppCmd::RestartGame => {
-                if let Some(path) = app.config.last_cart_path.clone() {
+                if let Some(path) = RomsLibrary::get_or_create().get_last_path() {
                     app.load_cart_file(emu, &PathBuf::from(path));
                 }
             }

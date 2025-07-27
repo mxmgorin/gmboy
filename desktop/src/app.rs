@@ -1,6 +1,7 @@
 use crate::audio::AppAudio;
 use crate::config::{AppConfig, VideoConfig};
 use crate::input::handler::InputHandler;
+use crate::library::RomsLibrary;
 use crate::video::game_window::GameWindow;
 use crate::video::menu::AppMenu;
 use crate::video::notification::Notifications;
@@ -121,13 +122,14 @@ impl App {
         } else {
             None
         };
+        let library = RomsLibrary::get_or_create();
 
         Ok(Self {
             video_subsystem,
             tile_window,
             audio: AppAudio::new(sdl, &config.audio),
             window: game_window,
-            menu: AppMenu::new(config.last_cart_path.is_some()),
+            menu: AppMenu::new(library.get_last_path().is_some()),
             state: AppState::Paused,
             palettes,
             config,
@@ -251,7 +253,8 @@ impl App {
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: usize) {
-        let name = self.config.get_last_file_stem().unwrap();
+        let library = RomsLibrary::get_or_create();
+        let name = library.get_last_file_stem().unwrap();
         let index = index.to_string();
 
         match event {
@@ -296,7 +299,8 @@ impl App {
             eprint!("Failed config.save: {err}");
         }
 
-        let name = self.config.get_last_file_stem();
+        let library = RomsLibrary::get_or_create();
+        let name = library.get_last_file_stem();
 
         let Some(name) = name else {
             return Err("Failed get_last_file_stem: not found".to_string());
@@ -326,9 +330,15 @@ impl App {
     }
 
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) {
-        let path_str = path.to_str().map(|s| s.to_string());
-        let is_reload = self.config.last_cart_path == path_str && !emu.runtime.bus.cart.is_empty();
-        self.config.last_cart_path = path_str;
+        let lib_path = RomsLibrary::get_path();
+        let mut library = RomsLibrary::get_or_create();
+        let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path) && !emu.runtime.bus.cart.is_empty();
+        library.add(path.to_path_buf());
+
+        if let Err(err) = core::save_json_file(&lib_path, &library) {
+            eprintln!("Failed save RomsLibrary: {err}");
+        }
+
         emu.load_cart_file(path);
         emu.runtime
             .bus

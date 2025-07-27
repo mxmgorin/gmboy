@@ -1,6 +1,7 @@
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
+use crate::library::RomsLibrary;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
@@ -17,6 +18,7 @@ mod app;
 mod audio;
 mod config;
 mod input;
+mod library;
 mod video;
 
 fn main() {
@@ -70,11 +72,15 @@ fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
         if cart_path.exists() {
             app.load_cart_file(emu, &cart_path);
         }
-    } else if let Some(cart_path) = &app.config.last_cart_path {
-        let cart_path = PathBuf::from(cart_path.clone());
+    } else {
+        let library = RomsLibrary::get_or_create();
 
-        if cart_path.exists() {
-            app.load_cart_file(emu, &cart_path);
+        if let Some(cart_path) = library.get_last_path() {
+            let cart_path = PathBuf::from(cart_path.clone());
+
+            if cart_path.exists() {
+                app.load_cart_file(emu, &cart_path);
+            }
         }
     }
 }
