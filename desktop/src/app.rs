@@ -332,14 +332,19 @@ impl App {
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) {
         let lib_path = RomsLibrary::get_path();
         let mut library = RomsLibrary::get_or_create();
-        let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path) && !emu.runtime.bus.cart.is_empty();
+        let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
+            && !emu.runtime.bus.cart.is_empty();
+
+        if emu.load_cart_file(path).is_err() {
+            return;
+        }
+
         library.add(path.to_path_buf());
 
         if let Err(err) = core::save_json_file(&lib_path, &library) {
             eprintln!("Failed save RomsLibrary: {err}");
         }
 
-        emu.load_cart_file(path);
         emu.runtime
             .bus
             .io

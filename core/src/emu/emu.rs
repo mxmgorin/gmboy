@@ -132,12 +132,12 @@ impl Emu {
         }
     }
 
-    pub fn load_cart_file(&mut self, path: &Path) {
+    pub fn load_cart_file(&mut self, path: &Path) -> Result<(), String> {
         let cart = read_cart_file(path).map_err(|e| e.to_string());
 
         let Ok(cart) = cart else {
-            eprintln!("Failed read_cart: {}", cart.unwrap_err());
-            return;
+            let msg = format!("Failed read_cart: {}", cart.unwrap_err());
+            return Err(msg);
         };
 
         let apu = Apu::new(self.runtime.bus.io.apu.config.clone());
@@ -148,6 +148,8 @@ impl Emu {
         self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
+        
+        Ok(())
     }
 
     pub fn load_save_state(&mut self, save_state: EmuSaveState) {

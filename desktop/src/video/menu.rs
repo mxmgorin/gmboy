@@ -929,7 +929,8 @@ fn get_suffix(enabled: bool) -> &'static str {
 
 #[derive(Debug, Clone)]
 pub struct LibraryMenu {
-    items: Box<[LibraryItem]>,
+    all_items: Box<[LibraryItem]>, // all ROMs
+    items: Box<[LibraryItem]>,     // current page items (plus nav items)
     selected_index: usize,
     current_page: usize,
 }
@@ -986,37 +987,87 @@ impl LibraryMenu {
     }
 
     pub fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
-        let item = self.items.get(self.selected_index).unwrap();
+        let item = &self.items[self.selected_index];
 
-        if item.name == "Back" {
-            return (None, true);
+        match item.name.as_str() {
+            name if name.starts_with("Next Page") => {
+                self.next_page();
+                return (None, false);
+            }
+            name if name.starts_with("Prev Page") => {
+                self.prev_page();
+                return (None, false);
+            }
+            "Back" => return (None, true),
+            _ => {}
         }
 
         (Some(AppCmd::LoadFile(item.path.clone())), false)
     }
-}
 
-const MAX_ROMS_PER_PAGE: usize = 12;
+    pub fn next_page(&mut self) {
+        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
+        if self.current_page + 1 < total_pages {
+            self.current_page += 1;
+            self.update_page();
+        }
+    }
 
-impl Default for LibraryMenu {
-    fn default() -> Self {
-        let library = RomsLibrary::get_or_create();
-        let mut items = Vec::with_capacity(12);
+    pub fn prev_page(&mut self) {
+        if self.current_page > 0 {
+            self.current_page -= 1;
+            self.update_page();
+        }
+    }
 
-        for path in library.get() {
-            items.push(LibraryItem::new(path));
+    fn update_page(&mut self) {
+        let total_pages = (self.all_items.len() + MAX_ROMS_PER_PAGE - 1) / MAX_ROMS_PER_PAGE;
+        let start = self.current_page * MAX_ROMS_PER_PAGE;
+        let end = usize::min(start + MAX_ROMS_PER_PAGE, self.all_items.len());
+        let mut page_items: Vec<LibraryItem> = self.all_items[start..end].to_vec();
+
+        if self.current_page + 1 < total_pages {
+            page_items.push(LibraryItem {
+                name: format!("Next Page ({}/{})", self.current_page + 1, total_pages),
+                path: Default::default(),
+            });
+        }
+        if self.current_page > 0 {
+            page_items.push(LibraryItem {
+                name: format!("Prev Page ({}/{})", self.current_page + 1, total_pages),
+                path: Default::default(),
+            });
         }
 
-
-        items.push(LibraryItem {
+        page_items.push(LibraryItem {
             name: "Back".to_string(),
             path: Default::default(),
         });
 
-        Self {
-            items: items.into_boxed_slice(),
+        self.items = page_items.into_boxed_slice();
+        self.selected_index = 0;
+    }
+}
+
+const MAX_ROMS_PER_PAGE: usize = 10;
+
+impl Default for LibraryMenu {
+    fn default() -> Self {
+        let library = RomsLibrary::get_or_create();
+        let mut all_items = Vec::with_capacity(12);
+
+        for path in library.get() {
+            all_items.push(LibraryItem::new(path));
+        }
+
+        let mut menu = Self {
+            items: Box::new([]),
+            all_items: all_items.into_boxed_slice(),
             selected_index: 0,
             current_page: 0,
-        }
+        };
+        menu.update_page();
+
+        menu
     }
 }
