@@ -104,14 +104,14 @@ impl FrameBlendMode {
         }
     }
 
-    pub fn get_profile(&self) -> &str {
+    pub fn get_profile(&self) -> Option<&BlendProfile> {
         match self {
-            FrameBlendMode::None => "",
-            FrameBlendMode::Linear(_) => "",
-            FrameBlendMode::Additive(_) => "",
-            FrameBlendMode::Exponential(_) => "",
-            FrameBlendMode::GammaCorrected(_) => "",
-            FrameBlendMode::Accurate(x) => x.name(),
+            FrameBlendMode::None |
+            FrameBlendMode::Linear(_) |
+            FrameBlendMode::Additive(_) |
+            FrameBlendMode::Exponential(_) |
+            FrameBlendMode::GammaCorrected(_) => None,
+            FrameBlendMode::Accurate(x) => Some(x),
         }
     }
 }
@@ -174,6 +174,12 @@ pub struct BlendProfileTint {
 impl BlendProfileTint {
     pub const fn new(red: f32, green: f32, blue: f32) -> Self {
         Self { red, green, blue }
+    }
+
+    pub fn reset(&mut self) {
+        self.red = 1.0;
+        self.green = 1.0;
+        self.blue = 1.0;
     }
 }
 

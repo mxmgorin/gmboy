@@ -1,9 +1,6 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::AppConfig;
-use crate::video::frame_blend::{
-    AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
-    LinearFrameBlend,
-};
+use crate::video::frame_blend::{AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend, LinearFrameBlend};
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use std::collections::VecDeque;
 use std::mem;
@@ -48,10 +45,13 @@ pub enum AppMenuItem {
     FrameBlendDim,
     VideoMenu,
     FrameBlendProfile,
+    FrameBlendRise,
+    FrameBlendFall,
+    FrameBlendBleed,
 }
 
 fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
-    let mut items = Vec::with_capacity(5);
+    let mut items = Vec::with_capacity(7);
     items.push(AppMenuItem::FrameBlendMode);
 
     match frame_blend_type {
@@ -72,6 +72,10 @@ fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
         FrameBlendMode::Accurate(_) => {
             items.push(AppMenuItem::FrameBlendDim);
             items.push(AppMenuItem::FrameBlendProfile);
+            items.push(AppMenuItem::FrameBlendFall);
+            items.push(AppMenuItem::FrameBlendRise);
+            items.push(AppMenuItem::FrameBlendBleed);
+
         }
     }
 
@@ -315,9 +319,45 @@ impl AppMenu {
                 if let FrameBlendMode::Accurate(x) = &mut conf.frame_blend_mode {
                     if x == &DMG_PROFILE {
                         *x = POCKET_PROFILE;
-                    } else if x == &POCKET_PROFILE {
+                    } else {
                         *x = DMG_PROFILE;
                     }
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            },
+            AppMenuItem::FrameBlendRise => {
+                let mut conf = config.video.clone();
+
+                if let Some(profile) = config.video.frame_blend_mode.get_profile() {
+                    let mut profile = profile.clone();
+                    profile.rise = core::change_f32_rounded(profile.rise, 0.05).clamp(0.0, 1.0);
+                    profile.tint.reset();
+                    conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::FrameBlendFall => {
+                let mut conf = config.video.clone();
+
+                if let Some(profile) = config.video.frame_blend_mode.get_profile() {
+                    let mut profile = profile.clone();
+                    profile.fall = core::change_f32_rounded(profile.fall, 0.05).clamp(0.0, 1.0);
+                    profile.tint.reset();
+                    conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::FrameBlendBleed => {
+                let mut conf = config.video.clone();
+
+                if let Some(profile) = config.video.frame_blend_mode.get_profile() {
+                    let mut profile = profile.clone();
+                    profile.bleed = core::change_f32_rounded(profile.bleed, 0.05).clamp(0.0, 1.0);
+                    profile.tint.reset();
+                    conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
@@ -440,9 +480,45 @@ impl AppMenu {
                 if let FrameBlendMode::Accurate(x) = &mut conf.frame_blend_mode {
                     if x == &DMG_PROFILE {
                         *x = POCKET_PROFILE;
-                    } else if x == &POCKET_PROFILE {
+                    } else {
                         *x = DMG_PROFILE;
                     }
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::FrameBlendRise => {
+                let mut conf = config.video.clone();
+
+                if let Some(profile) = config.video.frame_blend_mode.get_profile() {
+                    let mut profile = profile.clone();
+                    profile.rise = core::change_f32_rounded(profile.rise, -0.05).clamp(0.0, 1.0);
+                    profile.tint.reset();
+                    conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::FrameBlendFall => {
+                let mut conf = config.video.clone();
+
+                if let Some(profile) = config.video.frame_blend_mode.get_profile() {
+                    let mut profile = profile.clone();
+                    profile.fall = core::change_f32_rounded(profile.fall, -0.05).clamp(0.0, 1.0);
+                    profile.tint.reset();
+                    conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
+                }
+
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
+            AppMenuItem::FrameBlendBleed => {
+                let mut conf = config.video.clone();
+
+                if let Some(profile) = config.video.frame_blend_mode.get_profile() {
+                    let mut profile = profile.clone();
+                    profile.bleed = core::change_f32_rounded(profile.bleed, -0.05).clamp(0.0, 1.0);
+                    profile.tint.reset();
+                    conf.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
@@ -542,6 +618,9 @@ impl AppMenu {
                 None
             }
             AppMenuItem::FrameBlendProfile => None,
+            AppMenuItem::FrameBlendRise
+            | AppMenuItem::FrameBlendFall
+            | AppMenuItem::FrameBlendBleed => None,
         }
     }
 
@@ -633,9 +712,21 @@ impl AppMenuItem {
             AppMenuItem::FrameBlendProfile => {
                 format!(
                     "Blend Profile({})",
-                    config.video.frame_blend_mode.get_profile()
+                    config.video.frame_blend_mode.get_profile().unwrap().name()
                 )
             }
+            AppMenuItem::FrameBlendRise => format!(
+                "Frame Rise({})",
+                config.video.frame_blend_mode.get_profile().unwrap().rise
+            ),
+            AppMenuItem::FrameBlendFall => format!(
+                "Frame Fall({})",
+                config.video.frame_blend_mode.get_profile().unwrap().fall
+            ),
+            AppMenuItem::FrameBlendBleed => format!(
+                "Frame Bleed({})",
+                config.video.frame_blend_mode.get_profile().unwrap().bleed
+            ),
         }
     }
 }
