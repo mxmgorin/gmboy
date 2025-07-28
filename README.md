@@ -14,7 +14,7 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 - **Visual Filters**  
   Apply effects such as a grid filter or a sub-pixel filter for enhanced visuals.
 
-- **ROMs Scanning**
+- **ROMs Scanning**  
   Select your ROM directory and launch games directly from the emulator menu.
 
 - **Config Management**  
