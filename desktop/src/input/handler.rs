@@ -152,16 +152,19 @@ impl InputHandler {
             AppCmd::SelectRomsDir => {
                 if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
                     let mut lib = RomsList::get_or_create();
+                    let result = lib.load_from_dir(&dir);
 
-                    if let Err(err) = lib.load_from_dir(&dir) {
-                        eprintln!("Failed to load ROMs library: {err}");
-                    }
+                    let Ok(count) = result else {
+                        eprintln!("Failed to load ROMs library: {}", result.unwrap_err());
+                        return;
+                    };
 
                     if let Err(err) = core::save_json_file(&RomsList::get_path(), &lib) {
                         eprintln!("Failed to save ROMs library: {err}");
                     }
 
                     app.config.roms_dir = Some(dir);
+                    app.notifications.add(format!("Found {count} ROMs"));
                 }
             }
             AppCmd::ChangeConfig(cmd) => match cmd {

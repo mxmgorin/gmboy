@@ -76,7 +76,7 @@ pub struct App {
     pub state: AppState,
     pub config: AppConfig,
     pub menu: AppMenu,
-    notifications: Notifications,
+    pub notifications: Notifications,
 }
 
 impl EmuAudioCallback for App {

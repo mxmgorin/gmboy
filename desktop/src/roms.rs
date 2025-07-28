@@ -12,7 +12,7 @@ pub struct RomsList {
 
 impl RomsList {
     /// Loads all `.gb` and `.gbc` files from the given directory.
-    pub fn load_from_dir<P: AsRef<Path>>(&mut self, dir: P) -> std::io::Result<()> {
+    pub fn load_from_dir<P: AsRef<Path>>(&mut self, dir: P) -> std::io::Result<usize> {
         let dir_path = dir.as_ref();
         self.recent_paths.clear();
 
@@ -33,7 +33,7 @@ impl RomsList {
 
         }
 
-        Ok(())
+        Ok(self.recent_paths.len())
     }
 
     pub fn add(&mut self, path: PathBuf) {
