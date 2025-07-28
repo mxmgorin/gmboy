@@ -45,20 +45,18 @@ pub fn handle_gamepad(
             }
         }
         Button::LeftShoulder => {
-            if !is_pressed {
-                return Some(AppCmd::SaveState(
-                    SaveStateCmd::Load,
-                    app.config.current_load_index,
-                ));
-            }
+            return if is_pressed {
+                Some(AppCmd::ChangeMode(RunMode::Slow))
+            } else {
+                Some(AppCmd::ChangeMode(RunMode::Normal))
+            };
         }
         Button::RightShoulder => {
-            if !is_pressed {
-                return Some(AppCmd::SaveState(
-                    SaveStateCmd::Create,
-                    app.config.current_save_index,
-                ));
-            }
+            return if is_pressed {
+                Some(AppCmd::ChangeMode(RunMode::Turbo))
+            } else {
+                Some(AppCmd::ChangeMode(RunMode::Normal))
+            };
         }
 
         _ => (), // Ignore other keycodes
@@ -67,24 +65,26 @@ pub fn handle_gamepad(
     None
 }
 
-pub fn handle_gamepad_axis(axis_idx: u8, value: i16) -> Option<AppCmd> {
+pub fn handle_gamepad_axis(app: &App, axis_idx: u8, value: i16) -> Option<AppCmd> {
     const LEFT: u8 = 2;
     const RIGHT: u8 = 5;
     const THRESHOLD: i16 = 30_000;
     let is_pressed = value > THRESHOLD;
 
     if axis_idx == LEFT {
-        return if is_pressed {
-            Some(AppCmd::ChangeMode(RunMode::Slow))
-        } else {
-            Some(AppCmd::ChangeMode(RunMode::Normal))
-        };
+        if !is_pressed {
+            return Some(AppCmd::SaveState(
+                SaveStateCmd::Load,
+                app.config.current_load_index,
+            ));
+        }
     } else if axis_idx == RIGHT {
-        return if is_pressed {
-            Some(AppCmd::ChangeMode(RunMode::Turbo))
-        } else {
-            Some(AppCmd::ChangeMode(RunMode::Normal))
-        };
+        if !is_pressed {
+            return Some(AppCmd::SaveState(
+                SaveStateCmd::Create,
+                app.config.current_save_index,
+            ));
+        }
     }
 
     None

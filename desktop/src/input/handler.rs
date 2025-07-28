@@ -88,7 +88,7 @@ impl InputHandler {
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
-                    if let Some(evt) = handle_gamepad_axis(axis_idx, value) {
+                    if let Some(evt) = handle_gamepad_axis(app, axis_idx, value) {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
