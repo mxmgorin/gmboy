@@ -27,7 +27,7 @@ fn main() {
     let palettes = get_palettes();
     let mut emu = new_emu(&config, &palettes);
     let mut sdl = sdl2::init().unwrap();
-    let mut input = InputHandler::new(&sdl, &config.input).unwrap();
+    let mut input = InputHandler::new(&sdl).unwrap();
     let mut app = App::new(&mut sdl, config, palettes).unwrap();
     load_cart(&mut app, &mut emu, args);
 
@@ -118,7 +118,7 @@ fn get_config() -> AppConfig {
         let default_config = AppConfig::default();
 
         if let Err(err) = default_config.save_file() {
-            panic!("Failed to create default config: {err}");
+            panic!("Failed to save default config: {err}");
         }
 
         default_config

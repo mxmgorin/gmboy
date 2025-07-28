@@ -16,7 +16,7 @@ pub fn handle_gamepad(
     button: Button,
     is_pressed: bool,
 ) -> Option<AppCmd> {
-    let combo_cmd = state.update(button, is_pressed);
+    let combo_cmd = state.update(button, is_pressed, &app.config.input);
 
     if combo_cmd.is_some() {
         return combo_cmd;

@@ -7,8 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 use std::{env, fs, io};
+use crate::input::config::InputConfig;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -20,13 +20,8 @@ pub struct AppConfig {
     pub roms_dir: Option<String>,
     pub interface: InterfaceConfig,
     pub audio: AudioConfig,
-    pub input: InputConfig,
     pub video: VideoConfig,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InputConfig {
-    pub combo_interval: Duration,
+    pub input: InputConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -144,9 +139,7 @@ impl Default for AppConfig {
                 buffer_size: apu_config.buffer_size,
                 volume: apu_config.volume,
             },
-            input: InputConfig {
-                combo_interval: Duration::from_millis(500),
-            },
+            input: InputConfig::default(),
             video: VideoConfig {
                 frame_blend_mode: FrameBlendMode::None,
                 dim: 1.0,

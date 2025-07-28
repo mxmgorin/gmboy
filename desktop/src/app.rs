@@ -17,9 +17,11 @@ use sdl2::{Sdl, VideoSubsystem};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
+use serde::{Deserialize, Serialize};
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AppCmd {
     TogglePause,
     Rewind,
@@ -33,6 +35,7 @@ pub enum AppCmd {
     SelectRomsDir,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ChangeAppConfigCmd {
     Default,
     Volume(f32),

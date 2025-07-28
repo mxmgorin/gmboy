@@ -1,4 +1,5 @@
 use crate::app::AppCmd;
+use crate::input::config::InputConfig;
 use sdl2::controller::Button;
 use std::time::{Duration, Instant};
 
@@ -28,11 +29,10 @@ impl ButtonState {
 
 pub struct ComboTracker {
     states: Box<[ButtonState]>,
-    combo_interval: Duration,
 }
 
 impl ComboTracker {
-    pub fn new(combo_interval: Duration) -> Self {
+    pub fn new() -> Self {
         Self {
             states: vec![
                 ButtonState::new(Button::Start),
@@ -40,38 +40,39 @@ impl ComboTracker {
                 ButtonState::new(Button::Guide),
             ]
             .into_boxed_slice(),
-            combo_interval,
         }
     }
 
-    pub fn update(&mut self, button: Button, pressed: bool) -> Option<AppCmd> {
+    pub fn update(&mut self, button: Button, pressed: bool, config: &InputConfig) -> Option<AppCmd> {
         for state in self.states.iter_mut() {
             if state.button == button {
                 state.update(pressed);
-                return self.find();
+                return self.find(config);
             }
         }
 
         None
     }
 
-    fn find(&self) -> Option<AppCmd> {
-        if self.combo_2(Button::Back, Button::Start) || self.combo_2(Button::Guide, Button::Start) {
-            return Some(AppCmd::TogglePause);
+    fn find(&self, config: &InputConfig) -> Option<AppCmd> {
+        for (combo, cmd) in config.combos.0.iter() {
+            if self.combo_2(combo.b1, combo.b2, config.combo_interval) {
+                return Some(cmd.to_owned());
+            }
         }
 
         None
     }
 
     /// Generic function to check any 2-button combo
-    fn combo_2(&self, b1: Button, b2: Button) -> bool {
+    fn combo_2(&self, b1: i32, b2: i32, duration: Duration) -> bool {
         let mut state_1: Option<&ButtonState> = None;
         let mut state_2: Option<&ButtonState> = None;
 
         for state in &self.states {
-            if state.button == b1 {
+            if state.button as i32 == b1 {
                 state_1 = Some(state);
-            } else if state.button == b2 {
+            } else if state.button as i32 == b2 {
                 state_2 = Some(state);
             }
         }
@@ -88,7 +89,7 @@ impl ComboTracker {
                 s2.last_pressed.duration_since(s1.last_pressed)
             };
 
-            return diff <= self.combo_interval;
+            return diff <= duration;
         }
 
         false
