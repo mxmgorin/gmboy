@@ -1,6 +1,7 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::input::button::{
-    handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_up,
+    handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
+    handle_up,
 };
 use crate::Emu;
 use core::emu::runtime::RunMode;
@@ -21,11 +22,11 @@ pub fn handle_keyboard(
         Keycode::Z => handle_b(is_pressed, app, emu),
         Keycode::X => return handle_a(is_pressed, app, emu),
         Keycode::Return | Keycode::S => {
-            if app.state == AppState::Paused && !is_pressed {
-                return app.menu.select(&app.config);
+            return if app.state == AppState::Paused && !is_pressed {
+                app.menu.select(&app.config) // update menu for better ux
             } else {
-                emu.runtime.bus.io.joypad.start = is_pressed;
-            }
+                handle_start(is_pressed, app, emu)
+            };
         }
         Keycode::BACKSPACE | Keycode::A => return handle_select(is_pressed, app, emu),
         Keycode::R => {
@@ -50,137 +51,137 @@ pub fn handle_keyboard(
             }
         }
         Keycode::ESCAPE | Keycode::Q => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::TogglePause);
             }
         }
         Keycode::EQUALS => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0)));
             }
         }
         Keycode::MINUS => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0)));
             }
         }
         Keycode::M => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::ToggleMute));
             }
         }
         Keycode::I => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted));
             }
         }
         Keycode::F10 => {
-            if !is_pressed {
+            if is_pressed {
                 app.toggle_fullscreen();
             }
         }
         Keycode::F11 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05)));
             }
         }
         Keycode::F12 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05)));
             }
         }
         Keycode::P => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette));
             }
         }
         Keycode::NUM_1 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 1));
             }
         }
         Keycode::NUM_2 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 2));
             }
         }
         Keycode::NUM_3 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 3));
             }
         }
         Keycode::NUM_4 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 4));
             }
         }
         Keycode::NUM_5 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 5));
             }
         }
         Keycode::NUM_6 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 6));
             }
         }
         Keycode::NUM_7 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 7));
             }
         }
         Keycode::NUM_8 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 8));
             }
         }
         Keycode::NUM_9 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Create, 9));
             }
         }
         Keycode::F1 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 1));
             }
         }
         Keycode::F2 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 2));
             }
         }
         Keycode::F3 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 3));
             }
         }
         Keycode::F4 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 4));
             }
         }
         Keycode::F5 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 5));
             }
         }
         Keycode::F6 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 6));
             }
         }
         Keycode::F7 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 7));
             }
         }
         Keycode::F8 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 8));
             }
         }
         Keycode::F9 => {
-            if !is_pressed {
+            if is_pressed {
                 return Some(AppCmd::SaveState(SaveStateCmd::Load, 9));
             }
         }

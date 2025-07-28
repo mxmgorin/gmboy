@@ -1053,21 +1053,13 @@ impl RomsMenu {
     }
 
     pub fn move_left(&mut self) -> Option<AppCmd> {
-        let item = &self.items[self.selected_index];
-
-        if item.name.starts_with("Page") {
-            self.prev_page();
-        }
+        self.prev_page();
 
         None
     }
 
     pub fn move_right(&mut self) -> Option<AppCmd> {
-        let item = &self.items[self.selected_index];
-
-        if item.name.starts_with("Page") {
-            self.next_page();
-        }
+        self.next_page();
 
         None
     }
