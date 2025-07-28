@@ -61,7 +61,7 @@ impl GameWindow {
         let (canvas_win_width, canvas_win_height) = canvas.window().size();
         let game_rect = new_scaled_rect(canvas_win_width, canvas_win_height);
 
-        let notif_rect = Rect::new(0, 0, win_width / 3, win_width / 3);
+        let notif_rect = Rect::new(0, 0, win_width / 2, win_height / 3);
         let mut notif_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,

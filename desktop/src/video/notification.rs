@@ -1,5 +1,8 @@
 use std::time::{Duration, Instant};
 
+const MAX_CHARS: usize = 34;
+const MAX_COUNT: usize = 16;
+
 struct Notification {
     pub text: String,
     pub created_at: Instant,
@@ -23,11 +26,23 @@ impl Notifications {
     }
 
     pub fn add(&mut self, text: impl Into<String>) {
-        self.updated = true;
-        self.items.push(Notification {
-            text: text.into(),
+        let text = text.into();
+        let mut truncated: String = text.chars().take(MAX_CHARS).collect();
+
+        if text.chars().count() > MAX_CHARS {
+            truncated.push_str("..");
+        }
+
+        let item = Notification {
+            text: truncated,
             created_at: Instant::now(),
-        });
+        };
+        self.updated = true;
+        if self.items.len() >= MAX_COUNT {
+            self.items[0] = item;
+        } else {
+            self.items.push(item);
+        }
     }
 
     pub fn update_and_get(&mut self) -> (&[&str], bool) {
