@@ -1131,6 +1131,8 @@ impl Default for RomsMenu {
             all_items.push(RomMenuItem::new(path));
         }
 
+        all_items.sort_by(|a, b| a.name.cmp(&b.name));
+
         let mut menu = Self {
             items: Box::new([]),
             all_items: all_items.into_boxed_slice(),
