@@ -8,7 +8,7 @@ use crate::video::frame_blend::{
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use std::collections::VecDeque;
 use std::mem;
-use std::path::{PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub enum AppMenuItem {
@@ -255,15 +255,15 @@ fn options_menu() -> Box<[AppMenuItem]> {
 }
 
 fn interface_menu() -> Box<[AppMenuItem]> {
-    let mut items = Vec::with_capacity(6);
-    items.push(AppMenuItem::Palette);
-    items.push(AppMenuItem::PaletteInverted);
-    items.push(AppMenuItem::ToggleFullscreen);
-    items.push(AppMenuItem::ToggleFps);
-    items.push(AppMenuItem::Scale);
-    items.push(AppMenuItem::Back);
-
-    items.into_boxed_slice()
+    vec![
+        AppMenuItem::Palette,
+        AppMenuItem::PaletteInverted,
+        AppMenuItem::ToggleFullscreen,
+        AppMenuItem::ToggleFps,
+        AppMenuItem::Scale,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 fn game_menu() -> Box<[AppMenuItem]> {
@@ -291,10 +291,44 @@ fn audio_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
+#[derive(Debug, Clone, Default)]
+struct MenuBuffer {
+    items: Vec<String>,
+    refs: Vec<*const str>,
+}
+
+impl MenuBuffer {
+    pub fn add(&mut self, item: impl Into<String>) {
+        let item = item.into();
+        let ptr: *const str = item.as_str();
+        self.refs.push(ptr);
+        self.items.push(item);
+    }
+
+    pub fn get(&self) -> &[&str] {
+        // SAFETY:
+        // all pointers in `self.refs` point to valid strings in `self.items`
+        // Convert &[ *const str ] -> &[ &str ] by transmuting each element
+        unsafe { std::slice::from_raw_parts(self.refs.as_ptr() as *const &str, self.refs.len()) }
+    }
+
+    pub fn clear(&mut self) {
+        self.items.clear();
+        self.refs.clear();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+}
+
 pub struct AppMenu {
     prev_items: VecDeque<Box<[AppMenuItem]>>,
     items: Box<[AppMenuItem]>,
     selected_index: usize,
+    buffer: MenuBuffer,
+    updated: bool,
+    inner_buffer: MenuBuffer,
 }
 
 impl AppMenu {
@@ -303,29 +337,47 @@ impl AppMenu {
             prev_items: VecDeque::with_capacity(4),
             items: if with_cart { game_menu() } else { start_menu() },
             selected_index: 0,
+            buffer: MenuBuffer::default(),
+            updated: true,
+            inner_buffer: Default::default(),
         }
     }
 
-    pub fn get_items(&self, config: &AppConfig) -> Box<[String]> {
-        let mut items = Vec::with_capacity(8);
+    pub fn get_items(&mut self, config: &AppConfig) -> (&[&str], bool) {
+        let updated = self.updated;
+        self.updated = false;
 
-        for (i, item) in self.items.iter().enumerate() {
-            if let Some(inner) = item.get_inner() {
-                return inner.get_items();
-            }
+        if updated {
+            self.buffer.clear();
 
-            let line = item.to_string(config);
-            if i == self.selected_index {
-                items.push(format!("◀{line}▶"));
-            } else {
-                items.push(line.to_string());
+            for (i, item) in self.items.iter_mut().enumerate() {
+                if let Some(inner) = item.get_inner() {
+                    self.inner_buffer.clear();
+
+                    for inner_item in inner.get_iterator() {
+                        self.inner_buffer.add(inner_item);
+                    }
+
+                    return (self.inner_buffer.get(), updated);
+                } else {
+                    let line = item.to_string(config);
+                    if i == self.selected_index {
+                        self.buffer.add(format!("◀{line}▶"));
+                    } else {
+                        self.buffer.add(line.to_string());
+                    }
+                }
             }
+        } else if !self.inner_buffer.is_empty() {
+            return (self.inner_buffer.get(), updated);
         }
 
-        items.into_boxed_slice()
+        (self.buffer.get(), updated)
     }
 
     pub fn move_up(&mut self) {
+        self.updated = true;
+
         if let Some(curr) = self.items.get_mut(self.selected_index) {
             if let Some(inner) = curr.get_inner_mut() {
                 inner.move_up();
@@ -337,6 +389,7 @@ impl AppMenu {
     }
 
     pub fn move_down(&mut self) {
+        self.updated = true;
         if let Some(curr) = self.items.get_mut(self.selected_index) {
             if let Some(inner) = curr.get_inner_mut() {
                 inner.move_down();
@@ -348,6 +401,7 @@ impl AppMenu {
     }
 
     pub fn move_right(&mut self, config: &AppConfig) -> Option<AppCmd> {
+        self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
@@ -519,6 +573,7 @@ impl AppMenu {
     }
 
     pub fn move_left(&mut self, config: &AppConfig) -> Option<AppCmd> {
+        self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
@@ -693,6 +748,7 @@ impl AppMenu {
     }
 
     pub fn cancel(&mut self) {
+        self.updated = true;
         if let Some(prev) = self.prev_items.pop_back() {
             self.selected_index = 0;
             self.items = prev;
@@ -700,6 +756,7 @@ impl AppMenu {
     }
 
     pub fn select(&mut self, config: &AppConfig) -> Option<AppCmd> {
+        self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
@@ -806,6 +863,7 @@ impl AppMenu {
                 let (cmd, is_back) = x.select(config);
 
                 if is_back {
+                    self.inner_buffer.clear();
                     self.cancel();
                 }
 
@@ -816,6 +874,7 @@ impl AppMenu {
     }
 
     fn next_items(&mut self, items: Box<[AppMenuItem]>) {
+        self.updated = true;
         let prev = mem::replace(&mut self.items, items);
         self.selected_index = 0;
         self.prev_items.push_front(prev);
@@ -972,21 +1031,14 @@ impl RomMenuItem {
 }
 
 impl RomsMenu {
-    pub fn get_items(&self) -> Box<[String]> {
-        let items: Vec<_> = self
-            .items
-            .iter()
-            .enumerate()
-            .map(|(i, line)| {
-                if i == self.selected_index {
-                    format!("◀{}▶", line.name)
-                } else {
-                    line.name.clone()
-                }
-            })
-            .collect();
-
-        items.into_boxed_slice()
+    pub fn get_iterator(&self) -> impl Iterator<Item = String> + '_ {
+        self.items.iter().enumerate().map(move |(i, line)| {
+            if i == self.selected_index {
+                format!("◀{}▶", line.name)
+            } else {
+                line.name.clone()
+            }
+        })
     }
 
     pub fn move_up(&mut self) {
@@ -1085,5 +1137,31 @@ impl Default for RomsMenu {
         menu.update_page();
 
         menu
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::video::menu::{RomMenuItem, RomsMenu};
+
+    #[test]
+    pub fn iter() {
+        let roms = RomsMenu {
+            all_items: Box::new([]),
+            items: vec![
+                RomMenuItem::new("1"),
+                RomMenuItem::new("2"),
+                RomMenuItem::new("3"),
+            ]
+            .into_boxed_slice(),
+            selected_index: 0,
+            current_page: 0,
+        };
+        let mut iter = roms.get_iterator();
+
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_some());
+        assert!(iter.next().is_none());
     }
 }

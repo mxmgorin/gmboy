@@ -210,9 +210,8 @@ impl App {
     }
 
     fn draw_menu(&mut self) {
-        let items = self.menu.get_items(&self.config);
-        let lines: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
-        self.window.draw_text_lines(&lines, true, true);
+        let (items, _updated) = self.menu.get_items(&self.config);
+        self.window.draw_text_lines(items, true, true);
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
