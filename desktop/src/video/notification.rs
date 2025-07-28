@@ -31,16 +31,8 @@ impl Notifications {
     }
 
     pub fn update_and_get(&mut self) -> (&[&str], bool) {
-        if self.items.is_empty() {
-            let updated = self.updated;
-            self.updated = false;
-
-            return (&[], updated);
-        }
-
         let now = Instant::now();
         self.buffer.clear();
-        let prev_len = self.items.len();
         let mut i = 0;
 
         while i < self.items.len() {
@@ -51,6 +43,7 @@ impl Notifications {
                 i += 1;
             } else {
                 self.items.swap_remove(i);
+                self.updated = true;
             }
         }
 
@@ -61,8 +54,10 @@ impl Notifications {
             std::slice::from_raw_parts(self.buffer.as_ptr() as *const &str, self.buffer.len())
         };
 
-        self.updated = prev_len != self.items.len() || self.updated;
+        //let updated = prev_len != self.items.len();
+        let updated = self.updated;
+        self.updated = false;
 
-        (result, self.updated)
+        (result, updated)
     }
 }

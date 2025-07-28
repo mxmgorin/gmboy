@@ -21,6 +21,7 @@ pub struct GameWindow {
     fps_texture: Texture,
     grid_texture: Texture,
     subpixel_texture: Texture,
+    menu_texture: Texture,
     fps_rect: Rect,
     notif_rect: Rect,
     game_rect: Rect,
@@ -79,6 +80,15 @@ impl GameWindow {
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
+        let mut menu_texture = texture_creator
+            .create_texture_streaming(
+                PixelFormatEnum::ARGB8888,
+                LCD_X_RES as u32,
+                LCD_Y_RES as u32,
+            )
+            .unwrap();
+        menu_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+
         Ok(Self {
             game_texture,
             notif_texture,
@@ -105,6 +115,7 @@ impl GameWindow {
             ),
             canvas,
             texture_creator,
+            menu_texture,
         })
     }
 
@@ -309,8 +320,7 @@ impl GameWindow {
         )
     }
 
-    pub fn draw_text_lines(&mut self, lines: &[&str], center: bool, align_center: bool) {
-        self.clear();
+    pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {
 
         let (align_center, text_width) = if align_center {
             let center = CenterAlignedText::new(lines, self.font_size);
@@ -328,9 +338,9 @@ impl GameWindow {
             y /= 2;
         }
 
-        fill_texture(&mut self.game_texture, self.bg_color);
+        fill_texture(&mut self.menu_texture, self.bg_color);
         draw_text_lines(
-            &mut self.game_texture,
+            &mut self.menu_texture,
             lines,
             self.text_color,
             None,
@@ -340,9 +350,13 @@ impl GameWindow {
             1,
             align_center,
         );
+    }
+
+    pub fn draw_menu(&mut self) {
+        self.clear();
 
         self.canvas
-            .copy(&self.game_texture, None, Some(self.game_rect))
+            .copy(&self.menu_texture, None, Some(self.game_rect))
             .unwrap();
 
         if self.config.grid_enabled {

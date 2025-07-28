@@ -343,17 +343,20 @@ impl AppMenu {
         }
     }
 
+    pub fn request_update(&mut self) {
+        self.updated = true;
+    }
+
     pub fn get_items(&mut self, config: &AppConfig) -> (&[&str], bool) {
         let updated = self.updated;
         self.updated = false;
 
         if updated {
             self.buffer.clear();
+            self.inner_buffer.clear();
 
             for (i, item) in self.items.iter_mut().enumerate() {
                 if let Some(inner) = item.get_inner() {
-                    self.inner_buffer.clear();
-
                     for inner_item in inner.get_iterator() {
                         self.inner_buffer.add(inner_item);
                     }

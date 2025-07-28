@@ -191,7 +191,7 @@ impl App {
 
                 self.window.draw_fps();
             }
-        } else {
+        } else if updated || !lines.is_empty() {
             if updated {
                 self.window.update_notif(lines);
             }
@@ -210,8 +210,13 @@ impl App {
     }
 
     fn draw_menu(&mut self) {
-        let (items, _updated) = self.menu.get_items(&self.config);
-        self.window.draw_text_lines(items, true, true);
+        let (items, updated) = self.menu.get_items(&self.config);
+
+        if updated {
+            self.window.update_menu(items, true, true);
+        }
+
+        self.window.draw_menu();
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
@@ -236,6 +241,7 @@ impl App {
         self.window.text_color = colors[0];
         self.window.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
+        self.menu.request_update();
 
         let suffix = if self.config.interface.is_palette_inverted {
             " (inverted)"
