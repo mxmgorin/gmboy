@@ -26,7 +26,7 @@ impl Notifications {
     }
 
     pub fn add(&mut self, text: impl Into<String>) {
-        if self.items.len() < MAX_COUNT {
+        if self.items.len() >= MAX_COUNT {
             return;
         }
 
