@@ -26,6 +26,10 @@ impl Notifications {
     }
 
     pub fn add(&mut self, text: impl Into<String>) {
+        if self.items.len() < MAX_COUNT {
+            return;
+        }
+
         let text = text.into();
         let mut truncated: String = text.chars().take(MAX_CHARS).collect();
 
@@ -37,12 +41,8 @@ impl Notifications {
             text: truncated,
             created_at: Instant::now(),
         };
+        self.items.push(item);
         self.updated = true;
-        if self.items.len() >= MAX_COUNT {
-            self.items[0] = item;
-        } else {
-            self.items.push(item);
-        }
     }
 
     pub fn update_and_get(&mut self) -> (&[&str], bool) {
