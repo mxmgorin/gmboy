@@ -31,9 +31,19 @@ impl Notifications {
         }
 
         let text = text.into();
-        let mut truncated: String = text.chars().take(MAX_CHARS).collect();
+        let mut truncated = String::with_capacity(MAX_CHARS + 2);
+        let mut chars = text.chars();
 
-        if text.chars().count() > MAX_CHARS {
+        for _ in 0..MAX_CHARS {
+            if let Some(c) = chars.next() {
+                truncated.push(c);
+            } else {
+                break;
+            }
+        }
+
+        // If there are still more characters, append ".."
+        if chars.next().is_some() {
             truncated.push_str("..");
         }
 
