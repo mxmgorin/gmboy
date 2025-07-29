@@ -82,14 +82,14 @@ impl ComboTracker {
     }
 
     /// Generic function to check any 2-button combo
-    fn combo_2(&self, b1: i32, b2: i32, duration: Duration) -> bool {
+    fn combo_2(&self, b1: Button, b2: Button, duration: Duration) -> bool {
         let mut state_1: Option<&ButtonState> = None;
         let mut state_2: Option<&ButtonState> = None;
 
         for state in &self.states {
-            if state.button as i32 == b1 {
+            if state.button == b1 {
                 state_1 = Some(state);
-            } else if state.button as i32 == b2 {
+            } else if state.button == b2 {
                 state_2 = Some(state);
             }
         }

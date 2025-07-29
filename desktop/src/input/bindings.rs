@@ -4,7 +4,7 @@ use crate::app::AppCmd;
 use crate::input::{all_buttons, button_to_str, str_to_button};
 use sdl2::controller::Button;
 use serde::de::{Error, MapAccess, Visitor};
-use serde::ser::SerializeMap;
+use serde::ser::{SerializeMap, SerializeStruct};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 use std::option::Option;
@@ -152,19 +152,54 @@ impl<'de> Deserialize<'de> for GamepadBindings {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct ButtonCombo {
-    pub btn_1: i32,
-    pub btn_2: i32,
+    pub btn_1: Button,
+    pub btn_2: Button,
     pub cmd: AppCmd,
 }
 
 impl ButtonCombo {
-    pub fn new(b1: Button, b2: Button, cmd: AppCmd) -> Self {
+    pub fn new(btn_1: Button, btn_2: Button, cmd: AppCmd) -> Self {
         Self {
-            btn_1: b1 as i32,
-            btn_2: b2 as i32,
+            btn_1,
+            btn_2,
             cmd,
         }
+    }
+}
+
+impl Serialize for ButtonCombo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("ButtonCombo", 3)?;
+        state.serialize_field("btn_1", &button_to_str(self.btn_1))?;
+        state.serialize_field("btn_2", &button_to_str(self.btn_2))?;
+        state.serialize_field("cmd", &self.cmd)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for ButtonCombo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct ComboHelper {
+            btn_1: String,
+            btn_2: String,
+            cmd: AppCmd,
+        }
+
+        let helper = ComboHelper::deserialize(deserializer)?;
+        let b1 = str_to_button(&helper.btn_1)
+            .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", helper.btn_1)))?;
+        let b2 = str_to_button(&helper.btn_2)
+            .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", helper.btn_2)))?;
+
+        Ok(ButtonCombo { btn_1: b1, btn_2: b2, cmd: helper.cmd })
     }
 }
