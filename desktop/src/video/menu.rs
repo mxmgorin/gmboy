@@ -6,7 +6,6 @@ use crate::video::frame_blend::{
     LinearFrameBlend,
 };
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
-use std::collections::VecDeque;
 use std::mem;
 use std::path::PathBuf;
 
@@ -330,7 +329,7 @@ impl MenuBuffer {
 }
 
 pub struct AppMenu {
-    prev_items: VecDeque<Box<[AppMenuItem]>>,
+    prev_items: Vec<Box<[AppMenuItem]>>,
     items: Box<[AppMenuItem]>,
     selected_index: usize,
     buffer: MenuBuffer,
@@ -341,7 +340,7 @@ pub struct AppMenu {
 impl AppMenu {
     pub fn new(with_cart: bool) -> Self {
         Self {
-            prev_items: VecDeque::with_capacity(4),
+            prev_items: Vec::with_capacity(4),
             items: if with_cart { game_menu() } else { start_menu() },
             selected_index: 0,
             buffer: MenuBuffer::default(),
@@ -761,7 +760,9 @@ impl AppMenu {
 
     pub fn back(&mut self) {
         self.updated = true;
-        if let Some(prev) = self.prev_items.pop_back() {
+
+        if !self.prev_items.is_empty() {
+            let prev = self.prev_items.remove(self.prev_items.len() - 1);
             self.selected_index = 0;
             self.items = prev;
         }
@@ -901,7 +902,7 @@ impl AppMenu {
         self.updated = true;
         let prev = mem::replace(&mut self.items, items);
         self.selected_index = 0;
-        self.prev_items.push_front(prev);
+        self.prev_items.push(prev);
     }
 }
 
