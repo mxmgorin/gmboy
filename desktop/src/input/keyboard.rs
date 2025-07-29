@@ -31,7 +31,7 @@ pub fn handle_keyboard(
         Keycode::BACKSPACE | Keycode::A => return handle_select(is_pressed, app, emu),
         Keycode::R => {
             return if is_pressed {
-                Some(AppCmd::Rewind)
+                Some(AppCmd::ToggleRewind)
             } else {
                 Some(AppCmd::ChangeMode(RunMode::Normal))
             }

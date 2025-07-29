@@ -147,7 +147,13 @@ impl InputHandler {
                     }
                 }
             }
-            AppCmd::Rewind => emu.state = EmuState::Rewind,
+            AppCmd::ToggleRewind => {
+                if emu.state == EmuState::Rewind {
+                    emu.state = EmuState::Running
+                } else {
+                    emu.state = EmuState::Rewind
+                }
+            }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
                 if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {

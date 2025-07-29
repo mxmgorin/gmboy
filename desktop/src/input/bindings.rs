@@ -1,3 +1,5 @@
+use core::emu::runtime::RunMode;
+use core::auxiliary::joypad::JoypadButton;
 use crate::app::AppCmd;
 use crate::input::{all_buttons, button_to_str, str_to_button};
 use sdl2::controller::Button;
@@ -26,62 +28,52 @@ impl Default for Bindings {
 }
 #[derive(Debug, Clone)]
 pub struct GamepadBindings {
-    map: [Option<AppCmd>; GamepadBindings::BUTTON_COUNT],
+    map: [Option<AppCmd>; GamepadBindings::BUTTON_COUNT * 2],
 }
 
 impl GamepadBindings {
     pub const BUTTON_COUNT: usize = 15;
 
     #[inline(always)]
-    fn idx(btn: Button) -> usize {
-        btn as usize
+    fn idx(btn: Button, pressed: bool) -> usize {
+        (btn as usize) * 2 + if pressed { 0 } else { 1 }
+    }
+
+    fn set_both(&mut self, btn: Button, cmd: AppCmd) {
+        self.set(btn, true, cmd.clone());
+        self.set(btn, false, cmd);
     }
 
     pub fn new() -> Self {
-        let mut map = std::array::from_fn(|_| None);
-        map[Self::idx(Button::Start)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Start,
-        ));
-        map[Self::idx(Button::Guide)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Select,
-        ));
-        map[Self::idx(Button::Back)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Select,
-        ));
-        map[Self::idx(Button::DPadUp)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Up,
-        ));
-        map[Self::idx(Button::DPadDown)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Down,
-        ));
-        map[Self::idx(Button::DPadLeft)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Left,
-        ));
-        map[Self::idx(Button::DPadRight)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::Right,
-        ));
-        map[Self::idx(Button::A)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::A,
-        ));
-        map[Self::idx(Button::B)] = Some(AppCmd::EmuButton(
-            core::auxiliary::joypad::JoypadButton::B,
-        ));
-        //map[Self::idx(Button::X)] = Some(AppCmd::NextPalette);
-        map[Self::idx(Button::Y)] = Some(AppCmd::Rewind);
-        map[Self::idx(Button::LeftShoulder)] = Some(AppCmd::ChangeMode(core::emu::runtime::RunMode::Slow));
-        map[Self::idx(Button::RightShoulder)] = Some(AppCmd::ChangeMode(core::emu::runtime::RunMode::Turbo));
+        let mut bindings = GamepadBindings { map: std::array::from_fn(|_| None) };
+        bindings.set_both(Button::Start, AppCmd::EmuButton(JoypadButton::Start));
+        bindings.set_both(Button::Guide, AppCmd::EmuButton(JoypadButton::Select));
+        bindings.set_both(Button::Back, AppCmd::EmuButton(JoypadButton::Select));
+        bindings.set_both(Button::DPadUp, AppCmd::EmuButton(JoypadButton::Up));
+        bindings.set_both(Button::DPadDown, AppCmd::EmuButton(JoypadButton::Down));
+        bindings.set_both(Button::DPadLeft, AppCmd::EmuButton(JoypadButton::Left));
+        bindings.set_both(Button::DPadRight, AppCmd::EmuButton(JoypadButton::Right));
+        bindings.set_both(Button::A, AppCmd::EmuButton(JoypadButton::A));
+        bindings.set_both(Button::B, AppCmd::EmuButton(JoypadButton::B));
+        bindings.set_both(Button::Y, AppCmd::ToggleRewind);
+        bindings.set(Button::LeftShoulder, true, AppCmd::ChangeMode(RunMode::Slow));
+        bindings.set(Button::LeftShoulder, false, AppCmd::ChangeMode(RunMode::Normal));
+        bindings.set(Button::RightShoulder, true, AppCmd::ChangeMode(RunMode::Turbo));
+        bindings.set(Button::RightShoulder, false, AppCmd::ChangeMode(RunMode::Normal));
 
-        Self { map }
+        bindings
     }
 
     #[inline(always)]
-    pub fn get(&self, btn: Button) -> Option<&AppCmd> {
-        self.map.get(Self::idx(btn)).and_then(|x| x.as_ref())
+    pub fn get(&self, btn: Button, pressed: bool) -> Option<&AppCmd> {
+        self.map
+            .get(Self::idx(btn, pressed))
+            .and_then(|x| x.as_ref())
     }
 
     #[inline(always)]
-    pub fn set(&mut self, btn: Button, action: AppCmd) {
-        self.map[Self::idx(btn)] = Some(action);
+    pub fn set(&mut self, btn: Button, pressed: bool, action: AppCmd) {
+        self.map[Self::idx(btn, pressed)] = Some(action);
     }
 }
 
@@ -91,9 +83,17 @@ impl Serialize for GamepadBindings {
         S: Serializer,
     {
         let mut map_ser = serializer.serialize_map(None)?;
+
         for btn in all_buttons() {
-            if let Some(cmd) = self.get(*btn) {
-                map_ser.serialize_entry(&button_to_str(*btn), &cmd)?;
+            for &pressed in &[true, false] {
+                if let Some(cmd) = self.get(*btn, pressed) {
+                    let key = format!(
+                        "{}.{}",
+                        button_to_str(*btn),
+                        if pressed { "pressed" } else { "released" }
+                    );
+                    map_ser.serialize_entry(&key, cmd)?;
+                }
             }
         }
 
@@ -112,7 +112,10 @@ impl<'de> Deserialize<'de> for GamepadBindings {
             type Value = GamepadBindings;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "a map of gamepad button names to AppCmd")
+                write!(
+                    f,
+                    "a map of gamepad button.state (pressed/released) to AppCmd"
+                )
             }
 
             fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
@@ -121,11 +124,23 @@ impl<'de> Deserialize<'de> for GamepadBindings {
             {
                 let mut bindings = GamepadBindings::new();
 
-                while let Some((btn_name, cmd)) = access.next_entry::<String, AppCmd>()? {
-                    if let Some(btn) = str_to_button(&btn_name) {
-                        bindings.set(btn, cmd);
+                while let Some((key, cmd)) = access.next_entry::<String, AppCmd>()? {
+                    let mut parts = key.split('.');
+                    let btn_str = parts.next().unwrap_or("");
+                    let state_str = parts.next().unwrap_or("pressed");
+
+                    let pressed = match state_str {
+                        "pressed" => true,
+                        "released" => false,
+                        _ => {
+                            return Err(M::Error::custom(format!("Invalid state in key: {}", key)))
+                        }
+                    };
+
+                    if let Some(btn) = str_to_button(btn_str) {
+                        bindings.set(btn, pressed, cmd);
                     } else {
-                        return Err(M::Error::custom(format!("Unknown button: {}", btn_name)));
+                        return Err(M::Error::custom(format!("Unknown button: {}", btn_str)));
                     }
                 }
 
