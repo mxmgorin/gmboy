@@ -1,3 +1,4 @@
+use crate::input::config::InputConfig;
 use crate::video::frame_blend::FrameBlendMode;
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
@@ -7,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 use std::{env, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -20,13 +20,8 @@ pub struct AppConfig {
     pub roms_dir: Option<String>,
     pub interface: InterfaceConfig,
     pub audio: AudioConfig,
-    pub input: InputConfig,
     pub video: VideoConfig,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct InputConfig {
-    pub combo_interval: Duration,
+    pub input: InputConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -50,6 +45,22 @@ impl AppConfig {
 
     pub fn set_emu_config(&mut self, config: EmuConfig) {
         self.emulation = config;
+    }
+
+    pub fn inc_save_index(&mut self) {
+        self.current_save_index = core::move_next_wrapped(self.current_save_index, 99);
+    }
+
+    pub fn dec_save_index(&mut self) {
+        self.current_save_index = core::move_prev_wrapped(self.current_save_index, 99);
+    }
+
+    pub fn inc_load_index(&mut self) {
+        self.current_load_index = core::move_next_wrapped(self.current_load_index, 99);
+    }
+
+    pub fn dec_load_index(&mut self) {
+        self.current_load_index = core::move_prev_wrapped(self.current_load_index, 99);
     }
 }
 
@@ -144,9 +155,7 @@ impl Default for AppConfig {
                 buffer_size: apu_config.buffer_size,
                 volume: apu_config.volume,
             },
-            input: InputConfig {
-                combo_interval: Duration::from_millis(500),
-            },
+            input: InputConfig::default(),
             video: VideoConfig {
                 frame_blend_mode: FrameBlendMode::None,
                 dim: 1.0,

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cpu::{Cpu, CpuCallback, DebugCtx};
@@ -6,7 +7,7 @@ pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
 use crate::emu::EmuAudioCallback;
 use crate::ppu::Ppu;
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub enum RunMode {
     Normal,
     Slow,

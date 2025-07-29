@@ -7,6 +7,7 @@ use crate::video::menu::AppMenu;
 use crate::video::notification::Notifications;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
+use core::auxiliary::joypad::JoypadButton;
 use core::emu::battery::BatterySave;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
@@ -14,25 +15,29 @@ use core::emu::state::SaveStateCmd;
 use core::emu::EmuAudioCallback;
 use core::ppu::palette::LcdPalette;
 use sdl2::{Sdl, VideoSubsystem};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AppCmd {
-    TogglePause,
-    Rewind,
+    ToggleMenu,
+    ToggleRewind,
     LoadFile(PathBuf),
     RestartGame,
     ChangeMode(RunMode),
-    SaveState(SaveStateCmd, usize),
+    SaveState(SaveStateCmd, Option<usize>),
     SelectRom,
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
     SelectRomsDir,
+    EmuButton(JoypadButton),
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ChangeAppConfigCmd {
     Default,
     Volume(f32),
@@ -54,9 +59,11 @@ pub enum ChangeAppConfigCmd {
     MuteTurbo,
     MuteSlow,
     ComboInterval(i32),
-    SaveIndex(usize),
-    LoadIndex(usize),
-    PaletteInverted,
+    SetSaveIndex(usize),
+    SetLoadIndex(usize),
+    IncSaveAndLoadIndexes,
+    DecSaveAndLoadIndexes,
+    InvertPalette,
     Video(VideoConfig),
 }
 
@@ -258,14 +265,14 @@ impl App {
             .set_fullscreen(self.config.interface.is_fullscreen);
     }
 
-    pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: usize) {
+    pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
         let library = RomsList::get_or_create();
         let name = library.get_last_file_stem().unwrap();
-        let index = index.to_string();
 
         match event {
             SaveStateCmd::Create => {
                 let save_state = emu.create_save_state();
+                let index = index.unwrap_or(self.config.current_save_index).to_string();
 
                 if let Err(err) = save_state.save_file(&name, &index) {
                     eprintln!("Failed save_state: {err}");
@@ -276,6 +283,7 @@ impl App {
                 self.notifications.add(msg);
             }
             SaveStateCmd::Load => {
+                let index = index.unwrap_or(self.config.current_load_index).to_string();
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
 
                 let Ok(save_state) = save_state else {

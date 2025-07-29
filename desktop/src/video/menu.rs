@@ -411,12 +411,12 @@ impl AppMenu {
             AppMenuItem::SaveState => {
                 let i = core::move_next_wrapped(config.current_save_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetSaveIndex(i)))
             }
             AppMenuItem::LoadState => {
                 let i = core::move_next_wrapped(config.current_load_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetLoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => {
@@ -468,7 +468,7 @@ impl AppMenu {
                 ChangeAppConfigCmd::ComboInterval(5_000),
             )),
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendMode => {
                 let mode = match config.video.frame_blend_mode {
@@ -583,12 +583,12 @@ impl AppMenu {
             AppMenuItem::SaveState => {
                 let i = core::move_prev_wrapped(config.current_save_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetSaveIndex(i)))
             }
             AppMenuItem::LoadState => {
                 let i = core::move_prev_wrapped(config.current_load_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetLoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => {
@@ -640,7 +640,7 @@ impl AppMenu {
                 ChangeAppConfigCmd::ComboInterval(-5_000),
             )),
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendAlpha => {
                 let mut conf = config.video.clone();
@@ -763,17 +763,13 @@ impl AppMenu {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
-            AppMenuItem::Resume => Some(AppCmd::TogglePause),
+            AppMenuItem::Resume => Some(AppCmd::ToggleMenu),
             AppMenuItem::OpenRom => Some(AppCmd::SelectRom),
             AppMenuItem::Quit => Some(AppCmd::Quit),
             AppMenuItem::SaveState => Some(AppCmd::SaveState(
-                core::emu::state::SaveStateCmd::Create,
-                config.current_save_index,
-            )),
+                core::emu::state::SaveStateCmd::Create, None)),
             AppMenuItem::LoadState => Some(AppCmd::SaveState(
-                core::emu::state::SaveStateCmd::Load,
-                config.current_load_index,
-            )),
+                core::emu::state::SaveStateCmd::Load, None)),
             AppMenuItem::OptionsMenu => {
                 self.next_items(options_menu());
 
@@ -832,7 +828,7 @@ impl AppMenu {
             }
             AppMenuItem::ComboInterval => None,
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendAlpha => None,
             AppMenuItem::FrameBlendMode => None,

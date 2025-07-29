@@ -1,4 +1,4 @@
-use crate::{get_exe_path, save_json_file};
+use crate::{get_exe_dir, save_json_file};
 use serde::{Deserialize, Serialize};
 use std::io;
 use std::path::PathBuf;
@@ -17,7 +17,7 @@ impl LcdPalette {
     }
 
     pub fn default_palettes_path() -> PathBuf {
-        let exe_dir = get_exe_path();
+        let exe_dir = get_exe_dir();
 
         exe_dir.join("palettes.json")
     }

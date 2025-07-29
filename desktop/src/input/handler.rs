@@ -1,6 +1,6 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
-use crate::config::{AppConfig, InputConfig};
-use crate::input::combo::ComboTracker;
+use crate::config::AppConfig;
+use crate::input::combos::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
 use crate::roms::RomsList;
@@ -19,7 +19,7 @@ pub struct InputHandler {
 }
 
 impl InputHandler {
-    pub fn new(sdl: &Sdl, config: &InputConfig) -> Result<Self, String> {
+    pub fn new(sdl: &Sdl) -> Result<Self, String> {
         let mut game_controllers = vec![];
         let game_controller_subsystem = sdl.game_controller()?;
 
@@ -34,7 +34,7 @@ impl InputHandler {
             event_pump: sdl.event_pump()?,
             game_controllers,
             game_controller_subsystem,
-            combo_tracker: ComboTracker::new(config.combo_interval),
+            combo_tracker: ComboTracker::new(),
         })
     }
 
@@ -116,7 +116,7 @@ impl InputHandler {
             AppCmd::LoadFile(path) => {
                 app.load_cart_file(emu, &path);
             }
-            AppCmd::TogglePause => {
+            AppCmd::ToggleMenu => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
                     emu.runtime.bus.io.joypad.reset();
                     app.state = AppState::Running;
@@ -147,7 +147,13 @@ impl InputHandler {
                     }
                 }
             }
-            AppCmd::Rewind => emu.state = EmuState::Rewind,
+            AppCmd::ToggleRewind => {
+                if emu.state == EmuState::Rewind {
+                    emu.state = EmuState::Running
+                } else {
+                    emu.state = EmuState::Rewind
+                }
+            }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
                 if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
@@ -231,11 +237,10 @@ impl InputHandler {
                 ChangeAppConfigCmd::ComboInterval(x) => {
                     app.config.input.combo_interval =
                         core::change_duration(app.config.input.combo_interval, x);
-                    self.combo_tracker = ComboTracker::new(app.config.input.combo_interval);
                 }
-                ChangeAppConfigCmd::SaveIndex(x) => app.config.current_save_index = x,
-                ChangeAppConfigCmd::LoadIndex(x) => app.config.current_load_index = x,
-                ChangeAppConfigCmd::PaletteInverted => {
+                ChangeAppConfigCmd::SetSaveIndex(x) => app.config.current_save_index = x,
+                ChangeAppConfigCmd::SetLoadIndex(x) => app.config.current_load_index = x,
+                ChangeAppConfigCmd::InvertPalette => {
                     app.config.interface.is_palette_inverted =
                         !app.config.interface.is_palette_inverted;
                     app.update_palette(emu);
@@ -244,7 +249,22 @@ impl InputHandler {
                     app.config.video = x;
                     app.window.config = app.config.video.clone();
                 }
+                ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
+                    app.config.inc_save_index();
+                    app.config.inc_load_index();
+                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.menu.request_update();
+                }
+                ChangeAppConfigCmd::DecSaveAndLoadIndexes => {
+                    app.config.dec_load_index();
+                    app.config.dec_save_index();
+                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.menu.request_update();
+                }
             },
+            AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
         }
     }
 }

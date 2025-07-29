@@ -1,5 +1,26 @@
 use crate::app::{App, AppCmd, AppState};
 use crate::Emu;
+use core::auxiliary::joypad::JoypadButton;
+
+pub fn handle_emu_btn(
+    btn: JoypadButton,
+    is_pressed: bool,
+    app: &mut App,
+    emu: &mut Emu,
+) -> Option<AppCmd> {
+    match btn {
+        JoypadButton::Start => emu.runtime.bus.io.joypad.start = is_pressed,
+        JoypadButton::Select => emu.runtime.bus.io.joypad.select = is_pressed,
+        JoypadButton::A => return handle_a(is_pressed, app, emu),
+        JoypadButton::B => handle_b(is_pressed, app, emu),
+        JoypadButton::Up => handle_up(is_pressed, app, emu),
+        JoypadButton::Down => handle_down(is_pressed, app, emu),
+        JoypadButton::Left => return handle_left(is_pressed, app, emu),
+        JoypadButton::Right => return handle_right(is_pressed, app, emu),
+    }
+
+    None
+}
 
 pub fn handle_start(is_pressed: bool, _app: &mut App, emu: &mut Emu) -> Option<AppCmd> {
     emu.runtime.bus.io.joypad.start = is_pressed;

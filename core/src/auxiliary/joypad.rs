@@ -10,6 +10,18 @@ pub const START_OR_DOWN_BIT: u8 = 0x03;
 pub const SELECT_DIRECTIONS_BIT: u8 = 0x04;
 pub const SELECT_ACTIONS_BIT: u8 = 0x05;
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum JoypadButton {
+    Start,
+    Select,
+    A,
+    B,
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Joypad {
     pub start: bool,
@@ -26,6 +38,19 @@ pub struct Joypad {
 }
 
 impl Joypad {
+    pub fn handle(&mut self, button: JoypadButton, is_pressed: bool) {
+        match button {
+            JoypadButton::Start => self.start = is_pressed,
+            JoypadButton::Select => self.select = is_pressed,
+            JoypadButton::A => self.a = is_pressed,
+            JoypadButton::B => self.b = is_pressed,
+            JoypadButton::Up => self.up = is_pressed,
+            JoypadButton::Down => self.down = is_pressed,
+            JoypadButton::Left => self.left = is_pressed,
+            JoypadButton::Right => self.right = is_pressed,
+        }
+    }
+
     pub fn get_byte(&self) -> u8 {
         if self.actions_selected {
             ((!self.a as u8) << A_OR_RIGHT_BIT)

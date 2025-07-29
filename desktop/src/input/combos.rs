@@ -1,4 +1,6 @@
 use crate::app::AppCmd;
+use crate::input::all_buttons;
+use crate::input::config::InputConfig;
 use sdl2::controller::Button;
 use std::time::{Duration, Instant};
 
@@ -27,44 +29,60 @@ impl ButtonState {
 }
 
 pub struct ComboTracker {
-    states: Box<[ButtonState]>,
-    combo_interval: Duration,
+    states: [ButtonState; all_buttons().len()],
 }
 
 impl ComboTracker {
-    pub fn new(combo_interval: Duration) -> Self {
+    pub fn new() -> Self {
         Self {
-            states: vec![
+            states: [
                 ButtonState::new(Button::Start),
                 ButtonState::new(Button::Back),
                 ButtonState::new(Button::Guide),
-            ]
-            .into_boxed_slice(),
-            combo_interval,
+                ButtonState::new(Button::A),
+                ButtonState::new(Button::B),
+                ButtonState::new(Button::X),
+                ButtonState::new(Button::Y),
+                ButtonState::new(Button::LeftShoulder),
+                ButtonState::new(Button::RightShoulder),
+                ButtonState::new(Button::DPadUp),
+                ButtonState::new(Button::DPadDown),
+                ButtonState::new(Button::DPadLeft),
+                ButtonState::new(Button::DPadRight),
+                ButtonState::new(Button::LeftStick),
+                ButtonState::new(Button::RightStick),
+            ],
         }
     }
 
-    pub fn update(&mut self, button: Button, pressed: bool) -> Option<AppCmd> {
+    pub fn update(
+        &mut self,
+        button: Button,
+        pressed: bool,
+        config: &InputConfig,
+    ) -> Option<AppCmd> {
         for state in self.states.iter_mut() {
             if state.button == button {
                 state.update(pressed);
-                return self.find();
+                return self.find(config);
             }
         }
 
         None
     }
 
-    fn find(&self) -> Option<AppCmd> {
-        if self.combo_2(Button::Back, Button::Start) || self.combo_2(Button::Guide, Button::Start) {
-            return Some(AppCmd::TogglePause);
+    fn find(&self, config: &InputConfig) -> Option<AppCmd> {
+        for combo in config.bindings.button_combos.iter() {
+            if self.combo_2(combo.btn_1, combo.btn_2, config.combo_interval) {
+                return Some(combo.cmd.to_owned());
+            }
         }
 
         None
     }
 
     /// Generic function to check any 2-button combo
-    fn combo_2(&self, b1: Button, b2: Button) -> bool {
+    fn combo_2(&self, b1: Button, b2: Button, duration: Duration) -> bool {
         let mut state_1: Option<&ButtonState> = None;
         let mut state_2: Option<&ButtonState> = None;
 
@@ -88,7 +106,7 @@ impl ComboTracker {
                 s2.last_pressed.duration_since(s1.last_pressed)
             };
 
-            return diff <= self.combo_interval;
+            return diff <= duration;
         }
 
         false
