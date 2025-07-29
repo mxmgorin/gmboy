@@ -233,6 +233,7 @@ impl InputHandler {
                 ChangeAppConfigCmd::Default => {
                     app.config = AppConfig::default();
                     emu.config = app.config.emulation.clone();
+                    app.notifications.add("Defaults restored");
                 }
                 ChangeAppConfigCmd::ComboInterval(x) => {
                     app.config.input.combo_interval =

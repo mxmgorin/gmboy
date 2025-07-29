@@ -16,7 +16,7 @@ pub enum AppMenuItem {
     SaveState,
     LoadState,
     OpenRom,
-    OptionsMenu,
+    SettingsMenu,
     InterfaceMenu,
     Back,
     Quit,
@@ -39,7 +39,7 @@ pub enum AppMenuItem {
     AudioBufferSize,
     MuteTurbo,
     MuteSlow,
-    DefaultConfig,
+    ResetConfig,
     RestartGame,
     InputMenu,
     ComboInterval,
@@ -58,17 +58,21 @@ pub enum AppMenuItem {
     RomsMenu,
     Roms(RomsMenu),
     RomsDir,
+    Confirm(AppCmd),
+    Tools,
 }
 
 impl AppMenuItem {
     pub fn get_inner_mut(&mut self) -> Option<&mut RomsMenu> {
         match self {
             AppMenuItem::Resume
+            | AppMenuItem::Tools
+            | AppMenuItem::Confirm(_)
             | AppMenuItem::RomsDir
             | AppMenuItem::SaveState
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
-            | AppMenuItem::OptionsMenu
+            | AppMenuItem::SettingsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
             | AppMenuItem::Quit
@@ -91,7 +95,7 @@ impl AppMenuItem {
             | AppMenuItem::AudioBufferSize
             | AppMenuItem::MuteTurbo
             | AppMenuItem::MuteSlow
-            | AppMenuItem::DefaultConfig
+            | AppMenuItem::ResetConfig
             | AppMenuItem::RestartGame
             | AppMenuItem::InputMenu
             | AppMenuItem::ComboInterval
@@ -115,11 +119,13 @@ impl AppMenuItem {
     pub fn get_inner(&self) -> Option<&RomsMenu> {
         match self {
             AppMenuItem::Resume
+            | AppMenuItem::Tools
+            | AppMenuItem::Confirm(_)
             | AppMenuItem::SaveState
             | AppMenuItem::RomsDir
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
-            | AppMenuItem::OptionsMenu
+            | AppMenuItem::SettingsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
             | AppMenuItem::Quit
@@ -142,7 +148,7 @@ impl AppMenuItem {
             | AppMenuItem::AudioBufferSize
             | AppMenuItem::MuteTurbo
             | AppMenuItem::MuteSlow
-            | AppMenuItem::DefaultConfig
+            | AppMenuItem::ResetConfig
             | AppMenuItem::RestartGame
             | AppMenuItem::InputMenu
             | AppMenuItem::ComboInterval
@@ -207,6 +213,14 @@ fn input_menu() -> Box<[AppMenuItem]> {
     vec![AppMenuItem::ComboInterval, AppMenuItem::Back].into_boxed_slice()
 }
 
+fn confirm_menu(cmd: AppCmd) -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::Confirm(cmd), AppMenuItem::Back].into_boxed_slice()
+}
+
+fn tools_menu() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::ResetConfig, AppMenuItem::Back].into_boxed_slice()
+}
+
 fn system_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::AutoSaveState,
@@ -234,21 +248,21 @@ fn start_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
-        AppMenuItem::OptionsMenu,
+        AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
     ]
     .into_boxed_slice()
 }
 
-fn options_menu() -> Box<[AppMenuItem]> {
+fn settings_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::InterfaceMenu,
         AppMenuItem::VideoMenu,
         AppMenuItem::AudioMenu,
         AppMenuItem::InputMenu,
         AppMenuItem::SystemMenu,
+        AppMenuItem::Tools,
         AppMenuItem::DeveloperMenu,
-        AppMenuItem::DefaultConfig,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
@@ -274,7 +288,7 @@ fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::RestartGame,
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
-        AppMenuItem::OptionsMenu,
+        AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
     ]
     .into_boxed_slice()
@@ -434,7 +448,7 @@ impl AppMenu {
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
-            | AppMenuItem::OptionsMenu
+            | AppMenuItem::SettingsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
             | AppMenuItem::Quit
@@ -461,7 +475,7 @@ impl AppMenu {
             }
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
-            AppMenuItem::DefaultConfig => None,
+            AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
             AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
@@ -572,6 +586,8 @@ impl AppMenu {
             AppMenuItem::RomsMenu => None,
             AppMenuItem::Roms(x) => x.move_right(),
             AppMenuItem::RomsDir => None,
+            AppMenuItem::Confirm(_) => None,
+            AppMenuItem::Tools => None,
         }
     }
 
@@ -580,6 +596,7 @@ impl AppMenu {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
+            AppMenuItem::Tools => None,
             AppMenuItem::SaveState => {
                 let i = core::move_prev_wrapped(config.current_save_index, 99);
 
@@ -606,7 +623,7 @@ impl AppMenu {
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
-            | AppMenuItem::OptionsMenu
+            | AppMenuItem::SettingsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
             | AppMenuItem::Quit
@@ -633,7 +650,7 @@ impl AppMenu {
             )),
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
-            AppMenuItem::DefaultConfig => None,
+            AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
             AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
@@ -747,10 +764,11 @@ impl AppMenu {
             AppMenuItem::RomsMenu => None,
             AppMenuItem::Roms(x) => x.move_left(),
             AppMenuItem::RomsDir => None,
+            AppMenuItem::Confirm(_) => None,
         }
     }
 
-    pub fn cancel(&mut self) {
+    pub fn back(&mut self) {
         self.updated = true;
         if let Some(prev) = self.prev_items.pop_back() {
             self.selected_index = 0;
@@ -767,11 +785,15 @@ impl AppMenu {
             AppMenuItem::OpenRom => Some(AppCmd::SelectRom),
             AppMenuItem::Quit => Some(AppCmd::Quit),
             AppMenuItem::SaveState => Some(AppCmd::SaveState(
-                core::emu::state::SaveStateCmd::Create, None)),
+                core::emu::state::SaveStateCmd::Create,
+                None,
+            )),
             AppMenuItem::LoadState => Some(AppCmd::SaveState(
-                core::emu::state::SaveStateCmd::Load, None)),
-            AppMenuItem::OptionsMenu => {
-                self.next_items(options_menu());
+                core::emu::state::SaveStateCmd::Load,
+                None,
+            )),
+            AppMenuItem::SettingsMenu => {
+                self.next_items(settings_menu());
 
                 None
             }
@@ -781,7 +803,7 @@ impl AppMenu {
                 None
             }
             AppMenuItem::Back => {
-                self.cancel();
+                self.back();
 
                 None
             }
@@ -819,7 +841,13 @@ impl AppMenu {
             AppMenuItem::AudioBufferSize => None,
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
-            AppMenuItem::DefaultConfig => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Default)),
+            AppMenuItem::ResetConfig => {
+                self.next_items(confirm_menu(AppCmd::ChangeConfig(
+                    ChangeAppConfigCmd::Default,
+                )));
+
+                None
+            }
             AppMenuItem::RestartGame => Some(AppCmd::RestartGame),
             AppMenuItem::InputMenu => {
                 self.next_items(input_menu());
@@ -863,12 +891,24 @@ impl AppMenu {
 
                 if is_back {
                     self.inner_buffer.clear();
-                    self.cancel();
+                    self.back();
                 }
 
                 cmd
             }
             AppMenuItem::RomsDir => Some(AppCmd::SelectRomsDir),
+            AppMenuItem::Confirm(cmd) => {
+                let cmd = cmd.to_owned();
+                self.back();
+
+                Some(cmd)
+            },
+            AppMenuItem::Tools => {
+                self.next_items(tools_menu());
+
+                None
+            },
+
         }
     }
 
@@ -888,7 +928,7 @@ impl AppMenuItem {
             AppMenuItem::Quit => "Quit".to_string(),
             AppMenuItem::SaveState => format!("Save({})", config.current_save_index),
             AppMenuItem::LoadState => format!("Load({})", config.current_load_index),
-            AppMenuItem::OptionsMenu => "Options".to_string(),
+            AppMenuItem::SettingsMenu => "Settings".to_string(),
             AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
             AppMenuItem::Palette => format!("Palette({})", config.interface.selected_palette_idx),
@@ -934,7 +974,7 @@ impl AppMenuItem {
             AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
             AppMenuItem::MuteTurbo => format!("Mute Turbo{}", get_suffix(config.audio.mute_turbo)),
             AppMenuItem::MuteSlow => format!("Mute Slow{}", get_suffix(config.audio.mute_slow)),
-            AppMenuItem::DefaultConfig => "Reset Default".to_string(),
+            AppMenuItem::ResetConfig => "Reset Settings".to_string(),
             AppMenuItem::RestartGame => "Restart".to_string(),
             AppMenuItem::InputMenu => "Input".to_string(),
             AppMenuItem::ComboInterval => format!(
@@ -981,6 +1021,8 @@ impl AppMenuItem {
             AppMenuItem::RomsMenu => "ROMs".to_string(),
             AppMenuItem::Roms(x) => format!("ROMs ({})", x.items.len()),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
+            AppMenuItem::Confirm(_) => "Confirm".to_string(),
+            AppMenuItem::Tools => "Tools".to_string(),
         }
     }
 }
