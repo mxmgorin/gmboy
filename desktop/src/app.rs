@@ -29,7 +29,7 @@ pub enum AppCmd {
     LoadFile(PathBuf),
     RestartGame,
     ChangeMode(RunMode),
-    SaveState(SaveStateCmd, usize),
+    SaveState(SaveStateCmd, Option<usize>),
     SelectRom,
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
@@ -263,14 +263,14 @@ impl App {
             .set_fullscreen(self.config.interface.is_fullscreen);
     }
 
-    pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: usize) {
+    pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
         let library = RomsList::get_or_create();
         let name = library.get_last_file_stem().unwrap();
-        let index = index.to_string();
 
         match event {
             SaveStateCmd::Create => {
                 let save_state = emu.create_save_state();
+                let index = index.unwrap_or(self.config.current_save_index).to_string();
 
                 if let Err(err) = save_state.save_file(&name, &index) {
                     eprintln!("Failed save_state: {err}");
@@ -281,6 +281,7 @@ impl App {
                 self.notifications.add(msg);
             }
             SaveStateCmd::Load => {
+                let index = index.unwrap_or(self.config.current_load_index).to_string();
                 let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
 
                 let Ok(save_state) = save_state else {

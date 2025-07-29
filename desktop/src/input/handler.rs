@@ -133,7 +133,9 @@ impl InputHandler {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
             }
-            AppCmd::SaveState(event, index) => app.handle_save_state(emu, event, index),
+            AppCmd::SaveState(event, index) => {
+                app.handle_save_state(emu, event, index)
+            },
             AppCmd::SelectRom =>
             {
                 #[cfg(feature = "filepicker")]

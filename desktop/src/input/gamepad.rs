@@ -27,7 +27,7 @@ pub fn handle_gamepad(
     Some(cmd.to_owned())
 }
 
-pub fn handle_gamepad_axis(app: &App, axis_idx: u8, value: i16) -> Option<AppCmd> {
+pub fn handle_gamepad_axis(_app: &App, axis_idx: u8, value: i16) -> Option<AppCmd> {
     const LEFT: u8 = 2;
     const RIGHT: u8 = 5;
     const THRESHOLD: i16 = 25_000;
@@ -36,12 +36,12 @@ pub fn handle_gamepad_axis(app: &App, axis_idx: u8, value: i16) -> Option<AppCmd
     if axis_idx == LEFT && !is_pressed {
         return Some(AppCmd::SaveState(
             SaveStateCmd::Load,
-            app.config.current_load_index,
+            None
         ));
     } else if axis_idx == RIGHT && !is_pressed {
         return Some(AppCmd::SaveState(
             SaveStateCmd::Create,
-            app.config.current_save_index,
+            None
         ));
     }
 

@@ -97,92 +97,92 @@ pub fn handle_keyboard(
         }
         Keycode::NUM_1 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 1));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(1)));
             }
         }
         Keycode::NUM_2 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 2));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(2)));
             }
         }
         Keycode::NUM_3 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 3));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(3)));
             }
         }
         Keycode::NUM_4 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 4));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(4)));
             }
         }
         Keycode::NUM_5 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 5));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(5)));
             }
         }
         Keycode::NUM_6 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 6));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(6)));
             }
         }
         Keycode::NUM_7 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 7));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(7)));
             }
         }
         Keycode::NUM_8 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 8));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(8)));
             }
         }
         Keycode::NUM_9 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Create, 9));
+                return Some(AppCmd::SaveState(SaveStateCmd::Create, Some(9)));
             }
         }
         Keycode::F1 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 1));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(1)));
             }
         }
         Keycode::F2 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 2));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(2)));
             }
         }
         Keycode::F3 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 3));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(3)));
             }
         }
         Keycode::F4 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 4));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(4)));
             }
         }
         Keycode::F5 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 5));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(5)));
             }
         }
         Keycode::F6 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 6));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(6)));
             }
         }
         Keycode::F7 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 7));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(7)));
             }
         }
         Keycode::F8 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 8));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(8)));
             }
         }
         Keycode::F9 => {
             if is_pressed {
-                return Some(AppCmd::SaveState(SaveStateCmd::Load, 9));
+                return Some(AppCmd::SaveState(SaveStateCmd::Load, Some(9)));
             }
         }
         _ => (),

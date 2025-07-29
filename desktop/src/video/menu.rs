@@ -767,13 +767,9 @@ impl AppMenu {
             AppMenuItem::OpenRom => Some(AppCmd::SelectRom),
             AppMenuItem::Quit => Some(AppCmd::Quit),
             AppMenuItem::SaveState => Some(AppCmd::SaveState(
-                core::emu::state::SaveStateCmd::Create,
-                config.current_save_index,
-            )),
+                core::emu::state::SaveStateCmd::Create, None)),
             AppMenuItem::LoadState => Some(AppCmd::SaveState(
-                core::emu::state::SaveStateCmd::Load,
-                config.current_load_index,
-            )),
+                core::emu::state::SaveStateCmd::Load, None)),
             AppMenuItem::OptionsMenu => {
                 self.next_items(options_menu());
 

@@ -1,3 +1,4 @@
+use core::emu::state::SaveStateCmd;
 use core::emu::runtime::RunMode;
 use core::auxiliary::joypad::JoypadButton;
 use crate::app::{AppCmd, ChangeAppConfigCmd};
@@ -22,9 +23,12 @@ impl Default for Bindings {
             button_combos: vec![
                 ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
                 ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
-                ButtonCombo::new(Button::Start, Button::X, AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette)),
-
-            ],
+                ButtonCombo::new(Button::Guide, Button::X, AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette)),
+                ButtonCombo::new(Button::Back, Button::X, AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette)),
+                ButtonCombo::new(Button::LeftShoulder, Button::Back, AppCmd::SaveState(SaveStateCmd::Load, None)),
+                ButtonCombo::new(Button::RightShoulder, Button::Back, AppCmd::SaveState(SaveStateCmd::Create, None)),
+                ButtonCombo::new(Button::LeftShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Load, None)),
+                ButtonCombo::new(Button::RightShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Create, None)),],
         }
     }
 }
