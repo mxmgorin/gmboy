@@ -8,7 +8,7 @@ use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::Rect;
+use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 use sdl2::VideoSubsystem;
@@ -21,7 +21,10 @@ pub struct GameWindow {
     fps_texture: Texture,
     grid_texture: Texture,
     subpixel_texture: Texture,
+    scan_line_texture: Texture,
+    dot_matrix_texture: Texture,
     menu_texture: Texture,
+    vignette_texture: Texture,
     fps_rect: Rect,
     notif_rect: Rect,
     game_rect: Rect,
@@ -113,6 +116,24 @@ impl GameWindow {
                 game_rect.width(),
                 game_rect.height(),
             ),
+            scan_line_texture: generate_scanline_texture(
+                &mut canvas,
+                &texture_creator,
+                game_rect.width(),
+                game_rect.height(),
+            ),
+            dot_matrix_texture: generate_dot_matrix_texture(
+                &mut canvas,
+                &texture_creator,
+                game_rect.width(),
+                game_rect.height(),
+            ),
+            vignette_texture: generate_vignette_texture(
+                &mut canvas,
+                &texture_creator,
+                game_rect.width(),
+                game_rect.height(),
+            ),
             canvas,
             texture_creator,
             menu_texture,
@@ -171,13 +192,31 @@ impl GameWindow {
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
 
+        if self.config.vignette_enabled {
+            self.canvas
+                .copy(&self.vignette_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
+        if self.config.dot_matrix_enabled {
+            self.canvas
+                .copy(&self.dot_matrix_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
+        if self.config.scanline_enabled {
+            self.canvas
+                .copy(&self.scan_line_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
         if self.config.grid_enabled {
             self.canvas
                 .copy(&self.grid_texture, None, Some(self.game_rect))
                 .unwrap();
         }
 
-        if self.config.mask_enabled {
+        if self.config.subpixel_enabled {
             self.canvas
                 .copy(&self.subpixel_texture, None, Some(self.game_rect))
                 .unwrap();
@@ -321,7 +360,6 @@ impl GameWindow {
     }
 
     pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {
-
         let (align_center, text_width) = if align_center {
             let center = CenterAlignedText::new(lines, self.font_size);
 
@@ -359,13 +397,31 @@ impl GameWindow {
             .copy(&self.menu_texture, None, Some(self.game_rect))
             .unwrap();
 
+        if self.config.vignette_enabled {
+            self.canvas
+                .copy(&self.vignette_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
+        if self.config.dot_matrix_enabled {
+            self.canvas
+                .copy(&self.dot_matrix_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
+        if self.config.scanline_enabled {
+            self.canvas
+                .copy(&self.scan_line_texture, None, Some(self.game_rect))
+                .unwrap();
+        }
+
         if self.config.grid_enabled {
             self.canvas
                 .copy(&self.grid_texture, None, Some(self.game_rect))
                 .unwrap();
         }
 
-        if self.config.mask_enabled {
+        if self.config.subpixel_enabled {
             self.canvas
                 .copy(&self.subpixel_texture, None, Some(self.game_rect))
                 .unwrap();
@@ -449,6 +505,24 @@ impl GameWindow {
             self.game_rect.height(),
         );
         self.subpixel_texture = generate_subpixel_texture(
+            &mut self.canvas,
+            &self.texture_creator,
+            self.game_rect.width(),
+            self.game_rect.height(),
+        );
+        self.scan_line_texture = generate_scanline_texture(
+            &mut self.canvas,
+            &self.texture_creator,
+            self.game_rect.width(),
+            self.game_rect.height(),
+        );
+        self.dot_matrix_texture = generate_dot_matrix_texture(
+            &mut self.canvas,
+            &self.texture_creator,
+            self.game_rect.width(),
+            self.game_rect.height(),
+        );
+        self.vignette_texture = generate_vignette_texture(
             &mut self.canvas,
             &self.texture_creator,
             self.game_rect.width(),
@@ -569,4 +643,92 @@ fn generate_grid_texture(
     grid_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
     grid_texture
+}
+
+fn generate_scanline_texture(
+    canvas: &mut Canvas<Window>,
+    texture_creator: &TextureCreator<WindowContext>,
+    width: u32,
+    height: u32,
+) -> Texture {
+    let mut tex = texture_creator
+        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .unwrap();
+
+    canvas
+        .with_texture_canvas(&mut tex, |subcanvas| {
+            subcanvas.set_draw_color(Color::RGBA(0, 0, 0, 40));
+            for y in (0..height).step_by(2) {
+                // every 2 pixels
+                subcanvas
+                    .draw_line((0, y as i32), (width as i32, y as i32))
+                    .unwrap();
+            }
+        })
+        .unwrap();
+
+    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
+    tex
+}
+
+fn generate_dot_matrix_texture(
+    canvas: &mut Canvas<Window>,
+    texture_creator: &TextureCreator<WindowContext>,
+    width: u32,
+    height: u32,
+) -> Texture {
+    let mut tex = texture_creator
+        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .unwrap();
+
+    canvas
+        .with_texture_canvas(&mut tex, |subcanvas| {
+            subcanvas.set_draw_color(Color::RGBA(0, 0, 0, 30));
+            let spacing = 4; // distance between dots
+            let size = 1; // dot size
+
+            for y in (0..height).step_by(spacing) {
+                for x in (0..width).step_by(spacing) {
+                    let rect = Rect::new(x as i32, y as i32, size, size);
+                    subcanvas.fill_rect(rect).unwrap();
+                }
+            }
+        })
+        .unwrap();
+
+    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
+    tex
+}
+
+fn generate_vignette_texture(
+    canvas: &mut Canvas<Window>,
+    texture_creator: &TextureCreator<WindowContext>,
+    width: u32,
+    height: u32,
+) -> Texture {
+    let mut tex = texture_creator
+        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .unwrap();
+
+    canvas
+        .with_texture_canvas(&mut tex, |subcanvas| {
+            let center_x = width as f32 / 2.0;
+            let center_y = height as f32 / 2.0;
+            let max_dist = ((center_x.powi(2) + center_y.powi(2)).sqrt()) as f32;
+
+            for y in 0..height {
+                for x in 0..width {
+                    let dx = x as f32 - center_x;
+                    let dy = y as f32 - center_y;
+                    let dist = ((dx * dx + dy * dy).sqrt()) / max_dist;
+                    let alpha = (dist * 120.0) as u8; // intensity
+                    subcanvas.set_draw_color(Color::RGBA(0, 0, 0, alpha));
+                    subcanvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
+                }
+            }
+        })
+        .unwrap();
+
+    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
+    tex
 }

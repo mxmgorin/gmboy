@@ -12,7 +12,7 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
   Select from different frame blending modes to emulate the ghosting effect - play [Chikyū Kaihō Gun ZAS](https://en.wikipedia.org/wiki/Chiky%C5%AB_Kaih%C5%8D_Gun_ZAS) without flickering.
 
 - **Visual Filters**  
-  Apply effects such as a grid filter or a sub-pixel filter for enhanced visuals.
+  Apply effects such as grid lines, subpixel stripes, scanline, or a dot-matrix, vignette overlay to enhance the retro feel.
 
 - **ROMs Scanning**  
   Select your ROM directory and launch games directly from the emulator menu.

@@ -29,7 +29,10 @@ pub struct VideoConfig {
     pub frame_blend_mode: FrameBlendMode,
     pub dim: f32,
     pub grid_enabled: bool,
-    pub mask_enabled: bool,
+    pub subpixel_enabled: bool,
+    pub dot_matrix_enabled: bool,
+    pub scanline_enabled: bool,
+    pub vignette_enabled: bool,
 }
 
 impl VideoConfig {
@@ -160,7 +163,10 @@ impl Default for AppConfig {
                 frame_blend_mode: FrameBlendMode::None,
                 dim: 1.0,
                 grid_enabled: true,
-                mask_enabled: true,
+                subpixel_enabled: true,
+                dot_matrix_enabled: false,
+                scanline_enabled: false,
+                vignette_enabled: false,
             },
             roms_dir: None,
         }
