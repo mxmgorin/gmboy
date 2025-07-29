@@ -28,7 +28,11 @@ impl Default for Bindings {
                 ButtonCombo::new(Button::LeftShoulder, Button::Back, AppCmd::SaveState(SaveStateCmd::Load, None)),
                 ButtonCombo::new(Button::RightShoulder, Button::Back, AppCmd::SaveState(SaveStateCmd::Create, None)),
                 ButtonCombo::new(Button::LeftShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Load, None)),
-                ButtonCombo::new(Button::RightShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Create, None)),],
+                ButtonCombo::new(Button::RightShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Create, None)),
+                ButtonCombo::new(Button::DPadUp, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.1))),
+                ButtonCombo::new(Button::DPadDown, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.1))),
+            ],
+
         }
     }
 }
