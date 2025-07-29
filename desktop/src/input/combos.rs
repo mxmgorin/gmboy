@@ -38,12 +38,29 @@ impl ComboTracker {
                 ButtonState::new(Button::Start),
                 ButtonState::new(Button::Back),
                 ButtonState::new(Button::Guide),
+                ButtonState::new(Button::A),
+                ButtonState::new(Button::B),
+                ButtonState::new(Button::X),
+                ButtonState::new(Button::Y),
+                ButtonState::new(Button::LeftShoulder),
+                ButtonState::new(Button::RightShoulder),
+                ButtonState::new(Button::DPadUp),
+                ButtonState::new(Button::DPadDown),
+                ButtonState::new(Button::DPadLeft),
+                ButtonState::new(Button::DPadRight),
+                ButtonState::new(Button::LeftStick),
+                ButtonState::new(Button::RightStick),
             ]
             .into_boxed_slice(),
         }
     }
 
-    pub fn update(&mut self, button: Button, pressed: bool, config: &InputConfig) -> Option<AppCmd> {
+    pub fn update(
+        &mut self,
+        button: Button,
+        pressed: bool,
+        config: &InputConfig,
+    ) -> Option<AppCmd> {
         for state in self.states.iter_mut() {
             if state.button == button {
                 state.update(pressed);
@@ -55,7 +72,7 @@ impl ComboTracker {
     }
 
     fn find(&self, config: &InputConfig) -> Option<AppCmd> {
-        for (combo, cmd) in config.combos.0.iter() {
+        for (combo, cmd) in config.bindings.gamepad_combos.0.iter() {
             if self.combo_2(combo.b1, combo.b2, config.combo_interval) {
                 return Some(cmd.to_owned());
             }

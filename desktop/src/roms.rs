@@ -30,7 +30,6 @@ impl RomsList {
                     }
                 }
             }
-
         }
 
         Ok(self.recent_paths.len())
@@ -63,7 +62,7 @@ impl RomsList {
         let path = Self::get_path();
 
         if path.exists() {
-            let res = core::read_json_file::<RomsList>(&path);
+            let res: Result<RomsList, _> = core::read_json_file(&path);
             let Ok(lib) = res else {
                 return Default::default();
             };
@@ -79,7 +78,7 @@ impl RomsList {
     }
 
     pub fn get_path() -> PathBuf {
-        let exe_dir = core::get_exe_path();
+        let exe_dir = core::get_exe_dir();
 
         exe_dir.join("roms.json")
     }

@@ -2,7 +2,7 @@ use crate::ppu::tile::PixelColor;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use std::time::Duration;
@@ -79,22 +79,34 @@ pub fn into_pixel_colors(hex_colors: &[String]) -> [PixelColor; 4] {
     colors[..4].try_into().unwrap()
 }
 
-pub fn read_json_file<T: DeserializeOwned>(path: &Path) -> io::Result<T> {
-    let data = fs::read_to_string(path)?;
-    let config =
-        serde_json::from_str(&data).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+pub fn read_json_file<P, T>(path: P) -> io::Result<T>
+where
+    P: AsRef<Path>,
+    T: DeserializeOwned,
+{
+    let path_ref = path.as_ref();
+    let file = File::open(path_ref)
+        .map_err(|e| io::Error::new(e.kind(), format!("Failed to open {}: {}", path_ref.display(), e)))?;
 
-    Ok(config)
+    let reader = BufReader::new(file);
+    serde_json::from_reader(reader)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("Invalid JSON in {}: {}", path_ref.display(), e)))
 }
 
-pub fn save_json_file<T: Serialize>(path: &Path, data: &T) -> io::Result<()> {
-    let mut file = File::create(path)?;
-    let json = serde_json::to_string_pretty(data)?;
 
-    file.write_all(json.as_bytes())
+pub fn save_json_file<P, T>(path: P, data: &T) -> io::Result<()>
+where
+    P: AsRef<Path>,
+    T: Serialize,
+{
+    let file = File::create(path.as_ref())?;
+    let writer = BufWriter::new(file);
+    serde_json::to_writer_pretty(writer, data)
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }
 
-pub fn get_exe_path() -> PathBuf {
+
+pub fn get_exe_dir() -> PathBuf {
     let exe_path = env::current_exe().expect("Failed to get executable path");
 
     exe_path

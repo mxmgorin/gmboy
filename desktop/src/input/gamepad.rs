@@ -3,7 +3,7 @@ use crate::input::button::{
     handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
     handle_up,
 };
-use crate::input::combo::ComboTracker;
+use crate::input::combos::ComboTracker;
 use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;

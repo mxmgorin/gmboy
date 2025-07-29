@@ -1,6 +1,6 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::{AppConfig};
-use crate::input::combo::ComboTracker;
+use crate::input::combos::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
 use crate::roms::RomsList;
