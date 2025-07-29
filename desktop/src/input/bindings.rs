@@ -11,15 +11,15 @@ use std::option::Option;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Bindings {
-    pub gamepad: GamepadBindings,
-    pub gamepad_combos: Vec<ButtonCombo>,
+    pub buttons: ButtonBindings,
+    pub button_combos: Vec<ButtonCombo>,
 }
 
 impl Default for Bindings {
     fn default() -> Self {
         Self {
-            gamepad: GamepadBindings::new(),
-            gamepad_combos: vec![
+            buttons: ButtonBindings::new(),
+            button_combos: vec![
                 ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
                 ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
             ],
@@ -27,11 +27,11 @@ impl Default for Bindings {
     }
 }
 #[derive(Debug, Clone)]
-pub struct GamepadBindings {
-    map: [Option<AppCmd>; GamepadBindings::BUTTON_COUNT * 2],
+pub struct ButtonBindings {
+    map: [Option<AppCmd>; ButtonBindings::BUTTON_COUNT * 2],
 }
 
-impl GamepadBindings {
+impl ButtonBindings {
     pub const BUTTON_COUNT: usize = 15;
 
     #[inline(always)]
@@ -45,7 +45,7 @@ impl GamepadBindings {
     }
 
     pub fn new() -> Self {
-        let mut bindings = GamepadBindings { map: std::array::from_fn(|_| None) };
+        let mut bindings = ButtonBindings { map: std::array::from_fn(|_| None) };
         bindings.set_both(Button::Start, AppCmd::EmuButton(JoypadButton::Start));
         bindings.set_both(Button::Guide, AppCmd::EmuButton(JoypadButton::Select));
         bindings.set_both(Button::Back, AppCmd::EmuButton(JoypadButton::Select));
@@ -77,7 +77,7 @@ impl GamepadBindings {
     }
 }
 
-impl Serialize for GamepadBindings {
+impl Serialize for ButtonBindings {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -101,7 +101,7 @@ impl Serialize for GamepadBindings {
     }
 }
 
-impl<'de> Deserialize<'de> for GamepadBindings {
+impl<'de> Deserialize<'de> for ButtonBindings {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -109,7 +109,7 @@ impl<'de> Deserialize<'de> for GamepadBindings {
         struct BindingsVisitor;
 
         impl<'de> Visitor<'de> for BindingsVisitor {
-            type Value = GamepadBindings;
+            type Value = ButtonBindings;
 
             fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 write!(
@@ -122,7 +122,7 @@ impl<'de> Deserialize<'de> for GamepadBindings {
             where
                 M: MapAccess<'de>,
             {
-                let mut bindings = GamepadBindings::new();
+                let mut bindings = ButtonBindings::new();
 
                 while let Some((key, cmd)) = access.next_entry::<String, AppCmd>()? {
                     let mut parts = key.split('.');

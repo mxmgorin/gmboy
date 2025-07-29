@@ -72,7 +72,7 @@ impl ComboTracker {
     }
 
     fn find(&self, config: &InputConfig) -> Option<AppCmd> {
-        for combo in config.bindings.gamepad_combos.iter() {
+        for combo in config.bindings.button_combos.iter() {
             if self.combo_2(combo.btn_1, combo.btn_2, config.combo_interval) {
                 return Some(combo.cmd.to_owned());
             }

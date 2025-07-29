@@ -18,7 +18,7 @@ pub fn handle_gamepad(
         return combo_cmd;
     }
 
-    let cmd = app.config.input.bindings.gamepad.get(button, is_pressed)?;
+    let cmd = app.config.input.bindings.buttons.get(button, is_pressed)?;
 
     if let AppCmd::EmuButton(x) = cmd {
         return handle_emu_btn(*x, is_pressed, app, emu);
