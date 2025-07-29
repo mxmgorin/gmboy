@@ -1,6 +1,6 @@
 ## GMBoy
 
-`GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it emphasizes clean code, hardware understanding, and aims for high accuracy, test coverage, and good performance. 
+`GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it emphasizes clean code, hardware understanding, and aims for high accuracy, test coverage, and good performance.
 
 The emulator implements most Game Boy functionality and accuracy is verified by community test suites like blargg's and [mooneye](https://github.com/Gekkio/mooneye-test-suite). While most games should run correctly, some issues may still occur.
 
@@ -16,6 +16,9 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 
 - **ROMs Scanning**  
   Select your ROM directory and launch games directly from the emulator menu.
+
+- **Re-bindable Controls and Combo Inputs**  
+  Gamepad bindings and combo actions can be customized through the bindings.json file.
 
 - **Config Management**  
   Customize the config.json file via a built-in menu or by editing it manually.
@@ -38,33 +41,35 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 - **Tile Viewer**  
   Visualize and inspect background and sprite tile data in real time. Toggle it via the config.
 
-## Keybindings
+## Input bindings
 
-| Action                  | ⌨️ Keyboard              | 🎮 Gamepad     |
-|-------------------------|--------------------------|----------------|
-| D-pad Up                | Arrow Up                 | D-pad Up       |
-| D-pad Down              | Arrow Down               | D-pad Down     |
-| D-pad Left              | Arrow Left               | D-pad Left     |
-| D-pad Right             | Arrow Right              | D-pad Right    |
-| B                       | Z                        | B              |
-| A                       | X                        | A              |
-| Start                   | Enter / S                | Start          |
-| Select                  | Backspace / A            | Select         |
-| Rewind (hold)           | R                        | Y              |
-| Turbo mode (hold)       | Tab                      | Right Shoulder  |
-| Slow mode (hold)        | Left Shift / Right Shift | Left Shoulder   |
-| Main menu               | Esc / Q                  | Select + Start |
-| Restart                 |                          |                |
-| Screen scale up         | + (Equals)               |                |
-| Screen scale down       | - (Minus)                |                |
-| Fullscreen Toggle       | F10                      |                |
-| Mute audio              | M                        |                |
-| Invert palette          | I                        |                |
-| Next palette            | P                        | X              |
-| Load save state (1–9)   | F1–F19                   | Right Trigger |
-| Create save state (1–9) | 1–9                      | Left Trigger   |
-| Volume up               | F12                      |                |
-| Volume down             | F11                      |                |
+| Action                  | ⌨️ Keyboard              | 🎮 Gamepad          |
+|-------------------------|--------------------------|---------------------|
+| D-pad Up                | Arrow Up                 | D-pad Up            |
+| D-pad Down              | Arrow Down               | D-pad Down          |
+| D-pad Left              | Arrow Left               | D-pad Left          |
+| D-pad Right             | Arrow Right              | D-pad Right         |
+| B                       | Z                        | B                   |
+| A                       | X                        | A                   |
+| Start                   | Enter / S                | Start               |
+| Select                  | Backspace / A            | Select              |
+| Rewind (hold)           | R                        | Y                   |
+| Turbo mode (hold)       | Tab                      | RT                  |
+| Slow mode (hold)        | Left Shift / Right Shift | LT                  |
+| Main menu               | Esc / Q                  | Select + Start      |
+| Restart                 |                          |                     |
+| Screen scale up         | + (Equals)               |                     |
+| Screen scale down       | - (Minus)                |                     |
+| Fullscreen Toggle       | F10                      |                     |
+| Mute audio              | M                        |                     |
+| Invert palette          | I                        | Select + X          |
+| Next palette            | P                        | X                   |
+| Load save state (1–9)   | F1–F19                   | RT / Select + RB    |
+| Create save state (1–9) | 1–9                      | LT / Select + LT    |
+| Volume up               | F12                      | Start + D-pad Up    |
+| Volume down             | F11                      | Start + D-pad Down  |
+| Next Save State Slot    |                          | Start + D-pad Right |
+| Prev Save State Slot    |                          | Start + D-pad Left  |
 
 ## Supports
 

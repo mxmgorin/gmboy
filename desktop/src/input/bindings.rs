@@ -1,8 +1,8 @@
-use core::emu::state::SaveStateCmd;
-use core::emu::runtime::RunMode;
-use core::auxiliary::joypad::JoypadButton;
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::input::{all_buttons, button_to_str, str_to_button};
+use core::auxiliary::joypad::JoypadButton;
+use core::emu::runtime::RunMode;
+use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::ser::{SerializeMap, SerializeStruct};
@@ -13,28 +13,92 @@ use std::option::Option;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Bindings {
     pub buttons: ButtonBindings,
+    pub left_trigger: TriggerButtonConfig,
+    pub right_trigger: TriggerButtonConfig,
     pub button_combos: Vec<ButtonCombo>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct TriggerButtonConfig {
+    pub cmd: Option<AppCmd>,
+    pub code: u8,
+    pub threshold: i16,
+}
+
+impl TriggerButtonConfig {
+    pub fn is_pressed(&self, v: i16) -> bool {
+        v > self.threshold
+    }
 }
 
 impl Default for Bindings {
     fn default() -> Self {
         Self {
             buttons: ButtonBindings::new(),
+            left_trigger: TriggerButtonConfig {
+                cmd: None,
+                code: 2,
+                threshold: 30_000,
+            },
+            right_trigger: TriggerButtonConfig {
+                cmd: None,
+                code: 5,
+                threshold: 30_000,
+            },
             button_combos: vec![
                 ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
                 ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
-                ButtonCombo::new(Button::Guide, Button::X, AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette)),
-                ButtonCombo::new(Button::Back, Button::X, AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette)),
-                ButtonCombo::new(Button::LeftShoulder, Button::Back, AppCmd::SaveState(SaveStateCmd::Load, None)),
-                ButtonCombo::new(Button::RightShoulder, Button::Back, AppCmd::SaveState(SaveStateCmd::Create, None)),
-                ButtonCombo::new(Button::LeftShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Load, None)),
-                ButtonCombo::new(Button::RightShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Create, None)),
-                ButtonCombo::new(Button::DPadUp, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.1))),
-                ButtonCombo::new(Button::DPadDown, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.1))),
-                ButtonCombo::new(Button::DPadLeft, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::DecSaveAndLoadIndexes)),
-                ButtonCombo::new(Button::DPadRight, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::IncSaveAndLoadIndexes)),
+                ButtonCombo::new(
+                    Button::Guide,
+                    Button::X,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+                ),
+                ButtonCombo::new(
+                    Button::Back,
+                    Button::X,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+                ),
+                ButtonCombo::new(
+                    Button::LeftShoulder,
+                    Button::Back,
+                    AppCmd::SaveState(SaveStateCmd::Load, None),
+                ),
+                ButtonCombo::new(
+                    Button::RightShoulder,
+                    Button::Back,
+                    AppCmd::SaveState(SaveStateCmd::Create, None),
+                ),
+                ButtonCombo::new(
+                    Button::LeftShoulder,
+                    Button::Guide,
+                    AppCmd::SaveState(SaveStateCmd::Load, None),
+                ),
+                ButtonCombo::new(
+                    Button::RightShoulder,
+                    Button::Guide,
+                    AppCmd::SaveState(SaveStateCmd::Create, None),
+                ),
+                ButtonCombo::new(
+                    Button::DPadUp,
+                    Button::Start,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.1)),
+                ),
+                ButtonCombo::new(
+                    Button::DPadDown,
+                    Button::Start,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.1)),
+                ),
+                ButtonCombo::new(
+                    Button::DPadLeft,
+                    Button::Start,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::DecSaveAndLoadIndexes),
+                ),
+                ButtonCombo::new(
+                    Button::DPadRight,
+                    Button::Start,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::IncSaveAndLoadIndexes),
+                ),
             ],
-
         }
     }
 }
@@ -57,7 +121,9 @@ impl ButtonBindings {
     }
 
     pub fn new() -> Self {
-        let mut bindings = ButtonBindings { map: std::array::from_fn(|_| None) };
+        let mut bindings = ButtonBindings {
+            map: std::array::from_fn(|_| None),
+        };
         bindings.set_both(Button::Start, AppCmd::EmuButton(JoypadButton::Start));
         bindings.set_both(Button::Guide, AppCmd::EmuButton(JoypadButton::Select));
         bindings.set_both(Button::Back, AppCmd::EmuButton(JoypadButton::Select));
@@ -68,11 +134,31 @@ impl ButtonBindings {
         bindings.set_both(Button::A, AppCmd::EmuButton(JoypadButton::A));
         bindings.set_both(Button::B, AppCmd::EmuButton(JoypadButton::B));
         bindings.set_both(Button::Y, AppCmd::ToggleRewind);
-        bindings.set(Button::X, true, AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette));
-        bindings.set(Button::LeftShoulder, true, AppCmd::ChangeMode(RunMode::Slow));
-        bindings.set(Button::LeftShoulder, false, AppCmd::ChangeMode(RunMode::Normal));
-        bindings.set(Button::RightShoulder, true, AppCmd::ChangeMode(RunMode::Turbo));
-        bindings.set(Button::RightShoulder, false, AppCmd::ChangeMode(RunMode::Normal));
+        bindings.set(
+            Button::X,
+            true,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette),
+        );
+        bindings.set(
+            Button::LeftShoulder,
+            true,
+            AppCmd::ChangeMode(RunMode::Slow),
+        );
+        bindings.set(
+            Button::LeftShoulder,
+            false,
+            AppCmd::ChangeMode(RunMode::Normal),
+        );
+        bindings.set(
+            Button::RightShoulder,
+            true,
+            AppCmd::ChangeMode(RunMode::Turbo),
+        );
+        bindings.set(
+            Button::RightShoulder,
+            false,
+            AppCmd::ChangeMode(RunMode::Normal),
+        );
 
         bindings
     }
@@ -174,11 +260,7 @@ pub struct ButtonCombo {
 
 impl ButtonCombo {
     pub fn new(btn_1: Button, btn_2: Button, cmd: AppCmd) -> Self {
-        Self {
-            btn_1,
-            btn_2,
-            cmd,
-        }
+        Self { btn_1, btn_2, cmd }
     }
 }
 
@@ -213,6 +295,10 @@ impl<'de> Deserialize<'de> for ButtonCombo {
         let b2 = str_to_button(&helper.btn_2)
             .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", helper.btn_2)))?;
 
-        Ok(ButtonCombo { btn_1: b1, btn_2: b2, cmd: helper.cmd })
+        Ok(ButtonCombo {
+            btn_1: b1,
+            btn_2: b2,
+            cmd: helper.cmd,
+        })
     }
 }
