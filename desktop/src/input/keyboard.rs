@@ -72,7 +72,7 @@ pub fn handle_keyboard(
         }
         Keycode::I => {
             if is_pressed {
-                return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted));
+                return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette));
             }
         }
         Keycode::F10 => {

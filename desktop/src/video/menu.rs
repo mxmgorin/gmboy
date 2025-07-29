@@ -468,7 +468,7 @@ impl AppMenu {
                 ChangeAppConfigCmd::ComboInterval(5_000),
             )),
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendMode => {
                 let mode = match config.video.frame_blend_mode {
@@ -640,7 +640,7 @@ impl AppMenu {
                 ChangeAppConfigCmd::ComboInterval(-5_000),
             )),
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendAlpha => {
                 let mut conf = config.video.clone();
@@ -832,7 +832,7 @@ impl AppMenu {
             }
             AppMenuItem::ComboInterval => None,
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PaletteInverted))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendAlpha => None,
             AppMenuItem::FrameBlendMode => None,

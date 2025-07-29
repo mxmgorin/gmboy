@@ -1,6 +1,6 @@
 use core::emu::runtime::RunMode;
 use core::auxiliary::joypad::JoypadButton;
-use crate::app::AppCmd;
+use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::input::{all_buttons, button_to_str, str_to_button};
 use sdl2::controller::Button;
 use serde::de::{Error, MapAccess, Visitor};
@@ -22,6 +22,8 @@ impl Default for Bindings {
             button_combos: vec![
                 ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
                 ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
+                ButtonCombo::new(Button::Start, Button::X, AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette)),
+
             ],
         }
     }
@@ -56,6 +58,7 @@ impl ButtonBindings {
         bindings.set_both(Button::A, AppCmd::EmuButton(JoypadButton::A));
         bindings.set_both(Button::B, AppCmd::EmuButton(JoypadButton::B));
         bindings.set_both(Button::Y, AppCmd::ToggleRewind);
+        bindings.set(Button::X, true, AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette));
         bindings.set(Button::LeftShoulder, true, AppCmd::ChangeMode(RunMode::Slow));
         bindings.set(Button::LeftShoulder, false, AppCmd::ChangeMode(RunMode::Normal));
         bindings.set(Button::RightShoulder, true, AppCmd::ChangeMode(RunMode::Turbo));

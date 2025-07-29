@@ -61,7 +61,7 @@ pub enum ChangeAppConfigCmd {
     ComboInterval(i32),
     SaveIndex(usize),
     LoadIndex(usize),
-    PaletteInverted,
+    InvertPalette,
     Video(VideoConfig),
 }
 
