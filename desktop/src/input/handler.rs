@@ -6,6 +6,7 @@ use crate::input::keyboard::handle_keyboard;
 use crate::roms::RomsList;
 use crate::Emu;
 use core::emu::state::EmuState;
+use rfd::FileDialog;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
@@ -138,11 +139,10 @@ impl InputHandler {
             {
                 #[cfg(feature = "filepicker")]
                 if app.state == AppState::Paused {
-                    if let Some(path) = tinyfiledialogs::open_file_dialog(
-                        "Select Game Boy ROM",
-                        "",
-                        Some((&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)")),
-                    ) {
+                    if let Some(path) = FileDialog::new()
+                        .add_filter("Game Boy ROMs (*.gb, *.gbc)", &["gb", "gbc"])
+                        .pick_file()
+                    {
                         app.load_cart_file(emu, Path::new(&path));
                     }
                 }
@@ -156,7 +156,10 @@ impl InputHandler {
             }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
-                if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
+                if let Some(dir) = FileDialog::new()
+                    .add_filter("Select ROMs Folder", &[""])
+                    .pick_folder()
+                {
                     let mut lib = RomsList::get_or_create();
                     let result = lib.load_from_dir(&dir);
 
@@ -169,7 +172,7 @@ impl InputHandler {
                         eprintln!("Failed to save ROMs library: {err}");
                     }
 
-                    app.config.roms_dir = Some(dir);
+                    app.config.roms_dir = Some(dir.to_str().unwrap().to_string());
                     app.notifications.add(format!("Found {count} ROMs"));
                 }
             }
@@ -253,15 +256,19 @@ impl InputHandler {
                 ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
                     app.config.inc_save_index();
                     app.config.inc_load_index();
-                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
-                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.notifications
+                        .add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications
+                        .add(format!("Load Index: {}", app.config.current_load_index));
                     app.menu.request_update();
                 }
                 ChangeAppConfigCmd::DecSaveAndLoadIndexes => {
                     app.config.dec_load_index();
                     app.config.dec_save_index();
-                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
-                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.notifications
+                        .add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications
+                        .add(format!("Load Index: {}", app.config.current_load_index));
                     app.menu.request_update();
                 }
             },
