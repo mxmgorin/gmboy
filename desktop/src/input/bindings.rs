@@ -1,11 +1,11 @@
-use std::fmt;
 use crate::app::AppCmd;
+use crate::input::{all_buttons, button_to_str, str_to_button};
 use sdl2::controller::Button;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::option::Option;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::ser::SerializeMap;
-use crate::input::{all_buttons, button_to_str, str_to_button};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::fmt;
+use std::option::Option;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Bindings {
@@ -38,7 +38,40 @@ impl GamepadBindings {
     }
 
     pub fn new() -> Self {
-        Self { map: std::array::from_fn(|_| None) }
+        let mut map = std::array::from_fn(|_| None);
+        map[Self::idx(Button::Start)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Start,
+        ));
+        map[Self::idx(Button::Guide)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Select,
+        ));
+        map[Self::idx(Button::Back)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Select,
+        ));
+        map[Self::idx(Button::DPadUp)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Up,
+        ));
+        map[Self::idx(Button::DPadDown)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Down,
+        ));
+        map[Self::idx(Button::DPadLeft)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Left,
+        ));
+        map[Self::idx(Button::DPadRight)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::Right,
+        ));
+        map[Self::idx(Button::A)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::A,
+        ));
+        map[Self::idx(Button::B)] = Some(AppCmd::EmuButton(
+            core::auxiliary::joypad::JoypadButton::B,
+        ));
+        //map[Self::idx(Button::X)] = Some(AppCmd::NextPalette);
+        map[Self::idx(Button::Y)] = Some(AppCmd::Rewind);
+        map[Self::idx(Button::LeftShoulder)] = Some(AppCmd::ChangeMode(core::emu::runtime::RunMode::Slow));
+        map[Self::idx(Button::RightShoulder)] = Some(AppCmd::ChangeMode(core::emu::runtime::RunMode::Turbo));
+
+        Self { map }
     }
 
     #[inline(always)]

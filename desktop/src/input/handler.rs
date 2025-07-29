@@ -1,5 +1,5 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
-use crate::config::{AppConfig};
+use crate::config::AppConfig;
 use crate::input::combos::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
@@ -244,6 +244,7 @@ impl InputHandler {
                     app.window.config = app.config.video.clone();
                 }
             },
+            AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
         }
     }
 }

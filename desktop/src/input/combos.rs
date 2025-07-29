@@ -1,4 +1,5 @@
 use crate::app::AppCmd;
+use crate::input::all_buttons;
 use crate::input::config::InputConfig;
 use sdl2::controller::Button;
 use std::time::{Duration, Instant};
@@ -28,13 +29,13 @@ impl ButtonState {
 }
 
 pub struct ComboTracker {
-    states: Box<[ButtonState]>,
+    states: [ButtonState; all_buttons().len()],
 }
 
 impl ComboTracker {
     pub fn new() -> Self {
         Self {
-            states: vec![
+            states: [
                 ButtonState::new(Button::Start),
                 ButtonState::new(Button::Back),
                 ButtonState::new(Button::Guide),
@@ -50,8 +51,7 @@ impl ComboTracker {
                 ButtonState::new(Button::DPadRight),
                 ButtonState::new(Button::LeftStick),
                 ButtonState::new(Button::RightStick),
-            ]
-            .into_boxed_slice(),
+            ],
         }
     }
 

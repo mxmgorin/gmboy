@@ -1,3 +1,4 @@
+use core::auxiliary::joypad::JoypadButton;
 use crate::audio::AppAudio;
 use crate::config::{AppConfig, VideoConfig};
 use crate::input::handler::InputHandler;
@@ -33,6 +34,7 @@ pub enum AppCmd {
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
     SelectRomsDir,
+    EmuButton(JoypadButton)
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

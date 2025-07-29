@@ -25,12 +25,12 @@ pub fn button_to_str(btn: Button) -> &'static str {
         Button::DPadDown => "DPadDown",
         Button::DPadLeft => "DPadLeft",
         Button::DPadRight => "DPadRight",
-        Button::Misc1 |
-        Button::Paddle1 |
-        Button::Paddle2 |
-        Button::Paddle3 |
-        Button::Paddle4 |
-        Button::Touchpad => { "" }
+        Button::Misc1 => "Misc1",
+        Button::Paddle1 => "Paddle1",
+        Button::Paddle2 => "Paddle2",
+        Button::Paddle3 => "Paddle3",
+        Button::Paddle4 => "Paddle4",
+        Button::Touchpad => "Touchpad",
     }
 }
 
@@ -51,11 +51,17 @@ pub fn str_to_button(s: &str) -> Option<Button> {
         "DPadDown" => Some(Button::DPadDown),
         "DPadLeft" => Some(Button::DPadLeft),
         "DPadRight" => Some(Button::DPadRight),
+        "Misc1" => Some(Button::Misc1),
+        "Paddle1" => Some(Button::Paddle1),
+        "Paddle2" => Some(Button::Paddle2),
+        "Paddle3" => Some(Button::Paddle3),
+        "Paddle4" => Some(Button::Paddle4),
+        "Touchpad" => Some(Button::Touchpad),
         _ => None,
     }
 }
 
-pub fn all_buttons() -> &'static [Button] {
+pub const fn all_buttons() -> &'static [Button] {
     &[
         Button::A,
         Button::B,
@@ -72,5 +78,11 @@ pub fn all_buttons() -> &'static [Button] {
         Button::DPadDown,
         Button::DPadLeft,
         Button::DPadRight,
+        //Button::Misc1,
+        //Button::Paddle1,
+        //Button::Paddle2,
+        //Button::Paddle3,
+        //Button::Paddle4,
+        //Button::Touchpad,
     ]
 }
