@@ -39,7 +39,7 @@ pub enum AppCmd {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum ChangeAppConfigCmd {
-    Default,
+    Reset,
     Volume(f32),
     Scale(f32),
     TileWindow,

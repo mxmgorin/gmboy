@@ -233,7 +233,7 @@ impl InputHandler {
                 ChangeAppConfigCmd::MuteSlow => {
                     app.config.audio.mute_slow = !app.config.audio.mute_slow
                 }
-                ChangeAppConfigCmd::Default => {
+                ChangeAppConfigCmd::Reset => {
                     app.config = AppConfig::default();
                     emu.config = app.config.emulation.clone();
                     app.notifications.add("Defaults restored");

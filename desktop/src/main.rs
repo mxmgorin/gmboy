@@ -131,7 +131,7 @@ fn get_config() -> AppConfig {
             eprintln!("Failed load library from path: {err}");
         }
 
-        _ = core::save_json_file(&RomsList::get_path(), &lib);
+        _ = core::save_json_file(RomsList::get_path(), &lib);
     }
 
     config

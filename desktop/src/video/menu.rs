@@ -26,7 +26,7 @@ pub enum AppMenuItem {
     AudioMenu,
     Volume,
     Scale,
-    DeveloperMenu,
+    AdvancedMenu,
     TileWindow,
     SpinDuration,
     SystemMenu,
@@ -59,14 +59,12 @@ pub enum AppMenuItem {
     Roms(RomsMenu),
     RomsDir,
     Confirm(AppCmd),
-    Tools,
 }
 
 impl AppMenuItem {
     pub fn get_inner_mut(&mut self) -> Option<&mut RomsMenu> {
         match self {
             AppMenuItem::Resume
-            | AppMenuItem::Tools
             | AppMenuItem::Confirm(_)
             | AppMenuItem::RomsDir
             | AppMenuItem::SaveState
@@ -82,7 +80,7 @@ impl AppMenuItem {
             | AppMenuItem::AudioMenu
             | AppMenuItem::Volume
             | AppMenuItem::Scale
-            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::AdvancedMenu
             | AppMenuItem::TileWindow
             | AppMenuItem::SpinDuration
             | AppMenuItem::SystemMenu
@@ -119,7 +117,6 @@ impl AppMenuItem {
     pub fn get_inner(&self) -> Option<&RomsMenu> {
         match self {
             AppMenuItem::Resume
-            | AppMenuItem::Tools
             | AppMenuItem::Confirm(_)
             | AppMenuItem::SaveState
             | AppMenuItem::RomsDir
@@ -135,7 +132,7 @@ impl AppMenuItem {
             | AppMenuItem::AudioMenu
             | AppMenuItem::Volume
             | AppMenuItem::Scale
-            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::AdvancedMenu
             | AppMenuItem::TileWindow
             | AppMenuItem::SpinDuration
             | AppMenuItem::SystemMenu
@@ -217,10 +214,6 @@ fn confirm_menu(cmd: AppCmd) -> Box<[AppMenuItem]> {
     vec![AppMenuItem::Confirm(cmd), AppMenuItem::Back].into_boxed_slice()
 }
 
-fn tools_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::ResetConfig, AppMenuItem::Back].into_boxed_slice()
-}
-
 fn system_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::AutoSaveState,
@@ -235,10 +228,11 @@ fn system_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-fn developer_menu() -> Box<[AppMenuItem]> {
+fn advanced_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::TileWindow,
         AppMenuItem::SpinDuration,
+        AppMenuItem::ResetConfig,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
@@ -261,8 +255,7 @@ fn settings_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::AudioMenu,
         AppMenuItem::InputMenu,
         AppMenuItem::SystemMenu,
-        AppMenuItem::Tools,
-        AppMenuItem::DeveloperMenu,
+        AppMenuItem::AdvancedMenu,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
@@ -434,7 +427,7 @@ impl AppMenu {
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(1)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(100)))
             }
             AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05))),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
@@ -453,7 +446,7 @@ impl AppMenu {
             | AppMenuItem::Back
             | AppMenuItem::Quit
             | AppMenuItem::AudioMenu
-            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::AdvancedMenu
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
@@ -587,7 +580,6 @@ impl AppMenu {
             AppMenuItem::Roms(x) => x.move_right(),
             AppMenuItem::RomsDir => None,
             AppMenuItem::Confirm(_) => None,
-            AppMenuItem::Tools => None,
         }
     }
 
@@ -596,7 +588,6 @@ impl AppMenu {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
-            AppMenuItem::Tools => None,
             AppMenuItem::SaveState => {
                 let i = core::move_prev_wrapped(config.current_save_index, 99);
 
@@ -609,7 +600,7 @@ impl AppMenu {
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(-1)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(-100)))
             }
             AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05))),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
@@ -628,7 +619,7 @@ impl AppMenu {
             | AppMenuItem::Back
             | AppMenuItem::Quit
             | AppMenuItem::AudioMenu
-            | AppMenuItem::DeveloperMenu
+            | AppMenuItem::AdvancedMenu
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
@@ -818,8 +809,8 @@ impl AppMenu {
                 None
             }
             AppMenuItem::Volume | AppMenuItem::Scale => None,
-            AppMenuItem::DeveloperMenu => {
-                self.next_items(developer_menu());
+            AppMenuItem::AdvancedMenu => {
+                self.next_items(advanced_menu());
 
                 None
             }
@@ -843,7 +834,7 @@ impl AppMenu {
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
             AppMenuItem::ResetConfig => {
                 self.next_items(confirm_menu(AppCmd::ChangeConfig(
-                    ChangeAppConfigCmd::Default,
+                    ChangeAppConfigCmd::Reset,
                 )));
 
                 None
@@ -902,13 +893,7 @@ impl AppMenu {
                 self.back();
 
                 Some(cmd)
-            },
-            AppMenuItem::Tools => {
-                self.next_items(tools_menu());
-
-                None
-            },
-
+            }
         }
     }
 
@@ -943,14 +928,14 @@ impl AppMenuItem {
             AppMenuItem::Scale => {
                 format!("Scale(x{})", config.interface.scale)
             }
-            AppMenuItem::DeveloperMenu => "Developer".to_string(),
+            AppMenuItem::AdvancedMenu => "Advanced".to_string(),
             AppMenuItem::TileWindow => {
                 format!("Tile Window{}", get_suffix(config.interface.tile_window))
             }
             AppMenuItem::SpinDuration => {
                 format!(
-                    "Spin Interval({}ns)",
-                    config.get_emu_config().spin_duration.as_nanos()
+                    "Spin Wait({}µs)",
+                    config.get_emu_config().spin_duration.as_micros()
                 )
             }
             AppMenuItem::SystemMenu => "System".to_string(),
@@ -1022,7 +1007,6 @@ impl AppMenuItem {
             AppMenuItem::Roms(x) => format!("ROMs ({})", x.items.len()),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
-            AppMenuItem::Tools => "Tools".to_string(),
         }
     }
 }
