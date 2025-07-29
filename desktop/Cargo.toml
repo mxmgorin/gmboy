@@ -10,10 +10,10 @@ filepicker = []
 
 [dependencies]
 core = { path = "../core" }
+tinyfiledialogs = "3.9"
 sdl2 = { version = "0.38", default-features = false, features = ["unsafe_textures"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.141"
-rfd = "0.15.4" # tinyfiledialogs = "3.9"
 
 [target.'cfg(target_os="macos")'.dependencies.sdl2]
 features=["bundled", "static-link"]
