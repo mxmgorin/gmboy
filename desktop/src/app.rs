@@ -23,7 +23,7 @@ pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AppCmd {
-    TogglePause,
+    ToggleMenu,
     Rewind,
     LoadFile(PathBuf),
     RestartGame,

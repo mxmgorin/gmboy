@@ -763,7 +763,7 @@ impl AppMenu {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
-            AppMenuItem::Resume => Some(AppCmd::TogglePause),
+            AppMenuItem::Resume => Some(AppCmd::ToggleMenu),
             AppMenuItem::OpenRom => Some(AppCmd::SelectRom),
             AppMenuItem::Quit => Some(AppCmd::Quit),
             AppMenuItem::SaveState => Some(AppCmd::SaveState(

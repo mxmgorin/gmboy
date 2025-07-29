@@ -116,7 +116,7 @@ impl InputHandler {
             AppCmd::LoadFile(path) => {
                 app.load_cart_file(emu, &path);
             }
-            AppCmd::TogglePause => {
+            AppCmd::ToggleMenu => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
                     emu.runtime.bus.io.joypad.reset();
                     app.state = AppState::Running;

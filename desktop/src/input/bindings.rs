@@ -15,11 +15,11 @@ impl Default for Bindings {
             gamepad_combos: HashMap::from([
                 (
                     ButtonCombo::new(Button::Start, Button::Back),
-                    AppCmd::TogglePause,
+                    AppCmd::ToggleMenu,
                 ),
                 (
                     ButtonCombo::new(Button::Start, Button::Guide),
-                    AppCmd::TogglePause,
+                    AppCmd::ToggleMenu,
                 ),
             ])
             .into(),

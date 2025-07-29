@@ -52,7 +52,7 @@ pub fn handle_keyboard(
         }
         Keycode::ESCAPE | Keycode::Q => {
             if is_pressed {
-                return Some(AppCmd::TogglePause);
+                return Some(AppCmd::ToggleMenu);
             }
         }
         Keycode::EQUALS => {
