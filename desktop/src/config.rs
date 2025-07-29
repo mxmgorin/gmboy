@@ -1,3 +1,4 @@
+use crate::input::config::InputConfig;
 use crate::video::frame_blend::FrameBlendMode;
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
@@ -8,7 +9,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
-use crate::input::config::InputConfig;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -45,6 +45,22 @@ impl AppConfig {
 
     pub fn set_emu_config(&mut self, config: EmuConfig) {
         self.emulation = config;
+    }
+
+    pub fn inc_save_index(&mut self) {
+        self.current_save_index = core::move_next_wrapped(self.current_save_index, 99);
+    }
+
+    pub fn dec_save_index(&mut self) {
+        self.current_save_index = core::move_prev_wrapped(self.current_save_index, 99);
+    }
+
+    pub fn inc_load_index(&mut self) {
+        self.current_load_index = core::move_next_wrapped(self.current_load_index, 99);
+    }
+
+    pub fn dec_load_index(&mut self) {
+        self.current_load_index = core::move_prev_wrapped(self.current_load_index, 99);
     }
 }
 

@@ -1,4 +1,3 @@
-use core::auxiliary::joypad::JoypadButton;
 use crate::audio::AppAudio;
 use crate::config::{AppConfig, VideoConfig};
 use crate::input::handler::InputHandler;
@@ -8,6 +7,7 @@ use crate::video::menu::AppMenu;
 use crate::video::notification::Notifications;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
+use core::auxiliary::joypad::JoypadButton;
 use core::emu::battery::BatterySave;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
@@ -15,10 +15,10 @@ use core::emu::state::SaveStateCmd;
 use core::emu::EmuAudioCallback;
 use core::ppu::palette::LcdPalette;
 use sdl2::{Sdl, VideoSubsystem};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
@@ -34,7 +34,7 @@ pub enum AppCmd {
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
     SelectRomsDir,
-    EmuButton(JoypadButton)
+    EmuButton(JoypadButton),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -59,8 +59,10 @@ pub enum ChangeAppConfigCmd {
     MuteTurbo,
     MuteSlow,
     ComboInterval(i32),
-    SaveIndex(usize),
-    LoadIndex(usize),
+    SetSaveIndex(usize),
+    SetLoadIndex(usize),
+    IncSaveAndLoadIndexes,
+    DecSaveAndLoadIndexes,
     InvertPalette,
     Video(VideoConfig),
 }

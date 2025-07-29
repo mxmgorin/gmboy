@@ -133,9 +133,7 @@ impl InputHandler {
                 emu.state = EmuState::Running;
                 emu.runtime.set_mode(mode);
             }
-            AppCmd::SaveState(event, index) => {
-                app.handle_save_state(emu, event, index)
-            },
+            AppCmd::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppCmd::SelectRom =>
             {
                 #[cfg(feature = "filepicker")]
@@ -240,8 +238,8 @@ impl InputHandler {
                     app.config.input.combo_interval =
                         core::change_duration(app.config.input.combo_interval, x);
                 }
-                ChangeAppConfigCmd::SaveIndex(x) => app.config.current_save_index = x,
-                ChangeAppConfigCmd::LoadIndex(x) => app.config.current_load_index = x,
+                ChangeAppConfigCmd::SetSaveIndex(x) => app.config.current_save_index = x,
+                ChangeAppConfigCmd::SetLoadIndex(x) => app.config.current_load_index = x,
                 ChangeAppConfigCmd::InvertPalette => {
                     app.config.interface.is_palette_inverted =
                         !app.config.interface.is_palette_inverted;
@@ -250,6 +248,20 @@ impl InputHandler {
                 ChangeAppConfigCmd::Video(x) => {
                     app.config.video = x;
                     app.window.config = app.config.video.clone();
+                }
+                ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
+                    app.config.inc_save_index();
+                    app.config.inc_load_index();
+                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.menu.request_update();
+                }
+                ChangeAppConfigCmd::DecSaveAndLoadIndexes => {
+                    app.config.dec_load_index();
+                    app.config.dec_save_index();
+                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.menu.request_update();
                 }
             },
             AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn

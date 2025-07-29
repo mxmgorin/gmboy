@@ -411,12 +411,12 @@ impl AppMenu {
             AppMenuItem::SaveState => {
                 let i = core::move_next_wrapped(config.current_save_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetSaveIndex(i)))
             }
             AppMenuItem::LoadState => {
                 let i = core::move_next_wrapped(config.current_load_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetLoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => {
@@ -583,12 +583,12 @@ impl AppMenu {
             AppMenuItem::SaveState => {
                 let i = core::move_prev_wrapped(config.current_save_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetSaveIndex(i)))
             }
             AppMenuItem::LoadState => {
                 let i = core::move_prev_wrapped(config.current_load_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::LoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetLoadIndex(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => {

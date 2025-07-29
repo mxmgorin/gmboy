@@ -31,6 +31,8 @@ impl Default for Bindings {
                 ButtonCombo::new(Button::RightShoulder, Button::Guide, AppCmd::SaveState(SaveStateCmd::Create, None)),
                 ButtonCombo::new(Button::DPadUp, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.1))),
                 ButtonCombo::new(Button::DPadDown, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.1))),
+                ButtonCombo::new(Button::DPadLeft, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::DecSaveAndLoadIndexes)),
+                ButtonCombo::new(Button::DPadRight, Button::Start, AppCmd::ChangeConfig(ChangeAppConfigCmd::IncSaveAndLoadIndexes)),
             ],
 
         }
