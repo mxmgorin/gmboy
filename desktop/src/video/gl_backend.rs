@@ -60,7 +60,6 @@ impl GlBackend {
             gl::UseProgram(self.shader_program);
 
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, self.gl_texture);
 
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
@@ -81,16 +80,7 @@ impl GlBackend {
                 self.rect.height() as i32,
             );
 
-            // set uniforms
-            let (loc_image, loc_in, loc_out, origin) = self.uniform_locations;
-            gl::Uniform1i(loc_image, 0);
-            gl::Uniform2f(loc_in, width as f32, height as f32);
-            gl::Uniform2f(loc_out, self.rect.width() as f32, self.rect.height() as f32);
-            gl::Uniform2f(origin, self.rect.x as f32, self.rect.y as f32);
-
-            // draw quad
-            gl::BindVertexArray(self.gl_vao);
-            gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
+            self.draw_texture(self.gl_texture, 0.0, 0.0, self.rect.width() as f32, self.rect.height() as f32);
         }
     }
 
@@ -179,6 +169,21 @@ impl GlBackend {
                 gl::GetUniformLocation(program, c"output_resolution".as_ptr() as *const _),
                 gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
             );
+        }
+    }
+
+    fn draw_texture(&self, tex: u32, x: f32, y: f32, w: f32, h: f32) {
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, tex);
+
+            // Update uniforms (you may extend shader to support screen coords)
+            gl::Uniform1i(self.uniform_locations.0, 0);
+            gl::Uniform2f(self.uniform_locations.1, w, h);
+            gl::Uniform2f(self.uniform_locations.2, w, h);
+            gl::Uniform2f(self.uniform_locations.3, x, y);
+
+            gl::BindVertexArray(self.gl_vao);
+            gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
     }
 }
