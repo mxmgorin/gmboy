@@ -1,7 +1,6 @@
 use crate::video::char::get_char_bitmap;
 use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
-use sdl2::render::Texture;
 
 /// Calculate the text width based on character count, scale, and character width
 pub fn calc_text_width_str(text: &str, size: FontSize) -> usize {
@@ -32,7 +31,8 @@ impl CenterAlignedText {
 }
 
 pub fn draw_text_lines(
-    texture: &mut Texture,
+    buffer: &mut [u8],
+    pitch: usize,
     lines: &[&str],
     text_color: PixelColor,
     bg_color: Option<PixelColor>,
@@ -75,80 +75,76 @@ pub fn draw_text_lines(
     let total_height =
         lines.len() * ((size.height() * scale) + size.line_spacing()) - size.line_spacing();
 
-    texture
-        .with_lock(None, |buffer: &mut [u8], pitch: usize| {
-            // 1. Draw background rectangle with padding
-            if let Some(bg_color) = bg_color {
-                let (br, bg, bb, ba) = bg_color.as_rgba();
-                for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
-                    for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
-                        let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                        buffer[offset] = bb;
-                        buffer[offset + 1] = bg;
-                        buffer[offset + 2] = br;
-                        buffer[offset + 3] = ba;
-                    }
-                }
+    // 1. Draw background rectangle with padding
+    if let Some(bg_color) = bg_color {
+        let (br, bg, bb, ba) = bg_color.as_rgba();
+        for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
+            for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
+                let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
+                buffer[offset] = bb;
+                buffer[offset + 1] = bg;
+                buffer[offset + 2] = br;
+                buffer[offset + 3] = ba;
+            }
+        }
+    }
+
+    // 2. Draw text on top
+    for (line_index, line) in lines.iter().enumerate() {
+        // Compute line width
+        let mut line_width = 0;
+        for c in line.chars() {
+            if c == ' ' || get_char_bitmap(c, size).is_some() {
+                line_width += (size.width() * scale) + size.spacing();
+            }
+        }
+        if line_width >= size.spacing() {
+            line_width -= size.spacing();
+        }
+
+        // Align center if needed
+        let x_offset = if align_center.is_some() {
+            x + (max_line_width - line_width) / 2
+        } else {
+            x
+        };
+
+        let y_offset = y + line_index * ((size.height() * scale) + size.line_spacing());
+        let mut cursor_x = x_offset;
+
+        for c in line.chars() {
+            if c == ' ' {
+                cursor_x += (size.width() * scale) + size.spacing();
+                continue;
             }
 
-            // 2. Draw text on top
-            for (line_index, line) in lines.iter().enumerate() {
-                // Compute line width
-                let mut line_width = 0;
-                for c in line.chars() {
-                    if c == ' ' || get_char_bitmap(c, size).is_some() {
-                        line_width += (size.width() * scale) + size.spacing();
-                    }
-                }
-                if line_width >= size.spacing() {
-                    line_width -= size.spacing();
-                }
+            let Some(bitmap) = get_char_bitmap(c, size) else {
+                continue;
+            };
 
-                // Align center if needed
-                let x_offset = if align_center.is_some() {
-                    x + (max_line_width - line_width) / 2
-                } else {
-                    x
-                };
-
-                let y_offset = y + line_index * ((size.height() * scale) + size.line_spacing());
-                let mut cursor_x = x_offset;
-
-                for c in line.chars() {
-                    if c == ' ' {
-                        cursor_x += (size.width() * scale) + size.spacing();
-                        continue;
-                    }
-
-                    let Some(bitmap) = get_char_bitmap(c, size) else {
-                        continue;
-                    };
-
-                    for (row, pixel) in bitmap.iter().enumerate() {
-                        for col in 0..size.width() {
-                            if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
-                                let text_pixel_x = cursor_x + (col * scale);
-                                let text_pixel_y = y_offset + (row * scale);
-                                for dy in 0..scale {
-                                    for dx in 0..scale {
-                                        let px = text_pixel_x + dx;
-                                        let py = text_pixel_y + dy;
-                                        let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                                        let (r, g, b, a) = text_color.as_rgba();
-                                        buffer[offset] = b;
-                                        buffer[offset + 1] = g;
-                                        buffer[offset + 2] = r;
-                                        buffer[offset + 3] = a;
-                                    }
-                                }
+            for (row, pixel) in bitmap.iter().enumerate() {
+                for col in 0..size.width() {
+                    if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
+                        let text_pixel_x = cursor_x + (col * scale);
+                        let text_pixel_y = y_offset + (row * scale);
+                        for dy in 0..scale {
+                            for dx in 0..scale {
+                                let px = text_pixel_x + dx;
+                                let py = text_pixel_y + dy;
+                                let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
+                                let (r, g, b, a) = text_color.as_rgba();
+                                buffer[offset] = b;
+                                buffer[offset + 1] = g;
+                                buffer[offset + 2] = r;
+                                buffer[offset + 3] = a;
                             }
                         }
                     }
-                    cursor_x += (size.width() * scale) + size.spacing();
                 }
             }
-        })
-        .unwrap();
+            cursor_x += (size.width() * scale) + size.spacing();
+        }
+    }
 }
 
 #[derive(Clone, Copy)]

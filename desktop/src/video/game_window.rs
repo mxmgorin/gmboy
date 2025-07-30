@@ -65,8 +65,6 @@ impl GameWindow {
         self.gl_renderer.present();
     }
 
-    fn clear(&mut self) {}
-
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
         Ok(())
     }
