@@ -3,6 +3,7 @@ use crate::video::shader;
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
 use sdl2::{sys, VideoSubsystem};
+use crate::video::ui::UiTexture;
 
 pub struct GlBackend {
     window: Window,
@@ -31,6 +32,8 @@ impl GlBackend {
         unsafe {
             gl::Enable(gl::TEXTURE_2D);
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         Self {
@@ -221,6 +224,57 @@ impl GlBackend {
             }
         }
     }
+
+    pub fn draw_ui_texture_gl(
+        &self,
+        texture: &UiTexture,
+        rect: Rect,
+    ) {
+        let (win_w, win_h) = self.window.drawable_size();
+
+        let id = if let UiTexture::Gl {id, .. } = texture{
+            *id
+        } else {
+            return;
+        };
+
+        unsafe {
+            // Set viewport to full window
+            gl::Viewport(0, 0, win_w as i32, win_h as i32);
+
+            // Clear with dark gray to see difference
+            gl::ClearColor(0.3, 0.3, 0.3, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+
+            // Enable blending for transparency
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
+
+            gl::UseProgram(self.shader_program);
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, id);
+
+            // Compute vertices for quad in NDC coords
+            let vertices = sdl_rect_to_gl(rect, win_w as f32, win_h as f32);
+
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.gl_vbo);
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                0,
+                (vertices.len() * std::mem::size_of::<f32>()) as isize,
+                vertices.as_ptr() as *const _,
+            );
+            gl::BindVertexArray(self.gl_vao);
+
+            gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
+
+            // Unbind for cleanliness (optional)
+            gl::BindVertexArray(0);
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+            gl::BindTexture(gl::TEXTURE_2D, 0);
+            gl::UseProgram(0);
+        }
+    }
 }
 
 /// Converts ARGB -> RGB (3 bytes per pixel)
@@ -235,3 +289,18 @@ pub fn fill_argb_to_rgb(src: &[u32], dst: &mut [u8]) {
         i += 3;
     }
 }
+
+fn sdl_rect_to_gl(rect: Rect, window_w: f32, window_h: f32) -> [f32; 16] {
+    let x0 = (rect.x as f32 / window_w) * 2.0 - 1.0;
+    let y0 = 1.0 - (rect.y as f32 / window_h) * 2.0;
+    let x1 = ((rect.x + rect.width() as i32) as f32 / window_w) * 2.0 - 1.0;
+    let y1 = 1.0 - ((rect.y + rect.height() as i32) as f32 / window_h) * 2.0;
+
+    [
+        x0, y1, 0.0, 0.0,  // bottom-left (flip y)
+        x1, y1, 1.0, 0.0,  // bottom-right
+        x0, y0, 0.0, 1.0,  // top-left
+        x1, y0, 1.0, 1.0,  // top-right
+    ]
+}
+

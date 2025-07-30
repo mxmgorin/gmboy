@@ -27,18 +27,10 @@ impl GameWindow {
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
 
-        let hidden_window = video_subsystem
-            .window("texture_context", 1, 1)
-            .hidden()
-            .build()
-            .unwrap();
-
-        let hidden_canvas = hidden_window.into_canvas().build().unwrap();
-        let texture_creator = hidden_canvas.texture_creator();
-        let ui = UiOverlay::new(&texture_creator, game_rect, text_color, bg_color);
 
         let mut gl_renderer = GlBackend::new(video_subsystem, game_rect);
         gl_renderer.load_shader("crt")?;
+        let ui = UiOverlay::new_gl(game_rect, text_color, bg_color);
 
         Ok(Self {
             frame_blend: FrameBlend::new(),
@@ -60,13 +52,13 @@ impl GameWindow {
 
     pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {}
 
-    pub fn update_fps(&mut self, fps: &str) {}
-
     pub fn update_notif(&mut self, lines: &[&str]) {}
 
     pub fn draw_menu(&mut self) {}
 
-    pub fn draw_fps(&mut self) {}
+    pub fn draw_fps(&mut self) {
+        self.gl_renderer.draw_ui_texture_gl(&self.ui.fps_texture, self.ui.fps_rect);
+    }
 
     pub fn draw_notif(&mut self) {}
 

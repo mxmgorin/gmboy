@@ -193,7 +193,7 @@ impl App {
         if lines.is_empty() {
             if let Some((fps, updated)) = fps {
                 if updated {
-                    self.window.update_fps(fps);
+                    self.window.ui.update_fps(fps);
                 }
 
                 self.window.draw_fps();
