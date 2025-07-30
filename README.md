@@ -1,4 +1,6 @@
-## 🕹️ GMBoy
+## 🕹️ GMBoy 
+
+[![Build](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 
 `GMBoy` is a Game Boy emulator written in Rust, built as a deep dive into emulation and hardware design.
 It focuses on clean code, hardware accuracy, and good performance, making it both a learning project and a solid emulator.
@@ -31,7 +33,7 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 - **Custom Controls**  – Rebind gamepad inputs and combos via `bindings.json`.
 - **Palettes**  – Switch between multiple color palettes or add your own in `palettes.json`.
 - **Settings**  – Adjust different aspects through the built-in menu or edit `config.json` manually.
-- **Testing**  – Includes SM83 JSON tests, blargg, and mooneye test suites (via `cargo test`).
+- **Testing**  – Integrated SM83 JSON tests, blargg, and mooneye test suites (via `cargo test`).
 - **Tile Viewer**  – Inspect background and sprite tiles in real time; toggle via settings.
 
 🚧 **Planned Features**
