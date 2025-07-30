@@ -1,12 +1,35 @@
-## GMBoy
+## 🕹️ GMBoy
 
-`GMBoy` is a Game Boy emulator built in Rust as a deep dive into how emulation and hardware works. Built for fun and learning, it emphasizes clean code, hardware understanding, and aims for high accuracy, test coverage, and good performance.
+`GMBoy` is a Game Boy emulator written in Rust, built as a deep dive into emulation and hardware design.
+It focuses on clean code, hardware accuracy, and good performance, making it both a learning project and a solid emulator.
 
-The emulator implements most Game Boy functionality and accuracy is verified by community test suites like blargg's and [mooneye](https://github.com/Gekkio/mooneye-test-suite). While most games should run correctly, some issues may still occur.
+✅ Thorough testing: passes most community test suites (blargg’s, mooneye) for verifing accuracy  
+✅ Modern features: save states, visual filters, re-bindable combo controls, and more  
+✅ Cross-platform: Windows, macOS, Linux, powered by SDL2 for audio, input, and window management
 
-Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest) from the releases page.
+📥 [Download the latest release here](https://github.com/mxmgorin/gmboy/releases/latest)
 
-## Features
+🛠️ *Work in progress: while most games run correctly, some issues may still occur.*
+
+## Emulation Core
+
+- **CPU**: Complete Sharp LR35902 instruction set with accurate timing
+- **PPU (Graphics)**: Background, window, and sprite rendering
+- **APU (Audio)**: All 4 audio channels (Square 1 & 2, Wave, Noise)
+- **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
+- **Battery-backed SRAM**: Persistent save data
+- **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
+
+## User Features
+
+- **Slow and Turbo Modes**  
+  Ability to slow down or speed up emulation. Speed is adjustable via the config.
+
+- **Rewind**  
+  Undo your actions and retry sections without restarting. Adjustable via the config.
+
+- **Save States**  
+  Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config.
 
 - **Frame Blending**  
   Select from different frame blending modes to emulate the ghosting effect - play [Chikyū Kaihō Gun ZAS](https://en.wikipedia.org/wiki/Chiky%C5%AB_Kaih%C5%8D_Gun_ZAS) without flickering.
@@ -18,22 +41,13 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
   Select your ROM directory and launch games directly from the emulator menu.
 
 - **Re-bindable Controls and Combo Inputs**  
-  Gamepad bindings and combo actions can be customized through the bindings.json file.
-
-- **Config Management**  
-  Customize the config.json file via a built-in menu or by editing it manually.
+  Gamepad bindings and combo actions can be customized through the `bindings.json` file. You can see the default [bindings](#default-bindings) for reference.
 
 - **Multiple Palettes**  
-  Includes different color palettes with ability to add by editing the palettes.json file.
+  Includes different color palettes with ability to add by editing the `palettes.json` file.
 
-- **Slow and Turbo Modes**  
-  Ability to slow down or speed up emulation. Speed is adjustable via the config.
-
-- **Rewind**  
-  Undo your actions and retry sections without restarting. Adjustable via the config.
-
-- **Save States**  
-  Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config.
+- **Config Management**  
+  Customize the `config.json` file via a built-in menu or by editing it manually.
 
 - **Tests**  
   Integrated SM83 json tests, blargg tests, mooneye test suite (via `cargo test`).
@@ -41,7 +55,16 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 - **Tile Viewer**  
   Visualize and inspect background and sprite tile data in real time. Toggle it via the config.
 
-## Input bindings
+🚧 **Planned Features**
+
+- OpenGL for shaders and enhanced graphics effects
+- Game Boy Color (GBC) mode support
+- Ongoing improvements and ongoing bug fixes
+- WebAssembly, Android, and ARM builds for wider platform support
+- Audio visualizer for debugging and fun audio feedback
+- Custom palette loader and editor to tweak game colors
+
+## Default bindings
 
 | Action                  | ⌨️ Keyboard              | 🎮 Gamepad          |
 |-------------------------|--------------------------|---------------------|
@@ -71,26 +94,6 @@ Download the [latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 | Next Save State Slot    |                          | Start + D-pad Right |
 | Prev Save State Slot    |                          | Start + D-pad Left  |
 
-## Supports
-
--  **Full CPU Emulation**  
-   Complete implementation of the Sharp LR35902 instruction set with accurate instruction and sub-instruction timing.
-
-- **Full PPU Emulation (Graphics)**  
-  Rendering of background, window, and sprites.
-
-- **Full APU Emulation (Audio)**  
-  Sound output with all 4 audio channels (Square 1, Square 2, Wave, Noise).
-
-- **Cartridge MBCs**  
-  Supports ROM loading with No MBC, MBC1, MBC1M, MBC2, MBC3, MBC5 mappers.
-
-- **SRAM Battery Saves**  
-  Persistent save data using battery-backed SRAM.
-
-- **Input Handling**  
-  Emulates all standard Game Boy button inputs (D-Pad, A, B, Start, Select).
-
 ## 🛠️ Building
 
 First, make sure you have Rust installed. If you don't, install it with:
@@ -108,15 +111,6 @@ After that, you should be able to build:
 ```bash
 cargo build --release
 ```
-## Planned features
-
-- GBC mode
-- Re-mappable keybindings
-- Accuracy improvements, bug fixes
-- Shaders
-- Web, android, arm builds
-- Audio visualizer
-- Palette loader
 
 ## Test Results
 
