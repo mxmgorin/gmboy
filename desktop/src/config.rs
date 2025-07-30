@@ -1,9 +1,11 @@
+use core::ppu::LCD_Y_RES;
 use crate::input::config::InputConfig;
 use crate::video::frame_blend::FrameBlendMode;
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
 use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
+use core::ppu::LCD_X_RES;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
@@ -39,6 +41,9 @@ impl VideoConfig {
     pub fn change_dim(&mut self, v: f32) {
         self.dim = core::change_f32_rounded(self.dim, v).clamp(0.0, 1.0)
     }
+
+    pub const WIDTH: usize = LCD_X_RES as usize;
+    pub const HEIGHT: usize = LCD_Y_RES as usize;
 }
 
 impl AppConfig {

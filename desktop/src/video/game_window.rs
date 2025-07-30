@@ -3,12 +3,13 @@ use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
 use crate::video::fill_texture;
-use crate::video::frame_blend::FrameBlendMode;
+use crate::video::filter::Filters;
+use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::pixels::{Color, PixelFormatEnum};
-use sdl2::rect::{Point, Rect};
+use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 use sdl2::VideoSubsystem;
@@ -19,19 +20,15 @@ pub struct GameWindow {
     game_texture: Texture,
     notif_texture: Texture,
     fps_texture: Texture,
-    grid_texture: Texture,
-    subpixel_texture: Texture,
-    scan_line_texture: Texture,
-    dot_matrix_texture: Texture,
     menu_texture: Texture,
-    vignette_texture: Texture,
     fps_rect: Rect,
     notif_rect: Rect,
     game_rect: Rect,
+    font_size: FontSize,
+    frame_blend: FrameBlend,
+    filters: Filters,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
-    font_size: FontSize,
-    prev_framebuffer: Box<[u32]>,
     pub config: VideoConfig,
 }
 
@@ -56,15 +53,20 @@ impl GameWindow {
         let mut game_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
-                LCD_X_RES as u32,
-                LCD_Y_RES as u32,
+                VideoConfig::WIDTH as u32,
+                VideoConfig::HEIGHT as u32,
             )
             .unwrap();
         game_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
         let (canvas_win_width, canvas_win_height) = canvas.window().size();
         let game_rect = new_scaled_rect(canvas_win_width, canvas_win_height);
 
-        let notif_rect = Rect::new(0, 0, LCD_X_RES as u32 * 3, LCD_Y_RES as u32 * 2);
+        let notif_rect = Rect::new(
+            0,
+            0,
+            VideoConfig::WIDTH as u32 * 3,
+            VideoConfig::HEIGHT as u32 * 2,
+        );
         let mut notif_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
@@ -86,8 +88,8 @@ impl GameWindow {
         let mut menu_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
-                LCD_X_RES as u32,
-                LCD_Y_RES as u32,
+                VideoConfig::WIDTH as u32,
+                VideoConfig::HEIGHT as u32,
             )
             .unwrap();
         menu_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
@@ -100,40 +102,11 @@ impl GameWindow {
             text_color,
             bg_color,
             font_size: FontSize::Small,
-            prev_framebuffer: Box::new([]),
+            frame_blend: FrameBlend::new(),
             config,
             fps_texture,
             fps_rect,
-            grid_texture: generate_grid_texture(
-                &mut canvas,
-                &texture_creator,
-                game_rect.width(),
-                game_rect.height(),
-            ),
-            subpixel_texture: generate_subpixel_texture(
-                &mut canvas,
-                &texture_creator,
-                game_rect.width(),
-                game_rect.height(),
-            ),
-            scan_line_texture: generate_scanline_texture(
-                &mut canvas,
-                &texture_creator,
-                game_rect.width(),
-                game_rect.height(),
-            ),
-            dot_matrix_texture: generate_dot_matrix_texture(
-                &mut canvas,
-                &texture_creator,
-                game_rect.width(),
-                game_rect.height(),
-            ),
-            vignette_texture: generate_vignette_texture(
-                &mut canvas,
-                &texture_creator,
-                game_rect.width(),
-                game_rect.height(),
-            ),
+            filters: Filters::new(&mut canvas, &texture_creator, game_rect),
             canvas,
             texture_creator,
             menu_texture,
@@ -142,32 +115,13 @@ impl GameWindow {
 
     pub fn draw_buffer(&mut self, pixel_buffer: &[u32]) {
         self.clear();
-        let w = LCD_X_RES as usize;
-        let h = LCD_Y_RES as usize;
+        let w = VideoConfig::WIDTH;
+        let h = VideoConfig::HEIGHT;
 
         let pixel_buffer = if let FrameBlendMode::None = self.config.frame_blend_mode {
             pixel_buffer
         } else {
-            if self.prev_framebuffer.len() != pixel_buffer.len() {
-                self.prev_framebuffer = pixel_buffer.to_vec().into_boxed_slice();
-            }
-
-            for (i, curr) in pixel_buffer.iter().enumerate() {
-                let curr = *curr;
-                let prev = self.prev_framebuffer[i];
-
-                // Extract RGB
-                let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
-                let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
-
-                // --- Use ghosting mode to get blended pixel ---
-                let (r, g, b) = self.compute_pixel(i, w, h, (pr, pg, pb), (cr, cg, cb));
-
-                // Store result
-                self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
-            }
-
-            &self.prev_framebuffer
+            self.frame_blend.process_buffer(pixel_buffer, &self.config)
         };
 
         self.game_texture
@@ -188,175 +142,12 @@ impl GameWindow {
             })
             .unwrap();
 
+        self.clear();
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
 
-        if self.config.vignette_enabled {
-            self.canvas
-                .copy(&self.vignette_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.dot_matrix_enabled {
-            self.canvas
-                .copy(&self.dot_matrix_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.scanline_enabled {
-            self.canvas
-                .copy(&self.scan_line_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.grid_enabled {
-            self.canvas
-                .copy(&self.grid_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.subpixel_enabled {
-            self.canvas
-                .copy(&self.subpixel_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-    }
-
-    pub fn compute_pixel(
-        &self,
-        i: usize,
-        w: usize,
-        h: usize,
-        prev: (u32, u32, u32),
-        curr: (u32, u32, u32),
-    ) -> (u32, u32, u32) {
-        let (pr, pg, pb) = prev;
-        let (cr, cg, cb) = curr;
-
-        // Convert to linear [0..1]
-        let pr_lin = pr as f32 / 255.0;
-        let pg_lin = pg as f32 / 255.0;
-        let pb_lin = pb as f32 / 255.0;
-
-        let cr_lin = cr as f32 / 255.0;
-        let cg_lin = cg as f32 / 255.0;
-        let cb_lin = cb as f32 / 255.0;
-
-        // Final RGB values
-        let (mut lr, mut lg, mut lb) = match &self.config.frame_blend_mode {
-            FrameBlendMode::None => (cr_lin, cg_lin, cb_lin),
-            FrameBlendMode::Linear(x) => {
-                let a = x.alpha;
-                (
-                    pr_lin * (1.0 - a) + cr_lin * a,
-                    pg_lin * (1.0 - a) + cg_lin * a,
-                    pb_lin * (1.0 - a) + cb_lin * a,
-                )
-            }
-
-            FrameBlendMode::Exponential(x) => {
-                let fade = x.fade;
-                (
-                    pr_lin * fade + cr_lin * (1.0 - fade),
-                    pg_lin * fade + cg_lin * (1.0 - fade),
-                    pb_lin * fade + cb_lin * (1.0 - fade),
-                )
-            }
-            FrameBlendMode::Additive(x) => {
-                let mut fr = pr_lin * x.fade + cr_lin * x.alpha;
-                let mut fg = pg_lin * x.fade + cg_lin * x.alpha;
-                let mut fb = pb_lin * x.fade + cb_lin * x.alpha;
-
-                // Clamp to prevent overexposure
-                fr = fr.min(1.0);
-                fg = fg.min(1.0);
-                fb = fb.min(1.0);
-
-                (fr, fg, fb)
-            }
-
-            FrameBlendMode::GammaCorrected(x) => {
-                let gamma = 2.2;
-                let fade = x.fade;
-
-                fn to_linear(v: f32, g: f32) -> f32 {
-                    v.powf(g)
-                }
-                fn to_srgb(v: f32, g: f32) -> f32 {
-                    v.powf(1.0 / g)
-                }
-
-                let pr_l = to_linear(pr_lin, gamma);
-                let pg_l = to_linear(pg_lin, gamma);
-                let pb_l = to_linear(pb_lin, gamma);
-
-                let cr_l = to_linear(cr_lin, gamma);
-                let cg_l = to_linear(cg_lin, gamma);
-                let cb_l = to_linear(cb_lin, gamma);
-
-                (
-                    to_srgb(pr_l * fade + cr_l * (1.0 - fade), gamma),
-                    to_srgb(pg_l * fade + cg_l * (1.0 - fade), gamma),
-                    to_srgb(pb_l * fade + cb_l * (1.0 - fade), gamma),
-                )
-            }
-
-            FrameBlendMode::Accurate(x) => {
-                // Scanline timing & jitter
-                let y = i / w;
-                let jitter = ((y as f32).sin() * 0.003) + 1.0;
-                let scan_delay = (1.0 - (y as f32 / h as f32) * 0.2) * jitter;
-
-                fn lcd_step(prev: f32, curr: f32, rise: f32, fall: f32, delay: f32) -> f32 {
-                    let rate = if curr > prev { rise } else { fall };
-                    prev + (curr - prev) * rate * delay
-                }
-
-                // LCD response curve
-                let mut lr = lcd_step(pr_lin, cr_lin, x.rise, x.fall, scan_delay);
-                let mut lg = lcd_step(pg_lin, cg_lin, x.rise, x.fall, scan_delay);
-                let mut lb = lcd_step(pb_lin, cb_lin, x.rise, x.fall, scan_delay);
-
-                // Pixel bleeding (left + top)
-                let left_idx = if i % w == 0 { i } else { i - 1 };
-                let top_idx = if y == 0 { i } else { i - w };
-
-                let left = self.prev_framebuffer[left_idx];
-                let top = self.prev_framebuffer[top_idx];
-
-                let lpr = ((left >> 16) & 0xFF) as f32 / 255.0;
-                let lpg = ((left >> 8) & 0xFF) as f32 / 255.0;
-                let lpb = (left & 0xFF) as f32 / 255.0;
-
-                let tpr = ((top >> 16) & 0xFF) as f32 / 255.0;
-                let tpg = ((top >> 8) & 0xFF) as f32 / 255.0;
-                let tpb = (top & 0xFF) as f32 / 255.0;
-
-                lr = lr * (1.0 - x.bleed) + ((lpr + tpr) * 0.5) * x.bleed;
-                lg = lg * (1.0 - x.bleed) + ((lpg + tpg) * 0.5) * x.bleed;
-                lb = lb * (1.0 - x.bleed) + ((lpb + tpb) * 0.5) * x.bleed;
-
-                // Tint
-                lr *= x.tint.red;
-                lg *= x.tint.green;
-                lb *= x.tint.blue;
-
-                (lr, lg, lb)
-            }
-        };
-
-        let dim = self.config.dim;
-        lr *= dim;
-        lg *= dim;
-        lb *= dim;
-
-        // Convert back to 0..255
-        (
-            (lr * 255.0).clamp(0.0, 255.0) as u32,
-            (lg * 255.0).clamp(0.0, 255.0) as u32,
-            (lb * 255.0).clamp(0.0, 255.0) as u32,
-        )
+        self.filters.apply(&mut self.canvas, &self.config);
     }
 
     pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {
@@ -397,35 +188,7 @@ impl GameWindow {
             .copy(&self.menu_texture, None, Some(self.game_rect))
             .unwrap();
 
-        if self.config.vignette_enabled {
-            self.canvas
-                .copy(&self.vignette_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.dot_matrix_enabled {
-            self.canvas
-                .copy(&self.dot_matrix_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.scanline_enabled {
-            self.canvas
-                .copy(&self.scan_line_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.grid_enabled {
-            self.canvas
-                .copy(&self.grid_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
-
-        if self.config.subpixel_enabled {
-            self.canvas
-                .copy(&self.subpixel_texture, None, Some(self.game_rect))
-                .unwrap();
-        }
+        self.filters.apply(&mut self.canvas, &self.config);
     }
 
     pub fn update_fps(&mut self, fps: &str) {
@@ -498,36 +261,7 @@ impl GameWindow {
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
-        self.grid_texture = generate_grid_texture(
-            &mut self.canvas,
-            &self.texture_creator,
-            self.game_rect.width(),
-            self.game_rect.height(),
-        );
-        self.subpixel_texture = generate_subpixel_texture(
-            &mut self.canvas,
-            &self.texture_creator,
-            self.game_rect.width(),
-            self.game_rect.height(),
-        );
-        self.scan_line_texture = generate_scanline_texture(
-            &mut self.canvas,
-            &self.texture_creator,
-            self.game_rect.width(),
-            self.game_rect.height(),
-        );
-        self.dot_matrix_texture = generate_dot_matrix_texture(
-            &mut self.canvas,
-            &self.texture_creator,
-            self.game_rect.width(),
-            self.game_rect.height(),
-        );
-        self.vignette_texture = generate_vignette_texture(
-            &mut self.canvas,
-            &self.texture_creator,
-            self.game_rect.width(),
-            self.game_rect.height(),
-        );
+        self.filters = Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
     }
 
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
@@ -579,156 +313,4 @@ fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let y = ((window_height - new_height) / 2) as i32;
 
     Rect::new(x, y, new_width, new_height)
-}
-
-fn generate_subpixel_texture(
-    canvas: &mut Canvas<Window>,
-    texture_creator: &TextureCreator<WindowContext>,
-    width: u32,
-    height: u32,
-) -> Texture {
-    let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
-        .unwrap();
-
-    canvas
-        .with_texture_canvas(&mut tex, |subcanvas| {
-            // Define three shades for the stripe pattern
-            let colors = [
-                Color::RGBA(180, 200, 180, 40), // light
-                Color::RGBA(140, 170, 140, 40), // medium
-                Color::RGBA(100, 140, 100, 40), // dark
-            ];
-
-            let stripe_width = 1; // 1-pixel wide stripes
-            let mut x = 0;
-
-            while x < width as i32 {
-                for (i, color) in colors.iter().enumerate() {
-                    let rect = Rect::new(x + i as i32, 0, stripe_width, height);
-                    subcanvas.set_draw_color(*color);
-                    subcanvas.fill_rect(rect).unwrap();
-                }
-                x += colors.len() as i32;
-            }
-        })
-        .unwrap();
-
-    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
-    tex
-}
-
-fn generate_grid_texture(
-    canvas: &mut Canvas<Window>,
-    texture_creator: &TextureCreator<WindowContext>,
-    width: u32,
-    height: u32,
-) -> Texture {
-    let mut grid_texture = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
-        .unwrap();
-    canvas
-        .with_texture_canvas(&mut grid_texture, |tex| {
-            tex.set_draw_color(Color::RGBA(32, 32, 32, 80));
-            for i in 0..=LCD_X_RES {
-                let x = (i as f32 * width as f32 / LCD_X_RES as f32) as i32;
-                tex.draw_line((x, 0), (x, height as i32)).unwrap();
-            }
-            for j in 0..=LCD_Y_RES {
-                let y = (j as f32 * height as f32 / LCD_Y_RES as f32) as i32;
-                tex.draw_line((0, y), (width as i32, y)).unwrap();
-            }
-        })
-        .unwrap();
-    grid_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-
-    grid_texture
-}
-
-fn generate_scanline_texture(
-    canvas: &mut Canvas<Window>,
-    texture_creator: &TextureCreator<WindowContext>,
-    width: u32,
-    height: u32,
-) -> Texture {
-    let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
-        .unwrap();
-
-    canvas
-        .with_texture_canvas(&mut tex, |subcanvas| {
-            subcanvas.set_draw_color(Color::RGBA(0, 0, 0, 40));
-            for y in (0..height).step_by(2) {
-                // every 2 pixels
-                subcanvas
-                    .draw_line((0, y as i32), (width as i32, y as i32))
-                    .unwrap();
-            }
-        })
-        .unwrap();
-
-    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
-    tex
-}
-
-fn generate_dot_matrix_texture(
-    canvas: &mut Canvas<Window>,
-    texture_creator: &TextureCreator<WindowContext>,
-    width: u32,
-    height: u32,
-) -> Texture {
-    let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
-        .unwrap();
-
-    canvas
-        .with_texture_canvas(&mut tex, |subcanvas| {
-            subcanvas.set_draw_color(Color::RGBA(0, 0, 0, 30));
-            let spacing = 4; // distance between dots
-            let size = 1; // dot size
-
-            for y in (0..height).step_by(spacing) {
-                for x in (0..width).step_by(spacing) {
-                    let rect = Rect::new(x as i32, y as i32, size, size);
-                    subcanvas.fill_rect(rect).unwrap();
-                }
-            }
-        })
-        .unwrap();
-
-    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
-    tex
-}
-
-fn generate_vignette_texture(
-    canvas: &mut Canvas<Window>,
-    texture_creator: &TextureCreator<WindowContext>,
-    width: u32,
-    height: u32,
-) -> Texture {
-    let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
-        .unwrap();
-
-    canvas
-        .with_texture_canvas(&mut tex, |subcanvas| {
-            let center_x = width as f32 / 2.0;
-            let center_y = height as f32 / 2.0;
-            let max_dist = ((center_x.powi(2) + center_y.powi(2)).sqrt()) as f32;
-
-            for y in 0..height {
-                for x in 0..width {
-                    let dx = x as f32 - center_x;
-                    let dy = y as f32 - center_y;
-                    let dist = ((dx * dx + dy * dy).sqrt()) / max_dist;
-                    let alpha = (dist * 120.0) as u8; // intensity
-                    subcanvas.set_draw_color(Color::RGBA(0, 0, 0, alpha));
-                    subcanvas.draw_point(Point::new(x as i32, y as i32)).unwrap();
-                }
-            }
-        })
-        .unwrap();
-
-    tex.set_blend_mode(sdl2::render::BlendMode::Blend);
-    tex
 }

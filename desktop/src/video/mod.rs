@@ -8,6 +8,7 @@ pub mod tiles_window;
 pub mod menu;
 pub mod notification;
 pub mod frame_blend;
+mod filter;
 
 const BYTES_PER_PIXEL: usize = 4;
 
