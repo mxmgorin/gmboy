@@ -1,8 +1,7 @@
 use crate::config::VideoConfig;
 use crate::video::filter::Filters;
 use crate::video::game_window::new_scaled_rect;
-use crate::video::ui::UiOverlay;
-use crate::video::{PixelColor, BYTES_PER_PIXEL};
+use crate::video::BYTES_PER_PIXEL;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
@@ -15,16 +14,10 @@ pub struct Sdl2Backend {
     game_texture: Texture,
     game_rect: Rect,
     filters: Filters,
-    pub ui: UiOverlay,
 }
 
 impl Sdl2Backend {
-    pub fn new(
-        video_subsystem: VideoSubsystem,
-        rect: Rect,
-        text_color: PixelColor,
-        bg_color: PixelColor,
-    ) -> Self {
+    pub fn new(video_subsystem: VideoSubsystem, rect: Rect) -> Self {
         let window = video_subsystem
             .window("GMBoy", rect.width(), rect.height())
             .position_centered()
@@ -44,7 +37,6 @@ impl Sdl2Backend {
 
         Self {
             filters: Filters::new(&mut canvas, &texture_creator, rect),
-            ui: UiOverlay::new(&texture_creator, rect, text_color, bg_color),
             texture_creator,
             canvas,
             game_texture,
@@ -64,24 +56,18 @@ impl Sdl2Backend {
         self.filters.apply(&mut self.canvas, config);
     }
 
-    pub fn draw_menu(&mut self, config: &VideoConfig) {
+    pub fn draw_menu(&mut self, config: &VideoConfig, texture: &Texture, rect: Rect) {
         self.clear();
-        self.canvas
-            .copy(&self.ui.menu_texture, None, Some(self.ui.menu_rect))
-            .unwrap();
+        self.canvas.copy(texture, None, Some(rect)).unwrap();
         self.filters.apply(&mut self.canvas, config);
     }
 
-    pub fn draw_fps(&mut self) {
-        self.canvas
-            .copy(&self.ui.fps_texture, None, Some(self.ui.fps_rect))
-            .unwrap();
+    pub fn draw_fps(&mut self, texture: &Texture, rect: Rect) {
+        self.canvas.copy(texture, None, Some(rect)).unwrap();
     }
 
-    pub fn draw_notif(&mut self) {
-        self.canvas
-            .copy(&self.ui.notif_texture, None, Some(self.ui.notif_rect))
-            .unwrap();
+    pub fn draw_notif(&mut self, texture: &Texture, rect: Rect) {
+        self.canvas.copy(texture, None, Some(rect)).unwrap();
     }
 
     pub fn show(&mut self) {
@@ -113,7 +99,6 @@ impl Sdl2Backend {
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
-        self.ui.menu_rect = self.game_rect;
         self.filters = Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
     }
 

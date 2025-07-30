@@ -2,7 +2,7 @@ use crate::config::VideoConfig;
 use crate::video::shader;
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
-use sdl2::VideoSubsystem;
+use sdl2::{sys, VideoSubsystem};
 
 pub struct GlBackend {
     window: Window,
@@ -184,6 +184,41 @@ impl GlBackend {
 
             gl::BindVertexArray(self.gl_vao);
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
+        }
+    }
+
+    /// Helper: binds SDL texture and draws it using OpenGL
+    pub fn draw_sdl_texture(&self, texture: &sdl2::render::Texture, rect: &sdl2::rect::Rect) {
+        unsafe {
+            let mut tex_w: f32 = 0.0;
+            let mut tex_h: f32 = 0.0;
+
+            let raw = texture.raw();
+
+            // ✅ Bind SDL2 texture to OpenGL texture unit
+            if sys::SDL_GL_BindTexture(raw, &mut tex_w, &mut tex_h) == 0 {
+                // Convert SDL pixel coords to OpenGL world coords
+                let (win_w, win_h) = self.window.drawable_size();
+                let x = (rect.x as f32 / win_w as f32) * 2.0 - 1.0;
+                let y = 1.0 - (rect.y as f32 / win_h as f32) * 2.0;
+                let w = (rect.width() as f32 / win_w as f32) * 2.0;
+                let h = (rect.height() as f32 / win_h as f32) * 2.0;
+
+                // Use existing quad shader & VAO
+                gl::UseProgram(self.shader_program);
+                gl::BindVertexArray(self.gl_vao);
+
+                // Set uniforms to position/scale this quad correctly
+                gl::Uniform2f(self.uniform_locations.1, rect.width() as f32, rect.height() as f32);
+                gl::Uniform2f(self.uniform_locations.2, win_w as f32, win_h as f32);
+                gl::Uniform2f(self.uniform_locations.3, rect.x as f32, rect.y as f32);
+
+                // Draw using your existing quad rendering
+                gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
+
+                // ✅ Unbind SDL texture after use
+                sys::SDL_GL_UnbindTexture(raw);
+            }
         }
     }
 }

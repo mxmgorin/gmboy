@@ -245,8 +245,8 @@ impl App {
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
         let colors = self.config.interface.get_palette_colors(&self.palettes);
-        self.window.text_color = colors[0];
-        self.window.bg_color = colors[3];
+        self.window.ui.text_color = colors[0];
+        self.window.ui.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
         self.menu.request_update();
 

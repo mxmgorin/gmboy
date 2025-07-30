@@ -6,13 +6,13 @@ use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 use sdl2::VideoSubsystem;
+use crate::video::ui::UiOverlay;
 
 pub struct GameWindow {
     frame_blend: FrameBlend,
     gl_renderer: GlBackend,
     pub config: VideoConfig,
-    pub text_color: PixelColor,
-    pub bg_color: PixelColor,
+    pub ui: UiOverlay,
 }
 
 impl GameWindow {
@@ -27,15 +27,24 @@ impl GameWindow {
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
 
+        let hidden_window = video_subsystem
+            .window("texture_context", 1, 1)
+            .hidden()
+            .build()
+            .unwrap();
+
+        let hidden_canvas = hidden_window.into_canvas().build().unwrap();
+        let texture_creator = hidden_canvas.texture_creator();
+        let ui = UiOverlay::new(&texture_creator, game_rect, text_color, bg_color);
+
         let mut gl_renderer = GlBackend::new(video_subsystem, game_rect);
-        gl_renderer.load_shader("smooth_bilinear")?;
+        gl_renderer.load_shader("crt")?;
 
         Ok(Self {
             frame_blend: FrameBlend::new(),
             config,
-            text_color,
             gl_renderer,
-            bg_color,
+            ui
         })
     }
 
