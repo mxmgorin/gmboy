@@ -1,6 +1,10 @@
 ## 🕹️ GMBoy 
 
-[![Build](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
+[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
+![Platform](https://img.shields.io/badge/platform-Linux%20|%20Windows%20|%20Mac-blue)
+<!-- [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
 `GMBoy` is a Game Boy emulator written in Rust, built as a deep dive into emulation and hardware design.
 It focuses on clean code, hardware accuracy, and good performance, making it both a learning project and a solid emulator.
