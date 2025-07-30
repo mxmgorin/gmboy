@@ -22,38 +22,17 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 
 ## User Features
 
-- **Slow and Turbo Modes**  
-  Ability to slow down or speed up emulation. Speed is adjustable via the config.
-
-- **Rewind**  
-  Undo your actions and retry sections without restarting. Adjustable via the config.
-
-- **Save States**  
-  Save your game progress and resume where you left off. Auto save states on exit/start can be toggled via the config.
-
-- **Frame Blending**  
-  Select from different frame blending modes to emulate the ghosting effect - play [Chikyū Kaihō Gun ZAS](https://en.wikipedia.org/wiki/Chiky%C5%AB_Kaih%C5%8D_Gun_ZAS) without flickering.
-
-- **Visual Filters**  
-  Apply effects such as grid lines, subpixel stripes, scanline, or a dot-matrix, vignette overlay to enhance the retro feel.
-
-- **ROMs Scanning**  
-  Select your ROM directory and launch games directly from the emulator menu.
-
-- **Re-bindable Controls and Combo Inputs**  
-  Gamepad bindings and combo actions can be customized through the `bindings.json` file. You can see the default [bindings](#default-bindings) for reference.
-
-- **Multiple Palettes**  
-  Includes different color palettes with ability to add by editing the `palettes.json` file.
-
-- **Config Management**  
-  Customize the `config.json` file via a built-in menu or by editing it manually.
-
-- **Tests**  
-  Integrated SM83 json tests, blargg tests, mooneye test suite (via `cargo test`).
-
-- **Tile Viewer**  
-  Visualize and inspect background and sprite tile data in real time. Toggle it via the config.
+- **Slow & Turbo Modes**  – Adjust emulation speed via the settings or hotkeys.
+- **Rewind**  – Undo actions and retry sections; fully configurable.
+- **Save States**  – Save and resume progress, with multiple slots and optional auto-save on exit/start.
+- **Frame Blending**  – Choose and tweak different blending modes to emulate ghosting (e.g., reduce flicker in [Gun ZAS](https://en.wikipedia.org/wiki/Chiky%C5%AB_Kaih%C5%8D_Gun_ZAS)).
+- **Visual Filters**  – Apply grid, subpixel, scanline, dot-matrix, or vignette effects for a retro look.
+- **ROM Scanning**  – Set a ROM directory and launch games directly from the menu.
+- **Custom Controls**  – Rebind gamepad inputs and combos via `bindings.json`.
+- **Palettes**  – Switch between multiple color palettes or add your own in `palettes.json`.
+- **Settings**  – Adjust different aspects through the built-in menu or edit `config.json` manually.
+- **Testing**  – Includes SM83 JSON tests, blargg, and mooneye test suites (via `cargo test`).
+- **Tile Viewer**  – Inspect background and sprite tiles in real time; toggle via settings.
 
 🚧 **Planned Features**
 
