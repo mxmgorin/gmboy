@@ -165,7 +165,7 @@ impl App {
             } else {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
-                self.window.draw_frame(&emu.runtime.ppu.pipeline.buffer);
+                self.window.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
                 self.draw_notification(emu.runtime.ppu.get_fps());
                 self.window.show();
 

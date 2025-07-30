@@ -2,6 +2,7 @@ use crate::config::VideoConfig;
 use crate::video::filter::Filters;
 use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
 use crate::video::ui::UiOverlay;
+use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -63,32 +64,16 @@ impl GameWindow {
         })
     }
 
-    pub fn draw_frame(&mut self, frame_buffer: &[u32]) {
-        let w = VideoConfig::WIDTH;
-        let h = VideoConfig::HEIGHT;
-
-        let frame_buffer = if let FrameBlendMode::None = self.config.frame_blend_mode {
-            frame_buffer
+    pub fn draw_buffer(&mut self, buffer: &[u32]) {
+        let buffer = if let FrameBlendMode::None = self.config.frame_blend_mode {
+            buffer
         } else {
-            self.frame_blend.process_buffer(frame_buffer, &self.config)
+            self.frame_blend.process_buffer(buffer, &self.config)
         };
 
+        let pitch = VideoConfig::WIDTH * BYTES_PER_PIXEL;
         self.game_texture
-            .with_lock(None, |texture_buffer: &mut [u8], pitch: usize| {
-                let pitch_u32 = pitch / 4;
-                let texture_buffer_u32 = unsafe {
-                    std::slice::from_raw_parts_mut(
-                        texture_buffer.as_mut_ptr() as *mut u32,
-                        texture_buffer.len() / 4,
-                    )
-                };
-
-                for y in 0..h {
-                    let dst = y * pitch_u32;
-                    let src = y * w;
-                    texture_buffer_u32[dst..dst + w].copy_from_slice(&frame_buffer[src..src + w]);
-                }
-            })
+            .update(None, bytemuck::cast_slice(buffer), pitch)
             .unwrap();
 
         self.clear();
