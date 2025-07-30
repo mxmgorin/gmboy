@@ -93,49 +93,65 @@ impl UiOverlay {
             y /= 2;
         }
 
-        fill_texture(&mut self.menu_texture, self.bg_color);
-        draw_text_lines(
-            &mut self.menu_texture,
-            lines,
-            self.text_color,
-            None,
-            x,
-            y,
-            self.font_size,
-            1,
-            align_center,
-        );
+        self.menu_texture
+            .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                fill_texture(buffer, self.bg_color);
+
+                draw_text_lines(
+                    buffer,
+                    pitch,
+                    lines,
+                    self.text_color,
+                    None,
+                    x,
+                    y,
+                    self.font_size,
+                    1,
+                    align_center,
+                );
+            })
+            .unwrap();
     }
 
     pub fn update_fps(&mut self, fps: &str) {
-        fill_texture(&mut self.fps_texture, PixelColor::from_u32(0));
+        self.fps_texture
+            .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                fill_texture(buffer, PixelColor::from_u32(0));
 
-        draw_text_lines(
-            &mut self.fps_texture,
-            &[fps],
-            self.text_color,
-            Some(self.bg_color),
-            2,
-            2,
-            self.font_size,
-            2,
-            None,
-        );
+                draw_text_lines(
+                    buffer,
+                    pitch,
+                    &[fps],
+                    self.text_color,
+                    Some(self.bg_color),
+                    2,
+                    2,
+                    self.font_size,
+                    2,
+                    None,
+                );
+            })
+            .unwrap();
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
-        fill_texture(&mut self.notif_texture, PixelColor::from_u32(0));
+        self.notif_texture
+            .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                fill_texture(buffer, PixelColor::from_u32(0));
 
-        draw_text_lines(
-            &mut self.notif_texture,
-            lines,
-            self.text_color,
-            Some(self.bg_color),
-            10,
-            10,
-            self.font_size,
-            2,
-            None,
-        );
+                draw_text_lines(
+                    buffer,
+                    pitch,
+                    lines,
+                    self.text_color,
+                    Some(self.bg_color),
+                    10,
+                    10,
+                    self.font_size,
+                    2,
+                    None,
+                );
+            })
+            .unwrap();
     }
 }
