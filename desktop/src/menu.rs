@@ -1206,7 +1206,7 @@ impl Default for RomsMenu {
 
 #[cfg(test)]
 mod tests {
-    use crate::video::menu::{RomMenuItem, RomsMenu};
+    use crate::menu::{RomMenuItem, RomsMenu};
 
     #[test]
     pub fn iter() {

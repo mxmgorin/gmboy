@@ -5,10 +5,9 @@ mod char;
 pub mod draw_text;
 pub mod game_window;
 pub mod tiles_window;
-pub mod menu;
-pub mod notification;
 pub mod frame_blend;
 mod filter;
+mod ui;
 
 const BYTES_PER_PIXEL: usize = 4;
 

@@ -1,4 +1,3 @@
-use core::ppu::LCD_Y_RES;
 use crate::input::config::InputConfig;
 use crate::video::frame_blend::FrameBlendMode;
 use core::apu::apu::ApuConfig;
@@ -6,6 +5,7 @@ use core::emu::config::EmuConfig;
 use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
+use core::ppu::LCD_Y_RES;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;

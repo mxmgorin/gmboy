@@ -20,6 +20,8 @@ mod config;
 mod input;
 mod roms;
 mod video;
+pub mod menu;
+pub mod notification;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

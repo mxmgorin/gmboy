@@ -3,8 +3,8 @@ use crate::config::{AppConfig, VideoConfig};
 use crate::input::handler::InputHandler;
 use crate::roms::RomsList;
 use crate::video::game_window::GameWindow;
-use crate::video::menu::AppMenu;
-use crate::video::notification::Notifications;
+use crate::menu::AppMenu;
+use crate::notification::Notifications;
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::auxiliary::joypad::JoypadButton;
@@ -165,9 +165,9 @@ impl App {
             } else {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
-                self.window.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
+                self.window.draw_frame(&emu.runtime.ppu.pipeline.buffer);
                 self.draw_notification(emu.runtime.ppu.get_fps());
-                self.window.present();
+                self.window.show();
 
                 if let Some(tiles_window) = self.tile_window.as_mut() {
                     tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
@@ -183,7 +183,7 @@ impl App {
         emu.runtime.clock.reset();
         self.draw_menu();
         self.draw_notification(None);
-        self.window.present();
+        self.window.show();
         thread::sleep(Duration::from_millis(30));
     }
 
@@ -193,14 +193,14 @@ impl App {
         if lines.is_empty() {
             if let Some((fps, updated)) = fps {
                 if updated {
-                    self.window.update_fps(fps);
+                    self.window.ui.update_fps(fps);
                 }
 
                 self.window.draw_fps();
             }
         } else if updated || !lines.is_empty() {
             if updated {
-                self.window.update_notif(lines);
+                self.window.ui.update_notif(lines);
             }
 
             self.window.draw_notif();
@@ -220,7 +220,7 @@ impl App {
         let (items, updated) = self.menu.get_items(&self.config);
 
         if updated {
-            self.window.update_menu(items, true, true);
+            self.window.ui.update_menu(items, true, true);
         }
 
         self.window.draw_menu();
@@ -245,8 +245,8 @@ impl App {
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
         let colors = self.config.interface.get_palette_colors(&self.palettes);
-        self.window.text_color = colors[0];
-        self.window.bg_color = colors[3];
+        self.window.ui.text_color = colors[0];
+        self.window.ui.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
         self.menu.request_update();
 
