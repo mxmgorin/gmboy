@@ -15,10 +15,16 @@ pub struct GlBackend {
     uniform_locations: UniformLocations,
     game_rect: Rect,
     fps_texture_id: u32,
+    notif_texture_id: u32,
 }
 
 impl GlBackend {
-    pub fn new(video_subsystem: &VideoSubsystem, game_rect: Rect, fps_rect: Rect) -> Self {
+    pub fn new(
+        video_subsystem: &VideoSubsystem,
+        game_rect: Rect,
+        fps_rect: Rect,
+        notif_rect: Rect,
+    ) -> Self {
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
@@ -46,6 +52,7 @@ impl GlBackend {
             uniform_locations: Default::default(),
             game_rect,
             fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
+            notif_texture_id: create_texture(notif_rect.w, notif_rect.h),
         }
     }
 
@@ -79,7 +86,23 @@ impl GlBackend {
         }
     }
 
-    pub fn draw_notif(&mut self, _texture: &VideoTexture) {}
+    pub fn draw_notif(&mut self, texture: &VideoTexture) {
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.notif_texture_id);
+            gl::TexSubImage2D(
+                gl::TEXTURE_2D,
+                0,
+                0,
+                0,
+                texture.rect.w,
+                texture.rect.h,
+                gl::BGRA,
+                gl::UNSIGNED_BYTE,
+                texture.buffer.as_ptr() as *const _,
+            );
+            self.draw_quad();
+        }
+    }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
         self.window

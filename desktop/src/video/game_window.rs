@@ -59,14 +59,15 @@ impl GameWindow {
         let game_rect = new_scaled_rect(win_width, win_height);
         let menu_rect = Rect::new(0, 0, VideoConfig::WIDTH as u32, VideoConfig::HEIGHT as u32);
         let notif_rect = Rect::new(
-            0,
-            0,
+            6,
+            6,
             VideoConfig::WIDTH as u32 * 3,
-            VideoConfig::HEIGHT as u32 * 2,
+            VideoConfig::HEIGHT as u32 * 3,
         );
+
         let (backend, ui) = match config.backend {
             VideoBackendType::Sdl2 => {
-                let fps_rect = Rect::new(2, 2, 70, 70);
+                let fps_rect = Rect::new(6, 6, 70, 70);
                 let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
                 let backend = VideoBackend::Sdl2(Sdl2Backend::new(
                     video_subsystem,
@@ -79,13 +80,14 @@ impl GameWindow {
             }
             VideoBackendType::Gl => {
                 let fps_rect = Rect::new(
-                    10,
-                    10,
+                    6,
+                    6,
                     VideoConfig::WIDTH as u32 * 3,
                     VideoConfig::WIDTH as u32 * 3,
                 );
                 let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let mut gl_backend = GlBackend::new(video_subsystem, game_rect, fps_rect);
+                let mut gl_backend =
+                    GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect);
                 gl_backend.load_shader(&config.shader)?;
 
                 (VideoBackend::Gl(gl_backend), ui)
