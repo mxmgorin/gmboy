@@ -59,14 +59,14 @@ impl VideoBackend {
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_buffer(buffer, config),
-            VideoBackend::Gl(x) => x.draw_buffer(buffer, config),
+            VideoBackend::Gl(x) => x.draw_buffer(buffer),
         }
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_menu(texture, config),
-            VideoBackend::Gl(x) => x.draw_menu(texture, config),
+            VideoBackend::Gl(x) => x.draw_menu(texture),
         }
     }
 

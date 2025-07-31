@@ -5,7 +5,6 @@ use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
 use sdl2::VideoSubsystem;
 
-
 pub struct GlBackend {
     window: Window,
     _gl_context: GLContext,
@@ -46,8 +45,8 @@ impl GlBackend {
         }
     }
 
-    pub fn draw_menu(&mut self, _texture: &VideoTexture, _config: &VideoConfig) {
-        self.draw_buffer(&_texture.buffer, _config);
+    pub fn draw_menu(&mut self, texture: &VideoTexture) {
+        self.draw_buffer(&texture.buffer);
     }
 
     pub fn draw_fps(&mut self, _texture: &VideoTexture) {}
@@ -69,18 +68,23 @@ impl GlBackend {
 
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         if fullscreen {
-            self.window.set_fullscreen(sdl2::video::FullscreenType::Desktop).unwrap();
+            self.window
+                .set_fullscreen(sdl2::video::FullscreenType::Desktop)
+                .unwrap();
         } else {
-            self.window.set_fullscreen(sdl2::video::FullscreenType::Off).unwrap();
+            self.window
+                .set_fullscreen(sdl2::video::FullscreenType::Off)
+                .unwrap();
         };
         self.update_game_rect();
     }
 
     pub fn get_position(&self) -> (i32, i32) {
-        self.window.position()    }
+        self.window.position()
+    }
 
     /// Uploads ARGB pixels and draws a textured quad
-    pub fn draw_buffer(&mut self, buffer: &[u8], _config: &VideoConfig) {
+    pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let width = VideoConfig::WIDTH;
         let height = VideoConfig::HEIGHT;
 
@@ -117,7 +121,11 @@ impl GlBackend {
             let (loc_image, loc_in, loc_out, origin) = self.uniform_locations;
             gl::Uniform1i(loc_image, 0);
             gl::Uniform2f(loc_in, width as f32, height as f32);
-            gl::Uniform2f(loc_out, self.game_rect.width() as f32, self.game_rect.height() as f32);
+            gl::Uniform2f(
+                loc_out,
+                self.game_rect.width() as f32,
+                self.game_rect.height() as f32,
+            );
             gl::Uniform2f(origin, self.game_rect.x as f32, self.game_rect.y as f32);
 
             // draw quad
@@ -197,25 +205,24 @@ impl GlBackend {
         }
 
         self.shader_program = program;
-        self.cache_uniform_locations();
+        self.uniform_locations = get_uniform_locations(self.shader_program);
 
         Ok(())
-    }
-
-    fn cache_uniform_locations(&mut self) {
-        unsafe {
-            let program = self.shader_program;
-            self.uniform_locations = (
-                gl::GetUniformLocation(program, c"image".as_ptr() as *const _),
-                gl::GetUniformLocation(program, c"input_resolution".as_ptr() as *const _),
-                gl::GetUniformLocation(program, c"output_resolution".as_ptr() as *const _),
-                gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
-            );
-        }
     }
 
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.window.size();
         self.game_rect = new_scaled_rect(win_width, win_height);
+    }
+}
+
+fn get_uniform_locations(program: u32) -> (i32, i32, i32, i32) {
+    unsafe {
+        (
+            gl::GetUniformLocation(program, c"image".as_ptr() as *const _),
+            gl::GetUniformLocation(program, c"input_resolution".as_ptr() as *const _),
+            gl::GetUniformLocation(program, c"output_resolution".as_ptr() as *const _),
+            gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
+        )
     }
 }
