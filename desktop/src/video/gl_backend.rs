@@ -46,7 +46,9 @@ impl GlBackend {
         }
     }
 
-    pub fn draw_menu(&mut self, _texture: &VideoTexture, _config: &VideoConfig) {}
+    pub fn draw_menu(&mut self, _texture: &VideoTexture, _config: &VideoConfig) {
+        self.draw_buffer(&_texture.buffer, _config);
+    }
 
     pub fn draw_fps(&mut self, _texture: &VideoTexture) {}
 
@@ -78,8 +80,7 @@ impl GlBackend {
         self.window.position()    }
 
     /// Uploads ARGB pixels and draws a textured quad
-    pub fn draw_buffer(&mut self, buffer: &[u32], _config: &VideoConfig) {
-        let buffer: &[u8] = bytemuck::cast_slice(buffer);
+    pub fn draw_buffer(&mut self, buffer: &[u8], _config: &VideoConfig) {
         let width = VideoConfig::WIDTH;
         let height = VideoConfig::HEIGHT;
 

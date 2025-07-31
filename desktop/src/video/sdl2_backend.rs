@@ -88,10 +88,9 @@ impl Sdl2Backend {
         }
     }
 
-    pub fn draw_buffer(&mut self, buffer: &[u32], config: &VideoConfig) {
+    pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         self.clear();
         let pitch = VideoConfig::WIDTH * BYTES_PER_PIXEL;
-        let buffer = bytemuck::cast_slice(buffer);
         self.game_texture.update(None, buffer, pitch).unwrap();
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))

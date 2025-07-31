@@ -93,6 +93,7 @@ impl GameWindow {
             self.frame_blend.process_buffer(buffer, &self.config)
         };
 
+        let buffer: &[u8] = bytemuck::cast_slice(buffer);
         self.backend.draw_buffer(buffer, &self.config);
     }
 

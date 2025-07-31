@@ -56,7 +56,7 @@ pub enum VideoBackend {
 }
 
 impl VideoBackend {
-    pub fn draw_buffer(&mut self, buffer: &[u32], config: &VideoConfig) {
+    pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_buffer(buffer, config),
             VideoBackend::Gl(x) => x.draw_buffer(buffer, config),
