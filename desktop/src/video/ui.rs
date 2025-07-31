@@ -13,6 +13,7 @@ pub struct UiLayer {
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
     font_size: FontSize,
+    overlay_scale: usize,
 }
 
 impl UiLayer {
@@ -22,6 +23,7 @@ impl UiLayer {
         notif_rect: Rect,
         text_color: PixelColor,
         bg_color: PixelColor,
+        overlay_scale: usize,
     ) -> Self {
         Self {
             font_size: FontSize::Small,
@@ -30,6 +32,7 @@ impl UiLayer {
             notif_texture: VideoTexture::new(notif_rect, BYTES_PER_PIXEL),
             bg_color,
             text_color,
+            overlay_scale,
         }
     }
 
@@ -77,7 +80,7 @@ impl UiLayer {
             2,
             2,
             self.font_size,
-            2,
+            self.overlay_scale,
             None,
         );
     }
@@ -94,7 +97,7 @@ impl UiLayer {
             10,
             10,
             self.font_size,
-            2,
+            self.overlay_scale,
             None,
         );
     }

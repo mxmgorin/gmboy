@@ -14,10 +14,11 @@ pub struct GlBackend {
     gl_vbo: u32,
     uniform_locations: UniformLocations,
     game_rect: Rect,
+    fps_texture_id: u32,
 }
 
 impl GlBackend {
-    pub fn new(video_subsystem: &VideoSubsystem, game_rect: Rect) -> Self {
+    pub fn new(video_subsystem: &VideoSubsystem, game_rect: Rect, fps_rect: Rect) -> Self {
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
@@ -31,6 +32,8 @@ impl GlBackend {
         unsafe {
             gl::Enable(gl::TEXTURE_2D);
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::Enable(gl::BLEND);
+            gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         Self {
@@ -42,14 +45,7 @@ impl GlBackend {
             gl_vbo: 0,
             uniform_locations: Default::default(),
             game_rect,
-        }
-    }
-
-    fn before_draw(&self) {
-        unsafe {
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-            gl::UseProgram(self.shader_program);
+            fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
         }
     }
 
@@ -65,7 +61,23 @@ impl GlBackend {
         self.draw_buffer(&texture.buffer);
     }
 
-    pub fn draw_fps(&mut self, _texture: &VideoTexture) {}
+    pub fn draw_fps(&mut self, texture: &VideoTexture) {
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.fps_texture_id);
+            gl::TexSubImage2D(
+                gl::TEXTURE_2D,
+                0,
+                0,
+                0,
+                texture.rect.w,
+                texture.rect.h,
+                gl::BGRA,
+                gl::UNSIGNED_BYTE,
+                texture.buffer.as_ptr() as *const _,
+            );
+            self.draw_quad();
+        }
+    }
 
     pub fn draw_notif(&mut self, _texture: &VideoTexture) {}
 
@@ -102,9 +114,12 @@ impl GlBackend {
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let width = VideoConfig::WIDTH;
         let height = VideoConfig::HEIGHT;
-        self.before_draw();
 
         unsafe {
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::UseProgram(self.shader_program);
+
             gl::BindTexture(gl::TEXTURE_2D, self.gl_texture);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
