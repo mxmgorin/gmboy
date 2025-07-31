@@ -18,11 +18,9 @@ const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
 const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
 const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
 
-pub const SHADERS: [(&str, &str); 17] = [
-    ("pass", PASSTHROUGH_FRAGMENT),
+pub const SHADERS: [(&str, &str); 15] = [
     ("passthrough", PASSTHROUGH_FRAGMENT),
     ("bilinear", BILINEAR_FRAGMENT),
-    ("smooth", SMOOTH_BILINEAR_FRAGMENT),
     ("smooth_bilinear", SMOOTH_BILINEAR_FRAGMENT),
     ("crt", CRT_FRAGMENT),
     ("master", MASTER_FRAGMENT),

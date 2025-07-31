@@ -195,7 +195,7 @@ impl Default for AppConfig {
                     vignette_enabled: false,
                 },
                 gl: GlConfig {
-                    shader: "pass".to_string(),
+                    shader: "passthrough".to_string(),
                 },
             },
             roms_dir: None,

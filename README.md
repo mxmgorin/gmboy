@@ -11,7 +11,7 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 
 ✅ Thorough testing: passes most community test suites (blargg’s, mooneye) for verifing accuracy  
 ✅ Modern features: save states, visual filters, re-bindable combo controls, and more  
-✅ Cross-platform: Windows, macOS, Linux, powered by SDL2 for audio, input, and window management
+✅ Cross-platform: Windows, macOS, Linux, powered by **SDL2** for audio, input, and window management, with an optional **OpenGL** backend for hardware-accelerated rendering and shader support
 
 📥 [Download the latest release here](https://github.com/mxmgorin/gmboy/releases/latest)
 
@@ -28,11 +28,12 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 
 ## User Features
 
-- **Slow & Turbo Modes**  – Adjust emulation speed via the settings or hotkeys.
-- **Rewind**  – Undo actions and retry sections; fully configurable.
 - **Save States**  – Save and resume progress, with multiple slots and optional auto-save on exit/start.
+- **Rewind**  – Undo actions and retry sections; fully configurable.
+- **Slow & Turbo Modes**  – Adjust emulation speed via the settings or hotkeys.
 - **Frame Blending**  – Choose and tweak different blending modes to emulate ghosting (e.g., reduce flicker in [Gun ZAS](https://en.wikipedia.org/wiki/Chiky%C5%AB_Kaih%C5%8D_Gun_ZAS)).
 - **Visual Filters**  – Apply grid, subpixel, scanline, dot-matrix, or vignette effects for a retro look.
+- **OpenGL** – Hardware-accelerated graphics with support for shaders and improved performance.
 - **ROM Scanning**  – Set a ROM directory and launch games directly from the menu.
 - **Custom Controls**  – Rebind gamepad inputs and combos via `bindings.json`.
 - **Palettes**  – Switch between multiple color palettes or add your own in `palettes.json`.
@@ -42,7 +43,6 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 
 🚧 **Planned Features**
 
-- OpenGL for shaders and enhanced graphics effects
 - Game Boy Color (GBC) mode support
 - Ongoing improvements and ongoing bug fixes
 - WebAssembly, Android, and ARM builds for wider platform support
@@ -78,6 +78,8 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 | Volume down             | F11                      | Start + D-pad Down  |
 | Next Save State Slot    |                          | Start + D-pad Right |
 | Prev Save State Slot    |                          | Start + D-pad Left  |
+| Next Shader             | ]                        | Select + A          |
+
 
 ## 🛠️ Building
 

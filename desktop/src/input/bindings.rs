@@ -46,6 +46,16 @@ impl Default for Bindings {
                 threshold: 30_000,
             },
             button_combos: vec![
+                ButtonCombo::new(
+                    Button::Back,
+                    Button::A,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+                ),
+                ButtonCombo::new(
+                    Button::Guide,
+                    Button::A,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+                ),
                 ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
                 ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
                 ButtonCombo::new(
