@@ -88,7 +88,7 @@ impl GameWindow {
                 let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
                 let mut gl_backend =
                     GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect);
-                gl_backend.load_shader(&config.shader)?;
+                gl_backend.load_shader(&config.gl.shader)?;
 
                 (VideoBackend::Gl(gl_backend), ui)
             }

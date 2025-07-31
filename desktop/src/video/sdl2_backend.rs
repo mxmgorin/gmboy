@@ -82,7 +82,7 @@ impl Sdl2Backend {
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
-        self.filters.apply(&mut self.canvas, config);
+        self.filters.apply(&mut self.canvas, &config.sdl2);
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
@@ -93,7 +93,7 @@ impl Sdl2Backend {
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
-        self.filters.apply(&mut self.canvas, config);
+        self.filters.apply(&mut self.canvas, &config.sdl2);
     }
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {

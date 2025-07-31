@@ -27,23 +27,33 @@ pub struct AppConfig {
     pub input: InputConfig,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub enum VideoBackendType {
     Sdl2,
     Gl,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct VideoConfig {
-    pub frame_blend_mode: FrameBlendMode,
-    pub dim: f32,
+pub struct Sdl2Config {
     pub grid_enabled: bool,
     pub subpixel_enabled: bool,
     pub dot_matrix_enabled: bool,
     pub scanline_enabled: bool,
     pub vignette_enabled: bool,
-    pub backend: VideoBackendType,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GlConfig {
     pub shader: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VideoConfig {
+    pub frame_blend_mode: FrameBlendMode,
+    pub dim: f32,
+    pub backend: VideoBackendType,
+    pub sdl2: Sdl2Config,
+    pub gl: GlConfig,
 }
 
 impl VideoConfig {
@@ -176,13 +186,17 @@ impl Default for AppConfig {
             video: VideoConfig {
                 frame_blend_mode: FrameBlendMode::None,
                 dim: 1.0,
-                grid_enabled: true,
-                subpixel_enabled: true,
-                dot_matrix_enabled: false,
-                scanline_enabled: false,
-                vignette_enabled: false,
                 backend: VideoBackendType::Sdl2,
-                shader: "passthrough".to_string(),
+                sdl2: Sdl2Config {
+                    grid_enabled: true,
+                    subpixel_enabled: true,
+                    dot_matrix_enabled: false,
+                    scanline_enabled: false,
+                    vignette_enabled: false,
+                },
+                gl: GlConfig {
+                    shader: "pass".to_string(),
+                },
             },
             roms_dir: None,
             auto_continue: false,

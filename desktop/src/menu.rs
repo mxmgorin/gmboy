@@ -1,5 +1,5 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
-use crate::config::AppConfig;
+use crate::config::{AppConfig, VideoBackendType, VideoConfig};
 use crate::roms::RomsList;
 use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
@@ -175,16 +175,19 @@ impl AppMenuItem {
     }
 }
 
-fn video_menu(frame_blend_type: &FrameBlendMode) -> Box<[AppMenuItem]> {
+fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(12);
-    items.push(AppMenuItem::GridFilter);
-    items.push(AppMenuItem::SubpixelFilter);
-    items.push(AppMenuItem::ScanlineFilter);
-    items.push(AppMenuItem::DotMatrixFilter);
-    items.push(AppMenuItem::VignetteFilter);
     items.push(AppMenuItem::FrameBlendMode);
 
-    match frame_blend_type {
+    if conf.backend == VideoBackendType::Sdl2 {
+        items.push(AppMenuItem::GridFilter);
+        items.push(AppMenuItem::SubpixelFilter);
+        items.push(AppMenuItem::ScanlineFilter);
+        items.push(AppMenuItem::DotMatrixFilter);
+        items.push(AppMenuItem::VignetteFilter);
+    }
+
+    match conf.frame_blend_mode {
         FrameBlendMode::None => {}
         FrameBlendMode::Linear(_) => {
             items.push(AppMenuItem::FrameBlendDim);
@@ -489,7 +492,8 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendMode => {
-                let mode = match config.video.frame_blend_mode {
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode = match config.video.frame_blend_mode {
                     FrameBlendMode::None => FrameBlendMode::Linear(LinearFrameBlend::default()),
                     FrameBlendMode::Linear(_) => {
                         FrameBlendMode::Additive(AdditiveFrameBlend::default())
@@ -503,9 +507,7 @@ impl AppMenu {
                     FrameBlendMode::GammaCorrected(_) => FrameBlendMode::Accurate(DMG_PROFILE),
                     FrameBlendMode::Accurate(_) => FrameBlendMode::None,
                 };
-                self.items = video_menu(&mode);
-                let mut conf = config.video.clone();
-                conf.frame_blend_mode = mode;
+                self.items = video_menu(&conf);
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
@@ -579,12 +581,12 @@ impl AppMenu {
             }
             AppMenuItem::GridFilter => {
                 let mut conf = config.video.clone();
-                conf.grid_enabled = !conf.grid_enabled;
+                conf.sdl2.grid_enabled = !conf.sdl2.grid_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::SubpixelFilter => {
                 let mut conf = config.video.clone();
-                conf.subpixel_enabled = !conf.subpixel_enabled;
+                conf.sdl2.subpixel_enabled = !conf.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::RomsMenu => None,
@@ -673,7 +675,8 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameBlendMode => {
-                let blend_mode = match config.video.frame_blend_mode {
+                let mut conf = config.video.clone();
+                conf.frame_blend_mode = match config.video.frame_blend_mode {
                     FrameBlendMode::None => FrameBlendMode::Accurate(DMG_PROFILE),
                     FrameBlendMode::Linear(_) => FrameBlendMode::None,
                     FrameBlendMode::Additive(_) => {
@@ -690,9 +693,7 @@ impl AppMenu {
                     }
                 };
 
-                self.items = video_menu(&blend_mode);
-                let mut conf = config.video.clone();
-                conf.frame_blend_mode = blend_mode;
+                self.items = video_menu(&conf);
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
@@ -760,12 +761,12 @@ impl AppMenu {
             }
             AppMenuItem::GridFilter => {
                 let mut conf = config.video.clone();
-                conf.grid_enabled = !conf.grid_enabled;
+                conf.sdl2.grid_enabled = !conf.sdl2.grid_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::SubpixelFilter => {
                 let mut conf = config.video.clone();
-                conf.subpixel_enabled = !conf.subpixel_enabled;
+                conf.sdl2.subpixel_enabled = !conf.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::RomsMenu => None,
@@ -873,7 +874,7 @@ impl AppMenu {
             AppMenuItem::FrameBlendFade => None,
             AppMenuItem::FrameBlendDim => None,
             AppMenuItem::VideoMenu => {
-                self.next_items(video_menu(&config.video.frame_blend_mode));
+                self.next_items(video_menu(&config.video));
 
                 None
             }
@@ -883,12 +884,12 @@ impl AppMenu {
             | AppMenuItem::FrameBlendBleed => None,
             AppMenuItem::GridFilter => {
                 let mut conf = config.video.clone();
-                conf.grid_enabled = !conf.grid_enabled;
+                conf.sdl2.grid_enabled = !conf.sdl2.grid_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::SubpixelFilter => {
                 let mut conf = config.video.clone();
-                conf.subpixel_enabled = !conf.subpixel_enabled;
+                conf.sdl2.subpixel_enabled = !conf.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::RomsMenu => {
@@ -915,17 +916,17 @@ impl AppMenu {
             }
             AppMenuItem::ScanlineFilter => {
                 let mut conf = config.video.clone();
-                conf.scanline_enabled = !conf.scanline_enabled;
+                conf.sdl2.scanline_enabled = !conf.sdl2.scanline_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::DotMatrixFilter => {
                 let mut conf = config.video.clone();
-                conf.dot_matrix_enabled = !conf.dot_matrix_enabled;
+                conf.sdl2.dot_matrix_enabled = !conf.sdl2.dot_matrix_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::VignetteFilter => {
                 let mut conf = config.video.clone();
-                conf.vignette_enabled = !conf.vignette_enabled;
+                conf.sdl2.vignette_enabled = !conf.sdl2.vignette_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
         }
@@ -1035,22 +1036,27 @@ impl AppMenuItem {
                 "Frame Bleed({})",
                 config.video.frame_blend_mode.get_profile().unwrap().bleed
             ),
-            AppMenuItem::GridFilter => format!("Grid{}", get_suffix(config.video.grid_enabled)),
+            AppMenuItem::GridFilter => {
+                format!("Grid{}", get_suffix(config.video.sdl2.grid_enabled))
+            }
             AppMenuItem::SubpixelFilter => {
-                format!("Mask{}", get_suffix(config.video.subpixel_enabled))
+                format!("Mask{}", get_suffix(config.video.sdl2.subpixel_enabled))
             }
             AppMenuItem::RomsMenu => "ROMs".to_string(),
             AppMenuItem::Roms(x) => format!("ROMs ({})", x.items.len()),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
             AppMenuItem::ScanlineFilter => {
-                format!("Scanline{}", get_suffix(config.video.scanline_enabled))
+                format!("Scanline{}", get_suffix(config.video.sdl2.scanline_enabled))
             }
             AppMenuItem::DotMatrixFilter => {
-                format!("Dot-Matrix{}", get_suffix(config.video.dot_matrix_enabled))
+                format!(
+                    "Dot-Matrix{}",
+                    get_suffix(config.video.sdl2.dot_matrix_enabled)
+                )
             }
             AppMenuItem::VignetteFilter => {
-                format!("vignette{}", get_suffix(config.video.vignette_enabled))
+                format!("vignette{}", get_suffix(config.video.sdl2.vignette_enabled))
             }
         }
     }

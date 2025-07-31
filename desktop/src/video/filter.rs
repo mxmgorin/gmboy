@@ -1,4 +1,4 @@
-use crate::config::VideoConfig;
+use crate::config::{Sdl2Config, VideoConfig};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureCreator};
@@ -54,7 +54,7 @@ impl Filters {
         }
     }
 
-    pub fn apply(&self, canvas: &mut Canvas<Window>, config: &VideoConfig) {
+    pub fn apply(&self, canvas: &mut Canvas<Window>, config: &Sdl2Config) {
         if config.vignette_enabled {
             canvas
                 .copy(&self.vignette_texture, None, Some(self.rect))
