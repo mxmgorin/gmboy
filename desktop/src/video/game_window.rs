@@ -2,7 +2,7 @@ use crate::config::{VideoBackendType, VideoConfig};
 use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
-use crate::video::ui::UiOverlay;
+use crate::video::ui::UiLayer;
 use crate::video::{
     calc_win_height, calc_win_width, new_scaled_rect, VideoBackend, BYTES_PER_PIXEL,
 };
@@ -42,7 +42,7 @@ impl VideoTexture {
 pub struct GameWindow {
     frame_blend: FrameBlend,
     backend: VideoBackend,
-    pub ui: UiOverlay,
+    pub ui: UiLayer,
     pub config: VideoConfig,
 }
 
@@ -66,7 +66,7 @@ impl GameWindow {
             VideoConfig::WIDTH as u32 * 3,
             VideoConfig::HEIGHT as u32 * 2,
         );
-        let ui = UiOverlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color);
+        let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color);
         // backend
         let backend = match config.backend {
             VideoBackendType::Sdl2 => VideoBackend::Sdl2(Sdl2Backend::new(

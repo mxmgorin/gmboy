@@ -14,7 +14,6 @@ pub struct Sdl2Backend {
     game_texture: Texture,
     notif_texture: Texture,
     fps_texture: Texture,
-    menu_texture: Texture,
     game_rect: Rect,
     fps_rect: Rect,
     notif_rect: Rect,
@@ -62,15 +61,6 @@ impl Sdl2Backend {
             )
             .unwrap();
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-        // menu
-        let mut menu_texture = texture_creator
-            .create_texture_streaming(
-                PixelFormatEnum::ARGB8888,
-                VideoConfig::WIDTH as u32,
-                VideoConfig::HEIGHT as u32,
-            )
-            .unwrap();
-        menu_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Self {
             filters: Filters::new(&mut canvas, &texture_creator, game_rect),
@@ -82,7 +72,6 @@ impl Sdl2Backend {
             notif_rect,
             notif_texture,
             fps_texture,
-            menu_texture,
         }
     }
 
@@ -98,11 +87,11 @@ impl Sdl2Backend {
 
     pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
         self.clear();
-        self.menu_texture
+        self.game_texture
             .update(None, &texture.buffer, texture.pitch)
             .unwrap();
         self.canvas
-            .copy(&self.menu_texture, None, Some(self.game_rect))
+            .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
         self.filters.apply(&mut self.canvas, config);
     }

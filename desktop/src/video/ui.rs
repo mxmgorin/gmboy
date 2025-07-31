@@ -6,7 +6,7 @@ use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::rect::Rect;
 
-pub struct UiOverlay {
+pub struct UiLayer {
     pub notif_texture: VideoTexture,
     pub fps_texture: VideoTexture,
     pub menu_texture: VideoTexture,
@@ -15,7 +15,7 @@ pub struct UiOverlay {
     font_size: FontSize,
 }
 
-impl UiOverlay {
+impl UiLayer {
     pub fn new(
         menu_rect: Rect,
         fps_rect: Rect,
