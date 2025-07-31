@@ -19,11 +19,18 @@ pub struct AppConfig {
     pub auto_save_state: bool,
     pub current_save_index: usize,
     pub current_load_index: usize,
+    pub auto_continue: bool,
     pub roms_dir: Option<String>,
     pub interface: InterfaceConfig,
     pub audio: AudioConfig,
     pub video: VideoConfig,
     pub input: InputConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum VideoBackendType {
+    Sdl2,
+    Gl,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -35,6 +42,8 @@ pub struct VideoConfig {
     pub dot_matrix_enabled: bool,
     pub scanline_enabled: bool,
     pub vignette_enabled: bool,
+    pub backend: VideoBackendType,
+    pub shader: String,
 }
 
 impl VideoConfig {
@@ -172,8 +181,11 @@ impl Default for AppConfig {
                 dot_matrix_enabled: false,
                 scanline_enabled: false,
                 vignette_enabled: false,
+                backend: VideoBackendType::Sdl2,
+                shader: "passthrough".to_string(),
             },
             roms_dir: None,
+            auto_continue: false,
         }
     }
 }

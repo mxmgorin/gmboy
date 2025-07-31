@@ -157,7 +157,11 @@ impl App {
 
     /// Execution loop
     pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
-        self.state = AppState::Paused;
+        self.state = if self.config.auto_continue && !emu.runtime.bus.cart.is_empty() {
+            AppState::Running
+        } else {
+            AppState::Paused
+        };
 
         while self.state != AppState::Quitting {
             if self.state == AppState::Paused {

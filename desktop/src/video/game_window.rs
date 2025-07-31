@@ -1,5 +1,6 @@
-use crate::config::VideoConfig;
+use crate::config::{VideoBackendType, VideoConfig};
 use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
+use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::ui::UiOverlay;
 use crate::video::{
@@ -62,15 +63,25 @@ impl GameWindow {
             VideoConfig::HEIGHT as u32 * 2,
         );
 
-        Ok(Self {
-            frame_blend: FrameBlend::new(),
-            config,
-            backend: VideoBackend::Sdl2(Sdl2Backend::new(
+        let backend = match config.backend {
+            VideoBackendType::Sdl2 => VideoBackend::Sdl2(Sdl2Backend::new(
                 video_subsystem,
                 game_rect,
                 fps_rect,
                 notif_rect,
             )),
+            VideoBackendType::Gl => {
+                let mut gl_backend = GlBackend::new(video_subsystem, game_rect);
+                gl_backend.load_shader(&config.shader)?;
+
+                VideoBackend::Gl(gl_backend)
+            }
+        };
+
+        Ok(Self {
+            frame_blend: FrameBlend::new(),
+            config,
+            backend,
             ui: UiOverlay::new(game_rect, fps_rect, notif_rect, text_color, bg_color),
         })
     }

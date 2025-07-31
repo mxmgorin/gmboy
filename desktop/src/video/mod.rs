@@ -1,5 +1,6 @@
 use crate::config::VideoConfig;
 use crate::video::game_window::VideoTexture;
+use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -10,7 +11,9 @@ pub mod draw_text;
 mod filter;
 pub mod frame_blend;
 pub mod game_window;
+mod gl_backend;
 mod sdl2_backend;
+mod shader;
 pub mod tiles_window;
 mod ui;
 
@@ -49,54 +52,63 @@ pub fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
 
 pub enum VideoBackend {
     Sdl2(Sdl2Backend),
+    Gl(GlBackend),
 }
 
 impl VideoBackend {
     pub fn draw_buffer(&mut self, buffer: &[u32], config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_buffer(buffer, config),
+            VideoBackend::Gl(x) => x.draw_buffer(buffer, config),
         }
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_menu(texture, config),
+            VideoBackend::Gl(x) => x.draw_menu(texture, config),
         }
     }
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_fps(texture),
+            VideoBackend::Gl(x) => x.draw_fps(texture),
         }
     }
 
     pub fn draw_notif(&mut self, texture: &VideoTexture) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_notif(texture),
+            VideoBackend::Gl(x) => x.draw_notif(texture),
         }
     }
 
     pub fn show(&mut self) {
         match self {
             VideoBackend::Sdl2(x) => x.show(),
+            VideoBackend::Gl(x) => x.show(),
         }
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
         match self {
             VideoBackend::Sdl2(x) => x.set_scale(scale),
+            VideoBackend::Gl(x) => x.set_scale(scale),
         }
     }
 
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         match self {
             VideoBackend::Sdl2(x) => x.set_fullscreen(fullscreen),
+            VideoBackend::Gl(x) => x.set_fullscreen(fullscreen),
         }
     }
 
     pub fn get_position(&self) -> (i32, i32) {
         match self {
             VideoBackend::Sdl2(x) => x.get_position(),
+            VideoBackend::Gl(x) => x.get_position(),
         }
     }
 }
