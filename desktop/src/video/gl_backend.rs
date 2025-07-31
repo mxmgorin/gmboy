@@ -12,8 +12,9 @@ pub struct GlBackend {
     gl_texture: u32,
     gl_vao: u32,
     gl_vbo: u32,
-    uniform_locations: (i32, i32, i32, i32),
+    uniform_locations: UniformLocations,
     game_rect: Rect,
+    menu_texture: u32,
 }
 
 impl GlBackend {
@@ -40,13 +41,77 @@ impl GlBackend {
             gl_texture: 0,
             gl_vao: 0,
             gl_vbo: 0,
-            uniform_locations: (0, 0, 0, 0),
+            uniform_locations: Default::default(),
             game_rect,
+            menu_texture: create_texture(game_rect.w, game_rect.h),
+        }
+    }
+
+    fn before_draw(&self) {
+        unsafe {
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+
+            let (dw, dh) = self.window.drawable_size();
+            gl::Viewport(0, 0, dw as i32, dh as i32);
+            gl::UseProgram(self.shader_program);
+        }
+    }
+
+    fn draw_quad(&self) {
+        unsafe {
+            self.send_to_shader();
+            gl::BindVertexArray(self.gl_vao);
+            gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
+        }
+    }
+
+    fn send_to_shader(&self) {
+        unsafe {
+            gl::Uniform1i(self.uniform_locations.image, 0);
+            gl::Uniform2f(
+                self.uniform_locations.input_resolution,
+                VideoConfig::WIDTH as f32,
+                VideoConfig::HEIGHT as f32,
+            );
+            gl::Uniform2f(
+                self.uniform_locations.out_resolution,
+                self.game_rect.width() as f32,
+                self.game_rect.height() as f32,
+            );
+            gl::Uniform2f(
+                self.uniform_locations.origin,
+                self.game_rect.x as f32,
+                self.game_rect.y as f32,
+            );
         }
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture) {
-        self.draw_buffer(&texture.buffer);
+        self.before_draw();
+
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.menu_texture);
+            gl::TexSubImage2D(
+                gl::TEXTURE_2D,
+                0,
+                0,
+                0,
+                texture.rect.w,
+                texture.rect.h,
+                gl::BGRA,
+                gl::UNSIGNED_BYTE,
+                texture.buffer.as_ptr() as *const _,
+            );
+            gl::Viewport(
+                texture.rect.x,
+                texture.rect.y,
+                texture.rect.w,
+                texture.rect.h,
+            );
+
+            self.draw_quad();
+        }
     }
 
     pub fn draw_fps(&mut self, _texture: &VideoTexture) {}
@@ -83,21 +148,13 @@ impl GlBackend {
         self.window.position()
     }
 
-    /// Uploads ARGB pixels and draws a textured quad
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let width = VideoConfig::WIDTH;
         let height = VideoConfig::HEIGHT;
+        self.before_draw();
 
         unsafe {
-            let (dw, dh) = self.window.drawable_size();
-            gl::Viewport(0, 0, dw as i32, dh as i32);
-
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-            gl::UseProgram(self.shader_program);
-
-            gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.gl_texture);
-
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
                 0,
@@ -109,32 +166,16 @@ impl GlBackend {
                 gl::UNSIGNED_BYTE,
                 buffer.as_ptr() as *const _,
             );
-
             gl::Viewport(
                 self.game_rect.x,
                 self.game_rect.y,
                 self.game_rect.width() as i32,
                 self.game_rect.height() as i32,
             );
-
-            // set uniforms
-            let (loc_image, loc_in, loc_out, origin) = self.uniform_locations;
-            gl::Uniform1i(loc_image, 0);
-            gl::Uniform2f(loc_in, width as f32, height as f32);
-            gl::Uniform2f(
-                loc_out,
-                self.game_rect.width() as f32,
-                self.game_rect.height() as f32,
-            );
-            gl::Uniform2f(origin, self.game_rect.x as f32, self.game_rect.y as f32);
-
-            // draw quad
-            gl::BindVertexArray(self.gl_vao);
-            gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
+            self.draw_quad();
         }
     }
 
-    /// Swaps the window buffers to display rendered frame
     pub fn show(&self) {
         self.window.gl_swap_window();
     }
@@ -176,30 +217,11 @@ impl GlBackend {
             );
             gl::EnableVertexAttribArray(1);
 
-            let mut texture = 0;
-            gl::GenTextures(1, &mut texture);
-            gl::BindTexture(gl::TEXTURE_2D, texture);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
-            gl::TexImage2D(
-                gl::TEXTURE_2D,
-                0,
-                gl::BGRA as i32,
-                VideoConfig::WIDTH as i32,
-                VideoConfig::HEIGHT as i32,
-                0,
-                gl::BGRA,
-                gl::UNSIGNED_BYTE,
-                std::ptr::null(),
-            );
-
             // Unbind
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
 
-            self.gl_texture = texture;
+            self.gl_texture = create_texture(VideoConfig::WIDTH as i32, VideoConfig::HEIGHT as i32);
             self.gl_vao = vao;
             self.gl_vbo = vbo;
         }
@@ -216,13 +238,52 @@ impl GlBackend {
     }
 }
 
-fn get_uniform_locations(program: u32) -> (i32, i32, i32, i32) {
+fn get_uniform_locations(program: u32) -> UniformLocations {
     unsafe {
-        (
-            gl::GetUniformLocation(program, c"image".as_ptr() as *const _),
-            gl::GetUniformLocation(program, c"input_resolution".as_ptr() as *const _),
-            gl::GetUniformLocation(program, c"output_resolution".as_ptr() as *const _),
-            gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
-        )
+        UniformLocations {
+            image: gl::GetUniformLocation(program, c"image".as_ptr() as *const _),
+            input_resolution: gl::GetUniformLocation(
+                program,
+                c"input_resolution".as_ptr() as *const _,
+            ),
+            out_resolution: gl::GetUniformLocation(
+                program,
+                c"output_resolution".as_ptr() as *const _,
+            ),
+            origin: gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
+        }
+    }
+}
+
+#[derive(Default)]
+struct UniformLocations {
+    pub image: i32,
+    pub input_resolution: i32,
+    pub out_resolution: i32,
+    pub origin: i32,
+}
+
+pub fn create_texture(w: i32, h: i32) -> u32 {
+    unsafe {
+        let mut texture = 0;
+        gl::GenTextures(1, &mut texture);
+        gl::BindTexture(gl::TEXTURE_2D, texture);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as i32);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGBA as i32,
+            w,
+            h,
+            0,
+            gl::BGRA,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+
+        texture
     }
 }

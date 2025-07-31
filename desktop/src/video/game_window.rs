@@ -13,6 +13,7 @@ use sdl2::VideoSubsystem;
 pub struct VideoTexture {
     pub pitch: usize,
     pub buffer: Box<[u8]>,
+    pub rect: Rect,
 }
 
 impl VideoTexture {
@@ -22,6 +23,7 @@ impl VideoTexture {
         Self {
             pitch,
             buffer: vec![0; pitch * rect.h as usize].into_boxed_slice(),
+            rect,
         }
     }
 
