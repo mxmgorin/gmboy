@@ -61,6 +61,7 @@ pub enum AppMenuItem {
     ScanlineFilter,
     DotMatrixFilter,
     VignetteFilter,
+    VideoBackend,
 }
 
 impl AppMenuItem {
@@ -69,6 +70,7 @@ impl AppMenuItem {
             AppMenuItem::Resume
             | AppMenuItem::Confirm(_)
             | AppMenuItem::RomsDir
+            | AppMenuItem::VideoBackend
             | AppMenuItem::SaveState
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
@@ -125,6 +127,7 @@ impl AppMenuItem {
             | AppMenuItem::Confirm(_)
             | AppMenuItem::SaveState
             | AppMenuItem::RomsDir
+            | AppMenuItem::VideoBackend
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
             | AppMenuItem::VignetteFilter
@@ -177,6 +180,7 @@ impl AppMenuItem {
 
 fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(12);
+    items.push(AppMenuItem::VideoBackend);
     items.push(AppMenuItem::FrameBlendMode);
 
     if conf.backend == VideoBackendType::Sdl2 {
@@ -596,6 +600,14 @@ impl AppMenu {
             AppMenuItem::ScanlineFilter => None,
             AppMenuItem::DotMatrixFilter => None,
             AppMenuItem::VignetteFilter => None,
+            AppMenuItem::VideoBackend => {
+                let mut conf = config.video.clone();
+                conf.backend = match config.video.backend {
+                    VideoBackendType::Sdl2 => VideoBackendType::Gl,
+                    VideoBackendType::Gl => VideoBackendType::Sdl2,
+                };
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
         }
     }
 
@@ -774,6 +786,14 @@ impl AppMenu {
             AppMenuItem::RomsDir => None,
             AppMenuItem::Confirm(_) => None,
             AppMenuItem::VignetteFilter => None,
+            AppMenuItem::VideoBackend => {
+                let mut conf = config.video.clone();
+                conf.backend = match config.video.backend {
+                    VideoBackendType::Sdl2 => VideoBackendType::Gl,
+                    VideoBackendType::Gl => VideoBackendType::Sdl2,
+                };
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+            }
         }
     }
 
@@ -929,6 +949,7 @@ impl AppMenu {
                 conf.sdl2.vignette_enabled = !conf.sdl2.vignette_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::VideoBackend => None,
         }
     }
 
@@ -1057,6 +1078,9 @@ impl AppMenuItem {
             }
             AppMenuItem::VignetteFilter => {
                 format!("vignette{}", get_suffix(config.video.sdl2.vignette_enabled))
+            }
+            AppMenuItem::VideoBackend => {
+                format!("Backend({:?})", config.video.backend)
             }
         }
     }

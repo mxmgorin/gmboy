@@ -247,6 +247,10 @@ impl InputHandler {
                     app.update_palette(emu);
                 }
                 ChangeAppConfigCmd::Video(x) => {
+                    if app.config.video.backend != x.backend {
+                        app.notifications.add("Restart required to apply the changes");
+                    }
+
                     app.config.video = x;
                     app.window.config = app.config.video.clone();
                 }
