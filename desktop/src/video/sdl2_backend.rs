@@ -1,5 +1,6 @@
 use crate::config::VideoConfig;
 use crate::video::filter::Filters;
+use crate::video::game_window::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
@@ -98,24 +99,30 @@ impl Sdl2Backend {
         self.filters.apply(&mut self.canvas, config);
     }
 
-    pub fn draw_menu(&mut self, buffer: &[u8], pitch: usize, config: &VideoConfig) {
+    pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
         self.clear();
-        self.menu_texture.update(None, buffer, pitch).unwrap();
+        self.menu_texture
+            .update(None, &texture.buffer, texture.pitch)
+            .unwrap();
         self.canvas
             .copy(&self.menu_texture, None, Some(self.menu_rect))
             .unwrap();
         self.filters.apply(&mut self.canvas, config);
     }
 
-    pub fn draw_fps(&mut self, buffer: &[u8], pitch: usize) {
-        self.fps_texture.update(None, buffer, pitch).unwrap();
+    pub fn draw_fps(&mut self, texture: &VideoTexture) {
+        self.fps_texture
+            .update(None, &texture.buffer, texture.pitch)
+            .unwrap();
         self.canvas
             .copy(&self.fps_texture, None, Some(self.fps_rect))
             .unwrap();
     }
 
-    pub fn draw_notif(&mut self, buffer: &[u8], pitch: usize) {
-        self.notif_texture.update(None, buffer, pitch).unwrap();
+    pub fn draw_notif(&mut self, texture: &VideoTexture) {
+        self.notif_texture
+            .update(None, &texture.buffer, texture.pitch)
+            .unwrap();
         self.canvas
             .copy(&self.notif_texture, None, Some(self.notif_rect))
             .unwrap();

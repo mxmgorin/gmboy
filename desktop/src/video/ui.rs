@@ -1,22 +1,20 @@
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
-use crate::video::{fill_texture, BYTES_PER_PIXEL};
+use crate::video::game_window::VideoTexture;
+use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
 pub struct UiOverlay {
-    pub notif_buffer: Box<[u8]>,
-    pub fps_buffer: Box<[u8]>,
-    pub menu_buffer: Box<[u8]>,
+    pub notif_texture: VideoTexture,
+    pub fps_texture: VideoTexture,
+    pub menu_texture: VideoTexture,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
     font_size: FontSize,
-    pub notif_pitch: usize,
-    pub fps_pitch: usize,
-    pub menu_pitch: usize,
 }
 
 impl UiOverlay {
@@ -27,18 +25,11 @@ impl UiOverlay {
         text_color: PixelColor,
         bg_color: PixelColor,
     ) -> Self {
-        let menu_pitch = menu_rect.w as usize * BYTES_PER_PIXEL;
-        let fps_pitch = fps_rect.w as usize * BYTES_PER_PIXEL;
-        let notif_pitch = notif_rect.w as usize * BYTES_PER_PIXEL;
-
         Self {
             font_size: FontSize::Small,
-            menu_buffer: vec![0; menu_pitch * menu_rect.h as usize].into_boxed_slice(),
-            fps_buffer: vec![0; fps_pitch * fps_rect.h as usize].into_boxed_slice(),
-            notif_buffer: vec![0; notif_pitch * notif_rect.h as usize].into_boxed_slice(),
-            notif_pitch,
-            fps_pitch,
-            menu_pitch,
+            menu_texture: VideoTexture::new(menu_rect, BYTES_PER_PIXEL),
+            fps_texture: VideoTexture::new(fps_rect, BYTES_PER_PIXEL),
+            notif_texture: VideoTexture::new(notif_rect, BYTES_PER_PIXEL),
             bg_color,
             text_color,
         }
@@ -61,11 +52,10 @@ impl UiOverlay {
             y /= 2;
         }
 
-        fill_texture(&mut self.menu_buffer, self.bg_color);
-
+        self.menu_texture.fill(self.bg_color);
         draw_text_lines(
-            &mut self.menu_buffer,
-            self.menu_pitch,
+            &mut self.menu_texture.buffer,
+            self.menu_texture.pitch,
             lines,
             self.text_color,
             None,
@@ -78,11 +68,11 @@ impl UiOverlay {
     }
 
     pub fn update_fps(&mut self, fps: &str) {
-        fill_texture(&mut self.fps_buffer, PixelColor::from_u32(0));
+        self.fps_texture.fill(PixelColor::from_u32(0));
 
         draw_text_lines(
-            &mut self.fps_buffer,
-            self.fps_pitch,
+            &mut self.fps_texture.buffer,
+            self.fps_texture.pitch,
             &[fps],
             self.text_color,
             Some(self.bg_color),
@@ -95,11 +85,11 @@ impl UiOverlay {
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
-        fill_texture(&mut self.notif_buffer, PixelColor::from_u32(0));
+        self.fps_texture.fill(PixelColor::from_u32(0));
 
         draw_text_lines(
-            &mut self.notif_buffer,
-            self.notif_pitch,
+            &mut self.notif_texture.buffer,
+            self.notif_texture.pitch,
             lines,
             self.text_color,
             Some(self.bg_color),

@@ -2,10 +2,37 @@ use crate::config::VideoConfig;
 use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
 use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::ui::UiOverlay;
-use crate::video::{calc_win_height, calc_win_width, new_scaled_rect};
+use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
 use core::ppu::tile::PixelColor;
 use sdl2::rect::Rect;
 use sdl2::VideoSubsystem;
+
+pub struct VideoTexture {
+    pub pitch: usize,
+    pub buffer: Box<[u8]>,
+}
+
+impl VideoTexture {
+    pub fn new(rect: Rect, bytes_per_pixel: usize) -> Self {
+        let pitch = rect.w as usize * bytes_per_pixel;
+
+        Self {
+            pitch,
+            buffer: vec![0; pitch * rect.h as usize].into_boxed_slice(),
+        }
+    }
+
+    pub fn fill(&mut self, color: PixelColor) {
+        let (r, g, b, a) = color.as_rgba();
+
+        for i in (0..self.buffer.len()).step_by(BYTES_PER_PIXEL) {
+            self.buffer[i] = r;
+            self.buffer[i + 1] = g;
+            self.buffer[i + 2] = b;
+            self.buffer[i + 3] = a;
+        }
+    }
+}
 
 pub struct GameWindow {
     frame_blend: FrameBlend,
@@ -52,15 +79,15 @@ impl GameWindow {
     }
 
     pub fn draw_menu(&mut self) {
-        self.backend.draw_menu(&self.ui.menu_buffer, self.ui.menu_pitch, &self.config)
+        self.backend.draw_menu(&self.ui.menu_texture, &self.config)
     }
 
     pub fn draw_fps(&mut self) {
-        self.backend.draw_fps(&self.ui.fps_buffer, self.ui.fps_pitch);
+        self.backend.draw_fps(&self.ui.fps_texture);
     }
 
     pub fn draw_notif(&mut self) {
-        self.backend.draw_notif(&self.ui.notif_buffer, self.ui.notif_pitch);
+        self.backend.draw_notif(&self.ui.notif_texture);
     }
 
     pub fn show(&mut self) {

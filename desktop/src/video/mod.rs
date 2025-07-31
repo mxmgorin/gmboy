@@ -1,7 +1,6 @@
 use core::ppu::LCD_Y_RES;
 use core::ppu::LCD_X_RES;
 use sdl2::rect::Rect;
-use core::ppu::tile::PixelColor;
 
 mod char;
 pub mod draw_text;
@@ -13,17 +12,6 @@ mod ui;
 mod sdl2_backend;
 
 const BYTES_PER_PIXEL: usize = 4;
-
-pub fn fill_texture(buffer: &mut [u8], color: PixelColor) {
-    let (r, g, b, a) = color.as_rgba();
-
-    for i in (0..buffer.len()).step_by(BYTES_PER_PIXEL) {
-        buffer[i] = r;
-        buffer[i + 1] = g;
-        buffer[i + 2] = b;
-        buffer[i + 3] = a;
-    }
-}
 
 pub fn calc_win_height(scale: u32) -> u32 {
     LCD_Y_RES as u32 * scale
