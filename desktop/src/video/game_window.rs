@@ -2,7 +2,9 @@ use crate::config::VideoConfig;
 use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
 use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::ui::UiOverlay;
-use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
+use crate::video::{
+    calc_win_height, calc_win_width, new_scaled_rect, VideoBackend, BYTES_PER_PIXEL,
+};
 use core::ppu::tile::PixelColor;
 use sdl2::rect::Rect;
 use sdl2::VideoSubsystem;
@@ -36,7 +38,7 @@ impl VideoTexture {
 
 pub struct GameWindow {
     frame_blend: FrameBlend,
-    pub backend: Sdl2Backend,
+    backend: VideoBackend,
     pub ui: UiOverlay,
     pub config: VideoConfig,
 }
@@ -63,7 +65,12 @@ impl GameWindow {
         Ok(Self {
             frame_blend: FrameBlend::new(),
             config,
-            backend: Sdl2Backend::new(video_subsystem, game_rect, fps_rect, notif_rect),
+            backend: VideoBackend::Sdl2(Sdl2Backend::new(
+                video_subsystem,
+                game_rect,
+                fps_rect,
+                notif_rect,
+            )),
             ui: UiOverlay::new(game_rect, fps_rect, notif_rect, text_color, bg_color),
         })
     }
