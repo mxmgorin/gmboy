@@ -15,7 +15,6 @@ pub struct GlBackend {
     gl_vbo: u32,
     uniform_locations: (i32, i32, i32, i32),
     game_rect: Rect,
-    buffer: Box<[u8]>,
 }
 
 impl GlBackend {
@@ -44,7 +43,6 @@ impl GlBackend {
             gl_vbo: 0,
             uniform_locations: (0, 0, 0, 0),
             game_rect,
-            buffer: vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT * 3].into_boxed_slice(),
         }
     }
 
@@ -81,7 +79,7 @@ impl GlBackend {
 
     /// Uploads ARGB pixels and draws a textured quad
     pub fn draw_buffer(&mut self, buffer: &[u32], _config: &VideoConfig) {
-        fill_argb_to_rgb(buffer, &mut self.buffer);
+        let buffer: &[u8] = bytemuck::cast_slice(buffer);
         let width = VideoConfig::WIDTH;
         let height = VideoConfig::HEIGHT;
 
@@ -102,9 +100,9 @@ impl GlBackend {
                 0,
                 width as i32,
                 height as i32,
-                gl::RGB,
+                gl::BGRA,
                 gl::UNSIGNED_BYTE,
-                self.buffer.as_ptr() as *const _,
+                buffer.as_ptr() as *const _,
             );
 
             gl::Viewport(
@@ -179,11 +177,11 @@ impl GlBackend {
             gl::TexImage2D(
                 gl::TEXTURE_2D,
                 0,
-                gl::RGB as i32,
+                gl::BGRA as i32,
                 VideoConfig::WIDTH as i32,
                 VideoConfig::HEIGHT as i32,
                 0,
-                gl::RGB,
+                gl::BGRA,
                 gl::UNSIGNED_BYTE,
                 std::ptr::null(),
             );
@@ -218,18 +216,5 @@ impl GlBackend {
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.window.size();
         self.game_rect = new_scaled_rect(win_width, win_height);
-    }
-}
-
-/// Converts ARGB -> RGB (3 bytes per pixel)
-pub fn fill_argb_to_rgb(src: &[u32], dst: &mut [u8]) {
-    debug_assert_eq!(dst.len(), src.len() * 3);
-
-    let mut i = 0;
-    for &p in src {
-        dst[i] = ((p >> 16) & 0xFF) as u8; // R
-        dst[i + 1] = ((p >> 8) & 0xFF) as u8; // G
-        dst[i + 2] = (p & 0xFF) as u8; // B
-        i += 3;
     }
 }
