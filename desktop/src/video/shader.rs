@@ -7,20 +7,46 @@ const BILINEAR_FRAGMENT: &str = include_str!("../../shaders/bilinear.frag");
 const SMOOTH_BILINEAR_FRAGMENT: &str = include_str!("../../shaders/smooth_bilinear.frag");
 const CRT_FRAGMENT: &str = include_str!("../../shaders/crt.frag");
 const MASTER_FRAGMENT: &str = include_str!("../../shaders/master.frag");
+const FLAT_CRT_FRAGMENT: &str = include_str!("../../shaders/flat_crt.fsh");
+const HQ2X_FRAGMENT: &str = include_str!("../../shaders/HQ2x.fsh");
+const AAOMNI_SCALE_LEGACY: &str = include_str!("../../shaders/AAOmniScaleLegacy.fsh");
+const AASCALE2X: &str = include_str!("../../shaders/AAScale2x.fsh");
+const AASCALE4X: &str = include_str!("../../shaders/AAScale4x.fsh");
+const LCD: &str = include_str!("../../shaders/LCD.fsh");
+const MONO_LCD: &str = include_str!("../../shaders/MonoLCD.fsh");
+const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
+const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
+const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
 
 pub fn load_shader_program(name: &str) -> Result<u32, String> {
-    let fragment_partial = match name {
-        "pass" => PASSTHROUGH_FRAGMENT,
-        "passthrough" => PASSTHROUGH_FRAGMENT,
-        "bilinear" => BILINEAR_FRAGMENT,
-        "smooth" => SMOOTH_BILINEAR_FRAGMENT,
-        "smooth_bilinear" => SMOOTH_BILINEAR_FRAGMENT,
-        "crt" => CRT_FRAGMENT,
-        "master" => MASTER_FRAGMENT,
-        _ => return Err(format!("Shader {name} not found")),
-    };
-    let fragment_source = MASTER_FRAGMENT.replace("{filter}", fragment_partial);
-    unsafe { compile_program(VERTEX_SHADER, &fragment_source) }
+    let shaders = [
+        ("pass", PASSTHROUGH_FRAGMENT),
+        ("passthrough", PASSTHROUGH_FRAGMENT),
+        ("bilinear", BILINEAR_FRAGMENT),
+        ("smooth", SMOOTH_BILINEAR_FRAGMENT),
+        ("smooth_bilinear", SMOOTH_BILINEAR_FRAGMENT),
+        ("crt", CRT_FRAGMENT),
+        ("master", MASTER_FRAGMENT),
+        ("flat_crt", FLAT_CRT_FRAGMENT),
+        ("HQ2x", HQ2X_FRAGMENT),
+        ("AAOmniScaleLegacy", AAOMNI_SCALE_LEGACY),
+        ("AAScale2x", AASCALE2X),
+        ("AAScale4x", AASCALE4X),
+        ("LCD", LCD),
+        ("MonoLCD", MONO_LCD),
+        ("OmniScale", OMNI_SCALE),
+        ("Scale2x", SCALE2X),
+        ("Scale4x", SCALE4X),
+    ];
+
+    for (i_name, shader) in &shaders {
+        if i_name.to_lowercase() == name.to_lowercase() {
+            let fragment_source = MASTER_FRAGMENT.replace("{filter}", shader);
+            return unsafe { compile_program(VERTEX_SHADER, &fragment_source) };
+        }
+    }
+
+    Err(format!("Shader {name} not found"))
 }
 
 unsafe fn compile_program(vertex_src: &str, fragment_src: &str) -> Result<u32, String> {
