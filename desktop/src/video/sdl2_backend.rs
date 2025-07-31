@@ -173,7 +173,6 @@ impl Sdl2Backend {
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
-        // todo: update ui buffer
         self.menu_rect = self.game_rect;
         self.filters = Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
     }

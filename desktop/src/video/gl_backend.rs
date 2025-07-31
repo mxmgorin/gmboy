@@ -1,9 +1,10 @@
 use crate::config::VideoConfig;
 use crate::video::game_window::VideoTexture;
-use crate::video::{shader};
+use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
 use sdl2::VideoSubsystem;
+
 
 pub struct GlBackend {
     window: Window,
@@ -13,14 +14,14 @@ pub struct GlBackend {
     gl_vao: u32,
     gl_vbo: u32,
     uniform_locations: (i32, i32, i32, i32),
-    rect: Rect,
+    game_rect: Rect,
     buffer: Box<[u8]>,
 }
 
 impl GlBackend {
-    pub fn new(video_subsystem: &VideoSubsystem, rect: Rect) -> Self {
+    pub fn new(video_subsystem: &VideoSubsystem, game_rect: Rect) -> Self {
         let window = video_subsystem
-            .window("GMBoy GL", rect.width(), rect.height())
+            .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
             .opengl()
             .build()
@@ -42,7 +43,7 @@ impl GlBackend {
             gl_vao: 0,
             gl_vbo: 0,
             uniform_locations: (0, 0, 0, 0),
-            rect,
+            game_rect,
             buffer: vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT * 3].into_boxed_slice(),
         }
     }
@@ -53,15 +54,30 @@ impl GlBackend {
 
     pub fn draw_notif(&mut self, _texture: &VideoTexture) {}
 
-    pub fn set_scale(&mut self, _scale: u32) -> Result<(), String> {
+    pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
+        self.window
+            .set_size(calc_win_width(scale), calc_win_height(scale))
+            .map_err(|e| e.to_string())?;
+        self.window.set_position(
+            sdl2::video::WindowPos::Centered,
+            sdl2::video::WindowPos::Centered,
+        );
+        self.update_game_rect();
+
         Ok(())
     }
 
-    pub fn set_fullscreen(&mut self, _fullscreen: bool) {}
+    pub fn set_fullscreen(&mut self, fullscreen: bool) {
+        if fullscreen {
+            self.window.set_fullscreen(sdl2::video::FullscreenType::Desktop).unwrap();
+        } else {
+            self.window.set_fullscreen(sdl2::video::FullscreenType::Off).unwrap();
+        };
+        self.update_game_rect();
+    }
 
     pub fn get_position(&self) -> (i32, i32) {
-        (0, 0)
-    }
+        self.window.position()    }
 
     /// Uploads ARGB pixels and draws a textured quad
     pub fn draw_buffer(&mut self, buffer: &[u32], _config: &VideoConfig) {
@@ -92,18 +108,18 @@ impl GlBackend {
             );
 
             gl::Viewport(
-                self.rect.x,
-                self.rect.y,
-                self.rect.width() as i32,
-                self.rect.height() as i32,
+                self.game_rect.x,
+                self.game_rect.y,
+                self.game_rect.width() as i32,
+                self.game_rect.height() as i32,
             );
 
             // set uniforms
             let (loc_image, loc_in, loc_out, origin) = self.uniform_locations;
             gl::Uniform1i(loc_image, 0);
             gl::Uniform2f(loc_in, width as f32, height as f32);
-            gl::Uniform2f(loc_out, self.rect.width() as f32, self.rect.height() as f32);
-            gl::Uniform2f(origin, self.rect.x as f32, self.rect.y as f32);
+            gl::Uniform2f(loc_out, self.game_rect.width() as f32, self.game_rect.height() as f32);
+            gl::Uniform2f(origin, self.game_rect.x as f32, self.game_rect.y as f32);
 
             // draw quad
             gl::BindVertexArray(self.gl_vao);
@@ -197,6 +213,11 @@ impl GlBackend {
                 gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
             );
         }
+    }
+
+    fn update_game_rect(&mut self) {
+        let (win_width, win_height) = self.window.size();
+        self.game_rect = new_scaled_rect(win_width, win_height);
     }
 }
 
