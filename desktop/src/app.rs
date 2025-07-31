@@ -193,14 +193,14 @@ impl App {
         if lines.is_empty() {
             if let Some((fps, updated)) = fps {
                 if updated {
-                    self.window.backend.ui.update_fps(fps);
+                    self.window.ui.update_fps(fps);
                 }
 
                 self.window.draw_fps();
             }
         } else if updated || !lines.is_empty() {
             if updated {
-                self.window.backend.ui.update_notif(lines);
+                self.window.ui.update_notif(lines);
             }
 
             self.window.draw_notif();
@@ -220,7 +220,7 @@ impl App {
         let (items, updated) = self.menu.get_items(&self.config);
 
         if updated {
-            self.window.backend.ui.update_menu(items, true, true);
+            self.window.ui.update_menu(items, true, true);
         }
 
         self.window.draw_menu();
@@ -245,8 +245,8 @@ impl App {
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
         let colors = self.config.interface.get_palette_colors(&self.palettes);
-        self.window.backend.ui.text_color = colors[0];
-        self.window.backend.ui.bg_color = colors[3];
+        self.window.ui.text_color = colors[0];
+        self.window.ui.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
         self.menu.request_update();
 

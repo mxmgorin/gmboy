@@ -1,13 +1,16 @@
 use crate::config::VideoConfig;
 use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
 use crate::video::sdl2_backend::Sdl2Backend;
+use crate::video::ui::UiOverlay;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect};
 use core::ppu::tile::PixelColor;
+use sdl2::rect::Rect;
 use sdl2::VideoSubsystem;
 
 pub struct GameWindow {
-    pub backend: Sdl2Backend,
     frame_blend: FrameBlend,
+    pub backend: Sdl2Backend,
+    pub ui: UiOverlay,
     pub config: VideoConfig,
 }
 
@@ -22,11 +25,19 @@ impl GameWindow {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
+        let fps_rect = Rect::new(2, 2, 70, 70);
+        let notif_rect = Rect::new(
+            0,
+            0,
+            VideoConfig::WIDTH as u32 * 3,
+            VideoConfig::HEIGHT as u32 * 2,
+        );
 
         Ok(Self {
             frame_blend: FrameBlend::new(),
             config,
-            backend: Sdl2Backend::new(video_subsystem, game_rect, text_color, bg_color),
+            backend: Sdl2Backend::new(video_subsystem, game_rect, fps_rect, notif_rect),
+            ui: UiOverlay::new(game_rect, fps_rect, notif_rect, text_color, bg_color),
         })
     }
 
@@ -41,15 +52,15 @@ impl GameWindow {
     }
 
     pub fn draw_menu(&mut self) {
-        self.backend.draw_menu(&self.config)
+        self.backend.draw_menu(&self.ui.menu_buffer, self.ui.menu_pitch, &self.config)
     }
 
     pub fn draw_fps(&mut self) {
-        self.backend.draw_fps();
+        self.backend.draw_fps(&self.ui.fps_buffer, self.ui.fps_pitch);
     }
 
     pub fn draw_notif(&mut self) {
-        self.backend.draw_notif();
+        self.backend.draw_notif(&self.ui.notif_buffer, self.ui.notif_pitch);
     }
 
     pub fn show(&mut self) {
