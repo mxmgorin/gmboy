@@ -14,7 +14,6 @@ pub struct GlBackend {
     gl_vbo: u32,
     uniform_locations: UniformLocations,
     game_rect: Rect,
-    menu_texture: u32,
 }
 
 impl GlBackend {
@@ -43,7 +42,6 @@ impl GlBackend {
             gl_vbo: 0,
             uniform_locations: Default::default(),
             game_rect,
-            menu_texture: create_texture(game_rect.w, game_rect.h),
         }
     }
 
@@ -88,30 +86,7 @@ impl GlBackend {
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture) {
-        self.before_draw();
-
-        unsafe {
-            gl::BindTexture(gl::TEXTURE_2D, self.menu_texture);
-            gl::TexSubImage2D(
-                gl::TEXTURE_2D,
-                0,
-                0,
-                0,
-                texture.rect.w,
-                texture.rect.h,
-                gl::BGRA,
-                gl::UNSIGNED_BYTE,
-                texture.buffer.as_ptr() as *const _,
-            );
-            gl::Viewport(
-                texture.rect.x,
-                texture.rect.y,
-                texture.rect.w,
-                texture.rect.h,
-            );
-
-            self.draw_quad();
-        }
+        self.draw_buffer(&texture.buffer);
     }
 
     pub fn draw_fps(&mut self, _texture: &VideoTexture) {}

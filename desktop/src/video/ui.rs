@@ -4,8 +4,6 @@ use crate::video::draw_text::{
 use crate::video::game_window::VideoTexture;
 use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
-use core::ppu::LCD_X_RES;
-use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
 pub struct UiOverlay {
@@ -44,8 +42,8 @@ impl UiOverlay {
         };
 
         let text_height = calc_text_height(self.font_size) * lines.len();
-        let mut x = LCD_X_RES as usize - text_width;
-        let mut y = LCD_Y_RES as usize - text_height;
+        let mut x = self.menu_texture.rect.w as usize - text_width;
+        let mut y = self.menu_texture.rect.h as usize - text_height;
 
         if center {
             x /= 2;

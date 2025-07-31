@@ -18,7 +18,6 @@ pub struct Sdl2Backend {
     game_rect: Rect,
     fps_rect: Rect,
     notif_rect: Rect,
-    menu_rect: Rect,
     filters: Filters,
 }
 
@@ -84,7 +83,6 @@ impl Sdl2Backend {
             notif_texture,
             fps_texture,
             menu_texture,
-            menu_rect: game_rect,
         }
     }
 
@@ -104,7 +102,7 @@ impl Sdl2Backend {
             .update(None, &texture.buffer, texture.pitch)
             .unwrap();
         self.canvas
-            .copy(&self.menu_texture, None, Some(self.menu_rect))
+            .copy(&self.menu_texture, None, Some(self.game_rect))
             .unwrap();
         self.filters.apply(&mut self.canvas, config);
     }
@@ -172,7 +170,6 @@ impl Sdl2Backend {
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
-        self.menu_rect = self.game_rect;
         self.filters = Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
     }
 }

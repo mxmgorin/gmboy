@@ -56,15 +56,18 @@ impl GameWindow {
     ) -> Result<Self, String> {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
+        // ui components
         let game_rect = new_scaled_rect(win_width, win_height);
         let fps_rect = Rect::new(2, 2, 70, 70);
+        let menu_rect = Rect::new(0, 0, VideoConfig::WIDTH as u32, VideoConfig::HEIGHT as u32);
         let notif_rect = Rect::new(
             0,
             0,
             VideoConfig::WIDTH as u32 * 3,
             VideoConfig::HEIGHT as u32 * 2,
         );
-
+        let ui = UiOverlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color);
+        // backend
         let backend = match config.backend {
             VideoBackendType::Sdl2 => VideoBackend::Sdl2(Sdl2Backend::new(
                 video_subsystem,
@@ -84,7 +87,7 @@ impl GameWindow {
             frame_blend: FrameBlend::new(),
             config,
             backend,
-            ui: UiOverlay::new(game_rect, fps_rect, notif_rect, text_color, bg_color),
+            ui,
         })
     }
 
