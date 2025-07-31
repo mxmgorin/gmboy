@@ -18,28 +18,28 @@ const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
 const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
 const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
 
-pub fn load_shader_program(name: &str) -> Result<u32, String> {
-    let shaders = [
-        ("pass", PASSTHROUGH_FRAGMENT),
-        ("passthrough", PASSTHROUGH_FRAGMENT),
-        ("bilinear", BILINEAR_FRAGMENT),
-        ("smooth", SMOOTH_BILINEAR_FRAGMENT),
-        ("smooth_bilinear", SMOOTH_BILINEAR_FRAGMENT),
-        ("crt", CRT_FRAGMENT),
-        ("master", MASTER_FRAGMENT),
-        ("flat_crt", FLAT_CRT_FRAGMENT),
-        ("HQ2x", HQ2X_FRAGMENT),
-        ("AAOmniScaleLegacy", AAOMNI_SCALE_LEGACY),
-        ("AAScale2x", AASCALE2X),
-        ("AAScale4x", AASCALE4X),
-        ("LCD", LCD),
-        ("MonoLCD", MONO_LCD),
-        ("OmniScale", OMNI_SCALE),
-        ("Scale2x", SCALE2X),
-        ("Scale4x", SCALE4X),
-    ];
+pub const SHADERS: [(&str, &str); 17] = [
+    ("pass", PASSTHROUGH_FRAGMENT),
+    ("passthrough", PASSTHROUGH_FRAGMENT),
+    ("bilinear", BILINEAR_FRAGMENT),
+    ("smooth", SMOOTH_BILINEAR_FRAGMENT),
+    ("smooth_bilinear", SMOOTH_BILINEAR_FRAGMENT),
+    ("crt", CRT_FRAGMENT),
+    ("master", MASTER_FRAGMENT),
+    ("flat_crt", FLAT_CRT_FRAGMENT),
+    ("HQ2x", HQ2X_FRAGMENT),
+    ("AAOmniScaleLegacy", AAOMNI_SCALE_LEGACY),
+    ("AAScale2x", AASCALE2X),
+    ("AAScale4x", AASCALE4X),
+    ("LCD", LCD),
+    ("MonoLCD", MONO_LCD),
+    ("OmniScale", OMNI_SCALE),
+    ("Scale2x", SCALE2X),
+    ("Scale4x", SCALE4X),
+];
 
-    for (i_name, shader) in &shaders {
+pub fn load_shader_program(name: &str) -> Result<u32, String> {
+    for (i_name, shader) in SHADERS {
         if i_name.to_lowercase() == name.to_lowercase() {
             let fragment_source = MASTER_FRAGMENT.replace("{filter}", shader);
             return unsafe { compile_program(VERTEX_SHADER, &fragment_source) };
@@ -47,6 +47,17 @@ pub fn load_shader_program(name: &str) -> Result<u32, String> {
     }
 
     Err(format!("Shader {name} not found"))
+}
+
+pub fn next_shader_by_name<'a>(current_name: &str) -> (&'a str, &'a str) {
+    let idx = SHADERS
+        .iter()
+        .position(|(name, _)| *name == current_name)
+        .unwrap_or(0);
+    // Calculate next index with wrap-around
+    let next_idx = (idx + 1) % SHADERS.len();
+
+    SHADERS[next_idx]
 }
 
 unsafe fn compile_program(vertex_src: &str, fragment_src: &str) -> Result<u32, String> {

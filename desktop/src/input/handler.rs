@@ -248,7 +248,8 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::Video(x) => {
                     if app.config.video.backend != x.backend {
-                        app.notifications.add("Restart required to apply the changes");
+                        app.notifications
+                            .add("Restart required to apply the changes");
                     }
 
                     app.config.video = x;
@@ -257,17 +258,22 @@ impl InputHandler {
                 ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
                     app.config.inc_save_index();
                     app.config.inc_load_index();
-                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
-                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.notifications
+                        .add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications
+                        .add(format!("Load Index: {}", app.config.current_load_index));
                     app.menu.request_update();
                 }
                 ChangeAppConfigCmd::DecSaveAndLoadIndexes => {
                     app.config.dec_load_index();
                     app.config.dec_save_index();
-                    app.notifications.add(format!("Save Index: {}", app.config.current_save_index));
-                    app.notifications.add(format!("Load Index: {}", app.config.current_load_index));
+                    app.notifications
+                        .add(format!("Save Index: {}", app.config.current_save_index));
+                    app.notifications
+                        .add(format!("Load Index: {}", app.config.current_load_index));
                     app.menu.request_update();
                 }
+                ChangeAppConfigCmd::NextShader => app.next_shader(),
             },
             AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
         }

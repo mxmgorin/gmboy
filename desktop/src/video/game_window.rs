@@ -102,6 +102,12 @@ impl GameWindow {
         })
     }
 
+    pub fn on_config_update(&mut self, config: &VideoConfig) {
+        if let VideoBackend::Gl(ref mut backend) = self.backend {
+            _ = backend.load_shader(&config.gl.shader);
+        }
+    }
+
     pub fn draw_buffer(&mut self, buffer: &[u32]) {
         let buffer = if let FrameBlendMode::None = self.config.frame_blend_mode {
             buffer

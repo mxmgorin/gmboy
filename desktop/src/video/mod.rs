@@ -13,7 +13,7 @@ pub mod frame_blend;
 pub mod game_window;
 mod gl_backend;
 mod sdl2_backend;
-mod shader;
+pub mod shader;
 pub mod tiles_window;
 mod ui;
 
