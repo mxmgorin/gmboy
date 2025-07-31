@@ -85,7 +85,7 @@ impl UiOverlay {
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
-        self.fps_texture.fill(PixelColor::from_u32(0));
+        self.notif_texture.fill(PixelColor::from_u32(0));
 
         draw_text_lines(
             &mut self.notif_texture.buffer,
