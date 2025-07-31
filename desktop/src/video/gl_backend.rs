@@ -49,39 +49,15 @@ impl GlBackend {
         unsafe {
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
-
-            let (dw, dh) = self.window.drawable_size();
-            gl::Viewport(0, 0, dw as i32, dh as i32);
             gl::UseProgram(self.shader_program);
         }
     }
 
     fn draw_quad(&self) {
         unsafe {
-            self.send_to_shader();
+            self.uniform_locations.send_image();
             gl::BindVertexArray(self.gl_vao);
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
-        }
-    }
-
-    fn send_to_shader(&self) {
-        unsafe {
-            gl::Uniform1i(self.uniform_locations.image, 0);
-            gl::Uniform2f(
-                self.uniform_locations.input_resolution,
-                VideoConfig::WIDTH as f32,
-                VideoConfig::HEIGHT as f32,
-            );
-            gl::Uniform2f(
-                self.uniform_locations.out_resolution,
-                self.game_rect.width() as f32,
-                self.game_rect.height() as f32,
-            );
-            gl::Uniform2f(
-                self.uniform_locations.origin,
-                self.game_rect.x as f32,
-                self.game_rect.y as f32,
-            );
         }
     }
 
@@ -147,6 +123,14 @@ impl GlBackend {
                 self.game_rect.width() as i32,
                 self.game_rect.height() as i32,
             );
+            self.uniform_locations
+                .send_in_resolution(VideoConfig::WIDTH as f32, VideoConfig::HEIGHT as f32);
+            self.uniform_locations.send_out_resolution(
+                self.game_rect.width() as f32,
+                self.game_rect.height() as f32,
+            );
+            self.uniform_locations
+                .send_origin(self.game_rect.x as f32, self.game_rect.y as f32);
             self.draw_quad();
         }
     }
@@ -160,7 +144,6 @@ impl GlBackend {
         let program = shader::load_shader_program(name)?;
 
         unsafe {
-            // Create VAO + VBO
             let mut vao = 0;
             let mut vbo = 0;
             let vertices: [f32; 16] = [
@@ -174,12 +157,12 @@ impl GlBackend {
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
             gl::BufferData(
                 gl::ARRAY_BUFFER,
-                (std::mem::size_of_val(&vertices)) as isize,
+                size_of_val(&vertices) as isize,
                 vertices.as_ptr() as *const _,
                 gl::STATIC_DRAW,
             );
 
-            let stride = 4 * std::mem::size_of::<f32>() as i32;
+            let stride = 4 * size_of::<f32>() as i32;
             gl::VertexAttribPointer(0, 2, gl::FLOAT, gl::FALSE, stride, std::ptr::null());
             gl::EnableVertexAttribArray(0);
             gl::VertexAttribPointer(
@@ -188,7 +171,7 @@ impl GlBackend {
                 gl::FLOAT,
                 gl::FALSE,
                 stride,
-                (2 * std::mem::size_of::<f32>()) as *const _,
+                (2 * size_of::<f32>()) as *const _,
             );
             gl::EnableVertexAttribArray(1);
 
@@ -236,6 +219,32 @@ struct UniformLocations {
     pub input_resolution: i32,
     pub out_resolution: i32,
     pub origin: i32,
+}
+
+impl UniformLocations {
+    pub fn send_image(&self) {
+        unsafe {
+            gl::Uniform1i(self.image, 0);
+        }
+    }
+
+    pub fn send_in_resolution(&self, w: f32, h: f32) {
+        unsafe {
+            gl::Uniform2f(self.input_resolution, w, h);
+        }
+    }
+
+    pub fn send_out_resolution(&self, w: f32, h: f32) {
+        unsafe {
+            gl::Uniform2f(self.out_resolution, w, h);
+        }
+    }
+
+    pub fn send_origin(&self, x: f32, y: f32) {
+        unsafe {
+            gl::Uniform2f(self.origin, x, y);
+        }
+    }
 }
 
 pub fn create_texture(w: i32, h: i32) -> u32 {
