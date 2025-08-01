@@ -21,10 +21,10 @@ const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ShaderFrameBlendMode {
-    Disabled = 0,
+    None = 0,
     Simple = 1,
-    AccurateEven = 2,
-    AccurateOdd = 3,
+    AccEven = 2,
+    AccOdd = 3,
 }
 
 pub const SHADERS: [(&str, &str); 14] = [

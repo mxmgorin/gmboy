@@ -253,7 +253,7 @@ impl InputHandler {
                     }
 
                     app.config.video = x;
-                    app.window.config = app.config.video.clone();
+                    app.window.on_config_update(&app.config.video);
                 }
                 ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
                     app.config.inc_save_index();

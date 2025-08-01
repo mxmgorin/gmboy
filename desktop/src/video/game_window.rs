@@ -43,7 +43,7 @@ pub struct GameWindow {
     frame_blend: FrameBlend,
     backend: VideoBackend,
     pub ui: UiLayer,
-    pub config: VideoConfig,
+    config: VideoConfig,
 }
 
 impl GameWindow {
@@ -112,6 +112,8 @@ impl GameWindow {
     }
 
     pub fn on_config_update(&mut self, config: &VideoConfig) {
+        self.config = config.clone();
+
         if let VideoBackend::Gl(ref mut backend) = self.backend {
             _ = backend.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode);
         }

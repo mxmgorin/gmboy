@@ -6,8 +6,8 @@ pub enum FrameBlendMode {
     None,
     Linear(LinearFrameBlend),
     Additive(AdditiveFrameBlend),
-    Exponential(ExponentialFrameBlend),
-    GammaCorrected(GammaCorrectedFrameBlend),
+    Exp(ExponentialFrameBlend),
+    Gamma(GammaCorrectedFrameBlend),
     Accurate(BlendProfile),
 }
 
@@ -74,7 +74,7 @@ impl FrameBlend {
                 )
             }
 
-            FrameBlendMode::Exponential(x) => {
+            FrameBlendMode::Exp(x) => {
                 let fade = x.fade;
                 (
                     pr_lin * fade + cr_lin * (1.0 - fade),
@@ -95,7 +95,7 @@ impl FrameBlend {
                 (fr, fg, fb)
             }
 
-            FrameBlendMode::GammaCorrected(x) => {
+            FrameBlendMode::Gamma(x) => {
                 let gamma = 2.2;
                 let fade = x.fade;
 
@@ -211,8 +211,8 @@ impl FrameBlendMode {
             FrameBlendMode::Linear(_) => "Linear",
             FrameBlendMode::Additive(_) => "Additive",
             FrameBlendMode::None => "None",
-            FrameBlendMode::Exponential(_) => "Exponential",
-            FrameBlendMode::GammaCorrected(_) => "Gamma",
+            FrameBlendMode::Exp(_) => "Exp",
+            FrameBlendMode::Gamma(_) => "Gamma",
             FrameBlendMode::Accurate(_) => "Accurate",
         }
     }
@@ -226,8 +226,8 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => {
                 x.alpha = core::change_f32_rounded(x.alpha, v).clamp(0.0, 1.0)
             }
-            FrameBlendMode::Exponential(_) => {}
-            FrameBlendMode::GammaCorrected(x) => {
+            FrameBlendMode::Exp(_) => {}
+            FrameBlendMode::Gamma(x) => {
                 x.alpha = core::change_f32_rounded(x.alpha, v).clamp(0.0, 1.0)
             }
             FrameBlendMode::Accurate(_) => {}
@@ -241,10 +241,10 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => {
                 x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0)
             }
-            FrameBlendMode::Exponential(x) => {
+            FrameBlendMode::Exp(x) => {
                 x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0)
             }
-            FrameBlendMode::GammaCorrected(x) => {
+            FrameBlendMode::Gamma(x) => {
                 x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0)
             }
             FrameBlendMode::Accurate(_) => {}
@@ -256,8 +256,8 @@ impl FrameBlendMode {
             FrameBlendMode::None => 0.0,
             FrameBlendMode::Linear(x) => x.alpha,
             FrameBlendMode::Additive(x) => x.alpha,
-            FrameBlendMode::Exponential(_) => 0.0,
-            FrameBlendMode::GammaCorrected(x) => x.alpha,
+            FrameBlendMode::Exp(_) => 0.0,
+            FrameBlendMode::Gamma(x) => x.alpha,
             FrameBlendMode::Accurate(_) => 0.0,
         }
     }
@@ -267,8 +267,8 @@ impl FrameBlendMode {
             FrameBlendMode::None => 0.0,
             FrameBlendMode::Linear(_) => 0.0,
             FrameBlendMode::Additive(x) => x.fade,
-            FrameBlendMode::Exponential(x) => x.fade,
-            FrameBlendMode::GammaCorrected(x) => x.fade,
+            FrameBlendMode::Exp(x) => x.fade,
+            FrameBlendMode::Gamma(x) => x.fade,
             FrameBlendMode::Accurate(_) => 0.0,
         }
     }
@@ -278,8 +278,8 @@ impl FrameBlendMode {
             FrameBlendMode::None
             | FrameBlendMode::Linear(_)
             | FrameBlendMode::Additive(_)
-            | FrameBlendMode::Exponential(_)
-            | FrameBlendMode::GammaCorrected(_) => None,
+            | FrameBlendMode::Exp(_)
+            | FrameBlendMode::Gamma(_) => None,
             FrameBlendMode::Accurate(x) => Some(x),
         }
     }

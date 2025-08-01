@@ -1,5 +1,4 @@
 use crate::config::VideoConfig;
-use crate::video::frame_blend::FrameBlendMode;
 use crate::video::game_window::VideoTexture;
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
