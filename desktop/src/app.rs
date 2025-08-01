@@ -267,20 +267,20 @@ impl App {
     }
 
     pub fn next_shader(&mut self) {
-        let (name, _shader) = next_shader_by_name(&self.config.video.gl.shader);
+        let (name, _shader) = next_shader_by_name(&self.config.video.gl.shader_name);
         self.update_shader(name);
     }
     
     pub fn prev_shader(&mut self) {
-        let (name, _shader) = prev_shader_by_name(&self.config.video.gl.shader);
+        let (name, _shader) = prev_shader_by_name(&self.config.video.gl.shader_name);
         self.update_shader(name);
     }
     
     pub fn update_shader(&mut self, name: impl Into<String>) {
-        self.config.video.gl.shader = name.into();
+        self.config.video.gl.shader_name = name.into();
         self.window.on_config_update(&self.config.video);
         self.menu.request_update();
-        self.notifications.add(format!("Shader: {}", self.config.video.gl.shader));
+        self.notifications.add(format!("Shader: {}", self.config.video.gl.shader_name));
     }
 
     pub fn toggle_fullscreen(&mut self) {

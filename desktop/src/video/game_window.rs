@@ -85,7 +85,8 @@ impl GameWindow {
                 let gl_backend = GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect);
 
                 if let Ok(mut gl_backend) = gl_backend {
-                    gl_backend.load_shader(&config.gl.shader)?;
+                    gl_backend
+                        .load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)?;
 
                     (VideoBackend::Gl(gl_backend), ui)
                 } else {
@@ -112,7 +113,7 @@ impl GameWindow {
 
     pub fn on_config_update(&mut self, config: &VideoConfig) {
         if let VideoBackend::Gl(ref mut backend) = self.backend {
-            _ = backend.load_shader(&config.gl.shader);
+            _ = backend.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode);
         }
     }
 

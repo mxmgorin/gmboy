@@ -1,5 +1,6 @@
 use gl::types::GLenum;
 use std::ffi::CString;
+use serde::{Deserialize, Serialize};
 
 const VERTEX_SHADER: &str = include_str!("../../shaders/master.vert");
 const PASSTHROUGH_FRAGMENT: &str = include_str!("../../shaders/passthrough.frag");
@@ -17,6 +18,14 @@ const MONO_LCD: &str = include_str!("../../shaders/MonoLCD.fsh");
 const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
 const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
 const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum ShaderFrameBlendMode {
+    Disabled = 0,
+    Simple = 1,
+    AccurateEven = 2,
+    AccurateOdd = 3,
+}
 
 pub const SHADERS: [(&str, &str); 14] = [
     ("passthrough", PASSTHROUGH_FRAGMENT),

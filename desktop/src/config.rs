@@ -1,5 +1,6 @@
 use crate::input::config::InputConfig;
 use crate::video::frame_blend::FrameBlendMode;
+use crate::video::shader::ShaderFrameBlendMode;
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
 use core::ppu::palette::LcdPalette;
@@ -44,7 +45,8 @@ pub struct Sdl2Config {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GlConfig {
-    pub shader: String,
+    pub shader_name: String,
+    pub shader_frame_blend_mode: ShaderFrameBlendMode,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -195,7 +197,8 @@ impl Default for AppConfig {
                     vignette_enabled: false,
                 },
                 gl: GlConfig {
-                    shader: "passthrough".to_string(),
+                    shader_name: "passthrough".to_string(),
+                    shader_frame_blend_mode: ShaderFrameBlendMode::Simple,
                 },
             },
             roms_dir: None,

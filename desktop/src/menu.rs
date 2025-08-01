@@ -1091,7 +1091,7 @@ impl AppMenuItem {
                 format!("Backend({:?})", config.video.backend)
             }
             AppMenuItem::VideoShader => {
-                format!("Shader({:?})", config.video.gl.shader)
+                format!("Shader({:?})", config.video.gl.shader_name)
             }
         }
     }

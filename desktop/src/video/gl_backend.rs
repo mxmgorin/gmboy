@@ -1,5 +1,7 @@
 use crate::config::VideoConfig;
+use crate::video::frame_blend::FrameBlendMode;
 use crate::video::game_window::VideoTexture;
+use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
@@ -176,7 +178,11 @@ impl GlBackend {
     }
 
     /// Loads and initializes shaders + GPU resources
-    pub fn load_shader(&mut self, name: &str) -> Result<(), String> {
+    pub fn load_shader(
+        &mut self,
+        name: &str,
+        frame_blend_mode: ShaderFrameBlendMode,
+    ) -> Result<(), String> {
         let program = shader::load_shader_program(name)?;
 
         unsafe {
@@ -223,6 +229,8 @@ impl GlBackend {
         self.shader_program = program;
         self.uniform_locations = get_uniform_locations(self.shader_program);
         self.uniform_locations.send_image();
+        self.uniform_locations
+            .send_frame_blend_mode(frame_blend_mode);
 
         Ok(())
     }
@@ -235,6 +243,9 @@ impl GlBackend {
 
 fn get_uniform_locations(program: u32) -> UniformLocations {
     unsafe {
+        let cname = std::ffi::CString::new("frame_blending_mode").unwrap();
+        let frame_blending_mode = gl::GetUniformLocation(program, cname.as_ptr());
+
         UniformLocations {
             image: gl::GetUniformLocation(program, c"image".as_ptr() as *const _),
             input_resolution: gl::GetUniformLocation(
@@ -246,6 +257,7 @@ fn get_uniform_locations(program: u32) -> UniformLocations {
                 c"output_resolution".as_ptr() as *const _,
             ),
             origin: gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
+            frame_blending_mode,
         }
     }
 }
@@ -256,6 +268,7 @@ struct UniformLocations {
     pub input_resolution: i32,
     pub out_resolution: i32,
     pub origin: i32,
+    pub frame_blending_mode: i32,
 }
 
 impl UniformLocations {
@@ -280,6 +293,14 @@ impl UniformLocations {
     pub fn send_origin(&self, x: f32, y: f32) {
         unsafe {
             gl::Uniform2f(self.origin, x, y);
+        }
+    }
+
+    pub fn send_frame_blend_mode(&self, mode: ShaderFrameBlendMode) {
+        let mode = mode as i32 as f32;
+
+        unsafe {
+            gl::Uniform1f(self.frame_blending_mode, mode);
         }
     }
 }
