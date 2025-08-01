@@ -58,7 +58,6 @@ impl GlBackend {
 
     fn draw_quad(&self) {
         unsafe {
-            self.uniform_locations.send_image();
             gl::BindVertexArray(self.gl_vao);
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
@@ -139,7 +138,6 @@ impl GlBackend {
         let height = VideoConfig::HEIGHT;
 
         unsafe {
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(self.shader_program);
 
@@ -224,6 +222,7 @@ impl GlBackend {
 
         self.shader_program = program;
         self.uniform_locations = get_uniform_locations(self.shader_program);
+        self.uniform_locations.send_image();
 
         Ok(())
     }
