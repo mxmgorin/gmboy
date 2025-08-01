@@ -24,7 +24,7 @@ impl GlBackend {
         game_rect: Rect,
         fps_rect: Rect,
         notif_rect: Rect,
-    ) -> Self {
+    ) -> Result<Self, String> {
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
@@ -32,7 +32,7 @@ impl GlBackend {
             .build()
             .unwrap();
 
-        let gl_context = window.gl_create_context().unwrap();
+        let gl_context = window.gl_create_context()?;
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const _);
 
         unsafe {
@@ -42,7 +42,7 @@ impl GlBackend {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
-        Self {
+        Ok(Self {
             window,
             _gl_context: gl_context,
             shader_program: 0,
@@ -53,7 +53,7 @@ impl GlBackend {
             game_rect,
             fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
             notif_texture_id: create_texture(notif_rect.w, notif_rect.h),
-        }
+        })
     }
 
     fn draw_quad(&self) {

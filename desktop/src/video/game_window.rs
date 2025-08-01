@@ -66,18 +66,14 @@ impl GameWindow {
         );
 
         let (backend, ui) = match config.backend {
-            VideoBackendType::Sdl2 => {
-                let fps_rect = Rect::new(6, 6, 70, 70);
-                let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
-                let backend = VideoBackend::Sdl2(Sdl2Backend::new(
-                    video_subsystem,
-                    game_rect,
-                    fps_rect,
-                    notif_rect,
-                ));
-
-                (backend, ui)
-            }
+            VideoBackendType::Sdl2 => create_sdl2_backend(
+                video_subsystem,
+                game_rect,
+                menu_rect,
+                notif_rect,
+                text_color,
+                bg_color,
+            ),
             VideoBackendType::Gl => {
                 let fps_rect = Rect::new(
                     6,
@@ -86,11 +82,23 @@ impl GameWindow {
                     VideoConfig::WIDTH as u32 * 3,
                 );
                 let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let mut gl_backend =
-                    GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect);
-                gl_backend.load_shader(&config.gl.shader)?;
+                let gl_backend = GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect);
 
-                (VideoBackend::Gl(gl_backend), ui)
+                if let Ok(mut gl_backend) = gl_backend {
+                    gl_backend.load_shader(&config.gl.shader)?;
+
+                    (VideoBackend::Gl(gl_backend), ui)
+                } else {
+                    println!("Failed to create GL backend. Fallback to SDL2");
+                    create_sdl2_backend(
+                        video_subsystem,
+                        game_rect,
+                        menu_rect,
+                        notif_rect,
+                        text_color,
+                        bg_color,
+                    )
+                }
             }
         };
 
@@ -146,4 +154,19 @@ impl GameWindow {
     pub fn get_position(&self) -> (i32, i32) {
         self.backend.get_position()
     }
+}
+
+pub fn create_sdl2_backend(
+    video_subsystem: &VideoSubsystem,
+    game_rect: Rect,
+    menu_rect: Rect,
+    notif_rect: Rect,
+    text_color: PixelColor,
+    bg_color: PixelColor,
+) -> (VideoBackend, UiLayer) {
+    let fps_rect = Rect::new(6, 6, 70, 70);
+    let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
+    let backend = Sdl2Backend::new(video_subsystem, game_rect, fps_rect, notif_rect);
+
+    (VideoBackend::Sdl2(backend), ui)
 }
