@@ -5,7 +5,7 @@ use crate::menu::AppMenu;
 use crate::notification::Notifications;
 use crate::roms::RomsList;
 use crate::video::game_window::GameWindow;
-use crate::video::shader::next_shader_by_name;
+use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
 use core::auxiliary::joypad::JoypadButton;
@@ -67,6 +67,7 @@ pub enum ChangeAppConfigCmd {
     InvertPalette,
     Video(VideoConfig),
     NextShader,
+    PrevShader,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -267,10 +268,19 @@ impl App {
 
     pub fn next_shader(&mut self) {
         let (name, _shader) = next_shader_by_name(&self.config.video.gl.shader);
-        self.config.video.gl.shader = name.to_string();
+        self.update_shader(name);
+    }
+    
+    pub fn prev_shader(&mut self) {
+        let (name, _shader) = prev_shader_by_name(&self.config.video.gl.shader);
+        self.update_shader(name);
+    }
+    
+    pub fn update_shader(&mut self, name: impl Into<String>) {
+        self.config.video.gl.shader = name.into();
         self.window.on_config_update(&self.config.video);
         self.menu.request_update();
-        self.notifications.add(format!("Shader: {name}"));
+        self.notifications.add(format!("Shader: {}", self.config.video.gl.shader));
     }
 
     pub fn toggle_fullscreen(&mut self) {

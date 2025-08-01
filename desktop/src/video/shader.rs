@@ -18,12 +18,11 @@ const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
 const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
 const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
 
-pub const SHADERS: [(&str, &str); 15] = [
+pub const SHADERS: [(&str, &str); 14] = [
     ("passthrough", PASSTHROUGH_FRAGMENT),
     ("bilinear", BILINEAR_FRAGMENT),
     ("smooth_bilinear", SMOOTH_BILINEAR_FRAGMENT),
     ("crt", CRT_FRAGMENT),
-    ("master", MASTER_FRAGMENT),
     ("flat_crt", FLAT_CRT_FRAGMENT),
     ("HQ2x", HQ2X_FRAGMENT),
     ("AAOmniScaleLegacy", AAOMNI_SCALE_LEGACY),
@@ -56,6 +55,18 @@ pub fn next_shader_by_name<'a>(current_name: &str) -> (&'a str, &'a str) {
     let next_idx = (idx + 1) % SHADERS.len();
 
     SHADERS[next_idx]
+}
+
+pub fn prev_shader_by_name<'a>(current_name: &str) -> (&'a str, &'a str) {
+    let idx = SHADERS
+        .iter()
+        .position(|(name, _)| *name == current_name)
+        .unwrap_or(0);
+
+    // Calculate previous index with wrap-around
+    let prev_idx = if idx == 0 { SHADERS.len() - 1 } else { idx - 1 };
+
+    SHADERS[prev_idx]
 }
 
 unsafe fn compile_program(vertex_src: &str, fragment_src: &str) -> Result<u32, String> {

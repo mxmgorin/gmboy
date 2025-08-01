@@ -62,6 +62,7 @@ pub enum AppMenuItem {
     DotMatrixFilter,
     VignetteFilter,
     VideoBackend,
+    VideoShader,
 }
 
 impl AppMenuItem {
@@ -71,6 +72,7 @@ impl AppMenuItem {
             | AppMenuItem::Confirm(_)
             | AppMenuItem::RomsDir
             | AppMenuItem::VideoBackend
+            | AppMenuItem::VideoShader
             | AppMenuItem::SaveState
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
@@ -128,6 +130,7 @@ impl AppMenuItem {
             | AppMenuItem::SaveState
             | AppMenuItem::RomsDir
             | AppMenuItem::VideoBackend
+            | AppMenuItem::VideoShader
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
             | AppMenuItem::VignetteFilter
@@ -189,6 +192,8 @@ fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
         items.push(AppMenuItem::ScanlineFilter);
         items.push(AppMenuItem::DotMatrixFilter);
         items.push(AppMenuItem::VignetteFilter);
+    } else if conf.backend == VideoBackendType::Gl {
+        items.push(AppMenuItem::VideoShader);
     }
 
     match conf.frame_blend_mode {
@@ -608,6 +613,7 @@ impl AppMenu {
                 };
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader)),
         }
     }
 
@@ -794,6 +800,7 @@ impl AppMenu {
                 };
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader)),
         }
     }
 
@@ -950,6 +957,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::VideoBackend => None,
+            AppMenuItem::VideoShader => None,
         }
     }
 
@@ -1081,6 +1089,9 @@ impl AppMenuItem {
             }
             AppMenuItem::VideoBackend => {
                 format!("Backend({:?})", config.video.backend)
+            }
+            AppMenuItem::VideoShader => {
+                format!("Shader({:?})", config.video.gl.shader)
             }
         }
     }

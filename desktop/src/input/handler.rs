@@ -274,6 +274,7 @@ impl InputHandler {
                     app.menu.request_update();
                 }
                 ChangeAppConfigCmd::NextShader => app.next_shader(),
+                ChangeAppConfigCmd::PrevShader => app.prev_shader(),
             },
             AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
         }
