@@ -249,11 +249,11 @@ impl InputHandler {
                 ChangeAppConfigCmd::Video(x) => {
                     if app.config.video.backend != x.backend {
                         app.notifications
-                            .add("Restart required to apply the changes");
+                            .add("Restart required to apply");
                     }
 
                     app.config.video = x;
-                    app.window.config = app.config.video.clone();
+                    app.window.update_config(&app.config.video);
                 }
                 ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
                     app.config.inc_save_index();

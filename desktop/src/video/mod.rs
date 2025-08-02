@@ -111,4 +111,11 @@ impl VideoBackend {
             VideoBackend::Gl(x) => x.get_position(),
         }
     }
+
+    pub fn update_config(&mut self, config: &VideoConfig) {
+        match self {
+            VideoBackend::Sdl2(_) => {},
+            VideoBackend::Gl(x) => x.update_config(&config.gl),
+        }
+    }
 }
