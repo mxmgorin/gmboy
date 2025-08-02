@@ -90,6 +90,11 @@ pub fn handle_keyboard(
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05)));
             }
         }
+        Keycode::LEFTBRACKET => {
+            if is_pressed {
+                return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader));
+            }
+        }
         Keycode::RIGHTBRACKET => {
             if is_pressed {
                 return Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader));

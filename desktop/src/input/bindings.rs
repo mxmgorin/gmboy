@@ -48,6 +48,16 @@ impl Default for Bindings {
             button_combos: vec![
                 ButtonCombo::new(
                     Button::Back,
+                    Button::B,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+                ),
+                ButtonCombo::new(
+                    Button::Guide,
+                    Button::B,
+                    AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+                ),
+                ButtonCombo::new(
+                    Button::Back,
                     Button::A,
                     AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
                 ),

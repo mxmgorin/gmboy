@@ -51,35 +51,30 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 
 ## Default bindings
 
-| Action                  | ⌨️ Keyboard              | 🎮 Gamepad          |
-|-------------------------|--------------------------|---------------------|
-| D-pad Up                | Arrow Up                 | D-pad Up            |
-| D-pad Down              | Arrow Down               | D-pad Down          |
-| D-pad Left              | Arrow Left               | D-pad Left          |
-| D-pad Right             | Arrow Right              | D-pad Right         |
-| B                       | Z                        | B                   |
-| A                       | X                        | A                   |
-| Start                   | Enter / S                | Start               |
-| Select                  | Backspace / A            | Select              |
-| Rewind (hold)           | R                        | Y                   |
-| Turbo mode (hold)       | Tab                      | RT                  |
-| Slow mode (hold)        | Left Shift / Right Shift | LT                  |
-| Main menu               | Esc / Q                  | Select + Start      |
-| Restart                 |                          |                     |
-| Screen scale up         | + (Equals)               |                     |
-| Screen scale down       | - (Minus)                |                     |
-| Fullscreen Toggle       | F10                      |                     |
-| Mute audio              | M                        |                     |
-| Invert palette          | I                        | Select + X          |
-| Next palette            | P                        | X                   |
-| Load save state (1–9)   | F1–F19                   | RT / Select + RB    |
-| Create save state (1–9) | 1–9                      | LT / Select + LT    |
-| Volume up               | F12                      | Start + D-pad Up    |
-| Volume down             | F11                      | Start + D-pad Down  |
-| Next Save State Slot    |                          | Start + D-pad Right |
-| Prev Save State Slot    |                          | Start + D-pad Left  |
-| Next Shader             | ]                        | Select + A          |
-
+| Action                        | ⌨️ Keyboard               | 🎮 Gamepad                                  |
+|-------------------------------|---------------------------|---------------------------------------------|
+| D-pad Up                      | Arrow Up                  | D-pad Up                                    |
+| D-pad Down                    | Arrow Down                | D-pad Down                                  |
+| D-pad Left                    | Arrow Left                | D-pad Left                                  |
+| D-pad Right                   | Arrow Right               | D-pad Right                                 |
+| B                             | Z                         | B                                           |
+| A                             | X                         | A                                           |
+| Start                         | Enter or S                | Start                                       |
+| Select                        | Backspace or A            | Select                                      |
+| Rewind (hold)                 | R                         | Y                                           |
+| Turbo mode (hold)             | Tab                       | RB                                          |
+| Slow mode (hold)              | Left Shift or Right Shift | LB                                          |
+| Main menu                     | Esc or Q                  | Select + Start                              |
+| Screen scale Up and Down      | + (Equals) and - (Minus)  |                                             |
+| Fullscreen Toggle             | F10                       |                                             |
+| Mute audio                    | M                         |                                             |
+| Invert palette                | I                         | Select + X                                  |
+| Next palette                  | P                         | X                                           |
+| Load save state (1–9)         | F1–F19                    | RT or Select + RB                           |
+| Create save state (1–9)       | 1–9                       | LT or Select + LB                           |
+| Volume Up and Down            | F12 and F11               | Start + D-pad Up and Start + D-pad Down     |
+| Prev and Next Save State Slot |                           | Start + D-pad Right  and Start + D-pad Left |
+| Prev and Next Shader          | [ and ]                   | Select + B and Select + A                   |
 
 ## 🛠️ Building
 
