@@ -1,4 +1,4 @@
-use crate::config::VideoConfig;
+use crate::config::{GlConfig, VideoConfig};
 use crate::video::game_window::VideoTexture;
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
@@ -10,13 +10,16 @@ pub struct GlBackend {
     window: Window,
     _gl_context: GLContext,
     shader_program: u32,
-    gl_texture: u32,
-    gl_vao: u32,
-    gl_vbo: u32,
+    frame_texture_id: u32,
+    prev_frame_texture_id: u32,
+    vao: u32,
+    vbo: u32,
     uniform_locations: UniformLocations,
     game_rect: Rect,
     fps_texture_id: u32,
     notif_texture_id: u32,
+    shader_frame_blend_mode: ShaderFrameBlendMode,
+    prev_buffer: Box<[u8]>
 }
 
 impl GlBackend {
@@ -25,6 +28,7 @@ impl GlBackend {
         game_rect: Rect,
         fps_rect: Rect,
         notif_rect: Rect,
+        config: &GlConfig,
     ) -> Result<Self, String> {
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
@@ -43,23 +47,34 @@ impl GlBackend {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
-        Ok(Self {
+        let mut obj = Self {
             window,
             _gl_context: gl_context,
             shader_program: 0,
-            gl_texture: 0,
-            gl_vao: 0,
-            gl_vbo: 0,
+            frame_texture_id: 0,
+            vao: 0,
+            vbo: 0,
             uniform_locations: Default::default(),
             game_rect,
             fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
+            prev_frame_texture_id: 0,
             notif_texture_id: create_texture(notif_rect.w, notif_rect.h),
-        })
+            shader_frame_blend_mode: config.shader_frame_blend_mode,
+            prev_buffer: Box::new([]),
+        };
+        obj.update_config(config);
+
+        Ok(obj)
+    }
+
+    pub fn update_config(&mut self, config: &GlConfig) {
+        self.load_shader(&config.shader_name, self.shader_frame_blend_mode)
+            .unwrap();
     }
 
     fn draw_quad(&self) {
         unsafe {
-            gl::BindVertexArray(self.gl_vao);
+            gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
     }
@@ -142,7 +157,8 @@ impl GlBackend {
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(self.shader_program);
 
-            gl::BindTexture(gl::TEXTURE_2D, self.gl_texture);
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, self.frame_texture_id);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
                 0,
@@ -154,12 +170,35 @@ impl GlBackend {
                 gl::UNSIGNED_BYTE,
                 buffer.as_ptr() as *const _,
             );
+
+            if self.shader_frame_blend_mode != ShaderFrameBlendMode::None {
+                gl::ActiveTexture(gl::TEXTURE1);
+                gl::BindTexture(gl::TEXTURE_2D, self.prev_frame_texture_id);
+                gl::TexSubImage2D(
+                    gl::TEXTURE_2D,
+                    0,
+                    0,
+                    0,
+                    width as i32,
+                    height as i32,
+                    gl::BGRA,
+                    gl::UNSIGNED_BYTE,
+                    self.prev_buffer.as_ptr() as *const _,
+                );
+                self.uniform_locations.send_prev_image();
+                self.copy_buffer(buffer);
+            }
+
             gl::Viewport(
                 self.game_rect.x,
                 self.game_rect.y,
                 self.game_rect.width() as i32,
                 self.game_rect.height() as i32,
             );
+
+            self.uniform_locations.send_image();
+            self.uniform_locations
+                .send_frame_blend_mode(self.shader_frame_blend_mode);
             self.uniform_locations
                 .send_in_resolution(VideoConfig::WIDTH as f32, VideoConfig::HEIGHT as f32);
             self.uniform_locations.send_out_resolution(
@@ -168,7 +207,18 @@ impl GlBackend {
             );
             self.uniform_locations
                 .send_origin(self.game_rect.x as f32, self.game_rect.y as f32);
+
             self.draw_quad();
+        }
+    }
+
+    pub fn copy_buffer(&mut self, buffer: &[u8]) {
+        if buffer.len() != self.prev_buffer.len(){
+            return;
+        }
+
+        for (i, v) in buffer.iter().enumerate() {
+            self.prev_buffer[i] = *v;
         }
     }
 
@@ -220,16 +270,21 @@ impl GlBackend {
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
 
-            self.gl_texture = create_texture(VideoConfig::WIDTH as i32, VideoConfig::HEIGHT as i32);
-            self.gl_vao = vao;
-            self.gl_vbo = vbo;
+            self.frame_texture_id =
+                create_texture(VideoConfig::WIDTH as i32, VideoConfig::HEIGHT as i32);
+            self.vao = vao;
+            self.vbo = vbo;
         }
 
         self.shader_program = program;
         self.uniform_locations = get_uniform_locations(self.shader_program);
         self.uniform_locations.send_image();
+        self.uniform_locations.send_prev_image();
         self.uniform_locations
             .send_frame_blend_mode(frame_blend_mode);
+
+        self.prev_frame_texture_id = create_texture(self.game_rect.w, self.game_rect.h);
+        self.prev_buffer = vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT].into_boxed_slice();
 
         Ok(())
     }
@@ -242,9 +297,6 @@ impl GlBackend {
 
 fn get_uniform_locations(program: u32) -> UniformLocations {
     unsafe {
-        let cname = std::ffi::CString::new("frame_blending_mode").unwrap();
-        let frame_blending_mode = gl::GetUniformLocation(program, cname.as_ptr());
-
         UniformLocations {
             image: gl::GetUniformLocation(program, c"image".as_ptr() as *const _),
             input_resolution: gl::GetUniformLocation(
@@ -256,7 +308,11 @@ fn get_uniform_locations(program: u32) -> UniformLocations {
                 c"output_resolution".as_ptr() as *const _,
             ),
             origin: gl::GetUniformLocation(program, c"origin".as_ptr() as *const _),
-            frame_blending_mode,
+            frame_blending_mode: gl::GetUniformLocation(
+                program,
+                c"frame_blending_mode".as_ptr() as *const _,
+            ),
+            prev_image: gl::GetUniformLocation(program, c"previous_image".as_ptr() as *const _),
         }
     }
 }
@@ -268,12 +324,19 @@ struct UniformLocations {
     pub out_resolution: i32,
     pub origin: i32,
     pub frame_blending_mode: i32,
+    pub prev_image: i32,
 }
 
 impl UniformLocations {
     pub fn send_image(&self) {
         unsafe {
             gl::Uniform1i(self.image, 0);
+        }
+    }
+
+    pub fn send_prev_image(&self) {
+        unsafe {
+            gl::Uniform1i(self.prev_image, 1);
         }
     }
 
@@ -296,10 +359,10 @@ impl UniformLocations {
     }
 
     pub fn send_frame_blend_mode(&self, mode: ShaderFrameBlendMode) {
-        let mode = mode as i32 as f32;
+        let mode = mode as i32;
 
         unsafe {
-            gl::Uniform1f(self.frame_blending_mode, mode);
+            gl::Uniform1i(self.frame_blending_mode, mode);
         }
     }
 }

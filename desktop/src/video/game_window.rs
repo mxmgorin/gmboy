@@ -82,12 +82,10 @@ impl GameWindow {
                     VideoConfig::WIDTH as u32 * 3,
                 );
                 let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let gl_backend = GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect);
+                let gl_backend =
+                    GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect, &config.gl);
 
-                if let Ok(mut gl_backend) = gl_backend {
-                    gl_backend
-                        .load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)?;
-
+                if let Ok(gl_backend) = gl_backend {
                     (VideoBackend::Gl(gl_backend), ui)
                 } else {
                     println!("Failed to create GL backend. Fallback to SDL2");
@@ -111,12 +109,9 @@ impl GameWindow {
         })
     }
 
-    pub fn on_config_update(&mut self, config: &VideoConfig) {
+    pub fn update_config(&mut self, config: &VideoConfig) {
+        self.backend.update_config(config);
         self.config = config.clone();
-
-        if let VideoBackend::Gl(ref mut backend) = self.backend {
-            _ = backend.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode);
-        }
     }
 
     pub fn draw_buffer(&mut self, buffer: &[u32]) {

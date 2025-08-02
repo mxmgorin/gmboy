@@ -278,7 +278,7 @@ impl App {
     
     pub fn update_shader(&mut self, name: impl Into<String>) {
         self.config.video.gl.shader_name = name.into();
-        self.window.on_config_update(&self.config.video);
+        self.window.update_config(&self.config.video);
         self.menu.request_update();
         self.notifications.add(format!("Shader: {}", self.config.video.gl.shader_name));
     }

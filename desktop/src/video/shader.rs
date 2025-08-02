@@ -19,7 +19,7 @@ const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
 const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
 const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
 pub enum ShaderFrameBlendMode {
     None = 0,
     Simple = 1,
