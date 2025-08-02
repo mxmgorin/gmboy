@@ -52,7 +52,7 @@ pub struct GlConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoConfig {
     pub frame_blend_mode: FrameBlendMode,
-    pub dim: f32,
+    pub blend_dim: f32,
     pub backend: VideoBackendType,
     pub sdl2: Sdl2Config,
     pub gl: GlConfig,
@@ -60,7 +60,7 @@ pub struct VideoConfig {
 
 impl VideoConfig {
     pub fn change_dim(&mut self, v: f32) {
-        self.dim = core::change_f32_rounded(self.dim, v).clamp(0.0, 1.0)
+        self.blend_dim = core::change_f32_rounded(self.blend_dim, v).clamp(0.0, 1.0)
     }
 
     pub const WIDTH: usize = LCD_X_RES as usize;
@@ -187,7 +187,7 @@ impl Default for AppConfig {
             input: InputConfig::default(),
             video: VideoConfig {
                 frame_blend_mode: FrameBlendMode::None,
-                dim: 1.0,
+                blend_dim: 1.0,
                 backend: VideoBackendType::Sdl2,
                 sdl2: Sdl2Config {
                     grid_enabled: true,

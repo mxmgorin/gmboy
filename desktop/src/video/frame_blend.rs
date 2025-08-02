@@ -16,9 +16,14 @@ pub struct FrameBlend {
 }
 
 impl FrameBlend {
-    pub fn new() -> Self {
-        Self {
-            prev_framebuffer: vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT].into_boxed_slice(),
+    pub fn new(mode: &FrameBlendMode) -> Option<Self> {
+        if let FrameBlendMode::None = mode {
+            None
+        } else {
+            Some(Self {
+                prev_framebuffer: vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT]
+                    .into_boxed_slice(),
+            })
         }
     }
 
@@ -165,7 +170,7 @@ impl FrameBlend {
             }
         };
 
-        let dim = config.dim;
+        let dim = config.blend_dim;
         lr *= dim;
         lg *= dim;
         lb *= dim;
@@ -241,9 +246,7 @@ impl FrameBlendMode {
             FrameBlendMode::Additive(x) => {
                 x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0)
             }
-            FrameBlendMode::Exp(x) => {
-                x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0)
-            }
+            FrameBlendMode::Exp(x) => x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0),
             FrameBlendMode::Gamma(x) => {
                 x.fade = core::change_f32_rounded(x.fade, v).clamp(0.0, 1.0)
             }

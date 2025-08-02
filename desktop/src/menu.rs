@@ -1075,7 +1075,7 @@ impl AppMenuItem {
                 format!("Blend Fade({})", config.video.frame_blend_mode.get_fade())
             }
             AppMenuItem::FrameBlendDim => {
-                format!("Blend Dim({})", config.video.dim)
+                format!("Blend Dim({})", config.video.blend_dim)
             }
             AppMenuItem::VideoMenu => "Video".to_string(),
             AppMenuItem::FrameBlendProfile => {

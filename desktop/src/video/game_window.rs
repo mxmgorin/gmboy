@@ -1,5 +1,5 @@
 use crate::config::{VideoBackendType, VideoConfig};
-use crate::video::frame_blend::{FrameBlend, FrameBlendMode};
+use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::ui::UiLayer;
@@ -40,7 +40,7 @@ impl VideoTexture {
 }
 
 pub struct GameWindow {
-    frame_blend: FrameBlend,
+    frame_blend: Option<FrameBlend>,
     backend: VideoBackend,
     pub ui: UiLayer,
     config: VideoConfig,
@@ -102,7 +102,7 @@ impl GameWindow {
         };
 
         Ok(Self {
-            frame_blend: FrameBlend::new(),
+            frame_blend: FrameBlend::new(&config.frame_blend_mode),
             config,
             backend,
             ui,
@@ -110,15 +110,16 @@ impl GameWindow {
     }
 
     pub fn update_config(&mut self, config: &VideoConfig) {
+        self.frame_blend = FrameBlend::new(&config.frame_blend_mode);
         self.backend.update_config(config);
         self.config = config.clone();
     }
 
     pub fn draw_buffer(&mut self, buffer: &[u32]) {
-        let buffer = if let FrameBlendMode::None = self.config.frame_blend_mode {
-            buffer
+        let buffer = if let Some(blend) = &mut self.frame_blend {
+            blend.process_buffer(buffer, &self.config)
         } else {
-            self.frame_blend.process_buffer(buffer, &self.config)
+            buffer
         };
 
         let buffer: &[u8] = bytemuck::cast_slice(buffer);
