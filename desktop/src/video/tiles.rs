@@ -4,7 +4,7 @@ use core::ppu::tile::{
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::Canvas;
-use sdl2::video::{Window, WindowPos};
+use sdl2::video::Window;
 use sdl2::VideoSubsystem;
 
 const SCALE: u32 = 5;
@@ -14,20 +14,20 @@ const TILE_COLS: i32 = 16;
 const Y_SPACER: i32 = SCALE as i32;
 const X_DRAW_START: i32 = (SCALE / 2) as i32;
 
-pub struct TileWindow {
+pub struct TilesWindow {
     canvas: Canvas<Window>,
     rect_groups: [Vec<Rect>; 4],
     tiles: [TileData; TILES_COUNT],
 }
 
-impl TileWindow {
-    pub fn new(video_subsystem: &VideoSubsystem) -> TileWindow {
+impl TilesWindow {
+    pub fn new(video_subsystem: &VideoSubsystem) -> TilesWindow {
         let tile_grid_width =
             TILE_COLS as u32 * TILE_WIDTH as u32 * SCALE + (TILE_COLS as u32 * SCALE);
         let tile_grid_height = TILE_ROWS as u32 * TILE_HEIGHT as u32 * SCALE + 122;
 
         let debug_window = video_subsystem
-            .window("Debug Window", tile_grid_width, tile_grid_height)
+            .window("Tiles", tile_grid_width, tile_grid_height)
             .position_centered()
             .build()
             .unwrap();
@@ -43,12 +43,6 @@ impl TileWindow {
 
     pub fn get_window_id(&self) -> u32 {
         self.canvas.window().id()
-    }
-
-    pub fn set_position(&mut self, x: i32, y: i32) {
-        self.canvas
-            .window_mut()
-            .set_position(WindowPos::Positioned(x), WindowPos::Positioned(y));
     }
 
     pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {

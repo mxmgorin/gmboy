@@ -1,7 +1,7 @@
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
-use crate::video::video::VideoTexture;
+use crate::video::VideoTexture;
 use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::rect::Rect;

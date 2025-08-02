@@ -4,9 +4,8 @@ use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
 use crate::roms::RomsList;
-use crate::video::AppVideo;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
-use crate::video::tiles_window::TileWindow;
+use crate::video::AppVideo;
 use crate::Emu;
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::battery::BatterySave;
@@ -15,7 +14,7 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::EmuAudioCallback;
 use core::ppu::palette::LcdPalette;
-use sdl2::{Sdl, VideoSubsystem};
+use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -78,11 +77,9 @@ pub enum AppState {
 }
 
 pub struct App {
-    video_subsystem: VideoSubsystem,
     audio: AppAudio,
-    pub video: AppVideo,
     palettes: Box<[LcdPalette]>,
-    pub tile_window: Option<TileWindow>,
+    pub video: AppVideo,
     pub state: AppState,
     pub config: AppConfig,
     pub menu: AppMenu,
@@ -114,48 +111,17 @@ impl App {
         palettes: Box<[LcdPalette]>,
     ) -> Result<Self, String> {
         let colors = config.interface.get_palette_colors(&palettes);
-        let video_subsystem = sdl.video()?;
-        let mut game_window = AppVideo::new(
-            config.interface.scale as u32,
-            &video_subsystem,
-            colors[0],
-            colors[3],
-            config.video.clone(),
-        )?;
-        game_window.set_fullscreen(config.interface.is_fullscreen);
-
-        let tile_window = if config.interface.tile_window {
-            let (x, y) = game_window.get_position();
-            let mut debug_window = TileWindow::new(&video_subsystem);
-            debug_window.set_position(x + 640, y);
-
-            Some(debug_window)
-        } else {
-            None
-        };
-        let library = RomsList::get_or_create();
+        let roms = RomsList::get_or_create();
 
         Ok(Self {
-            video_subsystem,
-            tile_window,
             audio: AppAudio::new(sdl, &config.audio),
-            video: game_window,
-            menu: AppMenu::new(library.get_last_path().is_some()),
+            video: AppVideo::new(sdl, colors[0], colors[3], &config)?,
+            menu: AppMenu::new(roms.get_last_path().is_some()),
             state: AppState::Paused,
             palettes,
             config,
             notifications: Notifications::new(Duration::from_secs(3)),
         })
-    }
-
-    pub fn toggle_tile_window(&mut self) {
-        if self.tile_window.is_some() {
-            self.tile_window = None;
-            self.config.interface.tile_window = false;
-        } else {
-            self.tile_window = Some(TileWindow::new(&self.video_subsystem));
-            self.config.interface.tile_window = true;
-        }
     }
 
     /// Execution loop
@@ -172,13 +138,12 @@ impl App {
             } else {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
+
                 self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
                 self.draw_notification(emu.runtime.ppu.get_fps());
                 self.video.show();
-
-                if let Some(tiles_window) = self.tile_window.as_mut() {
-                    tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
-                }
+                self.video
+                    .draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
             }
         }
 
@@ -270,17 +235,18 @@ impl App {
         let (name, _shader) = next_shader_by_name(&self.config.video.gl.shader_name);
         self.update_shader(name);
     }
-    
+
     pub fn prev_shader(&mut self) {
         let (name, _shader) = prev_shader_by_name(&self.config.video.gl.shader_name);
         self.update_shader(name);
     }
-    
+
     pub fn update_shader(&mut self, name: impl Into<String>) {
         self.config.video.gl.shader_name = name.into();
         self.video.update_config(&self.config.video);
         self.menu.request_update();
-        self.notifications.add(format!("Shader: {}", self.config.video.gl.shader_name));
+        self.notifications
+            .add(format!("Shader: {}", self.config.video.gl.shader_name));
     }
 
     pub fn toggle_fullscreen(&mut self) {

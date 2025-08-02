@@ -1,5 +1,5 @@
+use core::ppu::tile::PixelColor;
 use crate::config::VideoConfig;
-use crate::video::video::VideoTexture;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
 use core::ppu::LCD_X_RES;
@@ -16,7 +16,7 @@ pub use video::*;
 mod gl_backend;
 mod sdl2_backend;
 pub mod shader;
-pub mod tiles_window;
+pub mod tiles;
 mod overlay;
 
 const BYTES_PER_PIXEL: usize = 4;
@@ -50,6 +50,35 @@ pub fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
     let y = ((window_height - new_height) / 2) as i32;
 
     Rect::new(x, y, new_width, new_height)
+}
+
+pub struct VideoTexture {
+    pub pitch: usize,
+    pub buffer: Box<[u8]>,
+    pub rect: Rect,
+}
+
+impl VideoTexture {
+    pub fn new(rect: Rect, bytes_per_pixel: usize) -> Self {
+        let pitch = rect.w as usize * bytes_per_pixel;
+
+        Self {
+            pitch,
+            buffer: vec![0; pitch * rect.h as usize].into_boxed_slice(),
+            rect,
+        }
+    }
+
+    pub fn fill(&mut self, color: PixelColor) {
+        let (r, g, b, a) = color.as_rgba();
+
+        for i in (0..self.buffer.len()).step_by(BYTES_PER_PIXEL) {
+            self.buffer[i] = r;
+            self.buffer[i + 1] = g;
+            self.buffer[i + 2] = b;
+            self.buffer[i + 3] = a;
+        }
+    }
 }
 
 pub enum VideoBackend {
@@ -104,13 +133,6 @@ impl VideoBackend {
         match self {
             VideoBackend::Sdl2(x) => x.set_fullscreen(fullscreen),
             VideoBackend::Gl(x) => x.set_fullscreen(fullscreen),
-        }
-    }
-
-    pub fn get_position(&self) -> (i32, i32) {
-        match self {
-            VideoBackend::Sdl2(x) => x.get_position(),
-            VideoBackend::Gl(x) => x.get_position(),
         }
     }
 

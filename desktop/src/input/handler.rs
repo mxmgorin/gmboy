@@ -98,12 +98,8 @@ impl InputHandler {
                     window_id,
                     ..
                 } => {
-                    if let Some(window) = app.tile_window.as_mut() {
-                        if window.get_window_id() == window_id {
-                            app.toggle_tile_window();
-                        } else {
-                            self.handle_cmd(app, emu, AppCmd::Quit);
-                        }
+                    if app.video.close_window(window_id) {
+                        self.handle_cmd(app, emu, AppCmd::Quit);
                     }
                 }
                 _ => {}
@@ -165,7 +161,7 @@ impl InputHandler {
                         return;
                     };
 
-                    if let Err(err) = core::save_json_file(&RomsList::get_path(), &lib) {
+                    if let Err(err) = core::save_json_file(RomsList::get_path(), &lib) {
                         eprintln!("Failed to save ROMs library: {err}");
                     }
 
@@ -176,7 +172,10 @@ impl InputHandler {
             AppCmd::ChangeConfig(cmd) => match cmd {
                 ChangeAppConfigCmd::Volume(x) => app.change_volume(emu, x),
                 ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
-                ChangeAppConfigCmd::TileWindow => app.toggle_tile_window(),
+                ChangeAppConfigCmd::TileWindow => {
+                    app.config.interface.tile_window = !app.config.interface.tile_window;
+                    app.video.toggle_tile_window();
+                },
                 ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
                 ChangeAppConfigCmd::Fps => {
                     emu.runtime.ppu.toggle_fps();
@@ -248,8 +247,7 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::Video(x) => {
                     if app.config.video.backend != x.backend {
-                        app.notifications
-                            .add("Restart required to apply");
+                        app.notifications.add("Restart required to apply");
                     }
 
                     app.config.video = x;

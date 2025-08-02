@@ -1,6 +1,6 @@
 use crate::config::VideoConfig;
 use crate::video::filter::Filters;
-use crate::video::video::VideoTexture;
+use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
@@ -28,7 +28,7 @@ impl Sdl2Backend {
         notif_rect: Rect,
     ) -> Self {
         let window = video_subsystem
-            .window("GMBoy", game_rect.width(), game_rect.height())
+            .window("GMBoy SDL2", game_rect.width(), game_rect.height())
             .position_centered()
             .resizable()
             .build()
@@ -150,10 +150,6 @@ impl Sdl2Backend {
                 .unwrap();
         }
         self.update_game_rect();
-    }
-
-    pub fn get_position(&self) -> (i32, i32) {
-        self.canvas.window().position()
     }
 
     fn update_game_rect(&mut self) {

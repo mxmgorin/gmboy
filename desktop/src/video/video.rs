@@ -1,59 +1,33 @@
-use crate::config::{VideoBackendType, VideoConfig};
+use crate::config::{AppConfig, VideoBackendType, VideoConfig};
 use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
-use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::overlay::Overlay;
-use crate::video::{
-    calc_win_height, calc_win_width, new_scaled_rect, VideoBackend, BYTES_PER_PIXEL,
-};
+use crate::video::sdl2_backend::Sdl2Backend;
+use crate::video::tiles::TilesWindow;
+use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, VideoBackend};
 use core::ppu::tile::PixelColor;
+use core::ppu::tile::TileData;
 use sdl2::rect::Rect;
-use sdl2::VideoSubsystem;
-
-pub struct VideoTexture {
-    pub pitch: usize,
-    pub buffer: Box<[u8]>,
-    pub rect: Rect,
-}
-
-impl VideoTexture {
-    pub fn new(rect: Rect, bytes_per_pixel: usize) -> Self {
-        let pitch = rect.w as usize * bytes_per_pixel;
-
-        Self {
-            pitch,
-            buffer: vec![0; pitch * rect.h as usize].into_boxed_slice(),
-            rect,
-        }
-    }
-
-    pub fn fill(&mut self, color: PixelColor) {
-        let (r, g, b, a) = color.as_rgba();
-
-        for i in (0..self.buffer.len()).step_by(BYTES_PER_PIXEL) {
-            self.buffer[i] = r;
-            self.buffer[i + 1] = g;
-            self.buffer[i + 2] = b;
-            self.buffer[i + 3] = a;
-        }
-    }
-}
+use sdl2::{Sdl, VideoSubsystem};
 
 pub struct AppVideo {
+    video_subsystem: VideoSubsystem,
     frame_blend: Option<FrameBlend>,
     backend: VideoBackend,
-    pub ui: Overlay,
     config: VideoConfig,
+    tiles_window: Option<TilesWindow>,
+    pub ui: Overlay,
 }
 
 impl AppVideo {
     pub fn new(
-        scale: u32,
-        video_subsystem: &VideoSubsystem,
+        sdl: &Sdl,
         text_color: PixelColor,
         bg_color: PixelColor,
-        config: VideoConfig,
+        config: &AppConfig,
     ) -> Result<Self, String> {
+        let video_subsystem = sdl.video()?;
+        let scale = config.interface.scale as u32;
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
@@ -64,16 +38,23 @@ impl AppVideo {
             VideoConfig::WIDTH as u32 * 3,
             VideoConfig::HEIGHT as u32 * 3,
         );
+        let mut tile_window = None;
 
-        let (backend, ui) = match config.backend {
-            VideoBackendType::Sdl2 => create_sdl2_backend(
-                video_subsystem,
-                game_rect,
-                menu_rect,
-                notif_rect,
-                text_color,
-                bg_color,
-            ),
+        let (mut backend, ui) = match config.video.backend {
+            VideoBackendType::Sdl2 => {
+                if config.interface.tile_window {
+                    tile_window = Some(TilesWindow::new(&video_subsystem));
+                }
+
+                create_sdl2_backend(
+                    &video_subsystem,
+                    game_rect,
+                    menu_rect,
+                    notif_rect,
+                    text_color,
+                    bg_color,
+                )
+            }
             VideoBackendType::Gl => {
                 let fps_rect = Rect::new(
                     6,
@@ -82,15 +63,20 @@ impl AppVideo {
                     VideoConfig::WIDTH as u32 * 3,
                 );
                 let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let gl_backend =
-                    GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect, &config.gl);
+                let gl_backend = GlBackend::new(
+                    &video_subsystem,
+                    game_rect,
+                    fps_rect,
+                    notif_rect,
+                    &config.video.gl,
+                );
 
                 if let Ok(gl_backend) = gl_backend {
                     (VideoBackend::Gl(gl_backend), ui)
                 } else {
                     println!("Failed to create GL backend. Fallback to SDL2");
                     create_sdl2_backend(
-                        video_subsystem,
+                        &video_subsystem,
                         game_rect,
                         menu_rect,
                         notif_rect,
@@ -100,13 +86,28 @@ impl AppVideo {
                 }
             }
         };
+        backend.set_fullscreen(config.interface.is_fullscreen);
 
         Ok(Self {
-            frame_blend: FrameBlend::new(&config.frame_blend_mode),
-            config,
+            frame_blend: FrameBlend::new(&config.video.frame_blend_mode),
+            config: config.video.clone(),
+            tiles_window: tile_window,
+            video_subsystem,
             backend,
             ui,
         })
+    }
+
+    /// Closes the window and returns do should quit.
+    pub fn close_window(&mut self, id: u32) -> bool {
+        if let Some(window) = self.tiles_window.as_mut() {
+            if window.get_window_id() == id {
+                self.toggle_tile_window();
+                return false;
+            }
+        }
+
+        true
     }
 
     pub fn update_config(&mut self, config: &VideoConfig) {
@@ -138,6 +139,12 @@ impl AppVideo {
         self.backend.draw_notif(&self.ui.notif_texture);
     }
 
+    pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
+        if let Some(tiles_window) = self.tiles_window.as_mut() {
+            tiles_window.draw_tiles(tiles);
+        }
+    }
+
     pub fn show(&mut self) {
         self.backend.show();
     }
@@ -150,8 +157,12 @@ impl AppVideo {
         self.backend.set_fullscreen(fullscreen);
     }
 
-    pub fn get_position(&self) -> (i32, i32) {
-        self.backend.get_position()
+    pub fn toggle_tile_window(&mut self) {
+        if self.tiles_window.is_some() {
+            self.tiles_window = None;
+        } else if self.config.backend == VideoBackendType::Sdl2 {
+            self.tiles_window = Some(TilesWindow::new(&self.video_subsystem));
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::config::{GlConfig, VideoConfig};
-use crate::video::video::VideoTexture;
+use crate::video::VideoTexture;
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
 use sdl2::rect::Rect;
@@ -147,10 +147,6 @@ impl GlBackend {
                 .unwrap();
         };
         self.update_game_rect();
-    }
-
-    pub fn get_position(&self) -> (i32, i32) {
-        self.window.position()
     }
 
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
