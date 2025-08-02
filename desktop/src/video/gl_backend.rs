@@ -1,10 +1,11 @@
 use crate::config::{GlConfig, VideoConfig};
 use crate::video::game_window::VideoTexture;
 use crate::video::shader::ShaderFrameBlendMode;
-use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
+use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
 use sdl2::VideoSubsystem;
+use std::ptr;
 
 pub struct GlBackend {
     window: Window,
@@ -19,7 +20,7 @@ pub struct GlBackend {
     fps_texture_id: u32,
     notif_texture_id: u32,
     shader_frame_blend_mode: ShaderFrameBlendMode,
-    prev_buffer: Box<[u8]>
+    prev_buffer: Box<[u8]>,
 }
 
 impl GlBackend {
@@ -68,7 +69,7 @@ impl GlBackend {
     }
 
     pub fn update_config(&mut self, config: &GlConfig) {
-        self.load_shader(&config.shader_name, self.shader_frame_blend_mode)
+        self.load_shader(&config.shader_name, config.shader_frame_blend_mode)
             .unwrap();
     }
 
@@ -85,6 +86,9 @@ impl GlBackend {
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {
         unsafe {
+            self.uniform_locations
+                .send_frame_blend_mode(ShaderFrameBlendMode::None);
+            gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.fps_texture_id);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
@@ -103,6 +107,9 @@ impl GlBackend {
 
     pub fn draw_notif(&mut self, texture: &VideoTexture) {
         unsafe {
+            self.uniform_locations
+                .send_frame_blend_mode(ShaderFrameBlendMode::None);
+            gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.notif_texture_id);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
@@ -157,6 +164,18 @@ impl GlBackend {
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(self.shader_program);
 
+            self.uniform_locations
+                .send_frame_blend_mode(self.shader_frame_blend_mode);
+            self.uniform_locations.send_image();
+            self.uniform_locations
+                .send_in_resolution(VideoConfig::WIDTH as f32, VideoConfig::HEIGHT as f32);
+            self.uniform_locations.send_out_resolution(
+                self.game_rect.width() as f32,
+                self.game_rect.height() as f32,
+            );
+            self.uniform_locations
+                .send_origin(self.game_rect.x as f32, self.game_rect.y as f32);
+
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.frame_texture_id);
             gl::TexSubImage2D(
@@ -170,6 +189,7 @@ impl GlBackend {
                 gl::UNSIGNED_BYTE,
                 buffer.as_ptr() as *const _,
             );
+            self.uniform_locations.send_image();
 
             if self.shader_frame_blend_mode != ShaderFrameBlendMode::None {
                 gl::ActiveTexture(gl::TEXTURE1);
@@ -186,7 +206,14 @@ impl GlBackend {
                     self.prev_buffer.as_ptr() as *const _,
                 );
                 self.uniform_locations.send_prev_image();
-                self.copy_buffer(buffer);
+
+                if buffer.len() == self.prev_buffer.len() {
+                    ptr::copy_nonoverlapping(
+                        buffer.as_ptr(),
+                        self.prev_buffer.as_mut_ptr(),
+                        buffer.len(),
+                    );
+                }
             }
 
             gl::Viewport(
@@ -196,29 +223,7 @@ impl GlBackend {
                 self.game_rect.height() as i32,
             );
 
-            self.uniform_locations.send_image();
-            self.uniform_locations
-                .send_frame_blend_mode(self.shader_frame_blend_mode);
-            self.uniform_locations
-                .send_in_resolution(VideoConfig::WIDTH as f32, VideoConfig::HEIGHT as f32);
-            self.uniform_locations.send_out_resolution(
-                self.game_rect.width() as f32,
-                self.game_rect.height() as f32,
-            );
-            self.uniform_locations
-                .send_origin(self.game_rect.x as f32, self.game_rect.y as f32);
-
             self.draw_quad();
-        }
-    }
-
-    pub fn copy_buffer(&mut self, buffer: &[u8]) {
-        if buffer.len() != self.prev_buffer.len(){
-            return;
-        }
-
-        for (i, v) in buffer.iter().enumerate() {
-            self.prev_buffer[i] = *v;
         }
     }
 
@@ -233,6 +238,7 @@ impl GlBackend {
         frame_blend_mode: ShaderFrameBlendMode,
     ) -> Result<(), String> {
         let program = shader::load_shader_program(name)?;
+        self.shader_frame_blend_mode = frame_blend_mode;
 
         unsafe {
             let mut vao = 0;
@@ -277,14 +283,21 @@ impl GlBackend {
         }
 
         self.shader_program = program;
+
         self.uniform_locations = get_uniform_locations(self.shader_program);
         self.uniform_locations.send_image();
-        self.uniform_locations.send_prev_image();
         self.uniform_locations
             .send_frame_blend_mode(frame_blend_mode);
 
-        self.prev_frame_texture_id = create_texture(self.game_rect.w, self.game_rect.h);
-        self.prev_buffer = vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT].into_boxed_slice();
+        if frame_blend_mode != ShaderFrameBlendMode::None {
+            self.uniform_locations.send_prev_image();
+            self.prev_frame_texture_id =
+                create_texture(VideoConfig::WIDTH as i32, VideoConfig::HEIGHT as i32);
+            self.prev_buffer = vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT * BYTES_PER_PIXEL]
+                .into_boxed_slice();
+        } else if frame_blend_mode == ShaderFrameBlendMode::None && !self.prev_buffer.is_empty() {
+            self.prev_buffer = Box::new([]);
+        }
 
         Ok(())
     }
