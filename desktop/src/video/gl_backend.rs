@@ -85,32 +85,20 @@ impl GlBackend {
     }
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {
-        unsafe {
-            self.uniform_locations
-                .send_frame_blend_mode(ShaderFrameBlendMode::None);
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, self.fps_texture_id);
-            gl::TexSubImage2D(
-                gl::TEXTURE_2D,
-                0,
-                0,
-                0,
-                texture.rect.w,
-                texture.rect.h,
-                gl::BGRA,
-                gl::UNSIGNED_BYTE,
-                texture.buffer.as_ptr() as *const _,
-            );
-            self.draw_quad();
-        }
+        self.draw_overlay(texture, self.fps_texture_id);
     }
 
     pub fn draw_notif(&mut self, texture: &VideoTexture) {
+        self.draw_overlay(texture, self.notif_texture_id);
+    }
+
+    fn draw_overlay(&mut self, texture: &VideoTexture, id: u32) {
         unsafe {
             self.uniform_locations
                 .send_frame_blend_mode(ShaderFrameBlendMode::None);
+
             gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, self.notif_texture_id);
+            gl::BindTexture(gl::TEXTURE_2D, id);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
                 0,
@@ -123,6 +111,9 @@ impl GlBackend {
                 texture.buffer.as_ptr() as *const _,
             );
             self.draw_quad();
+
+            self.uniform_locations
+                .send_frame_blend_mode(self.shader_frame_blend_mode);
         }
     }
 
@@ -164,8 +155,6 @@ impl GlBackend {
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(self.shader_program);
 
-            self.uniform_locations
-                .send_frame_blend_mode(self.shader_frame_blend_mode);
             self.uniform_locations.send_image();
             self.uniform_locations
                 .send_in_resolution(VideoConfig::WIDTH as f32, VideoConfig::HEIGHT as f32);
@@ -189,9 +178,10 @@ impl GlBackend {
                 gl::UNSIGNED_BYTE,
                 buffer.as_ptr() as *const _,
             );
-            self.uniform_locations.send_image();
 
             if self.shader_frame_blend_mode != ShaderFrameBlendMode::None {
+                self.uniform_locations.send_prev_image();
+
                 gl::ActiveTexture(gl::TEXTURE1);
                 gl::BindTexture(gl::TEXTURE_2D, self.prev_frame_texture_id);
                 gl::TexSubImage2D(
@@ -205,7 +195,6 @@ impl GlBackend {
                     gl::UNSIGNED_BYTE,
                     self.prev_buffer.as_ptr() as *const _,
                 );
-                self.uniform_locations.send_prev_image();
 
                 if buffer.len() == self.prev_buffer.len() {
                     ptr::copy_nonoverlapping(
