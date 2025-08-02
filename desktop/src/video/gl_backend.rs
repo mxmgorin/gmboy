@@ -81,7 +81,13 @@ impl GlBackend {
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture) {
+        self.uniform_locations
+            .send_frame_blend_mode(ShaderFrameBlendMode::None);
+
         self.draw_buffer(&texture.buffer);
+
+        self.uniform_locations
+            .send_frame_blend_mode(self.shader_frame_blend_mode);
     }
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {

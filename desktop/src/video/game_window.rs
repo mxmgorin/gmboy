@@ -162,7 +162,7 @@ pub fn create_sdl2_backend(
     text_color: PixelColor,
     bg_color: PixelColor,
 ) -> (VideoBackend, UiLayer) {
-    let fps_rect = Rect::new(6, 6, 70, 70);
+    let fps_rect = Rect::new(6, 6, 76, 76);
     let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
     let backend = Sdl2Backend::new(video_subsystem, game_rect, fps_rect, notif_rect);
 
