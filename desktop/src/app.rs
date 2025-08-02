@@ -4,7 +4,7 @@ use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
 use crate::roms::RomsList;
-use crate::video::game_window::GameWindow;
+use crate::video::AppVideo;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::tiles_window::TileWindow;
 use crate::Emu;
@@ -80,7 +80,7 @@ pub enum AppState {
 pub struct App {
     video_subsystem: VideoSubsystem,
     audio: AppAudio,
-    pub window: GameWindow,
+    pub video: AppVideo,
     palettes: Box<[LcdPalette]>,
     pub tile_window: Option<TileWindow>,
     pub state: AppState,
@@ -115,7 +115,7 @@ impl App {
     ) -> Result<Self, String> {
         let colors = config.interface.get_palette_colors(&palettes);
         let video_subsystem = sdl.video()?;
-        let mut game_window = GameWindow::new(
+        let mut game_window = AppVideo::new(
             config.interface.scale as u32,
             &video_subsystem,
             colors[0],
@@ -139,7 +139,7 @@ impl App {
             video_subsystem,
             tile_window,
             audio: AppAudio::new(sdl, &config.audio),
-            window: game_window,
+            video: game_window,
             menu: AppMenu::new(library.get_last_path().is_some()),
             state: AppState::Paused,
             palettes,
@@ -172,9 +172,9 @@ impl App {
             } else {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
-                self.window.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
+                self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
                 self.draw_notification(emu.runtime.ppu.get_fps());
-                self.window.show();
+                self.video.show();
 
                 if let Some(tiles_window) = self.tile_window.as_mut() {
                     tiles_window.draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
@@ -190,7 +190,7 @@ impl App {
         emu.runtime.clock.reset();
         self.draw_menu();
         self.draw_notification(None);
-        self.window.show();
+        self.video.show();
         thread::sleep(Duration::from_millis(30));
     }
 
@@ -200,23 +200,23 @@ impl App {
         if lines.is_empty() {
             if let Some((fps, updated)) = fps {
                 if updated {
-                    self.window.ui.update_fps(fps);
+                    self.video.ui.update_fps(fps);
                 }
 
-                self.window.draw_fps();
+                self.video.draw_fps();
             }
         } else if updated || !lines.is_empty() {
             if updated {
-                self.window.ui.update_notif(lines);
+                self.video.ui.update_notif(lines);
             }
 
-            self.window.draw_notif();
+            self.video.draw_notif();
         }
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
         self.config.interface.scale = (self.config.interface.scale + delta).max(0.0);
-        self.window.set_scale(self.config.interface.scale as u32)?;
+        self.video.set_scale(self.config.interface.scale as u32)?;
         let msg = format!("Scale: {}", self.config.interface.scale);
         self.notifications.add(msg);
 
@@ -227,10 +227,10 @@ impl App {
         let (items, updated) = self.menu.get_items(&self.config);
 
         if updated {
-            self.window.ui.update_menu(items, true, true);
+            self.video.ui.update_menu(items, true, true);
         }
 
-        self.window.draw_menu();
+        self.video.draw_menu();
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
@@ -252,8 +252,8 @@ impl App {
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.interface.selected_palette_idx];
         let colors = self.config.interface.get_palette_colors(&self.palettes);
-        self.window.ui.text_color = colors[0];
-        self.window.ui.bg_color = colors[3];
+        self.video.ui.text_color = colors[0];
+        self.video.ui.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
         self.menu.request_update();
 
@@ -278,14 +278,14 @@ impl App {
     
     pub fn update_shader(&mut self, name: impl Into<String>) {
         self.config.video.gl.shader_name = name.into();
-        self.window.update_config(&self.config.video);
+        self.video.update_config(&self.config.video);
         self.menu.request_update();
         self.notifications.add(format!("Shader: {}", self.config.video.gl.shader_name));
     }
 
     pub fn toggle_fullscreen(&mut self) {
         self.config.interface.is_fullscreen = !self.config.interface.is_fullscreen;
-        self.window
+        self.video
             .set_fullscreen(self.config.interface.is_fullscreen);
     }
 

@@ -1,22 +1,22 @@
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
-use crate::video::game_window::VideoTexture;
+use crate::video::video::VideoTexture;
 use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::rect::Rect;
 
-pub struct UiLayer {
+pub struct Overlay {
     pub notif_texture: VideoTexture,
     pub fps_texture: VideoTexture,
     pub menu_texture: VideoTexture,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
     font_size: FontSize,
-    overlay_scale: usize,
+    scale: usize,
 }
 
-impl UiLayer {
+impl Overlay {
     pub fn new(
         menu_rect: Rect,
         fps_rect: Rect,
@@ -32,7 +32,7 @@ impl UiLayer {
             notif_texture: VideoTexture::new(notif_rect, BYTES_PER_PIXEL),
             bg_color,
             text_color,
-            overlay_scale,
+            scale: overlay_scale,
         }
     }
 
@@ -80,7 +80,7 @@ impl UiLayer {
             self.fps_texture.rect.x as usize,
             self.fps_texture.rect.y as usize,
             self.font_size,
-            self.overlay_scale,
+            self.scale,
             None,
         );
     }
@@ -97,7 +97,7 @@ impl UiLayer {
             self.notif_texture.rect.x as usize,
             self.notif_texture.rect.y as usize,
             self.font_size,
-            self.overlay_scale,
+            self.scale,
             None,
         );
     }

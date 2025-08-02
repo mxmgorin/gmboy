@@ -1,5 +1,5 @@
 use crate::config::VideoConfig;
-use crate::video::game_window::VideoTexture;
+use crate::video::video::VideoTexture;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
 use core::ppu::LCD_X_RES;
@@ -10,12 +10,14 @@ mod char;
 pub mod draw_text;
 mod filter;
 pub mod frame_blend;
-pub mod game_window;
+mod video;
+pub use video::*;
+
 mod gl_backend;
 mod sdl2_backend;
 pub mod shader;
 pub mod tiles_window;
-mod ui;
+mod overlay;
 
 const BYTES_PER_PIXEL: usize = 4;
 

@@ -1,6 +1,6 @@
 use crate::config::VideoConfig;
 use crate::video::filter::Filters;
-use crate::video::game_window::VideoTexture;
+use crate::video::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;

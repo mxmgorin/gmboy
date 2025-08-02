@@ -1,5 +1,5 @@
 use crate::config::{GlConfig, VideoConfig};
-use crate::video::game_window::VideoTexture;
+use crate::video::video::VideoTexture;
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
 use sdl2::rect::Rect;
@@ -91,14 +91,14 @@ impl GlBackend {
     }
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {
-        self.draw_overlay(texture, self.fps_texture_id);
+        self.draw_hud(texture, self.fps_texture_id);
     }
 
     pub fn draw_notif(&mut self, texture: &VideoTexture) {
-        self.draw_overlay(texture, self.notif_texture_id);
+        self.draw_hud(texture, self.notif_texture_id);
     }
 
-    fn draw_overlay(&mut self, texture: &VideoTexture, id: u32) {
+    fn draw_hud(&mut self, texture: &VideoTexture, id: u32) {
         unsafe {
             self.uniform_locations
                 .send_frame_blend_mode(ShaderFrameBlendMode::None);

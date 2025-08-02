@@ -2,7 +2,7 @@ use crate::config::{VideoBackendType, VideoConfig};
 use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
-use crate::video::ui::UiLayer;
+use crate::video::overlay::Overlay;
 use crate::video::{
     calc_win_height, calc_win_width, new_scaled_rect, VideoBackend, BYTES_PER_PIXEL,
 };
@@ -39,14 +39,14 @@ impl VideoTexture {
     }
 }
 
-pub struct GameWindow {
+pub struct AppVideo {
     frame_blend: Option<FrameBlend>,
     backend: VideoBackend,
-    pub ui: UiLayer,
+    pub ui: Overlay,
     config: VideoConfig,
 }
 
-impl GameWindow {
+impl AppVideo {
     pub fn new(
         scale: u32,
         video_subsystem: &VideoSubsystem,
@@ -81,7 +81,7 @@ impl GameWindow {
                     VideoConfig::WIDTH as u32 * 3,
                     VideoConfig::WIDTH as u32 * 3,
                 );
-                let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
+                let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
                 let gl_backend =
                     GlBackend::new(video_subsystem, game_rect, fps_rect, notif_rect, &config.gl);
 
@@ -162,9 +162,9 @@ pub fn create_sdl2_backend(
     notif_rect: Rect,
     text_color: PixelColor,
     bg_color: PixelColor,
-) -> (VideoBackend, UiLayer) {
+) -> (VideoBackend, Overlay) {
     let fps_rect = Rect::new(6, 6, 76, 76);
-    let ui = UiLayer::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
+    let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
     let backend = Sdl2Backend::new(video_subsystem, game_rect, fps_rect, notif_rect);
 
     (VideoBackend::Sdl2(backend), ui)
