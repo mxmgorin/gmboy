@@ -247,7 +247,7 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::Video(x) => {
                     if app.config.video.render.backend != x.render.backend {
-                        app.notifications.add("Restart required to apply");
+                        app.notifications.add("Restart is required to apply");
                     }
 
                     app.config.video = x;
