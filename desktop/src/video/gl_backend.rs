@@ -5,6 +5,7 @@ use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYT
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
 use sdl2::{Sdl, VideoSubsystem};
+use std::ffi::CStr;
 use std::ptr;
 
 pub struct GlBackend {
@@ -42,6 +43,7 @@ impl GlBackend {
 
         let gl_context = window.gl_create_context()?;
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const _);
+        print_gl_versions();
 
         unsafe {
             gl::Enable(gl::TEXTURE_2D);
@@ -67,7 +69,6 @@ impl GlBackend {
             _video_subsystem: video_subsystem,
         };
         obj.update_config(config);
-
         Ok(obj)
     }
 
@@ -377,6 +378,20 @@ impl UniformLocations {
         unsafe {
             gl::Uniform1i(self.frame_blending_mode, mode);
         }
+    }
+}
+
+fn print_gl_versions() {
+    unsafe {
+        let version = CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8)
+            .to_str()
+            .unwrap();
+        let shading_lang = CStr::from_ptr(gl::GetString(gl::SHADING_LANGUAGE_VERSION) as *const i8)
+            .to_str()
+            .unwrap();
+
+        println!("OpenGL version: {version}");
+        println!("GLSL version: {shading_lang}");
     }
 }
 
