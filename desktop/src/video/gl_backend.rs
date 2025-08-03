@@ -3,7 +3,7 @@ use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
 use sdl2::rect::Rect;
-use sdl2::video::{GLContext, Window};
+use sdl2::video::{GLContext, GLProfile, Window};
 use sdl2::{Sdl, VideoSubsystem};
 use std::ffi::CStr;
 use std::ptr;
@@ -34,6 +34,11 @@ impl GlBackend {
         config: &RenderConfig,
     ) -> Result<Self, String> {
         let video_subsystem = sdl.video()?;
+        video_subsystem
+            .gl_attr()
+            .set_context_profile(GLProfile::Core);
+        video_subsystem.gl_attr().set_context_version(3, 2);
+
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
@@ -69,7 +74,7 @@ impl GlBackend {
             _video_subsystem: video_subsystem,
         };
         obj.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)?;
-        
+
         Ok(obj)
     }
 
