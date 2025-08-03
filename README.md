@@ -7,9 +7,15 @@
 <!-- [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" alt="Demo 1" width="260"/> &nbsp;&nbsp;
-  <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/02bg.gif" alt="Demo 2" width="260"/> &nbsp;&nbsp;
-  <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/03bg.gif" alt="Demo 3" width="260"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" alt="Demo 1" width="260"/>
+  </a>&nbsp;&nbsp;
+  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/02bg.gif" alt="Demo 2" width="260"/>
+  </a>&nbsp;&nbsp;
+  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/03bg.gif" alt="Demo 3" width="260"/>
+  </a>
 </p>
 
 `GMBoy` is a Game Boy emulator written in Rust, built as a deep dive into emulation and hardware design.
