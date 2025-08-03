@@ -68,7 +68,8 @@ impl GlBackend {
             window,
             _video_subsystem: video_subsystem,
         };
-        obj.update_config(config);
+        obj.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)?;
+        
         Ok(obj)
     }
 

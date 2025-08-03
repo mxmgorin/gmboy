@@ -54,13 +54,14 @@ impl AppVideo {
                 let gl_backend =
                     GlBackend::new(sdl, game_rect, fps_rect, notif_rect, &config.render);
 
-                if let Ok(gl_backend) = gl_backend {
-                    (VideoBackend::Gl(gl_backend), ui)
-                } else {
-                    println!("Failed to create GL backend. Fallback to SDL2");
-                    create_sdl2_backend(
-                        sdl, config, game_rect, menu_rect, notif_rect, text_color, bg_color,
-                    )
+                match gl_backend {
+                    Ok(gl_backend) => (VideoBackend::Gl(gl_backend), ui),
+                    Err(err) => {
+                        println!("Fallback to SDL2. Failed to create GL backend: {err}");
+                        create_sdl2_backend(
+                            sdl, config, game_rect, menu_rect, notif_rect, text_color, bg_color,
+                        )
+                    }
                 }
             }
         };
