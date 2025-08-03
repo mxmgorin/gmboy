@@ -617,6 +617,8 @@ impl AppMenu {
                     VideoBackendType::Sdl2 => VideoBackendType::Gl,
                     VideoBackendType::Gl => VideoBackendType::Sdl2,
                 };
+                self.items = video_menu(&conf);
+
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader)),
@@ -816,6 +818,8 @@ impl AppMenu {
                     VideoBackendType::Sdl2 => VideoBackendType::Gl,
                     VideoBackendType::Gl => VideoBackendType::Sdl2,
                 };
+                self.items = video_menu(&conf);
+
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader)),
