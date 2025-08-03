@@ -84,6 +84,8 @@ unsafe fn compile_program(vertex_src: &str, fragment_src: &str) -> Result<u32, S
     let program = gl::CreateProgram();
     gl::AttachShader(program, vs);
     gl::AttachShader(program, fs);
+    gl::BindAttribLocation(program, 0, c"pos".as_ptr() as *const _);
+    gl::BindAttribLocation(program, 1, c"tex".as_ptr() as *const _);
     gl::LinkProgram(program);
     gl::DeleteShader(vs);
     gl::DeleteShader(fs);
@@ -102,6 +104,7 @@ unsafe fn compile_program(vertex_src: &str, fragment_src: &str) -> Result<u32, S
         gl::DeleteProgram(program);
         return Err(String::from_utf8_lossy(&buf).into_owned());
     }
+
     Ok(program)
 }
 

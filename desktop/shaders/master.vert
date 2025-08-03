@@ -1,7 +1,7 @@
-#version 330 core
+#version 150 core
 
-layout(location = 0) in vec2 pos;
-layout(location = 1) in vec2 tex;
+in vec2 pos;
+in vec2 tex;
 
 out vec2 v_tex;
 
