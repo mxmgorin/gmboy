@@ -4,12 +4,13 @@ use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
-use sdl2::VideoSubsystem;
+use sdl2::{Sdl, VideoSubsystem};
 use std::ptr;
 
 pub struct GlBackend {
-    window: Window,
+    _video_subsystem: VideoSubsystem,
     _gl_context: GLContext,
+    window: Window,
     shader_program: u32,
     frame_texture_id: u32,
     prev_frame_texture_id: u32,
@@ -25,12 +26,13 @@ pub struct GlBackend {
 
 impl GlBackend {
     pub fn new(
-        video_subsystem: &VideoSubsystem,
+        sdl: &Sdl,
         game_rect: Rect,
         fps_rect: Rect,
         notif_rect: Rect,
         config: &RenderConfig,
     ) -> Result<Self, String> {
+        let video_subsystem = sdl.video()?;
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
@@ -49,23 +51,29 @@ impl GlBackend {
         }
 
         let mut obj = Self {
-            window,
             _gl_context: gl_context,
             shader_program: 0,
             frame_texture_id: 0,
             vao: 0,
             vbo: 0,
             uniform_locations: Default::default(),
-            game_rect,
             fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
             prev_frame_texture_id: 0,
             notif_texture_id: create_texture(notif_rect.w, notif_rect.h),
             shader_frame_blend_mode: config.gl.shader_frame_blend_mode,
             prev_buffer: Box::new([]),
+            game_rect,
+            window,
+            _video_subsystem: video_subsystem,
         };
         obj.update_config(config);
 
         Ok(obj)
+    }
+
+    /// Closes the window and returns true when main window is closed.
+    pub fn close_window(&mut self, _id: u32) -> bool {
+        true
     }
 
     pub fn update_config(&mut self, config: &RenderConfig) {

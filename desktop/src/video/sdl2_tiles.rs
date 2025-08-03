@@ -14,14 +14,14 @@ const TILE_COLS: i32 = 16;
 const Y_SPACER: i32 = SCALE as i32;
 const X_DRAW_START: i32 = (SCALE / 2) as i32;
 
-pub struct TilesWindow {
+pub struct Sdl2TilesView {
     canvas: Canvas<Window>,
     rect_groups: [Vec<Rect>; 4],
     tiles: [TileData; TILES_COUNT],
 }
 
-impl TilesWindow {
-    pub fn new(video_subsystem: &VideoSubsystem) -> TilesWindow {
+impl Sdl2TilesView {
+    pub fn new(video_subsystem: &VideoSubsystem) -> Sdl2TilesView {
         let tile_grid_width =
             TILE_COLS as u32 * TILE_WIDTH as u32 * SCALE + (TILE_COLS as u32 * SCALE);
         let tile_grid_height = TILE_ROWS as u32 * TILE_HEIGHT as u32 * SCALE + 122;

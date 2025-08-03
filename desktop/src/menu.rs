@@ -1025,7 +1025,7 @@ impl AppMenuItem {
             }
             AppMenuItem::AdvancedMenu => "Advanced".to_string(),
             AppMenuItem::TileWindow => {
-                format!("Tile Window{}", get_suffix(config.video.interface.show_tiles))
+                format!("Show Tiles{}", get_suffix(config.video.interface.show_tiles))
             }
             AppMenuItem::SpinDuration => {
                 format!(

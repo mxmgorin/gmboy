@@ -1,15 +1,18 @@
 use crate::config::{RenderConfig, VideoConfig};
 use crate::video::filter::Filters;
+use crate::video::sdl2_tiles::Sdl2TilesView;
 use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
+use core::ppu::tile::TileData;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
-use sdl2::VideoSubsystem;
+use sdl2::{Sdl, VideoSubsystem};
 
 pub struct Sdl2Backend {
-    pub canvas: Canvas<Window>,
+    video_subsystem: VideoSubsystem,
+    tiles_view: Option<Sdl2TilesView>,
     texture_creator: TextureCreator<WindowContext>,
     game_texture: Texture,
     notif_texture: Texture,
@@ -18,15 +21,18 @@ pub struct Sdl2Backend {
     fps_rect: Rect,
     notif_rect: Rect,
     filters: Filters,
+    pub canvas: Canvas<Window>,
 }
 
 impl Sdl2Backend {
     pub fn new(
-        video_subsystem: &VideoSubsystem,
+        sdl: &Sdl,
+        config: &VideoConfig,
         game_rect: Rect,
         fps_rect: Rect,
         notif_rect: Rect,
     ) -> Self {
+        let video_subsystem = sdl.video().unwrap();
         let window = video_subsystem
             .window("GMBoy SDL2", game_rect.width(), game_rect.height())
             .position_centered()
@@ -64,6 +70,12 @@ impl Sdl2Backend {
 
         Self {
             filters: Filters::new(&mut canvas, &texture_creator, game_rect),
+            tiles_view: if config.interface.show_tiles {
+                Some(Sdl2TilesView::new(&video_subsystem))
+            } else {
+                None
+            },
+            video_subsystem,
             texture_creator,
             canvas,
             game_texture,
@@ -73,6 +85,26 @@ impl Sdl2Backend {
             notif_texture,
             fps_texture,
         }
+    }
+
+    pub fn update_config(&mut self, config: &VideoConfig) {
+        if config.interface.show_tiles {
+            self.tiles_view = Some(Sdl2TilesView::new(&self.video_subsystem));
+        } else {
+            self.tiles_view = None;
+        }
+    }
+
+    /// Closes the window and returns true when main window is closed.
+    pub fn close_window(&mut self, id: u32) -> bool {
+        if let Some(tiles) = self.tiles_view.as_mut() {
+            if tiles.get_window_id() == id {
+                self.tiles_view = None;
+                return false;
+            }
+        }
+
+        true
     }
 
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
@@ -118,11 +150,6 @@ impl Sdl2Backend {
         self.canvas.present();
     }
 
-    fn clear(&mut self) {
-        self.canvas.set_draw_color(Color::RGB(0, 0, 0)); // black
-        self.canvas.clear();
-    }
-
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
         let window = self.canvas.window_mut();
         window
@@ -150,6 +177,17 @@ impl Sdl2Backend {
                 .unwrap();
         }
         self.update_game_rect();
+    }
+
+    pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
+        if let Some(tiles_view) = self.tiles_view.as_mut() {
+            tiles_view.draw_tiles(tiles);
+        }
+    }
+
+    fn clear(&mut self) {
+        self.canvas.set_draw_color(Color::RGB(0, 0, 0)); // black
+        self.canvas.clear();
     }
 
     fn update_game_rect(&mut self) {

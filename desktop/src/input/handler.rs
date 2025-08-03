@@ -174,8 +174,8 @@ impl InputHandler {
                 ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
                 ChangeAppConfigCmd::TileWindow => {
                     app.config.video.interface.show_tiles = !app.config.video.interface.show_tiles;
-                    app.video.toggle_tile_window();
-                },
+                    app.video.update_config(&app.config.video);
+                }
                 ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
                 ChangeAppConfigCmd::Fps => {
                     emu.runtime.ppu.toggle_fps();

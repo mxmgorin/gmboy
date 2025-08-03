@@ -1,7 +1,8 @@
-use core::ppu::tile::PixelColor;
 use crate::config::VideoConfig;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
+use core::ppu::tile::PixelColor;
+use core::ppu::tile::TileData;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
@@ -14,10 +15,10 @@ mod video;
 pub use video::*;
 
 mod gl_backend;
-mod sdl2_backend;
-pub mod shader;
-pub mod tiles;
 mod overlay;
+mod sdl2_backend;
+pub mod sdl2_tiles;
+pub mod shader;
 
 const BYTES_PER_PIXEL: usize = 4;
 
@@ -138,8 +139,21 @@ impl VideoBackend {
 
     pub fn update_config(&mut self, config: &VideoConfig) {
         match self {
-            VideoBackend::Sdl2(_) => {},
+            VideoBackend::Sdl2(x) => x.update_config(config),
             VideoBackend::Gl(x) => x.update_config(&config.render),
+        }
+    }
+    pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
+        match self {
+            VideoBackend::Sdl2(x) => x.draw_tiles(tiles),
+            VideoBackend::Gl(_) => {}
+        }
+    }
+
+    pub fn close_window(&mut self, id: u32) -> bool {
+        match self {
+            VideoBackend::Sdl2(x) => x.close_window(id),
+            VideoBackend::Gl(x) => x.close_window(id),
         }
     }
 }

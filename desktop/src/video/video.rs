@@ -3,19 +3,16 @@ use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
 use crate::video::overlay::Overlay;
 use crate::video::sdl2_backend::Sdl2Backend;
-use crate::video::tiles::TilesWindow;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, VideoBackend};
 use core::ppu::tile::PixelColor;
 use core::ppu::tile::TileData;
 use sdl2::rect::Rect;
-use sdl2::{Sdl, VideoSubsystem};
+use sdl2::Sdl;
 
 pub struct AppVideo {
-    video_subsystem: VideoSubsystem,
     frame_blend: Option<FrameBlend>,
     backend: VideoBackend,
     config: VideoConfig,
-    tiles_window: Option<TilesWindow>,
     pub ui: Overlay,
 }
 
@@ -26,35 +23,26 @@ impl AppVideo {
         bg_color: PixelColor,
         config: &VideoConfig,
     ) -> Result<Self, String> {
-        let video_subsystem = sdl.video()?;
         let scale = config.interface.scale as u32;
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
-        let menu_rect = Rect::new(0, 0, RenderConfig::WIDTH as u32, RenderConfig::HEIGHT as u32);
+        let menu_rect = Rect::new(
+            0,
+            0,
+            RenderConfig::WIDTH as u32,
+            RenderConfig::HEIGHT as u32,
+        );
         let notif_rect = Rect::new(
             6,
             6,
             RenderConfig::WIDTH as u32 * 3,
             RenderConfig::HEIGHT as u32 * 3,
         );
-        let mut tile_window = None;
-
         let (mut backend, ui) = match config.render.backend {
-            VideoBackendType::Sdl2 => {
-                if config.interface.show_tiles {
-                    tile_window = Some(TilesWindow::new(&video_subsystem));
-                }
-
-                create_sdl2_backend(
-                    &video_subsystem,
-                    game_rect,
-                    menu_rect,
-                    notif_rect,
-                    text_color,
-                    bg_color,
-                )
-            }
+            VideoBackendType::Sdl2 => create_sdl2_backend(
+                sdl, config, game_rect, menu_rect, notif_rect, text_color, bg_color,
+            ),
             VideoBackendType::Gl => {
                 let fps_rect = Rect::new(
                     6,
@@ -63,25 +51,15 @@ impl AppVideo {
                     RenderConfig::WIDTH as u32 * 3,
                 );
                 let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let gl_backend = GlBackend::new(
-                    &video_subsystem,
-                    game_rect,
-                    fps_rect,
-                    notif_rect,
-                    &config.render,
-                );
+                let gl_backend =
+                    GlBackend::new(sdl, game_rect, fps_rect, notif_rect, &config.render);
 
                 if let Ok(gl_backend) = gl_backend {
                     (VideoBackend::Gl(gl_backend), ui)
                 } else {
                     println!("Failed to create GL backend. Fallback to SDL2");
                     create_sdl2_backend(
-                        &video_subsystem,
-                        game_rect,
-                        menu_rect,
-                        notif_rect,
-                        text_color,
-                        bg_color,
+                        sdl, config, game_rect, menu_rect, notif_rect, text_color, bg_color,
                     )
                 }
             }
@@ -91,27 +69,19 @@ impl AppVideo {
         Ok(Self {
             frame_blend: FrameBlend::new(&config.render.frame_blend_mode),
             config: config.clone(),
-            tiles_window: tile_window,
-            video_subsystem,
             backend,
             ui,
         })
     }
 
-    /// Closes the window and returns do should quit.
+    /// Closes the window and returns true when main window is closed.
     pub fn close_window(&mut self, id: u32) -> bool {
-        if let Some(window) = self.tiles_window.as_mut() {
-            if window.get_window_id() == id {
-                self.toggle_tile_window();
-                return false;
-            }
-        }
-
-        true
+        self.backend.close_window(id)
     }
 
     pub fn update_config(&mut self, config: &VideoConfig) {
         self.frame_blend = FrameBlend::new(&config.render.frame_blend_mode);
+        self.backend.set_fullscreen(config.interface.is_fullscreen);
         self.backend.update_config(config);
         self.config = config.clone();
     }
@@ -140,9 +110,7 @@ impl AppVideo {
     }
 
     pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
-        if let Some(tiles_window) = self.tiles_window.as_mut() {
-            tiles_window.draw_tiles(tiles);
-        }
+        self.backend.draw_tiles(tiles);
     }
 
     pub fn show(&mut self) {
@@ -156,18 +124,11 @@ impl AppVideo {
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         self.backend.set_fullscreen(fullscreen);
     }
-
-    pub fn toggle_tile_window(&mut self) {
-        if self.tiles_window.is_some() {
-            self.tiles_window = None;
-        } else if self.config.render.backend == VideoBackendType::Sdl2 {
-            self.tiles_window = Some(TilesWindow::new(&self.video_subsystem));
-        }
-    }
 }
 
 pub fn create_sdl2_backend(
-    video_subsystem: &VideoSubsystem,
+    sdl: &Sdl,
+    config: &VideoConfig,
     game_rect: Rect,
     menu_rect: Rect,
     notif_rect: Rect,
@@ -176,7 +137,7 @@ pub fn create_sdl2_backend(
 ) -> (VideoBackend, Overlay) {
     let fps_rect = Rect::new(6, 6, 76, 76);
     let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
-    let backend = Sdl2Backend::new(video_subsystem, game_rect, fps_rect, notif_rect);
+    let backend = Sdl2Backend::new(sdl, config, game_rect, fps_rect, notif_rect);
 
     (VideoBackend::Sdl2(backend), ui)
 }
