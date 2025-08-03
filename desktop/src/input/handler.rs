@@ -173,13 +173,13 @@ impl InputHandler {
                 ChangeAppConfigCmd::Volume(x) => app.change_volume(emu, x),
                 ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
                 ChangeAppConfigCmd::TileWindow => {
-                    app.config.interface.tile_window = !app.config.interface.tile_window;
+                    app.config.video.interface.show_tiles = !app.config.video.interface.show_tiles;
                     app.video.toggle_tile_window();
                 },
                 ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
                 ChangeAppConfigCmd::Fps => {
                     emu.runtime.ppu.toggle_fps();
-                    app.config.interface.show_fps = !app.config.interface.show_fps;
+                    app.config.video.interface.show_fps = !app.config.video.interface.show_fps;
                 }
                 ChangeAppConfigCmd::SpinDuration(x) => {
                     emu.config.spin_duration = core::change_duration(emu.config.spin_duration, x);
@@ -241,12 +241,12 @@ impl InputHandler {
                 ChangeAppConfigCmd::SetSaveIndex(x) => app.config.current_save_index = x,
                 ChangeAppConfigCmd::SetLoadIndex(x) => app.config.current_load_index = x,
                 ChangeAppConfigCmd::InvertPalette => {
-                    app.config.interface.is_palette_inverted =
-                        !app.config.interface.is_palette_inverted;
+                    app.config.video.interface.is_palette_inverted =
+                        !app.config.video.interface.is_palette_inverted;
                     app.update_palette(emu);
                 }
                 ChangeAppConfigCmd::Video(x) => {
-                    if app.config.video.backend != x.backend {
+                    if app.config.video.render.backend != x.render.backend {
                         app.notifications.add("Restart required to apply");
                     }
 

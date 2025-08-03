@@ -139,7 +139,7 @@ impl VideoBackend {
     pub fn update_config(&mut self, config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(_) => {},
-            VideoBackend::Gl(x) => x.update_config(&config.gl),
+            VideoBackend::Gl(x) => x.update_config(&config.render),
         }
     }
 }

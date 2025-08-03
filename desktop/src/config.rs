@@ -22,7 +22,6 @@ pub struct AppConfig {
     pub current_load_index: usize,
     pub auto_continue: bool,
     pub roms_dir: Option<String>,
-    pub interface: InterfaceConfig,
     pub audio: AudioConfig,
     pub video: VideoConfig,
     pub input: InputConfig,
@@ -51,6 +50,12 @@ pub struct GlConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VideoConfig {
+    pub interface: InterfaceConfig,
+    pub render: RenderConfig,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RenderConfig {
     pub frame_blend_mode: FrameBlendMode,
     pub blend_dim: f32,
     pub backend: VideoBackendType,
@@ -58,7 +63,7 @@ pub struct VideoConfig {
     pub gl: GlConfig,
 }
 
-impl VideoConfig {
+impl RenderConfig {
     pub fn change_dim(&mut self, v: f32) {
         self.blend_dim = core::change_f32_rounded(self.blend_dim, v).clamp(0.0, 1.0)
     }
@@ -114,7 +119,7 @@ pub struct InterfaceConfig {
     pub scale: f32,
     pub is_fullscreen: bool,
     pub show_fps: bool,
-    pub tile_window: bool,
+    pub show_tiles: bool,
     pub is_palette_inverted: bool,
 }
 
@@ -169,14 +174,6 @@ impl Default for AppConfig {
             current_save_index: 0,
             current_load_index: 0,
             emulation: Default::default(),
-            interface: InterfaceConfig {
-                selected_palette_idx: 0,
-                scale: 5.0,
-                is_fullscreen: false,
-                show_fps: false,
-                tile_window: false,
-                is_palette_inverted: false,
-            },
             audio: AudioConfig {
                 mute: false,
                 mute_turbo: true,
@@ -186,19 +183,29 @@ impl Default for AppConfig {
             },
             input: InputConfig::default(),
             video: VideoConfig {
-                frame_blend_mode: FrameBlendMode::None,
-                blend_dim: 1.0,
-                backend: VideoBackendType::Sdl2,
-                sdl2: Sdl2Config {
-                    grid_enabled: true,
-                    subpixel_enabled: true,
-                    dot_matrix_enabled: false,
-                    scanline_enabled: false,
-                    vignette_enabled: false,
+                interface: InterfaceConfig {
+                    selected_palette_idx: 0,
+                    scale: 5.0,
+                    is_fullscreen: false,
+                    show_fps: false,
+                    show_tiles: false,
+                    is_palette_inverted: false,
                 },
-                gl: GlConfig {
-                    shader_name: "passthrough".to_string(),
-                    shader_frame_blend_mode: ShaderFrameBlendMode::Simple,
+                render: RenderConfig {
+                    frame_blend_mode: FrameBlendMode::None,
+                    blend_dim: 1.0,
+                    backend: VideoBackendType::Sdl2,
+                    sdl2: Sdl2Config {
+                        grid_enabled: true,
+                        subpixel_enabled: true,
+                        dot_matrix_enabled: false,
+                        scanline_enabled: false,
+                        vignette_enabled: false,
+                    },
+                    gl: GlConfig {
+                        shader_name: "passthrough".to_string(),
+                        shader_frame_blend_mode: ShaderFrameBlendMode::Simple,
+                    },
                 },
             },
             roms_dir: None,

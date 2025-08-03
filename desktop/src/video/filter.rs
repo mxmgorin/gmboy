@@ -1,4 +1,4 @@
-use crate::config::{Sdl2Config, VideoConfig};
+use crate::config::{RenderConfig, Sdl2Config};
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureCreator};
@@ -136,12 +136,12 @@ fn generate_grid_texture(
     canvas
         .with_texture_canvas(&mut grid_texture, |tex| {
             tex.set_draw_color(Color::RGBA(32, 32, 32, 80));
-            for i in 0..=VideoConfig::WIDTH {
-                let x = (i as f32 * width as f32 / VideoConfig::WIDTH as f32) as i32;
+            for i in 0..=RenderConfig::WIDTH {
+                let x = (i as f32 * width as f32 / RenderConfig::WIDTH as f32) as i32;
                 tex.draw_line((x, 0), (x, height as i32)).unwrap();
             }
-            for j in 0..=VideoConfig::HEIGHT {
-                let y = (j as f32 * height as f32 / VideoConfig::HEIGHT as f32) as i32;
+            for j in 0..=RenderConfig::HEIGHT {
+                let y = (j as f32 * height as f32 / RenderConfig::HEIGHT as f32) as i32;
                 tex.draw_line((0, y), (width as i32, y)).unwrap();
             }
         })

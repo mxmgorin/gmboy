@@ -45,14 +45,14 @@ fn main() {
 fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let emu_config = config.get_emu_config();
     let apu_config = config.audio.get_apu_config();
-    let colors = config.interface.get_palette_colors(palettes);
+    let colors = config.video.interface.get_palette_colors(palettes);
 
     let lcd = Lcd::new(colors);
     let apu = Apu::new(apu_config);
     let bus = Bus::new(Cart::empty(), Io::new(lcd, apu));
     let mut ppu = Ppu::default();
 
-    if config.interface.show_fps {
+    if config.video.interface.show_fps {
         ppu.toggle_fps();
     }
 

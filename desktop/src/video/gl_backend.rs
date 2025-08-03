@@ -1,6 +1,6 @@
-use crate::config::{GlConfig, VideoConfig};
-use crate::video::VideoTexture;
+use crate::config::RenderConfig;
 use crate::video::shader::ShaderFrameBlendMode;
+use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, Window};
@@ -29,7 +29,7 @@ impl GlBackend {
         game_rect: Rect,
         fps_rect: Rect,
         notif_rect: Rect,
-        config: &GlConfig,
+        config: &RenderConfig,
     ) -> Result<Self, String> {
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
@@ -60,7 +60,7 @@ impl GlBackend {
             fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
             prev_frame_texture_id: 0,
             notif_texture_id: create_texture(notif_rect.w, notif_rect.h),
-            shader_frame_blend_mode: config.shader_frame_blend_mode,
+            shader_frame_blend_mode: config.gl.shader_frame_blend_mode,
             prev_buffer: Box::new([]),
         };
         obj.update_config(config);
@@ -68,8 +68,8 @@ impl GlBackend {
         Ok(obj)
     }
 
-    pub fn update_config(&mut self, config: &GlConfig) {
-        self.load_shader(&config.shader_name, config.shader_frame_blend_mode)
+    pub fn update_config(&mut self, config: &RenderConfig) {
+        self.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)
             .unwrap();
     }
 
@@ -150,8 +150,8 @@ impl GlBackend {
     }
 
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
-        let width = VideoConfig::WIDTH;
-        let height = VideoConfig::HEIGHT;
+        let width = RenderConfig::WIDTH;
+        let height = RenderConfig::HEIGHT;
 
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT);
@@ -159,7 +159,7 @@ impl GlBackend {
 
             self.uniform_locations.send_image();
             self.uniform_locations
-                .send_in_resolution(VideoConfig::WIDTH as f32, VideoConfig::HEIGHT as f32);
+                .send_in_resolution(RenderConfig::WIDTH as f32, RenderConfig::HEIGHT as f32);
             self.uniform_locations.send_out_resolution(
                 self.game_rect.width() as f32,
                 self.game_rect.height() as f32,
@@ -268,7 +268,7 @@ impl GlBackend {
             gl::BindVertexArray(0);
 
             self.frame_texture_id =
-                create_texture(VideoConfig::WIDTH as i32, VideoConfig::HEIGHT as i32);
+                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32);
             self.vao = vao;
             self.vbo = vbo;
         }
@@ -283,9 +283,10 @@ impl GlBackend {
         if frame_blend_mode != ShaderFrameBlendMode::None {
             self.uniform_locations.send_prev_image();
             self.prev_frame_texture_id =
-                create_texture(VideoConfig::WIDTH as i32, VideoConfig::HEIGHT as i32);
-            self.prev_buffer = vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT * BYTES_PER_PIXEL]
-                .into_boxed_slice();
+                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32);
+            self.prev_buffer =
+                vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT * BYTES_PER_PIXEL]
+                    .into_boxed_slice();
         } else if frame_blend_mode == ShaderFrameBlendMode::None && !self.prev_buffer.is_empty() {
             self.prev_buffer = Box::new([]);
         }

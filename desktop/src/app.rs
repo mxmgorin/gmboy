@@ -110,12 +110,12 @@ impl App {
         config: AppConfig,
         palettes: Box<[LcdPalette]>,
     ) -> Result<Self, String> {
-        let colors = config.interface.get_palette_colors(&palettes);
+        let colors = config.video.interface.get_palette_colors(&palettes);
         let roms = RomsList::get_or_create();
 
         Ok(Self {
             audio: AppAudio::new(sdl, &config.audio),
-            video: AppVideo::new(sdl, colors[0], colors[3], &config)?,
+            video: AppVideo::new(sdl, colors[0], colors[3], &config.video)?,
             menu: AppMenu::new(roms.get_last_path().is_some()),
             state: AppState::Paused,
             palettes,
@@ -180,9 +180,9 @@ impl App {
     }
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
-        self.config.interface.scale = (self.config.interface.scale + delta).max(0.0);
-        self.video.set_scale(self.config.interface.scale as u32)?;
-        let msg = format!("Scale: {}", self.config.interface.scale);
+        self.config.video.interface.scale = (self.config.video.interface.scale + delta).max(0.0);
+        self.video.set_scale(self.config.video.interface.scale as u32)?;
+        let msg = format!("Scale: {}", self.config.video.interface.scale);
         self.notifications.add(msg);
 
         Ok(())
@@ -199,30 +199,30 @@ impl App {
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
-        self.config.interface.selected_palette_idx = core::move_next_wrapped(
-            self.config.interface.selected_palette_idx,
+        self.config.video.interface.selected_palette_idx = core::move_next_wrapped(
+            self.config.video.interface.selected_palette_idx,
             self.palettes.len() - 1,
         );
         self.update_palette(emu);
     }
 
     pub fn prev_palette(&mut self, emu: &mut Emu) {
-        self.config.interface.selected_palette_idx = core::move_prev_wrapped(
-            self.config.interface.selected_palette_idx,
+        self.config.video.interface.selected_palette_idx = core::move_prev_wrapped(
+            self.config.video.interface.selected_palette_idx,
             self.palettes.len() - 1,
         );
         self.update_palette(emu);
     }
 
     pub fn update_palette(&mut self, emu: &mut Emu) {
-        let palette = &self.palettes[self.config.interface.selected_palette_idx];
-        let colors = self.config.interface.get_palette_colors(&self.palettes);
+        let palette = &self.palettes[self.config.video.interface.selected_palette_idx];
+        let colors = self.config.video.interface.get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
         self.menu.request_update();
 
-        let suffix = if self.config.interface.is_palette_inverted {
+        let suffix = if self.config.video.interface.is_palette_inverted {
             " (inverted)"
         } else {
             ""
@@ -232,27 +232,27 @@ impl App {
     }
 
     pub fn next_shader(&mut self) {
-        let (name, _shader) = next_shader_by_name(&self.config.video.gl.shader_name);
+        let (name, _shader) = next_shader_by_name(&self.config.video.render.gl.shader_name);
         self.update_shader(name);
     }
 
     pub fn prev_shader(&mut self) {
-        let (name, _shader) = prev_shader_by_name(&self.config.video.gl.shader_name);
+        let (name, _shader) = prev_shader_by_name(&self.config.video.render.gl.shader_name);
         self.update_shader(name);
     }
 
     pub fn update_shader(&mut self, name: impl Into<String>) {
-        self.config.video.gl.shader_name = name.into();
+        self.config.video.render.gl.shader_name = name.into();
         self.video.update_config(&self.config.video);
         self.menu.request_update();
         self.notifications
-            .add(format!("Shader: {}", self.config.video.gl.shader_name));
+            .add(format!("Shader: {}", self.config.video.render.gl.shader_name));
     }
 
     pub fn toggle_fullscreen(&mut self) {
-        self.config.interface.is_fullscreen = !self.config.interface.is_fullscreen;
+        self.config.video.interface.is_fullscreen = !self.config.video.interface.is_fullscreen;
         self.video
-            .set_fullscreen(self.config.interface.is_fullscreen);
+            .set_fullscreen(self.config.video.interface.is_fullscreen);
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
@@ -286,7 +286,7 @@ impl App {
                     .bus
                     .io
                     .lcd
-                    .apply_colors(self.config.interface.get_palette_colors(&self.palettes));
+                    .apply_colors(self.config.video.interface.get_palette_colors(&self.palettes));
                 emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
 
                 let msg = format!("Loaded save state: {index}");
@@ -354,7 +354,7 @@ impl App {
             .bus
             .io
             .lcd
-            .apply_colors(self.config.interface.get_palette_colors(&self.palettes));
+            .apply_colors(self.config.video.interface.get_palette_colors(&self.palettes));
         emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
         self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());

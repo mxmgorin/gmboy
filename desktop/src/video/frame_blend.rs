@@ -1,4 +1,4 @@
-use crate::config::VideoConfig;
+use crate::config::{RenderConfig, VideoConfig};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -21,7 +21,7 @@ impl FrameBlend {
             None
         } else {
             Some(Self {
-                prev_framebuffer: vec![0; VideoConfig::WIDTH * VideoConfig::HEIGHT]
+                prev_framebuffer: vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT]
                     .into_boxed_slice(),
             })
         }
@@ -29,8 +29,8 @@ impl FrameBlend {
 
     pub fn process_buffer(&mut self, pixel_buffer: &[u32], config: &VideoConfig) -> &[u32] {
         debug_assert_eq!(self.prev_framebuffer.len(), pixel_buffer.len());
-        let w = VideoConfig::WIDTH;
-        let h = VideoConfig::HEIGHT;
+        let w = RenderConfig::WIDTH;
+        let h = RenderConfig::HEIGHT;
 
         for (i, &curr) in pixel_buffer.iter().enumerate() {
             let prev = self.prev_framebuffer[i];
@@ -68,7 +68,7 @@ impl FrameBlend {
         let cb_lin = cb as f32 / 255.0;
 
         // Final RGB values
-        let (mut lr, mut lg, mut lb) = match &config.frame_blend_mode {
+        let (mut lr, mut lg, mut lb) = match &config.render.frame_blend_mode {
             FrameBlendMode::None => (cr_lin, cg_lin, cb_lin),
             FrameBlendMode::Linear(x) => {
                 let a = x.alpha;
@@ -170,7 +170,7 @@ impl FrameBlend {
             }
         };
 
-        let dim = config.blend_dim;
+        let dim = config.render.blend_dim;
         lr *= dim;
         lg *= dim;
         lb *= dim;

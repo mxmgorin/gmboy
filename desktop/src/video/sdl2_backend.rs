@@ -1,4 +1,4 @@
-use crate::config::VideoConfig;
+use crate::config::{RenderConfig, VideoConfig};
 use crate::video::filter::Filters;
 use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
@@ -38,8 +38,8 @@ impl Sdl2Backend {
         let mut game_texture = texture_creator
             .create_texture_streaming(
                 PixelFormatEnum::ARGB8888,
-                VideoConfig::WIDTH as u32,
-                VideoConfig::HEIGHT as u32,
+                RenderConfig::WIDTH as u32,
+                RenderConfig::HEIGHT as u32,
             )
             .unwrap();
         game_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
@@ -77,12 +77,12 @@ impl Sdl2Backend {
 
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         self.clear();
-        let pitch = VideoConfig::WIDTH * BYTES_PER_PIXEL;
+        let pitch = RenderConfig::WIDTH * BYTES_PER_PIXEL;
         self.game_texture.update(None, buffer, pitch).unwrap();
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
-        self.filters.apply(&mut self.canvas, &config.sdl2);
+        self.filters.apply(&mut self.canvas, &config.render.sdl2);
     }
 
     pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
@@ -93,7 +93,7 @@ impl Sdl2Backend {
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
-        self.filters.apply(&mut self.canvas, &config.sdl2);
+        self.filters.apply(&mut self.canvas, &config.render.sdl2);
     }
 
     pub fn draw_fps(&mut self, texture: &VideoTexture) {
