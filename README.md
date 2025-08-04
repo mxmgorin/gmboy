@@ -1,6 +1,6 @@
 <p align="left">
   <a href="https://github.com/mxmgorin/gmboy">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/logo1.gif" alt="Logo" width="200">
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01l.gif" alt="Logo" width="200">
   </a>
 </p>
 
