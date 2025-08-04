@@ -1,4 +1,10 @@
-## 🕹️ GMBoy 
+<p align="left">
+  <a href="https://github.com/mxmgorin/gmboy">
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/logo1.gif" alt="Logo" width="200">
+  </a>
+</p>
+
+___
 
 [![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
