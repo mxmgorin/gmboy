@@ -3,9 +3,9 @@ use crate::input::button::{
     handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
     handle_up,
 };
-use crate::Emu;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
+use core::emu::Emu;
 use sdl2::keyboard::Keycode;
 
 pub fn handle_keyboard(

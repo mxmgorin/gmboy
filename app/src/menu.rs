@@ -624,12 +624,13 @@ impl AppMenu {
             AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader)),
             AppMenuItem::ShaderFrameBlend => {
                 let mut conf = config.video.clone();
-                conf.render.gl.shader_frame_blend_mode = match config.video.render.gl.shader_frame_blend_mode {
-                    ShaderFrameBlendMode::None => ShaderFrameBlendMode::Simple,
-                    ShaderFrameBlendMode::Simple => ShaderFrameBlendMode::AccEven,
-                    ShaderFrameBlendMode::AccEven => ShaderFrameBlendMode::AccOdd,
-                    ShaderFrameBlendMode::AccOdd => ShaderFrameBlendMode::None,
-                };
+                conf.render.gl.shader_frame_blend_mode =
+                    match config.video.render.gl.shader_frame_blend_mode {
+                        ShaderFrameBlendMode::None => ShaderFrameBlendMode::Simple,
+                        ShaderFrameBlendMode::Simple => ShaderFrameBlendMode::AccEven,
+                        ShaderFrameBlendMode::AccEven => ShaderFrameBlendMode::AccOdd,
+                        ShaderFrameBlendMode::AccOdd => ShaderFrameBlendMode::None,
+                    };
                 self.items = video_menu(&conf);
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
@@ -825,12 +826,13 @@ impl AppMenu {
             AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader)),
             AppMenuItem::ShaderFrameBlend => {
                 let mut conf = config.video.clone();
-                conf.render.gl.shader_frame_blend_mode = match config.video.render.gl.shader_frame_blend_mode {
-                    ShaderFrameBlendMode::None => ShaderFrameBlendMode::AccOdd,
-                    ShaderFrameBlendMode::Simple => ShaderFrameBlendMode::None,
-                    ShaderFrameBlendMode::AccEven => ShaderFrameBlendMode::Simple,
-                    ShaderFrameBlendMode::AccOdd => ShaderFrameBlendMode::AccEven,
-                };
+                conf.render.gl.shader_frame_blend_mode =
+                    match config.video.render.gl.shader_frame_blend_mode {
+                        ShaderFrameBlendMode::None => ShaderFrameBlendMode::AccOdd,
+                        ShaderFrameBlendMode::Simple => ShaderFrameBlendMode::None,
+                        ShaderFrameBlendMode::AccEven => ShaderFrameBlendMode::Simple,
+                        ShaderFrameBlendMode::AccOdd => ShaderFrameBlendMode::AccEven,
+                    };
                 self.items = video_menu(&conf);
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
@@ -1015,10 +1017,15 @@ impl AppMenuItem {
             AppMenuItem::SettingsMenu => "Settings".to_string(),
             AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
-            AppMenuItem::Palette => format!("Palette({})", config.video.interface.selected_palette_idx),
+            AppMenuItem::Palette => {
+                format!("Palette({})", config.video.interface.selected_palette_idx)
+            }
             AppMenuItem::ToggleFps => format!("FPS{}", get_suffix(config.video.interface.show_fps)),
             AppMenuItem::ToggleFullscreen => {
-                format!("Fullscreen{}", get_suffix(config.video.interface.is_fullscreen))
+                format!(
+                    "Fullscreen{}",
+                    get_suffix(config.video.interface.is_fullscreen)
+                )
             }
             AppMenuItem::AudioMenu => "Audio".to_string(),
             AppMenuItem::Volume => {
@@ -1029,7 +1036,10 @@ impl AppMenuItem {
             }
             AppMenuItem::AdvancedMenu => "Advanced".to_string(),
             AppMenuItem::TileWindow => {
-                format!("Show Tiles{}", get_suffix(config.video.interface.show_tiles))
+                format!(
+                    "Show Tiles{}",
+                    get_suffix(config.video.interface.show_tiles)
+                )
             }
             AppMenuItem::SpinDuration => {
                 format!(
@@ -1070,13 +1080,22 @@ impl AppMenuItem {
                 get_suffix(config.video.interface.is_palette_inverted)
             ),
             AppMenuItem::CpuFrameBlendMode => {
-                format!("CPU Frame Blend({})", config.video.render.frame_blend_mode.get_name())
+                format!(
+                    "CPU Frame Blend({})",
+                    config.video.render.frame_blend_mode.get_name()
+                )
             }
             AppMenuItem::FrameBlendAlpha => {
-                format!("Blend Alpha({})", config.video.render.frame_blend_mode.get_alpha())
+                format!(
+                    "Blend Alpha({})",
+                    config.video.render.frame_blend_mode.get_alpha()
+                )
             }
             AppMenuItem::FrameBlendFade => {
-                format!("Blend Fade({})", config.video.render.frame_blend_mode.get_fade())
+                format!(
+                    "Blend Fade({})",
+                    config.video.render.frame_blend_mode.get_fade()
+                )
             }
             AppMenuItem::FrameBlendDim => {
                 format!("Blend Dim({})", config.video.render.blend_dim)
@@ -1085,33 +1104,63 @@ impl AppMenuItem {
             AppMenuItem::FrameBlendProfile => {
                 format!(
                     "Blend Profile({})",
-                    config.video.render.frame_blend_mode.get_profile().unwrap().name()
+                    config
+                        .video
+                        .render
+                        .frame_blend_mode
+                        .get_profile()
+                        .unwrap()
+                        .name()
                 )
             }
             AppMenuItem::FrameBlendRise => format!(
                 "Blend Rise({})",
-                config.video.render.frame_blend_mode.get_profile().unwrap().rise
+                config
+                    .video
+                    .render
+                    .frame_blend_mode
+                    .get_profile()
+                    .unwrap()
+                    .rise
             ),
             AppMenuItem::FrameBlendFall => format!(
                 "Blend Fall({})",
-                config.video.render.frame_blend_mode.get_profile().unwrap().fall
+                config
+                    .video
+                    .render
+                    .frame_blend_mode
+                    .get_profile()
+                    .unwrap()
+                    .fall
             ),
             AppMenuItem::FrameBlendBleed => format!(
                 "Blend Bleed({})",
-                config.video.render.frame_blend_mode.get_profile().unwrap().bleed
+                config
+                    .video
+                    .render
+                    .frame_blend_mode
+                    .get_profile()
+                    .unwrap()
+                    .bleed
             ),
             AppMenuItem::GridFilter => {
                 format!("Grid{}", get_suffix(config.video.render.sdl2.grid_enabled))
             }
             AppMenuItem::SubpixelFilter => {
-                format!("Mask{}", get_suffix(config.video.render.sdl2.subpixel_enabled))
+                format!(
+                    "Mask{}",
+                    get_suffix(config.video.render.sdl2.subpixel_enabled)
+                )
             }
             AppMenuItem::RomsMenu => "ROMs".to_string(),
             AppMenuItem::Roms(x) => format!("ROMs ({})", x.items.len()),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
             AppMenuItem::ScanlineFilter => {
-                format!("Scanline{}", get_suffix(config.video.render.sdl2.scanline_enabled))
+                format!(
+                    "Scanline{}",
+                    get_suffix(config.video.render.sdl2.scanline_enabled)
+                )
             }
             AppMenuItem::DotMatrixFilter => {
                 format!(
@@ -1120,7 +1169,10 @@ impl AppMenuItem {
                 )
             }
             AppMenuItem::VignetteFilter => {
-                format!("Vignette{}", get_suffix(config.video.render.sdl2.vignette_enabled))
+                format!(
+                    "Vignette{}",
+                    get_suffix(config.video.render.sdl2.vignette_enabled)
+                )
             }
             AppMenuItem::VideoBackend => {
                 format!("Backend({:?})", config.video.render.backend)

@@ -1,7 +1,7 @@
 use crate::app::{App, AppCmd};
 use crate::input::button::handle_emu_btn;
 use crate::input::combos::ComboTracker;
-use crate::Emu;
+use core::emu::Emu;
 use sdl2::controller::Button;
 
 pub fn handle_gamepad(

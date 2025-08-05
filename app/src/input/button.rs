@@ -1,6 +1,6 @@
 use crate::app::{App, AppCmd, AppState};
-use crate::Emu;
 use core::auxiliary::joypad::JoypadButton;
+use core::emu::Emu;
 
 pub fn handle_emu_btn(
     btn: JoypadButton,

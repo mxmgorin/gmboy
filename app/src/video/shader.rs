@@ -1,23 +1,23 @@
 use gl::types::GLenum;
-use std::ffi::CString;
 use serde::{Deserialize, Serialize};
+use std::ffi::CString;
 
-const VERTEX_SHADER: &str = include_str!("../../shaders/master.vert");
-const PASSTHROUGH_FRAGMENT: &str = include_str!("../../shaders/passthrough.frag");
-const BILINEAR_FRAGMENT: &str = include_str!("../../shaders/bilinear.frag");
-const SMOOTH_BILINEAR_FRAGMENT: &str = include_str!("../../shaders/smooth_bilinear.frag");
-const CRT_FRAGMENT: &str = include_str!("../../shaders/crt.frag");
-const MASTER_FRAGMENT: &str = include_str!("../../shaders/master.frag");
-const FLAT_CRT_FRAGMENT: &str = include_str!("../../shaders/flat_crt.fsh");
-const HQ2X_FRAGMENT: &str = include_str!("../../shaders/HQ2x.fsh");
-const AAOMNI_SCALE_LEGACY: &str = include_str!("../../shaders/AAOmniScaleLegacy.fsh");
-const AASCALE2X: &str = include_str!("../../shaders/AAScale2x.fsh");
-const AASCALE4X: &str = include_str!("../../shaders/AAScale4x.fsh");
-const LCD: &str = include_str!("../../shaders/LCD.fsh");
-const MONO_LCD: &str = include_str!("../../shaders/MonoLCD.fsh");
-const OMNI_SCALE: &str = include_str!("../../shaders/OmniScale.fsh");
-const SCALE2X: &str = include_str!("../../shaders/Scale2x.fsh");
-const SCALE4X: &str = include_str!("../../shaders/Scale4x.fsh");
+const VERTEX_SHADER: &str = include_str!("../../../app/shaders/master.vert");
+const PASSTHROUGH_FRAGMENT: &str = include_str!("../../../app/shaders/passthrough.frag");
+const BILINEAR_FRAGMENT: &str = include_str!("../../../app/shaders/bilinear.frag");
+const SMOOTH_BILINEAR_FRAGMENT: &str = include_str!("../../../app/shaders/smooth_bilinear.frag");
+const CRT_FRAGMENT: &str = include_str!("../../../app/shaders/crt.frag");
+const MASTER_FRAGMENT: &str = include_str!("../../../app/shaders/master.frag");
+const FLAT_CRT_FRAGMENT: &str = include_str!("../../../app/shaders/flat_crt.fsh");
+const HQ2X_FRAGMENT: &str = include_str!("../../../app/shaders/HQ2x.fsh");
+const AAOMNI_SCALE_LEGACY: &str = include_str!("../../../app/shaders/AAOmniScaleLegacy.fsh");
+const AASCALE2X: &str = include_str!("../../../app/shaders/AAScale2x.fsh");
+const AASCALE4X: &str = include_str!("../../../app/shaders/AAScale4x.fsh");
+const LCD: &str = include_str!("../../../app/shaders/LCD.fsh");
+const MONO_LCD: &str = include_str!("../../../app/shaders/MonoLCD.fsh");
+const OMNI_SCALE: &str = include_str!("../../../app/shaders/OmniScale.fsh");
+const SCALE2X: &str = include_str!("../../../app/shaders/Scale2x.fsh");
+const SCALE4X: &str = include_str!("../../../app/shaders/Scale4x.fsh");
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
 pub enum ShaderFrameBlendMode {

@@ -148,7 +148,7 @@ impl Emu {
         self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
-        
+
         Ok(())
     }
 

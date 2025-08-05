@@ -4,8 +4,8 @@ use serde::Serialize;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::{Path, PathBuf};
-use std::{env, fs, io};
 use std::time::Duration;
+use std::{env, fs, io};
 
 pub mod apu;
 pub mod auxiliary;
@@ -85,14 +85,21 @@ where
     T: DeserializeOwned,
 {
     let path_ref = path.as_ref();
-    let file = File::open(path_ref)
-        .map_err(|e| io::Error::new(e.kind(), format!("Failed to open {}: {}", path_ref.display(), e)))?;
+    let file = File::open(path_ref).map_err(|e| {
+        io::Error::new(
+            e.kind(),
+            format!("Failed to open {}: {}", path_ref.display(), e),
+        )
+    })?;
 
     let reader = BufReader::new(file);
-    serde_json::from_reader(reader)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("Invalid JSON in {}: {}", path_ref.display(), e)))
+    serde_json::from_reader(reader).map_err(|e| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("Invalid JSON in {}: {}", path_ref.display(), e),
+        )
+    })
 }
-
 
 pub fn save_json_file<P, T>(path: P, data: &T) -> io::Result<()>
 where
@@ -101,10 +108,8 @@ where
 {
     let file = File::create(path.as_ref())?;
     let writer = BufWriter::new(file);
-    serde_json::to_writer_pretty(writer, data)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+    serde_json::to_writer_pretty(writer, data).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
 }
-
 
 pub fn get_exe_dir() -> PathBuf {
     let exe_path = env::current_exe().expect("Failed to get executable path");

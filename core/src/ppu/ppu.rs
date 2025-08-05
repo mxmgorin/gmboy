@@ -38,7 +38,7 @@ impl Ppu {
             self.fps = Some(Fps::default());
         }
     }
-    
+
     pub fn get_fps(&self) -> Option<(&str, bool)> {
         self.fps.as_ref().map(|x| x.get())
     }
@@ -179,7 +179,6 @@ impl Fps {
             self.frame_accum = 0.0;
         }
     }
-
 
     pub fn get(&self) -> (&str, bool) {
         (&self.fps_str, self.updated)
