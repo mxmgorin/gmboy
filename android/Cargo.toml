@@ -1,0 +1,11 @@
+[package]
+name = "android"
+version = "0.1.0"
+edition = "2021"
+authors = ["troidem <mxmgorin@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+app = { path = "../app" }

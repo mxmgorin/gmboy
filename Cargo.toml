@@ -3,6 +3,7 @@ members = [
     "core",
     "app",
     "desktop",
+    "android"
 ]
 
 resolver = "2"
