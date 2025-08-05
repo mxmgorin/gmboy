@@ -389,10 +389,10 @@ impl UniformLocations {
 
 fn print_gl_versions() {
     unsafe {
-        let version = CStr::from_ptr(gl::GetString(gl::VERSION) as *const i8)
+        let version = CStr::from_ptr(gl::GetString(gl::VERSION) as *const _)
             .to_str()
             .unwrap();
-        let shading_lang = CStr::from_ptr(gl::GetString(gl::SHADING_LANGUAGE_VERSION) as *const i8)
+        let shading_lang = CStr::from_ptr(gl::GetString(gl::SHADING_LANGUAGE_VERSION) as *const _)
             .to_str()
             .unwrap();
 
