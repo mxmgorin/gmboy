@@ -9,4 +9,4 @@ name = "gmboy"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-app = { path = "../app" }
+app = { path = "../app", default-features = false }

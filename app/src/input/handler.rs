@@ -152,6 +152,7 @@ impl InputHandler {
             }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
+                #[cfg(feature = "filepicker")]
                 if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
                     let mut lib = RomsList::get_or_create();
                     let result = lib.load_from_dir(&dir);

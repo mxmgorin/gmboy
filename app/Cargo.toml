@@ -6,16 +6,17 @@ authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
 default = ["filepicker"]
-filepicker = []
+filepicker = ["tinyfiledialogs"]
 
 [dependencies]
 core = { path = "../core" }
-tinyfiledialogs = "3.9"
 sdl2 = { version = "0.38", default-features = false, features = ["unsafe_textures"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.141"
 bytemuck = "1.23.1"
 gl = "0.14.0"
+
+tinyfiledialogs = { version = "3.9", optional = true }
 
 [target.'cfg(target_os="macos")'.dependencies.sdl2]
 features=["bundled", "static-link"]
