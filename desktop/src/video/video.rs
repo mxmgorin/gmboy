@@ -40,9 +40,13 @@ impl AppVideo {
             RenderConfig::HEIGHT as u32 * 3,
         );
         let (mut backend, ui) = match config.render.backend {
-            VideoBackendType::Sdl2 => create_sdl2_backend(
-                sdl, config, game_rect, menu_rect, notif_rect, text_color, bg_color,
-            ),
+            VideoBackendType::Sdl2 => {
+                let fps_rect = Rect::new(6, 6, 76, 76);
+                let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
+                let backend = Sdl2Backend::new(sdl, config, game_rect, fps_rect, notif_rect);
+
+                (VideoBackend::Sdl2(backend), ui)
+            }
             VideoBackendType::Gl => {
                 let fps_rect = Rect::new(
                     6,
@@ -51,18 +55,9 @@ impl AppVideo {
                     RenderConfig::WIDTH as u32 * 3,
                 );
                 let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let gl_backend =
-                    GlBackend::new(sdl, game_rect, fps_rect, notif_rect, &config.render);
+                let backend = GlBackend::new(sdl, game_rect, fps_rect, notif_rect, &config.render)?;
 
-                match gl_backend {
-                    Ok(gl_backend) => (VideoBackend::Gl(gl_backend), ui),
-                    Err(err) => {
-                        println!("Fallback to SDL2. Failed to create GL backend: {err}");
-                        create_sdl2_backend(
-                            sdl, config, game_rect, menu_rect, notif_rect, text_color, bg_color,
-                        )
-                    }
-                }
+                (VideoBackend::Gl(backend), ui)
             }
         };
         backend.set_fullscreen(config.interface.is_fullscreen);
@@ -125,20 +120,4 @@ impl AppVideo {
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         self.backend.set_fullscreen(fullscreen);
     }
-}
-
-pub fn create_sdl2_backend(
-    sdl: &Sdl,
-    config: &VideoConfig,
-    game_rect: Rect,
-    menu_rect: Rect,
-    notif_rect: Rect,
-    text_color: PixelColor,
-    bg_color: PixelColor,
-) -> (VideoBackend, Overlay) {
-    let fps_rect = Rect::new(6, 6, 76, 76);
-    let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
-    let backend = Sdl2Backend::new(sdl, config, game_rect, fps_rect, notif_rect);
-
-    (VideoBackend::Sdl2(backend), ui)
 }

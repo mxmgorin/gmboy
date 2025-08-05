@@ -11,6 +11,7 @@ pub enum FrameBlendMode {
     Accurate(BlendProfile),
 }
 
+#[derive(Debug)]
 pub struct FrameBlend {
     prev_framebuffer: Box<[u32]>,
 }

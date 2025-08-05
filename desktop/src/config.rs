@@ -194,7 +194,7 @@ impl Default for AppConfig {
                 render: RenderConfig {
                     frame_blend_mode: FrameBlendMode::None,
                     blend_dim: 1.0,
-                    backend: VideoBackendType::Sdl2,
+                    backend: VideoBackendType::Gl,
                     sdl2: Sdl2Config {
                         grid_enabled: true,
                         subpixel_enabled: true,

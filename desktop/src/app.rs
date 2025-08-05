@@ -1,5 +1,5 @@
 use crate::audio::AppAudio;
-use crate::config::{AppConfig, VideoConfig};
+use crate::config::{AppConfig, VideoBackendType, VideoConfig};
 use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
@@ -107,20 +107,37 @@ impl EmuAudioCallback for App {
 impl App {
     pub fn new(
         sdl: &mut Sdl,
-        config: AppConfig,
+        mut config: AppConfig,
         palettes: Box<[LcdPalette]>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
         let roms = RomsList::get_or_create();
+        let mut notifications = Notifications::new(Duration::from_secs(3));
+
+        let video = AppVideo::new(sdl, colors[0], colors[3], &config.video);
+        let video = match video {
+            Ok(video) => video,
+            Err(err) => {
+                if config.video.render.backend == VideoBackendType::Gl {
+                    let msg = "GL init failed, using SDL2";
+                    notifications.add(msg);
+                    config.video.render.backend = VideoBackendType::Sdl2;
+
+                    AppVideo::new(sdl, colors[0], colors[3], &config.video)?
+                } else {
+                    return Err(err);
+                }
+            }
+        };
 
         Ok(Self {
             audio: AppAudio::new(sdl, &config.audio),
-            video: AppVideo::new(sdl, colors[0], colors[3], &config.video)?,
+            video,
             menu: AppMenu::new(roms.get_last_path().is_some()),
             state: AppState::Paused,
             palettes,
             config,
-            notifications: Notifications::new(Duration::from_secs(3)),
+            notifications,
         })
     }
 
@@ -181,7 +198,8 @@ impl App {
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
         self.config.video.interface.scale = (self.config.video.interface.scale + delta).max(0.0);
-        self.video.set_scale(self.config.video.interface.scale as u32)?;
+        self.video
+            .set_scale(self.config.video.interface.scale as u32)?;
         let msg = format!("Scale: {}", self.config.video.interface.scale);
         self.notifications.add(msg);
 
@@ -216,7 +234,11 @@ impl App {
 
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.video.interface.selected_palette_idx];
-        let colors = self.config.video.interface.get_palette_colors(&self.palettes);
+        let colors = self
+            .config
+            .video
+            .interface
+            .get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
         emu.runtime.bus.io.lcd.set_pallet(colors);
@@ -245,8 +267,10 @@ impl App {
         self.config.video.render.gl.shader_name = name.into();
         self.video.update_config(&self.config.video);
         self.menu.request_update();
-        self.notifications
-            .add(format!("Shader: {}", self.config.video.render.gl.shader_name));
+        self.notifications.add(format!(
+            "Shader: {}",
+            self.config.video.render.gl.shader_name
+        ));
     }
 
     pub fn toggle_fullscreen(&mut self) {
@@ -282,11 +306,12 @@ impl App {
                 };
 
                 emu.load_save_state(save_state);
-                emu.runtime
-                    .bus
-                    .io
-                    .lcd
-                    .apply_colors(self.config.video.interface.get_palette_colors(&self.palettes));
+                emu.runtime.bus.io.lcd.apply_colors(
+                    self.config
+                        .video
+                        .interface
+                        .get_palette_colors(&self.palettes),
+                );
                 emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
 
                 let msg = format!("Loaded save state: {index}");
@@ -350,11 +375,12 @@ impl App {
             eprintln!("Failed save RomsLibrary: {err}");
         }
 
-        emu.runtime
-            .bus
-            .io
-            .lcd
-            .apply_colors(self.config.video.interface.get_palette_colors(&self.palettes));
+        emu.runtime.bus.io.lcd.apply_colors(
+            self.config
+                .video
+                .interface
+                .get_palette_colors(&self.palettes),
+        );
         emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
         self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
