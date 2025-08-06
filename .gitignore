@@ -24,3 +24,7 @@ Cargo.lock
 
 /roms/*
 docs/
+
+/android/build/*
+/android/app/build/*
+/android/.gradle
