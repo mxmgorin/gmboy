@@ -8,7 +8,7 @@ use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
-use crate::{AppFileDialog, FileSystem};
+use crate::{AppFileSystem, FileSystem};
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
@@ -86,7 +86,7 @@ pub struct App {
     pub config: AppConfig,
     pub menu: AppMenu,
     pub notifications: Notifications,
-    pub file_dialog: Box<dyn AppFileDialog>,
+    pub file_system: Box<dyn AppFileSystem>,
 }
 
 impl EmuAudioCallback for App {
@@ -112,7 +112,7 @@ impl App {
         sdl: &mut Sdl,
         mut config: AppConfig,
         palettes: Box<[LcdPalette]>,
-        file_dialog: Box<dyn AppFileDialog>,
+        file_system: Box<dyn AppFileSystem>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
         let roms = RomsList::get_or_create();
@@ -142,7 +142,7 @@ impl App {
             palettes,
             config,
             notifications,
-            file_dialog,
+            file_system,
         })
     }
 
@@ -369,16 +369,15 @@ impl App {
         let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
 
-        let file_name = path.file_stem().expect("we read file").to_str().unwrap();
-        let ram_bytes = BatterySave::load_file(file_name).ok().map(|x| x.ram_bytes);
-        let cart = read_cart_file(path, ram_bytes).map_err(|e| e.to_string());
+        let file_name = self.file_system.get_file_name(path).unwrap();
+        let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
+        let cart_bytes = self.file_system.read_file_bytes(path).unwrap();
+        let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string()).unwrap();
+        _ = core::print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
 
-        let Ok(cart) = cart else {
-            let msg = format!("Failed read_cart: {}", cart.unwrap_err());
-            eprintln!("{msg}");
-            library.remove(path);
-            return;
-        };
+        if let Some(ram_bytes) = ram_bytes {
+            cart.load_ram(ram_bytes);
+        }
 
         emu.load_cart(cart);
         library.add(path.to_path_buf());
@@ -416,16 +415,4 @@ impl App {
         let msg = format!("Volume: {}", self.config.audio.volume * 100.0);
         self.notifications.add(msg);
     }
-}
-
-pub fn read_cart_file(path: &Path, ram_bytes: Option<Box<[u8]>>) -> Result<Cart, String> {
-    let bytes = core::read_bytes(path).map_err(|e| e.to_string())?;
-    let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
-    _ = core::print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
-
-    if let Some(ram_bytes) = ram_bytes {
-        cart.load_ram(ram_bytes);
-    }
-
-    Ok(cart)
 }

@@ -133,7 +133,7 @@ impl InputHandler {
             AppCmd::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppCmd::SelectRom => {
                 if app.state == AppState::Paused {
-                    if let Some(path) = app.file_dialog.select_file(
+                    if let Some(path) = app.file_system.select_file(
                         "Select Game Boy ROM",
                         (&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)"),
                     ) {
@@ -150,7 +150,7 @@ impl InputHandler {
             }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
-                if let Some(dir) = app.file_dialog.select_dir("Select ROMs Folder") {
+                if let Some(dir) = app.file_system.select_dir("Select ROMs Folder") {
                     let mut lib = RomsList::get_or_create();
                     let result = lib.load_from_dir(&dir);
 

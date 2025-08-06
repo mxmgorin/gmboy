@@ -9,6 +9,7 @@ default = ["filepicker"]
 filepicker = ["tinyfiledialogs"]
 
 [dependencies]
+core = { path = "../core" }
 app = { path = "../app" }
 tinyfiledialogs = { version = "3.9", optional = true }
 

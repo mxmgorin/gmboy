@@ -1,8 +1,8 @@
-use app::AppFileDialog;
-use core::cart::Cart;
+use app::AppFileSystem;
 use jni::objects::{JByteArray, JClass, JObject, JString, JValue};
 use jni::{JNIEnv, JavaVM};
 use std::backtrace::Backtrace;
+use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
@@ -17,7 +17,7 @@ pub extern "C" fn SDL_main(_argc: i32, _argv: *const *const u8) -> i32 {
 
     _ = std::panic::catch_unwind(|| {
         let args: Vec<String> = std::env::args().collect();
-        let file_dialog = JavaFileDialog;
+        let file_dialog = AndroidFileSystem;
         app::run(args, Box::new(file_dialog));
     });
 
@@ -71,9 +71,7 @@ pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnFilePicked(
     _class: JObject,
     uri: JString,
 ) {
-    log("Java_com_mxmgorin_MainActivity_nativeOnFilePicked");
     let uri_str: String = env.get_string(&uri).unwrap().into();
-    log(&format!("{uri_str}"));
 
     *PICKED_FILE_URI.lock().unwrap() = Some(uri_str);
 }
@@ -83,9 +81,9 @@ pub fn get_picked_file_uri() -> Option<String> {
     PICKED_FILE_URI.lock().unwrap().clone()
 }
 
-pub struct JavaFileDialog;
+pub struct AndroidFileSystem;
 
-impl AppFileDialog for JavaFileDialog {
+impl AppFileSystem for AndroidFileSystem {
     fn select_file(&mut self, _title: &str, _filter: (&[&str], &str)) -> Option<String> {
         log("select_file");
         let mut env = get_env();
@@ -94,20 +92,6 @@ impl AppFileDialog for JavaFileDialog {
 
         loop {
             if let Some(uri) = get_picked_file_uri() {
-                log(&format!("opening {uri}"));
-
-                if let Some(name) = get_file_name(&uri) {
-                    log(&format!("filename {name}"));
-                }
-
-                if let Some(bytes) = read_content_uri(&uri) {
-                    log(&format!("file bytes {}", bytes.len()));
-
-                    if let Ok(cart) = Cart::new(bytes.into_boxed_slice()) {
-                        log(&format!("Selected cart: {}", cart.data.get_title()));
-                    }
-                }
-
                 return Some(uri);
             }
 
@@ -121,6 +105,18 @@ impl AppFileDialog for JavaFileDialog {
 
     fn select_dir(&mut self, _title: &str) -> Option<String> {
         None
+    }
+
+    fn get_file_name(&self, path: &Path) -> Option<String> {
+        let path = path.to_str()?;
+
+        get_file_name(path)
+    }
+
+    fn read_file_bytes(&self, path: &Path) -> Option<Box<[u8]>> {
+        let path = path.to_str()?;
+
+        read_content_uri(path).map(|x| x.into_boxed_slice())
     }
 }
 
@@ -189,4 +185,3 @@ pub fn get_file_name(uri: &str) -> Option<String> {
 
     Some(filename)
 }
-
