@@ -1,7 +1,8 @@
-use crate::{get_exe_dir, save_json_file};
+use core::save_json_file;
 use serde::{Deserialize, Serialize};
 use std::io;
 use std::path::PathBuf;
+use crate::get_base_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LcdPalette {
@@ -17,9 +18,7 @@ impl LcdPalette {
     }
 
     pub fn default_palettes_path() -> PathBuf {
-        let exe_dir = get_exe_dir();
-
-        exe_dir.join("palettes.json")
+        get_base_dir().join("palettes.json")
     }
 
     pub fn default_palettes() -> Vec<LcdPalette> {

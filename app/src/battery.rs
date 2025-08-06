@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::{env, fs};
+use std::{fs};
+use crate::get_base_dir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatterySave {
@@ -39,11 +40,6 @@ impl BatterySave {
     }
 
     pub fn generate_path(name: &str) -> PathBuf {
-        let exe_path = env::current_exe().expect("Failed to get executable path");
-        let exe_dir = exe_path
-            .parent()
-            .expect("Failed to get executable directory");
-
-        exe_dir.join("saves").join(format!("{name}.sav"))
+        get_base_dir().join("saves").join(format!("{name}.sav"))
     }
 }

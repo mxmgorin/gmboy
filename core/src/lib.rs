@@ -3,9 +3,9 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::time::Duration;
-use std::{env, fs, io};
+use std::{fs, io};
 
 pub mod apu;
 pub mod auxiliary;
@@ -109,15 +109,6 @@ where
     let file = File::create(path.as_ref())?;
     let writer = BufWriter::new(file);
     serde_json::to_writer_pretty(writer, data).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-}
-
-pub fn get_exe_dir() -> PathBuf {
-    let exe_path = env::current_exe().expect("Failed to get executable path");
-
-    exe_path
-        .parent()
-        .expect("Failed to get executable directory")
-        .to_path_buf()
 }
 
 pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {

@@ -1,11 +1,10 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::ppu::palette::LcdPalette;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
     TILE_SET_DATA_2_START,
 };
 use crate::ppu::window::LcdWindow;
-use crate::{get_bit_flag, into_pixel_colors, set_bit};
+use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
@@ -50,9 +49,12 @@ pub struct Lcd {
 
 impl Default for Lcd {
     fn default() -> Self {
-        let palette = into_pixel_colors(&LcdPalette::nostalgia().hex_colors);
-
-        Self::new(palette)
+        Self::new([
+            PixelColor::from_hex("0xFFFFFFFF"),
+            PixelColor::from_hex("0xFFAAAAAA"),
+            PixelColor::from_hex("0xFF555555"),
+            PixelColor::from_hex("0xFF000000"),
+        ])
     }
 }
 

@@ -1,19 +1,20 @@
 use crate::audio::AppAudio;
+use crate::battery::BatterySave;
 use crate::config::{AppConfig, VideoBackendType, VideoConfig};
 use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
+use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
+use crate::FileSystem;
 use core::auxiliary::joypad::JoypadButton;
-use core::emu::battery::BatterySave;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use core::emu::EmuAudioCallback;
-use core::ppu::palette::LcdPalette;
 use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -288,7 +289,7 @@ impl App {
                 let save_state = emu.create_save_state();
                 let index = index.unwrap_or(self.config.current_save_index).to_string();
 
-                if let Err(err) = save_state.save_file(&name, &index) {
+                if let Err(err) = FileSystem::write_save_state_file(&save_state, &name, &index) {
                     eprintln!("Failed save_state: {err}");
                     return;
                 }
@@ -298,7 +299,7 @@ impl App {
             }
             SaveStateCmd::Load => {
                 let index = index.unwrap_or(self.config.current_load_index).to_string();
-                let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
+                let save_state = FileSystem::read_save_state_file(&name, &index);
 
                 let Ok(save_state) = save_state else {
                     eprintln!("Failed load save_state: {}", save_state.unwrap_err());
@@ -347,9 +348,9 @@ impl App {
         }
 
         if self.config.auto_save_state {
-            if let Err(err) = emu
-                .create_save_state()
-                .save_file(&name, AUTO_SAVE_STATE_SUFFIX)
+            let state = emu.create_save_state();
+            if let Err(err) =
+                FileSystem::write_save_state_file(&state, &name, AUTO_SAVE_STATE_SUFFIX)
             {
                 eprintln!("Failed save_state: {err}");
             }
@@ -364,7 +365,11 @@ impl App {
         let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
 
-        if emu.load_cart_file(path).is_err() {
+        let file_name = path.file_stem().expect("we read file").to_str().unwrap();
+
+        let save = BatterySave::load_file(file_name).ok().map(|x| x.ram_bytes);
+
+        if emu.load_cart_file(path, save).is_err() {
             library.remove(path);
             return;
         }
@@ -387,8 +392,7 @@ impl App {
 
         if !is_reload && self.config.auto_save_state {
             let name = path.file_stem().unwrap().to_str().expect("cart is valid");
-            let save_state =
-                core::emu::state::EmuSaveState::load_file(name, AUTO_SAVE_STATE_SUFFIX);
+            let save_state = FileSystem::read_save_state_file(name, AUTO_SAVE_STATE_SUFFIX);
 
             if let Ok(save_state) = save_state {
                 emu.load_save_state(save_state);

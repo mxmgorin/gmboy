@@ -1,9 +1,10 @@
+use crate::get_base_dir;
 use crate::input::config::InputConfig;
+use crate::palette::LcdPalette;
 use crate::video::frame_blend::FrameBlendMode;
 use crate::video::shader::ShaderFrameBlendMode;
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
-use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::{env, fs, io};
+use std::{fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -155,13 +156,7 @@ impl AppConfig {
     }
 
     pub fn default_path() -> PathBuf {
-        // Get the directory where the binary is running from
-        let exe_path = env::current_exe().expect("Failed to get executable path");
-        let exe_dir = exe_path
-            .parent()
-            .expect("Failed to get executable directory");
-
-        exe_dir.join("config.json")
+        get_base_dir().join("config.json")
     }
 }
 

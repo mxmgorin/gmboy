@@ -7,23 +7,31 @@ use core::auxiliary::io::Io;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
+use core::emu::state::EmuSaveState;
 use core::emu::Emu;
 use core::ppu::lcd::Lcd;
-use core::ppu::palette::LcdPalette;
 use core::ppu::Ppu;
-use std::path::PathBuf;
+use palette::LcdPalette;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
 use std::{env, fs};
 
 pub mod app;
 pub mod audio;
+pub mod battery;
 pub mod config;
 pub mod input;
 pub mod menu;
 pub mod notification;
+pub mod palette;
 pub mod roms;
 pub mod video;
 
 pub fn run(args: Vec<String>) {
+    let base_dir = get_base_dir();
+    println!("Base dir: {base_dir:?}");
+
     let config = get_config();
     let palettes = get_palettes();
     let mut emu = new_emu(&config, &palettes);
@@ -148,5 +156,45 @@ pub fn get_palettes() -> Box<[LcdPalette]> {
         LcdPalette::save_palettes_file(&palettes).unwrap();
 
         palettes
+    }
+}
+
+pub fn get_base_dir() -> PathBuf {
+    let path = sdl2::filesystem::pref_path("mxmgodev", "GMBoy").unwrap();
+
+    PathBuf::from(path)
+}
+
+pub struct FileSystem;
+
+impl FileSystem {
+    pub fn write_save_state_file(v: &EmuSaveState, name: &str, suffix: &str) -> Result<(), String> {
+        let path = FileSystem::get_save_state_path(name, suffix);
+
+        if let Some(parent) = Path::new(&path).parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+
+        let encoded: Vec<u8> = bincode::serialize(v).map_err(|e| e.to_string())?;
+        let mut file = File::create(path).map_err(|e| e.to_string())?;
+        file.write_all(&encoded).map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    pub fn read_save_state_file(name: &str, suffix: &str) -> Result<EmuSaveState, String> {
+        let path = Self::get_save_state_path(name, suffix);
+        let mut file = File::open(path).map_err(|e| e.to_string())?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
+        let decoded = bincode::deserialize(&buffer).map_err(|e| e.to_string())?;
+
+        Ok(decoded)
+    }
+
+    pub fn get_save_state_path(game_name: &str, suffix: &str) -> PathBuf {
+        get_base_dir()
+            .join("save_states")
+            .join(format!("{game_name}_{suffix}.state"))
     }
 }

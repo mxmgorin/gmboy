@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use crate::get_base_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct RomsList {
@@ -78,8 +79,6 @@ impl RomsList {
     }
 
     pub fn get_path() -> PathBuf {
-        let exe_dir = core::get_exe_dir();
-
-        exe_dir.join("roms.json")
+        get_base_dir().join("roms.json")
     }
 }

@@ -4,7 +4,6 @@ use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
 use crate::cart::Cart;
 use crate::cpu::Cpu;
-use crate::emu::battery::BatterySave;
 use crate::emu::config::EmuConfig;
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
@@ -132,8 +131,8 @@ impl Emu {
         }
     }
 
-    pub fn load_cart_file(&mut self, path: &Path) -> Result<(), String> {
-        let cart = read_cart_file(path).map_err(|e| e.to_string());
+    pub fn load_cart_file(&mut self, path: &Path, ram_bytes: Option<Box<[u8]>>) -> Result<(), String> {
+        let cart = read_cart_file(path, ram_bytes).map_err(|e| e.to_string());
 
         let Ok(cart) = cart else {
             let msg = format!("Failed read_cart: {}", cart.unwrap_err());
@@ -167,17 +166,14 @@ impl Emu {
     }
 }
 
-pub fn read_cart_file(path: &Path) -> Result<Cart, String> {
+pub fn read_cart_file(path: &Path, ram_bytes: Option<Box<[u8]>>) -> Result<Cart, String> {
     let bytes = read_bytes(path).map_err(|e| e.to_string())?;
     let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
     _ = print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
-    let file_name = path.file_stem().expect("we read file").to_str().unwrap();
 
-    let Ok(save) = BatterySave::load_file(file_name) else {
-        return Ok(cart);
-    };
-
-    cart.load_ram(save.ram_bytes);
+    if let Some(ram_bytes) = ram_bytes {
+        cart.load_ram(ram_bytes);
+    }
 
     Ok(cart)
 }
