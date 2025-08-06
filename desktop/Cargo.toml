@@ -6,10 +6,11 @@ authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
 default = ["filepicker"]
-filepicker = []
+filepicker = ["tinyfiledialogs"]
 
 [dependencies]
 app = { path = "../app" }
+tinyfiledialogs = { version = "3.9", optional = true }
 
 [[bin]]
 name = "gmboy"

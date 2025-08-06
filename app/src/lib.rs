@@ -28,7 +28,7 @@ pub mod palette;
 pub mod roms;
 pub mod video;
 
-pub fn run(args: Vec<String>) {
+pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFileDialog>) {
     let base_dir = get_base_dir();
     println!("Base dir: {base_dir:?}");
 
@@ -37,7 +37,7 @@ pub fn run(args: Vec<String>) {
     let mut emu = new_emu(&config, &palettes);
     let mut sdl = sdl2::init().unwrap();
     let mut input = InputHandler::new(&sdl).unwrap();
-    let mut app = App::new(&mut sdl, config, palettes).unwrap();
+    let mut app = App::new(&mut sdl, config, palettes, file_dialog).unwrap();
     load_cart(&mut app, &mut emu, args);
 
     if let Err(err) = app.run(&mut emu, &mut input) {
@@ -197,4 +197,9 @@ impl FileSystem {
             .join("save_states")
             .join(format!("{game_name}_{suffix}.state"))
     }
+}
+
+pub trait AppFileDialog {
+    fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String>;
+    fn select_dir(&mut self, title: &str) -> Option<String>;
 }

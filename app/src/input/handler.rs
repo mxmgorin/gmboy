@@ -9,9 +9,8 @@ use core::emu::Emu;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
-use std::path::{PathBuf};
-#[cfg(feature = "filepicker")]
-use std::path::{Path};
+use std::path::Path;
+use std::path::PathBuf;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -132,14 +131,11 @@ impl InputHandler {
                 emu.runtime.set_mode(mode);
             }
             AppCmd::SaveState(event, index) => app.handle_save_state(emu, event, index),
-            AppCmd::SelectRom =>
-            {
-                #[cfg(feature = "filepicker")]
+            AppCmd::SelectRom => {
                 if app.state == AppState::Paused {
-                    if let Some(path) = tinyfiledialogs::open_file_dialog(
+                    if let Some(path) = app.file_dialog.select_file(
                         "Select Game Boy ROM",
-                        "",
-                        Some((&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)")),
+                        (&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)"),
                     ) {
                         app.load_cart_file(emu, Path::new(&path));
                     }
@@ -154,8 +150,7 @@ impl InputHandler {
             }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
-                #[cfg(feature = "filepicker")]
-                if let Some(dir) = tinyfiledialogs::select_folder_dialog("Select ROMs Folder", "") {
+                if let Some(dir) = app.file_dialog.select_dir("Select ROMs Folder") {
                     let mut lib = RomsList::get_or_create();
                     let result = lib.load_from_dir(&dir);
 

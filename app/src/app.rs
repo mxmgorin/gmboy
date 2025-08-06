@@ -8,7 +8,7 @@ use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
-use crate::FileSystem;
+use crate::{AppFileDialog, FileSystem};
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
@@ -85,6 +85,7 @@ pub struct App {
     pub config: AppConfig,
     pub menu: AppMenu,
     pub notifications: Notifications,
+    pub file_dialog: Box<dyn AppFileDialog>,
 }
 
 impl EmuAudioCallback for App {
@@ -110,6 +111,7 @@ impl App {
         sdl: &mut Sdl,
         mut config: AppConfig,
         palettes: Box<[LcdPalette]>,
+        file_dialog: Box<dyn AppFileDialog>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
         let roms = RomsList::get_or_create();
@@ -139,6 +141,7 @@ impl App {
             palettes,
             config,
             notifications,
+            file_dialog,
         })
     }
 
