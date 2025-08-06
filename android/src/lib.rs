@@ -1,4 +1,5 @@
 use std::backtrace::Backtrace;
+use app::AppFileDialog;
 
 #[no_mangle]
 pub extern "C" fn SDL_main(_argc: i32, _argv: *const *const u8) -> i32 {
@@ -11,7 +12,8 @@ pub extern "C" fn SDL_main(_argc: i32, _argv: *const *const u8) -> i32 {
 
     _ = std::panic::catch_unwind(|| {
         let args: Vec<String> = std::env::args().collect();
-        app::run(args);
+        let file_dialog = JavaFileDialog;
+        app::run(args, Box::new(file_dialog));
     });
 
     0
@@ -28,5 +30,17 @@ pub fn log(msg: &str) {
     let cmsg = CString::new(msg).unwrap();
     unsafe {
         __android_log_print(3, tag.as_ptr() as *const _, cmsg.as_ptr() as *const _);
+    }
+}
+
+pub struct JavaFileDialog;
+
+impl AppFileDialog for JavaFileDialog {
+    fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String> {
+        None
+    }
+
+    fn select_dir(&mut self, title: &str) -> Option<String> {
+        None
     }
 }
