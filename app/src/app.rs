@@ -370,21 +370,17 @@ impl App {
             && !emu.runtime.bus.cart.is_empty();
 
         let file_name = path.file_stem().expect("we read file").to_str().unwrap();
-
         let ram_bytes = BatterySave::load_file(file_name).ok().map(|x| x.ram_bytes);
         let cart = read_cart_file(path, ram_bytes).map_err(|e| e.to_string());
 
         let Ok(cart) = cart else {
             let msg = format!("Failed read_cart: {}", cart.unwrap_err());
             eprintln!("{msg}");
+            library.remove(path);
             return;
         };
 
-        if emu.load_cart(cart).is_err() {
-            library.remove(path);
-            return;
-        }
-
+        emu.load_cart(cart);
         library.add(path.to_path_buf());
 
         if let Err(err) = core::save_json_file(&lib_path, &library) {

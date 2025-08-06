@@ -129,7 +129,7 @@ impl Emu {
         }
     }
 
-    pub fn load_cart(&mut self, cart: Cart) -> Result<(), String> {
+    pub fn load_cart(&mut self, cart: Cart) {
         let apu = Apu::new(self.runtime.bus.io.apu.config.clone());
         let lcd = Lcd::new(self.runtime.bus.io.lcd.current_colors);
         let io = Io::new(lcd, apu);
@@ -138,8 +138,6 @@ impl Emu {
         self.state = EmuState::Running;
         self.runtime.clock.reset();
         self.rewind_buffer.clear();
-
-        Ok(())
     }
 
     pub fn load_save_state(&mut self, save_state: EmuSaveState) {
