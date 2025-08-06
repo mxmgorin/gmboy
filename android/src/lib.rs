@@ -1,9 +1,9 @@
-use core::cart::Cart;
 use app::AppFileDialog;
-use jni::objects::{JByteArray, JObject, JString};
-use jni::JNIEnv;
+use core::cart::Cart;
+use jni::objects::{JByteArray, JClass, JObject, JString, JValue};
+use jni::{JNIEnv, JavaVM};
 use std::backtrace::Backtrace;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 #[no_mangle]
@@ -32,6 +32,14 @@ extern "C" {
 extern "C" {
     fn SDL_AndroidGetActivity() -> *mut std::os::raw::c_void;
     fn SDL_AndroidGetJNIEnv() -> *mut std::os::raw::c_void;
+}
+
+static JVM: OnceLock<JavaVM> = OnceLock::new();
+
+/// Called from SDLActivity.onCreate or SDL2 main to store the JavaVM
+#[no_mangle]
+pub extern "C" fn Java_com_mxmgorin_gmboy_MainActivity_nativeInit(env: JNIEnv, _class: JClass) {
+    JVM.set(env.get_java_vm().unwrap()).ok();
 }
 
 pub fn log(msg: &str) {
@@ -86,7 +94,10 @@ impl AppFileDialog for JavaFileDialog {
 
         loop {
             if let Some(uri) = get_picked_file_uri() {
-                if let Some(bytes) = read_file_bytes(&uri) {
+                log(&format!("opening {}", uri));
+                if let Some(bytes) = read_content_uri(&uri) {
+                    log(&format!("bytes {}", bytes.len()));
+
                     if let Ok(cart) = Cart::new(bytes.into_boxed_slice()) {
                         log(&format!("Selected cart: {}", cart.data.get_title()));
                     }
@@ -112,31 +123,35 @@ fn get_env() -> JNIEnv<'static> {
     unsafe { JNIEnv::from_raw(SDL_AndroidGetJNIEnv() as *mut _).unwrap() }
 }
 
-/// Read file bytes using Java ContentResolver
-pub fn read_file_bytes(uri: &str) -> Option<Vec<u8>> {
-    let mut env = get_env();
-    let activity = get_activity();
+/// Reads bytes from an Android content:// URI using Java's ContentResolver
+pub fn read_content_uri(uri: &str) -> Option<Vec<u8>> {
+    let vm = JVM.get()?;
+    let mut env = vm.attach_current_thread().ok()?;
 
-    let j_uri = env.new_string(uri).unwrap();
-    let result = env
-        .call_method(
-            activity,
+    let activity_class = env.find_class("com/mxmgorin/gmboy/MainActivity").ok()?;
+    let juri: JString = env.new_string(uri).ok()?;
+    let obj = JObject::from(juri);
+    let arg = JValue::Object(&obj);
+
+    // Call Java static method readUriBytes(String) -> byte[]
+    let result_obj = env
+        .call_static_method(
+            activity_class,
             "readUriBytes",
             "(Ljava/lang/String;)[B",
-            &[(&JObject::from(j_uri)).into()],
+            &[arg],
         )
-        .ok()?;
+        .ok()?
+        .l()
+        .ok()?; // JObject
 
-    let byte_array = result.l().ok()?;
-    if byte_array.is_null() {
+    if result_obj.is_null() {
         return None;
     }
 
-    let byte_array: JByteArray = JByteArray::from(byte_array);
-    let len = env.get_array_length(&byte_array).ok()? as usize;
-    let mut buf = vec![0i8; len];
-    env.get_byte_array_region(byte_array, 0, &mut buf).ok()?;
+    // Wrap into JByteArray
+    let result_array: JByteArray = JByteArray::from(result_obj);
 
-    // Convert i8 -> u8
-    Some(buf.into_iter().map(|b| b as u8).collect())
+    // Convert to Vec<u8>
+    env.convert_byte_array(result_array).ok()
 }

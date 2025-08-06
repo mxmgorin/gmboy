@@ -1,13 +1,19 @@
 package com.mxmgorin.gmboy;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+
 import org.libsdl.app.SDLActivity;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class MainActivity extends SDLActivity {
     private static final int FILE_PICKER_REQUEST = 1001;
@@ -16,6 +22,7 @@ public class MainActivity extends SDLActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         enableImmersiveMode();
+        nativeInit(); // <-- this initializes the JVM for Rust
     }
 
     @Override
@@ -60,4 +67,33 @@ public class MainActivity extends SDLActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         );
     }
+
+    public static byte[] readUriBytes(String uriStr) {
+        try {
+            Uri uri = Uri.parse(uriStr);
+            ContentResolver resolver = getContext().getContentResolver();
+            InputStream inputStream = resolver.openInputStream(uri);
+
+            if (inputStream == null) return null;
+
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[4096];
+            int nRead;
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            inputStream.close();
+            return buffer.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static MainActivity getContext() {
+        return (MainActivity) SDLActivity.getContext();
+    }
+
+    // Called from Rust to store the JVM reference
+    public static native void nativeInit();
 }
