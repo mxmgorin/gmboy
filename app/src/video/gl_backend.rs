@@ -43,8 +43,7 @@ impl GlBackend {
             .window("GMBoy GL", game_rect.width(), game_rect.height())
             .position_centered()
             .opengl()
-            .build()
-            .unwrap();
+            .build().map_err(|e| e.to_string())?;
 
         let gl_context = window.gl_create_context()?;
         gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const _);
