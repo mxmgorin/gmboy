@@ -8,9 +8,7 @@ use crate::emu::config::EmuConfig;
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
 use crate::ppu::lcd::Lcd;
-use crate::read_bytes;
 use std::collections::VecDeque;
-use std::path::Path;
 use std::time::{Duration, Instant};
 use std::{mem, thread};
 
@@ -131,14 +129,7 @@ impl Emu {
         }
     }
 
-    pub fn load_cart_file(&mut self, path: &Path, ram_bytes: Option<Box<[u8]>>) -> Result<(), String> {
-        let cart = read_cart_file(path, ram_bytes).map_err(|e| e.to_string());
-
-        let Ok(cart) = cart else {
-            let msg = format!("Failed read_cart: {}", cart.unwrap_err());
-            return Err(msg);
-        };
-
+    pub fn load_cart(&mut self, cart: Cart) -> Result<(), String> {
         let apu = Apu::new(self.runtime.bus.io.apu.config.clone());
         let lcd = Lcd::new(self.runtime.bus.io.lcd.current_colors);
         let io = Io::new(lcd, apu);
@@ -164,29 +155,4 @@ impl Emu {
         self.cpu = save_state.cpu;
         self.runtime.clock.reset();
     }
-}
-
-pub fn read_cart_file(path: &Path, ram_bytes: Option<Box<[u8]>>) -> Result<Cart, String> {
-    let bytes = read_bytes(path).map_err(|e| e.to_string())?;
-    let mut cart = Cart::new(bytes).map_err(|e| e.to_string())?;
-    _ = print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
-
-    if let Some(ram_bytes) = ram_bytes {
-        cart.load_ram(ram_bytes);
-    }
-
-    Ok(cart)
-}
-
-fn print_cart(cart: &Cart) -> Result<(), String> {
-    println!("Cart Loaded:");
-    println!("\t Title          : {}", cart.data.get_title());
-    println!("\t Type           : {:?}", cart.data.get_cart_type()?);
-    println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
-    println!("\t ROM bytes      : {:?}", cart.data.bytes.len());
-    println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);
-    println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
-    println!("\t Checksum Valid : {}", cart.data.checksum_valid());
-
-    Ok(())
 }

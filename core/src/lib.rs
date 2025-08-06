@@ -6,6 +6,7 @@ use std::io::{BufReader, BufWriter};
 use std::path::{Path};
 use std::time::Duration;
 use std::{fs, io};
+use crate::cart::Cart;
 
 pub mod apu;
 pub mod auxiliary;
@@ -159,6 +160,19 @@ pub fn change_usize(value: usize, delta: i32) -> usize {
     } else {
         value + delta as usize
     }
+}
+
+pub fn print_cart(cart: &Cart) -> Result<(), String> {
+    println!("Cart Loaded:");
+    println!("\t Title          : {}", cart.data.get_title());
+    println!("\t Type           : {:?}", cart.data.get_cart_type()?);
+    println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
+    println!("\t ROM bytes      : {:?}", cart.data.bytes.len());
+    println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);
+    println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
+    println!("\t Checksum Valid : {}", cart.data.checksum_valid());
+
+    Ok(())
 }
 
 #[cfg(test)]
