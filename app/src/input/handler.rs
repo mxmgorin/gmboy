@@ -9,7 +9,9 @@ use core::emu::Emu;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
+#[cfg(feature = "filepicker")]
+use std::path::{Path};
 
 pub struct InputHandler {
     event_pump: EventPump,
