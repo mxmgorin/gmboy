@@ -94,9 +94,14 @@ impl AppFileDialog for JavaFileDialog {
 
         loop {
             if let Some(uri) = get_picked_file_uri() {
-                log(&format!("opening {}", uri));
+                log(&format!("opening {uri}"));
+
+                if let Some(name) = get_file_name(&uri) {
+                    log(&format!("filename {name}"));
+                }
+
                 if let Some(bytes) = read_content_uri(&uri) {
-                    log(&format!("bytes {}", bytes.len()));
+                    log(&format!("file bytes {}", bytes.len()));
 
                     if let Ok(cart) = Cart::new(bytes.into_boxed_slice()) {
                         log(&format!("Selected cart: {}", cart.data.get_title()));
@@ -155,3 +160,33 @@ pub fn read_content_uri(uri: &str) -> Option<Vec<u8>> {
     // Convert to Vec<u8>
     env.convert_byte_array(result_array).ok()
 }
+
+pub fn get_file_name(uri: &str) -> Option<String> {
+    let vm = JVM.get()?;
+    let mut env = vm.attach_current_thread().ok()?;
+
+    let activity_class = env.find_class("com/mxmgorin/gmboy/MainActivity").ok()?;
+    let juri = env.new_string(uri).ok()?;
+    let obj = JObject::from(juri);
+    let arg = JValue::Object(&obj);
+
+    let jstr = env
+        .call_static_method(
+            activity_class,
+            "getFileName",
+            "(Ljava/lang/String;)Ljava/lang/String;",
+            &[arg],
+        )
+        .ok()?
+        .l()
+        .ok()?;
+
+    if jstr.is_null() {
+        return None;
+    }
+
+    let filename: String = env.get_string(&JString::from(jstr)).ok()?.into();
+
+    Some(filename)
+}
+

@@ -3,8 +3,10 @@ package com.mxmgorin.gmboy;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -88,6 +90,27 @@ public class MainActivity extends SDLActivity {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static String getFileName(String uriStr) {
+        try {
+            Uri uri = Uri.parse(uriStr);
+            ContentResolver resolver = getContext().getContentResolver();
+            Cursor cursor = resolver.query(uri, null, null, null, null);
+            if (cursor != null) {
+                try {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1 && cursor.moveToFirst()) {
+                        return cursor.getString(nameIndex);
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // fallback if filename can't be found
     }
 
     public static MainActivity getContext() {
