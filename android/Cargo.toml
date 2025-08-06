@@ -5,8 +5,11 @@ edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
 
 [lib]
-name = "gmboy"
+name = "main"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 app = { path = "../app", default-features = false }
+core = { path = "../core", default-features = false }
+sdl2 = { version = "0.38", default-features = false, features = ["unsafe_textures"] }
+backtrace = "0.3"
