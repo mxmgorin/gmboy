@@ -28,7 +28,7 @@ pub mod palette;
 pub mod roms;
 pub mod video;
 
-pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFileSystem>) {
+pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFilesystem>) {
     let base_dir = get_base_dir();
     println!("Base dir: {base_dir:?}");
 
@@ -199,7 +199,7 @@ impl FileSystem {
     }
 }
 
-pub trait AppFileSystem {
+pub trait AppFilesystem {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String>;
     fn select_dir(&mut self, title: &str) -> Option<String>;
     fn get_file_name(&self, path: &Path) -> Option<String>;

@@ -1,4 +1,4 @@
-use app::AppFileSystem;
+use app::AppFilesystem;
 use std::env;
 use std::path::Path;
 
@@ -10,7 +10,7 @@ fn main() {
 
 pub struct DesktopFileSystem;
 
-impl AppFileSystem for DesktopFileSystem {
+impl AppFilesystem for DesktopFileSystem {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String> {
         tinyfiledialogs::open_file_dialog(title, "", Some(filter))
     }
