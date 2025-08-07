@@ -46,12 +46,12 @@ impl InputHandler {
                 Event::ControllerDeviceAdded { which, .. } => {
                     if let Ok(controller) = self.game_controller_subsystem.open(which) {
                         self.game_controllers.push(controller);
-                        println!("Controller {which} connected");
+                        log::info!("Controller {which} connected");
                     }
                 }
                 Event::ControllerDeviceRemoved { which, .. } => {
                     self.game_controllers.retain(|c| c.instance_id() != which);
-                    println!("Controller {which} disconnected");
+                    log::info!("Controller {which} disconnected");
                 }
                 Event::DropFile { filename, .. } => {
                     self.handle_cmd(app, emu, AppCmd::LoadFile(filename.into()))

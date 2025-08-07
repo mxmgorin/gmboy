@@ -207,6 +207,6 @@ mod tests {
         regs.flags.set(None, None, None, Some(true));
 
         assert!(regs.flags.get_z());
-        println!("{:#b}", regs.flags.byte)
+        log::info!("{:#b}", regs.flags.byte)
     }
 }

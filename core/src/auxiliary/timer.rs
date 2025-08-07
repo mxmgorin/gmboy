@@ -112,7 +112,6 @@ impl Timer {
                 self.tima_overflow_ticks = None;
                 self.disabling_glitch = false;
             } else {
-                //println!("SKIP {}", tima_overflow_ticks);
                 *tima_overflow_ticks += 1;
             }
         }

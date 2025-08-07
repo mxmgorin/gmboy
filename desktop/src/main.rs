@@ -3,6 +3,11 @@ use std::env;
 use std::path::Path;
 
 fn main() {
+    let env = env_logger::Env::default()
+        .filter_or("GMBOY_LOG_LEVEL", "trace")
+        .write_style_or("GMBOY_LOG_STYLE", "always");
+    env_logger::init_from_env(env);
+    log::info!("Starting desktop app");
     let args: Vec<String> = env::args().collect();
     let file_dialog = DesktopFileSystem;
     app::run(args, Box::new(file_dialog));

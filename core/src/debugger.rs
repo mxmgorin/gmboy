@@ -51,7 +51,7 @@ impl Debugger {
 
     pub fn print_serial(&self) {
         if !self.get_serial_msg().is_empty() {
-            println!("Serial: {}", self.get_serial_msg());
+            log::info!("Serial: {}", self.get_serial_msg());
         }
     }
 
@@ -78,7 +78,7 @@ impl Debugger {
             bus.read(cpu.registers.pc.wrapping_add(2)),
             bus.read(cpu.registers.pc.wrapping_add(3))
         );
-        println!(
+        log::info!(
             "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} {}",
             cpu.registers.a,
             cpu.registers.flags.byte,
@@ -108,7 +108,7 @@ impl Debugger {
             return;
         }
 
-        println!(
+        log::info!(
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             clock.t_cycles,
             pc,

@@ -12,6 +12,8 @@ filepicker = ["tinyfiledialogs"]
 core = { path = "../core" }
 app = { path = "../app" }
 tinyfiledialogs = { version = "3.9", optional = true }
+log = "0.4.27"
+env_logger = "0.11.8"
 
 [[bin]]
 name = "gmboy"

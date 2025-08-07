@@ -395,8 +395,8 @@ fn print_gl_versions() {
             .to_str()
             .unwrap();
 
-        println!("OpenGL version: {version}");
-        println!("GLSL version: {shading_lang}");
+        log::info!("OpenGL version: {version}");
+        log::info!("GLSL version: {shading_lang}");
     }
 }
 

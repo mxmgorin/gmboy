@@ -1,12 +1,12 @@
+use crate::cart::Cart;
 use crate::ppu::tile::PixelColor;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
-use std::path::{Path};
+use std::path::Path;
 use std::time::Duration;
 use std::{fs, io};
-use crate::cart::Cart;
 
 pub mod apu;
 pub mod auxiliary;
@@ -163,14 +163,23 @@ pub fn change_usize(value: usize, delta: i32) -> usize {
 }
 
 pub fn print_cart(cart: &Cart) -> Result<(), String> {
-    println!("Cart Loaded:");
-    println!("\t Title          : {}", cart.data.get_title());
-    println!("\t Type           : {:?}", cart.data.get_cart_type()?);
-    println!("\t ROM Size       : {:?}", cart.data.get_rom_size()?);
-    println!("\t ROM bytes      : {:?}", cart.data.bytes.len());
-    println!("\t RAM Size       : {:?}", cart.data.get_ram_size()?);
-    println!("\t ROM Version    : {:02X}", cart.data.get_rom_version());
-    println!("\t Checksum Valid : {}", cart.data.checksum_valid());
+    log::info!(
+        "Cart Loaded:\n\
+     \t\t\t\t  Title          : {}\n\
+     \t\t\t\t  Type           : {:?}\n\
+     \t\t\t\t  ROM Size       : {:?}\n\
+     \t\t\t\t  ROM bytes      : {}\n\
+     \t\t\t\t  RAM Size       : {:?}\n\
+     \t\t\t\t  ROM Version    : {:02X}\n\
+     \t\t\t\t  Checksum Valid : {}",
+        cart.data.get_title(),
+        cart.data.get_cart_type()?,
+        cart.data.get_rom_size()?,
+        cart.data.bytes.len(),
+        cart.data.get_ram_size()?,
+        cart.data.get_rom_version(),
+        cart.data.checksum_valid()
+    );
 
     Ok(())
 }
