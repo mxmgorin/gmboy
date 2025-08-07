@@ -165,11 +165,11 @@ pub fn get_base_dir() -> PathBuf {
     PathBuf::from(path)
 }
 
-pub struct FileSystem;
+pub struct Filesystem;
 
-impl FileSystem {
+impl Filesystem {
     pub fn write_save_state_file(v: &EmuSaveState, name: &str, suffix: &str) -> Result<(), String> {
-        let path = FileSystem::get_save_state_path(name, suffix);
+        let path = Filesystem::get_save_state_path(name, suffix);
 
         if let Some(parent) = Path::new(&path).parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;

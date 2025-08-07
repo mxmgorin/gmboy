@@ -7,6 +7,7 @@ use crate::video::frame_blend::{
 };
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use crate::video::shader::ShaderFrameBlendMode;
+use crate::AppFilesystem;
 use std::mem;
 use std::path::PathBuf;
 
@@ -231,8 +232,8 @@ fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
-fn library_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::Roms(RomsMenu::default()), AppMenuItem::Back].into_boxed_slice()
+fn library_menu(filesystem: &Box<dyn AppFilesystem>) -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::Roms(RomsMenu::new(filesystem)), AppMenuItem::Back].into_boxed_slice()
 }
 
 fn input_menu() -> Box<[AppMenuItem]> {
@@ -850,7 +851,7 @@ impl AppMenu {
         }
     }
 
-    pub fn select(&mut self, config: &AppConfig) -> Option<AppCmd> {
+    pub fn select(&mut self, config: &AppConfig, filesystem: &Box<dyn AppFilesystem>) -> Option<AppCmd> {
         self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
 
@@ -956,7 +957,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::RomsMenu => {
-                self.next_items(library_menu());
+                self.next_items(library_menu(filesystem));
 
                 None
             }
@@ -1216,11 +1217,10 @@ pub struct RomMenuItem {
 }
 
 impl RomMenuItem {
-    pub fn new(path: impl Into<PathBuf>) -> Self {
+    pub fn new(path: impl Into<PathBuf>, filesystem: &Box<dyn AppFilesystem>) -> Self {
         let path = path.into();
-        let name = path
-            .file_stem()
-            .and_then(|s| s.to_str())
+        let name = filesystem.get_file_name(&path);
+        let name = name
             .map(|s| {
                 let mut truncated: String = s.chars().take(MAX_ROM_CHARS).collect();
                 if s.chars().count() > MAX_ROM_CHARS {
@@ -1313,15 +1313,13 @@ impl RomsMenu {
             self.selected_index = self.items.len() - 2;
         }
     }
-}
 
-impl Default for RomsMenu {
-    fn default() -> Self {
+    pub fn new(filesystem: &Box<dyn AppFilesystem>) -> Self {
         let roms = RomsList::get_or_create();
         let mut all_items = Vec::with_capacity(12);
 
         for path in roms.get() {
-            all_items.push(RomMenuItem::new(path));
+            all_items.push(RomMenuItem::new(path, filesystem));
         }
 
         all_items.sort_by(|a, b| a.name.cmp(&b.name));
@@ -1340,16 +1338,39 @@ impl Default for RomsMenu {
 
 #[cfg(test)]
 mod tests {
+    use std::path::Path;
+    use crate::AppFilesystem;
     use crate::menu::{RomMenuItem, RomsMenu};
+
+    pub struct TestFilesystem;
+
+    impl AppFilesystem for TestFilesystem {
+        fn select_file(&mut self, _title: &str, _filter: (&[&str], &str)) -> Option<String> {
+            None
+        }
+
+        fn select_dir(&mut self, _title: &str) -> Option<String> {
+            None
+        }
+
+        fn get_file_name(&self, path: &Path) -> Option<String> {
+            path.file_stem()?.to_str().map(|x| x.to_string())
+        }
+
+        fn read_file_bytes(&self, _path: &Path) -> Option<Box<[u8]>> {
+            None
+        }
+    }
 
     #[test]
     pub fn iter() {
+        let filesystem: Box<dyn AppFilesystem> = Box::new(TestFilesystem);
         let roms = RomsMenu {
             all_items: Box::new([]),
             items: vec![
-                RomMenuItem::new("1"),
-                RomMenuItem::new("2"),
-                RomMenuItem::new("3"),
+                RomMenuItem::new("1", &filesystem),
+                RomMenuItem::new("2", &filesystem),
+                RomMenuItem::new("3", &filesystem),
             ]
             .into_boxed_slice(),
             selected_index: 0,

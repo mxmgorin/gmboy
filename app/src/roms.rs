@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -47,12 +46,6 @@ impl RomsList {
         if self.last_path.as_deref() == Some(path) {
             self.last_path = None;
         }
-    }
-
-    pub fn get_last_file_stem(&self) -> Option<Cow<str>> {
-        let path = Path::new(self.last_path.as_ref()?);
-
-        Some(path.file_stem()?.to_string_lossy())
     }
 
     pub fn get_last_path(&self) -> Option<&PathBuf> {

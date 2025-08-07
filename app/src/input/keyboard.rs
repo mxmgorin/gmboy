@@ -23,7 +23,7 @@ pub fn handle_keyboard(
         Keycode::X => return handle_a(is_pressed, app, emu),
         Keycode::Return | Keycode::S => {
             return if app.state == AppState::Paused && !is_pressed {
-                app.menu.select(&app.config) // update menu for better ux
+                app.menu.select(&app.config, &app.filesystem) // update menu for better ux
             } else {
                 handle_start(is_pressed, app, emu)
             };
