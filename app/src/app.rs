@@ -295,7 +295,7 @@ impl App {
                 let index = index.unwrap_or(self.config.current_save_index).to_string();
 
                 if let Err(err) = AppConfigFile::write_save_state_file(&save_state, &name, &index) {
-                    eprintln!("Failed save_state: {err}");
+                    log::error!("Failed save_state: {err}");
                     return;
                 }
 
@@ -307,7 +307,7 @@ impl App {
                 let save_state = AppConfigFile::read_save_state_file(&name, &index);
 
                 let Ok(save_state) = save_state else {
-                    eprintln!("Failed load save_state: {}", save_state.unwrap_err());
+                    log::error!("Failed load save_state: {}", save_state.unwrap_err());
                     return;
                 };
 
@@ -358,7 +358,7 @@ impl App {
             if let Err(err) =
                 AppConfigFile::write_save_state_file(&state, &name, AUTO_SAVE_STATE_SUFFIX)
             {
-                eprintln!("Failed save_state: {err}");
+                log::error!("Failed save_state: {err}");
             }
         }
 
@@ -375,7 +375,7 @@ impl App {
         let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
         let cart_bytes = self.filesystem.read_file_bytes(path).unwrap();
         let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string()).unwrap();
-        _ = core::print_cart(&cart).map_err(|e| eprintln!("Failed print_cart: {e}"));
+        _ = core::print_cart(&cart).map_err(|e| log::error!("Failed print_cart: {e}"));
 
         if let Some(ram_bytes) = ram_bytes {
             cart.load_ram(ram_bytes);
@@ -385,7 +385,7 @@ impl App {
         library.add(path.to_path_buf());
 
         if let Err(err) = core::save_json_file(&lib_path, &library) {
-            eprintln!("Failed save RomsLibrary: {err}");
+            log::error!("Failed save RomsLibrary: {err}");
         }
 
         emu.runtime.bus.io.lcd.apply_colors(
@@ -406,7 +406,7 @@ impl App {
             if let Ok(save_state) = save_state {
                 emu.load_save_state(save_state);
             } else {
-                eprintln!("Failed load save_state: {}", save_state.unwrap_err());
+                log::error!("Failed load save_state: {}", save_state.unwrap_err());
             };
         }
     }

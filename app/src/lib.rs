@@ -41,11 +41,11 @@ pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFilesystem>) {
     load_cart(&mut app, &mut emu, args);
 
     if let Err(err) = app.run(&mut emu, &mut input) {
-        eprintln!("Failed app run: {err}");
+        log::error!("Failed app run: {err}");
     }
 
     if let Err(err) = app.save_files(&mut emu) {
-        eprintln!("Failed app.save_files: {err}");
+        log::error!("Failed app.save_files: {err}");
     }
 }
 
@@ -101,16 +101,16 @@ pub fn get_config() -> AppConfig {
         let config = AppConfig::from_file(&config_path);
 
         let Ok(config) = config else {
-            eprintln!("Failed to parse config file: {}", config.unwrap_err());
+            log::error!("Failed to parse config file: {}", config.unwrap_err());
 
             let backup_path = config_path.with_file_name(format!(
                 "{}.bak",
                 config_path.file_name().unwrap().to_string_lossy()
             ));
             if let Err(rename_err) = fs::rename(config_path, &backup_path) {
-                eprintln!("Failed to rename invalid config file: {rename_err}");
+                log::error!("Failed to rename invalid config file: {rename_err}");
             } else {
-                eprintln!("Renamed invalid config to {backup_path:?}");
+                log::error!("Renamed invalid config to {backup_path:?}");
             }
 
             let default_config = AppConfig::default();
@@ -137,7 +137,7 @@ pub fn get_config() -> AppConfig {
         let mut lib = RomsList::get_or_create();
 
         if let Err(err) = lib.load_from_dir(path) {
-            eprintln!("Failed load library from path: {err}");
+            log::error!("Failed load library from path: {err}");
         }
 
         _ = core::save_json_file(RomsList::get_path(), &lib);

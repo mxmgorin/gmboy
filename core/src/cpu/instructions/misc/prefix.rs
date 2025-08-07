@@ -170,8 +170,7 @@ impl ExecutableInstruction for PrefixInstruction {
                 );
             }
             _ => {
-                eprintln!("ERROR: INVALID CB: {:02X}", op);
-                unimplemented!();
+                panic!("ERROR: INVALID CB: {op:02X}");
             }
         }
 

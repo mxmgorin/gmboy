@@ -155,12 +155,12 @@ impl InputHandler {
                     let result = lib.load_from_dir(&dir);
 
                     let Ok(count) = result else {
-                        eprintln!("Failed to load ROMs library: {}", result.unwrap_err());
+                        log::error!("Failed to load ROMs library: {}", result.unwrap_err());
                         return;
                     };
 
                     if let Err(err) = core::save_json_file(RomsList::get_path(), &lib) {
-                        eprintln!("Failed to save ROMs library: {err}");
+                        log::error!("Failed to save ROMs library: {err}");
                     }
 
                     app.config.roms_dir = Some(dir);
