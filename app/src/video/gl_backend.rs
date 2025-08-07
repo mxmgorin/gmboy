@@ -124,7 +124,7 @@ impl GlBackend {
                 0,
                 texture.rect.w,
                 texture.rect.h,
-                gl::BGRA,
+                gl::RGBA,
                 gl::UNSIGNED_BYTE,
                 texture.buffer.as_ptr() as *const _,
             );
@@ -188,7 +188,7 @@ impl GlBackend {
                 0,
                 width as i32,
                 height as i32,
-                gl::BGRA,
+                gl::RGBA,
                 gl::UNSIGNED_BYTE,
                 buffer.as_ptr() as *const _,
             );
@@ -205,7 +205,7 @@ impl GlBackend {
                     0,
                     width as i32,
                     height as i32,
-                    gl::BGRA,
+                    gl::RGBA,
                     gl::UNSIGNED_BYTE,
                     self.prev_buffer.as_ptr() as *const _,
                 );
@@ -413,7 +413,7 @@ pub fn create_texture(w: i32, h: i32) -> u32 {
             w,
             h,
             0,
-            gl::BGRA,
+            gl::RGBA,
             gl::UNSIGNED_BYTE,
             std::ptr::null(),
         );

@@ -1,4 +1,3 @@
-use crate::hex_to_rgba;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
 
@@ -139,26 +138,35 @@ impl Iterator for TileLineIterator {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelColor {
-    argb: u32,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
 }
 
 impl PixelColor {
-    pub const fn from_u32(argb: u32) -> PixelColor {
-        PixelColor { argb }
+    pub fn from_hex_rgba(hex: &str) -> PixelColor {
+        assert_eq!(hex.len(), 8);
+
+        let r = u8::from_str_radix(&hex[0..2], 16).unwrap();
+        let g = u8::from_str_radix(&hex[2..4], 16).unwrap();
+        let b = u8::from_str_radix(&hex[4..6], 16).unwrap();
+        let a = u8::from_str_radix(&hex[6..8], 16).unwrap();
+
+        Self { r, g, b, a }
     }
 
-    pub fn from_hex(hex: &str) -> PixelColor {
-        let u32 = u32::from_str_radix(hex, 16).unwrap();
-
-        Self::from_u32(u32)
+    pub fn as_rgba_bytes(&self) -> [u8; 4] {
+        [self.r, self.g, self.b, self.a]
     }
 
-    pub fn as_argb_u32(&self) -> u32 {
-        self.argb
-    }
-
-    pub fn as_rgba(&self) -> (u8, u8, u8, u8) {
-        hex_to_rgba(self.argb)
+    pub fn zero() -> PixelColor {
+        PixelColor {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0,
+        }
     }
 }
 

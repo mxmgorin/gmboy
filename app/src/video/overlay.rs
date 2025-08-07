@@ -45,7 +45,8 @@ impl Overlay {
         };
 
         let text_height = calc_text_height(self.font_size) * lines.len();
-        let mut x = self.menu_texture.rect.w as usize - text_width;
+        let menu_width = self.menu_texture.rect.w as usize;
+        let mut x = menu_width.saturating_sub(text_width);
         let mut y = self.menu_texture.rect.h as usize - text_height;
 
         if center {
@@ -69,7 +70,7 @@ impl Overlay {
     }
 
     pub fn update_fps(&mut self, fps: &str) {
-        self.fps_texture.fill(PixelColor::from_u32(0));
+        self.fps_texture.fill(PixelColor::zero());
 
         draw_text_lines(
             &mut self.fps_texture.buffer,
@@ -86,7 +87,7 @@ impl Overlay {
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
-        self.notif_texture.fill(PixelColor::from_u32(0));
+        self.notif_texture.fill(PixelColor::zero());
 
         draw_text_lines(
             &mut self.notif_texture.buffer,

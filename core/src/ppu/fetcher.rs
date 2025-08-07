@@ -3,6 +3,7 @@ use crate::ppu::fifo::PixelFifo;
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
+use std::ptr;
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
@@ -36,7 +37,7 @@ impl BgwFetchedData {
 #[derive(Debug, Clone)]
 pub struct PixelFetcher {
     pub sprite_fetcher: SpriteFetcher,
-    pub buffer: Box<[u32]>,
+    pub buffer: Box<[u8]>,
 
     fetch_step: FetchStep,
     line_x: u8,
@@ -57,7 +58,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![0; LCD_Y_RES as usize * LCD_X_RES as usize].into_boxed_slice(),
+            buffer: vec![0; LCD_Y_RES as usize * LCD_X_RES as usize * 4].into_boxed_slice(),
             sprite_fetcher: Default::default(),
         }
     }
@@ -95,9 +96,14 @@ impl PixelFetcher {
     }
 
     fn push_buffer(&mut self, index: usize, pixel: Pixel) {
+        let base = index * 4;
+        let rgba = pixel.color.as_rgba_bytes();
+
         unsafe {
-            *self.buffer.get_unchecked_mut(index) = pixel.color.as_argb_u32();
+            let dst = self.buffer.as_mut_ptr().add(base);
+            ptr::copy_nonoverlapping(rgba.as_ptr(), dst, 4);
         }
+
         self.pushed_x += 1;
     }
 

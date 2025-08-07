@@ -22,31 +22,31 @@ impl Filters {
         Self {
             grid_texture: generate_grid_texture(
                 canvas,
-                &texture_creator,
+                texture_creator,
                 rect.width(),
                 rect.height(),
             ),
             subpixel_texture: generate_subpixel_texture(
                 canvas,
-                &texture_creator,
+                texture_creator,
                 rect.width(),
                 rect.height(),
             ),
             scan_line_texture: generate_scanline_texture(
                 canvas,
-                &texture_creator,
+                texture_creator,
                 rect.width(),
                 rect.height(),
             ),
             dot_matrix_texture: generate_dot_matrix_texture(
                 canvas,
-                &texture_creator,
+                texture_creator,
                 rect.width(),
                 rect.height(),
             ),
             vignette_texture: generate_vignette_texture(
                 canvas,
-                &texture_creator,
+                texture_creator,
                 rect.width(),
                 rect.height(),
             ),
@@ -94,7 +94,7 @@ fn generate_subpixel_texture(
     height: u32,
 ) -> Texture {
     let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .create_texture_target(PixelFormatEnum::ABGR8888, width, height)
         .unwrap();
 
     canvas
@@ -131,7 +131,7 @@ fn generate_grid_texture(
     height: u32,
 ) -> Texture {
     let mut grid_texture = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .create_texture_target(PixelFormatEnum::ABGR8888, width, height)
         .unwrap();
     canvas
         .with_texture_canvas(&mut grid_texture, |tex| {
@@ -158,7 +158,7 @@ fn generate_scanline_texture(
     height: u32,
 ) -> Texture {
     let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .create_texture_target(PixelFormatEnum::ABGR8888, width, height)
         .unwrap();
 
     canvas
@@ -184,7 +184,7 @@ fn generate_dot_matrix_texture(
     height: u32,
 ) -> Texture {
     let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .create_texture_target(PixelFormatEnum::ABGR8888, width, height)
         .unwrap();
 
     canvas
@@ -213,7 +213,7 @@ fn generate_vignette_texture(
     height: u32,
 ) -> Texture {
     let mut tex = texture_creator
-        .create_texture_target(PixelFormatEnum::ARGB8888, width, height)
+        .create_texture_target(PixelFormatEnum::ABGR8888, width, height)
         .unwrap();
 
     canvas

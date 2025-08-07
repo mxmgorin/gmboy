@@ -43,7 +43,7 @@ impl Sdl2Backend {
         let texture_creator = canvas.texture_creator();
         let mut game_texture = texture_creator
             .create_texture_streaming(
-                PixelFormatEnum::ARGB8888,
+                PixelFormatEnum::ABGR8888,
                 RenderConfig::WIDTH as u32,
                 RenderConfig::HEIGHT as u32,
             )
@@ -52,7 +52,7 @@ impl Sdl2Backend {
         // notifications
         let mut notif_texture = texture_creator
             .create_texture_streaming(
-                PixelFormatEnum::ARGB8888,
+                PixelFormatEnum::ABGR8888,
                 notif_rect.width(),
                 notif_rect.height(),
             )
@@ -61,7 +61,7 @@ impl Sdl2Backend {
         // fps
         let mut fps_texture = texture_creator
             .create_texture_streaming(
-                PixelFormatEnum::ARGB8888,
+                PixelFormatEnum::ABGR8888,
                 fps_rect.width(),
                 fps_rect.height(),
             )

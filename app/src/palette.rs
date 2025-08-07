@@ -39,28 +39,28 @@ impl LcdPalette {
             LcdPalette {
                 name: "Swamp".to_string(),
                 hex_colors: [
-                    "fffafca4".to_string(),
-                    "ffd68e49".to_string(),
-                    "ff308013".to_string(),
-                    "ff400c01".to_string(),
+                    "fafca4ff".to_string(),
+                    "d68e49ff".to_string(),
+                    "308013ff".to_string(),
+                    "400c01ff".to_string(),
                 ],
             },
             LcdPalette {
                 name: "2bit demichrome".to_string(),
                 hex_colors: [
-                    "ff211e20".to_string(),
-                    "ff555568".to_string(),
-                    "ffa0a08b".to_string(),
-                    "ffe9efec".to_string(),
+                    "211e20ff".to_string(),
+                    "555568ff".to_string(),
+                    "a0a08bff".to_string(),
+                    "e9efecff".to_string(),
                 ],
             },
             LcdPalette {
                 name: "SpaceHaze".to_string(),
                 hex_colors: [
-                    "fff8e3c4".to_string(),
-                    "ffcc3495".to_string(),
-                    "ff6b1fb1".to_string(),
-                    "ff0b0630".to_string(),
+                    "f8e3c4ff".to_string(),
+                    "cc3495ff".to_string(),
+                    "6b1fb1ff".to_string(),
+                    "0b0630ff".to_string(),
                 ],
             },
         ]
@@ -70,10 +70,10 @@ impl LcdPalette {
         Self {
             name: "Nostalgia".to_string(),
             hex_colors: [
-                "ffd0d058".to_string(),
-                "ffa0a840".to_string(),
-                "ff708028".to_string(),
-                "ff405010".to_string(),
+                "d0d058ff".to_string(),
+                "a0a840ff".to_string(),
+                "708028ff".to_string(),
+                "405010ff".to_string(),
             ],
         }
     }
@@ -82,10 +82,10 @@ impl LcdPalette {
         Self {
             name: "2 bit matrix".to_string(),
             hex_colors: [
-                "fff2fff2".to_string(),
-                "ffadd9bc".to_string(),
-                "ff5b8c7c".to_string(),
-                "ff0d1a1a".to_string(),
+                "f2fff2ff".to_string(),
+                "add9bcff".to_string(),
+                "5b8c7cff".to_string(),
+                "0d1a1aff".to_string(),
             ],
         }
     }
@@ -95,10 +95,10 @@ impl LcdPalette {
         Self {
             name: "Purple dawn".to_string(),
             hex_colors: [
-                "ffeefded".to_string(),
-                "ff9a7bbc".to_string(),
-                "ff2d757e".to_string(),
-                "ff001b2e".to_string(),
+                "eefdedff".to_string(),
+                "9a7bbcff".to_string(),
+                "2d757eff".to_string(),
+                "001b2eff".to_string(),
             ],
         }
     }
@@ -108,10 +108,10 @@ impl LcdPalette {
         Self {
             name: "Peach blizzard".to_string(),
             hex_colors: [
-                "fffbd6ad".to_string(),
-                "fff19386".to_string(),
-                "ffa54371".to_string(),
-                "ff4c388a".to_string(),
+                "fbd6adff".to_string(),
+                "f19386ff".to_string(),
+                "a54371ff".to_string(),
+                "4c388aff".to_string(),
             ],
         }
     }
@@ -121,10 +121,10 @@ impl LcdPalette {
         Self {
             name: "Blueberry".to_string(),
             hex_colors: [
-                "ff280b0b".to_string(),
-                "ff6c2e53".to_string(),
-                "ffaa73e0".to_string(),
-                "ffb0ecf9".to_string(),
+                "280b0bff".to_string(),
+                "6c2e53ff".to_string(),
+                "aa73e0ff".to_string(),
+                "b0ecf9ff".to_string(),
             ],
         }
     }
@@ -134,10 +134,10 @@ impl LcdPalette {
         Self {
             name: "M-GB".to_string(),
             hex_colors: [
-                "ffdbd3c9".to_string(),
-                "ffa3bfa2".to_string(),
-                "ff788f97".to_string(),
-                "ff546a76".to_string(),
+                "dbd3c9ff".to_string(),
+                "a3bfa2ff".to_string(),
+                "788f97ff".to_string(),
+                "546a76ff".to_string(),
             ],
         }
     }
@@ -147,10 +147,10 @@ impl LcdPalette {
         Self {
             name: "Rabbit 5pm".to_string(),
             hex_colors: [
-                "ffffe7cd".to_string(),
-                "ffe4a39f".to_string(),
-                "ff629098".to_string(),
-                "ff4c3457".to_string(),
+                "ffe7cdff".to_string(),
+                "e4a39fff".to_string(),
+                "629098ff".to_string(),
+                "4c3457ff".to_string(),
             ],
         }
     }
@@ -159,10 +159,10 @@ impl LcdPalette {
         Self {
             name: "Candy pop!".to_string(),
             hex_colors: [
-                "ff301221".to_string(),
-                "ff854576".to_string(),
-                "ff9e81d0".to_string(),
-                "ffeebff5".to_string(),
+                "301221ff".to_string(),
+                "854576ff".to_string(),
+                "9e81d0ff".to_string(),
+                "eebff5ff".to_string(),
             ],
         }
     }
@@ -172,10 +172,10 @@ impl LcdPalette {
         Self {
             name: "Red is dead".to_string(),
             hex_colors: [
-                "fffffcfe".to_string(),
-                "ffff0015".to_string(),
-                "ff860020".to_string(),
-                "ff11070a".to_string(),
+                "fffcfeff".to_string(),
+                "ff0015ff".to_string(),
+                "860020ff".to_string(),
+                "11070aff".to_string(),
             ],
         }
     }
@@ -185,10 +185,10 @@ impl LcdPalette {
         Self {
             name: "Cave4".to_string(),
             hex_colors: [
-                "ffe4cbbf".to_string(),
-                "ff938282".to_string(),
-                "ff4f4e80".to_string(),
-                "ff2c0016".to_string(),
+                "e4cbbfff".to_string(),
+                "938282ff".to_string(),
+                "4f4e80ff".to_string(),
+                "2c0016ff".to_string(),
             ],
         }
     }
@@ -198,10 +198,10 @@ impl LcdPalette {
         Self {
             name: "Mcebuius".to_string(),
             hex_colors: [
-                "fff1e0cd".to_string(),
-                "ffffa49a".to_string(),
-                "ffda3467".to_string(),
-                "ff35333f".to_string(),
+                "f1e0cdff".to_string(),
+                "ffa49aff".to_string(),
+                "da3467ff".to_string(),
+                "35333fff".to_string(),
             ],
         }
     }
@@ -211,9 +211,9 @@ impl LcdPalette {
             name: "Back and White".to_string(),
             hex_colors: [
                 "ffffffff".to_string(),
-                "FFAAAAAA".to_string(),
-                "FF555555".to_string(),
-                "FF000000".to_string(),
+                "AAAAAAff".to_string(),
+                "555555ff".to_string(),
+                "000000ff".to_string(),
             ],
         }
     }
@@ -222,10 +222,10 @@ impl LcdPalette {
         Self {
             name: "Forgotten Swamp".to_string(),
             hex_colors: [
-                "ffd1ada1".to_string(),
-                "ff4d7d65".to_string(),
-                "ff593a5f".to_string(),
-                "ff3b252e".to_string(),
+                "d1ada1ff".to_string(),
+                "4d7d65ff".to_string(),
+                "593a5fff".to_string(),
+                "3b252eff".to_string(),
             ],
         }
     }
@@ -234,10 +234,10 @@ impl LcdPalette {
         Self {
             name: "Crimson".to_string(),
             hex_colors: [
-                "ffeff9d6".to_string(),
-                "ffba5044".to_string(),
-                "ff7a1c4b".to_string(),
-                "ff1b0326".to_string(),
+                "eff9d6ff".to_string(),
+                "ba5044ff".to_string(),
+                "7a1c4bff".to_string(),
+                "1b0326ff".to_string(),
             ],
         }
     }
@@ -246,10 +246,10 @@ impl LcdPalette {
         LcdPalette {
             name: "Rustic".to_string(),
             hex_colors: [
-                "ff2c2137".to_string(),
-                "ff764462".to_string(),
-                "ffa96868".to_string(),
-                "ffedb4a1".to_string(),
+                "2c2137ff".to_string(),
+                "764462ff".to_string(),
+                "a96868ff".to_string(),
+                "edb4a1ff".to_string(),
             ],
         }
     }

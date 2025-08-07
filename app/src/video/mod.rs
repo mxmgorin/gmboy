@@ -20,7 +20,7 @@ mod sdl2_backend;
 pub mod sdl2_tiles;
 pub mod shader;
 
-const BYTES_PER_PIXEL: usize = 4;
+pub const BYTES_PER_PIXEL: usize = 4;
 
 pub fn calc_win_height(scale: u32) -> u32 {
     LCD_Y_RES as u32 * scale
@@ -71,13 +71,11 @@ impl VideoTexture {
     }
 
     pub fn fill(&mut self, color: PixelColor) {
-        let (r, g, b, a) = color.as_rgba();
-
         for i in (0..self.buffer.len()).step_by(BYTES_PER_PIXEL) {
-            self.buffer[i] = r;
-            self.buffer[i + 1] = g;
-            self.buffer[i + 2] = b;
-            self.buffer[i + 3] = a;
+            self.buffer[i] = color.r;
+            self.buffer[i + 1] = color.g;
+            self.buffer[i + 2] = color.b;
+            self.buffer[i + 3] = color.a;
         }
     }
 }

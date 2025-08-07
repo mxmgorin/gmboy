@@ -67,7 +67,12 @@ mod tests {
 
     fn create_pixel(v: u32) -> Pixel {
         Pixel {
-            color: PixelColor::from_u32(v),
+            color: PixelColor {
+                r: v as u8,
+                g: 0,
+                b: 0,
+                a: 255,
+            },
             color_id: Default::default(),
         }
     }

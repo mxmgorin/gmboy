@@ -82,14 +82,13 @@ impl AppVideo {
         self.config = config.clone();
     }
 
-    pub fn draw_buffer(&mut self, buffer: &[u32]) {
+    pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let buffer = if let Some(blend) = &mut self.frame_blend {
             blend.process_buffer(buffer, &self.config)
         } else {
             buffer
         };
 
-        let buffer: &[u8] = bytemuck::cast_slice(buffer);
         self.backend.draw_buffer(buffer, &self.config);
     }
 

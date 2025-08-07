@@ -74,7 +74,7 @@ pub fn hex_to_rgba(argb: u32) -> (u8, u8, u8, u8) {
 pub fn into_pixel_colors(hex_colors: &[String]) -> [PixelColor; 4] {
     let colors: Vec<PixelColor> = hex_colors
         .iter()
-        .map(|hex| PixelColor::from_u32(u32::from_str_radix(hex, 16).unwrap()))
+        .map(|hex| PixelColor::from_hex_rgba(hex))
         .collect();
 
     colors[..4].try_into().unwrap()

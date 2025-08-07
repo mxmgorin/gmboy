@@ -77,14 +77,13 @@ pub fn draw_text_lines(
 
     // 1. Draw background rectangle with padding
     if let Some(bg_color) = bg_color {
-        let (br, bg, bb, ba) = bg_color.as_rgba();
         for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
             for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
                 let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                buffer[offset] = bb;
-                buffer[offset + 1] = bg;
-                buffer[offset + 2] = br;
-                buffer[offset + 3] = ba;
+                buffer[offset] = bg_color.r;
+                buffer[offset + 1] = bg_color.g;
+                buffer[offset + 2] = bg_color.b;
+                buffer[offset + 3] = bg_color.a;
             }
         }
     }
@@ -132,11 +131,10 @@ pub fn draw_text_lines(
                                 let px = text_pixel_x + dx;
                                 let py = text_pixel_y + dy;
                                 let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
-                                let (r, g, b, a) = text_color.as_rgba();
-                                buffer[offset] = b;
-                                buffer[offset + 1] = g;
-                                buffer[offset + 2] = r;
-                                buffer[offset + 3] = a;
+                                buffer[offset] = text_color.r;
+                                buffer[offset + 1] = text_color.g;
+                                buffer[offset + 2] = text_color.b;
+                                buffer[offset + 3] = text_color.a;
                             }
                         }
                     }

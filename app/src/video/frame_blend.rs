@@ -1,5 +1,6 @@
 use crate::config::{RenderConfig, VideoConfig};
 use serde::{Deserialize, Serialize};
+use crate::video::BYTES_PER_PIXEL;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrameBlendMode {
@@ -13,7 +14,7 @@ pub enum FrameBlendMode {
 
 #[derive(Debug)]
 pub struct FrameBlend {
-    prev_framebuffer: Box<[u32]>,
+    prev_framebuffer: Box<[u8]>,
 }
 
 impl FrameBlend {
@@ -22,30 +23,51 @@ impl FrameBlend {
             None
         } else {
             Some(Self {
-                prev_framebuffer: vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT]
+                prev_framebuffer: vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT * BYTES_PER_PIXEL]
                     .into_boxed_slice(),
             })
         }
     }
 
-    pub fn process_buffer(&mut self, pixel_buffer: &[u32], config: &VideoConfig) -> &[u32] {
+    pub fn process_buffer(&mut self, pixel_buffer: &[u8], config: &VideoConfig) -> &[u8] {
+        // pixel_buffer length must be width * height * 4
+        debug_assert_eq!(pixel_buffer.len(), RenderConfig::WIDTH * RenderConfig::HEIGHT * 4);
+        // prev_framebuffer should also be length * 4 (RGBA)
         debug_assert_eq!(self.prev_framebuffer.len(), pixel_buffer.len());
+
         let w = RenderConfig::WIDTH;
         let h = RenderConfig::HEIGHT;
 
-        for (i, &curr) in pixel_buffer.iter().enumerate() {
-            let prev = self.prev_framebuffer[i];
+        for i in 0..(w * h) {
+            // each pixel offset in bytes
+            let idx = i * 4;
 
-            let (cr, cg, cb) = ((curr >> 16) & 0xFF, (curr >> 8) & 0xFF, curr & 0xFF);
-            let (pr, pg, pb) = ((prev >> 16) & 0xFF, (prev >> 8) & 0xFF, prev & 0xFF);
+            // current pixel RGBA components
+            let cr = pixel_buffer[idx];
+            let cg = pixel_buffer[idx + 1];
+            let cb = pixel_buffer[idx + 2];
+            // alpha usually ignored in compute_pixel, but you can adjust if needed
+            // let ca = pixel_buffer[idx + 3];
 
+            // previous pixel RGBA components
+            let pr = self.prev_framebuffer[idx];
+            let pg = self.prev_framebuffer[idx + 1];
+            let pb = self.prev_framebuffer[idx + 2];
+            // let pa = self.prev_framebuffer[idx + 3];
+
+            // compute_pixel expects RGB tuples
             let (r, g, b) = self.compute_pixel(config, i, w, h, (pr, pg, pb), (cr, cg, cb));
 
-            self.prev_framebuffer[i] = (255 << 24) | (r << 16) | (g << 8) | b;
+            // write new pixel back, keep alpha = 255 (fully opaque)
+            self.prev_framebuffer[idx] = r;
+            self.prev_framebuffer[idx + 1] = g;
+            self.prev_framebuffer[idx + 2] = b;
+            self.prev_framebuffer[idx + 3] = 255;
         }
 
         &self.prev_framebuffer
     }
+
 
     pub fn compute_pixel(
         &self,
@@ -53,9 +75,9 @@ impl FrameBlend {
         i: usize,
         w: usize,
         h: usize,
-        prev: (u32, u32, u32),
-        curr: (u32, u32, u32),
-    ) -> (u32, u32, u32) {
+        prev: (u8, u8, u8),
+        curr: (u8, u8, u8),
+    ) -> (u8, u8, u8) {
         let (pr, pg, pb) = prev;
         let (cr, cg, cb) = curr;
 
@@ -147,16 +169,17 @@ impl FrameBlend {
                 let left_idx = if i % w == 0 { i } else { i - 1 };
                 let top_idx = if y == 0 { i } else { i - w };
 
-                let left = self.prev_framebuffer[left_idx];
-                let top = self.prev_framebuffer[top_idx];
+                // Calculate byte offsets
+                let left_base = left_idx * 4;
+                let top_base = top_idx * 4;
 
-                let lpr = ((left >> 16) & 0xFF) as f32 / 255.0;
-                let lpg = ((left >> 8) & 0xFF) as f32 / 255.0;
-                let lpb = (left & 0xFF) as f32 / 255.0;
+                let lpr = self.prev_framebuffer[left_base] as f32 / 255.0;
+                let lpg = self.prev_framebuffer[left_base + 1] as f32 / 255.0;
+                let lpb = self.prev_framebuffer[left_base + 2] as f32 / 255.0;
 
-                let tpr = ((top >> 16) & 0xFF) as f32 / 255.0;
-                let tpg = ((top >> 8) & 0xFF) as f32 / 255.0;
-                let tpb = (top & 0xFF) as f32 / 255.0;
+                let tpr = self.prev_framebuffer[top_base] as f32 / 255.0;
+                let tpg = self.prev_framebuffer[top_base + 1] as f32 / 255.0;
+                let tpb = self.prev_framebuffer[top_base + 2] as f32 / 255.0;
 
                 lr = lr * (1.0 - x.bleed) + ((lpr + tpr) * 0.5) * x.bleed;
                 lg = lg * (1.0 - x.bleed) + ((lpg + tpg) * 0.5) * x.bleed;
@@ -178,9 +201,9 @@ impl FrameBlend {
 
         // Convert back to 0..255
         (
-            (lr * 255.0).clamp(0.0, 255.0) as u32,
-            (lg * 255.0).clamp(0.0, 255.0) as u32,
-            (lb * 255.0).clamp(0.0, 255.0) as u32,
+            (lr * 255.0).clamp(0.0, 255.0) as u8,
+            (lg * 255.0).clamp(0.0, 255.0) as u8,
+            (lb * 255.0).clamp(0.0, 255.0) as u8,
         )
     }
 }
