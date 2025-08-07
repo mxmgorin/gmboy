@@ -19,6 +19,7 @@ import java.io.InputStream;
 
 public class MainActivity extends SDLActivity {
     private static final int FILE_PICKER_REQUEST = 1001;
+    private static final int OPEN_DIRECTORY_REQUEST = 42;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,21 +44,43 @@ public class MainActivity extends SDLActivity {
         startActivityForResult(intent, FILE_PICKER_REQUEST);
     }
 
+    // Called from Rust via JNI
+    public void openDirectoryPicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        startActivityForResult(intent, OPEN_DIRECTORY_REQUEST);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == FILE_PICKER_REQUEST && resultCode == Activity.RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            if (uri != null) {
-                String uriStr = uri.toString();
-                // Pass the result back to Rust
-                nativeOnFilePicked(uriStr);
-            }
+
+        if (resultCode != Activity.RESULT_OK || data == null) return;
+
+        Uri uri = data.getData();
+
+        if (uri == null) return;
+
+        String uriStr = uri.toString();
+
+        if (requestCode == FILE_PICKER_REQUEST) {
+            // Pass the result back to Rust
+            nativeOnFilePicked(uriStr);
+        }
+
+        if (requestCode == OPEN_DIRECTORY_REQUEST) {
+            // Pass the result back to Rust
+            nativeOnDirectoryPicked(uriStr);
         }
     }
 
     // Declare native callback implemented in Rust
     private static native void nativeOnFilePicked(String uri);
+
+    // Declare native callback implemented in Rust
+    private static native void nativeOnDirectoryPicked(String uri);
 
     private void enableImmersiveMode() {
         getWindow().getDecorView().setSystemUiVisibility(

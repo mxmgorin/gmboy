@@ -52,6 +52,7 @@ pub fn log(msg: &str) {
 }
 
 static PICKED_FILE_URI: Mutex<Option<String>> = Mutex::new(None);
+static PICKED_DIR_URI: Mutex<Option<String>> = Mutex::new(None);
 
 fn get_activity<'a>() -> JObject<'a> {
     unsafe { JObject::from_raw(SDL_AndroidGetActivity() as jni::sys::jobject) }
@@ -64,6 +65,13 @@ pub fn show_android_file_picker(env: &mut JNIEnv) {
         .expect("Failed to call openFilePicker");
 }
 
+/// Call this to show the directory picker
+pub fn show_android_directory_picker(env: &mut JNIEnv) {
+    let activity = get_activity();
+    env.call_method(activity, "openDirectoryPicker", "()V", &[])
+        .expect("Failed to call openDirectoryPicker");
+}
+
 /// This is the callback from Java when a file is picked
 #[no_mangle]
 pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnFilePicked(
@@ -72,8 +80,18 @@ pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnFilePicked(
     uri: JString,
 ) {
     let uri_str: String = env.get_string(&uri).unwrap().into();
-
     *PICKED_FILE_URI.lock().unwrap() = Some(uri_str);
+}
+
+/// This is the callback from Java when a directory is picked
+#[no_mangle]
+pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnDirectoryPicked(
+    mut env: JNIEnv,
+    _class: JObject,
+    uri: JString,
+) {
+    let uri_str: String = env.get_string(&uri).unwrap().into();
+    *PICKED_DIR_URI.lock().unwrap() = Some(uri_str);
 }
 
 /// Get last picked file URI
@@ -104,6 +122,10 @@ impl AppFileSystem for AndroidFileSystem {
     }
 
     fn select_dir(&mut self, _title: &str) -> Option<String> {
+        log("select_dir");
+        let mut env = get_env();
+        show_android_directory_picker(&mut env);
+        
         None
     }
 
