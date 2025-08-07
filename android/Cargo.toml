@@ -9,6 +9,7 @@ name = "main"
 crate-type = ["cdylib"]
 
 [dependencies]
-core = { path = "../core", default-features = false }
 app = { path = "../app", default-features = false }
 jni = "0.21"
+log = "0.4.27"
+android_logger = "0.15.1"

@@ -30,7 +30,7 @@ pub mod video;
 
 pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFilesystem>) {
     let base_dir = get_base_dir();
-    log::info!("Base dir: {base_dir:?}");
+    log::info!("Using base_dir: {base_dir:?}");
 
     let config = get_config();
     let palettes = get_palettes();
