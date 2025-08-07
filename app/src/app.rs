@@ -8,7 +8,7 @@ use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
-use crate::{AppFilesystem, Filesystem};
+use crate::{AppFilesystem, AppConfigFile};
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
@@ -294,7 +294,7 @@ impl App {
                 let save_state = emu.create_save_state();
                 let index = index.unwrap_or(self.config.current_save_index).to_string();
 
-                if let Err(err) = Filesystem::write_save_state_file(&save_state, &name, &index) {
+                if let Err(err) = AppConfigFile::write_save_state_file(&save_state, &name, &index) {
                     eprintln!("Failed save_state: {err}");
                     return;
                 }
@@ -304,7 +304,7 @@ impl App {
             }
             SaveStateCmd::Load => {
                 let index = index.unwrap_or(self.config.current_load_index).to_string();
-                let save_state = Filesystem::read_save_state_file(&name, &index);
+                let save_state = AppConfigFile::read_save_state_file(&name, &index);
 
                 let Ok(save_state) = save_state else {
                     eprintln!("Failed load save_state: {}", save_state.unwrap_err());
@@ -356,7 +356,7 @@ impl App {
         if self.config.auto_save_state {
             let state = emu.create_save_state();
             if let Err(err) =
-                Filesystem::write_save_state_file(&state, &name, AUTO_SAVE_STATE_SUFFIX)
+                AppConfigFile::write_save_state_file(&state, &name, AUTO_SAVE_STATE_SUFFIX)
             {
                 eprintln!("Failed save_state: {err}");
             }
@@ -401,7 +401,7 @@ impl App {
         if !is_reload && self.config.auto_save_state {
             let path = library.get_last_path().unwrap();
             let name = self.filesystem.get_file_name(path).unwrap();
-            let save_state = Filesystem::read_save_state_file(&name, AUTO_SAVE_STATE_SUFFIX);
+            let save_state = AppConfigFile::read_save_state_file(&name, AUTO_SAVE_STATE_SUFFIX);
 
             if let Ok(save_state) = save_state {
                 emu.load_save_state(save_state);
