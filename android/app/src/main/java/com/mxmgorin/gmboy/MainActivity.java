@@ -39,6 +39,8 @@ public class MainActivity extends SDLActivity {
     // Called from Rust via JNI
     public void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*"); // You can set e.g. "application/json"
         startActivityForResult(intent, FILE_PICKER_REQUEST);
@@ -62,6 +64,10 @@ public class MainActivity extends SDLActivity {
         Uri uri = data.getData();
 
         if (uri == null) return;
+
+        final int takeFlags = data.getFlags()
+                & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        getContentResolver().takePersistableUriPermission(uri, takeFlags);
 
         String uriStr = uri.toString();
 

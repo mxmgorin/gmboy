@@ -21,6 +21,10 @@ impl AppFilesystem for AndroidFilesystem {
 
         loop {
             if let Some(uri) = PICKED_FILE_URI.lock().unwrap().take() {
+                if let Some(name) = get_file_name(&uri) {
+                    log(&format!("get_file_name: {uri} {name}", ));
+                }
+
                 return Some(uri);
             }
 
@@ -43,7 +47,10 @@ impl AppFilesystem for AndroidFilesystem {
     fn get_file_name(&self, path: &Path) -> Option<String> {
         let path = path.to_str()?;
 
-        get_file_name(path)
+        let name = get_file_name(path);
+        log(&format!("get_file_name(self): {path:?} {name:?}", ));
+
+        name
     }
 
     fn read_file_bytes(&self, path: &Path) -> Option<Box<[u8]>> {
