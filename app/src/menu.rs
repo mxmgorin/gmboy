@@ -1228,7 +1228,7 @@ impl RomMenuItem {
                 }
                 truncated
             })
-            .unwrap();
+            .unwrap_or("not found".to_string());
 
         Self { name, path }
     }
