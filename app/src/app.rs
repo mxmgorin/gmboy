@@ -8,7 +8,7 @@ use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
-use crate::{AppFilesystem, AppConfigFile};
+use crate::{AppConfigFile, AppFilesystem};
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
@@ -110,7 +110,7 @@ impl EmuAudioCallback for App {
 impl App {
     pub fn new(
         sdl: &mut Sdl,
-        mut config: AppConfig,
+        config: AppConfig,
         palettes: Box<[LcdPalette]>,
         file_system: Box<dyn AppFilesystem>,
     ) -> Result<Self, String> {
@@ -122,10 +122,10 @@ impl App {
         let video = match video {
             Ok(video) => video,
             Err(err) => {
+                log::error!("Failed to init AppVideo: {err}");
                 if config.video.render.backend == VideoBackendType::Gl {
                     let msg = "GL init failed, using SDL2";
                     notifications.add(msg);
-                    config.video.render.backend = VideoBackendType::Sdl2;
 
                     AppVideo::new(sdl, colors[0], colors[3], &config.video)?
                 } else {

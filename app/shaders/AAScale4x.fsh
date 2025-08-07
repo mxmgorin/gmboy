@@ -13,8 +13,8 @@ STATIC vec4 scale2x(sampler2D image, vec2 position, vec2 input_resolution, vec2 
     vec2 p = position * input_resolution;
     // p = the position within a pixel [0...1]
     p = fract(p);
-    if (p.x > .5) {
-        if (p.y > .5) {
+    if (p.x > 0.5) {
+        if (p.y > 0.5) {
             // Top Right
             return equal(B, F) && inequal(B, D) && inequal(F, H) ? F : E;
         } else {
@@ -22,7 +22,7 @@ STATIC vec4 scale2x(sampler2D image, vec2 position, vec2 input_resolution, vec2 
             return equal(H, F) && inequal(D, H) && inequal(B, F) ? F : E;
         }
     } else {
-        if (p.y > .5) {
+        if (p.y > 0.5) {
             // Top Left
             return equal(D, B) && inequal(B, F) && inequal(D, H) ? D : E;
         } else {
@@ -50,11 +50,11 @@ STATIC vec4 scale(sampler2D image, vec2 position, vec2 input_resolution, vec2 ou
     vec4 H = scale2x_wrapper(image, position, vec2(  0, -1), input_resolution, output_resolution);
 
     vec4 R;
-    vec2 p = position * input_resolution * 2.;
+    vec2 p = position * input_resolution * 2.0;
     // p = the position within a pixel [0...1]
     p = fract(p);
-    if (p.x > .5) {
-        if (p.y > .5) {
+    if (p.x > 0.5) {
+        if (p.y > 0.5) {
             // Top Right
             R = equal(B, F) && inequal(B, D) && inequal(F, H) ? F : E;
         } else {
@@ -62,7 +62,7 @@ STATIC vec4 scale(sampler2D image, vec2 position, vec2 input_resolution, vec2 ou
             R = equal(H, F) && inequal(D, H) && inequal(B, F) ? F : E;
         }
     } else {
-        if (p.y > .5) {
+        if (p.y > 0.5) {
             // Top Left
             R = equal(D, B) && inequal(B, F) && inequal(D, H) ? D : E;
         } else {

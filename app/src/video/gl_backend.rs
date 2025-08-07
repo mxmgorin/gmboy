@@ -34,10 +34,8 @@ impl GlBackend {
         config: &RenderConfig,
     ) -> Result<Self, String> {
         let video_subsystem = sdl.video()?;
-        video_subsystem
-            .gl_attr()
-            .set_context_profile(GLProfile::Core);
-        video_subsystem.gl_attr().set_context_version(3, 2);
+        video_subsystem.gl_attr().set_context_profile(GLProfile::GLES);
+        video_subsystem.gl_attr().set_context_version(3, 0);
 
         let window = video_subsystem
             .window("GMBoy GL", game_rect.width(), game_rect.height())
@@ -395,8 +393,7 @@ fn print_gl_versions() {
             .to_str()
             .unwrap();
 
-        log::info!("OpenGL version: {version}");
-        log::info!("GLSL version: {shading_lang}");
+        log::info!("OpenGL version: {version}\nGLSL version: {shading_lang}");
     }
 }
 

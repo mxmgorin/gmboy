@@ -1,4 +1,5 @@
-#version 150
+#version 300 es
+precision mediump float;
 
 in vec2 pos;
 in vec2 tex;
