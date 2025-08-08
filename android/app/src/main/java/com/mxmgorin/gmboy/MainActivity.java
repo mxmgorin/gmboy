@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.view.View;
 
@@ -16,6 +17,8 @@ import org.libsdl.app.SDLActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends SDLActivity {
     private static final int FILE_PICKER_REQUEST = 1001;
@@ -60,7 +63,7 @@ public class MainActivity extends SDLActivity {
 
         try {
             Uri treeUri = Uri.parse(uriStr);
-            ContentResolver cr = context.getContentResolver();
+            ContentResolver cr = getContext().getContentResolver();
             Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                     treeUri, DocumentsContract.getTreeDocumentId(treeUri));
 
