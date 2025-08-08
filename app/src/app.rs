@@ -331,7 +331,7 @@ impl App {
         // save config
         self.config.set_emu_config(emu.config.clone());
         if let Err(err) = self.config.save_file().map_err(|e| e.to_string()) {
-            eprint!("Failed config.save: {err}");
+            log::warn!("Failed config.save: {err}");
         }
 
         let library = RomsList::get_or_create();
@@ -349,7 +349,7 @@ impl App {
                 .map_err(|e| e.to_string());
 
             if let Err(err) = battery {
-                eprint!("Failed BatterySave: {err}");
+                log::warn!("Failed BatterySave: {err}");
             };
         }
 
@@ -358,7 +358,7 @@ impl App {
             if let Err(err) =
                 AppConfigFile::write_save_state_file(&state, &name, AUTO_SAVE_STATE_SUFFIX)
             {
-                log::error!("Failed save_state: {err}");
+                log::warn!("Failed save_state: {err}");
             }
         }
 
