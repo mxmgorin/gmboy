@@ -181,7 +181,7 @@ impl Default for AppConfig {
                 interface: InterfaceConfig {
                     selected_palette_idx: 0,
                     scale: 5.0,
-                    is_fullscreen: false,
+                    is_fullscreen: true,
                     show_fps: false,
                     show_tiles: false,
                     is_palette_inverted: false,
@@ -191,8 +191,8 @@ impl Default for AppConfig {
                     blend_dim: 1.0,
                     backend: VideoBackendType::Gl,
                     sdl2: Sdl2Config {
-                        grid_enabled: true,
-                        subpixel_enabled: true,
+                        grid_enabled: false,
+                        subpixel_enabled: false,
                         dot_matrix_enabled: false,
                         scanline_enabled: false,
                         vignette_enabled: false,
