@@ -14,7 +14,7 @@ static JVM: OnceLock<JavaVM> = OnceLock::new();
 
 #[no_mangle]
 pub extern "C" fn SDL_main(_argc: i32, _argv: *const *const u8) -> i32 {
-    android_logger::init_once(Config::default().with_max_level(LevelFilter::Trace));
+    android_logger::init_once(Config::default().with_max_level(LevelFilter::Info));
     log::info!("SDL_main entered");
 
     std::panic::set_hook(Box::new(|info| {

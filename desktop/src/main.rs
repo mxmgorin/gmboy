@@ -4,7 +4,7 @@ use std::{env, fs};
 
 fn main() {
     let env = env_logger::Env::default()
-        .filter_or("GMBOY_LOG_LEVEL", "trace")
+        .filter_or("GMBOY_LOG_LEVEL", "info")
         .write_style_or("GMBOY_LOG_STYLE", "always");
     env_logger::init_from_env(env);
     log::info!("Starting desktop app");
