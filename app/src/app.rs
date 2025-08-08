@@ -20,7 +20,7 @@ use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
@@ -153,6 +153,9 @@ impl App {
         } else {
             AppState::Paused
         };
+        let target_render_fps = 60.0;
+        let min_render_interval = Duration::from_secs_f64(1.0 / target_render_fps);
+        let mut last_render_time = Instant::now();
 
         while self.state != AppState::Quitting {
             if self.state == AppState::Paused {
@@ -161,15 +164,26 @@ impl App {
                 input.handle_events(self, emu);
                 emu.run_frame(self)?;
 
-                self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
-                self.draw_notification(emu.runtime.ppu.get_fps());
-                self.video.show();
-                self.video
-                    .draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
+                let now = Instant::now();
+                if emu.runtime.mode == RunMode::Turbo {
+                    if now.duration_since(last_render_time) >= min_render_interval {
+                        self.render_frame(emu);
+                        last_render_time = now;
+                    }
+                } else {
+                    self.render_frame(emu);
+                    last_render_time = now;
+                }
             }
         }
 
         Ok(())
+    }
+
+    fn render_frame(&mut self, emu: &mut Emu) {
+        self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
+        self.draw_notification(emu.runtime.ppu.get_fps());
+        self.video.show();
     }
 
     pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
@@ -370,9 +384,15 @@ impl App {
         let mut library = RomsList::get_or_create();
         let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
-        let file_name = self.filesystem.get_file_name(path).ok_or("filesystem.get_file_name: None")?;
+        let file_name = self
+            .filesystem
+            .get_file_name(path)
+            .ok_or("filesystem.get_file_name: None")?;
         let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
-        let cart_bytes = self.filesystem.read_file_bytes(path).ok_or("filesystem.read_file_bytes: None")?;
+        let cart_bytes = self
+            .filesystem
+            .read_file_bytes(path)
+            .ok_or("filesystem.read_file_bytes: None")?;
         let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string())?;
         _ = core::print_cart(&cart).map_err(|e| log::error!("Failed print_cart: {e}"));
 
