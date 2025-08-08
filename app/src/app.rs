@@ -153,8 +153,8 @@ impl App {
         } else {
             AppState::Paused
         };
-        let target_render_fps = 60.0;
-        let min_render_interval = Duration::from_secs_f64(1.0 / target_render_fps);
+
+        const MIN_RENDER_INTERVAL: Duration = Duration::from_millis(33); // ~30 FPS
         let mut last_render_time = Instant::now();
 
         while self.state != AppState::Quitting {
@@ -162,28 +162,20 @@ impl App {
                 self.update_pause(emu, input);
             } else {
                 input.handle_events(self, emu);
-                emu.run_frame(self)?;
-
+                let on_time = emu.run_frame(self)?;
                 let now = Instant::now();
-                if emu.runtime.mode == RunMode::Turbo {
-                    if now.duration_since(last_render_time) >= min_render_interval {
-                        self.render_frame(emu);
-                        last_render_time = now;
-                    }
-                } else {
-                    self.render_frame(emu);
+                let time_since_last_render = now.duration_since(last_render_time);
+
+                if on_time || time_since_last_render >= MIN_RENDER_INTERVAL {
+                    self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
+                    self.draw_notification(emu.runtime.ppu.get_fps());
+                    self.video.show();
                     last_render_time = now;
                 }
             }
         }
 
         Ok(())
-    }
-
-    fn render_frame(&mut self, emu: &mut Emu) {
-        self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
-        self.draw_notification(emu.runtime.ppu.get_fps());
-        self.video.show();
     }
 
     pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
