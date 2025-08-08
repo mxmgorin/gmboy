@@ -232,8 +232,12 @@ fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
-fn library_menu(filesystem: &Box<dyn AppFilesystem>) -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::Roms(RomsMenu::new(filesystem)), AppMenuItem::Back].into_boxed_slice()
+fn library_menu(filesystem: &dyn AppFilesystem) -> Box<[AppMenuItem]> {
+    vec![
+        AppMenuItem::Roms(RomsMenu::new(filesystem)),
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 fn input_menu() -> Box<[AppMenuItem]> {
@@ -851,7 +855,7 @@ impl AppMenu {
         }
     }
 
-    pub fn select(&mut self, config: &AppConfig, filesystem: &Box<dyn AppFilesystem>) -> Option<AppCmd> {
+    pub fn select(&mut self, config: &AppConfig, filesystem: &dyn AppFilesystem) -> Option<AppCmd> {
         self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
 
@@ -1009,7 +1013,7 @@ impl AppMenu {
 
 impl AppMenuItem {
     pub fn to_string(&self, config: &AppConfig) -> String {
-        match self {
+        let item_str = match self {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open ROM".to_string(),
             AppMenuItem::Quit => "Quit".to_string(),
@@ -1187,7 +1191,9 @@ impl AppMenuItem {
                     config.video.render.gl.shader_frame_blend_mode
                 )
             }
-        }
+        };
+
+        truncate(&item_str)
     }
 }
 
@@ -1199,8 +1205,36 @@ fn get_suffix(enabled: bool) -> &'static str {
     }
 }
 
+const MAX_MENU_ITEM_CHARS: usize = 22;
+
+fn truncate(s: &str) -> String {
+    let max_len = s.len().min(MAX_MENU_ITEM_CHARS + 2);
+    let mut truncated = String::with_capacity(max_len);
+
+    for (i, ch) in s.chars().enumerate() {
+        if i == MAX_MENU_ITEM_CHARS {
+            let ends_with_paren = s.ends_with(')');
+            let total_chars = s.chars().count();
+
+            if total_chars > MAX_MENU_ITEM_CHARS + 1 || !ends_with_paren {
+                truncated.push('…');
+            }
+
+            if ends_with_paren {
+                truncated.push(')');
+            }
+
+            break;
+        }
+
+        truncated.push(ch);
+    }
+
+    truncated
+}
+
+
 const MAX_ROMS_PER_PAGE: usize = 10;
-const MAX_ROM_CHARS: usize = 16;
 
 #[derive(Debug, Clone)]
 pub struct RomsMenu {
@@ -1217,20 +1251,14 @@ pub struct RomMenuItem {
 }
 
 impl RomMenuItem {
-    pub fn new(path: impl Into<PathBuf>, filesystem: &Box<dyn AppFilesystem>) -> Self {
+    pub fn new(path: impl Into<PathBuf>, filesystem: &dyn AppFilesystem) -> Option<Self> {
         let path = path.into();
-        let name = filesystem.get_file_name(&path);
-        let name = name
-            .map(|s| {
-                let mut truncated: String = s.chars().take(MAX_ROM_CHARS).collect();
-                if s.chars().count() > MAX_ROM_CHARS {
-                    truncated.push_str("..");
-                }
-                truncated
-            })
-            .unwrap_or("not found".to_string());
+        let name = filesystem.get_file_name(&path)?;
 
-        Self { name, path }
+        Some(Self {
+            name: truncate(&name),
+            path,
+        })
     }
 }
 
@@ -1314,12 +1342,14 @@ impl RomsMenu {
         }
     }
 
-    pub fn new(filesystem: &Box<dyn AppFilesystem>) -> Self {
+    pub fn new(filesystem: &dyn AppFilesystem) -> Self {
         let roms = RomsList::get_or_create();
         let mut all_items = Vec::with_capacity(12);
 
         for path in roms.get() {
-            all_items.push(RomMenuItem::new(path, filesystem));
+            if let Some(item) = RomMenuItem::new(path, filesystem) {
+                all_items.push(item);
+            }
         }
 
         all_items.sort_by(|a, b| a.name.cmp(&b.name));
@@ -1338,9 +1368,9 @@ impl RomsMenu {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-    use crate::AppFilesystem;
     use crate::menu::{RomMenuItem, RomsMenu};
+    use crate::AppFilesystem;
+    use std::path::Path;
 
     pub struct TestFilesystem;
 
@@ -1372,9 +1402,9 @@ mod tests {
         let roms = RomsMenu {
             all_items: Box::new([]),
             items: vec![
-                RomMenuItem::new("1", &filesystem),
-                RomMenuItem::new("2", &filesystem),
-                RomMenuItem::new("3", &filesystem),
+                RomMenuItem::new("1", &*filesystem).unwrap(),
+                RomMenuItem::new("2", &*filesystem).unwrap(),
+                RomMenuItem::new("3", &*filesystem).unwrap(),
             ]
             .into_boxed_slice(),
             selected_index: 0,

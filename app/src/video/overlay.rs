@@ -46,7 +46,7 @@ impl Overlay {
 
         let text_height = calc_text_height(self.font_size) * lines.len();
         let menu_width = self.menu_texture.rect.w as usize;
-        let mut x = menu_width.saturating_sub(text_width);
+        let mut x = menu_width.wrapping_sub(text_width);
         let mut y = self.menu_texture.rect.h as usize - text_height;
 
         if center {

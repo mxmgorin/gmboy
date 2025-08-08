@@ -130,7 +130,7 @@ pub fn draw_text_lines(
                             for dx in 0..scale {
                                 let px = text_pixel_x + dx;
                                 let py = text_pixel_y + dy;
-                                let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
+                                let offset = (py.wrapping_mul(pitch)) + (px.wrapping_mul(BYTES_PER_PIXEL));
                                 buffer[offset] = text_color.r;
                                 buffer[offset + 1] = text_color.g;
                                 buffer[offset + 2] = text_color.b;

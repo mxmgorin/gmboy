@@ -72,7 +72,7 @@ pub fn handle_right(is_pressed: bool, app: &mut App, emu: &mut Emu) -> Option<Ap
 
 pub fn handle_a(is_pressed: bool, app: &mut App, emu: &mut Emu) -> Option<AppCmd> {
     if app.state == AppState::Paused && is_pressed {
-        return app.menu.select(&app.config, &app.filesystem);
+        return app.menu.select(&app.config, &*app.filesystem);
     } else {
         emu.runtime.bus.io.joypad.a = is_pressed;
     }
