@@ -10,7 +10,6 @@ use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
 use std::path::Path;
-use std::path::PathBuf;
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -111,8 +110,9 @@ impl InputHandler {
     pub fn handle_cmd(&mut self, app: &mut App, emu: &mut Emu, event: AppCmd) {
         match event {
             AppCmd::LoadFile(path) => {
-                app.load_cart_file(emu, &path);
-            }
+                if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
+                    log::warn!("Failed to load cart file: {err}");
+                }            }
             AppCmd::ToggleMenu => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
                     emu.runtime.bus.io.joypad.reset();
@@ -123,8 +123,9 @@ impl InputHandler {
             }
             AppCmd::RestartGame => {
                 if let Some(path) = RomsList::get_or_create().get_last_path() {
-                    app.load_cart_file(emu, &PathBuf::from(path));
-                }
+                    if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
+                        log::warn!("Failed to load cart file: {err}");
+                    }                }
             }
             AppCmd::ChangeMode(mode) => {
                 emu.state = EmuState::Running;
@@ -137,7 +138,9 @@ impl InputHandler {
                         "Select Game Boy ROM",
                         (&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)"),
                     ) {
-                        app.load_cart_file(emu, Path::new(&path));
+                        if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
+                            log::warn!("Failed to load cart file: {err}");
+                        }
                     }
                 }
             }

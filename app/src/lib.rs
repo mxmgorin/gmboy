@@ -78,17 +78,15 @@ pub fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
     .map(PathBuf::from);
 
     if let Some(cart_path) = cart_path {
-        if cart_path.exists() {
-            app.load_cart_file(emu, &cart_path);
+        if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
+            log::warn!("Failed to load cart file: {err}");
         }
     } else {
         let library = RomsList::get_or_create();
 
         if let Some(cart_path) = library.get_last_path() {
-            let cart_path = cart_path.clone();
-
-            if cart_path.exists() {
-                app.load_cart_file(emu, &cart_path);
+            if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
+                log::warn!("Failed to load cart file: {err}");
             }
         }
     }

@@ -365,16 +365,15 @@ impl App {
         Ok(())
     }
 
-    pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) {
+    pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) -> Result<(), String> {
         let lib_path = RomsList::get_path();
         let mut library = RomsList::get_or_create();
         let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
-
-        let file_name = self.filesystem.get_file_name(path).unwrap();
+        let file_name = self.filesystem.get_file_name(path).ok_or("filesystem.get_file_name: None")?;
         let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
-        let cart_bytes = self.filesystem.read_file_bytes(path).unwrap();
-        let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string()).unwrap();
+        let cart_bytes = self.filesystem.read_file_bytes(path).ok_or("filesystem.read_file_bytes: None")?;
+        let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string())?;
         _ = core::print_cart(&cart).map_err(|e| log::error!("Failed print_cart: {e}"));
 
         if let Some(ram_bytes) = ram_bytes {
@@ -385,7 +384,7 @@ impl App {
         library.add(path.to_path_buf());
 
         if let Err(err) = core::save_json_file(&lib_path, &library) {
-            log::error!("Failed save RomsLibrary: {err}");
+            log::warn!("Failed save RomsLibrary: {err}");
         }
 
         emu.runtime.bus.io.lcd.apply_colors(
@@ -406,9 +405,11 @@ impl App {
             if let Ok(save_state) = save_state {
                 emu.load_save_state(save_state);
             } else {
-                log::error!("Failed load save_state: {}", save_state.unwrap_err());
+                log::warn!("Failed load save_state: {}", save_state.unwrap_err());
             };
         }
+
+        Ok(())
     }
 
     pub fn change_volume(&mut self, emu: &mut Emu, delta: f32) {
