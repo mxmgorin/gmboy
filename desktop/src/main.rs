@@ -9,13 +9,13 @@ fn main() {
     env_logger::init_from_env(env);
     log::info!("Starting desktop app");
     let args: Vec<String> = env::args().collect();
-    let file_dialog = DesktopFileSystem;
+    let file_dialog = DesktopFilesystem;
     app::run(args, Box::new(file_dialog));
 }
 
-pub struct DesktopFileSystem;
+pub struct DesktopFilesystem;
 
-impl AppFilesystem for DesktopFileSystem {
+impl AppFilesystem for DesktopFilesystem {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String> {
         tinyfiledialogs::open_file_dialog(title, "", Some(filter))
     }
