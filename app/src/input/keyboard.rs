@@ -14,6 +14,8 @@ pub fn handle_keyboard(
     keycode: Keycode,
     is_pressed: bool,
 ) -> Option<AppCmd> {
+    log::trace!("handle_keyboard: {keycode:?}");
+    
     match keycode {
         Keycode::UP => handle_up(is_pressed, app, emu),
         Keycode::DOWN => handle_down(is_pressed, app, emu),
@@ -50,7 +52,7 @@ pub fn handle_keyboard(
                 Some(AppCmd::ChangeMode(RunMode::Normal))
             }
         }
-        Keycode::ESCAPE | Keycode::Q => {
+        Keycode::ESCAPE | Keycode::Q | Keycode::AC_BACK => {
             if is_pressed {
                 return Some(AppCmd::ToggleMenu);
             }
