@@ -55,6 +55,51 @@ public class MainActivity extends SDLActivity {
         startActivityForResult(intent, OPEN_DIRECTORY_REQUEST);
     }
 
+    public static List<String> getFilesInDirectory(String uriStr, String[] extensions) {
+        List<String> files = new ArrayList<>();
+
+        try {
+            Uri treeUri = Uri.parse(uriStr);
+            ContentResolver cr = context.getContentResolver();
+            Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+                    treeUri, DocumentsContract.getTreeDocumentId(treeUri));
+
+            Cursor cursor = cr.query(childrenUri,
+                    new String[]{
+                            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                            DocumentsContract.Document.COLUMN_DISPLAY_NAME
+                    },
+                    null, null, null);
+
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    String docId = cursor.getString(0);
+                    String displayName = cursor.getString(1);
+
+                    // Check extension
+                    if (matchesExtension(displayName, extensions)) {
+                        Uri fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId);
+                        files.add(fileUri.toString());
+                    }
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            files.add("error:" + e.toString());
+        }
+
+        return files;
+    }
+
+    private static boolean matchesExtension(String name, String[] extensions) {
+        for (String ext : extensions) {
+            if (name.toLowerCase().endsWith(ext.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
