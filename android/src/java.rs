@@ -2,6 +2,8 @@ use crate::{get_activity, JVM};
 use jni::objects::{JByteArray, JObject, JString, JValue};
 use jni::JNIEnv;
 
+const CLASS_NAME: &str = "com/mxmgorin/gmboy/MainActivity";
+
 /// Call this to show the file picker
 pub fn show_android_file_picker(env: &mut JNIEnv) {
     let activity = get_activity();
@@ -21,7 +23,7 @@ pub fn read_uri_bytes(uri: &str) -> Option<Vec<u8>> {
     let vm = JVM.get()?;
     let mut env = vm.attach_current_thread().ok()?;
 
-    let activity_class = env.find_class("com/mxmgorin/gmboy/MainActivity").ok()?;
+    let activity_class = env.find_class(CLASS_NAME).ok()?;
     let juri: JString = env.new_string(uri).ok()?;
     let obj = JObject::from(juri);
     let arg = JValue::Object(&obj);
@@ -51,7 +53,7 @@ pub fn get_file_name(uri: &str) -> Option<String> {
     let vm = JVM.get()?;
     let mut env = vm.attach_current_thread().ok()?;
 
-    let activity_class = env.find_class("com/mxmgorin/gmboy/MainActivity").ok()?;
+    let activity_class = env.find_class(CLASS_NAME).ok()?;
     let juri = env.new_string(uri).ok()?;
     let obj = JObject::from(juri);
     let arg = JValue::Object(&obj);
@@ -77,33 +79,19 @@ pub fn get_file_name(uri: &str) -> Option<String> {
 }
 
 /// Call Java method getFilesInDirectory(String uri, String[] extensions)
-pub fn get_files(uri: &str, extensions: &[&str]) -> Option<Vec<String>> {
+pub fn read_dir(uri: &str) -> Option<Vec<String>> {
     let vm = JVM.get()?;
     let mut env = vm.attach_current_thread().ok()?;
     let j_uri = env.new_string(uri).unwrap();
-
-    // Build String[] from &[&str]
-    let string_class = env.find_class("java/lang/String").unwrap();
-    let j_array = env
-        .new_object_array(extensions.len() as i32, string_class, JObject::null())
-        .unwrap();
-
-    for (i, &ext) in extensions.iter().enumerate() {
-        let j_ext = env.new_string(ext).unwrap();
-        env.set_object_array_element(&j_array, i as i32, j_ext)
-            .unwrap();
-    }
-
-    let class = env.find_class("com/example/myapp/MainActivity").unwrap();
+    let class = env.find_class(CLASS_NAME).unwrap();
 
     let result = env
         .call_static_method(
             class,
             "getFilesInDirectory",
-            "(Ljava/lang/String;[Ljava/lang/String;)Ljava/util/List;",
+            "(Ljava/lang/String;)Ljava/util/List;",
             &[
                 JValue::Object(&JObject::from(j_uri)),
-                JValue::Object(&JObject::from(j_array)),
             ],
         )
         .unwrap()

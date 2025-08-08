@@ -1,7 +1,5 @@
 use crate::get_env;
-use crate::java::{
-    get_file_name, read_uri_bytes, show_android_directory_picker, show_android_file_picker,
-};
+use crate::java::{get_file_name, read_dir, read_uri_bytes, show_android_directory_picker, show_android_file_picker};
 use app::AppFilesystem;
 use std::path::Path;
 use std::sync::Mutex;
@@ -67,6 +65,16 @@ impl AppFilesystem for AndroidFilesystem {
     }
 
     fn read_dir(&self, path: &Path) -> Result<Vec<String>, String> {
-        unimplemented!()
+        let path = path.to_str();
+        
+        let Some(path) = path else {
+            return Ok(vec![]);
+        };
+
+        let Some(items) = read_dir(path) else {
+            return Ok(vec![]);
+        };
+
+        Ok(items)
     }
 }

@@ -58,7 +58,7 @@ public class MainActivity extends SDLActivity {
         startActivityForResult(intent, OPEN_DIRECTORY_REQUEST);
     }
 
-    public static List<String> getFilesInDirectory(String uriStr, String[] extensions) {
+    public static List<String> getFilesInDirectory(String uriStr) {
         List<String> files = new ArrayList<>();
 
         try {
@@ -77,13 +77,8 @@ public class MainActivity extends SDLActivity {
             if (cursor != null) {
                 while (cursor.moveToNext()) {
                     String docId = cursor.getString(0);
-                    String displayName = cursor.getString(1);
-
-                    // Check extension
-                    if (matchesExtension(displayName, extensions)) {
-                        Uri fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId);
-                        files.add(fileUri.toString());
-                    }
+                    Uri fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId);
+                    files.add(fileUri.toString());
                 }
                 cursor.close();
             }
@@ -92,15 +87,6 @@ public class MainActivity extends SDLActivity {
         }
 
         return files;
-    }
-
-    private static boolean matchesExtension(String name, String[] extensions) {
-        for (String ext : extensions) {
-            if (name.toLowerCase().endsWith(ext.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
