@@ -1,6 +1,3 @@
-#version 300 es
-precision mediump float;
-
 uniform sampler2D image;
 uniform sampler2D previous_image;
 uniform int frame_blending_mode;

@@ -1,8 +1,9 @@
 use gl::types::GLenum;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
+use crate::video::gl_backend::GLSetup;
 
-const VERTEX_SHADER: &str = include_str!("../../../app/shaders/master.vert");
+const MASTER_VERTEX: &str = include_str!("../../../app/shaders/master.vert");
 const PASSTHROUGH_FRAGMENT: &str = include_str!("../../../app/shaders/passthrough.frag");
 const BILINEAR_FRAGMENT: &str = include_str!("../../../app/shaders/bilinear.frag");
 const SMOOTH_BILINEAR_FRAGMENT: &str = include_str!("../../../app/shaders/smooth_bilinear.frag");
@@ -44,11 +45,17 @@ pub const SHADERS: [(&str, &str); 14] = [
     ("Scale4x", SCALE4X),
 ];
 
-pub fn load_shader_program(name: &str) -> Result<u32, String> {
+pub fn load_shader_program(name: &str, gl: &GLSetup) -> Result<u32, String> {
     for (i_name, shader) in SHADERS {
         if i_name.to_lowercase() == name.to_lowercase() {
-            let fragment_source = MASTER_FRAGMENT.replace("{filter}", shader);
-            return unsafe { compile_program(VERTEX_SHADER, &fragment_source) };
+            let frag_src = MASTER_FRAGMENT.replace("{filter}", shader);
+            let frag = prepare_shader_source(gl, true, &frag_src);
+            let vert = prepare_shader_source(gl, false, MASTER_VERTEX);
+
+            log::debug!("Using fragment shader:\n{frag}");
+            log::debug!("Using vertext shader:\n{vert}");
+
+            return unsafe { compile_program(&vert, &frag) };
         }
     }
 
@@ -129,4 +136,85 @@ unsafe fn compile_shader(kind: GLenum, source: &str) -> Result<u32, String> {
         return Err(String::from_utf8_lossy(&buf).into_owned());
     }
     Ok(shader)
+}
+
+/// Prepare shader with correct #version, per-stage precision and GLES2 rewrites.
+/// `is_fragment` true for fragment shader, false for vertex shader.
+/// `body` is the shader body (no #version or precision lines required).
+pub fn prepare_shader_source(setup: &GLSetup, is_fragment: bool, body: &str) -> String {
+    let mut src = String::new();
+    src.push_str(setup.shader_version);
+    src.push('\n');
+
+    // For GLES we often need explicit precision qualifiers.
+    // We'll emit per-stage precision using the detected best precision.
+    if let Some(gles) = &setup.gles {
+        if gles.is_version_2 {
+            // GLES2: explicit precision qualifiers are required in fragment shaders,
+            // and allowed in vertex shaders (though many implementations ignore them).
+            if is_fragment {
+                src.push_str(&format!("precision {} float;\n", gles.fragment_precision));
+                src.push_str(&format!("precision {} int;\n", gles.fragment_precision));
+            } else {
+                // Vertex: emit precision too in case device needs it for varying math,
+                // but many GLES2 vertex shaders can omit it (we include for safety).
+                src.push_str(&format!("precision {} float;\n", gles.vertex_precision));
+                src.push_str(&format!("precision {} int;\n", gles.vertex_precision));
+            }
+        } else {
+            // GLES3: still useful to add fragment precision, but not strictly required.
+            if is_fragment {
+                src.push_str(&format!("precision {} float;\n", gles.fragment_precision));
+                src.push_str(&format!("precision {} int;\n", gles.fragment_precision));
+            }
+        }
+    }
+
+    let mut processed = body.to_string();
+
+    // If we landed on GLES2, perform automatic rewrites:
+    if setup.gles.is_some() && setup.gles.as_ref().unwrap().is_version_2 {
+        // 1) remove layout qualifiers (simple approach)
+        //    This will remove occurrences like `layout(location = 0) ` (with or without spaces)
+        processed = processed
+            .replace("layout(location = ", "")
+            .replace("layout(location=", "")
+            // also remove trailing `)` from the above removals if any were left
+            .replace(") ", " ")
+            .replace(");", ";");
+
+        // 2) convert `in`/`out` qualifier keywords to attribute/varying where appropriate.
+        //    Naive text replacements suffice for typical simple shader bodies.
+        if is_fragment {
+            // In fragment: `in` -> `varying`, `out vec4 Name;` -> remove + replace uses with gl_FragColor
+            processed = processed.replace("\nout ", "\n#OUT_MARKER "); // mark to handle types with 'out'
+            // remove `out vec4 NAME;` (common case)
+            // handle both `out vec4 FragColor;` and variants
+            let mut lines: Vec<String> = Vec::new();
+            for line in processed.lines() {
+                if line.trim_start().starts_with("#OUT_MARKER") {
+                    // skip this declaration line entirely
+                    continue;
+                } else {
+                    lines.push(line.to_string());
+                }
+            }
+            processed = lines.join("\n");
+            processed = processed.replace("in ", "varying ");
+            // replace remaining occurrences of the former frag-out name with gl_FragColor.
+            // This is best-effort: look for common name `FragColor`
+            processed = processed.replace("FragColor", "gl_FragColor");
+        } else {
+            // Vertex shader: `in` -> `attribute`, `out` -> `varying`
+            processed = processed.replace("in ", "attribute ");
+            processed = processed.replace("out ", "varying ");
+        }
+
+        // NOTE: This is a heuristic/textual transformation — works well for typical shaders.
+        // For very complex shaders (structs, multiple declarations on one line, macros), consider using a small parser.
+    }
+
+    src.push_str(&processed);
+
+    src
 }

@@ -225,7 +225,7 @@ impl GlBackend {
         name: &str,
         frame_blend_mode: ShaderFrameBlendMode,
     ) -> Result<(), String> {
-        let program = shader::load_shader_program(name)?;
+        let program = shader::load_shader_program(name, &self.gl)?;
         self.shader_frame_blend_mode = frame_blend_mode;
 
         unsafe {
@@ -400,7 +400,7 @@ pub fn create_gl_with_fallback(
     ];
 
     for &(profile, major, minor, shader_version, use_gles, is_gles2) in &attempts {
-        log::info!("Trying {profile:?} {major}.{minor} ...");
+        log::info!("Trying GL profile: {profile:?} {major}.{minor}");
 
         video.gl_attr().set_context_profile(profile);
         video.gl_attr().set_context_version(major, minor);
@@ -469,7 +469,7 @@ pub fn create_gl_with_fallback(
             // GLES3 / desktop: vertex shaders generally have highp by default (no need to emit),
             // but we'll still set values so caller can inspect them if needed.
             Some(Gles {
-                is_version_2: true,
+                is_version_2: false,
                 vertex_precision: "highp",
                 fragment_precision: "highp",
             })
