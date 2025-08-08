@@ -1360,6 +1360,10 @@ mod tests {
         fn read_file_bytes(&self, _path: &Path) -> Option<Box<[u8]>> {
             None
         }
+
+        fn read_dir(&self, _path: &Path) -> Result<Vec<String>, String> {
+            Ok(vec![])
+        }
     }
 
     #[test]

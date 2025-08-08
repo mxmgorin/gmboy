@@ -155,7 +155,7 @@ impl InputHandler {
             AppCmd::SelectRomsDir => {
                 if let Some(dir) = app.filesystem.select_dir("Select ROMs Folder") {
                     let mut lib = RomsList::get_or_create();
-                    let result = lib.load_from_dir(&dir);
+                    let result = lib.load_from_dir(&dir, &app.filesystem);
 
                     let Ok(count) = result else {
                         log::error!("Failed to load ROMs library: {}", result.unwrap_err());

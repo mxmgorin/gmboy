@@ -131,16 +131,6 @@ pub fn get_config() -> AppConfig {
         default_config
     };
 
-    if let Some(path) = &config.roms_dir {
-        let mut lib = RomsList::get_or_create();
-
-        if let Err(err) = lib.load_from_dir(path) {
-            log::error!("Failed load library from path: {err}");
-        }
-
-        _ = core::save_json_file(RomsList::get_path(), &lib);
-    }
-
     config
 }
 
@@ -202,4 +192,5 @@ pub trait AppFilesystem {
     fn select_dir(&mut self, title: &str) -> Option<String>;
     fn get_file_name(&self, path: &Path) -> Option<String>;
     fn read_file_bytes(&self, path: &Path) -> Option<Box<[u8]>>;
+    fn read_dir(&self, path: &Path) -> Result<Vec<String>, String>;
 }

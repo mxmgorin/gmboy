@@ -65,4 +65,8 @@ impl AppFilesystem for AndroidFilesystem {
 
         read_uri_bytes(path).map(|x| x.into_boxed_slice())
     }
+
+    fn read_dir(&self, path: &Path) -> Result<Vec<String>, String> {
+        unimplemented!()
+    }
 }
