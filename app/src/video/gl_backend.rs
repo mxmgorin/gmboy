@@ -2,6 +2,7 @@ use crate::config::RenderConfig;
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
+use gl::types::GLint;
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, GLProfile, Window};
 use sdl2::{Sdl, VideoSubsystem};
@@ -9,9 +10,7 @@ use std::ffi::CStr;
 use std::ptr;
 
 pub struct GlBackend {
-    _video_subsystem: VideoSubsystem,
-    _gl_context: GLContext,
-    window: Window,
+    gl: GLSetup,
     shader_program: u32,
     frame_texture_id: u32,
     prev_frame_texture_id: u32,
@@ -33,19 +32,7 @@ impl GlBackend {
         notif_rect: Rect,
         config: &RenderConfig,
     ) -> Result<Self, String> {
-        let video_subsystem = sdl.video()?;
-        video_subsystem.gl_attr().set_context_profile(GLProfile::GLES);
-        video_subsystem.gl_attr().set_context_version(3, 0);
-
-        let window = video_subsystem
-            .window("GMBoy GL", game_rect.width(), game_rect.height())
-            .position_centered()
-            .opengl()
-            .build().map_err(|e| e.to_string())?;
-
-        let gl_context = window.gl_create_context()?;
-        gl::load_with(|s| video_subsystem.gl_get_proc_address(s) as *const _);
-        print_gl_versions();
+        let gl = create_gl_with_fallback(sdl, game_rect.width(), game_rect.height())?;
 
         unsafe {
             gl::Enable(gl::TEXTURE_2D);
@@ -55,7 +42,6 @@ impl GlBackend {
         }
 
         let mut obj = Self {
-            _gl_context: gl_context,
             shader_program: 0,
             frame_texture_id: 0,
             vao: 0,
@@ -67,8 +53,7 @@ impl GlBackend {
             shader_frame_blend_mode: config.gl.shader_frame_blend_mode,
             prev_buffer: Box::new([]),
             game_rect,
-            window,
-            _video_subsystem: video_subsystem,
+            gl,
         };
         obj.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)?;
 
@@ -136,10 +121,10 @@ impl GlBackend {
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
-        self.window
+        self.gl.window
             .set_size(calc_win_width(scale), calc_win_height(scale))
             .map_err(|e| e.to_string())?;
-        self.window.set_position(
+        self.gl.window.set_position(
             sdl2::video::WindowPos::Centered,
             sdl2::video::WindowPos::Centered,
         );
@@ -150,11 +135,11 @@ impl GlBackend {
 
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         if fullscreen {
-            self.window
+            self.gl.window
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)
                 .unwrap();
         } else {
-            self.window
+            self.gl.window
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         };
@@ -231,7 +216,7 @@ impl GlBackend {
     }
 
     pub fn show(&self) {
-        self.window.gl_swap_window();
+        self.gl.window.gl_swap_window();
     }
 
     /// Loads and initializes shaders + GPU resources
@@ -307,7 +292,7 @@ impl GlBackend {
     }
 
     fn update_game_rect(&mut self) {
-        let (win_width, win_height) = self.window.size();
+        let (win_width, win_height) = self.gl.window.size();
         self.game_rect = new_scaled_rect(win_width, win_height);
     }
 }
@@ -384,6 +369,129 @@ impl UniformLocations {
     }
 }
 
+pub struct GLSetup {
+    _video_subsystem: VideoSubsystem,
+    _context: GLContext,
+    pub window: Window,
+    pub shader_version: &'static str,
+    pub gles: Option<Gles>,
+}
+
+#[derive(Debug)]
+pub struct Gles {
+    pub is_version_2: bool,
+    // chosen precisions: "highp" or "mediump"
+    pub vertex_precision: &'static str,
+    pub fragment_precision: &'static str,
+}
+
+pub fn create_gl_with_fallback(
+    sdl: &Sdl,
+    width: u32,
+    height: u32,
+) -> Result<GLSetup, String> {
+    let video = sdl.video()?;
+
+    let attempts = [
+        (GLProfile::Core, 3, 3, "#version 330 core", false, false),
+        (GLProfile::Core, 3, 2, "#version 150 core", false, false),
+        (GLProfile::GLES, 3, 0, "#version 300 es", true, false),
+        (GLProfile::GLES, 2, 0, "#version 100", true, true),
+    ];
+
+    for &(profile, major, minor, shader_version, use_gles, is_gles2) in &attempts {
+        log::info!("Trying {profile:?} {major}.{minor} ...");
+
+        video.gl_attr().set_context_profile(profile);
+        video.gl_attr().set_context_version(major, minor);
+
+        let window = match video
+            .window("GMBoy GL", width, height)
+            .position_centered()
+            .opengl()
+            .build()
+        {
+            Ok(w) => w,
+            Err(e) => {
+                log::warn!("Failed to create GL window: {e}");
+                continue;
+            }
+        };
+
+        let context = match window.gl_create_context() {
+            Ok(c) => c,
+            Err(e) => {
+                log::warn!("Failed to create GL context: {e}");
+                continue;
+            }
+        };
+
+        gl::load_with(|s| video.gl_get_proc_address(s) as *const _);
+
+        let gles = if use_gles && is_gles2 {
+            let mut frag_prec = "mediump";
+            let mut vert_prec = "mediump";
+
+            unsafe {
+                let mut range: [GLint; 2] = [0, 0];
+                let mut precision_val: GLint = 0;
+                gl::GetShaderPrecisionFormat(
+                    gl::FRAGMENT_SHADER,
+                    gl::HIGH_FLOAT,
+                    range.as_mut_ptr(),
+                    &mut precision_val,
+                );
+
+                if precision_val > 0 {
+                    frag_prec = "highp";
+                }
+
+                let mut v_range: [GLint; 2] = [0, 0];
+                let mut v_precision_val: GLint = 0;
+                gl::GetShaderPrecisionFormat(
+                    gl::VERTEX_SHADER,
+                    gl::HIGH_FLOAT,
+                    v_range.as_mut_ptr(),
+                    &mut v_precision_val,
+                );
+
+                if v_precision_val > 0 {
+                    vert_prec = "highp";
+                }
+            }
+
+            Some(Gles {
+                is_version_2: true,
+                vertex_precision: vert_prec,
+                fragment_precision: frag_prec,
+            })
+        } else if use_gles {
+            // GLES3 / desktop: vertex shaders generally have highp by default (no need to emit),
+            // but we'll still set values so caller can inspect them if needed.
+            Some(Gles {
+                is_version_2: true,
+                vertex_precision: "highp",
+                fragment_precision: "highp",
+            })
+        } else {
+            None
+        };
+
+        print_gl_versions();
+        log::info!("Using {profile:?} {major}.{minor} -> {shader_version}, GLES2: {gles:?}");
+
+        return Ok(GLSetup {
+            _context: context,
+            _video_subsystem: video,
+            window,
+            shader_version,
+            gles,
+        });
+    }
+
+    Err("No suitable GL/GLES context found!".to_string())
+}
+
 fn print_gl_versions() {
     unsafe {
         let version = CStr::from_ptr(gl::GetString(gl::VERSION) as *const _)
@@ -393,7 +501,7 @@ fn print_gl_versions() {
             .to_str()
             .unwrap();
 
-        log::info!("OpenGL version: {version}\nGLSL version: {shading_lang}");
+        log::info!("OpenGL version: {version}. GLSL version: {shading_lang}");
     }
 }
 
