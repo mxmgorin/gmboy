@@ -7,7 +7,7 @@ LIB_NAME="libmain.so"
 
 # Android targets (TRIPLE:API:JNILIBS_DIR)
 TARGETS=(
-  "aarch64-linux-android:33:arm64-v8a"
+  "x86_64-linux-android:33:x86_64"
 )
 
 cargo clean

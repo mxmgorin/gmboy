@@ -1,23 +1,26 @@
 use crate::get_env;
-use crate::java::{get_file_name, read_dir, read_uri_bytes, show_android_directory_picker, show_android_file_picker};
+use crate::java::{
+    get_file_name, read_dir, read_uri_bytes, show_android_directory_picker,
+    show_android_file_picker,
+};
 use app::AppFilesystem;
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-pub static PICKED_FILE_URI: Mutex<Option<String>> = Mutex::new(None);
-pub static PICKED_DIR_URI: Mutex<Option<String>> = Mutex::new(None);
-const TIMEOUT: Duration = Duration::from_secs(120);
+pub static PICKED_FILE_URI: Mutex<Option<Option<String>>> = Mutex::new(None);
+pub static PICKED_DIR_URI: Mutex<Option<Option<String>>> = Mutex::new(None);
+const TIMEOUT: Duration = Duration::from_secs(180);
 
 pub struct AndroidFilesystem;
 
 impl AndroidFilesystem {
-    pub fn wait(v: &Mutex<Option<String>>) -> Option<String> {
+    pub fn wait(v: &Mutex<Option<Option<String>>>) -> Option<String> {
         let start = Instant::now();
 
         loop {
             if let Some(uri) = v.lock().unwrap().take() {
-                return Some(uri);
+                return uri;
             }
 
             if start.elapsed() > TIMEOUT {
@@ -66,7 +69,7 @@ impl AppFilesystem for AndroidFilesystem {
 
     fn read_dir(&self, path: &Path) -> Result<Vec<String>, String> {
         let path = path.to_str();
-        
+
         let Some(path) = path else {
             return Ok(vec![]);
         };

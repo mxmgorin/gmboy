@@ -93,34 +93,42 @@ public class MainActivity extends SDLActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (resultCode != Activity.RESULT_OK || data == null) return;
+        if (resultCode != Activity.RESULT_OK || data == null) {
+            handlePickedResult(requestCode, null);
+            return;
+        }
 
         Uri uri = data.getData();
 
-        if (uri == null) return;
+        if (uri == null) {
+            handlePickedResult(requestCode, null);
+            return;
+        }
 
         final int takeFlags = data.getFlags()
                 & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
         getContentResolver().takePersistableUriPermission(uri, takeFlags);
-
         String uriStr = uri.toString();
+        handlePickedResult(requestCode, uriStr);
+    }
 
+    // Pass the result back to Rust
+    private void handlePickedResult(int requestCode, @Nullable String uriStr) {
         if (requestCode == FILE_PICKER_REQUEST) {
-            // Pass the result back to Rust
             nativeOnFilePicked(uriStr);
         }
 
         if (requestCode == OPEN_DIRECTORY_REQUEST) {
-            // Pass the result back to Rust
             nativeOnDirectoryPicked(uriStr);
         }
     }
 
     // Declare native callback implemented in Rust
-    private static native void nativeOnFilePicked(String uri);
+    private static native void nativeOnFilePicked(@Nullable String uri);
 
     // Declare native callback implemented in Rust
-    private static native void nativeOnDirectoryPicked(String uri);
+    private static native void nativeOnDirectoryPicked(@Nullable String uri);
 
     private void enableImmersiveMode() {
         getWindow().getDecorView().setSystemUiVisibility(
