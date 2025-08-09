@@ -32,13 +32,13 @@ jobs:
           cp target/aarch64-unknown-linux-gnu/release/gmboy dist/
 
       - name: Zip ARM release
-        run: cd dist && zip gmboy-linux-arm.zip .
+        run: cd dist && zip gmboy-linux-aarch64.zip .
 
       - name: Upload to artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gmboy-linux-arm.zip
-          path: dist/gmboy-linux-arm.zip
+          name: gmboy-linux-aarch64.zip
+          path: dist/gmboy-linux-aarch64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -46,6 +46,6 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/gmboy-linux-arm.zip
+          files: dist/gmboy-linux-aarch64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
