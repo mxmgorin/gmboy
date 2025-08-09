@@ -1,4 +1,4 @@
-use app::{AppPlatform, PlatformFileDialog, PlatformFileSystem};
+use app::{AppPlatform, PlatformFileSystem};
 use std::path::Path;
 use std::{env, fs};
 
@@ -9,36 +9,27 @@ fn main() {
     env_logger::init_from_env(env);
     log::info!("Starting desktop app");
     let args: Vec<String> = env::args().collect();
-    let fs = DesktopFileSystem;
+
+    #[cfg(feature = "file-dialog")]
     let fd = DesktopFileDialog;
-    app::run(args, AppPlatform::new(fs, fd));
+
+    #[cfg(not(feature = "file-dialog"))]
+    let fd = app::EmptyFileDialog;
+
+    app::run(args, AppPlatform::new(DesktopFileSystem, fd));
 }
 
+#[cfg(feature = "file-dialog")]
 pub struct DesktopFileDialog;
 
-impl PlatformFileDialog for DesktopFileDialog {
+#[cfg(feature = "file-dialog")]
+impl app::PlatformFileDialog for DesktopFileDialog {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String> {
-        #[cfg(feature = "file-dialog")]
-        {
-            tinyfiledialogs::open_file_dialog(title, "", Some(filter))
-        }
-
-        #[cfg(not(feature = "file-dialog"))]
-        {
-            None
-        }
+        tinyfiledialogs::open_file_dialog(title, "", Some(filter))
     }
 
     fn select_dir(&mut self, title: &str) -> Option<String> {
-        #[cfg(feature = "file-dialog")]
-        {
-            tinyfiledialogs::select_folder_dialog(title, "")
-        }
-
-        #[cfg(not(feature = "file-dialog"))]
-        {
-            None
-        }
+        tinyfiledialogs::select_folder_dialog(title, "")
     }
 }
 

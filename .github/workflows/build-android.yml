@@ -47,9 +47,13 @@ jobs:
         with:
           name: gmboy.apk
           path: android/app/build/outputs/apk/debug/gmboy.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: android/app/build/outputs/apk/debug/gmboy.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}

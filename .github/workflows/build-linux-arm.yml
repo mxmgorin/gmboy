@@ -9,7 +9,6 @@ on:
 
 jobs:
   build-arm:
-    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +34,16 @@ jobs:
       - name: Zip ARM release
         run: cd dist && zip gmboy-linux-arm.zip .
 
-      - name: Upload ARM zip to GitHub Release
+      - name: Upload to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmboy-linux-arm.zip
+          path: dist/gmboy-linux-arm.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: dist/gmboy-linux-arm.zip

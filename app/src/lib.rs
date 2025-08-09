@@ -227,3 +227,15 @@ pub trait PlatformFileSystem {
     fn read_file_bytes(&self, path: &Path) -> Option<Box<[u8]>>;
     fn read_dir(&self, path: &Path) -> Result<Vec<String>, String>;
 }
+
+pub struct EmptyFileDialog;
+
+impl PlatformFileDialog for EmptyFileDialog {
+    fn select_file(&mut self, _title: &str, _filter: (&[&str], &str)) -> Option<String> {
+        None
+    }
+
+    fn select_dir(&mut self, _title: &str) -> Option<String> {
+        None
+    }
+}
