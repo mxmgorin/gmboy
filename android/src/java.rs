@@ -1,18 +1,19 @@
-use crate::{get_activity, JVM};
+use crate::{get_activity, get_env, JVM};
 use jni::objects::{JByteArray, JObject, JString, JValue};
-use jni::JNIEnv;
 
 const CLASS_NAME: &str = "com/mxmgorin/gmboy/MainActivity";
 
 /// Call this to show the file picker
-pub fn show_android_file_picker(env: &mut JNIEnv) {
+pub fn show_android_file_picker() {
+    let mut env = get_env();
     let activity = get_activity();
     env.call_method(activity, "openFilePicker", "()V", &[])
         .expect("Failed to call openFilePicker");
 }
 
 /// Call this to show the directory picker
-pub fn show_android_directory_picker(env: &mut JNIEnv) {
+pub fn show_android_directory_picker() {
+    let mut env = get_env();
     let activity = get_activity();
     env.call_method(activity, "openDirectoryPicker", "()V", &[])
         .expect("Failed to call openDirectoryPicker");
