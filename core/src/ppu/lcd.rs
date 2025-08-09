@@ -50,10 +50,10 @@ pub struct Lcd {
 impl Default for Lcd {
     fn default() -> Self {
         Self::new([
-            PixelColor::from_hex_rgba("0xFFFFFFFF"),
-            PixelColor::from_hex_rgba("0xAAAAAAFF"),
-            PixelColor::from_hex_rgba("0x555555FF"),
-            PixelColor::from_hex_rgba("0x000000FF"),
+            PixelColor::from_hex_rgba("FFFFFFFF"),
+            PixelColor::from_hex_rgba("AAAAAAFF"),
+            PixelColor::from_hex_rgba("555555FF"),
+            PixelColor::from_hex_rgba("000000FF"),
         ])
     }
 }

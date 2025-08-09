@@ -146,6 +146,7 @@ pub struct PixelColor {
 
 impl PixelColor {
     pub fn from_hex_rgba(hex: &str) -> PixelColor {
+        println!("{hex}");
         assert_eq!(hex.len(), 8);
 
         let r = u8::from_str_radix(&hex[0..2], 16).unwrap();
