@@ -350,12 +350,18 @@ where
     pub fn save_files(&mut self, emu: &mut Emu) -> Result<(), String> {
         // save config
         self.config.set_emu_config(emu.config.clone());
+        
         if let Err(err) = self.config.save_file().map_err(|e| e.to_string()) {
             log::warn!("Failed config.save: {err}");
         }
 
-        let library = RomsList::get_or_create();
-        let path = library.get_last_path().unwrap();
+        let roms = RomsList::get_or_create();
+        let path = roms.get_last_path();
+        
+        let Some(path) = path else {
+            return Ok(());
+        };
+        
         let name = self.platform.fs.get_file_name(path);
 
         let Some(name) = name else {
