@@ -31,12 +31,12 @@ pub mod video;
 pub fn run<FS, FD>(args: Vec<String>, platform: AppPlatform<FS, FD>)
 where
     FS: PlatformFileSystem,
-    FD: PlatformFileDialog
+    FD: PlatformFileDialog,
 {
     let base_dir = get_base_dir();
     log::info!("Using base_dir: {base_dir:?}");
 
-    let config = get_config();
+    let config = get_config(&platform.fs);
     let palettes = get_palettes();
     let mut emu = new_emu(&config, &palettes);
     let mut sdl = sdl2::init().unwrap();
@@ -76,7 +76,7 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
 pub fn load_cart<FS, FD>(app: &mut App<FS, FD>, emu: &mut Emu, mut args: Vec<String>)
 where
     FS: PlatformFileSystem,
-    FD: PlatformFileDialog
+    FD: PlatformFileDialog,
 {
     let cart_path = if args.len() < 2 {
         env::var("CART_PATH").ok()
@@ -100,7 +100,7 @@ where
     }
 }
 
-pub fn get_config() -> AppConfig {
+pub fn get_config(fs: &impl PlatformFileSystem) -> AppConfig {
     let config_path = AppConfig::default_path();
 
     let config = if config_path.exists() {
@@ -138,6 +138,16 @@ pub fn get_config() -> AppConfig {
 
         default_config
     };
+
+    if let Some(roms_dir) = &config.roms_dir {
+        let mut roms = RomsList::get_or_create();
+
+        if roms.get().is_empty() {
+            if let Err(err) = roms.load_from_dir(roms_dir, fs) {
+                log::warn!("Failed to load roms: {err}");
+            }
+        }
+    }
 
     config
 }
@@ -215,10 +225,7 @@ where
     FD: PlatformFileDialog,
 {
     pub fn new(fs: FS, fd: FD) -> Self {
-        Self {
-            fs,
-            fd,
-        }
+        Self { fs, fd }
     }
 }
 
