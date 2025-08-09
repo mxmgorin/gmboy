@@ -172,7 +172,7 @@ impl InputHandler {
                     };
 
                     if let Err(err) = core::save_json_file(RomsList::get_path(), &lib) {
-                        log::error!("Failed to save ROMs library: {err}");
+                        log::error!("Failed to save ROMs: {err}");
                     }
 
                     app.config.roms_dir = Some(dir);
