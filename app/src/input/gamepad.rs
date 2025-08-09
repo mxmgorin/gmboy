@@ -3,14 +3,19 @@ use crate::input::button::handle_emu_btn;
 use crate::input::combos::ComboTracker;
 use core::emu::Emu;
 use sdl2::controller::Button;
+use crate::{PlatformFileDialog, PlatformFileSystem};
 
-pub fn handle_gamepad(
+pub fn handle_gamepad<F, D>(
     state: &mut ComboTracker,
-    app: &mut App,
+    app: &mut App<F, D>,
     emu: &mut Emu,
     button: Button,
     is_pressed: bool,
-) -> Option<AppCmd> {
+) -> Option<AppCmd>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog
+{
     let combo_cmd = state.update(button, is_pressed, &app.config.input);
 
     if combo_cmd.is_some() {
@@ -26,7 +31,11 @@ pub fn handle_gamepad(
     Some(cmd.to_owned())
 }
 
-pub fn handle_gamepad_axis(app: &App, axis_idx: u8, value: i16) -> Option<AppCmd> {
+pub fn handle_gamepad_axis<F, D>(app: &App<F, D>, axis_idx: u8, value: i16) -> Option<AppCmd>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog
+{
     if axis_idx == app.config.input.bindings.left_trigger.code
         && !app.config.input.bindings.left_trigger.is_pressed(value)
     {

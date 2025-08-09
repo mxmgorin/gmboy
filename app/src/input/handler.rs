@@ -10,6 +10,7 @@ use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
 use std::path::Path;
+use crate::{PlatformFileDialog, PlatformFileSystem};
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -39,7 +40,11 @@ impl InputHandler {
     }
 
     /// Polls and handles events. Returns false on quit.
-    pub fn handle_events(&mut self, app: &mut App, emu: &mut Emu) {
+    pub fn handle_events<F, D>(&mut self, app: &mut App<F, D>, emu: &mut Emu)
+    where
+        F: PlatformFileSystem,
+        D: PlatformFileDialog
+    {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
                 Event::ControllerDeviceAdded { which, .. } => {
@@ -107,7 +112,11 @@ impl InputHandler {
         }
     }
 
-    pub fn handle_cmd(&mut self, app: &mut App, emu: &mut Emu, event: AppCmd) {
+    pub fn handle_cmd<F, D>(&mut self, app: &mut App<F, D>, emu: &mut Emu, event: AppCmd)
+    where
+        F: PlatformFileSystem,
+        D: PlatformFileDialog
+    {
         match event {
             AppCmd::LoadFile(path) => {
                 if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
@@ -134,7 +143,7 @@ impl InputHandler {
             AppCmd::SaveState(event, index) => app.handle_save_state(emu, event, index),
             AppCmd::SelectRom => {
                 if app.state == AppState::Paused {
-                    if let Some(path) = app.filesystem.select_file(
+                    if let Some(path) = app.platform.fd.select_file(
                         "Select Game Boy ROM",
                         (&["*.gb", "*.gbc"], "Game Boy ROMs (*.gb, *.gbc)"),
                     ) {
@@ -153,9 +162,9 @@ impl InputHandler {
             }
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
-                if let Some(dir) = app.filesystem.select_dir("Select ROMs Folder") {
+                if let Some(dir) = app.platform.fd.select_dir("Select ROMs Folder") {
                     let mut lib = RomsList::get_or_create();
-                    let result = lib.load_from_dir(&dir, &app.filesystem);
+                    let result = lib.load_from_dir(&dir, &app.platform.fs);
 
                     let Ok(count) = result else {
                         log::error!("Failed to load ROMs library: {}", result.unwrap_err());

@@ -8,7 +8,7 @@ use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
-use crate::{AppConfigFile, AppFilesystem};
+use crate::{AppConfigFile, PlatformFileDialog, PlatformFileSystem, AppPlatform};
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
@@ -78,7 +78,11 @@ pub enum AppState {
     Quitting,
 }
 
-pub struct App {
+pub struct App<F, D>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog,
+{
     audio: AppAudio,
     palettes: Box<[LcdPalette]>,
     pub video: AppVideo,
@@ -86,10 +90,14 @@ pub struct App {
     pub config: AppConfig,
     pub menu: AppMenu,
     pub notifications: Notifications,
-    pub filesystem: Box<dyn AppFilesystem>,
+    pub platform: AppPlatform<F, D>,
 }
 
-impl EmuAudioCallback for App {
+impl<F, D> EmuAudioCallback for App<F, D>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog,
+{
     fn update(&mut self, output: &[f32], runtime: &EmuRuntime) {
         if self.config.audio.mute {
             return;
@@ -107,12 +115,16 @@ impl EmuAudioCallback for App {
     }
 }
 
-impl App {
+impl<F, D> App<F, D>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog,
+{
     pub fn new(
         sdl: &mut Sdl,
         config: AppConfig,
         palettes: Box<[LcdPalette]>,
-        file_system: Box<dyn AppFilesystem>,
+        platform: AppPlatform<F, D>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
         let roms = RomsList::get_or_create();
@@ -142,7 +154,7 @@ impl App {
             palettes,
             config,
             notifications,
-            filesystem: file_system,
+            platform,
         })
     }
 
@@ -293,7 +305,7 @@ impl App {
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
         let library = RomsList::get_or_create();
         let path = library.get_last_path().unwrap();
-        let name = self.filesystem.get_file_name(path).unwrap();
+        let name = self.platform.fs.get_file_name(path).unwrap();
 
         match event {
             SaveStateCmd::Create => {
@@ -342,7 +354,7 @@ impl App {
 
         let library = RomsList::get_or_create();
         let path = library.get_last_path().unwrap();
-        let name = self.filesystem.get_file_name(path);
+        let name = self.platform.fs.get_file_name(path);
 
         let Some(name) = name else {
             return Err("Failed filesystem.get_file_name: not found".to_string());
@@ -377,12 +389,14 @@ impl App {
         let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
         let file_name = self
-            .filesystem
+            .platform
+            .fs
             .get_file_name(path)
             .ok_or("filesystem.get_file_name: None")?;
         let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
         let cart_bytes = self
-            .filesystem
+            .platform
+            .fs
             .read_file_bytes(path)
             .ok_or("filesystem.read_file_bytes: None")?;
         let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string())?;
@@ -411,7 +425,7 @@ impl App {
 
         if !is_reload && self.config.auto_save_state {
             let path = library.get_last_path().unwrap();
-            let name = self.filesystem.get_file_name(path).unwrap();
+            let name = self.platform.fs.get_file_name(path).unwrap();
             let save_state = AppConfigFile::read_save_state_file(&name, AUTO_SAVE_STATE_SUFFIX);
 
             if let Ok(save_state) = save_state {

@@ -1,4 +1,4 @@
-use crate::{get_base_dir, AppFilesystem};
+use crate::{get_base_dir, PlatformFileSystem};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -14,7 +14,7 @@ impl RomsList {
     pub fn load_from_dir<P: AsRef<Path>>(
         &mut self,
         dir: P,
-        filesystem: &Box<dyn AppFilesystem>,
+        filesystem: &impl PlatformFileSystem,
     ) -> Result<usize, String> {
         let dir_path = dir.as_ref();
         self.recent_paths.clear();

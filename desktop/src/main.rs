@@ -1,4 +1,4 @@
-use app::AppFilesystem;
+use app::{AppPlatform, PlatformFileDialog, PlatformFileSystem};
 use std::path::Path;
 use std::{env, fs};
 
@@ -9,13 +9,14 @@ fn main() {
     env_logger::init_from_env(env);
     log::info!("Starting desktop app");
     let args: Vec<String> = env::args().collect();
-    let file_dialog = DesktopFilesystem;
-    app::run(args, Box::new(file_dialog));
+    let fs = DesktopFilesystem;
+    let fd = DesktopFileDialog;
+    app::run(args, AppPlatform::new(fs, fd));
 }
 
-pub struct DesktopFilesystem;
+pub struct DesktopFileDialog;
 
-impl AppFilesystem for DesktopFilesystem {
+impl PlatformFileDialog for DesktopFileDialog {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String> {
         tinyfiledialogs::open_file_dialog(title, "", Some(filter))
     }
@@ -23,7 +24,11 @@ impl AppFilesystem for DesktopFilesystem {
     fn select_dir(&mut self, title: &str) -> Option<String> {
         tinyfiledialogs::select_folder_dialog(title, "")
     }
+}
 
+pub struct DesktopFilesystem;
+
+impl PlatformFileSystem for DesktopFilesystem {
     fn get_file_name(&self, path: &Path) -> Option<String> {
         path.file_name()?.to_str().map(|x| x.to_string())
     }

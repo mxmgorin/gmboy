@@ -7,13 +7,18 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use sdl2::keyboard::Keycode;
+use crate::{PlatformFileDialog, PlatformFileSystem};
 
-pub fn handle_keyboard(
-    app: &mut App,
+pub fn handle_keyboard<F, D>(
+    app: &mut App<F, D>,
     emu: &mut Emu,
     keycode: Keycode,
     is_pressed: bool,
-) -> Option<AppCmd> {
+) -> Option<AppCmd>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog
+{
     log::trace!("handle_keyboard: {keycode:?}");
     
     match keycode {
@@ -25,7 +30,7 @@ pub fn handle_keyboard(
         Keycode::X => return handle_a(is_pressed, app, emu),
         Keycode::Return | Keycode::S => {
             return if app.state == AppState::Paused && !is_pressed {
-                app.menu.select(&app.config, &*app.filesystem) // update menu for better ux
+                app.menu.select(&app.config, &app.platform.fs) // update menu for better ux
             } else {
                 handle_start(is_pressed, app, emu)
             };

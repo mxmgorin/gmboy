@@ -28,7 +28,11 @@ pub mod palette;
 pub mod roms;
 pub mod video;
 
-pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFilesystem>) {
+pub fn run<F, D>(args: Vec<String>, platform: AppPlatform<F, D>)
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog
+{
     let base_dir = get_base_dir();
     log::info!("Using base_dir: {base_dir:?}");
 
@@ -37,7 +41,7 @@ pub fn run(args: Vec<String>, file_dialog: Box<dyn AppFilesystem>) {
     let mut emu = new_emu(&config, &palettes);
     let mut sdl = sdl2::init().unwrap();
     let mut input = InputHandler::new(&sdl).unwrap();
-    let mut app = App::new(&mut sdl, config, palettes, file_dialog).unwrap();
+    let mut app = App::new(&mut sdl, config, palettes, platform).unwrap();
     load_cart(&mut app, &mut emu, args);
 
     if let Err(err) = app.run(&mut emu, &mut input) {
@@ -69,7 +73,11 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     Emu::new(emu_config.clone(), runtime).unwrap()
 }
 
-pub fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
+pub fn load_cart<F, D>(app: &mut App<F, D>, emu: &mut Emu, mut args: Vec<String>)
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog
+{
     let cart_path = if args.len() < 2 {
         env::var("CART_PATH").ok()
     } else {
@@ -187,9 +195,34 @@ impl AppConfigFile {
     }
 }
 
-pub trait AppFilesystem {
+pub trait PlatformFileDialog {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String>;
     fn select_dir(&mut self, title: &str) -> Option<String>;
+}
+
+pub struct AppPlatform<F, D>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog,
+{
+    pub fs: F,
+    pub fd: D,
+}
+
+impl<F, D> AppPlatform<F, D>
+where
+    F: PlatformFileSystem,
+    D: PlatformFileDialog,
+{
+    pub fn new(fs: F, dialog: D) -> Self {
+        Self {
+            fs,
+            fd: dialog,
+        }
+    }
+}
+
+pub trait PlatformFileSystem {
     fn get_file_name(&self, path: &Path) -> Option<String>;
     fn read_file_bytes(&self, path: &Path) -> Option<Box<[u8]>>;
     fn read_dir(&self, path: &Path) -> Result<Vec<String>, String>;

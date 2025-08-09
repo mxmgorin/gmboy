@@ -7,7 +7,7 @@ use crate::video::frame_blend::{
 };
 use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use crate::video::shader::ShaderFrameBlendMode;
-use crate::AppFilesystem;
+use crate::PlatformFileSystem;
 use std::mem;
 use std::path::PathBuf;
 
@@ -232,7 +232,7 @@ fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
-fn library_menu(filesystem: &dyn AppFilesystem) -> Box<[AppMenuItem]> {
+fn library_menu(filesystem: &dyn PlatformFileSystem) -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::Roms(RomsMenu::new(filesystem)),
         AppMenuItem::Back,
@@ -855,7 +855,7 @@ impl AppMenu {
         }
     }
 
-    pub fn select(&mut self, config: &AppConfig, filesystem: &dyn AppFilesystem) -> Option<AppCmd> {
+    pub fn select(&mut self, config: &AppConfig, filesystem: &impl PlatformFileSystem) -> Option<AppCmd> {
         self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
 
@@ -1251,7 +1251,7 @@ pub struct RomMenuItem {
 }
 
 impl RomMenuItem {
-    pub fn new(path: impl Into<PathBuf>, filesystem: &dyn AppFilesystem) -> Option<Self> {
+    pub fn new(path: impl Into<PathBuf>, filesystem: &dyn PlatformFileSystem) -> Option<Self> {
         let path = path.into();
         let name = filesystem.get_file_name(&path)?;
 
@@ -1342,7 +1342,7 @@ impl RomsMenu {
         }
     }
 
-    pub fn new(filesystem: &dyn AppFilesystem) -> Self {
+    pub fn new(filesystem: &dyn PlatformFileSystem) -> Self {
         let roms = RomsList::get_or_create();
         let mut all_items = Vec::with_capacity(12);
 
@@ -1369,20 +1369,12 @@ impl RomsMenu {
 #[cfg(test)]
 mod tests {
     use crate::menu::{RomMenuItem, RomsMenu};
-    use crate::AppFilesystem;
+    use crate::PlatformFileSystem;
     use std::path::Path;
 
     pub struct TestFilesystem;
 
-    impl AppFilesystem for TestFilesystem {
-        fn select_file(&mut self, _title: &str, _filter: (&[&str], &str)) -> Option<String> {
-            None
-        }
-
-        fn select_dir(&mut self, _title: &str) -> Option<String> {
-            None
-        }
-
+    impl PlatformFileSystem for TestFilesystem {
         fn get_file_name(&self, path: &Path) -> Option<String> {
             path.file_stem()?.to_str().map(|x| x.to_string())
         }
@@ -1398,7 +1390,7 @@ mod tests {
 
     #[test]
     pub fn iter() {
-        let filesystem: Box<dyn AppFilesystem> = Box::new(TestFilesystem);
+        let filesystem: Box<dyn PlatformFileSystem> = Box::new(TestFilesystem);
         let roms = RomsMenu {
             all_items: Box::new([]),
             items: vec![
