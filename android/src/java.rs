@@ -1,5 +1,6 @@
 use crate::{get_activity, get_env, JVM};
 use jni::objects::{JByteArray, JObject, JString, JValue};
+use jni::AttachGuard;
 
 const CLASS_NAME: &str = "com/mxmgorin/gmboy/MainActivity";
 
@@ -7,6 +8,7 @@ const CLASS_NAME: &str = "com/mxmgorin/gmboy/MainActivity";
 pub fn show_android_file_picker() {
     let mut env = get_env();
     let activity = get_activity();
+
     env.call_method(activity, "openFilePicker", "()V", &[])
         .expect("Failed to call openFilePicker");
 }
@@ -15,6 +17,7 @@ pub fn show_android_file_picker() {
 pub fn show_android_directory_picker() {
     let mut env = get_env();
     let activity = get_activity();
+
     env.call_method(activity, "openDirectoryPicker", "()V", &[])
         .expect("Failed to call openDirectoryPicker");
 }
@@ -23,58 +26,55 @@ pub fn show_android_directory_picker() {
 pub fn read_uri_bytes(uri: &str) -> Option<Vec<u8>> {
     let vm = JVM.get()?;
     let mut env = vm.attach_current_thread().ok()?;
-
     let activity_class = env.find_class(CLASS_NAME).ok()?;
-    let juri: JString = env.new_string(uri).ok()?;
-    let obj = JObject::from(juri);
-    let arg = JValue::Object(&obj);
 
-    // Call Java static method readUriBytes(String) -> byte[]
-    let result_obj = env
+    let j_str: JString = env.new_string(uri).ok()?;
+    let j_obj = JObject::from(j_str);
+    let j_val = JValue::Object(&j_obj);
+
+    let j_obj = env
         .call_static_method(
             activity_class,
             "readUriBytes",
             "(Ljava/lang/String;)[B",
-            &[arg],
+            &[j_val],
         )
         .ok()?
         .l()
         .ok()?;
 
-    if result_obj.is_null() {
+    if j_obj.is_null() {
         return None;
     }
 
-    let result_array: JByteArray = JByteArray::from(result_obj);
-
-    env.convert_byte_array(result_array).ok()
+    env.convert_byte_array(JByteArray::from(j_obj)).ok()
 }
 
 pub fn get_file_name(uri: &str) -> Option<String> {
     let vm = JVM.get()?;
     let mut env = vm.attach_current_thread().ok()?;
-
     let activity_class = env.find_class(CLASS_NAME).ok()?;
-    let juri = env.new_string(uri).ok()?;
-    let obj = JObject::from(juri);
-    let arg = JValue::Object(&obj);
 
-    let jstr = env
+    let j_str = env.new_string(uri).ok()?;
+    let j_obj = JObject::from(j_str);
+    let j_val = JValue::Object(&j_obj);
+
+    let j_obj = env
         .call_static_method(
             activity_class,
             "getFileName",
             "(Ljava/lang/String;)Ljava/lang/String;",
-            &[arg],
+            &[j_val],
         )
         .ok()?
         .l()
         .ok()?;
 
-    if jstr.is_null() {
+    if j_obj.is_null() {
         return None;
     }
 
-    let filename: String = env.get_string(&JString::from(jstr)).ok()?.into();
+    let filename = env.get_string(&JString::from(j_obj)).ok()?.into();
 
     Some(filename)
 }
@@ -83,35 +83,30 @@ pub fn get_file_name(uri: &str) -> Option<String> {
 pub fn read_dir(uri: &str) -> Option<Vec<String>> {
     let vm = JVM.get()?;
     let mut env = vm.attach_current_thread().ok()?;
-    let j_uri = env.new_string(uri).unwrap();
     let class = env.find_class(CLASS_NAME).unwrap();
 
-    let result = env
+    let j_uri = env.new_string(uri).unwrap();
+    let j_obj = env
         .call_static_method(
             class,
             "getFilesInDirectory",
             "(Ljava/lang/String;)Ljava/util/List;",
-            &[
-                JValue::Object(&JObject::from(j_uri)),
-            ],
+            &[JValue::Object(&JObject::from(j_uri))],
         )
         .unwrap()
         .l()
         .unwrap();
 
-    java_list_to_vec(result)
+    j_obj_to_vec(&mut env, j_obj)
 }
 
-fn java_list_to_vec(list: JObject) -> Option<Vec<String>> {
-    let vm = JVM.get()?;
-    let mut env = vm.attach_current_thread().ok()?;
+fn j_obj_to_vec(env: &mut AttachGuard, list: JObject) -> Option<Vec<String>> {
     let size = env
         .call_method(&list, "size", "()I", &[])
         .unwrap()
         .i()
-        .unwrap();
-
-    let mut result = Vec::with_capacity(size as usize);
+        .unwrap_or(8);
+    let mut vec = Vec::with_capacity(size as usize);
 
     for i in 0..size {
         let element = env
@@ -120,9 +115,9 @@ fn java_list_to_vec(list: JObject) -> Option<Vec<String>> {
             .l()
             .unwrap();
 
-        let string: String = env.get_string(&JString::from(element)).unwrap().into();
-        result.push(string);
+        let string = env.get_string(&JString::from(element)).unwrap().into();
+        vec.push(string);
     }
 
-    Some(result)
+    Some(vec)
 }
