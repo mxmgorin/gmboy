@@ -34,7 +34,7 @@ jobs:
         override: true
 
     - name: Build release
-      run: cargo build --release
+      run: cargo build --release -p desktop
 
     - name: Prepare release folder
       run: |

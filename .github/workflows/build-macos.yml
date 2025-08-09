@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install targets
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin -p desktop
 
       - name: Build universal binary
         run: |
