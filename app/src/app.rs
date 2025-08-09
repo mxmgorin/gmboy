@@ -8,7 +8,7 @@ use crate::palette::LcdPalette;
 use crate::roms::RomsList;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
-use crate::{AppConfigFile, PlatformFileDialog, PlatformFileSystem, AppPlatform};
+use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
@@ -136,9 +136,10 @@ where
             Err(err) => {
                 log::error!("Failed to init AppVideo: {err}");
                 if config.video.render.backend == VideoBackendType::Gl {
-                    config.video.render.backend = VideoBackendType::Sdl2;
-                    let msg = "GL init failed, using SDL2";
+                    let msg = "GL init failed, fallback to SDL2";
+                    log::info!("{msg}");
                     notifications.add(msg);
+                    config.video.render.backend = VideoBackendType::Sdl2;
 
                     AppVideo::new(sdl, colors[0], colors[3], &config.video)?
                 } else {
