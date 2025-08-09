@@ -18,11 +18,27 @@ pub struct DesktopFileDialog;
 
 impl PlatformFileDialog for DesktopFileDialog {
     fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String> {
-        tinyfiledialogs::open_file_dialog(title, "", Some(filter))
+        #[cfg(feature = "file-dialog")]
+        {
+            tinyfiledialogs::open_file_dialog(title, "", Some(filter))
+        }
+
+        #[cfg(not(feature = "file-dialog"))]
+        {
+            None
+        }
     }
 
     fn select_dir(&mut self, title: &str) -> Option<String> {
-        tinyfiledialogs::select_folder_dialog(title, "")
+        #[cfg(feature = "file-dialog")]
+        {
+            tinyfiledialogs::select_folder_dialog(title, "")
+        }
+
+        #[cfg(not(feature = "file-dialog"))]
+        {
+            None
+        }
     }
 }
 
