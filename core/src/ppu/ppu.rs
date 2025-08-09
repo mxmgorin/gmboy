@@ -39,8 +39,8 @@ impl Ppu {
         }
     }
 
-    pub fn get_fps(&self) -> Option<(&str, bool)> {
-        self.fps.as_ref().map(|x| x.get())
+    pub fn get_fps(&mut self) -> Option<(&str, bool)> {
+        self.fps.as_mut().map(|x| x.get())
     }
 
     pub fn tick(&mut self, bus: &mut Bus) {
@@ -152,8 +152,6 @@ impl Default for Fps {
 
 impl Fps {
     pub fn update(&mut self) {
-        self.updated = false; // reset at start of update
-
         let now = self.timer.elapsed();
         let frame_time = (now - self.prev_frame_time).as_secs_f32();
         self.prev_frame_time = now;
@@ -180,7 +178,10 @@ impl Fps {
         }
     }
 
-    pub fn get(&self) -> (&str, bool) {
-        (&self.fps_str, self.updated)
+    pub fn get(&mut self) -> (&str, bool) {
+        let updated = self.updated;
+        self.updated = false;
+
+        (&self.fps_str, updated)
     }
 }
