@@ -9,15 +9,15 @@ use core::emu::Emu;
 use sdl2::keyboard::Keycode;
 use crate::{PlatformFileDialog, PlatformFileSystem};
 
-pub fn handle_keyboard<F, D>(
-    app: &mut App<F, D>,
+pub fn handle_keyboard<FS, FD>(
+    app: &mut App<FS, FD>,
     emu: &mut Emu,
     keycode: Keycode,
     is_pressed: bool,
 ) -> Option<AppCmd>
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog
 {
     log::trace!("handle_keyboard: {keycode:?}");
     

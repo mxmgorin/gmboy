@@ -1,4 +1,4 @@
-use crate::filesystem::AndroidFilesystem;
+use crate::file_system::AndroidFileSystem;
 use crate::get_env;
 use crate::java::{show_android_directory_picker, show_android_file_picker};
 use app::PlatformFileDialog;
@@ -16,7 +16,7 @@ impl PlatformFileDialog for AndroidFileDialog {
         let mut env = get_env();
         show_android_file_picker(&mut env);
 
-        let uri = AndroidFilesystem::wait(&PICKED_FILE_URI);
+        let uri = AndroidFileSystem::wait(&PICKED_FILE_URI);
         log::debug!("select_file: {uri:?}");
 
         uri
@@ -27,14 +27,14 @@ impl PlatformFileDialog for AndroidFileDialog {
         let mut env = get_env();
         show_android_directory_picker(&mut env);
 
-        let uri = AndroidFilesystem::wait(&PICKED_DIR_URI);
+        let uri = AndroidFileSystem::wait(&PICKED_DIR_URI);
         log::debug!("select_dir: {uri:?}");
 
         uri
     }
 }
 
-impl AndroidFilesystem {
+impl AndroidFileSystem {
     pub fn wait(v: &Mutex<Option<Option<String>>>) -> Option<String> {
         let start = Instant::now();
 

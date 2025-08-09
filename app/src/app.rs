@@ -78,10 +78,10 @@ pub enum AppState {
     Quitting,
 }
 
-pub struct App<F, D>
+pub struct App<FS, FD>
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog,
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
 {
     audio: AppAudio,
     palettes: Box<[LcdPalette]>,
@@ -90,13 +90,13 @@ where
     pub config: AppConfig,
     pub menu: AppMenu,
     pub notifications: Notifications,
-    pub platform: AppPlatform<F, D>,
+    pub platform: AppPlatform<FS, FD>,
 }
 
-impl<F, D> EmuAudioCallback for App<F, D>
+impl<FS, FD> EmuAudioCallback for App<FS, FD>
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog,
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
 {
     fn update(&mut self, output: &[f32], runtime: &EmuRuntime) {
         if self.config.audio.mute {
@@ -115,16 +115,16 @@ where
     }
 }
 
-impl<F, D> App<F, D>
+impl<FS, FD> App<FS, FD>
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog,
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
 {
     pub fn new(
         sdl: &mut Sdl,
         config: AppConfig,
         palettes: Box<[LcdPalette]>,
-        platform: AppPlatform<F, D>,
+        platform: AppPlatform<FS, FD>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
         let roms = RomsList::get_or_create();

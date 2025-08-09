@@ -9,7 +9,7 @@ fn main() {
     env_logger::init_from_env(env);
     log::info!("Starting desktop app");
     let args: Vec<String> = env::args().collect();
-    let fs = DesktopFilesystem;
+    let fs = DesktopFileSystem;
     let fd = DesktopFileDialog;
     app::run(args, AppPlatform::new(fs, fd));
 }
@@ -26,9 +26,9 @@ impl PlatformFileDialog for DesktopFileDialog {
     }
 }
 
-pub struct DesktopFilesystem;
+pub struct DesktopFileSystem;
 
-impl PlatformFileSystem for DesktopFilesystem {
+impl PlatformFileSystem for DesktopFileSystem {
     fn get_file_name(&self, path: &Path) -> Option<String> {
         path.file_name()?.to_str().map(|x| x.to_string())
     }

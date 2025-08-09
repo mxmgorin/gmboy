@@ -4,9 +4,9 @@ use crate::java::{
 use app::PlatformFileSystem;
 use std::path::Path;
 
-pub struct AndroidFilesystem;
+pub struct AndroidFileSystem;
 
-impl PlatformFileSystem for AndroidFilesystem {
+impl PlatformFileSystem for AndroidFileSystem {
     fn get_file_name(&self, path: &Path) -> Option<String> {
         let path = path.to_str()?;
 

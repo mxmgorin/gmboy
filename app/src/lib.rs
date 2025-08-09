@@ -28,10 +28,10 @@ pub mod palette;
 pub mod roms;
 pub mod video;
 
-pub fn run<F, D>(args: Vec<String>, platform: AppPlatform<F, D>)
+pub fn run<FS, FD>(args: Vec<String>, platform: AppPlatform<FS, FD>)
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog
 {
     let base_dir = get_base_dir();
     log::info!("Using base_dir: {base_dir:?}");
@@ -73,10 +73,10 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     Emu::new(emu_config.clone(), runtime).unwrap()
 }
 
-pub fn load_cart<F, D>(app: &mut App<F, D>, emu: &mut Emu, mut args: Vec<String>)
+pub fn load_cart<FS, FD>(app: &mut App<FS, FD>, emu: &mut Emu, mut args: Vec<String>)
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog
 {
     let cart_path = if args.len() < 2 {
         env::var("CART_PATH").ok()
@@ -200,24 +200,24 @@ pub trait PlatformFileDialog {
     fn select_dir(&mut self, title: &str) -> Option<String>;
 }
 
-pub struct AppPlatform<F, D>
+pub struct AppPlatform<FS, FD>
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog,
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
 {
-    pub fs: F,
-    pub fd: D,
+    pub fs: FS,
+    pub fd: FD,
 }
 
-impl<F, D> AppPlatform<F, D>
+impl<FS, FD> AppPlatform<FS, FD>
 where
-    F: PlatformFileSystem,
-    D: PlatformFileDialog,
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
 {
-    pub fn new(fs: F, dialog: D) -> Self {
+    pub fn new(fs: FS, fd: FD) -> Self {
         Self {
             fs,
-            fd: dialog,
+            fd,
         }
     }
 }

@@ -1,10 +1,10 @@
 mod file_dialog;
-mod filesystem;
+mod file_system;
 mod java;
 mod native;
 
 use crate::file_dialog::AndroidFileDialog;
-use crate::filesystem::AndroidFilesystem;
+use crate::file_system::AndroidFileSystem;
 use android_logger::Config;
 use app::AppPlatform;
 use jni::objects::JObject;
@@ -27,7 +27,7 @@ pub extern "C" fn SDL_main(_argc: i32, _argv: *const *const u8) -> i32 {
 
     _ = std::panic::catch_unwind(|| {
         let args: Vec<String> = std::env::args().collect();
-        let fs = AndroidFilesystem;
+        let fs = AndroidFileSystem;
         let dialog = AndroidFileDialog;
         app::run(args, AppPlatform::new(fs, dialog));
     });

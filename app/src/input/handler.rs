@@ -40,10 +40,10 @@ impl InputHandler {
     }
 
     /// Polls and handles events. Returns false on quit.
-    pub fn handle_events<F, D>(&mut self, app: &mut App<F, D>, emu: &mut Emu)
+    pub fn handle_events<FS, FD>(&mut self, app: &mut App<FS, FD>, emu: &mut Emu)
     where
-        F: PlatformFileSystem,
-        D: PlatformFileDialog
+        FS: PlatformFileSystem,
+        FD: PlatformFileDialog
     {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
@@ -112,10 +112,10 @@ impl InputHandler {
         }
     }
 
-    pub fn handle_cmd<F, D>(&mut self, app: &mut App<F, D>, emu: &mut Emu, event: AppCmd)
+    pub fn handle_cmd<FS, FD>(&mut self, app: &mut App<FS, FD>, emu: &mut Emu, event: AppCmd)
     where
-        F: PlatformFileSystem,
-        D: PlatformFileDialog
+        FS: PlatformFileSystem,
+        FD: PlatformFileDialog
     {
         match event {
             AppCmd::LoadFile(path) => {
