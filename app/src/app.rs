@@ -122,7 +122,7 @@ where
 {
     pub fn new(
         sdl: &mut Sdl,
-        config: AppConfig,
+        mut config: AppConfig,
         palettes: Box<[LcdPalette]>,
         platform: AppPlatform<FS, FD>,
     ) -> Result<Self, String> {
@@ -136,6 +136,7 @@ where
             Err(err) => {
                 log::error!("Failed to init AppVideo: {err}");
                 if config.video.render.backend == VideoBackendType::Gl {
+                    config.video.render.backend = VideoBackendType::Sdl2;
                     let msg = "GL init failed, using SDL2";
                     notifications.add(msg);
 
