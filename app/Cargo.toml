@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
 
+[features]
+default = ["file-dialog"]
+file-dialog = []
+
 [dependencies]
 core = { path = "../core" }
 sdl2 = { version = "0.38", default-features = false, features = ["unsafe_textures"] }

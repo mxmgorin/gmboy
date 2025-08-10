@@ -256,6 +256,7 @@ fn system_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::SlowSpeed,
         AppMenuItem::RewindSize,
         AppMenuItem::RewindInterval,
+        #[cfg(feature = "file-dialog")]
         AppMenuItem::RomsDir,
         AppMenuItem::Back,
     ]
@@ -313,6 +314,7 @@ fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::SaveState,
         AppMenuItem::LoadState,
         AppMenuItem::RestartGame,
+        #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
         AppMenuItem::SettingsMenu,
