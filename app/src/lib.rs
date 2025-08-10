@@ -142,14 +142,12 @@ pub fn get_config(fs: &impl PlatformFileSystem) -> AppConfig {
     if let Some(roms_dir) = &config.roms_dir {
         let mut roms = RomsList::get_or_create();
 
-        if roms.get().is_empty() {
-            if let Err(err) = roms.load_from_dir(roms_dir, fs) {
-                log::warn!("Failed to load ROMs: {err}");
-            }
+        if let Err(err) = roms.load_from_dir(roms_dir, fs) {
+            log::warn!("Failed to load ROMs: {err}");
+        }
 
-            if let Err(err) = core::save_json_file(RomsList::get_path(), &roms) {
-                log::warn!("Failed to save ROMs: {err}");
-            }
+        if let Err(err) = core::save_json_file(RomsList::get_path(), &roms) {
+            log::warn!("Failed to save ROMs: {err}");
         }
     }
 
