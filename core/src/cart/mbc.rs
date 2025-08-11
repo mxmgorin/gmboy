@@ -16,7 +16,7 @@ pub const RAM_EXTERNAL_END_ADDR: u16 = 0xBFFF;
 
 pub trait Mbc {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8;
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8);
+    fn write_rom(&mut self, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
     fn load_ram(&mut self, bytes: Box<[u8]>);
@@ -47,13 +47,13 @@ impl Mbc for MbcVariant {
         }
     }
 
-    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, address: u16, value: u8) {
         match self {
             MbcVariant::NoMbc | MbcVariant::NoMbcRam(_) => {}
-            MbcVariant::Mbc1(c) => c.write_rom(&cart_data, address, value),
-            MbcVariant::Mbc2(c) => c.write_rom(&cart_data, address, value),
-            MbcVariant::Mbc3(c) => c.write_rom(&cart_data, address, value),
-            MbcVariant::Mbc5(c) => c.write_rom(&cart_data, address, value),
+            MbcVariant::Mbc1(c) => c.write_rom(address, value),
+            MbcVariant::Mbc2(c) => c.write_rom(address, value),
+            MbcVariant::Mbc3(c) => c.write_rom(address, value),
+            MbcVariant::Mbc5(c) => c.write_rom(address, value),
         }
     }
 

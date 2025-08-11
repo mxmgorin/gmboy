@@ -88,7 +88,7 @@ impl Mbc for Mbc1 {
         cart_data.bytes[address]
     }
 
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {

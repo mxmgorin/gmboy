@@ -22,7 +22,7 @@ impl Mbc for Mbc2 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x3FFF => {
                 if address & 0x100 == 0 {

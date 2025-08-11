@@ -120,7 +120,7 @@ impl Cart {
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                self.mbc.write_rom(&self.data, address, value)
+                self.mbc.write_rom(address, value)
             }
             RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => self.mbc.write_ram(address, value),
             _ => (),
