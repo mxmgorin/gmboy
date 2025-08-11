@@ -11,6 +11,7 @@ use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::PlatformFileSystem;
 use std::mem;
+use crate::roms::RomsState;
 
 pub struct AppMenu {
     prev_items: Vec<Box<[AppMenuItem]>>,
@@ -508,6 +509,7 @@ impl AppMenu {
         &mut self,
         config: &AppConfig,
         filesystem: &impl PlatformFileSystem,
+        roms: &RomsState
     ) -> Option<AppCmd> {
         self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
@@ -619,7 +621,7 @@ impl AppMenu {
                 None
             }
             AppMenuItem::RomsMenu => {
-                self.next_items(roms_menu(filesystem));
+                self.next_items(roms_menu(filesystem, roms));
 
                 None
             }

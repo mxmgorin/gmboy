@@ -105,7 +105,7 @@ where
     FD: PlatformFileDialog
 {
     if app.state == AppState::Paused && is_pressed {
-        return app.menu.select(&app.config, &app.platform.fs);
+        return app.menu.select(&app.config, &app.platform.fs, &app.roms);
     } else {
         emu.runtime.bus.io.joypad.a = is_pressed;
     }

@@ -6,6 +6,7 @@ use crate::menu::roms::RomsMenu;
 use crate::menu::SubMenu;
 use crate::video::frame_blend::FrameBlendMode;
 use crate::PlatformFileSystem;
+use crate::roms::RomsState;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(15);
@@ -53,8 +54,8 @@ pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
-pub fn roms_menu(filesystem: &impl PlatformFileSystem) -> Box<[AppMenuItem]> {
-    let roms: Box<dyn SubMenu> = Box::new(RomsMenu::new(filesystem));
+pub fn roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<[AppMenuItem]> {
+    let roms: Box<dyn SubMenu> = Box::new(RomsMenu::new(filesystem, roms));
 
     vec![AppMenuItem::RomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
 }

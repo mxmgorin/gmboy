@@ -3,7 +3,6 @@ use crate::config::AppConfig;
 use crate::input::combos::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
-use crate::roms::RomsState;
 use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::emu::state::EmuState;
 use core::emu::Emu;
@@ -132,8 +131,8 @@ impl InputHandler {
                 }
             }
             AppCmd::RestartGame => {
-                if let Some(path) = RomsState::get_or_create(&app.platform.fs).get_last_path() {
-                    if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
+                if let Some(path) = app.roms.get_last_path() {
+                    if let Err(err) = app.load_cart_file(emu, &path.to_path_buf()) {
                         log::warn!("Failed to load cart file: {err}");
                     }
                 }
@@ -165,15 +164,13 @@ impl InputHandler {
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
                 if let Some(dir) = app.platform.fd.select_dir("Select ROMs Folder") {
-                    let mut roms = RomsState::get_or_create(&app.platform.fs);
-                    let result = roms.load_from_dir(&dir, &app.platform.fs);
+                    let result = app.roms.load_from_dir(&dir, &app.platform.fs);
 
                     let Ok(count) = result else {
                         log::error!("Failed to load ROMs: {}", result.unwrap_err());
                         return;
                     };
 
-                    roms.save_file();
                     app.notifications.add(format!("Found {count} ROMs"));
                 }
             }

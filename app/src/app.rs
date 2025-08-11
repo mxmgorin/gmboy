@@ -91,6 +91,7 @@ where
     pub menu: AppMenu,
     pub notifications: Notifications,
     pub platform: AppPlatform<FS, FD>,
+    pub roms: RomsState,
 }
 
 impl<FS, FD> EmuAudioCallback for App<FS, FD>
@@ -157,6 +158,7 @@ where
             config,
             notifications,
             platform,
+            roms,
         })
     }
 
@@ -305,8 +307,7 @@ where
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
-        let roms = RomsState::get_or_create(&self.platform.fs);
-        let path = roms.get_last_path().unwrap();
+        let path = self.roms.get_last_path().unwrap();
         let name = self.platform.fs.get_file_name(path).unwrap();
 
         match event {
@@ -348,6 +349,7 @@ where
     }
 
     pub fn save_files(&mut self, emu: &mut Emu) -> Result<(), String> {
+        self.roms.save_file();
         // save config
         self.config.set_emu_config(emu.config.clone());
         
@@ -392,8 +394,7 @@ where
     }
 
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) -> Result<(), String> {
-        let mut roms = RomsState::get_or_create(&self.platform.fs);
-        let is_reload = roms.get_last_path().map(|x| x.as_path()) == Some(path)
+        let is_reload = self.roms.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
         let file_name = self
             .platform
@@ -414,8 +415,7 @@ where
         }
 
         emu.load_cart(cart);
-        roms.on_opened(path.to_path_buf());
-        roms.save_file();
+        self.roms.on_opened(path.to_path_buf());
 
         emu.runtime.bus.io.lcd.apply_colors(
             self.config
@@ -428,7 +428,7 @@ where
         self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
 
         if !is_reload && self.config.auto_save_state {
-            let path = roms.get_last_path().unwrap();
+            let path = self.roms.get_last_path().unwrap();
             let name = self.platform.fs.get_file_name(path).unwrap();
             let save_state = AppConfigFile::read_save_state_file(&name, AUTO_SAVE_STATE_SUFFIX);
 

@@ -56,8 +56,7 @@ impl RomsMenu {
         }
     }
 
-    pub fn new(fs: &impl PlatformFileSystem) -> Self {
-        let roms = RomsState::get_or_create(fs);
+    pub fn new(fs: &impl PlatformFileSystem, roms: &RomsState) -> Self {
         let mut all_items = Vec::with_capacity(12);
 
         for path in roms.get() {

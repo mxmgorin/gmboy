@@ -1,7 +1,6 @@
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
-use crate::roms::RomsState;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
@@ -37,7 +36,7 @@ where
     let base_dir = get_base_dir();
     log::info!("Using base_dir: {base_dir:?}");
 
-    let config = get_config(&platform.fs);
+    let config = get_config();
     let palettes = get_palettes();
     let mut emu = new_emu(&config, &palettes);
     let mut sdl = sdl2::init().unwrap();
@@ -91,17 +90,15 @@ where
             log::warn!("Failed to load cart file: {err}");
         }
     } else {
-        let roms = RomsState::get_or_create(&app.platform.fs);
-
-        if let Some(cart_path) = roms.get_last_path() {
-            if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
+        if let Some(cart_path) = app.roms.get_last_path() {
+            if let Err(err) = app.load_cart_file(emu, &cart_path.to_path_buf()) {
                 log::warn!("Failed to load cart file: {err}");
             }
         }
     }
 }
 
-pub fn get_config(fs: &impl PlatformFileSystem) -> AppConfig {
+pub fn get_config() -> AppConfig {
     let config_path = AppConfig::default_path();
 
     let config = if config_path.exists() {
@@ -139,8 +136,6 @@ pub fn get_config(fs: &impl PlatformFileSystem) -> AppConfig {
 
         default_config
     };
-    let roms = RomsState::get_or_create(fs);
-    roms.save_file();
 
     config
 }
@@ -159,7 +154,7 @@ pub fn get_palettes() -> Box<[LcdPalette]> {
 }
 
 pub fn get_base_dir() -> PathBuf {
-    let path = sdl2::filesystem::pref_path("mxmgodev", "GMBoy").unwrap();
+    let path = sdl2::filesystem::pref_path("mxmgorin", "GMBoy").unwrap();
 
     PathBuf::from(path)
 }
