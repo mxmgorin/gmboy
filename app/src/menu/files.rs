@@ -28,11 +28,15 @@ impl SubMenu for FilesMenu {
         let selected = self.fb.get_selected();
 
         Box::new(self.fb.get_page_entries().iter().map(move |path| {
-            let name = path
+            let mut name = path
                 .file_name()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .to_string();
+
+            if path.is_dir() {
+                name = format!("/{name}");
+            }
 
             let name = if let Some(selected) = selected {
                 if selected == path {
@@ -43,7 +47,7 @@ impl SubMenu for FilesMenu {
             } else {
                 name
             };
-            
+
             truncate_menu_item(&name)
         }))
     }
