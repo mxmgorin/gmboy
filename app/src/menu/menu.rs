@@ -640,9 +640,12 @@ impl AppMenu {
                 None
             }
             AppMenuItem::LoadedRoms => {
-                self.next_items(loaded_roms_menu(filesystem, roms));
-
-                None
+                if roms.loaded_count() == 0 {
+                    Some(AppCmd::SelectRomsDir)
+                } else {
+                    self.next_items(loaded_roms_menu(filesystem, roms));
+                    None
+                }
             }
             AppMenuItem::OpenedRoms => {
                 self.next_items(opened_roms_menu(filesystem, roms));
