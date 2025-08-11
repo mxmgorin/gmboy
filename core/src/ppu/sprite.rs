@@ -3,8 +3,7 @@ use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::OamEntry;
 use crate::ppu::tile::{
-    get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
-    TILE_SET_DATA_1_START,
+    get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
 };
 
 #[derive(Debug, Clone, Default, Copy)]
@@ -44,16 +43,18 @@ impl SpriteFetcher {
 
                 // Iterate through sorted list to insert at correct position
                 for i in 0..self.line_sprites_count {
-                    let current_entry = &self.line_sprites[i];
+                    let current_entry = unsafe { self.line_sprites.get_unchecked(i) };
 
                     if ram_entry.x < current_entry.x && ram_entry.x != current_entry.x {
                         // Sort by X first, then by OAM index if X is the same
-
                         for j in (i..self.line_sprites_count).rev() {
-                            self.line_sprites[j + 1] = self.line_sprites[j];
+                            unsafe {
+                                *self.line_sprites.get_unchecked_mut(j + 1) =
+                                    *self.line_sprites.get_unchecked(j)
+                            }
                         }
 
-                        self.line_sprites[i] = ram_entry.to_owned();
+                        unsafe { *self.line_sprites.get_unchecked_mut(i) = *ram_entry };
                         self.line_sprites_count += 1;
                         inserted = true;
                         break;
@@ -62,7 +63,10 @@ impl SpriteFetcher {
 
                 if !inserted {
                     // If no earlier insertion, push to the back
-                    self.line_sprites[self.line_sprites_count] = ram_entry.to_owned();
+                    unsafe {
+                        *self.line_sprites.get_unchecked_mut(self.line_sprites_count) =
+                            ram_entry.to_owned();
+                    }
                     self.line_sprites_count += 1;
                 }
             }
@@ -74,14 +78,18 @@ impl SpriteFetcher {
         let fetch_x = fetch_x as i32;
 
         for idx in 0..self.line_sprites_count {
-            let sprite = self.line_sprites[idx];
+            let sprite = unsafe { self.line_sprites.get_unchecked(idx) };
             let sp_x = self.calc_sprite_x(sprite.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x + 8)
                 || (sp_x + 8 >= fetch_x && sp_x + 8 < fetch_x + 8)
             {
                 // need to add
-                self.fetched_sprites[self.fetched_sprites_count] = sprite.to_owned();
+                unsafe {
+                    *self
+                        .fetched_sprites
+                        .get_unchecked_mut(self.fetched_sprites_count) = *sprite;
+                };
                 self.fetched_sprites_count += 1;
             }
 
@@ -101,7 +109,8 @@ impl SpriteFetcher {
         let sprite_height: u8 = bus.io.lcd.control.obj_height();
 
         for i in 0..self.fetched_sprites_count {
-            let sprite = self.fetched_sprites[i];
+            let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
+
             let mut tile_y: u8 = cur_y
                 .wrapping_add(TILE_BIT_SIZE as i32)
                 .wrapping_sub(sprite.y as i32)
@@ -126,10 +135,14 @@ impl SpriteFetcher {
                 .wrapping_add(tile_y as u16)
                 .wrapping_add(byte_offset);
 
-            match byte_offset {
-                0 => self.fetched_sprite_data[i].tile_line.byte1 = bus.read(addr),
-                1 => self.fetched_sprite_data[i].tile_line.byte2 = bus.read(addr),
-                _ => unreachable!(),
+            let data = unsafe { self.fetched_sprite_data.get_unchecked_mut(i) };
+            let value = bus.read(addr);
+
+            unsafe {
+                *data
+                    .tile_line
+                    .as_bytes_mut()
+                    .get_unchecked_mut(byte_offset as usize) = value;
             }
         }
     }
@@ -141,7 +154,7 @@ impl SpriteFetcher {
         bg_color_index: usize,
     ) -> Option<PixelColor> {
         for i in 0..self.fetched_sprites_count {
-            let sprite = self.fetched_sprites[i];
+            let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
             let sprite_x = self.calc_sprite_x(sprite.x, lcd.scroll_x);
 
             if sprite_x + 8 < fifo_x as i32 {
@@ -153,13 +166,13 @@ impl SpriteFetcher {
                 continue; // Out of sprite range
             }
 
-            let bit = if self.fetched_sprites[i].f_x_flip() {
+            let bit = if sprite.f_x_flip() {
                 7 - offset
             } else {
                 offset
             };
 
-            let data = self.fetched_sprite_data[i];
+            let data = unsafe { self.fetched_sprite_data.get_unchecked(i) };
             let color_index =
                 get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit as u8);
 
@@ -167,14 +180,16 @@ impl SpriteFetcher {
                 continue; // Transparent
             }
 
-            if !self.fetched_sprites[i].f_bgp() || bg_color_index == 0 {
-                let color = if self.fetched_sprites[i].f_pn() {
-                    lcd.sp2_colors[color_index]
-                } else {
-                    lcd.sp1_colors[color_index]
+            if !sprite.f_bgp() || bg_color_index == 0 {
+                let color = unsafe {
+                    if sprite.f_pn() {
+                        lcd.sp2_colors.get_unchecked(color_index)
+                    } else {
+                        lcd.sp1_colors.get_unchecked(color_index)
+                    }
                 };
 
-                return Some(color);
+                return Some(*color);
             }
         }
 

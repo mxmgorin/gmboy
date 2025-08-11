@@ -27,10 +27,25 @@ pub struct TileData {
     pub lines: [TileLineData; TILE_HEIGHT as usize],
 }
 
+#[repr(C, packed)]
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TileLineData {
     pub byte1: u8,
     pub byte2: u8,
+}
+
+impl TileLineData {
+    /// Mutable view as 2-byte array slice
+    pub fn as_bytes_mut(&mut self) -> &mut [u8; 2] {
+        // SAFETY: TileLineData is #[repr(C)] with exactly 2 u8 fields, no padding
+        unsafe { &mut *(self as *mut TileLineData as *mut [u8; 2]) }
+    }
+
+    /// View entry as 4-byte array slice
+    pub fn as_bytes(&self) -> &[u8; 2] {
+        // SAFETY: TileLineData is #[repr(C)] with exactly 2 u8 fields, no padding
+        unsafe { &*(self as *const TileLineData as *const [u8; 2]) }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
