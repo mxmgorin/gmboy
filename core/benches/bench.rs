@@ -1,3 +1,6 @@
+use core::ppu::vram::VRAM_ADDR_START;
+use core::ppu::vram::VRAM_SIZE;
+use core::ppu::vram::VideoRam;
 use core::ppu::oam::OAM_ADDR_START;
 use core::apu::Apu;
 use core::auxiliary::timer::Timer;
@@ -96,6 +99,18 @@ fn criterion_benchmark(c: &mut Criterion) {
             |mut oam| {
                 for i in 0..5_000_000 {
                     oam.write((i % OAM_ENTRIES_COUNT * 4) as u16 + OAM_ADDR_START, (i & 0xFF) as u8);
+                }
+            },
+            BatchSize::SmallInput,
+        );
+    });
+
+    c.bench_function("vram_write_5_000_000", |b| {
+        b.iter_batched(
+            VideoRam::default,
+            |mut vram| {
+                for i in 0..5_000_000 {
+                    vram.write((i % VRAM_SIZE) as u16 + VRAM_ADDR_START, (i & 0xFF) as u8);
                 }
             },
             BatchSize::SmallInput,
