@@ -1,5 +1,5 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
-use crate::config::{AppConfig, VideoBackendType};
+use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::buffer::MenuBuffer;
 use crate::menu::item::AppMenuItem;
 use crate::menu::{advanced_menu, audio_menu, confirm_menu, files_menu, game_menu, input_menu, interface_menu, roms_menu, settings_menu, start_menu, system_menu, video_menu};
@@ -290,6 +290,10 @@ impl AppMenu {
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::FrameSkip => {
+                let frame_skip = update_frame_skip(config.frame_skip, 1);
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(frame_skip)))
+            }
         }
     }
 
@@ -492,6 +496,10 @@ impl AppMenu {
 
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::FrameSkip => {
+                let frame_skip = update_frame_skip(config.frame_skip, -1);
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(frame_skip)))
+            }
         }
     }
 
@@ -660,6 +668,7 @@ impl AppMenu {
             AppMenuItem::VideoBackend => None,
             AppMenuItem::VideoShader => None,
             AppMenuItem::ShaderFrameBlend => None,
+            AppMenuItem::FrameSkip => None,
         }
     }
 

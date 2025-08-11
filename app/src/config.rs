@@ -74,9 +74,16 @@ impl RenderConfig {
     pub const HEIGHT: usize = LCD_Y_RES as usize;
 }
 
+pub fn update_frame_skip(v: usize, delta: isize) -> usize {
+    let v = v as isize - delta;
+
+    v.clamp(0, 59) as usize
+}
+
 impl AppConfig {
     pub fn calc_min_frame_interval(&self) -> Duration {
         let frame_skip = self.frame_skip as f32;
+        let frame_skip = frame_skip.clamp(0.0, 59.0);
 
         Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
     }

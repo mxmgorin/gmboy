@@ -58,6 +58,7 @@ pub enum AppMenuItem {
     ShaderFrameBlend,
     FileBrowser,
     FileBrowserSubMenu(Box<dyn SubMenu>),
+    FrameSkip,
 }
 
 impl AppMenuItem {
@@ -75,6 +76,7 @@ impl AppMenuItem {
             | AppMenuItem::SettingsMenu
             | AppMenuItem::InterfaceMenu
             | AppMenuItem::Back
+            | AppMenuItem::FrameSkip
             | AppMenuItem::Quit
             | AppMenuItem::Palette
             | AppMenuItem::ToggleFps
@@ -129,6 +131,7 @@ impl AppMenuItem {
             | AppMenuItem::ShaderFrameBlend
             | AppMenuItem::RomsDir
             | AppMenuItem::VideoBackend
+            | AppMenuItem::FrameSkip
             | AppMenuItem::VideoShader
             | AppMenuItem::LoadState
             | AppMenuItem::OpenRom
@@ -378,6 +381,7 @@ impl AppMenuItem {
             }
             AppMenuItem::FileBrowser => "Browse".to_string(),
             AppMenuItem::FileBrowserSubMenu(_) => "Browse Sub".to_string(),
+            AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.frame_skip),
         };
 
         truncate_menu_item(&item_str)

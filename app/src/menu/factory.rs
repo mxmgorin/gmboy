@@ -94,6 +94,7 @@ pub fn advanced_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::TileWindow,
         AppMenuItem::SpinDuration,
+        AppMenuItem::FrameSkip,
         AppMenuItem::ResetConfig,
         AppMenuItem::Back,
     ]

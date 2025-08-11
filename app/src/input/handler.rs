@@ -278,6 +278,10 @@ impl InputHandler {
                 }
                 ChangeAppConfigCmd::NextShader => app.next_shader(),
                 ChangeAppConfigCmd::PrevShader => app.prev_shader(),
+                ChangeAppConfigCmd::FrameSkip(x) => {
+                    app.config.frame_skip = x;
+                    app.min_render_interval = app.config.calc_min_frame_interval();
+                }
             },
             AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
             AppCmd::SetFileBrowsePath(path) => app.roms.last_browse_dir_path = Some(path),

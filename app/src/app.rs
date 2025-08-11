@@ -70,6 +70,7 @@ pub enum ChangeAppConfigCmd {
     Video(VideoConfig),
     NextShader,
     PrevShader,
+    FrameSkip(usize),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -86,7 +87,7 @@ where
 {
     audio: AppAudio,
     palettes: Box<[LcdPalette]>,
-    min_render_interval: Duration,
+    pub min_render_interval: Duration,
     pub video: AppVideo,
     pub state: AppState,
     pub config: AppConfig,
