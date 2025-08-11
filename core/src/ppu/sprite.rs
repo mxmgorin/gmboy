@@ -1,9 +1,9 @@
 use crate::bus::Bus;
 use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
-use crate::ppu::lcd::Lcd;
+use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::OamEntry;
 use crate::ppu::tile::{
-    get_color_index, Pixel, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
+    get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
     TILE_SET_DATA_1_START,
 };
 
@@ -139,7 +139,7 @@ impl SpriteFetcher {
         lcd: &Lcd,
         fifo_x: u8,
         bg_color_index: usize,
-    ) -> Option<Pixel> {
+    ) -> Option<PixelColor> {
         for i in 0..self.fetched_sprites_count {
             let sprite = self.fetched_sprites[i];
             let sprite_x = self.calc_sprite_x(sprite.x, lcd.scroll_x);
@@ -174,7 +174,7 @@ impl SpriteFetcher {
                     lcd.sp1_colors[color_index]
                 };
 
-                return Some(Pixel::new(color, color_index.into()));
+                return Some(color);
             }
         }
 

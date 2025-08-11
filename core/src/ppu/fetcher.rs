@@ -1,7 +1,8 @@
 use crate::bus::Bus;
 use crate::ppu::fifo::PixelFifo;
+use crate::ppu::lcd::PixelColor;
 use crate::ppu::sprite::SpriteFetcher;
-use crate::ppu::tile::{get_color_index, Pixel, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::ptr;
 
@@ -95,9 +96,9 @@ impl PixelFetcher {
         }
     }
 
-    fn push_buffer(&mut self, index: usize, pixel: Pixel) {
+    fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
         let base = index * 4;
-        let rgba = pixel.color.as_rgba_bytes();
+        let rgba = pixel.as_rgba_bytes();
 
         unsafe {
             let dst = self.buffer.as_mut_ptr().add(base);
@@ -176,13 +177,10 @@ impl PixelFetcher {
                 bit,
             );
 
-            let bgw_pixel = if bus.io.lcd.control.bgw_enabled() {
-                Pixel::new(
-                    bus.io.lcd.bg_colors[bgw_color_index],
-                    bgw_color_index.into(),
-                )
+            let bgw_pixel_color = if bus.io.lcd.control.bgw_enabled() {
+                bus.io.lcd.bg_colors[bgw_color_index]
             } else {
-                Pixel::new(bus.io.lcd.bg_colors[0], 0.into())
+                bus.io.lcd.bg_colors[0]
             };
 
             let sprite_pixel = if bus.io.lcd.control.obj_enabled() {
@@ -192,7 +190,7 @@ impl PixelFetcher {
                 None
             };
 
-            let pixel = sprite_pixel.unwrap_or(bgw_pixel);
+            let pixel = sprite_pixel.unwrap_or(bgw_pixel_color);
 
             if x >= 0 {
                 self.pixel_fifo.push(pixel);

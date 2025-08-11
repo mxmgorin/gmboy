@@ -1,11 +1,11 @@
-use crate::ppu::tile::Pixel;
+use crate::ppu::lcd::PixelColor;
 
 const BUFFER_SIZE: usize = MAX_FIFO_SIZE * 2;
 const MAX_FIFO_SIZE: usize = 8;
 
 #[derive(Debug, Clone)]
 pub struct PixelFifo {
-    buffer: [Pixel; BUFFER_SIZE],
+    buffer: [PixelColor; BUFFER_SIZE],
     head: usize,
     tail: usize,
     size: usize,
@@ -14,7 +14,7 @@ pub struct PixelFifo {
 impl Default for PixelFifo {
     fn default() -> Self {
         Self {
-            buffer: [Pixel::default(); BUFFER_SIZE],
+            buffer: [PixelColor::default(); BUFFER_SIZE],
             head: 0,
             tail: 0,
             size: 0,
@@ -23,7 +23,7 @@ impl Default for PixelFifo {
 }
 
 impl PixelFifo {
-    pub fn push(&mut self, pixel: Pixel) {
+    pub fn push(&mut self, pixel: PixelColor) {
         // SAFETY:
         // - we change tail only here and don't give any mut reference
         unsafe {
@@ -34,7 +34,7 @@ impl PixelFifo {
         self.size += 1;
     }
 
-    pub fn pop(&mut self) -> Option<Pixel> {
+    pub fn pop(&mut self) -> Option<PixelColor> {
         if self.size > MAX_FIFO_SIZE {
             // SAFETY:
             // - we change head only here and don't give any mut reference
@@ -65,15 +65,12 @@ mod tests {
     use super::*;
     use crate::ppu::lcd::PixelColor;
 
-    fn create_pixel(v: u32) -> Pixel {
-        Pixel {
-            color: PixelColor {
-                r: v as u8,
-                g: 0,
-                b: 0,
-                a: 255,
-            },
-            color_id: Default::default(),
+    fn create_pixel(v: u32) -> PixelColor {
+        PixelColor {
+            r: v as u8,
+            g: 0,
+            b: 0,
+            a: 255,
         }
     }
 
