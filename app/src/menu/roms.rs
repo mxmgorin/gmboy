@@ -1,7 +1,7 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
-use crate::roms::RomsList;
+use crate::roms::RomsState;
 use crate::PlatformFileSystem;
 use std::path::PathBuf;
 
@@ -56,12 +56,12 @@ impl RomsMenu {
         }
     }
 
-    pub fn new(filesystem: &impl PlatformFileSystem) -> Self {
-        let roms = RomsList::get_or_create();
+    pub fn new(fs: &impl PlatformFileSystem) -> Self {
+        let roms = RomsState::get_or_create(fs);
         let mut all_items = Vec::with_capacity(12);
 
         for path in roms.get() {
-            if let Some(item) = RomMenuItem::new(path, filesystem) {
+            if let Some(item) = RomMenuItem::new(path, fs) {
                 all_items.push(item);
             }
         }

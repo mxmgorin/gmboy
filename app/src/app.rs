@@ -5,7 +5,7 @@ use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
 use crate::palette::LcdPalette;
-use crate::roms::RomsList;
+use crate::roms::RomsState;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
 use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
@@ -127,7 +127,6 @@ where
         platform: AppPlatform<FS, FD>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
-        let roms = RomsList::get_or_create();
         let mut notifications = Notifications::new(Duration::from_secs(3));
 
         let video = AppVideo::new(sdl, colors[0], colors[3], &config.video);
@@ -147,6 +146,7 @@ where
                 }
             }
         };
+        let roms = RomsState::get_or_create(&platform.fs);
 
         Ok(Self {
             audio: AppAudio::new(sdl, &config.audio),
@@ -305,8 +305,8 @@ where
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
-        let library = RomsList::get_or_create();
-        let path = library.get_last_path().unwrap();
+        let roms = RomsState::get_or_create(&self.platform.fs);
+        let path = roms.get_last_path().unwrap();
         let name = self.platform.fs.get_file_name(path).unwrap();
 
         match event {
@@ -355,7 +355,7 @@ where
             log::warn!("Failed config.save: {err}");
         }
 
-        let roms = RomsList::get_or_create();
+        let roms = RomsState::get_or_create(&self.platform.fs);
         let path = roms.get_last_path();
         
         let Some(path) = path else {
@@ -392,9 +392,8 @@ where
     }
 
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) -> Result<(), String> {
-        let lib_path = RomsList::get_path();
-        let mut library = RomsList::get_or_create();
-        let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
+        let mut roms = RomsState::get_or_create(&self.platform.fs);
+        let is_reload = roms.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.bus.cart.is_empty();
         let file_name = self
             .platform
@@ -415,11 +414,8 @@ where
         }
 
         emu.load_cart(cart);
-        library.add(path.to_path_buf());
-
-        if let Err(err) = core::save_json_file(&lib_path, &library) {
-            log::warn!("Failed save RomsLibrary: {err}");
-        }
+        roms.on_opened(path.to_path_buf());
+        roms.save_file();
 
         emu.runtime.bus.io.lcd.apply_colors(
             self.config
@@ -432,7 +428,7 @@ where
         self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
 
         if !is_reload && self.config.auto_save_state {
-            let path = library.get_last_path().unwrap();
+            let path = roms.get_last_path().unwrap();
             let name = self.platform.fs.get_file_name(path).unwrap();
             let save_state = AppConfigFile::read_save_state_file(&name, AUTO_SAVE_STATE_SUFFIX);
 

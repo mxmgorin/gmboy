@@ -22,7 +22,6 @@ pub struct AppConfig {
     pub current_save_index: usize,
     pub current_load_index: usize,
     pub auto_continue: bool,
-    pub roms_dir: Option<String>,
     pub audio: AudioConfig,
     pub video: VideoConfig,
     pub input: InputConfig,
@@ -203,7 +202,6 @@ impl Default for AppConfig {
                     },
                 },
             },
-            roms_dir: None,
             auto_continue: false,
         }
     }

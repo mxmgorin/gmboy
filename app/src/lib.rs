@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
-use crate::roms::RomsList;
+use crate::roms::RomsState;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
@@ -21,13 +21,13 @@ pub mod app;
 pub mod audio;
 pub mod battery;
 pub mod config;
+pub mod file_browser;
 pub mod input;
 pub mod menu;
 pub mod notification;
 pub mod palette;
 pub mod roms;
 pub mod video;
-pub mod file_browser;
 
 pub fn run<FS, FD>(args: Vec<String>, platform: AppPlatform<FS, FD>)
 where
@@ -91,9 +91,9 @@ where
             log::warn!("Failed to load cart file: {err}");
         }
     } else {
-        let library = RomsList::get_or_create();
+        let roms = RomsState::get_or_create(&app.platform.fs);
 
-        if let Some(cart_path) = library.get_last_path() {
+        if let Some(cart_path) = roms.get_last_path() {
             if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
                 log::warn!("Failed to load cart file: {err}");
             }
@@ -139,18 +139,8 @@ pub fn get_config(fs: &impl PlatformFileSystem) -> AppConfig {
 
         default_config
     };
-
-    if let Some(roms_dir) = &config.roms_dir {
-        let mut roms = RomsList::get_or_create();
-
-        if let Err(err) = roms.load_from_dir(roms_dir, fs) {
-            log::warn!("Failed to load ROMs: {err}");
-        }
-
-        if let Err(err) = core::save_json_file(RomsList::get_path(), &roms) {
-            log::warn!("Failed to save ROMs: {err}");
-        }
-    }
+    let roms = RomsState::get_or_create(fs);
+    roms.save_file();
 
     config
 }

@@ -3,14 +3,14 @@ use crate::config::AppConfig;
 use crate::input::combos::ComboTracker;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
-use crate::roms::RomsList;
+use crate::roms::RomsState;
+use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::emu::state::EmuState;
 use core::emu::Emu;
 use sdl2::controller::GameController;
 use sdl2::event::Event;
 use sdl2::{EventPump, GameControllerSubsystem, Sdl};
 use std::path::Path;
-use crate::{PlatformFileDialog, PlatformFileSystem};
 
 pub struct InputHandler {
     event_pump: EventPump,
@@ -43,7 +43,7 @@ impl InputHandler {
     pub fn handle_events<FS, FD>(&mut self, app: &mut App<FS, FD>, emu: &mut Emu)
     where
         FS: PlatformFileSystem,
-        FD: PlatformFileDialog
+        FD: PlatformFileDialog,
     {
         while let Some(event) = self.event_pump.poll_event() {
             match event {
@@ -115,13 +115,14 @@ impl InputHandler {
     pub fn handle_cmd<FS, FD>(&mut self, app: &mut App<FS, FD>, emu: &mut Emu, event: AppCmd)
     where
         FS: PlatformFileSystem,
-        FD: PlatformFileDialog
+        FD: PlatformFileDialog,
     {
         match event {
             AppCmd::LoadFile(path) => {
                 if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
                     log::warn!("Failed to load cart file: {err}");
-                }            }
+                }
+            }
             AppCmd::ToggleMenu => {
                 if app.state == AppState::Paused && !emu.runtime.bus.cart.is_empty() {
                     emu.runtime.bus.io.joypad.reset();
@@ -131,10 +132,11 @@ impl InputHandler {
                 }
             }
             AppCmd::RestartGame => {
-                if let Some(path) = RomsList::get_or_create().get_last_path() {
+                if let Some(path) = RomsState::get_or_create(&app.platform.fs).get_last_path() {
                     if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
                         log::warn!("Failed to load cart file: {err}");
-                    }                }
+                    }
+                }
             }
             AppCmd::ChangeMode(mode) => {
                 emu.state = EmuState::Running;
@@ -163,19 +165,15 @@ impl InputHandler {
             AppCmd::Quit => app.state = AppState::Quitting,
             AppCmd::SelectRomsDir => {
                 if let Some(dir) = app.platform.fd.select_dir("Select ROMs Folder") {
-                    let mut lib = RomsList::get_or_create();
-                    let result = lib.load_from_dir(&dir, &app.platform.fs);
+                    let mut roms = RomsState::get_or_create(&app.platform.fs);
+                    let result = roms.load_from_dir(&dir, &app.platform.fs);
 
                     let Ok(count) = result else {
-                        log::error!("Failed to load ROMs library: {}", result.unwrap_err());
+                        log::error!("Failed to load ROMs: {}", result.unwrap_err());
                         return;
                     };
 
-                    if let Err(err) = core::save_json_file(RomsList::get_path(), &lib) {
-                        log::error!("Failed to save ROMs: {err}");
-                    }
-
-                    app.config.roms_dir = Some(dir);
+                    roms.save_file();
                     app.notifications.add(format!("Found {count} ROMs"));
                 }
             }
