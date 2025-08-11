@@ -1,7 +1,7 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::file_browser::FileBrowser;
-use crate::menu::{SubMenu, MAX_MENU_ITEMS_PER_PAGE};
+use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -34,7 +34,7 @@ impl SubMenu for FilesMenu {
                 .to_string_lossy()
                 .to_string();
 
-            if let Some(selected) = selected {
+            let name = if let Some(selected) = selected {
                 if selected == path {
                     format!("◀{name}▶")
                 } else {
@@ -42,7 +42,9 @@ impl SubMenu for FilesMenu {
                 }
             } else {
                 name
-            }
+            };
+            
+            truncate_menu_item(&name)
         }))
     }
 
