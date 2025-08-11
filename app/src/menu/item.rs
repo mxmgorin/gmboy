@@ -47,7 +47,7 @@ pub enum AppMenuItem {
     GridFilter,
     SubpixelFilter,
     RomsMenu,
-    Roms(Box<dyn SubMenu>),
+    RomsSubMenu(Box<dyn SubMenu>),
     RomsDir,
     Confirm(AppCmd),
     ScanlineFilter,
@@ -56,6 +56,8 @@ pub enum AppMenuItem {
     VideoBackend,
     VideoShader,
     ShaderFrameBlend,
+    FileBrowser,
+    FileBrowserSubMenu(Box<dyn SubMenu>),
 }
 
 impl AppMenuItem {
@@ -112,8 +114,10 @@ impl AppMenuItem {
             | AppMenuItem::SubpixelFilter
             | AppMenuItem::ScanlineFilter
             | AppMenuItem::DotMatrixFilter
+            | AppMenuItem::FileBrowser
             | AppMenuItem::RomsMenu => None,
-            AppMenuItem::Roms(x) => Some(x),
+            AppMenuItem::RomsSubMenu(x) => Some(x),
+            AppMenuItem::FileBrowserSubMenu(x) => Some(x),
         }
     }
 
@@ -170,8 +174,10 @@ impl AppMenuItem {
             | AppMenuItem::SubpixelFilter
             | AppMenuItem::ScanlineFilter
             | AppMenuItem::DotMatrixFilter
+            | AppMenuItem::FileBrowser
             | AppMenuItem::RomsMenu => None,
-            AppMenuItem::Roms(x) => Some(x),
+            AppMenuItem::RomsSubMenu(x) => Some(x),
+            AppMenuItem::FileBrowserSubMenu(x) => Some(x),
         }
     }
 }
@@ -337,7 +343,7 @@ impl AppMenuItem {
                 )
             }
             AppMenuItem::RomsMenu => "ROMs".to_string(),
-            AppMenuItem::Roms(x) => "ROMs".to_string(),
+            AppMenuItem::RomsSubMenu(_) => "ROMs Sub".to_string(),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
             AppMenuItem::ScanlineFilter => {
@@ -370,6 +376,8 @@ impl AppMenuItem {
                     config.video.render.gl.shader_frame_blend_mode
                 )
             }
+            AppMenuItem::FileBrowser => "Browse".to_string(),
+            AppMenuItem::FileBrowserSubMenu(_) => "Browse Sub".to_string(),
         };
 
         truncate_menu_item(&item_str)

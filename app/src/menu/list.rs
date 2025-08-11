@@ -1,10 +1,11 @@
 use crate::app::AppCmd;
 use crate::config::{VideoBackendType, VideoConfig};
+use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;
 use crate::menu::roms::RomsMenu;
 use crate::menu::SubMenu;
-use crate::PlatformFileSystem;
 use crate::video::frame_blend::FrameBlendMode;
+use crate::PlatformFileSystem;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(15);
@@ -55,11 +56,13 @@ pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
 pub fn roms_menu(filesystem: &impl PlatformFileSystem) -> Box<[AppMenuItem]> {
     let roms: Box<dyn SubMenu> = Box::new(RomsMenu::new(filesystem));
 
-    vec![
-        AppMenuItem::Roms(roms),
-        AppMenuItem::Back,
-    ]
-        .into_boxed_slice()
+    vec![AppMenuItem::RomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
+}
+
+pub fn files_menu(_filesystem: &impl PlatformFileSystem) -> Box<[AppMenuItem]> {
+    let files: Box<dyn SubMenu> = Box::new(FilesMenu::new());
+
+    vec![AppMenuItem::FileBrowserSubMenu(files)].into_boxed_slice()
 }
 
 pub fn input_menu() -> Box<[AppMenuItem]> {
@@ -82,7 +85,7 @@ pub fn system_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::RomsDir,
         AppMenuItem::Back,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 pub fn advanced_menu() -> Box<[AppMenuItem]> {
@@ -92,17 +95,19 @@ pub fn advanced_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::ResetConfig,
         AppMenuItem::Back,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 pub fn start_menu() -> Box<[AppMenuItem]> {
     vec![
+        #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
+        AppMenuItem::FileBrowser,
         AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 pub fn settings_menu() -> Box<[AppMenuItem]> {
@@ -115,7 +120,7 @@ pub fn settings_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::AdvancedMenu,
         AppMenuItem::Back,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 pub fn interface_menu() -> Box<[AppMenuItem]> {
@@ -127,7 +132,7 @@ pub fn interface_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::Scale,
         AppMenuItem::Back,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 pub fn game_menu() -> Box<[AppMenuItem]> {
@@ -139,10 +144,11 @@ pub fn game_menu() -> Box<[AppMenuItem]> {
         #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
+        AppMenuItem::FileBrowser,
         AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }
 
 pub fn audio_menu() -> Box<[AppMenuItem]> {
@@ -153,5 +159,5 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::MuteSlow,
         AppMenuItem::Back,
     ]
-        .into_boxed_slice()
+    .into_boxed_slice()
 }

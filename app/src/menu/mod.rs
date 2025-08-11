@@ -4,14 +4,14 @@ use crate::config::AppConfig;
 pub mod buffer;
 pub mod files;
 pub mod item;
-mod list;
+pub mod list;
 pub mod menu;
 pub mod roms;
 
 pub use list::*;
 pub use menu::*;
 
-pub const MAX_ROMS_PER_PAGE: usize = 10;
+pub const MAX_MENU_ITEMS_PER_PAGE: usize = 10;
 pub const MAX_MENU_ITEM_CHARS: usize = 22;
 
 pub fn truncate_menu_item(s: &str) -> String {

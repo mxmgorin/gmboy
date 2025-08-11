@@ -2,10 +2,7 @@ use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::{AppConfig, VideoBackendType};
 use crate::menu::buffer::MenuBuffer;
 use crate::menu::item::AppMenuItem;
-use crate::menu::{
-    advanced_menu, audio_menu, confirm_menu, game_menu, input_menu, interface_menu, roms_menu,
-    settings_menu, start_menu, system_menu, video_menu,
-};
+use crate::menu::{advanced_menu, audio_menu, confirm_menu, files_menu, game_menu, input_menu, interface_menu, roms_menu, settings_menu, start_menu, system_menu, video_menu};
 use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
     LinearFrameBlend,
@@ -261,8 +258,8 @@ impl AppMenu {
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::RomsMenu => None,
-            AppMenuItem::Roms(x) => x.move_right(),
+            AppMenuItem::FileBrowser | AppMenuItem::RomsMenu => None,
+            AppMenuItem::FileBrowserSubMenu(x) | AppMenuItem::RomsSubMenu(x) => x.move_right(),
             AppMenuItem::RomsDir => None,
             AppMenuItem::Confirm(_) => None,
             AppMenuItem::ScanlineFilter => None,
@@ -465,8 +462,8 @@ impl AppMenu {
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::RomsMenu => None,
-            AppMenuItem::Roms(x) => x.move_left(),
+            AppMenuItem::FileBrowser | AppMenuItem::RomsMenu => None,
+            AppMenuItem::FileBrowserSubMenu(x) | AppMenuItem::RomsSubMenu(x) => x.move_left(),
             AppMenuItem::RomsDir => None,
             AppMenuItem::Confirm(_) => None,
             AppMenuItem::VignetteFilter => None,
@@ -616,12 +613,17 @@ impl AppMenu {
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
+            AppMenuItem::FileBrowser => {
+                self.next_items(files_menu(filesystem));
+
+                None
+            }
             AppMenuItem::RomsMenu => {
                 self.next_items(roms_menu(filesystem));
 
                 None
             }
-            AppMenuItem::Roms(x) => {
+            AppMenuItem::FileBrowserSubMenu(x) | AppMenuItem::RomsSubMenu(x) => {
                 let (cmd, is_back) = x.select(config);
 
                 if is_back {

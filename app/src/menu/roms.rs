@@ -1,6 +1,6 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
-use crate::menu::{truncate_menu_item, SubMenu, MAX_ROMS_PER_PAGE};
+use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
 use crate::roms::RomsList;
 use crate::PlatformFileSystem;
 use std::path::PathBuf;
@@ -34,9 +34,9 @@ pub struct RomsMenu {
 impl RomsMenu {
     fn update_page(&mut self) {
         let prev_len = self.items.len();
-        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE).max(1);
-        let start = self.current_page * MAX_ROMS_PER_PAGE;
-        let end = usize::min(start + MAX_ROMS_PER_PAGE, self.all_items.len());
+        let total_pages = self.all_items.len().div_ceil(MAX_MENU_ITEMS_PER_PAGE).max(1);
+        let start = self.current_page * MAX_MENU_ITEMS_PER_PAGE;
+        let end = usize::min(start + MAX_MENU_ITEMS_PER_PAGE, self.all_items.len());
         let mut page_items: Vec<RomMenuItem> = self.all_items[start..end].to_vec();
 
         page_items.push(RomMenuItem {
@@ -122,7 +122,7 @@ impl SubMenu for RomsMenu {
     }
 
     fn next_page(&mut self) {
-        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
+        let total_pages = self.all_items.len().div_ceil(MAX_MENU_ITEMS_PER_PAGE);
         if self.current_page + 1 < total_pages {
             self.current_page += 1;
             self.update_page();
