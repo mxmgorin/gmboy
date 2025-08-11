@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct FilesMenu {
-    file_manager: FileBrowser,
+    fb: FileBrowser,
 }
 
 #[derive(Debug, Clone)]
@@ -18,58 +18,58 @@ pub struct FileMenuItem {
 impl FilesMenu {
     pub fn new() -> Self {
         Self {
-            file_manager: FileBrowser::new(".", MAX_MENU_ITEMS_PER_PAGE).unwrap(),
+            fb: FileBrowser::new(".", MAX_MENU_ITEMS_PER_PAGE).unwrap(),
         }
     }
 }
 
 impl SubMenu for FilesMenu {
     fn get_iterator<'a>(&'a self) -> Box<dyn Iterator<Item = String> + 'a> {
-        Box::new(
-            self.file_manager
-                .get_page_entries()
-                .iter()
-                .enumerate()
-                .map(move |(i, path)| {
-                    let name = path
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_string();
+        let selected = self.fb.get_selected();
 
-                    if i == (self.file_manager.selected_index % self.file_manager.page_size) {
-                        format!("◀{name}▶")
-                    } else {
-                        name
-                    }
-                }),
-        )
+        Box::new(self.fb.get_page_entries().iter().map(move |path| {
+            let name = path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+
+            if let Some(selected) = selected {
+                if selected == path {
+                    format!("◀{name}▶")
+                } else {
+                    name
+                }
+            } else {
+                name
+            }
+        }))
     }
 
     fn move_up(&mut self) {
-        self.file_manager.up();
+        self.fb.up();
     }
 
     fn move_down(&mut self) {
-        self.file_manager.down();
+        self.fb.down();
     }
 
     fn move_left(&mut self) -> Option<AppCmd> {
-        self.file_manager.prev_page();
+        self.fb.prev_page();
 
         None
     }
 
     fn move_right(&mut self) -> Option<AppCmd> {
-        self.file_manager.next_page();
+        self.fb.next_page();
 
         None
     }
 
     fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
-        if let Some(selected) = self.file_manager.get_selected() {
+        if let Some(selected) = self.fb.get_selected() {
             return if selected.is_dir() {
-                self.file_manager.enter().unwrap();
+                self.fb.enter().unwrap();
                 (None, false)
             } else {
                 (Some(AppCmd::LoadFile(selected.clone())), false)
@@ -80,10 +80,10 @@ impl SubMenu for FilesMenu {
     }
 
     fn next_page(&mut self) {
-        self.file_manager.next_page();
+        self.fb.next_page();
     }
 
     fn prev_page(&mut self) {
-        self.file_manager.prev_page();
+        self.fb.prev_page();
     }
 }
