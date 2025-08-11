@@ -86,6 +86,7 @@ where
 {
     audio: AppAudio,
     palettes: Box<[LcdPalette]>,
+    min_render_interval: Duration,
     pub video: AppVideo,
     pub state: AppState,
     pub config: AppConfig,
@@ -151,10 +152,11 @@ where
         let roms = RomsState::get_or_create(&platform.fs);
 
         Ok(Self {
+            min_render_interval: config.calc_min_frame_interval(),
             audio: AppAudio::new(sdl, &config.audio),
-            video,
             menu: AppMenu::new(roms.get_last_path().is_some()),
             state: AppState::Paused,
+            video,
             palettes,
             config,
             notifications,
@@ -171,7 +173,6 @@ where
             AppState::Paused
         };
 
-        const MIN_RENDER_INTERVAL: Duration = Duration::from_millis(33); // ~30 FPS
         let mut last_render_time = Instant::now();
 
         while self.state != AppState::Quitting {
@@ -183,7 +184,7 @@ where
                 let now = Instant::now();
                 let time_since_last_render = now.duration_since(last_render_time);
 
-                if on_time || time_since_last_render >= MIN_RENDER_INTERVAL {
+                if on_time || time_since_last_render >= self.min_render_interval {
                     self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
                     self.draw_notification(emu.runtime.ppu.get_fps());
                     self.video.show();
@@ -353,18 +354,18 @@ where
         self.roms.save_file();
         // save config
         self.config.set_emu_config(emu.config.clone());
-        
+
         if let Err(err) = self.config.save_file().map_err(|e| e.to_string()) {
             log::warn!("Failed config.save: {err}");
         }
 
         let roms = RomsState::get_or_create(&self.platform.fs);
         let path = roms.get_last_path();
-        
+
         let Some(path) = path else {
             return Ok(());
         };
-        
+
         let name = self.platform.fs.get_file_name(path);
 
         let Some(name) = name else {

@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use std::{fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -22,6 +23,7 @@ pub struct AppConfig {
     pub current_save_index: usize,
     pub current_load_index: usize,
     pub auto_continue: bool,
+    pub frame_skip: usize,
     pub audio: AudioConfig,
     pub video: VideoConfig,
     pub input: InputConfig,
@@ -73,6 +75,12 @@ impl RenderConfig {
 }
 
 impl AppConfig {
+    pub fn calc_min_frame_interval(&self) -> Duration {
+        let frame_skip = self.frame_skip as f32;
+
+        Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
+    }
+
     pub fn get_emu_config(&self) -> &EmuConfig {
         &self.emulation
     }
@@ -203,6 +211,7 @@ impl Default for AppConfig {
                 },
             },
             auto_continue: false,
+            frame_skip: 30,
         }
     }
 }
