@@ -32,7 +32,9 @@ impl SubMenu for FilesMenu {
                 name = format!("/{name}");
             }
 
-            let name = if let Some(selected) = selected {
+            let name = truncate_menu_item(&name);
+
+            if let Some(selected) = selected {
                 if selected == path {
                     format!("◀{name}▶")
                 } else {
@@ -40,9 +42,7 @@ impl SubMenu for FilesMenu {
                 }
             } else {
                 name
-            };
-
-            truncate_menu_item(&name)
+            }
         }))
     }
 

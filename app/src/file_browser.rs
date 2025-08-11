@@ -18,13 +18,15 @@ impl FileBrowser {
         page_size: usize,
         extensions: &'static[&'static str]
     ) -> std::io::Result<Self> {
+        let current_dir = path.as_ref().to_path_buf().canonicalize()?;
         let mut fm = FileBrowser {
-            current_dir: path.as_ref().to_path_buf(),
+            current_dir,
             entries: Vec::new(),
             selected_index: 0,
             page_size,
             extensions,
         };
+
         fm.refresh_entries()?;
 
         Ok(fm)
@@ -131,6 +133,12 @@ impl FileBrowser {
         let mut entries: Vec<PathBuf> = fs::read_dir(&self.current_dir)?
             .filter_map(|e| e.ok().map(|e| e.path()))
             .filter(|path| {
+                if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.starts_with('.') {
+                        return false; // skip hidden files/folders
+                    }
+                }
+
                 if path.is_dir() || self.extensions.is_empty() {
                     true
                 } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
