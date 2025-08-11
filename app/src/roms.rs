@@ -9,7 +9,7 @@ pub struct RomsState {
     pub last_browse_dir_path: Option<PathBuf>,
     pub selected_dir_path: Option<PathBuf>,
     opened_rom_paths: IndexSet<PathBuf>,
-    loaded_rom_paths: HashSet<PathBuf>,
+    loaded_rom_files: HashSet<String>,
 }
 
 impl RomsState {
@@ -20,7 +20,7 @@ impl RomsState {
         filesystem: &impl PlatformFileSystem,
     ) -> Result<usize, String> {
         let dir_path = dir.as_ref();
-        self.loaded_rom_paths.clear();
+        self.loaded_rom_files.clear();
         let files = filesystem.read_dir(dir_path)?;
         self.selected_dir_path = Some(dir_path.to_owned());
 
@@ -28,12 +28,12 @@ impl RomsState {
             let path = PathBuf::from(file);
             if let Some(name) = filesystem.get_file_name(&path) {
                 if name.ends_with(".gb") || name.ends_with(".gbc") {
-                    self.loaded_rom_paths.insert(path);
+                    self.loaded_rom_files.insert(name);
                 }
             }
         }
 
-        Ok(self.loaded_rom_paths.len())
+        Ok(self.loaded_rom_files.len())
     }
 
     pub fn on_opened(&mut self, path: PathBuf) {
@@ -41,7 +41,6 @@ impl RomsState {
     }
 
     pub fn remove(&mut self, path: &Path) {
-        self.loaded_rom_paths.remove(path);
         self.opened_rom_paths.shift_remove(path);
     }
 
@@ -72,8 +71,13 @@ impl RomsState {
         obj
     }
 
-    pub fn get(&self) -> &HashSet<PathBuf> {
-        &self.loaded_rom_paths
+    /// Returns an iterator over the full paths of loaded ROM files.
+    pub fn iter_loaded(&self) -> Option<impl Iterator<Item = PathBuf> + '_> {
+        self.selected_dir_path.as_ref().map(|dir| {
+            self.loaded_rom_files
+                .iter()
+                .map(move |file_name| dir.join(file_name))
+        })
     }
 
     pub fn save_file(&self) {

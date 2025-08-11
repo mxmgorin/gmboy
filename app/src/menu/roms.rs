@@ -59,9 +59,11 @@ impl RomsMenu {
     pub fn new(fs: &impl PlatformFileSystem, roms: &RomsState) -> Self {
         let mut all_items = Vec::with_capacity(12);
 
-        for path in roms.get() {
-            if let Some(item) = RomMenuItem::new(path, fs) {
-                all_items.push(item);
+        if let Some(iter) = roms.iter_loaded() {
+            for path in iter {
+                if let Some(item) = RomMenuItem::new(path, fs) {
+                    all_items.push(item);
+                }
             }
         }
 
