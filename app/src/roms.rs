@@ -13,6 +13,14 @@ pub struct RomsState {
 }
 
 impl RomsState {
+    pub fn opened_count(&self) -> usize {
+        self.opened_rom_paths.len()
+    }
+
+    pub fn loaded_count(&self) -> usize {
+        self.loaded_rom_files.len()
+    }
+
     /// Loads all `.gb` and `.gbc` files from the given directory.
     pub fn load_from_dir<P: AsRef<Path>>(
         &mut self,

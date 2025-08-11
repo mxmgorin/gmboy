@@ -237,7 +237,7 @@ where
     }
 
     fn draw_menu(&mut self) {
-        let (items, updated) = self.menu.get_items(&self.config);
+        let (items, updated) = self.menu.get_items(&self.config, &self.roms);
 
         if updated {
             self.video.ui.update_menu(items, true, true);

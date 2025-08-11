@@ -1,6 +1,7 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::menu::{get_menu_item_suffix, truncate_menu_item, SubMenu};
+use crate::roms::RomsState;
 
 pub enum AppMenuItem {
     Resume,
@@ -120,11 +121,10 @@ impl AppMenuItem {
             | AppMenuItem::DotMatrixFilter
             | AppMenuItem::BrowseRoms
             | AppMenuItem::OpenedRoms
-
             | AppMenuItem::LoadedRoms => None,
-            AppMenuItem::LoadedRomsSubMenu(x) |
-            AppMenuItem::OpenedRomsSubMenu(x) |
-            AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
+            AppMenuItem::LoadedRomsSubMenu(x)
+            | AppMenuItem::OpenedRomsSubMenu(x)
+            | AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
         }
     }
 
@@ -185,15 +185,15 @@ impl AppMenuItem {
             | AppMenuItem::BrowseRoms
             | AppMenuItem::OpenedRoms
             | AppMenuItem::LoadedRoms => None,
-            AppMenuItem::LoadedRomsSubMenu(x) |
-            AppMenuItem::OpenedRomsSubMenu(x) |
-            AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
+            AppMenuItem::LoadedRomsSubMenu(x)
+            | AppMenuItem::OpenedRomsSubMenu(x)
+            | AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
         }
     }
 }
 
 impl AppMenuItem {
-    pub fn to_string(&self, config: &AppConfig) -> String {
+    pub fn to_string(&self, config: &AppConfig, roms: &RomsState) -> String {
         let item_str = match self {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open ROM".to_string(),
@@ -352,7 +352,7 @@ impl AppMenuItem {
                     get_menu_item_suffix(config.video.render.sdl2.subpixel_enabled)
                 )
             }
-            AppMenuItem::LoadedRoms => "ROMs".to_string(),
+            AppMenuItem::LoadedRoms => format!("ROMs({})", roms.loaded_count()),
             AppMenuItem::LoadedRomsSubMenu(_) => "ROMs Sub".to_string(),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
@@ -389,7 +389,7 @@ impl AppMenuItem {
             AppMenuItem::BrowseRoms => "Browse".to_string(),
             AppMenuItem::BrowseRomsSubMenu(_) => "Browse Sub".to_string(),
             AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.frame_skip),
-            AppMenuItem::OpenedRoms => "Recent".to_string(),
+            AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
         };
 

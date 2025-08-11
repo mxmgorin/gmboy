@@ -41,7 +41,7 @@ impl AppMenu {
         self.updated = true;
     }
 
-    pub fn get_items(&mut self, config: &AppConfig) -> (&[&str], bool) {
+    pub fn get_items(&mut self, config: &AppConfig, roms: &RomsState) -> (&[&str], bool) {
         let updated = self.updated;
         self.updated = false;
 
@@ -57,7 +57,7 @@ impl AppMenu {
 
                     return (self.sub_buffer.get(), updated);
                 } else {
-                    let line = item.to_string(config);
+                    let line = item.to_string(config, roms);
                     if i == self.selected_index {
                         self.buffer.add(format!("◀{line}▶"));
                     } else {
