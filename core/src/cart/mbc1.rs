@@ -46,7 +46,7 @@ impl Mbc1 {
     }
 
     pub fn get_effective_rom_bank_number(&self, address: u16) -> u8 {
-        let bank = if address < 0x4000 {
+        if address < 0x4000 {
             match self.banking_mode {
                 BankingMode::RomBanking => 0,
                 BankingMode::RamBanking => {
@@ -57,15 +57,11 @@ impl Mbc1 {
                     }
                 }
             }
+        } else if self.is_multicart {
+            (self.data.rom_bank_number as u8 & 0b1111) | self.data.ram_bank_number << 4
         } else {
-            if self.is_multicart {
-                (self.data.rom_bank_number as u8 & 0b1111) | self.data.ram_bank_number << 4
-            } else {
-                self.data.rom_bank_number as u8 | self.data.ram_bank_number << 5
-            }
-        };
-
-        bank
+            self.data.rom_bank_number as u8 | self.data.ram_bank_number << 5
+        }
     }
 
     pub fn get_rom_bank_mask(&self) -> u8 {
