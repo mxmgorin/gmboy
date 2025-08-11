@@ -280,6 +280,7 @@ impl InputHandler {
                 ChangeAppConfigCmd::PrevShader => app.prev_shader(),
             },
             AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
+            AppCmd::SetFileBrowsePath(path) => app.roms.last_browse_dir_path = Some(path),
         }
     }
 }

@@ -5,7 +5,7 @@ pub const FILE_BROWSER_BACK_ITEM: &str = "/..[up]";
 
 #[derive(Debug)]
 pub struct FileBrowser {
-    current_dir: PathBuf,
+    pub current_dir: PathBuf,
     entries: Vec<PathBuf>,
     selected_index: usize,
     page_size: usize,

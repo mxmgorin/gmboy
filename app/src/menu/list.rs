@@ -1,3 +1,4 @@
+use std::path::Path;
 use crate::app::AppCmd;
 use crate::config::{VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
@@ -60,8 +61,8 @@ pub fn roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<
     vec![AppMenuItem::RomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
 }
 
-pub fn files_menu(_filesystem: &impl PlatformFileSystem) -> Box<[AppMenuItem]> {
-    let files: Box<dyn SubMenu> = Box::new(FilesMenu::new());
+pub fn files_menu(_filesystem: &impl PlatformFileSystem, last_path: Option<impl AsRef<Path>>) -> Box<[AppMenuItem]> {
+    let files: Box<dyn SubMenu> = Box::new(FilesMenu::new(last_path));
 
     vec![AppMenuItem::FileBrowserSubMenu(files)].into_boxed_slice()
 }

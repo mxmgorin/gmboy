@@ -10,9 +10,15 @@ pub struct FilesMenu {
 }
 
 impl FilesMenu {
-    pub fn new() -> Self {
+    pub fn new(last_path: Option<impl AsRef<Path>>) -> Self {
+        let extensions = &["gb", "gbc"];
+        
         Self {
-            fb: FileBrowser::new(".", MAX_MENU_ITEMS_PER_PAGE, &["gb", "gbc"]).unwrap(),
+            fb: if let Some(last_path) = last_path {
+                FileBrowser::new(last_path, MAX_MENU_ITEMS_PER_PAGE, extensions).unwrap()
+            } else {
+                FileBrowser::new(".", MAX_MENU_ITEMS_PER_PAGE, extensions).unwrap()
+            },
         }
     }
 }
@@ -73,7 +79,7 @@ impl SubMenu for FilesMenu {
                     log::error!("{err:?}");
                 }
 
-                (None, false)
+                (Some(AppCmd::SetFileBrowsePath(self.fb.current_dir.clone())), false)
             } else {
                 (Some(AppCmd::LoadFile(selected.clone())), false)
             };

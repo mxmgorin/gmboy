@@ -616,7 +616,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FileBrowser => {
-                self.next_items(files_menu(filesystem));
+                self.next_items(files_menu(filesystem, roms.last_browse_dir_path.as_ref()));
 
                 None
             }

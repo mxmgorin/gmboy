@@ -37,6 +37,7 @@ pub enum AppCmd {
     ChangeConfig(ChangeAppConfigCmd),
     SelectRomsDir,
     EmuButton(JoypadButton),
+    SetFileBrowsePath(PathBuf),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
