@@ -38,8 +38,8 @@ pub enum MbcVariant {
 impl Mbc for MbcVariant {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match self {
-            MbcVariant::NoMbc => cart_data.bytes[address as usize],
-            MbcVariant::NoMbcRam(_c) => cart_data.bytes[address as usize],
+            MbcVariant::NoMbc => cart_data.read(address as usize),
+            MbcVariant::NoMbcRam(_c) => cart_data.read(address as usize),
             MbcVariant::Mbc1(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc2(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc3(c) => c.read_rom(cart_data, address),
@@ -127,10 +127,11 @@ impl MbcData {
 
     pub fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match address {
-            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.read(address as usize),
             ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
                 let offset = ROM_BANK_SIZE * self.rom_bank_number as usize;
-                cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
+                let addr = (address as usize - ROM_BANK_SIZE) + offset;
+                cart_data.read(addr)
             }
             _ => 0xFF,
         }

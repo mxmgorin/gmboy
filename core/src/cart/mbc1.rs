@@ -83,9 +83,9 @@ impl Mbc1 {
 impl Mbc for Mbc1 {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         let bank = self.get_effective_rom_bank_number(address);
-        let address = Mbc1::get_rom_address(address, bank) & (cart_data.bytes.len() - 1);
+        let address = Mbc1::get_rom_address(address, bank) & (cart_data.len() - 1);
 
-        cart_data.bytes[address]
+        cart_data.read(address)
     }
 
     fn write_rom(&mut self, address: u16, value: u8) {

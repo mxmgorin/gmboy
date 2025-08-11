@@ -175,7 +175,7 @@ pub fn print_cart(cart: &Cart) -> Result<(), String> {
         cart.data.get_title(),
         cart.data.get_cart_type()?,
         cart.data.get_rom_size()?,
-        cart.data.bytes.len(),
+        cart.data.len(),
         cart.data.get_ram_size()?,
         cart.data.get_rom_version(),
         cart.data.checksum_valid()

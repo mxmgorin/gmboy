@@ -144,12 +144,26 @@ impl Cart {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CartData {
-    pub bytes: Box<[u8]>,
+    bytes: Box<[u8]>,
 }
 
 impl CartData {
     pub fn new(bytes: Box<[u8]>) -> Self {
         Self { bytes }
+    }
+
+    pub fn len(&self) -> usize {
+        self.bytes.len()
+    }
+
+    pub fn read(&self, addr: usize) -> u8 {
+        unsafe { *self.bytes.get_unchecked(addr) }
+    }
+
+    pub fn write(&mut self, addr: u16, value: u8) {
+        unsafe {
+            *self.bytes.get_unchecked_mut(addr as usize) = value;
+        }
     }
 
     pub fn get_title(&self) -> String {
