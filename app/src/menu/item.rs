@@ -46,8 +46,8 @@ pub enum AppMenuItem {
     FrameBlendBleed,
     GridFilter,
     SubpixelFilter,
-    RomsMenu,
-    RomsSubMenu(Box<dyn SubMenu>),
+    LoadedRoms,
+    LoadedRomsSubMenu(Box<dyn SubMenu>),
     RomsDir,
     Confirm(AppCmd),
     ScanlineFilter,
@@ -56,9 +56,11 @@ pub enum AppMenuItem {
     VideoBackend,
     VideoShader,
     ShaderFrameBlend,
-    FileBrowser,
-    FileBrowserSubMenu(Box<dyn SubMenu>),
+    BrowseRoms,
+    BrowseRomsSubMenu(Box<dyn SubMenu>),
     FrameSkip,
+    OpenedRoms,
+    OpenedRomsSubMenu(Box<dyn SubMenu>),
 }
 
 impl AppMenuItem {
@@ -116,10 +118,13 @@ impl AppMenuItem {
             | AppMenuItem::SubpixelFilter
             | AppMenuItem::ScanlineFilter
             | AppMenuItem::DotMatrixFilter
-            | AppMenuItem::FileBrowser
-            | AppMenuItem::RomsMenu => None,
-            AppMenuItem::RomsSubMenu(x) => Some(x),
-            AppMenuItem::FileBrowserSubMenu(x) => Some(x),
+            | AppMenuItem::BrowseRoms
+            | AppMenuItem::OpenedRoms
+
+            | AppMenuItem::LoadedRoms => None,
+            AppMenuItem::LoadedRomsSubMenu(x) |
+            AppMenuItem::OpenedRomsSubMenu(x) |
+            AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
         }
     }
 
@@ -177,10 +182,12 @@ impl AppMenuItem {
             | AppMenuItem::SubpixelFilter
             | AppMenuItem::ScanlineFilter
             | AppMenuItem::DotMatrixFilter
-            | AppMenuItem::FileBrowser
-            | AppMenuItem::RomsMenu => None,
-            AppMenuItem::RomsSubMenu(x) => Some(x),
-            AppMenuItem::FileBrowserSubMenu(x) => Some(x),
+            | AppMenuItem::BrowseRoms
+            | AppMenuItem::OpenedRoms
+            | AppMenuItem::LoadedRoms => None,
+            AppMenuItem::LoadedRomsSubMenu(x) |
+            AppMenuItem::OpenedRomsSubMenu(x) |
+            AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
         }
     }
 }
@@ -345,8 +352,8 @@ impl AppMenuItem {
                     get_menu_item_suffix(config.video.render.sdl2.subpixel_enabled)
                 )
             }
-            AppMenuItem::RomsMenu => "ROMs".to_string(),
-            AppMenuItem::RomsSubMenu(_) => "ROMs Sub".to_string(),
+            AppMenuItem::LoadedRoms => "ROMs".to_string(),
+            AppMenuItem::LoadedRomsSubMenu(_) => "ROMs Sub".to_string(),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
             AppMenuItem::ScanlineFilter => {
@@ -379,9 +386,11 @@ impl AppMenuItem {
                     config.video.render.gl.shader_frame_blend_mode
                 )
             }
-            AppMenuItem::FileBrowser => "Browse".to_string(),
-            AppMenuItem::FileBrowserSubMenu(_) => "Browse Sub".to_string(),
+            AppMenuItem::BrowseRoms => "Browse".to_string(),
+            AppMenuItem::BrowseRomsSubMenu(_) => "Browse Sub".to_string(),
             AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.frame_skip),
+            AppMenuItem::OpenedRoms => "Recent".to_string(),
+            AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
         };
 
         truncate_menu_item(&item_str)

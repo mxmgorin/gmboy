@@ -55,16 +55,22 @@ pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
-pub fn roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<[AppMenuItem]> {
-    let roms: Box<dyn SubMenu> = Box::new(RomsMenu::new(filesystem, roms));
+pub fn loaded_roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<[AppMenuItem]> {
+    let roms: Box<dyn SubMenu> = Box::new(RomsMenu::from_loaded(filesystem, roms));
 
-    vec![AppMenuItem::RomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
+    vec![AppMenuItem::LoadedRomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
+}
+
+pub fn opened_roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<[AppMenuItem]> {
+    let roms: Box<dyn SubMenu> = Box::new(RomsMenu::from_opened(filesystem, roms));
+
+    vec![AppMenuItem::OpenedRomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
 }
 
 pub fn files_menu(_filesystem: &impl PlatformFileSystem, last_path: Option<impl AsRef<Path>>) -> Box<[AppMenuItem]> {
     let files: Box<dyn SubMenu> = Box::new(FilesMenu::new(last_path));
 
-    vec![AppMenuItem::FileBrowserSubMenu(files)].into_boxed_slice()
+    vec![AppMenuItem::BrowseRomsSubMenu(files)].into_boxed_slice()
 }
 
 pub fn input_menu() -> Box<[AppMenuItem]> {
@@ -105,9 +111,9 @@ pub fn start_menu() -> Box<[AppMenuItem]> {
     vec![
         #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
-        AppMenuItem::RomsMenu,
+        AppMenuItem::LoadedRoms,
         #[cfg(feature = "file-browser")]
-        AppMenuItem::FileBrowser,
+        AppMenuItem::BrowseRoms,
         AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
     ]
@@ -147,9 +153,10 @@ pub fn game_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::RestartGame,
         #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
-        AppMenuItem::RomsMenu,
+        AppMenuItem::OpenedRoms,
+        AppMenuItem::LoadedRoms,
         #[cfg(feature = "file-browser")]
-        AppMenuItem::FileBrowser,
+        AppMenuItem::BrowseRoms,
         AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
     ]

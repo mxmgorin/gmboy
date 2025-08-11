@@ -34,7 +34,11 @@ pub struct RomsMenu {
 impl RomsMenu {
     fn update_page(&mut self) {
         let prev_len = self.items.len();
-        let total_pages = self.all_items.len().div_ceil(MAX_MENU_ITEMS_PER_PAGE).max(1);
+        let total_pages = self
+            .all_items
+            .len()
+            .div_ceil(MAX_MENU_ITEMS_PER_PAGE)
+            .max(1);
         let start = self.current_page * MAX_MENU_ITEMS_PER_PAGE;
         let end = usize::min(start + MAX_MENU_ITEMS_PER_PAGE, self.all_items.len());
         let mut page_items: Vec<RomMenuItem> = self.all_items[start..end].to_vec();
@@ -56,7 +60,7 @@ impl RomsMenu {
         }
     }
 
-    pub fn new(fs: &impl PlatformFileSystem, roms: &RomsState) -> Self {
+    pub fn from_loaded(fs: &impl PlatformFileSystem, roms: &RomsState) -> Self {
         let mut all_items = Vec::with_capacity(12);
 
         if let Some(iter) = roms.iter_loaded() {
@@ -68,6 +72,26 @@ impl RomsMenu {
         }
 
         all_items.sort_by(|a, b| a.name.cmp(&b.name));
+
+        let mut menu = Self {
+            items: Box::new([]),
+            all_items: all_items.into_boxed_slice(),
+            selected_index: 0,
+            current_page: 0,
+        };
+        menu.update_page();
+
+        menu
+    }
+
+    pub fn from_opened(fs: &impl PlatformFileSystem, roms: &RomsState) -> Self {
+        let mut all_items = Vec::with_capacity(12);
+
+        for path in roms.iter_opened() {
+            if let Some(item) = RomMenuItem::new(path, fs) {
+                all_items.push(item);
+            }
+        }
 
         let mut menu = Self {
             items: Box::new([]),
@@ -141,9 +165,9 @@ impl SubMenu for RomsMenu {
 #[cfg(test)]
 mod tests {
     use crate::menu::roms::{RomMenuItem, RomsMenu};
+    use crate::menu::SubMenu;
     use crate::PlatformFileSystem;
     use std::path::Path;
-    use crate::menu::SubMenu;
 
     pub struct TestFilesystem;
 

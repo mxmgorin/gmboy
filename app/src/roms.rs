@@ -80,6 +80,10 @@ impl RomsState {
         })
     }
 
+    pub fn iter_opened(&self) -> impl Iterator<Item = &PathBuf> + '_ {
+        self.opened_rom_paths.iter()
+    }
+
     pub fn save_file(&self) {
         if let Err(err) = core::save_json_file(RomsState::get_path(), self) {
             log::error!("Failed to save ROMs: {err}");

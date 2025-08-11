@@ -2,7 +2,11 @@ use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::buffer::MenuBuffer;
 use crate::menu::item::AppMenuItem;
-use crate::menu::{advanced_menu, audio_menu, confirm_menu, files_menu, game_menu, input_menu, interface_menu, roms_menu, settings_menu, start_menu, system_menu, video_menu};
+use crate::menu::{
+    advanced_menu, audio_menu, confirm_menu, files_menu, game_menu, input_menu, interface_menu,
+    loaded_roms_menu, opened_roms_menu, settings_menu, start_menu, system_menu, video_menu,
+};
+use crate::roms::RomsState;
 use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
     LinearFrameBlend,
@@ -11,7 +15,6 @@ use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::PlatformFileSystem;
 use std::mem;
-use crate::roms::RomsState;
 
 pub struct AppMenu {
     prev_items: Vec<Box<[AppMenuItem]>>,
@@ -259,8 +262,10 @@ impl AppMenu {
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::FileBrowser | AppMenuItem::RomsMenu => None,
-            AppMenuItem::FileBrowserSubMenu(x) | AppMenuItem::RomsSubMenu(x) => x.move_right(),
+            AppMenuItem::BrowseRoms | AppMenuItem::LoadedRoms | AppMenuItem::OpenedRoms => None,
+            AppMenuItem::BrowseRomsSubMenu(x)
+            | AppMenuItem::LoadedRomsSubMenu(x)
+            | AppMenuItem::OpenedRomsSubMenu(x) => x.move_right(),
             AppMenuItem::RomsDir => None,
             AppMenuItem::Confirm(_) => None,
             AppMenuItem::ScanlineFilter => None,
@@ -292,7 +297,9 @@ impl AppMenu {
             }
             AppMenuItem::FrameSkip => {
                 let frame_skip = update_frame_skip(config.frame_skip, 1);
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(frame_skip)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(
+                    frame_skip,
+                )))
             }
         }
     }
@@ -467,8 +474,10 @@ impl AppMenu {
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::FileBrowser | AppMenuItem::RomsMenu => None,
-            AppMenuItem::FileBrowserSubMenu(x) | AppMenuItem::RomsSubMenu(x) => x.move_left(),
+            AppMenuItem::BrowseRoms | AppMenuItem::LoadedRoms | AppMenuItem::OpenedRoms => None,
+            AppMenuItem::BrowseRomsSubMenu(x)
+            | AppMenuItem::LoadedRomsSubMenu(x)
+            | AppMenuItem::OpenedRomsSubMenu(x) => x.move_left(),
             AppMenuItem::RomsDir => None,
             AppMenuItem::Confirm(_) => None,
             AppMenuItem::VignetteFilter => None,
@@ -498,7 +507,9 @@ impl AppMenu {
             }
             AppMenuItem::FrameSkip => {
                 let frame_skip = update_frame_skip(config.frame_skip, -1);
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(frame_skip)))
+                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(
+                    frame_skip,
+                )))
             }
         }
     }
@@ -517,7 +528,7 @@ impl AppMenu {
         &mut self,
         config: &AppConfig,
         filesystem: &impl PlatformFileSystem,
-        roms: &RomsState
+        roms: &RomsState,
     ) -> Option<AppCmd> {
         self.updated = true;
         let item = self.items.get_mut(self.selected_index).unwrap();
@@ -623,17 +634,24 @@ impl AppMenu {
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
-            AppMenuItem::FileBrowser => {
+            AppMenuItem::BrowseRoms => {
                 self.next_items(files_menu(filesystem, roms.last_browse_dir_path.as_ref()));
 
                 None
             }
-            AppMenuItem::RomsMenu => {
-                self.next_items(roms_menu(filesystem, roms));
+            AppMenuItem::LoadedRoms => {
+                self.next_items(loaded_roms_menu(filesystem, roms));
 
                 None
             }
-            AppMenuItem::FileBrowserSubMenu(x) | AppMenuItem::RomsSubMenu(x) => {
+            AppMenuItem::OpenedRoms => {
+                self.next_items(opened_roms_menu(filesystem, roms));
+
+                None
+            }
+            AppMenuItem::BrowseRomsSubMenu(x)
+            | AppMenuItem::LoadedRomsSubMenu(x)
+            | AppMenuItem::OpenedRomsSubMenu(x) => {
                 let (cmd, is_back) = x.select(config);
 
                 if is_back {
