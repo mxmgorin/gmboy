@@ -2,23 +2,17 @@ use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::file_browser::{FileBrowser, FILE_BROWSER_BACK_ITEM};
 use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct FilesMenu {
     fb: FileBrowser,
-}
-
-#[derive(Debug, Clone)]
-pub struct FileMenuItem {
-    pub name: String,
-    pub path: PathBuf,
 }
 
 impl FilesMenu {
     pub fn new() -> Self {
         Self {
-            fb: FileBrowser::new(".", MAX_MENU_ITEMS_PER_PAGE).unwrap(),
+            fb: FileBrowser::new(".", MAX_MENU_ITEMS_PER_PAGE, &["gb", "gbc"]).unwrap(),
         }
     }
 }

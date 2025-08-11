@@ -3,23 +3,30 @@ use std::path::{Path, PathBuf};
 
 pub const FILE_BROWSER_BACK_ITEM: &str = "/..[up]";
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct FileBrowser {
     current_dir: PathBuf,
     entries: Vec<PathBuf>,
-    pub selected_index: usize,
-    pub page_size: usize,
+    selected_index: usize,
+    page_size: usize,
+    extensions: &'static[&'static str],
 }
 
 impl FileBrowser {
-    pub fn new<P: AsRef<Path>>(path: P, page_size: usize) -> std::io::Result<Self> {
+    pub fn new<P: AsRef<Path>>(
+        path: P,
+        page_size: usize,
+        extensions: &'static[&'static str]
+    ) -> std::io::Result<Self> {
         let mut fm = FileBrowser {
             current_dir: path.as_ref().to_path_buf(),
             entries: Vec::new(),
             selected_index: 0,
             page_size,
+            extensions,
         };
         fm.refresh_entries()?;
+
         Ok(fm)
     }
 
@@ -123,7 +130,18 @@ impl FileBrowser {
     fn refresh_entries(&mut self) -> std::io::Result<()> {
         let mut entries: Vec<PathBuf> = fs::read_dir(&self.current_dir)?
             .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|path| {
+                if path.is_dir() || self.extensions.is_empty() {
+                    true
+                } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    // check if extension matches one of the filters (case insensitive)
+                    self.extensions.iter().any(|f| f.eq_ignore_ascii_case(ext))
+                } else {
+                    false
+                }
+            })
             .collect();
+
         entries.sort();
         entries.insert(0, PathBuf::from(FILE_BROWSER_BACK_ITEM));
         self.entries = entries;
