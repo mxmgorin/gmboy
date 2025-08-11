@@ -1,8 +1,8 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
-use crate::file_browser::FileBrowser;
+use crate::file_browser::{FileBrowser, FILE_BROWSER_BACK_ITEM};
 use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct FilesMenu {
@@ -34,7 +34,7 @@ impl SubMenu for FilesMenu {
                 .to_string_lossy()
                 .to_string();
 
-            if path.is_dir() {
+            if path.is_dir() || path == Path::new(FILE_BROWSER_BACK_ITEM) {
                 name = format!("/{name}");
             }
 
@@ -74,8 +74,11 @@ impl SubMenu for FilesMenu {
 
     fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
         if let Some(selected) = self.fb.get_selected() {
-            return if selected.is_dir() {
-                self.fb.enter().unwrap();
+            return if selected.is_dir() || selected == Path::new(FILE_BROWSER_BACK_ITEM) {
+                if let Err(err) = self.fb.enter() {
+                    log::error!("{err:?}");
+                }
+
                 (None, false)
             } else {
                 (Some(AppCmd::LoadFile(selected.clone())), false)

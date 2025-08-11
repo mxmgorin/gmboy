@@ -1,6 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub const FILE_BROWSER_BACK_ITEM: &str = "/..[up]";
+
 #[derive(Debug, Clone)]
 pub struct FileBrowser {
     current_dir: PathBuf,
@@ -33,7 +35,9 @@ impl FileBrowser {
 
     pub fn enter(&mut self) -> std::io::Result<Option<PathBuf>> {
         if let Some(selected) = self.entries.get(self.selected_index) {
-            if selected.is_dir() {
+            if selected == Path::new(FILE_BROWSER_BACK_ITEM) {
+                self.back()?;
+            } else if selected.is_dir() {
                 self.current_dir = selected.clone();
                 self.selected_index = 0;
                 self.refresh_entries()?;
@@ -121,6 +125,7 @@ impl FileBrowser {
             .filter_map(|e| e.ok().map(|e| e.path()))
             .collect();
         entries.sort();
+        entries.insert(0, PathBuf::from(FILE_BROWSER_BACK_ITEM));
         self.entries = entries;
 
         if self.selected_index >= self.entries.len() {
