@@ -75,7 +75,7 @@ impl AppMenu {
         self.updated = true;
 
         if let Some(curr) = self.items.get_mut(self.selected_index) {
-            if let Some(inner) = curr.get_inner_mut() {
+            if let Some(inner) = curr.get_items_mut() {
                 inner.move_up();
                 return;
             }
@@ -87,7 +87,7 @@ impl AppMenu {
     pub fn move_down(&mut self) {
         self.updated = true;
         if let Some(curr) = self.items.get_mut(self.selected_index) {
-            if let Some(inner) = curr.get_inner_mut() {
+            if let Some(inner) = curr.get_items_mut() {
                 inner.move_down();
                 return;
             }

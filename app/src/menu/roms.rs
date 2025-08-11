@@ -1,17 +1,9 @@
-use std::path::PathBuf;
 use crate::app::AppCmd;
 use crate::config::AppConfig;
-use crate::menu::{truncate_menu_item, MAX_ROMS_PER_PAGE};
-use crate::PlatformFileSystem;
+use crate::menu::{truncate_menu_item, SubMenu, MAX_ROMS_PER_PAGE};
 use crate::roms::RomsList;
-
-#[derive(Debug, Clone)]
-pub struct RomsMenu {
-    pub all_items: Box<[RomMenuItem]>, // all ROMs
-    items: Box<[RomMenuItem]>,     // current page items (plus nav items)
-    selected_index: usize,
-    current_page: usize,
-}
+use crate::PlatformFileSystem;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct RomMenuItem {
@@ -31,62 +23,15 @@ impl RomMenuItem {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct RomsMenu {
+    all_items: Box<[RomMenuItem]>, // all ROMs
+    items: Box<[RomMenuItem]>,     // current page items (plus nav items)
+    selected_index: usize,
+    current_page: usize,
+}
+
 impl RomsMenu {
-    pub fn get_iterator(&self) -> impl Iterator<Item = String> + '_ {
-        self.items.iter().enumerate().map(move |(i, line)| {
-            if i == self.selected_index {
-                format!("◀{}▶", line.name)
-            } else {
-                line.name.clone()
-            }
-        })
-    }
-
-    pub fn move_up(&mut self) {
-        self.selected_index = core::move_prev_wrapped(self.selected_index, self.items.len() - 1);
-    }
-
-    pub fn move_down(&mut self) {
-        self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
-    }
-
-    pub fn move_left(&mut self) -> Option<AppCmd> {
-        self.prev_page();
-
-        None
-    }
-
-    pub fn move_right(&mut self) -> Option<AppCmd> {
-        self.next_page();
-
-        None
-    }
-
-    pub fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
-        let item = &self.items[self.selected_index];
-
-        if item.name.starts_with("Back") {
-            return (None, true);
-        }
-
-        (Some(AppCmd::LoadFile(item.path.clone())), false)
-    }
-
-    pub fn next_page(&mut self) {
-        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
-        if self.current_page + 1 < total_pages {
-            self.current_page += 1;
-            self.update_page();
-        }
-    }
-
-    pub fn prev_page(&mut self) {
-        if self.current_page > 0 {
-            self.current_page -= 1;
-            self.update_page();
-        }
-    }
-
     fn update_page(&mut self) {
         let prev_len = self.items.len();
         let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE).max(1);
@@ -135,11 +80,69 @@ impl RomsMenu {
     }
 }
 
+impl SubMenu for RomsMenu {
+    fn get_iterator<'a>(&'a self) -> Box<dyn Iterator<Item = String> + 'a> {
+        Box::new(self.items.iter().enumerate().map(move |(i, line)| {
+            if i == self.selected_index {
+                format!("◀{}▶", line.name)
+            } else {
+                line.name.clone()
+            }
+        }))
+    }
+
+    fn move_up(&mut self) {
+        self.selected_index = core::move_prev_wrapped(self.selected_index, self.items.len() - 1);
+    }
+
+    fn move_down(&mut self) {
+        self.selected_index = core::move_next_wrapped(self.selected_index, self.items.len() - 1);
+    }
+
+    fn move_left(&mut self) -> Option<AppCmd> {
+        self.prev_page();
+
+        None
+    }
+
+    fn move_right(&mut self) -> Option<AppCmd> {
+        self.next_page();
+
+        None
+    }
+
+    fn select(&mut self, _config: &AppConfig) -> (Option<AppCmd>, bool) {
+        let item = &self.items[self.selected_index];
+
+        if item.name.starts_with("Back") {
+            return (None, true);
+        }
+
+        (Some(AppCmd::LoadFile(item.path.clone())), false)
+    }
+
+    fn next_page(&mut self) {
+        let total_pages = self.all_items.len().div_ceil(MAX_ROMS_PER_PAGE);
+        if self.current_page + 1 < total_pages {
+            self.current_page += 1;
+            self.update_page();
+        }
+    }
+
+    fn prev_page(&mut self) {
+        if self.current_page > 0 {
+            self.current_page -= 1;
+            self.update_page();
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::menu::roms::{RomMenuItem, RomsMenu};
     use crate::PlatformFileSystem;
     use std::path::Path;
-    use crate::menu::roms::{RomMenuItem, RomsMenu};
+    use crate::menu::SubMenu;
 
     pub struct TestFilesystem;
 
@@ -167,7 +170,7 @@ mod tests {
                 RomMenuItem::new("2", &filesystem).unwrap(),
                 RomMenuItem::new("3", &filesystem).unwrap(),
             ]
-                .into_boxed_slice(),
+            .into_boxed_slice(),
             selected_index: 0,
             current_page: 0,
         };

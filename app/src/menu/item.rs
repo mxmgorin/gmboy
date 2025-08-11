@@ -1,9 +1,7 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
-use crate::menu::{get_menu_item_suffix, truncate_menu_item};
-use crate::menu::roms::RomsMenu;
+use crate::menu::{get_menu_item_suffix, truncate_menu_item, SubMenu};
 
-#[derive(Debug, Clone)]
 pub enum AppMenuItem {
     Resume,
     SaveState,
@@ -49,7 +47,7 @@ pub enum AppMenuItem {
     GridFilter,
     SubpixelFilter,
     RomsMenu,
-    Roms(RomsMenu),
+    Roms(Box<dyn SubMenu>),
     RomsDir,
     Confirm(AppCmd),
     ScanlineFilter,
@@ -61,7 +59,7 @@ pub enum AppMenuItem {
 }
 
 impl AppMenuItem {
-    pub fn get_inner_mut(&mut self) -> Option<&mut RomsMenu> {
+    pub fn get_items_mut(&mut self) -> Option<&mut Box<dyn SubMenu>> {
         match self {
             AppMenuItem::Resume
             | AppMenuItem::Confirm(_)
@@ -119,7 +117,7 @@ impl AppMenuItem {
         }
     }
 
-    pub fn get_items(&self) -> Option<&RomsMenu> {
+    pub fn get_items(&self) -> Option<&Box<dyn SubMenu>> {
         match self {
             AppMenuItem::Resume
             | AppMenuItem::Confirm(_)
@@ -339,7 +337,7 @@ impl AppMenuItem {
                 )
             }
             AppMenuItem::RomsMenu => "ROMs".to_string(),
-            AppMenuItem::Roms(x) => format!("ROMs ({})", x.all_items.len()),
+            AppMenuItem::Roms(x) => "ROMs".to_string(),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
             AppMenuItem::ScanlineFilter => {
