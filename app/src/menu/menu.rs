@@ -21,7 +21,7 @@ pub struct AppMenu {
     selected_index: usize,
     buffer: MenuBuffer,
     updated: bool,
-    inner_buffer: MenuBuffer,
+    sub_buffer: MenuBuffer,
 }
 
 impl AppMenu {
@@ -32,7 +32,7 @@ impl AppMenu {
             selected_index: 0,
             buffer: MenuBuffer::default(),
             updated: true,
-            inner_buffer: Default::default(),
+            sub_buffer: Default::default(),
         }
     }
 
@@ -46,15 +46,15 @@ impl AppMenu {
 
         if updated {
             self.buffer.clear();
-            self.inner_buffer.clear();
+            self.sub_buffer.clear();
 
             for (i, item) in self.items.iter_mut().enumerate() {
-                if let Some(inner) = item.get_inner() {
-                    for inner_item in inner.get_iterator() {
-                        self.inner_buffer.add(inner_item);
+                if let Some(sub_items) = item.get_items() {
+                    for sub_item in sub_items.get_iterator() {
+                        self.sub_buffer.add(sub_item);
                     }
 
-                    return (self.inner_buffer.get(), updated);
+                    return (self.sub_buffer.get(), updated);
                 } else {
                     let line = item.to_string(config);
                     if i == self.selected_index {
@@ -64,8 +64,8 @@ impl AppMenu {
                     }
                 }
             }
-        } else if !self.inner_buffer.is_empty() {
-            return (self.inner_buffer.get(), updated);
+        } else if !self.sub_buffer.is_empty() {
+            return (self.sub_buffer.get(), updated);
         }
 
         (self.buffer.get(), updated)
@@ -625,7 +625,7 @@ impl AppMenu {
                 let (cmd, is_back) = x.select(config);
 
                 if is_back {
-                    self.inner_buffer.clear();
+                    self.sub_buffer.clear();
                     self.back();
                 }
 

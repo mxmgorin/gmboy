@@ -119,7 +119,7 @@ impl AppMenuItem {
         }
     }
 
-    pub fn get_inner(&self) -> Option<&RomsMenu> {
+    pub fn get_items(&self) -> Option<&RomsMenu> {
         match self {
             AppMenuItem::Resume
             | AppMenuItem::Confirm(_)
