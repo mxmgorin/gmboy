@@ -1,16 +1,17 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub struct FileManager {
+#[derive(Debug, Clone)]
+pub struct FileBrowser {
     current_dir: PathBuf,
     entries: Vec<PathBuf>,
-    selected_index: usize,
-    page_size: usize,
+    pub selected_index: usize,
+    pub page_size: usize,
 }
 
-impl FileManager {
+impl FileBrowser {
     pub fn new<P: AsRef<Path>>(path: P, page_size: usize) -> std::io::Result<Self> {
-        let mut fm = FileManager {
+        let mut fm = FileBrowser {
             current_dir: path.as_ref().to_path_buf(),
             entries: Vec::new(),
             selected_index: 0,

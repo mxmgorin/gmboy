@@ -27,7 +27,7 @@ pub mod notification;
 pub mod palette;
 pub mod roms;
 pub mod video;
-pub mod file_manager;
+pub mod file_browser;
 
 pub fn run<FS, FD>(args: Vec<String>, platform: AppPlatform<FS, FD>)
 where
