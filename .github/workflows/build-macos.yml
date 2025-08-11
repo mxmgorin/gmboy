@@ -36,11 +36,11 @@ jobs:
           cp target/universal/release/gmboy dist/
 
       - name: Zip bundle
-        run: cd dist && zip -r gmboy-macos.zip .
+        run: cd dist && zip -r gmboy-macos-universal.zip .
 
       - name: Upload Linux zip to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/gmboy-macos.zip
+          files: dist/gmboy-macos-universal.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

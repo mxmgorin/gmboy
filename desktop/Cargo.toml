@@ -5,8 +5,9 @@ edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
-default = ["file-dialog"]
+default = ["file-dialog", "file-browser"]
 file-dialog = ["tinyfiledialogs", "app/file-dialog"]
+file-browser = ["app/file-browser"]
 
 [dependencies]
 core = { path = "../core" }

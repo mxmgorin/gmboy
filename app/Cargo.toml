@@ -5,8 +5,10 @@ edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
-default = ["file-dialog"]
+default = ["file-dialog", "file-browser"]
 file-dialog = []
+file-browser = []
+sdl2-bundled = ["sdl2/bundled"]
 
 [dependencies]
 core = { path = "../core" }
@@ -21,7 +23,3 @@ indexmap = { version = "2.10.0", features = ["serde"] }
 [target.'cfg(target_os="macos")'.dependencies.sdl2]
 features=["bundled", "static-link"]
 version="0.38"
-
-[target.'cfg(target_arch = "aarch64")'.dependencies.sdl2]
-features = ["bundled"]
-version = "0.38"

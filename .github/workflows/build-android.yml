@@ -40,12 +40,12 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Rename APK
-        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/gmboy.apk
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/gmboy-universal.apk
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/gmboy.apk
+          files: android/app/build/outputs/apk/debug/gmboy-universal.apk
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

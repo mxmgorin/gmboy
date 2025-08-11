@@ -4,11 +4,11 @@ use crate::config::AppConfig;
 pub mod buffer;
 pub mod files;
 pub mod item;
-pub mod list;
+pub mod factory;
 pub mod menu;
 pub mod roms;
 
-pub use list::*;
+pub use factory::*;
 pub use menu::*;
 
 pub const MAX_MENU_ITEMS_PER_PAGE: usize = 10;

@@ -105,6 +105,7 @@ pub fn start_menu() -> Box<[AppMenuItem]> {
         #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
+        #[cfg(feature = "file-browser")]
         AppMenuItem::FileBrowser,
         AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
@@ -146,6 +147,7 @@ pub fn game_menu() -> Box<[AppMenuItem]> {
         #[cfg(feature = "file-dialog")]
         AppMenuItem::OpenRom,
         AppMenuItem::RomsMenu,
+        #[cfg(feature = "file-browser")]
         AppMenuItem::FileBrowser,
         AppMenuItem::SettingsMenu,
         AppMenuItem::Quit,
