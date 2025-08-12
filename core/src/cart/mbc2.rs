@@ -23,19 +23,17 @@ impl Mbc for Mbc2 {
     }
 
     fn write_rom(&mut self, address: u16, value: u8) {
-        match address {
-            0x0000..=0x3FFF => {
-                if address & 0x100 == 0 {
-                    self.data.ram_enabled = value & 0xF == 0xA;
-                } else {
-                    self.data.rom_bank_number = match (value as u16) & 0x0F {
-                        0 => 1,
-                        n => n,
-                    };
-                    self.data.clamp_rom_bank_number();
-                }
+        if let 0x0000..=0x3FFF = address {
+            if address & 0x100 == 0 {
+                self.data.ram_enabled = value & 0xF == 0xA;
+            } else {
+                self.data.rom_bank_number = match (value as u16) & 0x0F {
+                    0 => 1,
+                    n => n,
+                };
+                
+                self.data.clamp_rom_bank_number();
             }
-            _ => {}
         }
     }
 
@@ -45,7 +43,7 @@ impl Mbc for Mbc2 {
         }
 
         let address = (address as usize) & 0x1FF; // wrap every 512 bytes
-        self.data.ram_bytes[address] | 0xF0
+        self.data.read_ram_byte(address) | 0xF0
     }
 
     fn write_ram(&mut self, address: u16, value: u8) {

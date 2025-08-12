@@ -56,7 +56,7 @@ pub struct PixelFetcher {
     fifo_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
-    pushed_x: u8,
+    pushed_x: usize,
 }
 
 impl Default for PixelFetcher {
@@ -91,13 +91,13 @@ impl PixelFetcher {
             // For the window layer, bypass scroll_x to avoid horizontal scrolling
             if self.bgw_fetched_data.is_window {
                 // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
-                let index = (self.pushed_x as usize)
+                let index = self.pushed_x
                     .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
                 self.push_buffer(index, pixel);
             } else {
                 // For the background layer, apply scroll_x for horizontal scrolling
                 if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
-                    let index = (self.pushed_x as usize)
+                    let index = self.pushed_x
                         .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
                     self.push_buffer(index, pixel);
                 }
@@ -250,7 +250,7 @@ impl PixelFetcher {
     }
 
     pub fn is_full(&self) -> bool {
-        self.pushed_x >= LCD_X_RES
+        self.pushed_x >= LCD_X_RES as usize
     }
 }
 

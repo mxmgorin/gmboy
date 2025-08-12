@@ -74,7 +74,10 @@ impl Mbc for MbcVariant {
     fn write_ram(&mut self, address: u16, value: u8) {
         match self {
             MbcVariant::NoMbc => {}
-            MbcVariant::NoMbcRam(c) => c[address as usize - RAM_ADDRESS_START] = value,
+            MbcVariant::NoMbcRam(c) => unsafe {
+                // SAFETY: address is matched at the bus
+                *c.get_unchecked_mut(address as usize - RAM_ADDRESS_START) = value;
+            },
             MbcVariant::Mbc1(c) => c.write_ram(address, value),
             MbcVariant::Mbc2(c) => c.write_ram(address, value),
             MbcVariant::Mbc3(c) => c.write_ram(address, value),
@@ -107,7 +110,7 @@ impl Mbc for MbcVariant {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MbcData {
-    pub ram_bytes: Box<[u8]>,
+    ram_bytes: Box<[u8]>,
     pub rom_bank_number: u16,
     pub ram_bank_number: u8,
     pub ram_enabled: bool,
@@ -123,6 +126,10 @@ impl MbcData {
             ram_enabled: false,
             rom_banks_count: rom_size.banks_count(),
         }
+    }
+
+    pub fn read_ram_byte(&self, index: usize) -> u8 {
+        unsafe { *self.ram_bytes.get_unchecked(index) }
     }
 
     pub fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
@@ -162,7 +169,7 @@ impl MbcData {
         let index = (address as usize - RAM_ADDRESS_START) + offset;
 
         if index < self.ram_bytes.len() {
-            self.ram_bytes[index]
+            self.read_ram_byte(index)
         } else {
             0xFF
         }
@@ -177,7 +184,9 @@ impl MbcData {
         let index = (address as usize - RAM_ADDRESS_START) + offset;
 
         if index < self.ram_bytes.len() {
-            self.ram_bytes[index] = value;
+            unsafe {
+                *self.ram_bytes.get_unchecked_mut(index) = value;
+            }
         }
     }
 
@@ -190,6 +199,6 @@ impl MbcData {
     }
 
     pub fn clamp_rom_bank_number(&mut self) {
-        self.rom_bank_number = self.rom_bank_number % self.rom_banks_count as u16;
+        self.rom_bank_number %= self.rom_banks_count as u16;
     }
 }

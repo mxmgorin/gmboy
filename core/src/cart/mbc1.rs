@@ -3,6 +3,7 @@ use crate::cart::mbc::{Mbc, MbcData};
 use crate::cart::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BankingMode {
     RomBanking,
