@@ -1,6 +1,6 @@
 use crate::config::{RenderConfig, VideoConfig};
+use core::ppu::fetcher::PPU_BUFFER_LEN;
 use serde::{Deserialize, Serialize};
-use crate::video::BYTES_PER_PIXEL;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FrameBlendMode {
@@ -23,16 +23,12 @@ impl FrameBlend {
             None
         } else {
             Some(Self {
-                prev_framebuffer: vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT * BYTES_PER_PIXEL]
-                    .into_boxed_slice(),
+                prev_framebuffer: vec![0; PPU_BUFFER_LEN].into_boxed_slice(),
             })
         }
     }
 
     pub fn process_buffer(&mut self, pixel_buffer: &[u8], config: &VideoConfig) -> &[u8] {
-        // pixel_buffer length must be width * height * 4
-        debug_assert_eq!(pixel_buffer.len(), RenderConfig::WIDTH * RenderConfig::HEIGHT * 4);
-        // prev_framebuffer should also be length * 4 (RGBA)
         debug_assert_eq!(self.prev_framebuffer.len(), pixel_buffer.len());
 
         let w = RenderConfig::WIDTH;
@@ -46,14 +42,11 @@ impl FrameBlend {
             let cr = pixel_buffer[idx];
             let cg = pixel_buffer[idx + 1];
             let cb = pixel_buffer[idx + 2];
-            // alpha usually ignored in compute_pixel, but you can adjust if needed
-            // let ca = pixel_buffer[idx + 3];
 
             // previous pixel RGBA components
             let pr = self.prev_framebuffer[idx];
             let pg = self.prev_framebuffer[idx + 1];
             let pb = self.prev_framebuffer[idx + 2];
-            // let pa = self.prev_framebuffer[idx + 3];
 
             // compute_pixel expects RGB tuples
             let (r, g, b) = self.compute_pixel(config, i, w, h, (pr, pg, pb), (cr, cg, cb));
@@ -62,12 +55,10 @@ impl FrameBlend {
             self.prev_framebuffer[idx] = r;
             self.prev_framebuffer[idx + 1] = g;
             self.prev_framebuffer[idx + 2] = b;
-            self.prev_framebuffer[idx + 3] = 255;
         }
 
         &self.prev_framebuffer
     }
-
 
     pub fn compute_pixel(
         &self,

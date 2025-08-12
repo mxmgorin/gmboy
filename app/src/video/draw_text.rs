@@ -1,5 +1,4 @@
 use crate::video::char::get_char_bitmap;
-use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 
 /// Calculate the text width based on character count, scale, and character width
@@ -41,6 +40,7 @@ pub fn draw_text_lines(
     size: FontSize,
     scale: usize,
     align_center: Option<CenterAlignedText>,
+    bytes_per_pixel: usize, // NEW PARAMETER
 ) {
     if lines.is_empty() {
         return;
@@ -71,26 +71,28 @@ pub fn draw_text_lines(
         0
     };
 
-    // Compute total height of the text block
     let total_height =
         lines.len() * ((size.height() * scale) + size.line_spacing()) - size.line_spacing();
 
-    // 1. Draw background rectangle with padding
+    // Draw background rectangle with padding
     if let Some(bg_color) = bg_color {
         for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
             for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
-                let offset = (py * pitch) + (px * BYTES_PER_PIXEL);
+                let offset = (py * pitch) + (px * bytes_per_pixel);
+
                 buffer[offset] = bg_color.r;
                 buffer[offset + 1] = bg_color.g;
                 buffer[offset + 2] = bg_color.b;
-                buffer[offset + 3] = bg_color.a;
+
+                if bytes_per_pixel == 4 {
+                    buffer[offset + 3] = bg_color.a;
+                }
             }
         }
     }
 
-    // 2. Draw text on top
+    // Draw text on top
     for (line_index, line) in lines.iter().enumerate() {
-        // Compute line width
         let mut line_width = 0;
         for c in line.chars() {
             if c == ' ' || get_char_bitmap(c, size).is_some() {
@@ -101,7 +103,6 @@ pub fn draw_text_lines(
             line_width -= size.spacing();
         }
 
-        // Align center if needed
         let x_offset = if align_center.is_some() {
             x + (max_line_width - line_width) / 2
         } else {
@@ -130,11 +131,15 @@ pub fn draw_text_lines(
                             for dx in 0..scale {
                                 let px = text_pixel_x + dx;
                                 let py = text_pixel_y + dy;
-                                let offset = (py.wrapping_mul(pitch)) + (px.wrapping_mul(BYTES_PER_PIXEL));
+                                let mut offset = (py.wrapping_mul(pitch)) + (px.wrapping_mul(bytes_per_pixel));
+
                                 buffer[offset] = text_color.r;
                                 buffer[offset + 1] = text_color.g;
                                 buffer[offset + 2] = text_color.b;
-                                buffer[offset + 3] = text_color.a;
+
+                                if bytes_per_pixel == 4 {
+                                    buffer[offset + 3] = text_color.a;
+                                }
                             }
                         }
                     }

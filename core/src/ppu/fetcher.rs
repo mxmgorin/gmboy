@@ -7,6 +7,8 @@ use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::ptr;
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
+pub const PPU_BYTES_PER_PIXEL: usize = 3;
+pub const PPU_BUFFER_LEN: usize = LCD_Y_RES as usize * LCD_X_RES as usize * PPU_BYTES_PER_PIXEL;
 
 type FetchFn = fn(&mut PixelFetcher, &Bus);
 
@@ -69,7 +71,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![0; LCD_Y_RES as usize * LCD_X_RES as usize * 4].into_boxed_slice(),
+            buffer: vec![0; PPU_BUFFER_LEN].into_boxed_slice(),
             sprite_fetcher: Default::default(),
         }
     }
@@ -108,12 +110,12 @@ impl PixelFetcher {
     }
 
     fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
-        let base = index * 4;
-        let rgba = pixel.as_rgba_bytes();
+        let base = index * PPU_BYTES_PER_PIXEL;
+        let bytes = pixel.as_rgb_bytes();
 
         unsafe {
             let dst = self.buffer.as_mut_ptr().add(base);
-            ptr::copy_nonoverlapping(rgba.as_ptr(), dst, 4);
+            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, PPU_BYTES_PER_PIXEL);
         }
 
         self.pushed_x += 1;

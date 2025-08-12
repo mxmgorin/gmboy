@@ -1,8 +1,8 @@
 use crate::config::{RenderConfig, VideoConfig};
-use crate::video::filter::Filters;
+use crate::video::sdl2_filters::Sdl2Filters;
 use crate::video::sdl2_tiles::Sdl2TilesView;
 use crate::video::VideoTexture;
-use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, BYTES_PER_PIXEL};
+use crate::video::{calc_win_height, calc_win_width, new_scaled_rect};
 use core::ppu::tile::TileData;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
@@ -20,7 +20,7 @@ pub struct Sdl2Backend {
     game_rect: Rect,
     fps_rect: Rect,
     notif_rect: Rect,
-    filters: Filters,
+    filters: Sdl2Filters,
     pub canvas: Canvas<Window>,
 }
 
@@ -43,7 +43,7 @@ impl Sdl2Backend {
         let texture_creator = canvas.texture_creator();
         let mut game_texture = texture_creator
             .create_texture_streaming(
-                PixelFormatEnum::ABGR8888,
+                PixelFormatEnum::RGB24,
                 RenderConfig::WIDTH as u32,
                 RenderConfig::HEIGHT as u32,
             )
@@ -69,7 +69,7 @@ impl Sdl2Backend {
         fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Self {
-            filters: Filters::new(&mut canvas, &texture_creator, game_rect),
+            filters: Sdl2Filters::new(&mut canvas, &texture_creator, game_rect),
             tiles_view: if config.interface.show_tiles {
                 Some(Sdl2TilesView::new(&video_subsystem))
             } else {
@@ -109,7 +109,7 @@ impl Sdl2Backend {
 
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         self.clear();
-        let pitch = RenderConfig::WIDTH * BYTES_PER_PIXEL;
+        let pitch = RenderConfig::WIDTH * core::ppu::fetcher::PPU_BYTES_PER_PIXEL;
         self.game_texture.update(None, buffer, pitch).unwrap();
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
@@ -193,6 +193,6 @@ impl Sdl2Backend {
     fn update_game_rect(&mut self) {
         let (win_width, win_height) = self.canvas.window().size();
         self.game_rect = new_scaled_rect(win_width, win_height);
-        self.filters = Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
+        self.filters = Sdl2Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
     }
 }

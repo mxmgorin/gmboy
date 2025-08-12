@@ -4,7 +4,7 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 
-pub struct Filters {
+pub struct Sdl2Filters {
     grid_texture: Texture,
     subpixel_texture: Texture,
     scan_line_texture: Texture,
@@ -13,7 +13,7 @@ pub struct Filters {
     rect: Rect,
 }
 
-impl Filters {
+impl Sdl2Filters {
     pub fn new(
         canvas: &mut Canvas<Window>,
         texture_creator: &TextureCreator<WindowContext>,

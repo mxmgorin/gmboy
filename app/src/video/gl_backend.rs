@@ -1,8 +1,8 @@
 use crate::config::RenderConfig;
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::video::VideoTexture;
-use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader, BYTES_PER_PIXEL};
-use gl::types::GLint;
+use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
+use gl::types::{GLenum, GLint};
 use sdl2::rect::Rect;
 use sdl2::video::{GLContext, GLProfile, Window};
 use sdl2::{Sdl, VideoSubsystem};
@@ -47,9 +47,9 @@ impl GlBackend {
             vao: 0,
             vbo: 0,
             uniform_locations: Default::default(),
-            fps_texture_id: create_texture(fps_rect.w, fps_rect.h),
+            fps_texture_id: create_texture(fps_rect.w, fps_rect.h, gl::RGBA),
             prev_frame_texture_id: 0,
-            notif_texture_id: create_texture(notif_rect.w, notif_rect.h),
+            notif_texture_id: create_texture(notif_rect.w, notif_rect.h, gl::RGBA),
             shader_frame_blend_mode: config.gl.shader_frame_blend_mode,
             prev_buffer: Box::new([]),
             game_rect,
@@ -173,7 +173,7 @@ impl GlBackend {
                 0,
                 width as i32,
                 height as i32,
-                gl::RGBA,
+                gl::RGB,
                 gl::UNSIGNED_BYTE,
                 buffer.as_ptr() as *const _,
             );
@@ -190,7 +190,7 @@ impl GlBackend {
                     0,
                     width as i32,
                     height as i32,
-                    gl::RGBA,
+                    gl::RGB,
                     gl::UNSIGNED_BYTE,
                     self.prev_buffer.as_ptr() as *const _,
                 );
@@ -265,7 +265,7 @@ impl GlBackend {
             gl::BindVertexArray(0);
 
             self.frame_texture_id =
-                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32);
+                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32, gl::RGB);
             self.vao = vao;
             self.vbo = vbo;
         }
@@ -280,9 +280,9 @@ impl GlBackend {
         if frame_blend_mode != ShaderFrameBlendMode::None {
             self.uniform_locations.send_prev_image();
             self.prev_frame_texture_id =
-                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32);
+                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32, gl::RGB);
             self.prev_buffer =
-                vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT * BYTES_PER_PIXEL]
+                vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT * core::ppu::fetcher::PPU_BYTES_PER_PIXEL]
                     .into_boxed_slice();
         } else if frame_blend_mode == ShaderFrameBlendMode::None && !self.prev_buffer.is_empty() {
             self.prev_buffer = Box::new([]);
@@ -505,7 +505,7 @@ fn print_gl_versions() {
     }
 }
 
-pub fn create_texture(w: i32, h: i32) -> u32 {
+pub fn create_texture(w: i32, h: i32, color_type: GLenum) -> u32 {
     unsafe {
         let mut texture = 0;
         gl::GenTextures(1, &mut texture);
@@ -521,7 +521,7 @@ pub fn create_texture(w: i32, h: i32) -> u32 {
             w,
             h,
             0,
-            gl::RGBA,
+            color_type,
             gl::UNSIGNED_BYTE,
             std::ptr::null(),
         );

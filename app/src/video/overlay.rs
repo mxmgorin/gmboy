@@ -2,7 +2,6 @@ use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
 use crate::video::VideoTexture;
-use crate::video::BYTES_PER_PIXEL;
 use core::ppu::tile::PixelColor;
 use sdl2::rect::Rect;
 
@@ -27,9 +26,9 @@ impl Overlay {
     ) -> Self {
         Self {
             font_size: FontSize::Small,
-            menu_texture: VideoTexture::new(menu_rect, BYTES_PER_PIXEL),
-            fps_texture: VideoTexture::new(fps_rect, BYTES_PER_PIXEL),
-            notif_texture: VideoTexture::new(notif_rect, BYTES_PER_PIXEL),
+            menu_texture: VideoTexture::new(menu_rect, core::ppu::fetcher::PPU_BYTES_PER_PIXEL),
+            fps_texture: VideoTexture::new(fps_rect, 4),
+            notif_texture: VideoTexture::new(notif_rect, 4),
             bg_color,
             text_color,
             scale: overlay_scale,
@@ -66,6 +65,7 @@ impl Overlay {
             self.font_size,
             1,
             align_center_opt,
+            self.menu_texture.bytes_per_pixel,
         );
     }
 
@@ -83,6 +83,7 @@ impl Overlay {
             self.font_size,
             self.scale,
             None,
+            self.fps_texture.bytes_per_pixel,
         );
     }
 
@@ -100,6 +101,7 @@ impl Overlay {
             self.font_size,
             self.scale,
             None,
+            self.notif_texture.bytes_per_pixel,
         );
     }
 }

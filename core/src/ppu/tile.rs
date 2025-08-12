@@ -175,6 +175,10 @@ impl PixelColor {
         [self.r, self.g, self.b, self.a]
     }
 
+    pub fn as_rgb_bytes(&self) -> [u8; 3] {
+        [self.r, self.g, self.b]
+    }
+
     pub fn zero() -> PixelColor {
         PixelColor {
             r: 0,

@@ -1,5 +1,5 @@
-mod fetcher;
-mod fifo;
+pub mod fetcher;
+pub mod fifo;
 pub mod lcd;
 pub mod oam;
 pub mod ppu;

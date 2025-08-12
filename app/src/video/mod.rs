@@ -9,7 +9,7 @@ use sdl2::rect::Rect;
 
 mod char;
 pub mod draw_text;
-mod filter;
+mod sdl2_filters;
 pub mod frame_blend;
 mod video;
 pub use video::*;
@@ -19,8 +19,6 @@ mod overlay;
 mod sdl2_backend;
 pub mod sdl2_tiles;
 pub mod shader;
-
-pub const BYTES_PER_PIXEL: usize = 4;
 
 pub fn calc_win_height(scale: u32) -> u32 {
     LCD_Y_RES as u32 * scale
@@ -57,6 +55,7 @@ pub struct VideoTexture {
     pub pitch: usize,
     pub buffer: Box<[u8]>,
     pub rect: Rect,
+    pub bytes_per_pixel: usize,
 }
 
 impl VideoTexture {
@@ -67,15 +66,19 @@ impl VideoTexture {
             pitch,
             buffer: vec![0; pitch * rect.h as usize].into_boxed_slice(),
             rect,
+            bytes_per_pixel,
         }
     }
 
     pub fn fill(&mut self, color: PixelColor) {
-        for i in (0..self.buffer.len()).step_by(BYTES_PER_PIXEL) {
+        for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
             self.buffer[i] = color.r;
             self.buffer[i + 1] = color.g;
             self.buffer[i + 2] = color.b;
-            self.buffer[i + 3] = color.a;
+
+            if self.bytes_per_pixel == 4 {
+                self.buffer[i + 3] = color.a;
+            }
         }
     }
 }
