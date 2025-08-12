@@ -35,6 +35,7 @@ impl Io {
         }
     }
 
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             0xFF00 => self.joypad.get_byte(),
@@ -50,6 +51,7 @@ impl Io {
         }
     }
 
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             0xFF00 => self.joypad.set_byte(value),

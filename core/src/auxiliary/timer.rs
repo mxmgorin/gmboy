@@ -150,11 +150,13 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     fn is_enabled(&self) -> bool {
         // If bit 2 of TAC is set to 0 then the timer is disabled
         self.tac & (1 << TAC_ENABLE_BIT) != 0
     }
 
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             TIMER_DIV_ADDRESS => self.reset_div(),
@@ -167,10 +169,11 @@ impl Timer {
                 self.tma = value;
             }
             TIMER_TAC_ADDRESS => self.write_tac(value),
-            _ => panic!("Invalid Timer address: {:02X}", address),
+            _ => panic!("Invalid Timer address: {address:02X}"),
         }
     }
 
+    #[inline(always)]
     fn write_tima(&mut self, value: u8) {
         if let Some(overflow_ticks) = self.tima_overflow_ticks {
             if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
@@ -186,6 +189,7 @@ impl Timer {
         self.tima = value;
     }
 
+    #[inline(always)]
     pub fn reset_div(&mut self) {
         self.div = 0;
 
@@ -197,6 +201,7 @@ impl Timer {
         //}
     }
 
+    #[inline(always)]
     pub fn write_tac(&mut self, value: u8) {
         let old_is_enabled = self.is_enabled();
         let old_clock_bit = self.get_clock_bit_position();
@@ -227,6 +232,7 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             TIMER_DIV_ADDRESS => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
@@ -242,7 +248,7 @@ impl Timer {
             }
             TIMER_TMA_ADDRESS => self.tma,
             TIMER_TAC_ADDRESS => self.tac | TIMER_TAC_UNUSED_MASK,
-            _ => panic!("Invalid Timer address: {:02X}", address),
+            _ => panic!("Invalid Timer address: {address:02X}"),
         }
     }
 }
