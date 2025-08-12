@@ -49,7 +49,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                     ppu.tick(&mut bus);
                 }
             },
-            BatchSize::SmallInput,
+            BatchSize::LargeInput,
         );
     });
 
