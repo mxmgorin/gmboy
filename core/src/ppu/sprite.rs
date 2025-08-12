@@ -64,8 +64,7 @@ impl SpriteFetcher {
                 if !inserted {
                     // If no earlier insertion, push to the back
                     unsafe {
-                        *self.line_sprites.get_unchecked_mut(self.line_sprites_count) =
-                            ram_entry.to_owned();
+                        *self.line_sprites.get_unchecked_mut(self.line_sprites_count) = *ram_entry;
                     }
                     self.line_sprites_count += 1;
                 }
