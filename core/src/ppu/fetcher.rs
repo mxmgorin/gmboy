@@ -168,37 +168,49 @@ impl PixelFetcher {
             return false;
         }
 
-        let x: i32 = self.fetch_x.wrapping_sub(8 - (bus.io.lcd.scroll_x % 8)) as i32;
+        let lcd = &bus.io.lcd;
+        let control = lcd.control;
+        let obj_enabled = control.obj_enabled();
+        let bgw_enabled = control.bgw_enabled();
+        let bg_colors = &lcd.bg_colors;
+        let x: i32 = self.fetch_x.wrapping_sub(8 - (lcd.scroll_x % 8)) as i32;
+
+        if x < 0 {
+            return true; // nothing to push
+        }
 
         for bit in 0..TILE_BITS_COUNT {
-            let bgw_color_index = get_color_index(
-                self.bgw_fetched_data.byte1,
-                self.bgw_fetched_data.byte2,
-                bit,
-            );
+            let bgw_color_index =
+                get_color_index(self.bgw_fetched_data.byte1, self.bgw_fetched_data.byte2, bit);
 
-            let bgw_pixel_color = if bus.io.lcd.control.bgw_enabled() {
-                bus.io.lcd.bg_colors[bgw_color_index]
+            let pixel = if obj_enabled {
+                if let Some(sprite_pixel) =
+                    self.sprite_fetcher.fetch_sprite_pixel(lcd, self.fifo_x, bgw_color_index)
+                {
+                    sprite_pixel
+                } else {
+                   Self::get_gbw_color(bg_colors, bgw_color_index, bgw_enabled)
+                }
             } else {
-                bus.io.lcd.bg_colors[0]
+                Self::get_gbw_color(bg_colors, bgw_color_index, bgw_enabled)
             };
 
-            let sprite_pixel = if bus.io.lcd.control.obj_enabled() {
-                self.sprite_fetcher
-                    .fetch_sprite_pixel(&bus.io.lcd, self.fifo_x, bgw_color_index)
-            } else {
-                None
-            };
-
-            let pixel = sprite_pixel.unwrap_or(bgw_pixel_color);
-
-            if x >= 0 {
-                self.pixel_fifo.push(pixel);
-                self.fifo_x += 1;
-            }
+            self.pixel_fifo.push(pixel);
+            self.fifo_x += 1;
         }
 
         true
+    }
+
+    #[inline(always)]
+    fn get_gbw_color(colors: &[PixelColor; 4], index: usize, enabled: bool) -> PixelColor {
+        if enabled {
+            // SAFETY: always index 0..=3
+            unsafe { *colors.get_unchecked(index) }
+        } else {
+            // SAFETY: there is always 4 colors
+            unsafe { *colors.get_unchecked(0) }
+        }
     }
 
     pub fn reset(&mut self) {
