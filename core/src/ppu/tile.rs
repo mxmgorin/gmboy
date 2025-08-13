@@ -153,26 +153,28 @@ impl Iterator for TileLineIterator {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelColor {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-    pub a: u8,
+    r: u8,
+    g: u8,
+    b: u8,
 }
 
 impl PixelColor {
+    pub fn new(r: u8, g: u8, b: u8) -> PixelColor {
+        PixelColor { r, g, b }
+    }
     pub fn from_hex_rgba(hex: &str) -> PixelColor {
-        assert_eq!(hex.len(), 8);
+        assert!(hex.len() >= 6);
 
         let r = u8::from_str_radix(&hex[0..2], 16).unwrap();
         let g = u8::from_str_radix(&hex[2..4], 16).unwrap();
         let b = u8::from_str_radix(&hex[4..6], 16).unwrap();
-        let a = u8::from_str_radix(&hex[6..8], 16).unwrap();
+        //let a = u8::from_str_radix(&hex[6..8], 16).unwrap();
 
-        Self { r, g, b, a }
+        Self { r, g, b }
     }
 
     pub fn as_rgba_bytes(&self) -> [u8; 4] {
-        [self.r, self.g, self.b, self.a]
+        [self.r, self.g, self.b, 255]
     }
 
     pub fn as_rgb_bytes(&self) -> [u8; 3] {
@@ -184,7 +186,6 @@ impl PixelColor {
             r: 0,
             g: 0,
             b: 0,
-            a: 0,
         }
     }
 }

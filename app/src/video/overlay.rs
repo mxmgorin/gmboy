@@ -71,7 +71,7 @@ impl Overlay {
     }
 
     pub fn update_fps(&mut self, fps: &str) {
-        self.fps_texture.fill(PixelColor::zero());
+        self.fps_texture.zero();
 
         draw_text_lines(
             &mut self.fps_texture.buffer,
@@ -89,7 +89,7 @@ impl Overlay {
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
-        self.notif_texture.fill(PixelColor::zero());
+        self.notif_texture.zero();
 
         draw_text_lines(
             &mut self.notif_texture.buffer,

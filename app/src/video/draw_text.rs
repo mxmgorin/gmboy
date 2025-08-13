@@ -79,13 +79,14 @@ pub fn draw_text_lines(
         for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
             for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
                 let offset = (py * pitch) + (px * bytes_per_pixel);
+                let colors = bg_color.as_rgba_bytes();
 
-                buffer[offset] = bg_color.r;
-                buffer[offset + 1] = bg_color.g;
-                buffer[offset + 2] = bg_color.b;
+                buffer[offset] = colors[0];
+                buffer[offset + 1] = colors[1];
+                buffer[offset + 2] = colors[2];
 
                 if bytes_per_pixel == 4 {
-                    buffer[offset + 3] = bg_color.a;
+                    buffer[offset + 3] = colors[3];
                 }
             }
         }
@@ -132,13 +133,14 @@ pub fn draw_text_lines(
                                 let px = text_pixel_x + dx;
                                 let py = text_pixel_y + dy;
                                 let offset = (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
+                                let colors = text_color.as_rgba_bytes();
 
-                                buffer[offset] = text_color.r;
-                                buffer[offset + 1] = text_color.g;
-                                buffer[offset + 2] = text_color.b;
+                                buffer[offset] = colors[0];
+                                buffer[offset + 1] = colors[1];
+                                buffer[offset + 2] = colors[2];
 
                                 if bytes_per_pixel == 4 {
-                                    buffer[offset + 3] = text_color.a;
+                                    buffer[offset + 3] = colors[3];
                                 }
                             }
                         }

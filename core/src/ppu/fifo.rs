@@ -66,12 +66,7 @@ mod tests {
     use crate::ppu::lcd::PixelColor;
 
     fn create_pixel(v: u32) -> PixelColor {
-        PixelColor {
-            r: v as u8,
-            g: 0,
-            b: 0,
-            a: 255,
-        }
+        PixelColor::new(v as u8, 0, 0)
     }
 
     #[test]

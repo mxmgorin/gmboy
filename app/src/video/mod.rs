@@ -72,12 +72,25 @@ impl VideoTexture {
 
     pub fn fill(&mut self, color: PixelColor) {
         for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
-            self.buffer[i] = color.r;
-            self.buffer[i + 1] = color.g;
-            self.buffer[i + 2] = color.b;
+            let colors = color.as_rgba_bytes();
+            self.buffer[i] = colors[0];
+            self.buffer[i + 1] = colors[1];
+            self.buffer[i + 2] = colors[2];
 
             if self.bytes_per_pixel == 4 {
-                self.buffer[i + 3] = color.a;
+                self.buffer[i + 3] = colors[3];
+            }
+        }
+    }
+
+    pub fn zero(&mut self) {
+        for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
+            self.buffer[i] = 0;
+            self.buffer[i + 1] = 0;
+            self.buffer[i + 2] = 0;
+
+            if self.bytes_per_pixel == 4 {
+                self.buffer[i + 3] = 0;
             }
         }
     }
