@@ -32,4 +32,8 @@ impl PlatformFileSystem for AndroidFileSystem {
 
         Ok(items)
     }
+
+    fn can_split_paths(&self) -> bool {
+        false
+    }
 }

@@ -69,4 +69,8 @@ impl PlatformFileSystem for DesktopFileSystem {
 
         Ok(files)
     }
+
+    fn can_split_paths(&self) -> bool {
+        true
+    }
 }

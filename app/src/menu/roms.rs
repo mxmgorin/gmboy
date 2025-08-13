@@ -63,7 +63,7 @@ impl RomsMenu {
     pub fn from_loaded(fs: &impl PlatformFileSystem, roms: &RomsState) -> Self {
         let mut all_items = Vec::with_capacity(12);
 
-        if let Some(iter) = roms.iter_loaded() {
+        if let Some(iter) = roms.iter_loaded(fs) {
             for path in iter {
                 if let Some(item) = RomMenuItem::new(path, fs) {
                     all_items.push(item);
@@ -182,6 +182,10 @@ mod tests {
 
         fn read_dir(&self, _path: &Path) -> Result<Vec<String>, String> {
             Ok(vec![])
+        }
+
+        fn can_split_paths(&self) -> bool {
+            true
         }
     }
 

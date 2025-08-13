@@ -31,12 +31,17 @@ impl RomsState {
         self.loaded_rom_files.clear();
         let files = filesystem.read_dir(dir_path)?;
         self.selected_dir_path = Some(dir_path.to_owned());
+        let can_split_paths = filesystem.can_split_paths();
 
         for file in files {
-            let path = PathBuf::from(file);
-            if let Some(name) = filesystem.get_file_name(&path) {
-                if name.ends_with(".gb") || name.ends_with(".gbc") {
-                    self.loaded_rom_files.insert(name);
+            if file.ends_with(".gb") || file.ends_with(".gbc") {
+                if can_split_paths {
+                    let path = PathBuf::from(file);
+                    if let Some(name) = filesystem.get_file_name(&path) {
+                        self.loaded_rom_files.insert(name); // store just the name
+                    }
+                } else {
+                    self.loaded_rom_files.insert(file.clone()); // store full path
                 }
             }
         }
@@ -80,11 +85,20 @@ impl RomsState {
     }
 
     /// Returns an iterator over the full paths of loaded ROM files.
-    pub fn iter_loaded(&self) -> Option<impl Iterator<Item = PathBuf> + '_> {
+    pub fn iter_loaded(
+        &self,
+        fs: &impl PlatformFileSystem,
+    ) -> Option<impl Iterator<Item = PathBuf> + '_> {
+        let can_split_paths = fs.can_split_paths();
+
         self.selected_dir_path.as_ref().map(|dir| {
-            self.loaded_rom_files
-                .iter()
-                .map(move |file_name| dir.join(file_name))
+            self.loaded_rom_files.iter().map(move |file_name| {
+                if can_split_paths {
+                    dir.join(file_name)
+                } else {
+                    PathBuf::from(file_name)
+                }
+            })
         })
     }
 
