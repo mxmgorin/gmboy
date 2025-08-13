@@ -8,6 +8,7 @@ authors = ["troidem <mxmgorin@gmail.com>"]
 default = ["file-dialog", "file-browser"]
 file-dialog = ["tinyfiledialogs", "app/file-dialog"]
 file-browser = ["app/file-browser"]
+sdl2-bundled = ["app/sdl2-bundled"]
 
 [dependencies]
 core = { path = "../core" }
