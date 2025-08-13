@@ -75,7 +75,7 @@ impl RenderConfig {
 }
 
 pub fn update_frame_skip(v: usize, delta: isize) -> usize {
-    let v = v as isize - delta;
+    let v = v as isize + delta;
 
     v.clamp(0, 59) as usize
 }
