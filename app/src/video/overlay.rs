@@ -36,16 +36,17 @@ impl Overlay {
     }
 
     pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {
+        let menu_width = self.menu_texture.rect.w as usize;
+
         let (align_center_opt, text_width) = if align_center {
-            let center = CenterAlignedText::new(lines, self.font_size);
+            let center = CenterAlignedText::new(lines, self.font_size, menu_width);
             (Some(center), center.longest_text_width)
         } else {
             (None, calc_text_width_str(lines[0], self.font_size))
         };
 
         let text_height = calc_text_height(self.font_size) * lines.len();
-        let menu_width = self.menu_texture.rect.w as usize;
-        let mut x = menu_width.wrapping_sub(text_width);
+        let mut x = menu_width.saturating_sub(text_width);
         let mut y = self.menu_texture.rect.h as usize - text_height;
 
         if center {

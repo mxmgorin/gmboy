@@ -20,11 +20,11 @@ pub struct CenterAlignedText {
 }
 
 impl CenterAlignedText {
-    pub fn new(lines: &[&str], size: FontSize) -> Self {
+    pub fn new(lines: &[&str], size: FontSize, max: usize) -> Self {
         let len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
 
         Self {
-            longest_text_width: calc_text_width(len, size),
+            longest_text_width: calc_text_width(len, size).min(max),
         }
     }
 }
@@ -40,7 +40,7 @@ pub fn draw_text_lines(
     size: FontSize,
     scale: usize,
     align_center: Option<CenterAlignedText>,
-    bytes_per_pixel: usize, // NEW PARAMETER
+    bytes_per_pixel: usize
 ) {
     if lines.is_empty() {
         return;
@@ -131,7 +131,7 @@ pub fn draw_text_lines(
                             for dx in 0..scale {
                                 let px = text_pixel_x + dx;
                                 let py = text_pixel_y + dy;
-                                let mut offset = (py.wrapping_mul(pitch)) + (px.wrapping_mul(bytes_per_pixel));
+                                let offset = (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
 
                                 buffer[offset] = text_color.r;
                                 buffer[offset + 1] = text_color.g;
