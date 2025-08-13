@@ -93,7 +93,7 @@ impl From<usize> for ColorId {
             1 => ColorId::Light,
             2 => ColorId::Dark,
             3 => ColorId::Darkest,
-            _ => panic!("Invalid value for ColorId {}", value),
+            _ => panic!("Invalid value for ColorId {value}"),
         }
     }
 }
@@ -153,15 +153,20 @@ impl Iterator for TileLineIterator {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelColor {
-    r: u8,
-    g: u8,
-    b: u8,
+    rgb565: u16,
 }
 
 impl PixelColor {
     pub fn new(r: u8, g: u8, b: u8) -> PixelColor {
-        PixelColor { r, g, b }
+        // Convert from 8-bit per channel to RGB565
+        let r5 = (r as u16 >> 3) & 0x1F; // 5 bits
+        let g6 = (g as u16 >> 2) & 0x3F; // 6 bits
+        let b5 = (b as u16 >> 3) & 0x1F; // 5 bits
+        let rgb565 = (r5 << 11) | (g6 << 5) | b5;
+
+        PixelColor { rgb565 }
     }
+
     pub fn from_hex_rgba(hex: &str) -> PixelColor {
         assert!(hex.len() >= 6);
 
@@ -170,23 +175,43 @@ impl PixelColor {
         let b = u8::from_str_radix(&hex[4..6], 16).unwrap();
         //let a = u8::from_str_radix(&hex[6..8], 16).unwrap();
 
-        Self { r, g, b }
+        Self::new(r, g, b)
     }
 
+    /// Convert to RGBA8888 (full 8-bit channels, alpha = 255)
     pub fn as_rgba_bytes(&self) -> [u8; 4] {
-        [self.r, self.g, self.b, 255]
+        let r = ((self.rgb565 >> 11) & 0x1F) as u8;
+        let g = ((self.rgb565 >> 5) & 0x3F) as u8;
+        let b = (self.rgb565 & 0x1F) as u8;
+
+        [
+            r << 3 | (r >> 2), // scale 5-bit → 8-bit
+            g << 2 | (g >> 4), // scale 6-bit → 8-bit
+            b << 3 | (b >> 2), // scale 5-bit → 8-bit
+            255,               // alpha
+        ]
     }
 
+    /// Convert to RGB888 (full 8-bit channels)
     pub fn as_rgb_bytes(&self) -> [u8; 3] {
-        [self.r, self.g, self.b]
+        let r = ((self.rgb565 >> 11) & 0x1F) as u8;
+        let g = ((self.rgb565 >> 5) & 0x3F) as u8;
+        let b = (self.rgb565 & 0x1F) as u8;
+
+        [
+            r << 3 | (r >> 2), // 5-bit → 8-bit
+            g << 2 | (g >> 4), // 6-bit → 8-bit
+            b << 3 | (b >> 2), // 5-bit → 8-bit
+        ]
+    }
+
+    /// Return raw RGB565 bytes in **little-endian** order
+    pub fn as_rgb565_bytes(&self) -> [u8; 2] {
+        self.rgb565.to_le_bytes()
     }
 
     pub fn zero() -> PixelColor {
-        PixelColor {
-            r: 0,
-            g: 0,
-            b: 0,
-        }
+        PixelColor::new(0, 0, 0)
     }
 }
 

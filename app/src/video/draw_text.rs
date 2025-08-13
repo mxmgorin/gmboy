@@ -40,7 +40,7 @@ pub fn draw_text_lines(
     size: FontSize,
     scale: usize,
     align_center: Option<CenterAlignedText>,
-    bytes_per_pixel: usize
+    bytes_per_pixel: usize,
 ) {
     if lines.is_empty() {
         return;
@@ -79,15 +79,7 @@ pub fn draw_text_lines(
         for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
             for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
                 let offset = (py * pitch) + (px * bytes_per_pixel);
-                let colors = bg_color.as_rgba_bytes();
-
-                buffer[offset] = colors[0];
-                buffer[offset + 1] = colors[1];
-                buffer[offset + 2] = colors[2];
-
-                if bytes_per_pixel == 4 {
-                    buffer[offset + 3] = colors[3];
-                }
+                draw_colors(buffer, offset, bg_color, bytes_per_pixel);
             }
         }
     }
@@ -132,22 +124,32 @@ pub fn draw_text_lines(
                             for dx in 0..scale {
                                 let px = text_pixel_x + dx;
                                 let py = text_pixel_y + dy;
-                                let offset = (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
-                                let colors = text_color.as_rgba_bytes();
-
-                                buffer[offset] = colors[0];
-                                buffer[offset + 1] = colors[1];
-                                buffer[offset + 2] = colors[2];
-
-                                if bytes_per_pixel == 4 {
-                                    buffer[offset + 3] = colors[3];
-                                }
+                                let offset = (py.saturating_mul(pitch))
+                                    + (px.saturating_mul(bytes_per_pixel));
+                                draw_colors(buffer, offset, text_color, bytes_per_pixel);
                             }
                         }
                     }
                 }
             }
             cursor_x += (size.width() * scale) + size.spacing();
+        }
+    }
+}
+
+pub fn draw_colors(buffer: &mut [u8], offset: usize, color: PixelColor, bytes_per_pixel: usize) {
+    if bytes_per_pixel == 2 {
+        let colors = color.as_rgb565_bytes();
+        buffer[offset] = colors[0];
+        buffer[offset + 1] = colors[1];
+    } else {
+        let colors = color.as_rgba_bytes();
+        buffer[offset] = colors[0];
+        buffer[offset + 1] = colors[1];
+        buffer[offset + 2] = colors[2];
+
+        if bytes_per_pixel == 4 {
+            buffer[offset + 3] = colors[3];
         }
     }
 }

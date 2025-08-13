@@ -43,7 +43,7 @@ impl Sdl2Backend {
         let texture_creator = canvas.texture_creator();
         let mut game_texture = texture_creator
             .create_texture_streaming(
-                PixelFormatEnum::RGB24,
+                PixelFormatEnum::RGB565,
                 RenderConfig::WIDTH as u32,
                 RenderConfig::HEIGHT as u32,
             )

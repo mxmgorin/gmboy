@@ -9,8 +9,8 @@ use sdl2::rect::Rect;
 
 mod char;
 pub mod draw_text;
-mod sdl2_filters;
 pub mod frame_blend;
+mod sdl2_filters;
 mod video;
 pub use video::*;
 
@@ -72,13 +72,19 @@ impl VideoTexture {
 
     pub fn fill(&mut self, color: PixelColor) {
         for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
-            let colors = color.as_rgba_bytes();
-            self.buffer[i] = colors[0];
-            self.buffer[i + 1] = colors[1];
-            self.buffer[i + 2] = colors[2];
+            if self.bytes_per_pixel == 2 {
+                let colors = color.as_rgb565_bytes();
+                self.buffer[i] = colors[0];
+                self.buffer[i + 1] = colors[1];
+            } else {
+                let colors = color.as_rgba_bytes();
+                self.buffer[i] = colors[0];
+                self.buffer[i + 1] = colors[1];
+                self.buffer[i + 2] = colors[2];
 
-            if self.bytes_per_pixel == 4 {
-                self.buffer[i + 3] = colors[3];
+                if self.bytes_per_pixel == 4 {
+                    self.buffer[i + 3] = colors[3];
+                }
             }
         }
     }

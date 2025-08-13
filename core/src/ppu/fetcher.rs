@@ -7,7 +7,7 @@ use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::ptr;
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
-pub const PPU_BYTES_PER_PIXEL: usize = 3;
+pub const PPU_BYTES_PER_PIXEL: usize = 2;
 pub const PPU_BUFFER_LEN: usize = LCD_Y_RES as usize * LCD_X_RES as usize * PPU_BYTES_PER_PIXEL;
 
 type FetchFn = fn(&mut PixelFetcher, &Bus);
@@ -111,7 +111,7 @@ impl PixelFetcher {
 
     fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
         let base = index * PPU_BYTES_PER_PIXEL;
-        let bytes = pixel.as_rgb_bytes();
+        let bytes = pixel.as_rgb565_bytes();
 
         unsafe {
             let dst = self.buffer.as_mut_ptr().add(base);

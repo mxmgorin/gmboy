@@ -47,9 +47,21 @@ impl GlBackend {
             vao: 0,
             vbo: 0,
             uniform_locations: Default::default(),
-            fps_texture_id: create_texture(fps_rect.w, fps_rect.h, gl::RGBA),
+            fps_texture_id: create_texture(
+                fps_rect.w,
+                fps_rect.h,
+                gl::RGBA,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+            ),
             prev_frame_texture_id: 0,
-            notif_texture_id: create_texture(notif_rect.w, notif_rect.h, gl::RGBA),
+            notif_texture_id: create_texture(
+                notif_rect.w,
+                notif_rect.h,
+                gl::RGBA,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+            ),
             shader_frame_blend_mode: config.gl.shader_frame_blend_mode,
             prev_buffer: Box::new([]),
             game_rect,
@@ -121,7 +133,8 @@ impl GlBackend {
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
-        self.gl.window
+        self.gl
+            .window
             .set_size(calc_win_width(scale), calc_win_height(scale))
             .map_err(|e| e.to_string())?;
         self.gl.window.set_position(
@@ -135,11 +148,13 @@ impl GlBackend {
 
     pub fn set_fullscreen(&mut self, fullscreen: bool) {
         if fullscreen {
-            self.gl.window
+            self.gl
+                .window
                 .set_fullscreen(sdl2::video::FullscreenType::Desktop)
                 .unwrap();
         } else {
-            self.gl.window
+            self.gl
+                .window
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         };
@@ -166,6 +181,8 @@ impl GlBackend {
 
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.frame_texture_id);
+            gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1); // needed for UNSIGNED_SHORT_5_6_5
+
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
                 0,
@@ -174,7 +191,7 @@ impl GlBackend {
                 width as i32,
                 height as i32,
                 gl::RGB,
-                gl::UNSIGNED_BYTE,
+                gl::UNSIGNED_SHORT_5_6_5,
                 buffer.as_ptr() as *const _,
             );
 
@@ -183,6 +200,8 @@ impl GlBackend {
 
                 gl::ActiveTexture(gl::TEXTURE1);
                 gl::BindTexture(gl::TEXTURE_2D, self.prev_frame_texture_id);
+                gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1); // needed for UNSIGNED_SHORT_5_6_5
+
                 gl::TexSubImage2D(
                     gl::TEXTURE_2D,
                     0,
@@ -191,7 +210,7 @@ impl GlBackend {
                     width as i32,
                     height as i32,
                     gl::RGB,
-                    gl::UNSIGNED_BYTE,
+                    gl::UNSIGNED_SHORT_5_6_5,
                     self.prev_buffer.as_ptr() as *const _,
                 );
 
@@ -264,8 +283,13 @@ impl GlBackend {
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
 
-            self.frame_texture_id =
-                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32, gl::RGB);
+            self.frame_texture_id = create_texture(
+                RenderConfig::WIDTH as i32,
+                RenderConfig::HEIGHT as i32,
+                gl::RGB565,
+                gl::RGB,
+                gl::UNSIGNED_SHORT_5_6_5,
+            );
             self.vao = vao;
             self.vbo = vbo;
         }
@@ -279,11 +303,20 @@ impl GlBackend {
 
         if frame_blend_mode != ShaderFrameBlendMode::None {
             self.uniform_locations.send_prev_image();
-            self.prev_frame_texture_id =
-                create_texture(RenderConfig::WIDTH as i32, RenderConfig::HEIGHT as i32, gl::RGB);
-            self.prev_buffer =
-                vec![0; RenderConfig::WIDTH * RenderConfig::HEIGHT * core::ppu::fetcher::PPU_BYTES_PER_PIXEL]
-                    .into_boxed_slice();
+            self.prev_frame_texture_id = create_texture(
+                RenderConfig::WIDTH as i32,
+                RenderConfig::HEIGHT as i32,
+                gl::RGB565,
+                gl::RGB,
+                gl::UNSIGNED_SHORT_5_6_5,
+            );
+            self.prev_buffer = vec![
+                0;
+                RenderConfig::WIDTH
+                    * RenderConfig::HEIGHT
+                    * core::ppu::fetcher::PPU_BYTES_PER_PIXEL
+            ]
+            .into_boxed_slice();
         } else if frame_blend_mode == ShaderFrameBlendMode::None && !self.prev_buffer.is_empty() {
             self.prev_buffer = Box::new([]);
         }
@@ -385,11 +418,7 @@ pub struct Gles {
     pub fragment_precision: &'static str,
 }
 
-pub fn create_gl_with_fallback(
-    sdl: &Sdl,
-    width: u32,
-    height: u32,
-) -> Result<GLSetup, String> {
+pub fn create_gl_with_fallback(sdl: &Sdl, width: u32, height: u32) -> Result<GLSetup, String> {
     let video = sdl.video()?;
 
     let attempts = [
@@ -505,11 +534,18 @@ fn print_gl_versions() {
     }
 }
 
-pub fn create_texture(w: i32, h: i32, color_type: GLenum) -> u32 {
+pub fn create_texture(
+    w: i32,
+    h: i32,
+    inner_format: GLenum,
+    format: GLenum,
+    data_type: GLenum,
+) -> u32 {
     unsafe {
         let mut texture = 0;
         gl::GenTextures(1, &mut texture);
         gl::BindTexture(gl::TEXTURE_2D, texture);
+
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as i32);
@@ -517,13 +553,13 @@ pub fn create_texture(w: i32, h: i32, color_type: GLenum) -> u32 {
         gl::TexImage2D(
             gl::TEXTURE_2D,
             0,
-            gl::RGBA as i32,
+            inner_format as GLint,
             w,
             h,
             0,
-            color_type,
-            gl::UNSIGNED_BYTE,
-            std::ptr::null(),
+            format,
+            data_type,
+            ptr::null(),
         );
 
         texture
