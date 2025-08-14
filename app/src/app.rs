@@ -155,7 +155,7 @@ where
         Ok(Self {
             min_render_interval: config.calc_min_frame_interval(),
             audio: AppAudio::new(sdl, &config.audio),
-            menu: AppMenu::new(roms.get_last_path().is_some()),
+            menu: AppMenu::new(&roms),
             state: AppState::Paused,
             video,
             palettes,
@@ -428,7 +428,7 @@ where
         );
         emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
-        self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
+        self.menu = AppMenu::new(&self.roms);
 
         if !is_reload && self.config.auto_save_state {
             let path = self.roms.get_last_path().unwrap();

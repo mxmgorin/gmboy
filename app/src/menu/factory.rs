@@ -1,13 +1,13 @@
-use std::path::Path;
 use crate::app::AppCmd;
 use crate::config::{VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;
 use crate::menu::roms::RomsMenu;
 use crate::menu::SubMenu;
+use crate::roms::RomsState;
 use crate::video::frame_blend::FrameBlendMode;
 use crate::PlatformFileSystem;
-use crate::roms::RomsState;
+use std::path::Path;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     let mut items = Vec::with_capacity(15);
@@ -55,19 +55,28 @@ pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
     items.into_boxed_slice()
 }
 
-pub fn loaded_roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<[AppMenuItem]> {
+pub fn loaded_roms_menu(
+    filesystem: &impl PlatformFileSystem,
+    roms: &RomsState,
+) -> Box<[AppMenuItem]> {
     let roms: Box<dyn SubMenu> = Box::new(RomsMenu::from_loaded(filesystem, roms));
 
     vec![AppMenuItem::LoadedRomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
 }
 
-pub fn opened_roms_menu(filesystem: &impl PlatformFileSystem, roms: &RomsState) -> Box<[AppMenuItem]> {
+pub fn opened_roms_menu(
+    filesystem: &impl PlatformFileSystem,
+    roms: &RomsState,
+) -> Box<[AppMenuItem]> {
     let roms: Box<dyn SubMenu> = Box::new(RomsMenu::from_opened(filesystem, roms));
 
     vec![AppMenuItem::OpenedRomsSubMenu(roms), AppMenuItem::Back].into_boxed_slice()
 }
 
-pub fn files_menu(_filesystem: &impl PlatformFileSystem, last_path: Option<impl AsRef<Path>>) -> Box<[AppMenuItem]> {
+pub fn files_menu(
+    _filesystem: &impl PlatformFileSystem,
+    last_path: Option<impl AsRef<Path>>,
+) -> Box<[AppMenuItem]> {
     let files: Box<dyn SubMenu> = Box::new(FilesMenu::new(last_path));
 
     vec![AppMenuItem::BrowseRomsSubMenu(files)].into_boxed_slice()
@@ -107,17 +116,38 @@ pub fn advanced_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-pub fn start_menu() -> Box<[AppMenuItem]> {
-    vec![
-        #[cfg(feature = "file-dialog")]
-        AppMenuItem::OpenRom,
-        AppMenuItem::LoadedRoms,
-        #[cfg(feature = "file-browser")]
-        AppMenuItem::BrowseRoms,
-        AppMenuItem::SettingsMenu,
-        AppMenuItem::Quit,
-    ]
-    .into_boxed_slice()
+pub fn start_menu(roms: &RomsState) -> Box<[AppMenuItem]> {
+    let mut items = Vec::with_capacity(10);
+
+    if roms.last_browse_dir_path.is_some() {
+        items.push(AppMenuItem::Resume);
+        items.push(AppMenuItem::SaveState);
+        items.push(AppMenuItem::LoadState);
+        items.push(AppMenuItem::RestartGame);
+    }
+
+    if roms.opened_count() != 0 {
+        items.push(AppMenuItem::OpenedRoms);
+    }
+
+    #[cfg(not(feature = "file-dialog"))]
+    if roms.loaded_count() != 0 {
+        items.push(AppMenuItem::LoadedRoms);
+    }
+
+    #[cfg(feature = "file-dialog")]
+    {
+        items.push(AppMenuItem::OpenRom);
+        items.push(AppMenuItem::LoadedRoms);
+    }
+
+    #[cfg(feature = "file-browser")]
+    items.push(AppMenuItem::BrowseRoms);
+
+    items.push(AppMenuItem::SettingsMenu);
+    items.push(AppMenuItem::Quit);
+
+    items.into_boxed_slice()
 }
 
 pub fn settings_menu() -> Box<[AppMenuItem]> {
@@ -141,24 +171,6 @@ pub fn interface_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::ToggleFps,
         AppMenuItem::Scale,
         AppMenuItem::Back,
-    ]
-    .into_boxed_slice()
-}
-
-pub fn game_menu() -> Box<[AppMenuItem]> {
-    vec![
-        AppMenuItem::Resume,
-        AppMenuItem::SaveState,
-        AppMenuItem::LoadState,
-        AppMenuItem::RestartGame,
-        #[cfg(feature = "file-dialog")]
-        AppMenuItem::OpenRom,
-        AppMenuItem::OpenedRoms,
-        AppMenuItem::LoadedRoms,
-        #[cfg(feature = "file-browser")]
-        AppMenuItem::BrowseRoms,
-        AppMenuItem::SettingsMenu,
-        AppMenuItem::Quit,
     ]
     .into_boxed_slice()
 }

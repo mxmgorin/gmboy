@@ -3,7 +3,7 @@ use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::buffer::MenuBuffer;
 use crate::menu::item::AppMenuItem;
 use crate::menu::{
-    advanced_menu, audio_menu, confirm_menu, files_menu, game_menu, input_menu, interface_menu,
+    advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu,
     loaded_roms_menu, opened_roms_menu, settings_menu, start_menu, system_menu, video_menu,
 };
 use crate::roms::RomsState;
@@ -26,10 +26,10 @@ pub struct AppMenu {
 }
 
 impl AppMenu {
-    pub fn new(with_cart: bool) -> Self {
+    pub fn new(roms: &RomsState) -> Self {
         Self {
             prev_items: Vec::with_capacity(4),
-            items: if with_cart { game_menu() } else { start_menu() },
+            items: start_menu(roms),
             selected_index: 0,
             buffer: MenuBuffer::default(),
             updated: true,
