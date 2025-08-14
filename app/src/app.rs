@@ -418,7 +418,7 @@ where
         }
 
         emu.load_cart(cart);
-        self.roms.on_opened(path.to_path_buf());
+        self.roms.insert_or_update(path.to_path_buf());
 
         emu.runtime.bus.io.lcd.apply_colors(
             self.config

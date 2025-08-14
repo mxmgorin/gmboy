@@ -49,8 +49,9 @@ impl RomsState {
         Ok(self.loaded_rom_files.len())
     }
 
-    pub fn on_opened(&mut self, path: PathBuf) {
-        self.opened_rom_paths.insert(path.clone());
+    pub fn insert_or_update(&mut self, path: PathBuf) {
+        self.opened_rom_paths.shift_remove(&path);
+        self.opened_rom_paths.insert(path);
     }
 
     pub fn remove(&mut self, path: &Path) {
@@ -103,7 +104,7 @@ impl RomsState {
     }
 
     pub fn iter_opened(&self) -> impl Iterator<Item = &PathBuf> + '_ {
-        self.opened_rom_paths.iter()
+        self.opened_rom_paths.iter().rev()
     }
 
     pub fn save_file(&self) {
