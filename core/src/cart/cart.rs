@@ -107,6 +107,7 @@ impl Cart {
         format!("{title}-{global_checksum}")
     }
 
+    #[inline]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
@@ -117,6 +118,7 @@ impl Cart {
         }
     }
 
+    #[inline]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {

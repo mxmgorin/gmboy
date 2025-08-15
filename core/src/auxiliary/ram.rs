@@ -33,11 +33,13 @@ impl Default for Ram {
 }
 
 impl Ram {
+    #[inline]
     pub fn working_ram_read(&self, addr: u16) -> u8 {
         // SAFETY: address is matched in bus
         unsafe { *self.working_ram.get_unchecked(normalize_w_addr(addr)) }
     }
 
+    #[inline]
     pub fn working_ram_write(&mut self, addr: u16, val: u8) {
         // SAFETY: address is matched in bus
         unsafe {
@@ -45,11 +47,13 @@ impl Ram {
         }
     }
 
+    #[inline]
     pub fn high_ram_read(&self, addr: u16) -> u8 {
         // SAFETY: address is matched in bus
         unsafe { *self.high_ram.get_unchecked(normalize_h_addr(addr)) }
     }
 
+    #[inline]
     pub fn high_ram_write(&mut self, addr: u16, val: u8) {
         // SAFETY: address is matched in bus
         unsafe {
@@ -58,10 +62,12 @@ impl Ram {
     }
 }
 
+#[inline]
 fn normalize_w_addr(addr: u16) -> usize {
     addr as usize - W_RAM_ADDR_START
 }
 
+#[inline]
 fn normalize_h_addr(addr: u16) -> usize {
     addr as usize - H_RAM_ADDR_START
 }

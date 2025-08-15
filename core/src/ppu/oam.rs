@@ -26,6 +26,7 @@ impl Default for OamRam {
 }
 
 impl OamRam {
+    #[inline]
     pub fn read(&self, addr: u16) -> u8 {
         let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
@@ -35,6 +36,7 @@ impl OamRam {
         }
     }
 
+    #[inline]
     pub fn write(&mut self, addr: u16, value: u8) {
         let (item_index, byte_offset) = self.get_index_and_offset(addr);
 

@@ -24,6 +24,7 @@ impl Dma {
         self.is_active = true;
     }
 
+    #[inline]
     pub fn is_transferring(&self) -> bool {
         self.is_active && (self.start_delay == 0 || self.queue_addr.is_some())
     }
