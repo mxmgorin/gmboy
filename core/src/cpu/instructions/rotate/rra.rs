@@ -28,9 +28,10 @@ impl ExecutableInstruction for RraInstruction {
         cpu.registers.a >>= 1;
         cpu.registers.a |= carry << 7;
 
-        cpu.registers
-            .flags
-            .set(false.into(), false.into(), false.into(), Some(new_c != 0));
+        cpu.registers.flags.set_z(false);
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h(false);
+        cpu.registers.flags.set_c(new_c != 0);
     }
 
     fn get_address_mode(&self) -> AddressMode {

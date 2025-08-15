@@ -42,12 +42,9 @@ impl ExecutableInstruction for PrefixInstruction {
         match bit_op {
             1 => {
                 // BIT
-                cpu.registers.flags.set(
-                    ((reg_val & (1 << bit)) == 0).into(),
-                    false.into(),
-                    true.into(),
-                    None,
-                );
+                cpu.registers.flags.set_z((reg_val & (1 << bit)) == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(true);
                 return;
             }
             2 => {
@@ -74,12 +71,10 @@ impl ExecutableInstruction for PrefixInstruction {
                 let result = (reg_val << 1) | (carry as u8); // Rotate left and wrap MSB to LSB
 
                 cpu.set_reg8(reg, result);
-                cpu.registers.flags.set(
-                    (result == 0).into(), // Zero flag (not set for RLCA)
-                    false.into(),         // Subtract flag
-                    false.into(),         // Half-Carry flag
-                    carry.into(),         // Carry flag
-                );
+                cpu.registers.flags.set_z(result == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c(carry);
             }
             1 => {
                 // RRC
@@ -87,12 +82,10 @@ impl ExecutableInstruction for PrefixInstruction {
                 reg_val = reg_val >> 1 | (old << 7);
 
                 cpu.set_reg8(reg, reg_val);
-                cpu.registers.flags.set(
-                    (reg_val == 0).into(),
-                    false.into(),
-                    false.into(),
-                    Some(old & 1 != 0),
-                );
+                cpu.registers.flags.set_z(reg_val == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c(old & 1 != 0);
             }
             2 => {
                 // RL
@@ -100,12 +93,11 @@ impl ExecutableInstruction for PrefixInstruction {
                 reg_val = (reg_val << 1) | (flag_c as u8);
 
                 cpu.set_reg8(reg, reg_val);
-                cpu.registers.flags.set(
-                    (reg_val == 0).into(),
-                    false.into(),
-                    false.into(),
-                    Some((old & 0x80) != 0),
-                );
+
+                cpu.registers.flags.set_z(reg_val == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c((old & 0x80) != 0);
             }
             3 => {
                 // RR
@@ -113,12 +105,11 @@ impl ExecutableInstruction for PrefixInstruction {
                 reg_val = (reg_val >> 1) | ((flag_c as u8) << 7);
 
                 cpu.set_reg8(reg, reg_val);
-                cpu.registers.flags.set(
-                    (reg_val == 0).into(),
-                    false.into(),
-                    false.into(),
-                    Some((old & 1) != 0),
-                );
+
+                cpu.registers.flags.set_z(reg_val == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c((old & 1) != 0);
             }
             4 => {
                 // SLA
@@ -126,12 +117,11 @@ impl ExecutableInstruction for PrefixInstruction {
                 reg_val <<= 1;
 
                 cpu.set_reg8(reg, reg_val);
-                cpu.registers.flags.set(
-                    (reg_val == 0).into(),
-                    false.into(),
-                    false.into(),
-                    Some((old & 0x80) != 0),
-                );
+
+                cpu.registers.flags.set_z(reg_val == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c((old & 0x80) != 0);
             }
             5 => {
                 // SRA
@@ -141,33 +131,32 @@ impl ExecutableInstruction for PrefixInstruction {
                 let carry = reg_val & 0x01 != 0; // Save LSB as Carry
 
                 cpu.set_reg8(reg, result);
-                cpu.registers
-                    .flags
-                    .set((u == 0).into(), false.into(), false.into(), carry.into());
+
+                cpu.registers.flags.set_z(u == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c(carry);
             }
             6 => {
                 // SWAP
                 reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
                 cpu.set_reg8(reg, reg_val);
 
-                cpu.registers.flags.set(
-                    (reg_val == 0).into(),
-                    false.into(),
-                    false.into(),
-                    false.into(),
-                );
+                cpu.registers.flags.set_z(reg_val == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c(false);
             }
             7 => {
                 // SRL
                 let u = reg_val >> 1;
 
                 cpu.set_reg8(reg, u);
-                cpu.registers.flags.set(
-                    (u == 0).into(),
-                    false.into(),
-                    false.into(),
-                    Some((reg_val & 1) != 0),
-                );
+
+                cpu.registers.flags.set_z(u == 0);
+                cpu.registers.flags.set_n(false);
+                cpu.registers.flags.set_h(false);
+                cpu.registers.flags.set_c((reg_val & 1) != 0);
             }
             _ => {
                 panic!("ERROR: INVALID CB: {op:02X}");

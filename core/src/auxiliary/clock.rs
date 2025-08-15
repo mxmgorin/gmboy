@@ -42,8 +42,9 @@ impl Clock {
     }
 
     pub fn m_cycles(&mut self, m_cycles: usize) {
+        self.m_cycles = self.m_cycles.wrapping_add(m_cycles);
+
         for _ in 0..m_cycles {
-            self.m_cycles = self.m_cycles.wrapping_add(1);
             self.t_cycles(T_CYCLES_PER_M_CYCLE);
             Dma::tick(&mut self.bus);
         }

@@ -14,12 +14,9 @@ pub struct CcfInstruction;
 
 impl ExecutableInstruction for CcfInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.registers.flags.set(
-            None,
-            Some(false),
-            Some(false),
-            Some(!cpu.registers.flags.get_c()),
-        );
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h(false);
+        cpu.registers.flags.set_c(!cpu.registers.flags.get_c());
     }
 
     fn get_address_mode(&self) -> AddressMode {

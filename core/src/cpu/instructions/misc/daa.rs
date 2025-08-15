@@ -48,13 +48,10 @@ impl ExecutableInstruction for DaaInstruction {
         } else {
             cpu.registers.a = cpu.registers.a.wrapping_add(u);
         };
-
-        cpu.registers.flags.set(
-            (cpu.registers.a == 0).into(),
-            None,
-            false.into(),
-            Some(fc != 0),
-        );
+       
+        cpu.registers.flags.set_z(cpu.registers.a == 0);
+        cpu.registers.flags.set_h(false);
+        cpu.registers.flags.set_c(fc != 0);
     }
 
     fn get_address_mode(&self) -> AddressMode {

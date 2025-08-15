@@ -211,50 +211,50 @@ mod tests {
     ) {
         match condition_type {
             ConditionType::NC => {
-                cpu.registers.flags.set(None, None, None, false.into());
+                cpu.registers.flags.set_c(false);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
-                cpu.registers.flags.set(None, None, None, true.into());
+                cpu.registers.flags.set_c(true);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
             ConditionType::C => {
-                cpu.registers.flags.set(None, None, None, false.into());
+                cpu.registers.flags.set_c(false);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
-                cpu.registers.flags.set(None, None, None, true.into());
+                cpu.registers.flags.set_c(true);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
             ConditionType::NZ => {
-                cpu.registers.flags.set(false.into(), None, None, None);
+                cpu.registers.flags.set_z(false);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
-                cpu.registers.flags.set(true.into(), None, None, None);
+                cpu.registers.flags.set_z(true);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
             ConditionType::Z => {
-                cpu.registers.flags.set(false.into(), None, None, None);
+                cpu.registers.flags.set_z(false);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
-                cpu.registers.flags.set(true.into(), None, None, None);
+                cpu.registers.flags.set_z(true);
                 cpu.step(None).unwrap();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }

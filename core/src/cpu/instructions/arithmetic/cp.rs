@@ -24,12 +24,10 @@ impl ExecutableInstruction for CpInstruction {
         let result: i32 = reg_i32.wrapping_sub(fetched_value_i32);
         let reg_value_diff = (reg_i32 & 0x0F) - (fetched_value_i32 & 0x0F);
 
-        cpu.registers.flags.set(
-            (result == 0).into(),
-            true.into(),
-            (reg_value_diff < 0).into(),
-            (result < 0).into(),
-        )
+        cpu.registers.flags.set_z(result == 0);
+        cpu.registers.flags.set_n(true);
+        cpu.registers.flags.set_h(reg_value_diff < 0);
+        cpu.registers.flags.set_c(result < 0);
     }
 
     fn get_address_mode(&self) -> AddressMode {

@@ -31,12 +31,9 @@ impl ExecutableInstruction for IncInstruction {
             return;
         }
 
-        cpu.registers.flags.set(
-            (value == 0).into(),
-            false.into(),
-            ((value & 0x0F) == 0).into(),
-            None,
-        );
+        cpu.registers.flags.set_z(value == 0);
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h((value & 0x0F) == 0);
     }
 
     fn get_address_mode(&self) -> AddressMode {

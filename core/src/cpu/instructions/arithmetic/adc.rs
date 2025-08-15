@@ -20,12 +20,10 @@ impl ExecutableInstruction for AdcInstruction {
 
         cpu.registers.a = ((a + u + c) & 0xFF) as u8;
 
-        cpu.registers.flags.set(
-            (cpu.registers.a == 0).into(),
-            false.into(),
-            ((a & 0xF) + (u & 0xF) + c > 0xF).into(),
-            (a + u + c > 0xFF).into(),
-        );
+        cpu.registers.flags.set_z(cpu.registers.a == 0);
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h((a & 0xF) + (u & 0xF) + c > 0xF);
+        cpu.registers.flags.set_c(a + u + c > 0xFF);
     }
 
     fn get_address_mode(&self) -> AddressMode {

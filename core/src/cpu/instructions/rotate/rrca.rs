@@ -10,9 +10,10 @@ impl ExecutableInstruction for RrcaInstruction {
         cpu.registers.a >>= 1;
         cpu.registers.a |= b << 7;
 
-        cpu.registers
-            .flags
-            .set(false.into(), false.into(), false.into(), Some(b != 0));
+        cpu.registers.flags.set_z(false);
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h(false);
+        cpu.registers.flags.set_c(b != 0);
     }
 
     fn get_address_mode(&self) -> AddressMode {

@@ -50,18 +50,42 @@ impl Flags {
         }
     }
 
+    #[inline]
+    pub fn set_z(&mut self, v: bool) {
+        set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline]
+    pub fn set_n(&mut self, v: bool) {
+        set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline]
+    pub fn set_h(&mut self, v: bool) {
+        set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline]
+    pub fn set_c(&mut self, v: bool) {
+        set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline]
     pub fn get_z(&self) -> bool {
         get_bit_flag(self.byte, ZERO_FLAG_BYTE_POSITION)
     }
 
+    #[inline]
     pub fn get_n(&self) -> bool {
         get_bit_flag(self.byte, SUBTRACT_FLAG_BYTE_POSITION)
     }
 
+    #[inline]
     pub fn get_h(&self) -> bool {
         get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
     }
 
+    #[inline]
     pub fn get_c(&self) -> bool {
         get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION)
     }
@@ -100,6 +124,7 @@ impl Default for Registers {
 }
 
 impl Registers {
+    #[inline]
     pub fn read_register(&self, register_type: RegisterType) -> u16 {
         match register_type {
             RegisterType::A => self.a as u16,
@@ -119,22 +144,27 @@ impl Registers {
         }
     }
 
+    #[inline]
     pub fn get_af(&self) -> u16 {
         (self.a as u16) << 8 | self.flags.byte as u16
     }
 
+    #[inline]
     pub fn get_bc(&self) -> u16 {
         (self.b as u16) << 8 | self.c as u16
     }
 
+    #[inline]
     pub fn get_de(&self) -> u16 {
         (self.d as u16) << 8 | self.e as u16
     }
 
+    #[inline]
     pub fn get_hl(&self) -> u16 {
         (self.h as u16) << 8 | self.l as u16
     }
 
+    #[inline]
     pub fn set_register(&mut self, register_type: RegisterType, value: u16) {
         match register_type {
             RegisterType::A => self.a = (value & 0xFF) as u8,
@@ -154,21 +184,25 @@ impl Registers {
         }
     }
 
+    #[inline]
     pub fn set_af(&mut self, value: u16) {
         self.a = ((value & 0xFF00) >> 8) as u8;
         self.flags.byte = (value & 0xFF) as u8;
     }
 
+    #[inline]
     pub fn set_bc(&mut self, value: u16) {
         self.b = ((value & 0xFF00) >> 8) as u8;
         self.c = (value & 0xFF) as u8;
     }
 
+    #[inline]
     pub fn set_de(&mut self, value: u16) {
         self.d = ((value & 0xFF00) >> 8) as u8;
         self.e = (value & 0xFF) as u8;
     }
 
+    #[inline]
     pub fn set_hl(&mut self, value: u16) {
         self.h = ((value & 0xFF00) >> 8) as u8;
         self.l = (value & 0xFF) as u8;
@@ -204,9 +238,8 @@ mod tests {
         let mut regs = Registers::default();
         regs.flags.byte = 0b10000000;
 
-        regs.flags.set(None, None, None, Some(true));
+        regs.flags.set_c(true);
 
         assert!(regs.flags.get_z());
-        log::info!("{:#b}", regs.flags.byte)
     }
 }

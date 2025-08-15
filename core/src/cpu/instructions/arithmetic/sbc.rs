@@ -41,9 +41,11 @@ impl ExecutableInstruction for SbcInstruction {
         let result = r_val.wrapping_sub(val_plus_c as u16);
 
         cpu.registers.set_register(r, result);
-        cpu.registers
-            .flags
-            .set((result == 0).into(), true.into(), h.into(), c.into());
+
+        cpu.registers.flags.set_z(result == 0);
+        cpu.registers.flags.set_n(true);
+        cpu.registers.flags.set_h(h);
+        cpu.registers.flags.set_c(c);
     }
 
     fn get_address_mode(&self) -> AddressMode {

@@ -12,9 +12,11 @@ impl ExecutableInstruction for RlaInstruction {
         let c: u8 = (u >> 7) & 1;
 
         cpu.registers.a = (u << 1) | cf;
-        cpu.registers
-            .flags
-            .set(false.into(), false.into(), false.into(), Some(c != 0));
+
+        cpu.registers.flags.set_z(false);
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h(false);
+        cpu.registers.flags.set_c(c != 0);
     }
 
     fn get_address_mode(&self) -> AddressMode {

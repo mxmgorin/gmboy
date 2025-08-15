@@ -15,9 +15,11 @@ impl ExecutableInstruction for LdInstruction {
                     let h_flag = (cpu.registers.sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
                     let c_flag = (cpu.registers.sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
-                    cpu.registers
-                        .flags
-                        .set(false.into(), false.into(), Some(h_flag), Some(c_flag));
+                    cpu.registers.flags.set_z(false);
+                    cpu.registers.flags.set_n(false);
+                    cpu.registers.flags.set_h(h_flag);
+                    cpu.registers.flags.set_c(c_flag);
+                    
                     let offset_e = fetched_data.value as i8; // truncate to 8 bits (+8e)
 
                     cpu.registers.set_register(

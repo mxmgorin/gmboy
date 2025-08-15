@@ -10,12 +10,11 @@ impl ExecutableInstruction for OrInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         let value = fetched_data.value & 0xFF;
         cpu.registers.a |= value as u8;
-        cpu.registers.flags.set(
-            (cpu.registers.a == 0).into(),
-            false.into(),
-            false.into(),
-            false.into(),
-        );
+
+        cpu.registers.flags.set_z(cpu.registers.a == 0);
+        cpu.registers.flags.set_n(false);
+        cpu.registers.flags.set_h(false);
+        cpu.registers.flags.set_c(false);
     }
 
     fn get_address_mode(&self) -> AddressMode {
