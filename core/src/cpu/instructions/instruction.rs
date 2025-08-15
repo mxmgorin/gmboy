@@ -308,6 +308,7 @@ impl Instruction {
 
 /// Represents the various CPU registers in a Game Boy CPU.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
 pub enum RegisterType {
     /// Accumulator register, used for arithmetic and logic operations.
     A,

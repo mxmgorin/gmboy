@@ -34,6 +34,7 @@ impl Cpu {
     }
 
     /// Costs 2 M-Cycles with push PC
+    #[inline]
     pub fn goto_addr(&mut self, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
         if ConditionType::check_cond(&self.registers, cond) {
             self.clock.m_cycles(1); // internal: branch decision?
@@ -46,6 +47,7 @@ impl Cpu {
     }
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
+    #[inline]
     pub fn read_pc(&mut self) -> u8 {
         let value = self.clock.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
@@ -170,26 +172,26 @@ impl Cpu {
                 self.read_memory(self.registers.read_register(RegisterType::HL)) as u8
             }
             _ => {
-                panic!("**ERR INVALID REG8: {:?}", rt);
+                panic!("**ERR INVALID REG8: {rt:?}");
             }
         }
     }
 
     pub fn set_reg8(&mut self, rt: RegisterType, val: u8) {
         match rt {
-            RegisterType::A => self.registers.a = val & 0xFF,
-            RegisterType::F => self.registers.flags.byte = val & 0xFF,
-            RegisterType::B => self.registers.b = val & 0xFF,
-            RegisterType::C => self.registers.c = val & 0xFF,
-            RegisterType::D => self.registers.d = val & 0xFF,
-            RegisterType::E => self.registers.e = val & 0xFF,
-            RegisterType::H => self.registers.h = val & 0xFF,
-            RegisterType::L => self.registers.l = val & 0xFF,
+            RegisterType::A => self.registers.a = val,
+            RegisterType::F => self.registers.flags.byte = val,
+            RegisterType::B => self.registers.b = val,
+            RegisterType::C => self.registers.c = val,
+            RegisterType::D => self.registers.d = val,
+            RegisterType::E => self.registers.e = val,
+            RegisterType::H => self.registers.h = val,
+            RegisterType::L => self.registers.l = val,
             RegisterType::HL => {
                 self.write_to_memory(self.registers.read_register(RegisterType::HL), val)
             }
             _ => {
-                panic!("**ERR INVALID REG8: {:?}", rt);
+                panic!("**ERR INVALID REG8: {rt:?}");
             }
         }
     }

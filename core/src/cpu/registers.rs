@@ -78,7 +78,7 @@ impl Display for Flags {
         .iter()
         .map(|&(flag, c)| if flag { c } else { '-' })
         .collect();
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 

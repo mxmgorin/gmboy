@@ -1,6 +1,7 @@
 use crate::cpu::Registers;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
 pub enum ConditionType {
     /// Non-zero: Execute if Z is not set.
     NZ,
@@ -13,6 +14,7 @@ pub enum ConditionType {
 }
 
 impl ConditionType {
+    #[inline(always)]
     pub fn check_cond(registers: &Registers, cond: Option<ConditionType>) -> bool {
         let Some(cond) = cond else {
             return true;
