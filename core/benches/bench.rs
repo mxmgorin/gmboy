@@ -1,3 +1,5 @@
+use core::cpu::Cpu;
+use core::auxiliary::clock::Clock;
 use core::ppu::vram::VRAM_ADDR_START;
 use core::ppu::vram::VRAM_SIZE;
 use core::ppu::vram::VideoRam;
@@ -21,6 +23,24 @@ pub fn get_cart() -> Cart {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("cpu_step_500_000", |b| {
+        b.iter_batched(
+            || {
+                let ppu = Ppu::default();
+                let bus = Bus::new(get_cart(), Default::default());
+                let clock = Clock::new(ppu, bus);
+
+                Cpu::new(clock)
+            },
+            |mut cpu| {
+                for _ in 0..500_000 {
+                    _ = cpu.step(None);
+                }
+            },
+            BatchSize::LargeInput,
+        );
+    });
+
     c.bench_function("timer_tick_5_000_000", |b| {
         b.iter_batched(
             || {
