@@ -1,4 +1,3 @@
-use crate::bus::Bus;
 use crate::cart::CartSaveState;
 use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
@@ -18,6 +17,5 @@ pub enum SaveStateCmd {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmuSaveState {
     pub cpu: Cpu,
-    pub bus_without_cart: Bus,
     pub cart_save_state: CartSaveState,
 }

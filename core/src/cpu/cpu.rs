@@ -1,5 +1,5 @@
-use crate::bus::Bus;
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction, Instruction};
+use crate::auxiliary::clock::{Clock};
+use crate::cpu::instructions::{ConditionType, ExecutableInstruction, Instruction};
 use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
 use crate::LittleEndianBytes;
@@ -14,91 +14,106 @@ pub struct DebugCtx {
     pub fetched_data: FetchedData,
 }
 
-pub trait CpuCallback {
-    fn m_cycles(&mut self, m_cycles: usize);
-    fn update_serial(&mut self, cpu: &mut Cpu);
-    fn debug(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>);
-    fn get_bus_mut(&mut self) -> &mut Bus;
-}
-
-#[derive(Debug, Clone)]
-pub struct CounterCpuCallback {
-    pub m_cycles_count: usize,
-    pub bus: Bus,
-}
-
-impl CpuCallback for CounterCpuCallback {
-    fn m_cycles(&mut self, m_cycles: usize) {
-        self.m_cycles_count += m_cycles;
-    }
-
-    fn update_serial(&mut self, _cpu: &mut Cpu) {}
-
-    fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
-
-    fn get_bus_mut(&mut self) -> &mut Bus {
-        &mut self.bus
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Cpu {
     pub registers: Registers,
     pub enabling_ime: bool,
     pub current_opcode: u8,
     pub is_halted: bool,
+    pub clock: Clock,
+}
+
+impl Clone for Cpu {
+    fn clone(&self) -> Self {
+        self.save_state()
+    }
 }
 
 impl Cpu {
+    pub fn new(clock: Clock) -> Self {
+        Self {
+            registers: Default::default(),
+            enabling_ime: false,
+            current_opcode: 0,
+            is_halted: false,
+            clock,
+        }
+    }
+
+    pub fn save_state(&self) -> Self {
+        Self {
+            registers: self.registers.clone(),
+            enabling_ime: self.enabling_ime,
+            current_opcode: self.current_opcode,
+            is_halted: self.is_halted,
+            clock: self.clock.clone(),
+        }
+    }
+
+    /// Costs 2 M-Cycles with push PC
+    pub fn goto_addr(&mut self, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
+        if ConditionType::check_cond(&self.registers, cond) {
+            self.clock.m_cycles(1); // internal: branch decision?
+            if push_pc {
+                self.push16(self.registers.pc);
+            }
+
+            self.registers.pc = addr;
+        }
+    }
+
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
-    pub fn fetch_data(&mut self, callback: &mut impl CpuCallback) -> u8 {
-        let value = callback.get_bus_mut().read(self.registers.pc);
+    pub fn fetch_data(&mut self) -> u8 {
+        let value = self.clock.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
-        callback.m_cycles(1);
+        self.clock.m_cycles(1);
 
         value
     }
 
     /// Reads 16bit immediate data by PC and increments PC + 2. Costs 1 M-Cycle.
-    pub fn fetch_data16(&mut self, callback: &mut impl CpuCallback) -> u16 {
+    pub fn fetch_data16(&mut self) -> u16 {
         let bytes = LittleEndianBytes {
-            low_byte: self.fetch_data(callback),
-            high_byte: self.fetch_data(callback),
+            low_byte: self.fetch_data(),
+            high_byte: self.fetch_data(),
         };
 
         bytes.into()
     }
 
     /// Reads data from memory. Costs 1 M-Cycle.
-    pub fn read_memory(&mut self, address: u16, callback: &mut impl CpuCallback) -> u16 {
-        let value = callback.get_bus_mut().read(address) as u16;
-        callback.m_cycles(1);
+    pub fn read_memory(&mut self, address: u16) -> u16 {
+        let value = self.clock.bus.read(address) as u16;
+        self.clock.m_cycles(1);
 
         value
     }
 
     /// Writes to memory. Costs 1 M-Cycle.
-    pub fn write_to_memory(&mut self, address: u16, value: u8, callback: &mut impl CpuCallback) {
-        callback.get_bus_mut().write(address, value);
-        callback.m_cycles(1);
+    pub fn write_to_memory(&mut self, address: u16, value: u8) {
+        self.clock.bus.write(address, value);
+        self.clock.m_cycles(1);
     }
 
-    pub fn step(&mut self, callback: &mut impl CpuCallback) -> Result<(), String> {
+    pub fn step(
+        &mut self,
+        mut _debugger: Option<&mut crate::debugger::Debugger>,
+    ) -> Result<(), String> {
         #[cfg(debug_assertions)]
-        callback.debug(self, None);
+        if let Some(ref mut debugger) = _debugger {
+            debugger.print(self, None);
+        }
 
-        self.handle_interrupts(callback);
+        self.handle_interrupts();
 
         if self.is_halted {
-            if !callback.get_bus_mut().io.interrupts.ime
-                && callback.get_bus_mut().io.interrupts.any_is_pending()
-            {
+            if !self.clock.bus.io.interrupts.ime && self.clock.bus.io.interrupts.any_is_pending() {
                 // HALT bug: continue executing instructions
                 self.is_halted = false;
             }
 
             // Do nothing, just wait for an interrupt to wake up
-            callback.m_cycles(1);
+            self.clock.m_cycles(1);
 
             return Ok(());
         }
@@ -106,7 +121,7 @@ impl Cpu {
         #[cfg(debug_assertions)]
         let pc = self.registers.pc;
 
-        self.current_opcode = self.fetch_data(callback);
+        self.current_opcode = self.fetch_data();
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
             return Err(format!(
@@ -115,7 +130,7 @@ impl Cpu {
             ));
         };
 
-        let fetched_data = AddressMode::fetch_data(self, instruction.get_address_mode(), callback);
+        let fetched_data = self.fetch_data_mode(instruction.get_address_mode());
 
         #[cfg(debug_assertions)]
         let inst_ctx = DebugCtx {
@@ -125,44 +140,42 @@ impl Cpu {
             fetched_data: fetched_data.clone(),
         };
         #[cfg(debug_assertions)]
-        callback.debug(self, Some(inst_ctx));
-        callback.update_serial(self);
+        if let Some(debugger) = _debugger {
+            debugger.print(self, Some(inst_ctx));
+            debugger.update_serial(&mut self.clock.bus);
+        }
 
         let prev_enabling_ime = self.enabling_ime;
-        instruction.execute(self, callback, fetched_data);
+        instruction.execute(self, fetched_data);
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed
             self.enabling_ime = false;
-            callback.get_bus_mut().io.interrupts.ime = true;
+            self.clock.bus.io.interrupts.ime = true;
         }
 
         Ok(())
     }
 
     /// Costs 5 M-cycles when an interrupt is executed
-    pub fn handle_interrupts(&mut self, callback: &mut impl CpuCallback) {
-        if callback.get_bus_mut().io.interrupts.ime {
-            if let Some((addr, it)) = callback.get_bus_mut().io.interrupts.get_pending() {
+    pub fn handle_interrupts(&mut self) {
+        if self.clock.bus.io.interrupts.ime {
+            if let Some((addr, it)) = self.clock.bus.io.interrupts.get_pending() {
                 // execute interrupt handler
-                callback.m_cycles(2);
+                self.clock.m_cycles(2);
 
                 self.is_halted = false;
-                callback
-                    .get_bus_mut()
-                    .io
-                    .interrupts
-                    .acknowledge_interrupt(it);
-                Instruction::goto_addr(self, None, addr, true, callback);
+                self.clock.bus.io.interrupts.acknowledge_interrupt(it);
+                self.goto_addr(None, addr, true);
 
-                callback.m_cycles(1);
+                self.clock.m_cycles(1);
             }
 
             self.enabling_ime = false;
         }
     }
 
-    pub fn read_reg8(&mut self, rt: RegisterType, callback: &mut impl CpuCallback) -> u8 {
+    pub fn read_reg8(&mut self, rt: RegisterType) -> u8 {
         match rt {
             RegisterType::A => self.registers.a,
             RegisterType::F => self.registers.flags.byte,
@@ -173,7 +186,7 @@ impl Cpu {
             RegisterType::H => self.registers.h,
             RegisterType::L => self.registers.l,
             RegisterType::HL => {
-                self.read_memory(self.registers.read_register(RegisterType::HL), callback) as u8
+                self.read_memory(self.registers.read_register(RegisterType::HL)) as u8
             }
             _ => {
                 panic!("**ERR INVALID REG8: {:?}", rt);
@@ -181,7 +194,7 @@ impl Cpu {
         }
     }
 
-    pub fn set_reg8(&mut self, rt: RegisterType, val: u8, callback: &mut impl CpuCallback) {
+    pub fn set_reg8(&mut self, rt: RegisterType, val: u8) {
         match rt {
             RegisterType::A => self.registers.a = val & 0xFF,
             RegisterType::F => self.registers.flags.byte = val & 0xFF,
@@ -191,11 +204,9 @@ impl Cpu {
             RegisterType::E => self.registers.e = val & 0xFF,
             RegisterType::H => self.registers.h = val & 0xFF,
             RegisterType::L => self.registers.l = val & 0xFF,
-            RegisterType::HL => self.write_to_memory(
-                self.registers.read_register(RegisterType::HL),
-                val,
-                callback,
-            ),
+            RegisterType::HL => {
+                self.write_to_memory(self.registers.read_register(RegisterType::HL), val)
+            }
             _ => {
                 panic!("**ERR INVALID REG8: {:?}", rt);
             }

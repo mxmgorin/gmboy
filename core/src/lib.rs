@@ -1,11 +1,11 @@
 use crate::cart::Cart;
 use crate::ppu::tile::PixelColor;
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
-use std::time::Duration;
+use std::time::{Duration, Instant, SystemTime};
 use std::{fs, io};
 
 pub mod apu;
@@ -182,6 +182,53 @@ pub fn print_cart(cart: &Cart) -> Result<(), String> {
     );
 
     Ok(())
+}
+
+pub fn serialize<S>(instant: &Instant, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let now_system = SystemTime::now();
+    let now_instant = Instant::now();
+    let delta = if *instant <= now_instant {
+        now_instant.duration_since(*instant)
+    } else {
+        (*instant).duration_since(now_instant)
+    };
+
+    let system_time = if *instant <= now_instant {
+        now_system - delta
+    } else {
+        now_system + delta
+    };
+
+    let timestamp = system_time
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i128;
+
+    serializer.serialize_i128(timestamp)
+}
+
+pub fn deserialize<'de, D>(deserializer: D) -> Result<Instant, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let timestamp = i128::deserialize(deserializer)?;
+    let system_time = SystemTime::UNIX_EPOCH
+        + Duration::from_nanos(timestamp as u64); // careful with overflow
+    let now_system = SystemTime::now();
+    let now_instant = Instant::now();
+
+    let delta = now_system
+        .duration_since(system_time)
+        .unwrap_or(Duration::ZERO);
+
+    Ok(now_instant - delta)
+}
+
+mod instant_serde {
+    pub use super::{serialize, deserialize};
 }
 
 #[cfg(test)]

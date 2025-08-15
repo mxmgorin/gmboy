@@ -1,8 +1,9 @@
+use crate::Clock;
 use crate::print_with_dashes;
 use core::bus::Bus;
 use core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use core::cpu::instructions::ExecutableInstruction;
-use core::cpu::{CounterCpuCallback, Cpu, Flags, Registers};
+use core::cpu::{Cpu, Flags, Registers};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -10,15 +11,10 @@ use std::path::PathBuf;
 pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
 
-    let mut bus = setup_bus(test_case);
-    let mut cpu = setup_cpu(test_case, &mut bus);
-    let mut ctx = CounterCpuCallback {
-        m_cycles_count: 0,
-        bus,
-    };
-    cpu.step(&mut ctx).unwrap();
+    let mut cpu = setup_cpu(test_case);
+    cpu.step(None).unwrap();
 
-    let result = test_case.validate_final_state(&cpu, &ctx.bus);
+    let result = test_case.validate_final_state(&cpu);
 
     if let Err(err) = result {
         let inst = INSTRUCTIONS_BY_OPCODES[cpu.current_opcode as usize];
@@ -43,7 +39,7 @@ pub fn run_sb_test_cases(print_result: bool) -> usize {
     let mut count = 0;
 
     for i in 0..256 {
-        let test_cases = Sm83TestCase::load_file(&format!("cb {:02X}.json", i).to_lowercase());
+        let test_cases = Sm83TestCase::load_file(&format!("cb {i:02X}.json").to_lowercase());
 
         let Ok(test_cases) = test_cases else {
             continue;
@@ -106,7 +102,7 @@ impl Sm83TestCase {
         serde_json::from_str(json).unwrap()
     }
 
-    pub fn validate_final_state(&self, cpu: &Cpu, bus: &Bus) -> Result<(), String> {
+    pub fn validate_final_state(&self, cpu: &Cpu) -> Result<(), String> {
         if cpu.registers.a != self.final_state.a {
             return Err(format!(
                 "Invalid A: actual={}, expected={}",
@@ -168,19 +164,19 @@ impl Sm83TestCase {
             ));
         }
         if let Some(ime) = self.final_state.ime {
-            if bus.io.interrupts.ime != (ime != 0) {
+            if cpu.clock.bus.io.interrupts.ime != (ime != 0) {
                 return Err(format!(
                     "Invalid IME: actual={}, expected={}",
-                    bus.io.interrupts.ime,
+                    cpu.clock.bus.io.interrupts.ime,
                     self.final_state.ime.unwrap_or_default()
                 ));
             }
         }
         if let Some(ie) = self.final_state.ie {
-            if bus.io.interrupts.ie_register != ie {
+            if cpu.clock.bus.io.interrupts.ie_register != ie {
                 return Err(format!(
                     "Invalid IE: actual={}, expected={}",
-                    bus.io.interrupts.ie_register, ie
+                    cpu.clock.bus.io.interrupts.ie_register, ie
                 ));
             }
         }
@@ -190,10 +186,10 @@ impl Sm83TestCase {
 
         // Assert RAM contents
         for ram in self.final_state.ram.iter() {
-            if bus.read(ram.0) != ram.1 {
+            if cpu.clock.bus.read(ram.0) != ram.1 {
                 return Err(format!(
                     "Invalid RAM: actual={}, expected={}",
-                    bus.read(ram.0),
+                    cpu.clock.bus.read(ram.0),
                     ram.1
                 ));
             }
@@ -226,9 +222,11 @@ pub struct RamState(pub u16, pub u8);
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Cycle(pub u16, pub u8, pub String);
 
-pub fn setup_cpu(test_case: &Sm83TestCase, bus: &mut Bus) -> Cpu {
-    let mut cpu = Cpu::default();
-    set_cpu_state(&mut cpu, test_case, bus);
+pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
+    let bus = setup_bus(test_case);
+    let clock = Clock::new(Default::default(), bus);
+    let mut cpu = Cpu::new(clock);
+    set_cpu_state(&mut cpu, test_case);
 
     cpu
 }
@@ -242,7 +240,7 @@ pub fn setup_bus(test_case: &Sm83TestCase) -> Bus {
     bus
 }
 
-pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase, bus: &mut Bus) {
+pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
     cpu.registers = Registers {
         a: test_case.initial_state.a,
         flags: Flags {
@@ -258,9 +256,9 @@ pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase, bus: &mut Bus) {
         pc: test_case.initial_state.pc,
     };
     if let Some(ie) = test_case.initial_state.ie {
-        bus.io.interrupts.ie_register = ie;
+        cpu.clock.bus.io.interrupts.ie_register = ie;
     }
     if let Some(ime) = test_case.initial_state.ime {
-        bus.io.interrupts.ime = ime != 0
+        cpu.clock.bus.io.interrupts.ime = ime != 0
     }
 }

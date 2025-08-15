@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::bus::Bus;
 use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::lcd::{Lcd, PixelColor};
@@ -6,12 +7,12 @@ use crate::ppu::tile::{
     get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
 };
 
-#[derive(Debug, Clone, Default, Copy)]
+#[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct SpriteFetchedData {
     pub tile_line: TileLineData,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SpriteFetcher {
     pub line_sprites_count: usize,
     pub line_sprites: [OamEntry; MAX_FIFO_SPRITES_SIZE],

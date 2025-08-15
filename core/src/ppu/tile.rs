@@ -28,7 +28,7 @@ pub struct TileData {
 }
 
 #[repr(C, packed)]
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct TileLineData {
     pub byte1: u8,
     pub byte2: u8,

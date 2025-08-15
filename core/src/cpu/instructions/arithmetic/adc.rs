@@ -1,5 +1,5 @@
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu};
 
 use crate::cpu::instructions::{DataDestination, FetchedData};
 
@@ -9,7 +9,7 @@ pub struct AdcInstruction {
 }
 
 impl ExecutableInstruction for AdcInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         let DataDestination::Register(_) = fetched_data.dest else {
             unreachable!();
         };

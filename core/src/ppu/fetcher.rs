@@ -5,6 +5,7 @@ use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use std::ptr;
+use serde::{Deserialize, Serialize};
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 pub const PPU_BYTES_PER_PIXEL: usize = 2;
@@ -20,7 +21,7 @@ const FETCH_HANDLERS: [FetchFn; 5] = [
     PixelFetcher::fetch_push,
 ];
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BgwFetchedData {
     pub tile_idx: u8,
     pub byte1: u8,
@@ -47,7 +48,7 @@ impl BgwFetchedData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PixelFetcher {
     pub sprite_fetcher: SpriteFetcher,
     pub buffer: Box<[u8]>,
@@ -257,7 +258,7 @@ impl PixelFetcher {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum FetchStep {
     Tile,
     Data0,

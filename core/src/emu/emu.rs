@@ -1,4 +1,5 @@
 use crate::apu::Apu;
+use crate::auxiliary::clock::{Clock};
 use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
@@ -24,7 +25,6 @@ pub struct Emu {
     pub config: EmuConfig,
     pub state: EmuState,
     pub runtime: EmuRuntime,
-    cpu: Cpu,
     prev_speed_multiplier: f64,
     rewind_buffer: VecDeque<EmuSaveState>,
     last_rewind_save_time: Instant,
@@ -33,7 +33,6 @@ pub struct Emu {
 impl Emu {
     pub fn new(config: EmuConfig, runtime: EmuRuntime) -> Result<Self, String> {
         Ok(Self {
-            cpu: Cpu::default(),
             runtime,
             prev_speed_multiplier: config.normal_speed,
             state: EmuState::Running,
@@ -52,15 +51,15 @@ impl Emu {
                     thread::sleep(Duration::from_millis(250));
                 }
 
-                self.runtime.run_frame(&mut self.cpu, callback)?;
+                self.runtime.run_frame(callback)?;
             }
             EmuState::Running => {
-                self.runtime.run_frame(&mut self.cpu, callback)?;
+                self.runtime.run_frame(callback)?;
                 self.push_rewind();
             }
         };
 
-        let real_elapsed = self.runtime.clock.time.elapsed();
+        let real_elapsed = self.runtime.cpu.clock.time.elapsed();
         let emulated_time = self.calc_emulated_time();
         let on_time = emulated_time >= real_elapsed;
 
@@ -94,12 +93,12 @@ impl Emu {
         };
 
         if self.prev_speed_multiplier != speed_multiplier {
-            self.runtime.clock.reset();
+            self.runtime.cpu.clock.reset();
         }
 
         self.prev_speed_multiplier = speed_multiplier;
 
-        let emulated_duration_ns = (self.runtime.clock.t_cycles as f64 * CYCLE_DURATION_NS
+        let emulated_duration_ns = (self.runtime.cpu.clock.t_cycles as f64 * CYCLE_DURATION_NS
             / speed_multiplier)
             .round() as u64;
 
@@ -108,9 +107,8 @@ impl Emu {
 
     pub fn create_save_state(&self) -> EmuSaveState {
         EmuSaveState {
-            cpu: self.cpu.clone(),
-            bus_without_cart: self.runtime.bus.clone_empty_cart(),
-            cart_save_state: self.runtime.bus.cart.create_save_state(),
+            cpu: self.runtime.cpu.save_state(),
+            cart_save_state: self.runtime.cpu.clock.bus.cart.create_save_state(),
         }
     }
 
@@ -131,27 +129,33 @@ impl Emu {
     }
 
     pub fn load_cart(&mut self, cart: Cart) {
-        let apu = Apu::new(self.runtime.bus.io.apu.config.clone());
-        let lcd = Lcd::new(self.runtime.bus.io.lcd.current_colors);
+        let apu = Apu::new(self.runtime.cpu.clock.bus.io.apu.config.clone());
+        let lcd = Lcd::new(self.runtime.cpu.clock.bus.io.lcd.current_colors);
         let io = Io::new(lcd, apu);
-        self.runtime.bus = Bus::new(cart, io);
-        self.cpu = Cpu::default();
+        let bus = Bus::new(cart, io);
+        self.runtime.cpu.clock.ppu.reset();        
+        let clock = Clock::new(self.runtime.cpu.clock.ppu.clone(), bus);
+        self.runtime.cpu = Cpu::new(clock);
+
         self.state = EmuState::Running;
-        self.runtime.clock.reset();
+        self.runtime.cpu.clock.reset();
         self.rewind_buffer.clear();
     }
 
-    pub fn load_save_state(&mut self, save_state: EmuSaveState) {
+    pub fn load_save_state(&mut self, mut save_state: EmuSaveState) {
         // reconstruct cart
-        let mut bus = save_state.bus_without_cart;
-        mem::swap(&mut bus.cart.data, &mut self.runtime.bus.cart.data);
-        let cart = save_state.cart_save_state.into_cart(bus.cart.data);
-        bus.cart = cart;
+        mem::swap(
+            &mut save_state.cpu.clock.bus.cart.data,
+            &mut self.runtime.cpu.clock.bus.cart.data,
+        );
+        let cart = save_state
+            .cart_save_state
+            .into_cart(save_state.cpu.clock.bus.cart.data);
+        save_state.cpu.clock.bus.cart = cart;
 
-        self.runtime.bus = bus;
-        self.runtime.bus.io.joypad = Joypad::default(); // reset controls
+        self.runtime.cpu.clock.bus.io.joypad = Joypad::default(); // reset controls
 
-        self.cpu = save_state.cpu;
-        self.runtime.clock.reset();
+        self.runtime.cpu = save_state.cpu;
+        self.runtime.cpu.clock.reset();
     }
 }

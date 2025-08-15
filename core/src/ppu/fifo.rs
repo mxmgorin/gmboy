@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use crate::ppu::lcd::PixelColor;
 
 const BUFFER_SIZE: usize = MAX_FIFO_SIZE * 2;
 const MAX_FIFO_SIZE: usize = 8;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PixelFifo {
     buffer: [PixelColor; BUFFER_SIZE],
     head: usize,

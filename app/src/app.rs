@@ -168,7 +168,7 @@ where
 
     /// Execution loop
     pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
-        self.state = if self.config.auto_continue && !emu.runtime.bus.cart.is_empty() {
+        self.state = if self.config.auto_continue && !emu.runtime.cpu.clock.bus.cart.is_empty() {
             AppState::Running
         } else {
             AppState::Paused
@@ -186,8 +186,8 @@ where
                 let time_since_last_render = now.duration_since(last_render_time);
 
                 if on_time || time_since_last_render >= self.min_render_interval {
-                    self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
-                    self.draw_notification(emu.runtime.ppu.get_fps());
+                    self.video.draw_buffer(&emu.runtime.cpu.clock.ppu.pipeline.buffer);
+                    self.draw_notification(emu.runtime.cpu.clock.ppu.get_fps());
                     self.video.show();
                     last_render_time = now;
                 }
@@ -199,7 +199,7 @@ where
 
     pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
         input.handle_events(self, emu);
-        emu.runtime.clock.reset();
+        emu.runtime.cpu.clock.reset();
         self.draw_menu();
         self.draw_notification(None);
         self.video.show();
@@ -271,7 +271,7 @@ where
             .get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
-        emu.runtime.bus.io.lcd.set_pallet(colors);
+        emu.runtime.cpu.clock.bus.io.lcd.set_pallet(colors);
         self.menu.request_update();
 
         let suffix = if self.config.video.interface.is_palette_inverted {
@@ -336,13 +336,13 @@ where
                 };
 
                 emu.load_save_state(save_state);
-                emu.runtime.bus.io.lcd.apply_colors(
+                emu.runtime.cpu.clock.bus.io.lcd.apply_colors(
                     self.config
                         .video
                         .interface
                         .get_palette_colors(&self.palettes),
                 );
-                emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
+                emu.runtime.cpu.clock.bus.io.apu.config = self.config.audio.get_apu_config();
 
                 let msg = format!("Loaded save state: {index}");
                 self.notifications.add(msg);
@@ -374,7 +374,7 @@ where
         };
 
         // save sram for battery emulation
-        if let Some(bytes) = emu.runtime.bus.cart.dump_ram() {
+        if let Some(bytes) = emu.runtime.cpu.clock.bus.cart.dump_ram() {
             let battery = BatterySave::from_bytes(bytes)
                 .save_file(&name)
                 .map_err(|e| e.to_string());
@@ -398,7 +398,7 @@ where
 
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) -> Result<(), String> {
         let is_reload = self.roms.get_last_path().map(|x| x.as_path()) == Some(path)
-            && !emu.runtime.bus.cart.is_empty();
+            && !emu.runtime.cpu.clock.bus.cart.is_empty();
         let file_name = self
             .platform
             .fs
@@ -420,13 +420,13 @@ where
         emu.load_cart(cart);
         self.roms.insert_or_update(path.to_path_buf());
 
-        emu.runtime.bus.io.lcd.apply_colors(
+        emu.runtime.cpu.clock.bus.io.lcd.apply_colors(
             self.config
                 .video
                 .interface
                 .get_palette_colors(&self.palettes),
         );
-        emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
+        emu.runtime.cpu.clock.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
         self.menu = AppMenu::new(&self.roms);
 
@@ -446,8 +446,8 @@ where
     }
 
     pub fn change_volume(&mut self, emu: &mut Emu, delta: f32) {
-        emu.runtime.bus.io.apu.config.change_volume(delta);
-        self.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
+        emu.runtime.cpu.clock.bus.io.apu.config.change_volume(delta);
+        self.config.audio.volume = emu.runtime.cpu.clock.bus.io.apu.config.volume;
 
         let msg = format!("Volume: {}", self.config.audio.volume * 100.0);
         self.notifications.add(msg);

@@ -1,9 +1,7 @@
-use crate::TestCpuCtxWithPPu;
 use core::auxiliary::clock::Clock;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
-use core::debugger::{CpuLogType, Debugger};
 use std::fmt::Display;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
@@ -20,17 +18,13 @@ pub fn run_mooneye_rom(
 
 pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), String> {
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let mut callback = TestCpuCtxWithPPu {
-        clock: Clock::default(),
-        debugger: Debugger::new(CpuLogType::None, false),
-        ppu: Default::default(),
-        bus: Bus::new(cart, Default::default()),
-    };
-    let mut cpu = Cpu::default();
+    let bus = Bus::new(cart, Default::default());
+    let clock = Clock::new(Default::default(), bus);
+    let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
 
     loop {
-        cpu.step(&mut callback)?;
+        cpu.step(None)?;
 
         if cpu.registers.b == 3
             && cpu.registers.c == 5

@@ -1,6 +1,6 @@
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu};
 
 /// Subtract the value in r8 and the carry flag from A.
 /// Cycles: 1
@@ -16,7 +16,7 @@ pub struct SbcInstruction {
 }
 
 impl ExecutableInstruction for SbcInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };

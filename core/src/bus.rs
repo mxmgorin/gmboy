@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 pub const ECHO_MIRROR_OFFSET: u16 = 0x2000;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Bus {
     pub cart: Cart,
     pub ram: Ram,

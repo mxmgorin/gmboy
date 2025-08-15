@@ -1,6 +1,6 @@
 use crate::cpu::instructions::FetchedData;
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu};
 
 /// Decimal Adjust Accumulator.
 /// Designed to be used after performing an arithmetic instruction (ADD, ADC, SUB, SBC) whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.
@@ -27,9 +27,8 @@ use crate::cpu::{Cpu, CpuCallback};
 #[derive(Debug, Clone, Copy)]
 pub struct DaaInstruction;
 
-// todo: test
 impl ExecutableInstruction for DaaInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
+    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 

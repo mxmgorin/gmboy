@@ -1,10 +1,10 @@
-use crate::auxiliary::clock::Tickable;
 use crate::auxiliary::io::Io;
 use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::fetcher::PixelFetcher;
 use crate::ppu::lcd::{LcdStatSrc, PpuMode};
 use std::time::{Duration, Instant};
+use serde::{Deserialize, Serialize};
 
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
@@ -15,27 +15,26 @@ pub const TARGET_FRAME_TIME_MILLIS: u64 = FRAME_DURATION.as_millis() as u64;
 pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
 pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
 
-impl Tickable for Ppu {
-    fn tick(&mut self, bus: &mut Bus) {
-        self.tick(bus);
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Ppu {
-    line_ticks: usize,
-
     pub current_frame: usize,
     pub pipeline: PixelFetcher,
+    line_ticks: usize,
     fps: Option<Fps>,
 }
 
 impl Ppu {
-    pub fn toggle_fps(&mut self) {
-        if self.fps.is_some() {
-            self.fps = None;
-        } else {
+    pub fn reset(&mut self) {
+        self.line_ticks = 0;
+        self.current_frame = 0;
+        self.pipeline.reset();
+    }
+
+    pub fn toggle_fps(&mut self, enable: bool) {
+        if enable {
             self.fps = Some(Fps::default());
+        } else {
+            self.fps = None;
         }
     }
 
@@ -123,8 +122,9 @@ impl Ppu {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Fps {
+    #[serde(with = "crate::instant_serde")]
     timer: Instant,
     prev_frame_time: Duration,
     last_fps_update: Duration,

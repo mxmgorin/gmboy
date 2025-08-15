@@ -62,11 +62,7 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let apu = Apu::new(apu_config);
     let bus = Bus::new(Cart::empty(), Io::new(lcd, apu));
     let mut ppu = Ppu::default();
-
-    if config.video.interface.show_fps {
-        ppu.toggle_fps();
-    }
-
+    ppu.toggle_fps(config.video.interface.show_fps);
     let debugger = None;
     let runtime = EmuRuntime::new(ppu, bus, debugger);
 
@@ -89,11 +85,9 @@ where
         if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
             log::warn!("Failed to load cart file: {err}");
         }
-    } else {
-        if let Some(cart_path) = app.roms.get_last_path() {
-            if let Err(err) = app.load_cart_file(emu, &cart_path.to_path_buf()) {
-                log::warn!("Failed to load cart file: {err}");
-            }
+    } else if let Some(cart_path) = app.roms.get_last_path() {
+        if let Err(err) = app.load_cart_file(emu, &cart_path.to_path_buf()) {
+            log::warn!("Failed to load cart file: {err}");
         }
     }
 }

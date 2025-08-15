@@ -1,6 +1,6 @@
 use crate::cpu::instructions::FetchedData;
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu};
 
 /// Complement Carry Flag.
 /// Cycles: 1
@@ -13,7 +13,7 @@ use crate::cpu::{Cpu, CpuCallback};
 pub struct CcfInstruction;
 
 impl ExecutableInstruction for CcfInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
+    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
         cpu.registers.flags.set(
             None,
             Some(false),

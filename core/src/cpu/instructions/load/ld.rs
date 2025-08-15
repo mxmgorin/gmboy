@@ -1,6 +1,6 @@
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction, RegisterType};
 use crate::cpu::instructions::{DataDestination, DataSource, FetchedData};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu};
 
 #[derive(Debug, Clone, Copy)]
 pub struct LdInstruction {
@@ -8,7 +8,7 @@ pub struct LdInstruction {
 }
 
 impl ExecutableInstruction for LdInstruction {
-    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if self.address_mode.is_hl_spi8() {
@@ -25,11 +25,11 @@ impl ExecutableInstruction for LdInstruction {
                         cpu.registers.sp.wrapping_add(offset_e as u16),
                     );
 
-                    callback.m_cycles(1);
+                    cpu.clock.m_cycles(1);
                 } else {
                     if let DataSource::Register(src_r) = fetched_data.source {
                         if r.is_16bit() && src_r.is_16bit() {
-                            callback.m_cycles(1);
+                            cpu.clock.m_cycles(1);
                         }
                     }
 
@@ -43,15 +43,14 @@ impl ExecutableInstruction for LdInstruction {
                         cpu.write_to_memory(
                             addr + 1,
                             ((fetched_data.value >> 8) & 0xFF) as u8,
-                            callback,
                         );
-                        cpu.write_to_memory(addr, (fetched_data.value & 0xFF) as u8, callback);
+                        cpu.write_to_memory(addr, (fetched_data.value & 0xFF) as u8);
                     } else {
-                        cpu.write_to_memory(addr, fetched_data.value as u8, callback);
+                        cpu.write_to_memory(addr, fetched_data.value as u8);
                     }
                 }
                 DataSource::Immediate => {
-                    cpu.write_to_memory(addr, fetched_data.value as u8, callback);
+                    cpu.write_to_memory(addr, fetched_data.value as u8);
                 }
             },
         }

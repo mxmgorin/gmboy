@@ -38,11 +38,14 @@ pub use rotate::rrca::*;
 
 #[cfg(test)]
 mod tests {
+    use crate::auxiliary::clock::{Clock};
+    use crate::auxiliary::io::Io;
     use crate::bus::Bus;
     use crate::cpu::instructions::{
         AddressMode, ConditionType, Instruction, RegisterType, INSTRUCTIONS_BY_OPCODES,
     };
-    use crate::cpu::{Cpu, CpuCallback, DebugCtx};
+    use crate::cpu::Cpu;
+    use crate::ppu::Ppu;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -56,167 +59,117 @@ mod tests {
         3, 3, 2, 1, 0, 4, 2, 4, 3, 2, 4, 1, 0, 0, 2, 4,
     ];
 
-    #[derive(Debug)]
-    pub struct Callback {
-        pub t_cycles: usize,
-        bus: Bus,
-    }
-
-    impl Default for Callback {
-        fn default() -> Self {
-            Self {
-                t_cycles: 0,
-                bus: Bus::with_bytes(vec![0; 100000], Default::default()),
-            }
-        }
-    }
-
-    impl Callback {
-        pub fn get_m_cycles(&self) -> usize {
-            self.t_cycles / 4
-        }
-    }
-
-    impl CpuCallback for Callback {
-        fn m_cycles(&mut self, m_cycles: usize) {
-            self.t_cycles += m_cycles * 4;
-        }
-
-        fn update_serial(&mut self, _cpu: &mut Cpu) {}
-
-        fn debug(&mut self, _cpu: &mut Cpu, _ctx: Option<DebugCtx>) {}
-
-        fn get_bus_mut(&mut self) -> &mut Bus {
-            &mut self.bus
-        }
-    }
-
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let mut cpu = Cpu::default();
-        let mut callback = Callback::default();
+        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let mut cpu = Cpu::new(clock);
         cpu.registers.pc = 0;
-        callback.t_cycles = 0;
-        callback.get_bus_mut().write(0, opcode as u8);
-        cpu.step(&mut callback).unwrap();
+        cpu.clock.bus.write(0, opcode as u8);
+        cpu.step(None).unwrap();
 
-        assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
+        assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
     }
 
     #[test]
     pub fn test_m_cycles_call() {
-        let mut cpu = Cpu::default();
+        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Call(instr) = *instr else {
                 continue;
             };
-            let mut callback = Callback::default();
-
             cpu.registers.pc = 0;
-            callback.t_cycles = 0;
-            callback.get_bus_mut().write(0, opcode as u8);
+            cpu.clock.t_cycles = 0;
+            cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(
-                    &mut cpu,
-                    &mut callback,
-                    condition_type,
-                    6,
-                    M_CYCLES_BY_OPCODES[opcode],
-                );
+                assert_for_condition(&mut cpu, condition_type, 6, M_CYCLES_BY_OPCODES[opcode]);
             } else {
-                cpu.step(&mut callback).unwrap();
+                cpu.step(None).unwrap();
                 // 6
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles_jp() {
-        let mut cpu = Cpu::default();
+        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jp(instr) = *instr else {
                 continue;
             };
 
-            let mut callback = Callback::default();
             cpu.registers.pc = 0;
-            callback.t_cycles = 0;
-            callback.get_bus_mut().write(0, opcode as u8);
+            cpu.clock.t_cycles = 0;
+            cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(
-                    &mut cpu,
-                    &mut callback,
-                    condition_type,
-                    4,
-                    M_CYCLES_BY_OPCODES[opcode],
-                );
+                assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
             } else if instr.address_mode == AddressMode::D16 {
-                cpu.step(&mut callback).unwrap();
+                cpu.step(None).unwrap();
                 // 4
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
-                cpu.step(&mut callback).unwrap();
+                cpu.step(None).unwrap();
                 // 1
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles_jr() {
-        let mut cpu = Cpu::default();
+        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Jr(instr) = *instr else {
                 continue;
             };
 
-            let mut callback = Callback::default();
             cpu.registers.pc = 0;
-            callback.t_cycles = 0;
-            callback.get_bus_mut().write(0, opcode as u8);
+            cpu.clock.t_cycles = 0;
+            cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, &mut callback, condition_type, 3, 2);
+                assert_for_condition(&mut cpu, condition_type, 3, 2);
             } else {
-                cpu.step(&mut callback).unwrap();
+                cpu.step(None).unwrap();
                 // 3
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles_ret() {
-        let mut cpu = Cpu::default();
+        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             let Instruction::Ret(instr) = *instr else {
                 continue;
             };
 
-            let mut callback = Callback::default();
             cpu.registers.pc = 0;
-            callback.t_cycles = 0;
-            callback.get_bus_mut().write(0, opcode as u8);
+            cpu.clock.t_cycles = 0;
+            cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
-                assert_for_condition(&mut cpu, &mut callback, condition_type, 5, 2);
+                assert_for_condition(&mut cpu, condition_type, 5, 2);
             } else {
-                cpu.step(&mut callback).unwrap();
+                cpu.step(None).unwrap();
                 // 4
-                assert_eq!(M_CYCLES_BY_OPCODES[opcode], callback.get_m_cycles());
+                assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
         }
     }
 
     #[test]
     pub fn test_m_cycles() {
-        let mut cpu = Cpu::default();
-        let mut callback = Callback::default();
-
+        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
             match instr {
                 Instruction::Jp(_) // has tests
@@ -234,11 +187,11 @@ mod tests {
             }
 
             cpu.registers.pc = 0;
-            callback.t_cycles = 0;
-            callback.get_bus_mut().write(0, opcode as u8);
-            cpu.step(&mut callback).unwrap();
+            cpu.clock.t_cycles = 0;
+            cpu.clock.bus.write(0, opcode as u8);
+            cpu.step(None).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
-            let actual = callback.t_cycles / 4;
+            let actual = cpu.clock.get_m_cycles();
 
             if actual != expected {
                 let msg = format!(
@@ -252,7 +205,6 @@ mod tests {
 
     pub fn assert_for_condition(
         cpu: &mut Cpu,
-        callback: &mut Callback,
         condition_type: ConditionType,
         m_cycles_set: usize,
         m_cycles_not: usize,
@@ -260,51 +212,51 @@ mod tests {
         match condition_type {
             ConditionType::NC => {
                 cpu.registers.flags.set(None, None, None, false.into());
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_set, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                callback.t_cycles = 0;
+                cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_not, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
             ConditionType::C => {
                 cpu.registers.flags.set(None, None, None, false.into());
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_not, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                callback.t_cycles = 0;
+                cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(None, None, None, true.into());
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_set, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
             ConditionType::NZ => {
                 cpu.registers.flags.set(false.into(), None, None, None);
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_set, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                callback.t_cycles = 0;
+                cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_not, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
             ConditionType::Z => {
                 cpu.registers.flags.set(false.into(), None, None, None);
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_not, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                callback.t_cycles = 0;
+                cpu.clock.t_cycles = 0;
 
                 cpu.registers.flags.set(true.into(), None, None, None);
-                cpu.step(callback).unwrap();
-                assert_eq!(m_cycles_set, callback.t_cycles / 4);
+                cpu.step(None).unwrap();
+                assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
         }
     }

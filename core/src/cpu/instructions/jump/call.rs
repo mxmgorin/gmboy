@@ -1,6 +1,6 @@
 use crate::cpu::instructions::FetchedData;
-use crate::cpu::instructions::{AddressMode, ConditionType, ExecutableInstruction, Instruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::instructions::{AddressMode, ConditionType, ExecutableInstruction};
+use crate::cpu::{Cpu};
 
 #[derive(Debug, Clone, Copy)]
 pub struct CallInstruction {
@@ -8,8 +8,8 @@ pub struct CallInstruction {
 }
 
 impl ExecutableInstruction for CallInstruction {
-    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        Instruction::goto_addr(cpu, self.condition_type, fetched_data.value, true, callback);
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        cpu.goto_addr(self.condition_type, fetched_data.value, true);
     }
 
     fn get_address_mode(&self) -> AddressMode {
