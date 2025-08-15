@@ -3,8 +3,9 @@ use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::fetcher::PixelFetcher;
 use crate::ppu::lcd::{LcdStatSrc, PpuMode};
-use std::time::{Duration, Instant};
+use arrayvec::ArrayString;
 use serde::{Deserialize, Serialize};
+use std::time::{Duration, Instant};
 
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
@@ -39,7 +40,7 @@ impl Ppu {
     }
 
     pub fn get_fps(&mut self) -> Option<(&str, bool)> {
-        self.fps.as_mut().map(|x| x.get())
+        self.fps.as_mut().map(|x| x.take())
     }
 
     pub fn tick(&mut self, bus: &mut Bus) {
@@ -131,7 +132,7 @@ pub struct Fps {
     frame_accum: f32,
     frame_count: u32,
     fps: f32,
-    fps_str: String,
+    fps_str: ArrayString<10>,
     updated: bool,
 }
 
@@ -144,18 +145,19 @@ impl Default for Fps {
             frame_accum: 0.0,
             frame_count: 0,
             fps: 0.0,
-            fps_str: "0.0".to_string(),
+            fps_str: ArrayString::<10>::new(),
             updated: false,
         }
     }
 }
+
+use core::fmt::Write;
 
 impl Fps {
     pub fn update(&mut self) {
         let now = self.timer.elapsed();
         let frame_time = (now - self.prev_frame_time).as_secs_f32();
         self.prev_frame_time = now;
-
         self.frame_accum += frame_time;
         self.frame_count += 1;
 
@@ -166,19 +168,21 @@ impl Fps {
                 0.0
             };
 
-            if (new_fps - self.fps).abs() > f32::EPSILON {
-                self.updated = true; // mark updated only when fps changes
+            self.updated = (new_fps - self.fps).abs() > f32::EPSILON;
+
+            if self.updated {
+                self.fps = new_fps;
+                self.fps_str.clear();
+                write!(&mut self.fps_str, "{:.2}", self.fps).unwrap();
             }
 
-            self.fps = new_fps;
-            self.fps_str = format!("{:.2}", self.fps);
             self.last_fps_update = now;
             self.frame_count = 0;
             self.frame_accum = 0.0;
         }
     }
 
-    pub fn get(&mut self) -> (&str, bool) {
+    pub fn take(&mut self) -> (&str, bool) {
         let updated = self.updated;
         self.updated = false;
 
