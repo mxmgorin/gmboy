@@ -1,7 +1,7 @@
+use crate::video::gl_backend::GLSetup;
 use gl::types::GLenum;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
-use crate::video::gl_backend::GLSetup;
 
 const MASTER_VERTEX: &str = include_str!("../../../app/shaders/master.vert");
 const PASSTHROUGH_FRAGMENT: &str = include_str!("../../../app/shaders/passthrough.frag");
@@ -21,11 +21,21 @@ const SCALE2X: &str = include_str!("../../../app/shaders/Scale2x.fsh");
 const SCALE4X: &str = include_str!("../../../app/shaders/Scale4x.fsh");
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
+#[repr(u8)]
 pub enum ShaderFrameBlendMode {
     None = 0,
     Simple = 1,
     AccEven = 2,
     AccOdd = 3,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
+#[repr(u8)]
+pub enum ShaderPrecision {
+    Auto = 0,
+    Low = 1,
+    Medium = 2,
+    High = 3,
 }
 
 pub const SHADERS: [(&str, &str); 14] = [
@@ -45,12 +55,16 @@ pub const SHADERS: [(&str, &str); 14] = [
     ("Scale4x", SCALE4X),
 ];
 
-pub fn load_shader_program(name: &str, gl: &GLSetup) -> Result<u32, String> {
+pub fn load_shader_program(
+    name: &str,
+    gl: &GLSetup,
+    precision: ShaderPrecision,
+) -> Result<u32, String> {
     for (i_name, shader) in SHADERS {
         if i_name.to_lowercase() == name.to_lowercase() {
             let frag_src = MASTER_FRAGMENT.replace("{filter}", shader);
-            let frag = prepare_shader_source(gl, true, &frag_src);
-            let vert = prepare_shader_source(gl, false, MASTER_VERTEX);
+            let frag = prepare_shader_source(gl, true, &frag_src, precision);
+            let vert = prepare_shader_source(gl, false, MASTER_VERTEX, precision);
 
             log::debug!("Using fragment shader:\n{frag}");
             log::debug!("Using vertext shader:\n{vert}");
@@ -141,7 +155,12 @@ unsafe fn compile_shader(kind: GLenum, source: &str) -> Result<u32, String> {
 /// Prepare shader with correct #version, per-stage precision and GLES2 rewrites.
 /// `is_fragment` true for fragment shader, false for vertex shader.
 /// `body` is the shader body (no #version or precision lines required).
-pub fn prepare_shader_source(setup: &GLSetup, is_fragment: bool, body: &str) -> String {
+pub fn prepare_shader_source(
+    setup: &GLSetup,
+    is_fragment: bool,
+    body: &str,
+    precision: ShaderPrecision,
+) -> String {
     let mut src = String::new();
     src.push_str(setup.shader_version);
     src.push('\n');
@@ -149,23 +168,36 @@ pub fn prepare_shader_source(setup: &GLSetup, is_fragment: bool, body: &str) -> 
     // For GLES we often need explicit precision qualifiers.
     // We'll emit per-stage precision using the detected best precision.
     if let Some(gles) = &setup.gles {
+        let (frag_p, vert_p) = if precision == ShaderPrecision::Auto {
+            (gles.fragment_precision, gles.vertex_precision)
+        } else {
+            let selected = match precision {
+                ShaderPrecision::Auto => unreachable!(),
+                ShaderPrecision::Low => "lowp",
+                ShaderPrecision::Medium => "mediump",
+                ShaderPrecision::High => "highp",
+            };
+
+            (selected, selected)
+        };
+
         if gles.is_version_2 {
             // GLES2: explicit precision qualifiers are required in fragment shaders,
             // and allowed in vertex shaders (though many implementations ignore them).
             if is_fragment {
-                src.push_str(&format!("precision {} float;\n", gles.fragment_precision));
-                src.push_str(&format!("precision {} int;\n", gles.fragment_precision));
+                src.push_str(&format!("precision {} float;\n", frag_p));
+                src.push_str(&format!("precision {} int;\n", frag_p));
             } else {
                 // Vertex: emit precision too in case device needs it for varying math,
                 // but many GLES2 vertex shaders can omit it (we include for safety).
-                src.push_str(&format!("precision {} float;\n", gles.vertex_precision));
-                src.push_str(&format!("precision {} int;\n", gles.vertex_precision));
+                src.push_str(&format!("precision {} float;\n", vert_p));
+                src.push_str(&format!("precision {} int;\n", vert_p));
             }
         } else {
             // GLES3: still useful to add fragment precision, but not strictly required.
             if is_fragment {
-                src.push_str(&format!("precision {} float;\n", gles.fragment_precision));
-                src.push_str(&format!("precision {} int;\n", gles.fragment_precision));
+                src.push_str(&format!("precision {} float;\n", frag_p));
+                src.push_str(&format!("precision {} int;\n", frag_p));
             }
         }
     }
@@ -188,8 +220,8 @@ pub fn prepare_shader_source(setup: &GLSetup, is_fragment: bool, body: &str) -> 
         if is_fragment {
             // In fragment: `in` -> `varying`, `out vec4 Name;` -> remove + replace uses with gl_FragColor
             processed = processed.replace("\nout ", "\n#OUT_MARKER "); // mark to handle types with 'out'
-            // remove `out vec4 NAME;` (common case)
-            // handle both `out vec4 FragColor;` and variants
+                                                                       // remove `out vec4 NAME;` (common case)
+                                                                       // handle both `out vec4 FragColor;` and variants
             let mut lines: Vec<String> = Vec::new();
             for line in processed.lines() {
                 if line.trim_start().starts_with("#OUT_MARKER") {

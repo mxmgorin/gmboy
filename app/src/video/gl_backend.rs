@@ -1,5 +1,5 @@
 use crate::config::RenderConfig;
-use crate::video::shader::ShaderFrameBlendMode;
+use crate::video::shader::{ShaderFrameBlendMode, ShaderPrecision};
 use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
 use gl::types::{GLenum, GLint};
@@ -67,7 +67,11 @@ impl GlBackend {
             game_rect,
             gl,
         };
-        obj.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)?;
+        obj.load_shader(
+            &config.gl.shader_name,
+            config.gl.shader_frame_blend_mode,
+            config.gl.shader_precision,
+        )?;
 
         Ok(obj)
     }
@@ -78,8 +82,12 @@ impl GlBackend {
     }
 
     pub fn update_config(&mut self, config: &RenderConfig) {
-        self.load_shader(&config.gl.shader_name, config.gl.shader_frame_blend_mode)
-            .unwrap();
+        self.load_shader(
+            &config.gl.shader_name,
+            config.gl.shader_frame_blend_mode,
+            config.gl.shader_precision,
+        )
+        .unwrap();
     }
 
     fn draw_quad(&self) {
@@ -243,8 +251,9 @@ impl GlBackend {
         &mut self,
         name: &str,
         frame_blend_mode: ShaderFrameBlendMode,
+        precision: ShaderPrecision,
     ) -> Result<(), String> {
-        let program = shader::load_shader_program(name, &self.gl)?;
+        let program = shader::load_shader_program(name, &self.gl, precision)?;
         self.shader_frame_blend_mode = frame_blend_mode;
 
         unsafe {

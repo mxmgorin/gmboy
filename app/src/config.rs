@@ -2,7 +2,7 @@ use crate::get_base_dir;
 use crate::input::config::InputConfig;
 use crate::palette::LcdPalette;
 use crate::video::frame_blend::FrameBlendMode;
-use crate::video::shader::ShaderFrameBlendMode;
+use crate::video::shader::{ShaderFrameBlendMode, ShaderPrecision};
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
 use core::ppu::tile::PixelColor;
@@ -48,6 +48,7 @@ pub struct Sdl2Config {
 pub struct GlConfig {
     pub shader_name: String,
     pub shader_frame_blend_mode: ShaderFrameBlendMode,
+    pub shader_precision: ShaderPrecision,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -214,6 +215,7 @@ impl Default for AppConfig {
                     gl: GlConfig {
                         shader_name: "passthrough".to_string(),
                         shader_frame_blend_mode: ShaderFrameBlendMode::Simple,
+                        shader_precision: ShaderPrecision::Auto,
                     },
                 },
             },
