@@ -87,7 +87,7 @@ impl ExecutableInstruction for Instruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         match self {
             Instruction::Unknown(opcode) => {
-                panic!("Can't execute an unknown instruction {:X}", opcode)
+                panic!("Can't execute an unknown instruction {opcode:X}")
             }
             Instruction::Nop(inst) => inst.execute(cpu, fetched_data),
             Instruction::Inc(inst) => inst.execute(cpu, fetched_data),
@@ -128,10 +128,9 @@ impl ExecutableInstruction for Instruction {
 
     fn get_address_mode(&self) -> AddressMode {
         match self {
-            Instruction::Unknown(opcode) => panic!(
-                "Can't get_address_mode for unknown instruction {:X}",
-                opcode
-            ),
+            Instruction::Unknown(opcode) => {
+                panic!("Can't get_address_mode for unknown instruction {opcode:X}")
+            }
             Instruction::Nop(inst) => inst.get_address_mode(),
             Instruction::Inc(inst) => inst.get_address_mode(),
             Instruction::Dec(inst) => inst.get_address_mode(),
@@ -174,22 +173,22 @@ impl Instruction {
     pub fn get_type(&self) -> InstructionType {
         match self {
             Instruction::Unknown(opcode) => {
-                panic!("Can't get_type for unknown instruction {:X}", opcode)
+                panic!("Can't get_type for unknown instruction {opcode:X}")
             }
-            Instruction::Nop(_inst) => InstructionType::NOP,
-            Instruction::Inc(_inst) => InstructionType::INC,
-            Instruction::Dec(_inst) => InstructionType::DEC,
-            Instruction::Ld(_inst) => InstructionType::LD,
-            Instruction::Jr(_inst) => InstructionType::JR,
-            Instruction::Daa(_inst) => InstructionType::DAA,
-            Instruction::Cpl(_inst) => InstructionType::CPL,
-            Instruction::Ccf(_inst) => InstructionType::CCF,
-            Instruction::Halt(_inst) => InstructionType::HALT,
-            Instruction::Xor(_inst) => InstructionType::XOR,
-            Instruction::Di(_inst) => InstructionType::DI,
-            Instruction::Jp(_inst) => InstructionType::JP,
-            Instruction::Ldh(_inst) => InstructionType::LDH,
-            Instruction::Call(_inst) => InstructionType::CALL,
+            Instruction::Nop(_) => InstructionType::NOP,
+            Instruction::Inc(_) => InstructionType::INC,
+            Instruction::Dec(_) => InstructionType::DEC,
+            Instruction::Ld(_) => InstructionType::LD,
+            Instruction::Jr(_) => InstructionType::JR,
+            Instruction::Daa(_) => InstructionType::DAA,
+            Instruction::Cpl(_) => InstructionType::CPL,
+            Instruction::Ccf(_) => InstructionType::CCF,
+            Instruction::Halt(_) => InstructionType::HALT,
+            Instruction::Xor(_) => InstructionType::XOR,
+            Instruction::Di(_) => InstructionType::DI,
+            Instruction::Jp(_) => InstructionType::JP,
+            Instruction::Ldh(_) => InstructionType::LDH,
+            Instruction::Call(_) => InstructionType::CALL,
             Instruction::Rra(_) => InstructionType::RRA,
             Instruction::Rla(_) => InstructionType::RLA,
             Instruction::Rrca(_) => InstructionType::RRCA,
@@ -217,11 +216,7 @@ impl Instruction {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
-    pub fn to_asm_string(
-        &self,
-        cpu: &Cpu,
-        fetched_data: &FetchedData,
-    ) -> String {
+    pub fn to_asm_string(&self, cpu: &Cpu, fetched_data: &FetchedData) -> String {
         match self.get_address_mode() {
             AddressMode::IMP => format!("{:?}", self.get_type()),
             AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
