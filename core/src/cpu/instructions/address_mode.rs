@@ -8,7 +8,7 @@ impl AddressMode {
 }
 
 impl Cpu {
-    pub fn fetch_data_mode(&mut self, address_mode: AddressMode) -> FetchedData {
+    pub fn fetch_data(&mut self, address_mode: AddressMode) -> FetchedData {
         let mut fetched_data = FetchedData::empty();
 
         match address_mode {
@@ -24,16 +24,16 @@ impl Cpu {
                 fetched_data.dest = DataDestination::Register(r1);
             }
             AddressMode::R_D8(r1) => {
-                fetched_data.value = self.fetch_data() as u16;
+                fetched_data.value = self.read_pc() as u16;
                 fetched_data.source = DataSource::Immediate;
                 fetched_data.dest = DataDestination::Register(r1);
             }
             AddressMode::D16 => {
-                fetched_data.value = self.fetch_data16();
+                fetched_data.value = self.read_pc16();
                 fetched_data.source = DataSource::Immediate;
             }
             AddressMode::R_D16(r1) => {
-                fetched_data.value = self.fetch_data16();
+                fetched_data.value = self.read_pc16();
                 fetched_data.source = DataSource::Immediate;
                 fetched_data.dest = DataDestination::Register(r1);
             }
@@ -94,14 +94,14 @@ impl Cpu {
                 self.registers.set_hl(addr.wrapping_sub(1));
             }
             AddressMode::R_A8(r1) => {
-                let addr = self.fetch_data() as u16;
+                let addr = self.read_pc() as u16;
 
                 fetched_data.value = self.read_memory(addr);
                 fetched_data.source = DataSource::Memory(addr);
                 fetched_data.dest = DataDestination::Register(r1);
             }
             AddressMode::R_HA8(r1) => {
-                let addr = self.fetch_data() as u16;
+                let addr = self.read_pc() as u16;
                 let addr = 0xFF00 | addr;
 
                 fetched_data.value = self.read_memory(addr);
@@ -109,30 +109,30 @@ impl Cpu {
                 fetched_data.dest = DataDestination::Register(r1);
             }
             AddressMode::A8_R(r2) => {
-                let addr = self.fetch_data() as u16;
+                let addr = self.read_pc() as u16;
 
                 fetched_data.value = self.registers.read_register(r2);
                 fetched_data.source = DataSource::Register(r2);
                 fetched_data.dest = DataDestination::Memory(addr);
             }
             AddressMode::LH_SPi8 => {
-                fetched_data.value = self.fetch_data() as u16;
+                fetched_data.value = self.read_pc() as u16;
                 fetched_data.source = DataSource::Immediate;
                 fetched_data.dest = DataDestination::Register(RegisterType::HL);
             }
             AddressMode::D8 => {
-                fetched_data.value = self.fetch_data() as u16;
+                fetched_data.value = self.read_pc() as u16;
                 fetched_data.source = DataSource::Immediate;
             }
             AddressMode::A16_R(r2) => {
-                let addr = self.fetch_data16();
+                let addr = self.read_pc16();
 
                 fetched_data.value = self.registers.read_register(r2);
                 fetched_data.source = DataSource::Register(r2);
                 fetched_data.dest = DataDestination::Memory(addr);
             }
             AddressMode::MR_D8(r1) => {
-                fetched_data.value = self.fetch_data() as u16;
+                fetched_data.value = self.read_pc() as u16;
                 fetched_data.source = DataSource::Immediate;
                 fetched_data.dest = DataDestination::Memory(self.registers.read_register(r1));
             }
@@ -144,7 +144,7 @@ impl Cpu {
                 fetched_data.dest = DataDestination::Memory(addr);
             }
             AddressMode::R_A16(r1) => {
-                let addr = self.fetch_data16();
+                let addr = self.read_pc16();
 
                 fetched_data.value = self.read_memory(addr);
                 fetched_data.source = DataSource::Memory(addr);
@@ -318,7 +318,6 @@ mod tests {
     use crate::cart::Cart;
     use crate::cpu::instructions::{AddressMode, RegisterType};
     use crate::cpu::Cpu;
-    use crate::LittleEndianBytes;
     use crate::ppu::Ppu;
 
     #[test]
@@ -328,7 +327,7 @@ mod tests {
         let mut cpu = Cpu::new(clock);
         let mode = AddressMode::IMP;
 
-        let data = cpu.fetch_data_mode(mode);
+        let data = cpu.fetch_data(mode);
 
         assert_eq!(data.value, 0);
     }
@@ -342,7 +341,7 @@ mod tests {
             cpu.registers.set_register(reg_type, 23);
             let mode = AddressMode::R(reg_type);
 
-            let data = cpu.fetch_data_mode(mode);
+            let data = cpu.fetch_data(mode);
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -358,7 +357,7 @@ mod tests {
             cpu.registers.set_register(reg_type, 23);
             let mode = AddressMode::R_R(RegisterType::BC, reg_type);
 
-            let data = cpu.fetch_data_mode(mode);
+            let data = cpu.fetch_data(mode);
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -377,7 +376,7 @@ mod tests {
         cpu.registers.pc = pc as u16;
         let mode = AddressMode::R_D8(RegisterType::A);
 
-        let data = cpu.fetch_data_mode(mode);
+        let data = cpu.fetch_data(mode);
 
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
@@ -391,11 +390,7 @@ mod tests {
         let mut bytes = vec![0u8; 40000];
         let h_val = 0x40;
         let l_val = 0x00;
-        let hl_val: u16 = LittleEndianBytes {
-            low_byte: l_val,
-            high_byte: h_val,
-        }
-        .into();
+        let hl_val = u16::from_le_bytes([l_val, h_val]);
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
 
@@ -404,7 +399,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = cpu.fetch_data_mode(mode);
+        let data = cpu.fetch_data(mode);
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);
@@ -417,11 +412,7 @@ mod tests {
         let mut bytes = vec![0u8; 40000];
         let h_val = 0x40;
         let l_val = 0x00;
-        let hl_val: u16 = LittleEndianBytes {
-            low_byte: l_val,
-            high_byte: h_val,
-        }
-        .into();
+        let hl_val = u16::from_le_bytes([l_val, h_val]);
         let addr_value = 123;
         bytes[hl_val as usize] = addr_value;
         let cart = Cart::new(bytes.into_boxed_slice()).unwrap();
@@ -430,7 +421,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = cpu.fetch_data_mode(mode);
+        let data = cpu.fetch_data(mode);
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);

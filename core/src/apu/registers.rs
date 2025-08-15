@@ -1,5 +1,5 @@
 use crate::apu::channels::channel::ChannelType;
-use crate::{get_bit_flag, set_bit, LittleEndianBytes};
+use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
 pub const NRX4_LENGTH_ENABLE_POS: u8 = 6;
@@ -79,13 +79,9 @@ pub struct NRx3x4 {
 }
 
 impl NRx3x4 {
+    #[inline]
     pub fn get_period(&self) -> u16 {
-        let value = LittleEndianBytes {
-            low_byte: self.period_low.byte,
-            high_byte: self.nrx4.get_period(),
-        };
-
-        value.into()
+        u16::from_le_bytes([self.period_low.byte, self.nrx4.get_period()])
     }
 
     pub fn set_period(&mut self, value: u16) {

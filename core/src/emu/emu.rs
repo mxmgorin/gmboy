@@ -15,7 +15,7 @@ use std::{mem, thread};
 
 const CYCLES_PER_SECOND: usize = 4_194_304;
 const NANOS_PER_SECOND: usize = 1_000_000_000;
-const CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
+const T_CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
 
 pub trait EmuAudioCallback {
     fn update(&mut self, output: &[f32], runtime: &EmuRuntime);
@@ -98,7 +98,7 @@ impl Emu {
 
         self.prev_speed_multiplier = speed_multiplier;
 
-        let emulated_duration_ns = (self.runtime.cpu.clock.t_cycles as f64 * CYCLE_DURATION_NS
+        let emulated_duration_ns = (self.runtime.cpu.clock.get_t_cycles() as f64 * T_CYCLE_DURATION_NS
             / speed_multiplier)
             .round() as u64;
 
@@ -107,7 +107,7 @@ impl Emu {
 
     pub fn create_save_state(&self) -> EmuSaveState {
         EmuSaveState {
-            cpu: self.runtime.cpu.save_state(),
+            cpu: self.runtime.cpu.clone(),
             cart_save_state: self.runtime.cpu.clock.bus.cart.create_save_state(),
         }
     }

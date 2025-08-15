@@ -106,7 +106,7 @@ impl Debugger {
 
         log::info!(
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
-            cpu.clock.t_cycles,
+            cpu.clock.get_t_cycles(),
             pc,
             instruction.to_asm_string(cpu, fetched_data),
             opcode,

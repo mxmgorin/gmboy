@@ -80,7 +80,7 @@ mod tests {
                 continue;
             };
             cpu.registers.pc = 0;
-            cpu.clock.t_cycles = 0;
+            cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
@@ -103,7 +103,7 @@ mod tests {
             };
 
             cpu.registers.pc = 0;
-            cpu.clock.t_cycles = 0;
+            cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
@@ -130,7 +130,7 @@ mod tests {
             };
 
             cpu.registers.pc = 0;
-            cpu.clock.t_cycles = 0;
+            cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
@@ -153,7 +153,7 @@ mod tests {
             };
 
             cpu.registers.pc = 0;
-            cpu.clock.t_cycles = 0;
+            cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
             if let Some(condition_type) = instr.condition_type {
@@ -187,7 +187,7 @@ mod tests {
             }
 
             cpu.registers.pc = 0;
-            cpu.clock.t_cycles = 0;
+            cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
             cpu.step(None).unwrap();
             let expected = M_CYCLES_BY_OPCODES[opcode];
@@ -216,7 +216,7 @@ mod tests {
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                cpu.clock.t_cycles = 0;
+                cpu.clock.reset();
 
                 cpu.registers.flags.set(None, None, None, true.into());
                 cpu.step(None).unwrap();
@@ -228,7 +228,7 @@ mod tests {
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                cpu.clock.t_cycles = 0;
+                cpu.clock.reset();
 
                 cpu.registers.flags.set(None, None, None, true.into());
                 cpu.step(None).unwrap();
@@ -240,7 +240,7 @@ mod tests {
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                cpu.clock.t_cycles = 0;
+                cpu.clock.reset();
 
                 cpu.registers.flags.set(true.into(), None, None, None);
                 cpu.step(None).unwrap();
@@ -252,7 +252,7 @@ mod tests {
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
-                cpu.clock.t_cycles = 0;
+                cpu.clock.reset();
 
                 cpu.registers.flags.set(true.into(), None, None, None);
                 cpu.step(None).unwrap();

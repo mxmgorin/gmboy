@@ -2,7 +2,6 @@ use crate::auxiliary::clock::{Clock};
 use crate::cpu::instructions::{ConditionType, ExecutableInstruction, Instruction};
 use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
-use crate::LittleEndianBytes;
 use serde::{Deserialize, Serialize};
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
@@ -14,19 +13,13 @@ pub struct DebugCtx {
     pub fetched_data: FetchedData,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Cpu {
     pub registers: Registers,
     pub enabling_ime: bool,
     pub current_opcode: u8,
     pub is_halted: bool,
     pub clock: Clock,
-}
-
-impl Clone for Cpu {
-    fn clone(&self) -> Self {
-        self.save_state()
-    }
 }
 
 impl Cpu {
@@ -37,16 +30,6 @@ impl Cpu {
             current_opcode: 0,
             is_halted: false,
             clock,
-        }
-    }
-
-    pub fn save_state(&self) -> Self {
-        Self {
-            registers: self.registers.clone(),
-            enabling_ime: self.enabling_ime,
-            current_opcode: self.current_opcode,
-            is_halted: self.is_halted,
-            clock: self.clock.clone(),
         }
     }
 
@@ -63,7 +46,7 @@ impl Cpu {
     }
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
-    pub fn fetch_data(&mut self) -> u8 {
+    pub fn read_pc(&mut self) -> u8 {
         let value = self.clock.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
         self.clock.m_cycles(1);
@@ -72,16 +55,13 @@ impl Cpu {
     }
 
     /// Reads 16bit immediate data by PC and increments PC + 2. Costs 1 M-Cycle.
-    pub fn fetch_data16(&mut self) -> u16 {
-        let bytes = LittleEndianBytes {
-            low_byte: self.fetch_data(),
-            high_byte: self.fetch_data(),
-        };
-
-        bytes.into()
+    #[inline]
+    pub fn read_pc16(&mut self) -> u16 {
+        u16::from_le_bytes([self.read_pc(), self.read_pc()])
     }
 
     /// Reads data from memory. Costs 1 M-Cycle.
+    #[inline]
     pub fn read_memory(&mut self, address: u16) -> u16 {
         let value = self.clock.bus.read(address) as u16;
         self.clock.m_cycles(1);
@@ -90,6 +70,7 @@ impl Cpu {
     }
 
     /// Writes to memory. Costs 1 M-Cycle.
+    #[inline]
     pub fn write_to_memory(&mut self, address: u16, value: u8) {
         self.clock.bus.write(address, value);
         self.clock.m_cycles(1);
@@ -121,7 +102,7 @@ impl Cpu {
         #[cfg(debug_assertions)]
         let pc = self.registers.pc;
 
-        self.current_opcode = self.fetch_data();
+        self.current_opcode = self.read_pc();
 
         let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
             return Err(format!(
@@ -130,7 +111,7 @@ impl Cpu {
             ));
         };
 
-        let fetched_data = self.fetch_data_mode(instruction.get_address_mode());
+        let fetched_data = self.fetch_data(instruction.get_address_mode());
 
         #[cfg(debug_assertions)]
         let inst_ctx = DebugCtx {
