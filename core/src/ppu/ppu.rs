@@ -151,7 +151,7 @@ impl Default for Fps {
     }
 }
 
-use core::fmt::Write;
+use std::fmt::Write;
 
 impl Fps {
     pub fn update(&mut self) {

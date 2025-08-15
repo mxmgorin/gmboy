@@ -197,7 +197,7 @@ fn test_cpu_instructs_11() {
     assert_result(
         name,
         category,
-        run_blargg_rom_serial(name, category, TIMEOUT),
+        run_blargg_rom_serial(name, category, Duration::from_secs(60)),
     );
 }
 
