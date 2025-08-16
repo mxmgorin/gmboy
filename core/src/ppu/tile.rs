@@ -178,20 +178,6 @@ impl PixelColor {
         Self::new(r, g, b)
     }
 
-    /// Convert to RGBA8888 (full 8-bit channels, alpha = 255)
-    pub fn as_rgba_bytes(&self) -> [u8; 4] {
-        let r = ((self.rgb565 >> 11) & 0x1F) as u8;
-        let g = ((self.rgb565 >> 5) & 0x3F) as u8;
-        let b = (self.rgb565 & 0x1F) as u8;
-
-        [
-            r << 3 | (r >> 2), // scale 5-bit → 8-bit
-            g << 2 | (g >> 4), // scale 6-bit → 8-bit
-            b << 3 | (b >> 2), // scale 5-bit → 8-bit
-            255,               // alpha
-        ]
-    }
-
     /// Convert to RGB888 (full 8-bit channels)
     pub fn as_rgb_bytes(&self) -> [u8; 3] {
         let r = ((self.rgb565 >> 11) & 0x1F) as u8;

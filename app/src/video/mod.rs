@@ -71,25 +71,10 @@ impl VideoTexture {
     }
 
     pub fn fill(&mut self, color: PixelColor) {
-        for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
-            if self.bytes_per_pixel == 2 {
-                let colors = color.as_rgb565_bytes();
-                self.buffer[i] = colors[0];
-                self.buffer[i + 1] = colors[1];
-            } else {
-                let colors = color.as_rgba_bytes();
-                self.buffer[i] = colors[0];
-                self.buffer[i + 1] = colors[1];
-                self.buffer[i + 2] = colors[2];
-
-                if self.bytes_per_pixel == 4 {
-                    self.buffer[i + 3] = colors[3];
-                }
-            }
-        }
+        fill_buffer(&mut self.buffer, color, self.bytes_per_pixel)
     }
 
-    pub fn zero(&mut self) {
+    pub fn clear(&mut self) {
         for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
             self.buffer[i] = 0;
             self.buffer[i + 1] = 0;
@@ -98,6 +83,31 @@ impl VideoTexture {
             if self.bytes_per_pixel == 4 {
                 self.buffer[i + 3] = 0;
             }
+        }
+    }
+}
+
+#[inline]
+pub fn fill_buffer(buffer: &mut [u8], color: PixelColor, bytes_per_pixel: usize) {
+    for i in (0..buffer.len()).step_by(bytes_per_pixel) {
+        draw_color(buffer, i, color, bytes_per_pixel);
+    }
+}
+
+#[inline]
+pub fn draw_color(buffer: &mut [u8], index: usize, color: PixelColor, bytes_per_pixel: usize) {
+    if bytes_per_pixel == 2 {
+        let bytes = color.as_rgb565_bytes();
+        buffer[index] = bytes[0];
+        buffer[index + 1] = bytes[1];
+    } else {
+        let bytes = color.as_rgb_bytes();
+        buffer[index] = bytes[0];
+        buffer[index + 1] = bytes[1];
+        buffer[index + 2] = bytes[2];
+
+        if bytes_per_pixel == 4 {
+            buffer[index + 3] = 255;
         }
     }
 }

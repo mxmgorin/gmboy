@@ -1,5 +1,6 @@
 use crate::video::char::get_char_bitmap;
 use core::ppu::tile::PixelColor;
+use crate::video::draw_color;
 
 /// Calculate the text width based on character count, scale, and character width
 pub fn calc_text_width_str(text: &str, size: FontSize) -> usize {
@@ -80,7 +81,7 @@ pub fn draw_text_lines(
         for py in y.saturating_sub(BG_PADDING)..y + total_height + BG_PADDING {
             for px in x.saturating_sub(BG_PADDING)..x + max_line_width + BG_PADDING {
                 let offset = (py * pitch) + (px * bytes_per_pixel);
-                draw_colors(buffer, offset, bg_color, bytes_per_pixel);
+                draw_color(buffer, offset, bg_color, bytes_per_pixel);
             }
         }
     }
@@ -127,30 +128,13 @@ pub fn draw_text_lines(
                                 let py = text_pixel_y + dy;
                                 let offset = (py.saturating_mul(pitch))
                                     + (px.saturating_mul(bytes_per_pixel));
-                                draw_colors(buffer, offset, text_color, bytes_per_pixel);
+                                draw_color(buffer, offset, text_color, bytes_per_pixel);
                             }
                         }
                     }
                 }
             }
             cursor_x += (size.width() * scale) + size.spacing();
-        }
-    }
-}
-
-pub fn draw_colors(buffer: &mut [u8], offset: usize, color: PixelColor, bytes_per_pixel: usize) {
-    if bytes_per_pixel == 2 {
-        let colors = color.as_rgb565_bytes();
-        buffer[offset] = colors[0];
-        buffer[offset + 1] = colors[1];
-    } else {
-        let colors = color.as_rgba_bytes();
-        buffer[offset] = colors[0];
-        buffer[offset + 1] = colors[1];
-        buffer[offset + 2] = colors[2];
-
-        if bytes_per_pixel == 4 {
-            buffer[offset + 3] = colors[3];
         }
     }
 }
