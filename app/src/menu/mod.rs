@@ -11,7 +11,7 @@ pub mod roms;
 pub use factory::*;
 pub use menu::*;
 
-pub const MAX_MENU_ITEMS_PER_PAGE: usize = 10;
+pub const MAX_MENU_ITEMS_PER_PAGE: usize = 12;
 pub const MAX_MENU_ITEM_CHARS: usize = 22;
 
 pub fn truncate_menu_item(s: &str) -> String {
