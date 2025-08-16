@@ -40,6 +40,8 @@ impl Overlay {
         };
 
         let text_height = self.font_size.height() * lines.len();
+        let lines_height = self.font_size.line_spacing() * (lines.len().saturating_sub(1));
+        let text_height = text_height + lines_height;
         let mut x = menu_width.saturating_sub(text_width);
         let mut y = LCD_Y_RES as usize - text_height;
 
