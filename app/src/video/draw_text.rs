@@ -1,19 +1,6 @@
 use crate::video::char::get_char_bitmap;
-use core::ppu::tile::PixelColor;
 use crate::video::draw_color;
-
-/// Calculate the text width based on character count, scale, and character width
-pub fn calc_text_width_str(text: &str, size: FontSize) -> usize {
-    calc_text_width(text.len(), size)
-}
-
-pub fn calc_text_width(len: usize, size: FontSize) -> usize {
-    len * size.width() + (len - 1) * size.spacing()
-}
-
-pub fn calc_text_height(size: FontSize) -> usize {
-    size.height()
-}
+use core::ppu::tile::PixelColor;
 
 #[derive(Clone, Copy)]
 pub struct CenterAlignedText {
@@ -25,7 +12,7 @@ impl CenterAlignedText {
         let len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
 
         Self {
-            longest_text_width: calc_text_width(len, size).min(max),
+            longest_text_width: size.calc_len_width(len).min(max),
         }
     }
 }
@@ -149,7 +136,7 @@ pub enum FontSize {
 }
 
 impl FontSize {
-    fn height(self) -> usize {
+    pub fn height(self) -> usize {
         match self {
             FontSize::Big8x8 => 8,
             FontSize::Normal5x6 => 6,
@@ -158,7 +145,7 @@ impl FontSize {
         }
     }
 
-    fn width(self) -> usize {
+    pub fn width(self) -> usize {
         match self {
             FontSize::Big8x8 => 8,
             FontSize::Normal5x6 => 5,
@@ -167,7 +154,7 @@ impl FontSize {
         }
     }
 
-    fn spacing(self) -> usize {
+    pub fn spacing(self) -> usize {
         match self {
             FontSize::Big8x8 => 2,
             FontSize::Normal5x6 => 1,
@@ -176,7 +163,7 @@ impl FontSize {
         }
     }
 
-    fn line_spacing(self) -> usize {
+    pub fn line_spacing(self) -> usize {
         match self {
             FontSize::Big8x8 => 2,
             FontSize::Normal5x6 => 2,
@@ -185,12 +172,21 @@ impl FontSize {
         }
     }
 
-    fn padding(self) -> usize {
+    pub fn padding(self) -> usize {
         match self {
             FontSize::Big8x8 => 4,
             FontSize::Normal5x6 => 4,
             FontSize::Tiny3x4 => 1,
             FontSize::Small4x5 => 2,
         }
+    }
+
+    /// Calculate the text width based on character count, scale, and character width
+    pub fn calc_text_width(&self, text: &str) -> usize {
+        self.calc_len_width(text.len())
+    }
+
+    pub fn calc_len_width(&self, len: usize) -> usize {
+        len * self.width() + (len - 1) * self.spacing()
     }
 }

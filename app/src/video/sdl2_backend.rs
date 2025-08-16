@@ -16,9 +16,7 @@ pub struct Sdl2Backend {
     texture_creator: TextureCreator<WindowContext>,
     game_texture: Texture,
     notif_texture: Texture,
-    fps_texture: Texture,
     game_rect: Rect,
-    fps_rect: Rect,
     notif_rect: Rect,
     filters: Sdl2Filters,
     pub canvas: Canvas<Window>,
@@ -29,7 +27,6 @@ impl Sdl2Backend {
         sdl: &Sdl,
         config: &VideoConfig,
         game_rect: Rect,
-        fps_rect: Rect,
         notif_rect: Rect,
     ) -> Self {
         let video_subsystem = sdl.video().unwrap();
@@ -58,15 +55,6 @@ impl Sdl2Backend {
             )
             .unwrap();
         notif_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-        // fps
-        let mut fps_texture = texture_creator
-            .create_texture_streaming(
-                PixelFormatEnum::ABGR8888,
-                fps_rect.width(),
-                fps_rect.height(),
-            )
-            .unwrap();
-        fps_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Self {
             filters: Sdl2Filters::new(&mut canvas, &texture_creator, game_rect),
@@ -80,10 +68,8 @@ impl Sdl2Backend {
             canvas,
             game_texture,
             game_rect,
-            fps_rect,
             notif_rect,
             notif_texture,
-            fps_texture,
         }
     }
 
@@ -127,15 +113,6 @@ impl Sdl2Backend {
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
         self.filters.apply(&mut self.canvas, &config.render.sdl2);
-    }
-
-    pub fn draw_fps(&mut self, texture: &VideoTexture) {
-        self.fps_texture
-            .update(None, &texture.buffer, texture.pitch)
-            .unwrap();
-        self.canvas
-            .copy(&self.fps_texture, None, Some(self.fps_rect))
-            .unwrap();
     }
 
     pub fn draw_notif(&mut self, texture: &VideoTexture) {

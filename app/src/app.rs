@@ -176,7 +176,6 @@ where
         };
 
         let mut last_render_time = Instant::now();
-        let mut prev_fps = 0.0;
         let mut fps_str = arrayvec::ArrayString::<10>::new();
 
         while self.state != AppState::Quitting {
@@ -189,19 +188,18 @@ where
                 let time_since_last_render = now.duration_since(last_render_time);
 
                 if on_time || time_since_last_render >= self.min_render_interval {
+                    let fps = emu.runtime.cpu.clock.ppu.get_fps();
                     let buff = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
-                    self.video.draw_buffer(buff);
 
-                    if let Some(new_fps) = emu.runtime.cpu.clock.ppu.get_fps() {
-                        let fps_updated = (new_fps - prev_fps).abs() > f32::EPSILON;
+                    if let Some(new_fps) = fps {
                         fps_str.clear();
                         write!(&mut fps_str, "{new_fps:.2}").unwrap();
-                        self.draw_notif(Some((&fps_str, fps_updated)));
-                        prev_fps = new_fps;
-                    } else {
-                        self.draw_notif(None);
+                        self.video.ui.draw_hud_to_buff(buff, &fps_str);
+                        self.video.draw_buffer(buff);
                     }
 
+                    self.video.draw_buffer(buff);
+                    self.draw_hud();
                     self.video.show();
                     last_render_time = now;
                 }
@@ -216,36 +214,22 @@ where
         emu.runtime.cpu.clock.reset();
         let buffer = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
         self.draw_menu(buffer);
-        self.draw_notif(None);
+        self.draw_hud();
 
         self.video.show();
 
         thread::sleep(Duration::from_millis(30));
     }
 
-    pub fn draw_notif(&mut self, fps: Option<(&str, bool)>) -> bool {
+    pub fn draw_hud(&mut self) {
         let (lines, updated) = self.notifications.update_and_get();
-        let mut res = false;
-
-        if lines.is_empty() {
-            if let Some((fps, updated)) = fps {
-                if updated {
-                    self.video.ui.update_fps(fps);
-                    res = true;
-                }
-
-                self.video.draw_fps();
-            }
-        } else if updated || !lines.is_empty() {
+        if updated || !lines.is_empty() {
             if updated {
                 self.video.ui.update_notif(lines);
             }
 
             self.video.draw_notif();
-            res = true;
         }
-
-        res
     }
 
     pub fn restart_rom(&mut self, emu: &mut Emu) {

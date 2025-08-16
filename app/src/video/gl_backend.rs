@@ -18,7 +18,6 @@ pub struct GlBackend {
     vbo: u32,
     uniform_locations: UniformLocations,
     game_rect: Rect,
-    fps_texture_id: u32,
     notif_texture_id: u32,
     shader_frame_blend_mode: ShaderFrameBlendMode,
     prev_buffer: Box<[u8]>,
@@ -28,7 +27,6 @@ impl GlBackend {
     pub fn new(
         sdl: &Sdl,
         game_rect: Rect,
-        fps_rect: Rect,
         notif_rect: Rect,
         config: &RenderConfig,
     ) -> Result<Self, String> {
@@ -47,13 +45,6 @@ impl GlBackend {
             vao: 0,
             vbo: 0,
             uniform_locations: Default::default(),
-            fps_texture_id: create_texture(
-                fps_rect.w,
-                fps_rect.h,
-                gl::RGBA,
-                gl::RGBA,
-                gl::UNSIGNED_BYTE,
-            ),
             prev_frame_texture_id: 0,
             notif_texture_id: create_texture(
                 notif_rect.w,
@@ -105,10 +96,6 @@ impl GlBackend {
 
         self.uniform_locations
             .send_frame_blend_mode(self.shader_frame_blend_mode);
-    }
-
-    pub fn draw_fps(&mut self, texture: &VideoTexture) {
-        self.draw_hud(texture, self.fps_texture_id);
     }
 
     pub fn draw_notif(&mut self, texture: &VideoTexture) {
