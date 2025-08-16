@@ -25,7 +25,7 @@ impl Overlay {
         overlay_scale: usize,
     ) -> Self {
         Self {
-            font_size: FontSize::Small,
+            font_size: FontSize::Normal5x6,
             fps_texture: VideoTexture::new(fps_rect, 4),
             notif_texture: VideoTexture::new(notif_rect, 4),
             bg_color,

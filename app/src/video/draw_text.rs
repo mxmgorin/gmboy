@@ -47,7 +47,6 @@ pub fn draw_text_lines(
         return;
     }
 
-
     let max_line_width = if let Some(center) = align_center {
         center.longest_text_width
     } else if bg_color.is_some() {
@@ -143,36 +142,46 @@ pub fn draw_text_lines(
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
 pub enum FontSize {
-    Normal,
-    Small,
+    Big8x8,
+    Normal5x6,
+    Small4x5,
+    Tiny3x4,
 }
 
 impl FontSize {
     fn height(self) -> usize {
         match self {
-            FontSize::Normal => 8,
-            FontSize::Small => 6,
+            FontSize::Big8x8 => 8,
+            FontSize::Normal5x6 => 6,
+            FontSize::Tiny3x4 => 4,
+            FontSize::Small4x5 => 5,
         }
     }
 
     fn width(self) -> usize {
         match self {
-            FontSize::Normal => 8,
-            FontSize::Small => 5,
+            FontSize::Big8x8 => 8,
+            FontSize::Normal5x6 => 5,
+            FontSize::Tiny3x4 => 3,
+            FontSize::Small4x5 => 4,
         }
     }
 
     fn spacing(self) -> usize {
         match self {
-            FontSize::Normal => 2,
-            FontSize::Small => 1,
+            FontSize::Big8x8 => 2,
+            FontSize::Normal5x6 => 1,
+            FontSize::Tiny3x4 => 1,
+            FontSize::Small4x5 => 1,
         }
     }
 
     fn line_spacing(self) -> usize {
         match self {
-            FontSize::Normal => 2,
-            FontSize::Small => 2,
+            FontSize::Big8x8 => 2,
+            FontSize::Normal5x6 => 2,
+            FontSize::Tiny3x4 => 1,
+            FontSize::Small4x5 => 1,
         }
     }
 }

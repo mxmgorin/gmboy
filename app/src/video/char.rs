@@ -2,12 +2,48 @@ use crate::video::draw_text::FontSize;
 
 pub fn get_char_bitmap(c: char, size: FontSize) -> Option<Box<[u8]>> {
     match size {
-        FontSize::Normal => get_normal_char_bitmap(c).map(Box::from),
-        FontSize::Small => get_small_char_bitmap(c).map(Box::from),
+        FontSize::Big8x8 => char_bitmap_8x8(c).map(Box::from),
+        FontSize::Normal5x6 => char_bitmap_5x6(c).map(Box::from),
+        FontSize::Tiny3x4 => char_bitmap_3x4(c).map(Box::from),
+        FontSize::Small4x5 => char_bitmap_4x5(c).map(Box::from),
     }
 }
 
-fn get_small_char_bitmap(c: char) -> Option<[u8; 6]> {
+fn char_bitmap_3x4(c: char) -> Option<[u8; 4]> {
+    match c {
+        '0' => [0b111, 0b101, 0b101, 0b111].into(),
+        '1' => [0b010, 0b110, 0b010, 0b111].into(),
+        '2' => [0b111, 0b001, 0b111, 0b100].into(),
+        '3' => [0b111, 0b001, 0b011, 0b111].into(),
+        '4' => [0b101, 0b101, 0b111, 0b001].into(),
+        '5' => [0b111, 0b100, 0b111, 0b011].into(),
+        '6' => [0b111, 0b100, 0b111, 0b111].into(),
+        '7' => [0b111, 0b001, 0b010, 0b010].into(),
+        '8' => [0b111, 0b101, 0b111, 0b111].into(),
+        '9' => [0b111, 0b101, 0b111, 0b011].into(),
+        '.' => [0b000, 0b000, 0b000, 0b010].into(),
+        _ => None,
+    }
+}
+
+fn char_bitmap_4x5(ch: char) -> Option<[u8; 5]> {
+    Some(match ch {
+        '0' => [0b0110, 0b1001, 0b1001, 0b1001, 0b0110],
+        '1' => [0b0100, 0b1100, 0b0100, 0b0100, 0b1110],
+        '2' => [0b1110, 0b0001, 0b1110, 0b1000, 0b1111],
+        '3' => [0b1110, 0b0001, 0b0110, 0b0001, 0b1110],
+        '4' => [0b1001, 0b1001, 0b1111, 0b0001, 0b0001],
+        '5' => [0b1111, 0b1000, 0b1110, 0b0001, 0b1110],
+        '6' => [0b0110, 0b1000, 0b1110, 0b1001, 0b0110],
+        '7' => [0b1111, 0b0001, 0b0010, 0b0100, 0b0100],
+        '8' => [0b0110, 0b1001, 0b0110, 0b1001, 0b0110],
+        '9' => [0b0110, 0b1001, 0b0111, 0b0001, 0b0110],
+        '.' => [0b0000, 0b0000, 0b0000, 0b0110, 0b0110],
+        _ => [0b0000; 5],
+    })
+}
+
+fn char_bitmap_5x6(c: char) -> Option<[u8; 6]> {
     match c {
         'A' => Some([0b01110, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001]),
         'B' => Some([0b11110, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110]),
@@ -89,20 +125,8 @@ fn get_small_char_bitmap(c: char) -> Option<[u8; 6]> {
         '▼' => Some([0b00000, 0b00000, 0b00000, 0b11111, 0b01110, 0b00100]),
         '#' => Some([0b01010, 0b11111, 0b01010, 0b01010, 0b11111, 0b01010]),
         ':' => Some([0b00000, 0b00100, 0b00000, 0b00000, 0b00100, 0b00000]),
-        '/' => Some([
-            0b00000,
-            0b00001,
-            0b00010,
-            0b00100,
-            0b01000,
-            0b10000]),
-        '\\' => Some([
-            0b00000,
-            0b10000,
-            0b01000,
-            0b00100,
-            0b00010,
-            0b00001]),
+        '/' => Some([0b00000, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000]),
+        '\\' => Some([0b00000, 0b10000, 0b01000, 0b00100, 0b00010, 0b00001]),
         'µ' => Some([0b10001, 0b10001, 0b10001, 0b10011, 0b11101, 0b10000]),
         '…' => Some([0b00000, 0b00000, 0b00000, 0b00000, 0b10101, 0b10101]),
         '[' => Some([
@@ -126,7 +150,7 @@ fn get_small_char_bitmap(c: char) -> Option<[u8; 6]> {
     }
 }
 
-pub fn get_normal_char_bitmap(c: char) -> Option<[u8; 8]> {
+pub fn char_bitmap_8x8(c: char) -> Option<[u8; 8]> {
     match c {
         // A-Z
         'A' => Some([
