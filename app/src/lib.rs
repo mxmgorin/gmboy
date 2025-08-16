@@ -85,10 +85,8 @@ where
         if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
             log::warn!("Failed to load cart file: {err}");
         }
-    } else if let Some(cart_path) = app.roms.get_last_path() {
-        if let Err(err) = app.load_cart_file(emu, &cart_path.to_path_buf()) {
-            log::warn!("Failed to load cart file: {err}");
-        }
+    } else {
+        app.restart_rom(emu);
     }
 }
 

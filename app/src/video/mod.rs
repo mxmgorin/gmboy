@@ -125,10 +125,10 @@ impl VideoBackend {
         }
     }
 
-    pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
+    pub fn draw_menu(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
-            VideoBackend::Sdl2(x) => x.draw_menu(texture, config),
-            VideoBackend::Gl(x) => x.draw_menu(texture),
+            VideoBackend::Sdl2(x) => x.draw_menu(buffer, config),
+            VideoBackend::Gl(x) => x.draw_menu(buffer),
         }
     }
 

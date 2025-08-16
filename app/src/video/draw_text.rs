@@ -128,6 +128,7 @@ pub fn draw_text_lines(
                                 let py = text_pixel_y + dy;
                                 let offset = (py.saturating_mul(pitch))
                                     + (px.saturating_mul(bytes_per_pixel));
+
                                 draw_color(buffer, offset, text_color, bytes_per_pixel);
                             }
                         }

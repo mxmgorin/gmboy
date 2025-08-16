@@ -97,11 +97,11 @@ impl GlBackend {
         }
     }
 
-    pub fn draw_menu(&mut self, texture: &VideoTexture) {
+    pub fn draw_menu(&mut self, buffer: &[u8]) {
         self.uniform_locations
             .send_frame_blend_mode(ShaderFrameBlendMode::None);
 
-        self.draw_buffer(&texture.buffer);
+        self.draw_buffer(buffer);
 
         self.uniform_locations
             .send_frame_blend_mode(self.shader_frame_blend_mode);
@@ -323,7 +323,7 @@ impl GlBackend {
                 0;
                 RenderConfig::WIDTH
                     * RenderConfig::HEIGHT
-                    * core::ppu::fetcher::PPU_BYTES_PER_PIXEL
+                    * core::ppu::PPU_BYTES_PER_PIXEL
             ]
             .into_boxed_slice();
         } else if frame_blend_mode == ShaderFrameBlendMode::None && !self.prev_buffer.is_empty() {

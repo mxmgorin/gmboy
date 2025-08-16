@@ -128,14 +128,11 @@ impl InputHandler {
                     app.state = AppState::Running;
                 } else {
                     app.state = AppState::Paused;
+                    app.menu.request_update();
                 }
             }
-            AppCmd::RestartGame => {
-                if let Some(path) = app.roms.get_last_path() {
-                    if let Err(err) = app.load_cart_file(emu, &path.to_path_buf()) {
-                        log::warn!("Failed to load cart file: {err}");
-                    }
-                }
+            AppCmd::RestartRom => {
+                app.restart_rom(emu);
             }
             AppCmd::ChangeMode(mode) => {
                 emu.state = EmuState::Running;

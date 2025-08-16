@@ -29,7 +29,7 @@ pub enum AppCmd {
     ToggleMenu,
     ToggleRewind,
     LoadFile(PathBuf),
-    RestartGame,
+    RestartRom,
     ChangeMode(RunMode),
     SaveState(SaveStateCmd, Option<usize>),
     SelectRom,
@@ -186,8 +186,9 @@ where
                 let time_since_last_render = now.duration_since(last_render_time);
 
                 if on_time || time_since_last_render >= self.min_render_interval {
-                    self.video.draw_buffer(&emu.runtime.cpu.clock.ppu.pipeline.buffer);
-                    self.draw_notification(emu.runtime.cpu.clock.ppu.get_fps());
+                    self.video
+                        .draw_buffer(&emu.runtime.cpu.clock.ppu.pipeline.buffer);
+                    self.draw_notif(emu.runtime.cpu.clock.ppu.get_fps());
                     self.video.show();
                     last_render_time = now;
                 }
@@ -200,19 +201,24 @@ where
     pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
         input.handle_events(self, emu);
         emu.runtime.cpu.clock.reset();
-        self.draw_menu();
-        self.draw_notification(None);
+        let buffer = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
+        self.draw_menu(buffer);
+        self.draw_notif(None);
+
         self.video.show();
+
         thread::sleep(Duration::from_millis(30));
     }
 
-    pub fn draw_notification(&mut self, fps: Option<(&str, bool)>) {
+    pub fn draw_notif(&mut self, fps: Option<(&str, bool)>) -> bool {
         let (lines, updated) = self.notifications.update_and_get();
+        let mut res = false;
 
         if lines.is_empty() {
             if let Some((fps, updated)) = fps {
                 if updated {
                     self.video.ui.update_fps(fps);
+                    res = true;
                 }
 
                 self.video.draw_fps();
@@ -223,6 +229,17 @@ where
             }
 
             self.video.draw_notif();
+            res = true;
+        }
+
+        res
+    }
+
+    pub fn restart_rom(&mut self, emu: &mut Emu) {
+        if let Some(cart_path) = self.roms.get_last_path() {
+            if let Err(err) = self.load_cart_file(emu, &cart_path.to_path_buf()) {
+                log::warn!("Failed to load cart file: {err}");
+            }
         }
     }
 
@@ -236,14 +253,16 @@ where
         Ok(())
     }
 
-    fn draw_menu(&mut self) {
+    fn draw_menu(&mut self, buffer: &mut [u8]) -> bool {
         let (items, updated) = self.menu.get_items(&self.config, &self.roms);
 
         if updated {
-            self.video.ui.update_menu(items, true, true);
+            self.video.ui.update_menu(buffer, items, true, true);
         }
 
-        self.video.draw_menu();
+        self.video.draw_menu(buffer);
+
+        updated
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {

@@ -601,7 +601,7 @@ impl AppMenu {
 
                 None
             }
-            AppMenuItem::RestartGame => Some(AppCmd::RestartGame),
+            AppMenuItem::RestartGame => Some(AppCmd::RestartRom),
             AppMenuItem::InputMenu => {
                 self.next_items(input_menu());
 

@@ -27,12 +27,7 @@ impl AppVideo {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
-        let menu_rect = Rect::new(
-            0,
-            0,
-            RenderConfig::WIDTH as u32,
-            RenderConfig::HEIGHT as u32,
-        );
+
         let notif_rect = Rect::new(
             6,
             6,
@@ -42,7 +37,7 @@ impl AppVideo {
         let (mut backend, ui) = match config.render.backend {
             VideoBackendType::Sdl2 => {
                 let fps_rect = Rect::new(6, 6, 76, 76);
-                let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
+                let ui = Overlay::new(fps_rect, notif_rect, text_color, bg_color, 2);
                 let backend = Sdl2Backend::new(sdl, config, game_rect, fps_rect, notif_rect);
 
                 (VideoBackend::Sdl2(backend), ui)
@@ -54,7 +49,7 @@ impl AppVideo {
                     RenderConfig::WIDTH as u32 * 3,
                     RenderConfig::WIDTH as u32 * 3,
                 );
-                let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
+                let ui = Overlay::new(fps_rect, notif_rect, text_color, bg_color, 1);
                 let backend = GlBackend::new(sdl, game_rect, fps_rect, notif_rect, &config.render)?;
 
                 (VideoBackend::Gl(backend), ui)
@@ -92,8 +87,8 @@ impl AppVideo {
         self.backend.draw_buffer(buffer, &self.config);
     }
 
-    pub fn draw_menu(&mut self) {
-        self.backend.draw_menu(&self.ui.menu_texture, &self.config)
+    pub fn draw_menu(&mut self, buffer: &[u8]) {
+        self.backend.draw_menu(buffer, &self.config)
     }
 
     pub fn draw_fps(&mut self) {

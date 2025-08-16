@@ -13,7 +13,11 @@ pub const LCD_Y_RES: u8 = 144;
 pub const LCD_X_RES: u8 = 160;
 pub const TARGET_FPS_F: f64 = 59.7;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = FRAME_DURATION.as_millis() as u64;
-pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
+pub const PPU_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
+pub const PPU_BYTES_PER_PIXEL: usize = 2;
+pub const PPU_BUFFER_LEN: usize = PPU_PIXELS_COUNT * PPU_BYTES_PER_PIXEL;
+pub const PPU_PITCH: usize = PPU_BYTES_PER_PIXEL * LCD_X_RES as usize;
+
 pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

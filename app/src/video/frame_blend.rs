@@ -1,5 +1,5 @@
 use crate::config::{RenderConfig, VideoConfig};
-use core::ppu::fetcher::PPU_BUFFER_LEN;
+use core::ppu::PPU_BUFFER_LEN;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -1,14 +1,15 @@
 use crate::video::draw_text::{
     calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
 };
-use crate::video::VideoTexture;
+use crate::video::{fill_buffer, VideoTexture};
 use core::ppu::tile::PixelColor;
+use core::ppu::LCD_X_RES;
+use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
 pub struct Overlay {
     pub notif_texture: VideoTexture,
     pub fps_texture: VideoTexture,
-    pub menu_texture: VideoTexture,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
     font_size: FontSize,
@@ -17,7 +18,6 @@ pub struct Overlay {
 
 impl Overlay {
     pub fn new(
-        menu_rect: Rect,
         fps_rect: Rect,
         notif_rect: Rect,
         text_color: PixelColor,
@@ -26,7 +26,6 @@ impl Overlay {
     ) -> Self {
         Self {
             font_size: FontSize::Small,
-            menu_texture: VideoTexture::new(menu_rect, core::ppu::fetcher::PPU_BYTES_PER_PIXEL),
             fps_texture: VideoTexture::new(fps_rect, 4),
             notif_texture: VideoTexture::new(notif_rect, 4),
             bg_color,
@@ -35,8 +34,14 @@ impl Overlay {
         }
     }
 
-    pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {
-        let menu_width = self.menu_texture.rect.w as usize;
+    pub fn update_menu(
+        &self,
+        buffer: &mut [u8],
+        lines: &[&str],
+        center: bool,
+        align_center: bool,
+    ) {
+        let menu_width = LCD_X_RES as usize;
 
         let (align_center_opt, text_width) = if align_center {
             let center = CenterAlignedText::new(lines, self.font_size, menu_width);
@@ -47,17 +52,17 @@ impl Overlay {
 
         let text_height = calc_text_height(self.font_size) * lines.len();
         let mut x = menu_width.saturating_sub(text_width);
-        let mut y = self.menu_texture.rect.h as usize - text_height;
+        let mut y = LCD_Y_RES as usize - text_height;
 
         if center {
             x /= 2;
             y /= 2;
         }
 
-        self.menu_texture.fill(self.bg_color);
+        fill_buffer(buffer, self.bg_color, core::ppu::PPU_BYTES_PER_PIXEL);
         draw_text_lines(
-            &mut self.menu_texture.buffer,
-            self.menu_texture.pitch,
+            buffer,
+            core::ppu::PPU_PITCH,
             lines,
             self.text_color,
             None,
@@ -66,7 +71,7 @@ impl Overlay {
             self.font_size,
             1,
             align_center_opt,
-            self.menu_texture.bytes_per_pixel,
+            core::ppu::PPU_BYTES_PER_PIXEL,
         );
     }
 

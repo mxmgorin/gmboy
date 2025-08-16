@@ -109,7 +109,7 @@ impl Sdl2Backend {
 
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         self.clear();
-        let pitch = RenderConfig::WIDTH * core::ppu::fetcher::PPU_BYTES_PER_PIXEL;
+        let pitch = RenderConfig::WIDTH * core::ppu::PPU_BYTES_PER_PIXEL;
         self.game_texture.update(None, buffer, pitch).unwrap();
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))
@@ -117,10 +117,11 @@ impl Sdl2Backend {
         self.filters.apply(&mut self.canvas, &config.render.sdl2);
     }
 
-    pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
+    pub fn draw_menu(&mut self, buffer: &[u8], config: &VideoConfig) {
         self.clear();
+        
         self.game_texture
-            .update(None, &texture.buffer, texture.pitch)
+            .update(None, buffer, core::ppu::PPU_PITCH)
             .unwrap();
         self.canvas
             .copy(&self.game_texture, None, Some(self.game_rect))

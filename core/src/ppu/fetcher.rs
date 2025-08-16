@@ -3,13 +3,11 @@ use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::PixelColor;
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
-use crate::ppu::{LCD_X_RES, LCD_Y_RES};
+use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
 use std::ptr;
 use serde::{Deserialize, Serialize};
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
-pub const PPU_BYTES_PER_PIXEL: usize = 2;
-pub const PPU_BUFFER_LEN: usize = LCD_Y_RES as usize * LCD_X_RES as usize * PPU_BYTES_PER_PIXEL;
 
 type FetchFn = fn(&mut PixelFetcher, &Bus);
 
