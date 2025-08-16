@@ -3,7 +3,6 @@ use crate::bus::Bus;
 use crate::cpu::interrupts::InterruptType;
 use crate::ppu::fetcher::PixelFetcher;
 use crate::ppu::lcd::{LcdStatSrc, PpuMode};
-use arrayvec::ArrayString;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
@@ -43,8 +42,8 @@ impl Ppu {
         }
     }
 
-    pub fn get_fps(&mut self) -> Option<(&str, bool)> {
-        self.fps.as_mut().map(|x| x.take())
+    pub fn get_fps(&mut self) -> Option<f32> {
+        self.fps.as_mut().map(|x| x.get())
     }
 
     pub fn tick(&mut self, bus: &mut Bus) {
@@ -136,8 +135,6 @@ pub struct Fps {
     frame_accum: f32,
     frame_count: u32,
     fps: f32,
-    fps_str: ArrayString<10>,
-    updated: bool,
 }
 
 impl Default for Fps {
@@ -149,13 +146,9 @@ impl Default for Fps {
             frame_accum: 0.0,
             frame_count: 0,
             fps: 0.0,
-            fps_str: ArrayString::<10>::new(),
-            updated: false,
         }
     }
 }
-
-use std::fmt::Write;
 
 impl Fps {
     pub fn update(&mut self) {
@@ -166,19 +159,11 @@ impl Fps {
         self.frame_count += 1;
 
         if (now - self.last_fps_update).as_secs_f32() >= 1.0 {
-            let new_fps = if self.frame_accum > 0.0 {
+            self.fps = if self.frame_accum > 0.0 {
                 self.frame_count as f32 / self.frame_accum
             } else {
                 0.0
             };
-
-            self.updated = (new_fps - self.fps).abs() > f32::EPSILON;
-
-            if self.updated {
-                self.fps = new_fps;
-                self.fps_str.clear();
-                write!(&mut self.fps_str, "{:.2}", self.fps).unwrap();
-            }
 
             self.last_fps_update = now;
             self.frame_count = 0;
@@ -186,10 +171,7 @@ impl Fps {
         }
     }
 
-    pub fn take(&mut self) -> (&str, bool) {
-        let updated = self.updated;
-        self.updated = false;
-
-        (&self.fps_str, updated)
+    pub fn get(&mut self) -> f32 {
+        self.fps
     }
 }

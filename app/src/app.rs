@@ -18,6 +18,7 @@ use core::emu::Emu;
 use core::emu::EmuAudioCallback;
 use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
+use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::{Duration, Instant};
@@ -175,6 +176,8 @@ where
         };
 
         let mut last_render_time = Instant::now();
+        let mut prev_fps = 0.0;
+        let mut fps_str = arrayvec::ArrayString::<10>::new();
 
         while self.state != AppState::Quitting {
             if self.state == AppState::Paused {
@@ -186,9 +189,19 @@ where
                 let time_since_last_render = now.duration_since(last_render_time);
 
                 if on_time || time_since_last_render >= self.min_render_interval {
-                    self.video
-                        .draw_buffer(&emu.runtime.cpu.clock.ppu.pipeline.buffer);
-                    self.draw_notif(emu.runtime.cpu.clock.ppu.get_fps());
+                    let buff = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
+                    self.video.draw_buffer(buff);
+
+                    if let Some(new_fps) = emu.runtime.cpu.clock.ppu.get_fps() {
+                        let fps_updated = (new_fps - prev_fps).abs() > f32::EPSILON;
+                        fps_str.clear();
+                        write!(&mut fps_str, "{new_fps:.2}").unwrap();
+                        self.draw_notif(Some((&fps_str, fps_updated)));
+                        prev_fps = new_fps;
+                    } else {
+                        self.draw_notif(None);
+                    }
+
                     self.video.show();
                     last_render_time = now;
                 }
