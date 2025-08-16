@@ -129,10 +129,12 @@ pub fn draw_text_lines(
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
 pub enum FontSize {
-    Font8x8,
-    Font5x6,
-    Font4x5,
     Font3x4,
+    Font4x5,
+    Font5x5,
+    Font5x6,
+    Font8x8,
+
 }
 
 impl FontSize {
@@ -142,6 +144,7 @@ impl FontSize {
             FontSize::Font5x6 => 6,
             FontSize::Font3x4 => 4,
             FontSize::Font4x5 => 5,
+            FontSize::Font5x5 => 5,
         }
     }
 
@@ -151,6 +154,7 @@ impl FontSize {
             FontSize::Font5x6 => 5,
             FontSize::Font3x4 => 3,
             FontSize::Font4x5 => 4,
+            FontSize::Font5x5 => 5,
         }
     }
 
@@ -160,6 +164,7 @@ impl FontSize {
             FontSize::Font5x6 => 1,
             FontSize::Font3x4 => 1,
             FontSize::Font4x5 => 1,
+            FontSize::Font5x5 => 1,
         }
     }
 
@@ -169,6 +174,7 @@ impl FontSize {
             FontSize::Font5x6 => 2,
             FontSize::Font3x4 => 1,
             FontSize::Font4x5 => 1,
+            FontSize::Font5x5 => 2,
         }
     }
 
@@ -178,6 +184,7 @@ impl FontSize {
             FontSize::Font5x6 => 4,
             FontSize::Font3x4 => 1,
             FontSize::Font4x5 => 2,
+            FontSize::Font5x5 => 2,
         }
     }
 
