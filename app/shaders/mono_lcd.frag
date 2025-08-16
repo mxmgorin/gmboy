@@ -4,6 +4,7 @@
 STATIC vec4 scale(sampler2D image, vec2 position, vec2 input_resolution, vec2 output_resolution)
 {
     vec2 pixel = position * input_resolution - vec2(0.5, 0.5);
+    float original_alpha = texture(image, position).a;
 
     vec4 q11 = texture(image, (floor(pixel) + 0.5) / input_resolution);
     vec4 q12 = texture(image, (vec2(floor(pixel.x), ceil(pixel.y)) + 0.5) / input_resolution);
@@ -47,5 +48,5 @@ STATIC vec4 scale(sampler2D image, vec2 position, vec2 input_resolution, vec2 ou
     r2 = mix(q12, q22, fract(pixel.x));
     
     vec4 shadow = mix(r1, r2, fract(pixel.y));
-    return mix(min(shadow, pre_shadow), pre_shadow, 0.75);
+    return mix(min(shadow, pre_shadow), pre_shadow, original_alpha);
 }
