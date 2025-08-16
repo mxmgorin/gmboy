@@ -9,16 +9,16 @@ const BILINEAR_FRAGMENT: &str = include_str!("../../../app/shaders/bilinear.frag
 const SMOOTH_BILINEAR_FRAGMENT: &str = include_str!("../../../app/shaders/smooth_bilinear.frag");
 const CRT_FRAGMENT: &str = include_str!("../../../app/shaders/crt.frag");
 const MASTER_FRAGMENT: &str = include_str!("../../../app/shaders/master.frag");
-const FLAT_CRT_FRAGMENT: &str = include_str!("../../../app/shaders/flat_crt.fsh");
-const HQ2X_FRAGMENT: &str = include_str!("../../../app/shaders/HQ2x.fsh");
-const AAOMNI_SCALE_LEGACY: &str = include_str!("../../../app/shaders/AAOmniScaleLegacy.fsh");
-const AASCALE2X: &str = include_str!("../../../app/shaders/AAScale2x.fsh");
-const AASCALE4X: &str = include_str!("../../../app/shaders/AAScale4x.fsh");
-const LCD: &str = include_str!("../../../app/shaders/LCD.fsh");
-const MONO_LCD: &str = include_str!("../../../app/shaders/MonoLCD.fsh");
-const OMNI_SCALE: &str = include_str!("../../../app/shaders/OmniScale.fsh");
-const SCALE2X: &str = include_str!("../../../app/shaders/Scale2x.fsh");
-const SCALE4X: &str = include_str!("../../../app/shaders/Scale4x.fsh");
+const FLAT_CRT_FRAGMENT: &str = include_str!("../../shaders/flat_crt.frag");
+const HQ2X_FRAGMENT: &str = include_str!("../../shaders/hq2x.frag");
+const AAOMNI_SCALE_LEGACY: &str = include_str!("../../shaders/aa_omni_scale_legacy.frag");
+const AASCALE2X: &str = include_str!("../../shaders/aa_scale2x.frag");
+const AASCALE4X: &str = include_str!("../../shaders/aa_scale4x.frag");
+const LCD: &str = include_str!("../../shaders/lcd.frag");
+const MONO_LCD: &str = include_str!("../../shaders/mono_lcd.frag");
+const OMNI_SCALE: &str = include_str!("../../shaders/omni_scale.frag");
+const SCALE2X: &str = include_str!("../../shaders/scale2x.frag");
+const SCALE4X: &str = include_str!("../../shaders/scale4x.frag");
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]
 #[repr(u8)]
@@ -39,17 +39,17 @@ pub enum ShaderPrecision {
 }
 
 pub const SHADERS: [(&str, &str); 14] = [
-    ("passthrough", PASSTHROUGH_FRAGMENT),
-    ("bilinear", BILINEAR_FRAGMENT),
-    ("smooth_bilinear", SMOOTH_BILINEAR_FRAGMENT),
-    ("crt", CRT_FRAGMENT),
-    ("flat_crt", FLAT_CRT_FRAGMENT),
+    ("Passthrough", PASSTHROUGH_FRAGMENT),
+    ("Bilinear", BILINEAR_FRAGMENT),
+    ("Smooth Bilinear", SMOOTH_BILINEAR_FRAGMENT),
+    ("CRT", CRT_FRAGMENT),
+    ("Flat CRT", FLAT_CRT_FRAGMENT),
     ("HQ2x", HQ2X_FRAGMENT),
-    ("AAOmniScaleLegacy", AAOMNI_SCALE_LEGACY),
-    ("AAScale2x", AASCALE2X),
-    ("AAScale4x", AASCALE4X),
+    ("AA OmniScale Legacy", AAOMNI_SCALE_LEGACY),
+    ("AA Scale2x", AASCALE2X),
+    ("AA Scale4x", AASCALE4X),
     ("LCD", LCD),
-    ("MonoLCD", MONO_LCD),
+    ("Mono LCD", MONO_LCD),
     ("OmniScale", OMNI_SCALE),
     ("Scale2x", SCALE2X),
     ("Scale4x", SCALE4X),
