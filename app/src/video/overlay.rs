@@ -83,7 +83,7 @@ impl Overlay {
     }
 
     pub fn draw_hud_to_buff(&mut self, buffer: &mut [u8], text: &str) {
-        let font_size = FontSize::Small4x5;
+        let font_size = FontSize::Tiny3x4;
         let padding = font_size.padding();
 
         draw_text_lines(
