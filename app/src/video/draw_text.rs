@@ -46,7 +46,6 @@ pub fn draw_text_lines(
         return;
     }
 
-    const PADDING: usize = 4;
 
     let max_line_width = if let Some(center) = align_center {
         center.longest_text_width
@@ -76,8 +75,10 @@ pub fn draw_text_lines(
 
     // Draw background rectangle with padding
     if let Some(bg_color) = bg_color {
-        for py in y.saturating_sub(PADDING)..y + total_height + PADDING {
-            for px in x.saturating_sub(PADDING)..x + max_line_width + PADDING {
+        const BG_PADDING: usize = 4;
+
+        for py in y.saturating_sub(BG_PADDING)..y + total_height + BG_PADDING {
+            for px in x.saturating_sub(BG_PADDING)..x + max_line_width + BG_PADDING {
                 let offset = (py * pitch) + (px * bytes_per_pixel);
                 draw_colors(buffer, offset, bg_color, bytes_per_pixel);
             }
