@@ -1,4 +1,4 @@
-use crate::video::char::get_char_bitmap;
+use crate::video::font::get_char_bitmap;
 use crate::video::draw_color;
 use core::ppu::tile::PixelColor;
 
@@ -129,55 +129,55 @@ pub fn draw_text_lines(
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
 pub enum FontSize {
-    Big8x8,
-    Normal5x6,
-    Small4x5,
-    Tiny3x4,
+    Font8x8,
+    Font5x6,
+    Font4x5,
+    Font3x4,
 }
 
 impl FontSize {
     pub fn height(self) -> usize {
         match self {
-            FontSize::Big8x8 => 8,
-            FontSize::Normal5x6 => 6,
-            FontSize::Tiny3x4 => 4,
-            FontSize::Small4x5 => 5,
+            FontSize::Font8x8 => 8,
+            FontSize::Font5x6 => 6,
+            FontSize::Font3x4 => 4,
+            FontSize::Font4x5 => 5,
         }
     }
 
     pub fn width(self) -> usize {
         match self {
-            FontSize::Big8x8 => 8,
-            FontSize::Normal5x6 => 5,
-            FontSize::Tiny3x4 => 3,
-            FontSize::Small4x5 => 4,
+            FontSize::Font8x8 => 8,
+            FontSize::Font5x6 => 5,
+            FontSize::Font3x4 => 3,
+            FontSize::Font4x5 => 4,
         }
     }
 
     pub fn spacing(self) -> usize {
         match self {
-            FontSize::Big8x8 => 2,
-            FontSize::Normal5x6 => 1,
-            FontSize::Tiny3x4 => 1,
-            FontSize::Small4x5 => 1,
+            FontSize::Font8x8 => 2,
+            FontSize::Font5x6 => 1,
+            FontSize::Font3x4 => 1,
+            FontSize::Font4x5 => 1,
         }
     }
 
     pub fn line_spacing(self) -> usize {
         match self {
-            FontSize::Big8x8 => 2,
-            FontSize::Normal5x6 => 2,
-            FontSize::Tiny3x4 => 1,
-            FontSize::Small4x5 => 1,
+            FontSize::Font8x8 => 2,
+            FontSize::Font5x6 => 2,
+            FontSize::Font3x4 => 1,
+            FontSize::Font4x5 => 1,
         }
     }
 
     pub fn padding(self) -> usize {
         match self {
-            FontSize::Big8x8 => 4,
-            FontSize::Normal5x6 => 4,
-            FontSize::Tiny3x4 => 1,
-            FontSize::Small4x5 => 2,
+            FontSize::Font8x8 => 4,
+            FontSize::Font5x6 => 4,
+            FontSize::Font3x4 => 1,
+            FontSize::Font4x5 => 2,
         }
     }
 

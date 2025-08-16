@@ -2,10 +2,10 @@ use crate::video::draw_text::FontSize;
 
 pub fn get_char_bitmap(c: char, size: FontSize) -> Option<Box<[u8]>> {
     match size {
-        FontSize::Big8x8 => char_bitmap_8x8(c).map(Box::from),
-        FontSize::Normal5x6 => char_bitmap_5x6(c).map(Box::from),
-        FontSize::Tiny3x4 => char_bitmap_3x4(c).map(Box::from),
-        FontSize::Small4x5 => char_bitmap_4x5(c).map(Box::from),
+        FontSize::Font8x8 => char_bitmap_8x8(c).map(Box::from),
+        FontSize::Font5x6 => char_bitmap_5x6(c).map(Box::from),
+        FontSize::Font3x4 => char_bitmap_3x4(c).map(Box::from),
+        FontSize::Font4x5 => char_bitmap_4x5(c).map(Box::from),
     }
 }
 

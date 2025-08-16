@@ -21,7 +21,7 @@ impl Overlay {
         overlay_scale: usize,
     ) -> Self {
         Self {
-            font_size: FontSize::Normal5x6,
+            font_size: FontSize::Font5x6,
             notif_texture: VideoTexture::new(notif_rect, 4),
             bg_color,
             text_color,
@@ -85,7 +85,7 @@ impl Overlay {
     }
 
     pub fn draw_hud_to_buff(&mut self, buffer: &mut [u8], text: &str) {
-        let font_size = FontSize::Tiny3x4;
+        let font_size = FontSize::Font3x4;
         let padding = font_size.padding();
 
         draw_text_lines(
