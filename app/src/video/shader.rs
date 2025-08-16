@@ -92,7 +92,6 @@ pub fn prev_shader_by_name<'a>(current_name: &str) -> (&'a str, &'a str) {
         .iter()
         .position(|(name, _)| *name == current_name)
         .unwrap_or(0);
-
     // Calculate previous index with wrap-around
     let prev_idx = if idx == 0 { SHADERS.len() - 1 } else { idx - 1 };
 
@@ -161,43 +160,37 @@ pub fn prepare_shader_source(
     body: &str,
     precision: ShaderPrecision,
 ) -> String {
-    let mut src = String::new();
-    src.push_str(setup.shader_version);
-    src.push('\n');
+    let mut header = String::new();
+    header.push_str(setup.shader_version);
+    header.push('\n');
 
     // For GLES we often need explicit precision qualifiers.
     // We'll emit per-stage precision using the detected best precision.
     if let Some(gles) = &setup.gles {
-        let (frag_p, vert_p) = if precision == ShaderPrecision::Auto {
-            (gles.fragment_precision, gles.vertex_precision)
-        } else {
-            let selected = match precision {
-                ShaderPrecision::Auto => unreachable!(),
-                ShaderPrecision::Low => "lowp",
-                ShaderPrecision::Medium => "mediump",
-                ShaderPrecision::High => "highp",
-            };
-
-            (selected, selected)
+        let (frag_p, vert_p) = match precision {
+            ShaderPrecision::Auto => (gles.fragment_precision, gles.vertex_precision),
+            ShaderPrecision::Low => ("lowp", "lowp"),
+            ShaderPrecision::Medium => ("mediump", "mediump"),
+            ShaderPrecision::High => ("highp", "highp"),
         };
 
         if gles.is_version_2 {
             // GLES2: explicit precision qualifiers are required in fragment shaders,
             // and allowed in vertex shaders (though many implementations ignore them).
             if is_fragment {
-                src.push_str(&format!("precision {} float;\n", frag_p));
-                src.push_str(&format!("precision {} int;\n", frag_p));
+                header.push_str(&format!("precision {frag_p} float;\n"));
+                header.push_str(&format!("precision {frag_p} int;\n"));
             } else {
                 // Vertex: emit precision too in case device needs it for varying math,
                 // but many GLES2 vertex shaders can omit it (we include for safety).
-                src.push_str(&format!("precision {} float;\n", vert_p));
-                src.push_str(&format!("precision {} int;\n", vert_p));
+                header.push_str(&format!("precision {vert_p} float;\n"));
+                header.push_str(&format!("precision {vert_p} int;\n"));
             }
         } else {
             // GLES3: still useful to add fragment precision, but not strictly required.
             if is_fragment {
-                src.push_str(&format!("precision {} float;\n", frag_p));
-                src.push_str(&format!("precision {} int;\n", frag_p));
+                header.push_str(&format!("precision {frag_p} float;\n"));
+                header.push_str(&format!("precision {frag_p} int;\n"));
             }
         }
     }
@@ -246,7 +239,7 @@ pub fn prepare_shader_source(
         // For very complex shaders (structs, multiple declarations on one line, macros), consider using a small parser.
     }
 
-    src.push_str(&processed);
+    header.push_str(&processed);
 
-    src
+    header
 }
