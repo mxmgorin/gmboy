@@ -75,10 +75,10 @@ pub fn draw_text_lines(
 
     // Draw background rectangle with padding
     if let Some(bg_color) = bg_color {
-        const BG_PADDING: usize = 4;
+        let padding = size.padding();
 
-        for py in y.saturating_sub(BG_PADDING)..y + total_height + BG_PADDING {
-            for px in x.saturating_sub(BG_PADDING)..x + max_line_width + BG_PADDING {
+        for py in y.saturating_sub(padding)..y + total_height + padding {
+            for px in x.saturating_sub(padding)..x + max_line_width + padding {
                 let offset = (py * pitch) + (px * bytes_per_pixel);
                 draw_color(buffer, offset, bg_color, bytes_per_pixel);
             }
@@ -182,6 +182,15 @@ impl FontSize {
             FontSize::Normal5x6 => 2,
             FontSize::Tiny3x4 => 1,
             FontSize::Small4x5 => 1,
+        }
+    }
+
+    fn padding(self) -> usize {
+        match self {
+            FontSize::Big8x8 => 4,
+            FontSize::Normal5x6 => 4,
+            FontSize::Tiny3x4 => 1,
+            FontSize::Small4x5 => 2,
         }
     }
 }
