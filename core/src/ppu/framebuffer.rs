@@ -1,17 +1,32 @@
+use std::ops::{Deref, DerefMut};
+use serde::{Deserialize, Serialize};
 use crate::ppu::{PPU_BYTES_PER_PIXEL, PPU_PITCH};
 
-pub struct FrameBuffer<'a> {
-    pub buffer: &'a mut [u8],
-    pub pitch: usize,
-    pub bytes_per_pixel: usize,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FrameBuffer {
+    buffer: Box<[u8]>,
 }
 
-impl<'a> FrameBuffer<'a> {
-    pub fn from_ppu(buffer: &'a mut [u8]) -> Self {
+impl Deref for FrameBuffer {
+    type Target = [u8];
+    fn deref(&self) -> &Self::Target {
+        &self.buffer
+    }
+}
+
+impl DerefMut for FrameBuffer {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.buffer
+    }
+}
+
+impl FrameBuffer {
+    pub const PITCH: usize = PPU_PITCH;
+    pub const BYTES_PER_PIXEL: usize = PPU_BYTES_PER_PIXEL;
+
+    pub fn new(buffer: Box<[u8]>) -> Self {
         FrameBuffer {
             buffer,
-            pitch: PPU_PITCH,
-            bytes_per_pixel: PPU_BYTES_PER_PIXEL,
         }
     }
 }

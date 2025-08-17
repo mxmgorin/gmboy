@@ -203,7 +203,7 @@ where
             self.video.ui.fill_fps(fb, &self.fps_str);
         }
 
-        self.video.draw_buffer(fb.buffer);
+        self.video.draw_buffer(fb);
         self.video.try_render(on_time);
 
         Ok(())
@@ -253,7 +253,7 @@ where
             self.video.ui.fill_menu(fb, items, true, true);
         }
 
-        self.video.draw_menu(&mut fb.buffer);
+        self.video.draw_menu(fb);
 
         updated
     }

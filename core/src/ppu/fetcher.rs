@@ -6,6 +6,7 @@ use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH
 use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
 use std::ptr;
 use serde::{Deserialize, Serialize};
+use crate::ppu::framebuffer::FrameBuffer;
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
@@ -49,7 +50,7 @@ impl BgwFetchedData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PixelFetcher {
     pub sprite_fetcher: SpriteFetcher,
-    pub buffer: Box<[u8]>,
+    pub buffer: FrameBuffer,
 
     fetch_step: FetchStep,
     line_x: u8,
@@ -70,7 +71,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: vec![0; PPU_BUFFER_LEN].into_boxed_slice(),
+            buffer: FrameBuffer::new(vec![0; PPU_BUFFER_LEN].into_boxed_slice()),
             sprite_fetcher: Default::default(),
         }
     }

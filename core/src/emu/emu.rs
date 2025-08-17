@@ -44,8 +44,8 @@ impl Emu {
     }
 
     #[inline]
-    pub fn get_framebuffer(&mut self) -> FrameBuffer {
-        FrameBuffer::from_ppu(&mut self.runtime.cpu.clock.ppu.pipeline.buffer)
+    pub fn get_framebuffer(&mut self) -> &mut FrameBuffer {
+        &mut self.runtime.cpu.clock.ppu.pipeline.buffer
     }
 
     /// Runs emulation for one frame. Return whether the emulation is on time.
@@ -158,10 +158,8 @@ impl Emu {
             .cart_save_state
             .into_cart(save_state.cpu.clock.bus.cart.data);
         save_state.cpu.clock.bus.cart = cart;
-
-        self.runtime.cpu.clock.bus.io.joypad = Joypad::default(); // reset controls
-
         self.runtime.cpu = save_state.cpu;
+        self.runtime.cpu.clock.bus.io.joypad = Joypad::default(); // reset controls
         self.runtime.cpu.clock.reset();
     }
 }

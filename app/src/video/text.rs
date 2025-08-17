@@ -51,8 +51,8 @@ pub fn fill_line_outlined(fb: &mut FrameBuffer, line: &str, style: TextStyle, x:
 pub fn fill_rect(fb: &mut FrameBuffer, w: usize, h: usize, color: PixelColor, x: usize, y: usize) {
     for py in y..h {
         for px in x..w {
-            let offset = (py * fb.pitch) + (px * fb.bytes_per_pixel);
-            draw_color(fb.buffer, offset, color, fb.bytes_per_pixel);
+            let offset = (py * FrameBuffer::PITCH) + (px * FrameBuffer::BYTES_PER_PIXEL);
+            draw_color(fb, offset, color);
         }
     }
 }
@@ -80,9 +80,9 @@ pub fn fill_line(
                     let px = text_pixel_x;
                     let py = text_pixel_y;
                     let offset =
-                        (py.saturating_mul(fb.pitch)) + (px.saturating_mul(fb.bytes_per_pixel));
+                        (py.saturating_mul(FrameBuffer::PITCH)) + (px.saturating_mul(FrameBuffer::BYTES_PER_PIXEL));
 
-                    draw_color(fb.buffer, offset, text_color, fb.bytes_per_pixel);
+                    draw_color(fb, offset, text_color);
                 }
             }
         }

@@ -86,14 +86,14 @@ impl VideoTexture {
 
 #[inline]
 pub fn fill_buffer(fb: &mut FrameBuffer, color: PixelColor) {
-    for i in (0..fb.buffer.len()).step_by(fb.bytes_per_pixel) {
-        draw_color(fb.buffer, i, color, fb.bytes_per_pixel);
+    for i in (0..fb.len()).step_by(FrameBuffer::BYTES_PER_PIXEL) {
+        draw_color(fb, i, color);
     }
 }
 
 #[inline]
-pub fn draw_color(buffer: &mut [u8], index: usize, color: PixelColor, bytes_per_pixel: usize) {
-    let bytes: &[u8] = match bytes_per_pixel {
+pub fn draw_color(fb: &mut FrameBuffer, index: usize, color: PixelColor) {
+    let bytes: &[u8] = match FrameBuffer::BYTES_PER_PIXEL {
         2 => &color.as_rgb565_bytes(),
         3 => &color.as_rgb_bytes(),
         4 => &color.as_rgba_bytes(),
@@ -105,8 +105,8 @@ pub fn draw_color(buffer: &mut [u8], index: usize, color: PixelColor, bytes_per_
     unsafe {
         std::ptr::copy_nonoverlapping(
             bytes.as_ptr(),
-            buffer.as_mut_ptr().add(index),
-            bytes_per_pixel,
+            fb.as_mut_ptr().add(index),
+            FrameBuffer::BYTES_PER_PIXEL,
         );
     }
 }
