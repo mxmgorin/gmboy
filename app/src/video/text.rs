@@ -1,6 +1,6 @@
-use core::ppu::framebuffer::FrameBuffer;
+use crate::video::draw_color;
 use crate::video::font::get_char_bitmap;
-use crate::video::{draw_color};
+use core::ppu::framebuffer::FrameBuffer;
 use core::ppu::tile::PixelColor;
 
 pub struct TextStyle {
@@ -79,8 +79,8 @@ pub fn fill_line(
                     let text_pixel_y = y + (row);
                     let px = text_pixel_x;
                     let py = text_pixel_y;
-                    let offset =
-                        (py.saturating_mul(FrameBuffer::PITCH)) + (px.saturating_mul(FrameBuffer::BYTES_PER_PIXEL));
+                    let offset = (py.saturating_mul(FrameBuffer::PITCH))
+                        + (px.saturating_mul(FrameBuffer::BYTES_PER_PIXEL));
 
                     draw_color(fb, offset, text_color);
                 }

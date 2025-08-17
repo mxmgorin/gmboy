@@ -76,6 +76,7 @@ impl Emu {
         Ok(on_time)
     }
 
+    #[inline]
     fn sleep_spin(&self, duration: Duration) {
         let start = Instant::now();
 

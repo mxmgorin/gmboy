@@ -93,23 +93,25 @@ pub fn fill_buffer(fb: &mut FrameBuffer, color: PixelColor) {
 
 #[inline]
 pub fn draw_color(fb: &mut FrameBuffer, index: usize, color: PixelColor) {
-    let bytes: &[u8] = match FrameBuffer::BYTES_PER_PIXEL {
+    // Use const generic indirectly via const
+    const BPP: usize = FrameBuffer::BYTES_PER_PIXEL;
+
+    let bytes: &[u8] = match BPP {
         2 => &color.as_rgb565_bytes(),
         3 => &color.as_rgb_bytes(),
         4 => &color.as_rgba_bytes(),
         _ => panic!("Unsupported pixel size"),
     };
 
-    // Safety: caller guarantees that `index..index+bytes_per_pixel`
-    // is within the buffer.
     unsafe {
         std::ptr::copy_nonoverlapping(
             bytes.as_ptr(),
             fb.as_mut_ptr().add(index),
-            FrameBuffer::BYTES_PER_PIXEL,
+            BPP,
         );
     }
 }
+
 pub fn truncate_text(s: &str, max_chars: usize) -> String {
     let max_len = s.len().min(max_chars + 2);
     let mut truncated = String::with_capacity(max_len);
