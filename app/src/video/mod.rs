@@ -129,7 +129,7 @@ impl<'a> FrameBuffer<'a> {
 }
 
 pub enum VideoBackend {
-    Sdl2(Sdl2Backend),
+    Sdl2(Box<Sdl2Backend>),
     Gl(GlBackend),
 }
 

@@ -32,7 +32,7 @@ impl AppVideo {
                 let ui = Overlay::new(text_color, bg_color);
                 let backend = Sdl2Backend::new(sdl, config, game_rect);
 
-                (VideoBackend::Sdl2(backend), ui)
+                (VideoBackend::Sdl2(Box::new(backend)), ui)
             }
             VideoBackendType::Gl => {
                 let ui = Overlay::new(text_color, bg_color);

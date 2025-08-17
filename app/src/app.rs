@@ -251,7 +251,7 @@ where
         let (items, updated) = self.menu.get_items(&self.config, &self.roms);
 
         if updated {
-            self.video.ui.update_menu(buffer, items, true, true);
+            self.video.ui.fill_menu(buffer, items, true, true);
         }
 
         self.video.draw_menu(buffer);

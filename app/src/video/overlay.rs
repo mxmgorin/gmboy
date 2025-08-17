@@ -19,7 +19,7 @@ impl Overlay {
         }
     }
 
-    pub fn update_menu(&self, buffer: &mut [u8], lines: &[&str], center: bool, align_center: bool) {
+    pub fn fill_menu(&self, buffer: &mut [u8], lines: &[&str], center: bool, align_center: bool) {
         let menu_width = LCD_X_RES as usize;
         let size = FontSize::Font5x6;
 
