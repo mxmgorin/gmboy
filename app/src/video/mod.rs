@@ -148,13 +148,6 @@ impl VideoBackend {
         }
     }
 
-    pub fn draw_notif(&mut self, texture: &VideoTexture) {
-        match self {
-            VideoBackend::Sdl2(x) => x.draw_notif(texture),
-            VideoBackend::Gl(x) => x.draw_notif(texture),
-        }
-    }
-
     pub fn show(&mut self) {
         match self {
             VideoBackend::Sdl2(x) => x.show(),

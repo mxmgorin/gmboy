@@ -1,4 +1,4 @@
-use crate::config::{RenderConfig, VideoBackendType, VideoConfig};
+use crate::config::{VideoBackendType, VideoConfig};
 use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
 use crate::video::overlay::Overlay;
@@ -6,7 +6,6 @@ use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, VideoBackend};
 use core::ppu::tile::PixelColor;
 use core::ppu::tile::TileData;
-use sdl2::rect::Rect;
 use sdl2::Sdl;
 
 pub struct AppVideo {
@@ -28,22 +27,16 @@ impl AppVideo {
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
 
-        let notif_rect = Rect::new(
-            0,
-            0,
-            RenderConfig::WIDTH as u32 * 3,
-            RenderConfig::HEIGHT as u32 * 3,
-        );
         let (mut backend, ui) = match config.render.backend {
             VideoBackendType::Sdl2 => {
-                let ui = Overlay::new(notif_rect, text_color, bg_color);
-                let backend = Sdl2Backend::new(sdl, config, game_rect, notif_rect);
+                let ui = Overlay::new(text_color, bg_color);
+                let backend = Sdl2Backend::new(sdl, config, game_rect);
 
                 (VideoBackend::Sdl2(backend), ui)
             }
             VideoBackendType::Gl => {
-                let ui = Overlay::new(notif_rect, text_color, bg_color);
-                let backend = GlBackend::new(sdl, game_rect, notif_rect, &config.render)?;
+                let ui = Overlay::new(text_color, bg_color);
+                let backend = GlBackend::new(sdl, game_rect, &config.render)?;
 
                 (VideoBackend::Gl(backend), ui)
             }
@@ -82,10 +75,6 @@ impl AppVideo {
 
     pub fn draw_menu(&mut self, buffer: &[u8]) {
         self.backend.draw_menu(buffer, &self.config)
-    }
-
-    pub fn draw_notif(&mut self) {
-        self.backend.draw_notif(&self.ui.notif_texture);
     }
 
     pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {

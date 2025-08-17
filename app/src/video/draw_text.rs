@@ -97,6 +97,10 @@ pub fn fill_text_lines(
     x: usize,
     y: usize,
 ) {
+    if lines.is_empty() {
+        return;
+    }
+
     let max_line_width = if let Some(center) = style.align_center {
         center.max_text_width
     } else if style.bg_color.is_some() {

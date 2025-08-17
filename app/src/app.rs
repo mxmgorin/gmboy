@@ -190,16 +190,16 @@ where
                 if on_time || time_since_last_render >= self.min_render_interval {
                     let fps = emu.runtime.cpu.clock.ppu.get_fps();
                     let buff = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
+                    self.draw_notif(buff);
 
                     if let Some(new_fps) = fps {
                         fps_str.clear();
                         write!(&mut fps_str, "{new_fps:.2}").unwrap();
-                        self.video.ui.draw_hud_to_buff(buff, &fps_str);
+                        self.video.ui.fill_fps(buff, &fps_str);
                         self.video.draw_buffer(buff);
                     }
 
                     self.video.draw_buffer(buff);
-                    self.draw_hud();
                     self.video.show();
                     last_render_time = now;
                 }
@@ -214,21 +214,18 @@ where
         emu.runtime.cpu.clock.reset();
         let buffer = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
         self.draw_menu(buffer);
-        self.draw_hud();
-
+        self.draw_notif(buffer);
         self.video.show();
 
         thread::sleep(Duration::from_millis(30));
     }
 
-    pub fn draw_hud(&mut self) {
+    pub fn draw_notif(&mut self, buff: &mut [u8]) {
         let (lines, updated) = self.notifications.update_and_get();
-        if updated || !lines.is_empty() {
-            if updated {
-                self.video.ui.update_notif(lines);
-            }
+        self.video.ui.fill_notif(buff, lines);
 
-            self.video.draw_notif();
+        if updated {
+            self.menu.request_update();
         }
     }
 

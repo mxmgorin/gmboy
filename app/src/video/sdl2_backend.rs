@@ -1,7 +1,6 @@
 use crate::config::{RenderConfig, VideoConfig};
 use crate::video::sdl2_filters::Sdl2Filters;
 use crate::video::sdl2_tiles::Sdl2TilesView;
-use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect};
 use core::ppu::tile::TileData;
 use sdl2::pixels::{Color, PixelFormatEnum};
@@ -15,9 +14,7 @@ pub struct Sdl2Backend {
     tiles_view: Option<Sdl2TilesView>,
     texture_creator: TextureCreator<WindowContext>,
     game_texture: Texture,
-    notif_texture: Texture,
     game_rect: Rect,
-    notif_rect: Rect,
     filters: Sdl2Filters,
     pub canvas: Canvas<Window>,
 }
@@ -27,7 +24,6 @@ impl Sdl2Backend {
         sdl: &Sdl,
         config: &VideoConfig,
         game_rect: Rect,
-        notif_rect: Rect,
     ) -> Self {
         let video_subsystem = sdl.video().unwrap();
         let window = video_subsystem
@@ -46,15 +42,6 @@ impl Sdl2Backend {
             )
             .unwrap();
         game_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-        // notifications
-        let mut notif_texture = texture_creator
-            .create_texture_streaming(
-                PixelFormatEnum::ABGR8888,
-                notif_rect.width(),
-                notif_rect.height(),
-            )
-            .unwrap();
-        notif_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Self {
             filters: Sdl2Filters::new(&mut canvas, &texture_creator, game_rect),
@@ -68,8 +55,6 @@ impl Sdl2Backend {
             canvas,
             game_texture,
             game_rect,
-            notif_rect,
-            notif_texture,
         }
     }
 
@@ -113,15 +98,6 @@ impl Sdl2Backend {
             .copy(&self.game_texture, None, Some(self.game_rect))
             .unwrap();
         self.filters.apply(&mut self.canvas, &config.render.sdl2);
-    }
-
-    pub fn draw_notif(&mut self, texture: &VideoTexture) {
-        self.notif_texture
-            .update(None, &texture.buffer, texture.pitch)
-            .unwrap();
-        self.canvas
-            .copy(&self.notif_texture, None, Some(self.notif_rect))
-            .unwrap();
     }
 
     pub fn show(&mut self) {

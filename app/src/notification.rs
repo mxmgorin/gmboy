@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 const MAX_CHARS: usize = 34;
-const MAX_COUNT: usize = 16;
+const MAX_COUNT: usize = 4;
 
 struct Notification {
     pub text: String,

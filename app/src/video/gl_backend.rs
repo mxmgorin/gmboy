@@ -1,6 +1,5 @@
 use crate::config::RenderConfig;
 use crate::video::shader::{ShaderFrameBlendMode, ShaderPrecision};
-use crate::video::VideoTexture;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
 use gl::types::{GLenum, GLint};
 use sdl2::rect::Rect;
@@ -18,7 +17,6 @@ pub struct GlBackend {
     vbo: u32,
     uniform_locations: UniformLocations,
     game_rect: Rect,
-    notif_texture_id: u32,
     shader_frame_blend_mode: ShaderFrameBlendMode,
     prev_buffer: Box<[u8]>,
 }
@@ -27,7 +25,6 @@ impl GlBackend {
     pub fn new(
         sdl: &Sdl,
         game_rect: Rect,
-        notif_rect: Rect,
         config: &RenderConfig,
     ) -> Result<Self, String> {
         let gl = create_gl_with_fallback(sdl, game_rect.width(), game_rect.height())?;
@@ -46,13 +43,6 @@ impl GlBackend {
             vbo: 0,
             uniform_locations: Default::default(),
             prev_frame_texture_id: 0,
-            notif_texture_id: create_texture(
-                notif_rect.w,
-                notif_rect.h,
-                gl::RGBA,
-                gl::RGBA,
-                gl::UNSIGNED_BYTE,
-            ),
             shader_frame_blend_mode: config.gl.shader_frame_blend_mode,
             prev_buffer: Box::new([]),
             game_rect,
@@ -96,35 +86,6 @@ impl GlBackend {
 
         self.uniform_locations
             .send_frame_blend_mode(self.shader_frame_blend_mode);
-    }
-
-    pub fn draw_notif(&mut self, texture: &VideoTexture) {
-        self.draw_hud(texture, self.notif_texture_id);
-    }
-
-    fn draw_hud(&mut self, texture: &VideoTexture, id: u32) {
-        unsafe {
-            self.uniform_locations
-                .send_frame_blend_mode(ShaderFrameBlendMode::None);
-
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, id);
-            gl::TexSubImage2D(
-                gl::TEXTURE_2D,
-                0,
-                0,
-                0,
-                texture.rect.w,
-                texture.rect.h,
-                gl::RGBA,
-                gl::UNSIGNED_BYTE,
-                texture.buffer.as_ptr() as *const _,
-            );
-            self.draw_quad();
-
-            self.uniform_locations
-                .send_frame_blend_mode(self.shader_frame_blend_mode);
-        }
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
