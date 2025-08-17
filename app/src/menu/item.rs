@@ -379,7 +379,7 @@ impl AppMenuItem {
                 format!("Backend({:?})", config.video.render.backend)
             }
             AppMenuItem::VideoShader => {
-                format!("Shader({:?})", config.video.render.gl.shader_name)
+                format!("Shader({})", config.video.render.gl.shader_name)
             }
             AppMenuItem::ShaderFrameBlend => {
                 format!(

@@ -22,7 +22,11 @@ pub struct CenterAlignedText {
 
 impl CenterAlignedText {
     pub fn new(lines: &[&str], size: FontSize, max: usize) -> Self {
-        let len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
+        let len = lines
+            .iter()
+            .map(|line| line.chars().count())
+            .max()
+            .unwrap_or(0);
 
         Self {
             max_text_width: size.calc_len_width(len).min(max),
@@ -129,11 +133,7 @@ pub fn fill_text_lines(
 
     // Draw text on top
     for (line_index, line) in lines.iter().enumerate() {
-        let mut line_width = style.size.calc_text_width(line);
-
-        if line_width >= style.size.spacing() {
-            line_width -= style.size.spacing();
-        }
+        let line_width = style.size.calc_text_width(line) - style.size.spacing();
 
         let x_offset = if style.align_center.is_some() {
             x + ((max_line_width - line_width) / 2)
