@@ -30,26 +30,29 @@ impl CenterAlignedText {
     }
 }
 
+#[inline]
 pub fn fill_str_outlined(fb: &mut FrameBuffer, line: &str, style: TextStyle, x: usize, y: usize) {
-    fill_str_rect(fb, line, style.bg_color, x, y, style.size);
+    let padding = style.size.padding();
+    let rect_w = x + style.size.calc_text_width(line) + padding;
+    let rect_h = y + style.size.height() + padding;
+    let rect_x = x.saturating_sub(padding);
+    let rect_y = y.saturating_sub(padding);
+
+    fill_str_rect(fb, rect_w, rect_h, style.bg_color, rect_x, rect_y);
     fill_str(fb, line, style.text_color, x, y, style.size);
 }
 
 #[inline]
 pub fn fill_str_rect(
     fb: &mut FrameBuffer,
-    line: &str,
+    w: usize,
+    h: usize,
     color: PixelColor,
     x: usize,
     y: usize,
-    size: FontSize,
 ) {
-    let line_width = size.calc_text_width(line);
-    let line_height = size.height();
-    let padding = size.padding();
-
-    for py in y.saturating_sub(padding)..y + line_height + padding {
-        for px in x.saturating_sub(padding)..x + line_width + padding {
+    for py in y..h {
+        for px in x..w {
             let offset = (py * fb.pitch) + (px * fb.bytes_per_pixel);
             draw_color(fb.buffer, offset, color, fb.bytes_per_pixel);
         }
@@ -113,13 +116,11 @@ pub fn fill_text_lines(
     // Draw background rectangle with padding
     if let Some(bg_color) = style.bg_color {
         let padding = style.size.padding();
-
-        for py in y.saturating_sub(padding)..y + total_height + padding {
-            for px in x.saturating_sub(padding)..x + max_line_width + padding {
-                let offset = (py * fb.pitch) + (px * fb.bytes_per_pixel);
-                draw_color(fb.buffer, offset, bg_color, fb.bytes_per_pixel);
-            }
-        }
+        let w = x + max_line_width + padding;
+        let h = y + total_height + padding;
+        let x = y.saturating_sub(padding);
+        let y = x.saturating_sub(padding);
+        fill_str_rect(fb, w, h, bg_color, x, y);
     }
 
     // Draw text on top
@@ -137,28 +138,7 @@ pub fn fill_text_lines(
         };
 
         let y_offset = y + line_index * ((style.size.height()) + style.size.line_spacing());
-        let mut cursor_x = x_offset;
-
-        for c in line.chars() {
-            let bitmap = get_char_bitmap(c, style.size);
-
-            for (row, pixel) in bitmap.iter().enumerate() {
-                for col in 0..style.size.width() {
-                    if (pixel >> (style.size.width() - 1 - col)) & 1 == 1 {
-                        let text_pixel_x = cursor_x + (col);
-                        let text_pixel_y = y_offset + (row);
-                        let px = text_pixel_x;
-                        let py = text_pixel_y;
-                        let offset =
-                            (py.saturating_mul(fb.pitch)) + (px.saturating_mul(fb.bytes_per_pixel));
-
-                        draw_color(fb.buffer, offset, style.text_color, fb.bytes_per_pixel);
-                    }
-                }
-            }
-
-            cursor_x += (style.size.width()) + style.size.spacing();
-        }
+        fill_str(fb, line, style.text_color, x_offset, y_offset, style.size);
     }
 }
 

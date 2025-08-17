@@ -29,8 +29,8 @@ impl AppVideo {
         let game_rect = new_scaled_rect(win_width, win_height);
 
         let notif_rect = Rect::new(
-            6,
-            6,
+            0,
+            0,
             RenderConfig::WIDTH as u32 * 3,
             RenderConfig::HEIGHT as u32 * 3,
         );

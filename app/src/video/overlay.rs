@@ -68,14 +68,11 @@ impl Overlay {
             size: self.font_size,
             align_center: None,
         };
+        let padding = style.size.padding();
+        let x = self.notif_texture.rect.x as usize + padding;
+        let y = self.notif_texture.rect.y as usize + padding;
 
-        fill_text_lines(
-            &mut fb,
-            lines,
-            style,
-            self.notif_texture.rect.x as usize,
-            self.notif_texture.rect.y as usize,
-        );
+        fill_text_lines(&mut fb, lines, style, x, y);
     }
 
     pub fn draw_hud_to_buff(&mut self, buffer: &mut [u8], text: &str) {
