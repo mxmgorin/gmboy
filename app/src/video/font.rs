@@ -1,4 +1,4 @@
-use crate::video::draw_text::FontSize;
+use crate::video::text::FontSize;
 
 pub fn get_char_bitmap(c: char, size: FontSize) -> &'static [u8] {
     match size {

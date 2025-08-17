@@ -35,26 +35,19 @@ impl CenterAlignedText {
 }
 
 #[inline]
-pub fn fill_str_outlined(fb: &mut FrameBuffer, line: &str, style: TextStyle, x: usize, y: usize) {
+pub fn fill_line_outlined(fb: &mut FrameBuffer, line: &str, style: TextStyle, x: usize, y: usize) {
     let padding = style.size.padding();
     let rect_w = x + style.size.calc_text_width(line) + padding;
     let rect_h = y + style.size.height() + padding;
     let rect_x = x.saturating_sub(padding);
     let rect_y = y.saturating_sub(padding);
 
-    fill_str_rect(fb, rect_w, rect_h, style.bg_color, rect_x, rect_y);
-    fill_str(fb, line, style.text_color, x, y, style.size);
+    fill_rect(fb, rect_w, rect_h, style.bg_color, rect_x, rect_y);
+    fill_line(fb, line, style.text_color, x, y, style.size);
 }
 
 #[inline]
-pub fn fill_str_rect(
-    fb: &mut FrameBuffer,
-    w: usize,
-    h: usize,
-    color: PixelColor,
-    x: usize,
-    y: usize,
-) {
+pub fn fill_rect(fb: &mut FrameBuffer, w: usize, h: usize, color: PixelColor, x: usize, y: usize) {
     for py in y..h {
         for px in x..w {
             let offset = (py * fb.pitch) + (px * fb.bytes_per_pixel);
@@ -64,7 +57,7 @@ pub fn fill_str_rect(
 }
 
 #[inline]
-pub fn fill_str(
+pub fn fill_line(
     fb: &mut FrameBuffer,
     line: &str,
     text_color: PixelColor,
@@ -72,12 +65,15 @@ pub fn fill_str(
     y: usize,
     size: FontSize,
 ) {
+    let width = size.width();
+    let spacing = size.spacing();
+
     for c in line.chars() {
         let bitmap = get_char_bitmap(c, size);
 
         for (row, pixel) in bitmap.iter().enumerate() {
-            for col in 0..size.width() {
-                if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
+            for col in 0..width {
+                if (pixel >> (width - 1 - col)) & 1 == 1 {
                     let text_pixel_x = cursor_x + (col);
                     let text_pixel_y = y + (row);
                     let px = text_pixel_x;
@@ -90,17 +86,11 @@ pub fn fill_str(
             }
         }
 
-        cursor_x += (size.width()) + size.spacing();
+        cursor_x += width + spacing;
     }
 }
 
-pub fn fill_text_lines(
-    fb: &mut FrameBuffer,
-    lines: &[&str],
-    style: TextLinesStyle,
-    x: usize,
-    y: usize,
-) {
+pub fn fill_lines(fb: &mut FrameBuffer, lines: &[&str], style: TextLinesStyle, x: usize, y: usize) {
     if lines.is_empty() {
         return;
     }
@@ -117,23 +107,29 @@ pub fn fill_text_lines(
         0
     };
 
+    let line_spacing = style.size.line_spacing();
+
     // Draw background rectangle with padding
     if let Some(bg_color) = style.bg_color {
         let text_height = style.size.height() * lines.len();
-        let lines_height = style.size.line_spacing() * (lines.len().saturating_sub(1));
+        let lines_height = line_spacing * (lines.len().saturating_sub(1));
         let text_height = text_height + lines_height;
-
         let padding = style.size.padding();
+
         let w = x + max_line_width + padding;
         let h = y + text_height + padding;
         let x = y.saturating_sub(padding);
         let y = x.saturating_sub(padding);
-        fill_str_rect(fb, w, h, bg_color, x, y);
+
+        fill_rect(fb, w, h, bg_color, x, y);
     }
+
+    let height = style.size.height();
+    let spacing = style.size.spacing();
 
     // Draw text on top
     for (line_index, line) in lines.iter().enumerate() {
-        let line_width = style.size.calc_text_width(line) - style.size.spacing();
+        let line_width = style.size.calc_text_width(line) - spacing;
 
         let x_offset = if style.align_center.is_some() {
             x + ((max_line_width - line_width) / 2)
@@ -141,8 +137,8 @@ pub fn fill_text_lines(
             x
         };
 
-        let y_offset = y + line_index * ((style.size.height()) + style.size.line_spacing());
-        fill_str(fb, line, style.text_color, x_offset, y_offset, style.size);
+        let y_offset = y + line_index * (height + line_spacing);
+        fill_line(fb, line, style.text_color, x_offset, y_offset, style.size);
     }
 }
 

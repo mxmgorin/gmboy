@@ -7,7 +7,7 @@ use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
-pub mod draw_text;
+pub mod text;
 mod font;
 pub mod frame_blend;
 mod sdl2_filters;
