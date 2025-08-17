@@ -2,6 +2,12 @@ use crate::video::font::get_char_bitmap;
 use crate::video::{draw_color, FrameBuffer};
 use core::ppu::tile::PixelColor;
 
+pub struct TextStyle {
+    pub text_color: PixelColor,
+    pub bg_color: PixelColor,
+    pub size: FontSize,
+}
+
 #[derive(Clone, Copy)]
 pub struct CenterAlignedText {
     pub longest_text_width: usize,
@@ -20,14 +26,12 @@ impl CenterAlignedText {
 pub fn fill_str_outlined(
     fb: &mut FrameBuffer,
     line: &str,
-    text_color: PixelColor,
-    bg_color: PixelColor,
+    style: TextStyle,
     x: usize,
     y: usize,
-    size: FontSize,
 ) {
-    fill_str_rect(fb, line, bg_color, x, y, size);
-    fill_str(fb, line, text_color, x, y, size);
+    fill_str_rect(fb, line, style.bg_color, x, y, style.size);
+    fill_str(fb, line, style.text_color, x, y, style.size);
 }
 
 #[inline]

@@ -1,4 +1,6 @@
-use crate::video::draw_text::{fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize};
+use crate::video::draw_text::{
+    fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize, TextStyle,
+};
 use crate::video::{fill_buffer, FrameBuffer, VideoTexture};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
@@ -77,17 +79,15 @@ impl Overlay {
     }
 
     pub fn draw_hud_to_buff(&mut self, buffer: &mut [u8], text: &str) {
-        let font_size = FontSize::Font3x4;
-        let padding = font_size.padding();
+        let style = TextStyle {
+            text_color: self.text_color,
+            bg_color: self.bg_color,
+            size: FontSize::Font3x4,
+        };
+        let padding = style.size.padding();
+        let x = LCD_X_RES as usize - padding - style.size.calc_text_width(text);
+        let y = LCD_Y_RES as usize - padding - style.size.height();
 
-        fill_str_outlined(
-            &mut FrameBuffer::new_ppu(buffer),
-            text,
-            self.text_color,
-            self.bg_color,
-            LCD_X_RES as usize - padding - font_size.calc_text_width(text),
-            LCD_Y_RES as usize - padding - font_size.height(),
-            font_size,
-        );
+        fill_str_outlined(&mut FrameBuffer::new_ppu(buffer), text, style, x, y);
     }
 }
