@@ -1,5 +1,5 @@
 use crate::video::draw_text::{
-    fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize, TextStyle,
+    fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize, TextLinesStyle, TextStyle,
 };
 use crate::video::{fill_buffer, FrameBuffer, VideoTexture};
 use core::ppu::tile::PixelColor;
@@ -27,9 +27,9 @@ impl Overlay {
     pub fn update_menu(&self, buffer: &mut [u8], lines: &[&str], center: bool, align_center: bool) {
         let menu_width = LCD_X_RES as usize;
 
-        let (align_center_opt, text_width) = if align_center {
+        let (align_center, text_width) = if align_center {
             let center = CenterAlignedText::new(lines, self.font_size, menu_width);
-            (Some(center), center.longest_text_width)
+            (Some(center), center.max_text_width)
         } else {
             (None, self.font_size.calc_text_width(lines[0]))
         };
@@ -44,18 +44,15 @@ impl Overlay {
             x /= 2;
             y /= 2;
         }
+        let style = TextLinesStyle {
+            text_color: self.text_color,
+            bg_color: None,
+            size: self.font_size,
+            align_center,
+        };
 
         fill_buffer(buffer, self.bg_color, core::ppu::PPU_BYTES_PER_PIXEL);
-        fill_text_lines(
-            &mut FrameBuffer::new_ppu(buffer),
-            lines,
-            self.text_color,
-            None,
-            x,
-            y,
-            self.font_size,
-            align_center_opt,
-        );
+        fill_text_lines(&mut FrameBuffer::new_ppu(buffer), lines, style, x, y);
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
@@ -65,16 +62,19 @@ impl Overlay {
             pitch: self.notif_texture.pitch,
             bytes_per_pixel: self.notif_texture.bytes_per_pixel,
         };
+        let style = TextLinesStyle {
+            text_color: self.text_color,
+            bg_color: Some(self.bg_color),
+            size: self.font_size,
+            align_center: None,
+        };
 
         fill_text_lines(
             &mut fb,
             lines,
-            self.text_color,
-            Some(self.bg_color),
+            style,
             self.notif_texture.rect.x as usize,
             self.notif_texture.rect.y as usize,
-            self.font_size,
-            None,
         );
     }
 

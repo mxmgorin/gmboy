@@ -8,9 +8,16 @@ pub struct TextStyle {
     pub size: FontSize,
 }
 
+pub struct TextLinesStyle {
+    pub text_color: PixelColor,
+    pub bg_color: Option<PixelColor>,
+    pub size: FontSize,
+    pub align_center: Option<CenterAlignedText>,
+}
+
 #[derive(Clone, Copy)]
 pub struct CenterAlignedText {
-    pub longest_text_width: usize,
+    pub max_text_width: usize,
 }
 
 impl CenterAlignedText {
@@ -18,18 +25,12 @@ impl CenterAlignedText {
         let len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
 
         Self {
-            longest_text_width: size.calc_len_width(len).min(max),
+            max_text_width: size.calc_len_width(len).min(max),
         }
     }
 }
 
-pub fn fill_str_outlined(
-    fb: &mut FrameBuffer,
-    line: &str,
-    style: TextStyle,
-    x: usize,
-    y: usize,
-) {
+pub fn fill_str_outlined(fb: &mut FrameBuffer, line: &str, style: TextStyle, x: usize, y: usize) {
     fill_str_rect(fb, line, style.bg_color, x, y, style.size);
     fill_str(fb, line, style.text_color, x, y, style.size);
 }
@@ -89,31 +90,29 @@ pub fn fill_str(
 pub fn fill_text_lines(
     fb: &mut FrameBuffer,
     lines: &[&str],
-    text_color: PixelColor,
-    bg_color: Option<PixelColor>,
+    style: TextLinesStyle,
     x: usize,
     y: usize,
-    size: FontSize,
-    align_center: Option<CenterAlignedText>,
 ) {
-    let max_line_width = if let Some(center) = align_center {
-        center.longest_text_width
-    } else if bg_color.is_some() {
+    let max_line_width = if let Some(center) = style.align_center {
+        center.max_text_width
+    } else if style.bg_color.is_some() {
         lines
             .iter()
-            .map(|line| size.calc_text_width(line))
+            .map(|line| style.size.calc_text_width(line))
             .max()
             .unwrap_or(0)
     } else {
         0
     };
 
-    let total_height =
-        lines.len() * (size.height() + size.line_spacing()).saturating_sub(size.line_spacing());
+    let total_height = lines.len()
+        * (style.size.height() + style.size.line_spacing())
+            .saturating_sub(style.size.line_spacing());
 
     // Draw background rectangle with padding
-    if let Some(bg_color) = bg_color {
-        let padding = size.padding();
+    if let Some(bg_color) = style.bg_color {
+        let padding = style.size.padding();
 
         for py in y.saturating_sub(padding)..y + total_height + padding {
             for px in x.saturating_sub(padding)..x + max_line_width + padding {
@@ -125,27 +124,27 @@ pub fn fill_text_lines(
 
     // Draw text on top
     for (line_index, line) in lines.iter().enumerate() {
-        let mut line_width = size.calc_text_width(line);
+        let mut line_width = style.size.calc_text_width(line);
 
-        if line_width >= size.spacing() {
-            line_width -= size.spacing();
+        if line_width >= style.size.spacing() {
+            line_width -= style.size.spacing();
         }
 
-        let x_offset = if align_center.is_some() {
+        let x_offset = if style.align_center.is_some() {
             x + ((max_line_width - line_width) / 2)
         } else {
             x
         };
 
-        let y_offset = y + line_index * ((size.height()) + size.line_spacing());
+        let y_offset = y + line_index * ((style.size.height()) + style.size.line_spacing());
         let mut cursor_x = x_offset;
 
         for c in line.chars() {
-            let bitmap = get_char_bitmap(c, size);
+            let bitmap = get_char_bitmap(c, style.size);
 
             for (row, pixel) in bitmap.iter().enumerate() {
-                for col in 0..size.width() {
-                    if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
+                for col in 0..style.size.width() {
+                    if (pixel >> (style.size.width() - 1 - col)) & 1 == 1 {
                         let text_pixel_x = cursor_x + (col);
                         let text_pixel_y = y_offset + (row);
                         let px = text_pixel_x;
@@ -153,12 +152,12 @@ pub fn fill_text_lines(
                         let offset =
                             (py.saturating_mul(fb.pitch)) + (px.saturating_mul(fb.bytes_per_pixel));
 
-                        draw_color(fb.buffer, offset, text_color, fb.bytes_per_pixel);
+                        draw_color(fb.buffer, offset, style.text_color, fb.bytes_per_pixel);
                     }
                 }
             }
 
-            cursor_x += (size.width()) + size.spacing();
+            cursor_x += (style.size.width()) + style.size.spacing();
         }
     }
 }
