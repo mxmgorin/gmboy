@@ -7,11 +7,14 @@ use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, VideoBacken
 use core::ppu::tile::PixelColor;
 use core::ppu::tile::TileData;
 use sdl2::Sdl;
+use std::time::{Duration, Instant};
 
 pub struct AppVideo {
     frame_blend: Option<FrameBlend>,
     backend: VideoBackend,
     config: VideoConfig,
+    last_render_time: Instant,
+    pub min_render_interval: Duration,
     pub ui: Overlay,
 }
 
@@ -46,6 +49,8 @@ impl AppVideo {
         Ok(Self {
             frame_blend: FrameBlend::new(&config.render.frame_blend_mode),
             config: config.clone(),
+            last_render_time: Instant::now(),
+            min_render_interval: config.render.calc_min_frame_interval(),
             backend,
             ui,
         })
@@ -57,6 +62,7 @@ impl AppVideo {
     }
 
     pub fn update_config(&mut self, config: &VideoConfig) {
+        self.min_render_interval = config.render.calc_min_frame_interval();
         self.frame_blend = FrameBlend::new(&config.render.frame_blend_mode);
         self.backend.set_fullscreen(config.interface.is_fullscreen);
         self.backend.update_config(config);
@@ -83,8 +89,13 @@ impl AppVideo {
         self.backend.draw_tiles(tiles);
     }
 
-    pub fn show(&mut self) {
-        self.backend.show();
+    pub fn try_render(&mut self, on_time: bool) {
+        let min_elapsed = self.last_render_time.elapsed() >= self.min_render_interval;
+        
+        if on_time || min_elapsed {
+            self.backend.show();
+            self.last_render_time = Instant::now();
+        }
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {

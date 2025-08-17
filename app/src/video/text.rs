@@ -1,5 +1,6 @@
+use core::ppu::framebuffer::FrameBuffer;
 use crate::video::font::get_char_bitmap;
-use crate::video::{draw_color, FrameBuffer};
+use crate::video::{draw_color};
 use core::ppu::tile::PixelColor;
 
 pub struct TextStyle {

@@ -1,5 +1,5 @@
 use crate::apu::Apu;
-use crate::auxiliary::clock::{Clock};
+use crate::auxiliary::clock::Clock;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::joypad::Joypad;
 use crate::bus::Bus;
@@ -8,6 +8,7 @@ use crate::cpu::Cpu;
 use crate::emu::config::EmuConfig;
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
+use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::Lcd;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
@@ -40,6 +41,11 @@ impl Emu {
             last_rewind_save_time: Instant::now(),
             config,
         })
+    }
+
+    #[inline]
+    pub fn get_framebuffer(&mut self) -> FrameBuffer {
+        FrameBuffer::from_ppu(&mut self.runtime.cpu.clock.ppu.pipeline.buffer)
     }
 
     /// Runs emulation for one frame. Return whether the emulation is on time.
@@ -98,9 +104,9 @@ impl Emu {
 
         self.prev_speed_multiplier = speed_multiplier;
 
-        let emulated_duration_ns = (self.runtime.cpu.clock.get_t_cycles() as f64 * T_CYCLE_DURATION_NS
-            / speed_multiplier)
-            .round() as u64;
+        let emulated_duration_ns =
+            (self.runtime.cpu.clock.get_t_cycles() as f64 * T_CYCLE_DURATION_NS / speed_multiplier)
+                .round() as u64;
 
         Duration::from_nanos(emulated_duration_ns)
     }
@@ -133,7 +139,7 @@ impl Emu {
         let lcd = Lcd::new(self.runtime.cpu.clock.bus.io.lcd.current_colors);
         let io = Io::new(lcd, apu);
         let bus = Bus::new(cart, io);
-        self.runtime.cpu.clock.ppu.reset();        
+        self.runtime.cpu.clock.ppu.reset();
         let clock = Clock::new(self.runtime.cpu.clock.ppu.clone(), bus);
         self.runtime.cpu = Cpu::new(clock);
 

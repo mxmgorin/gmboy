@@ -1,3 +1,4 @@
+use core::ppu::framebuffer::FrameBuffer;
 use crate::config::VideoConfig;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
@@ -69,11 +70,7 @@ impl VideoTexture {
             bytes_per_pixel,
         }
     }
-
-    pub fn fill(&mut self, color: PixelColor) {
-        fill_buffer(&mut self.buffer, color, self.bytes_per_pixel)
-    }
-
+    
     pub fn clear(&mut self) {
         for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
             self.buffer[i] = 0;
@@ -88,9 +85,9 @@ impl VideoTexture {
 }
 
 #[inline]
-pub fn fill_buffer(buffer: &mut [u8], color: PixelColor, bytes_per_pixel: usize) {
-    for i in (0..buffer.len()).step_by(bytes_per_pixel) {
-        draw_color(buffer, i, color, bytes_per_pixel);
+pub fn fill_buffer(fb: &mut FrameBuffer, color: PixelColor) {
+    for i in (0..fb.buffer.len()).step_by(fb.bytes_per_pixel) {
+        draw_color(fb.buffer, i, color, fb.bytes_per_pixel);
     }
 }
 
@@ -113,23 +110,6 @@ pub fn draw_color(buffer: &mut [u8], index: usize, color: PixelColor, bytes_per_
         );
     }
 }
-
-pub struct FrameBuffer<'a> {
-    pub buffer: &'a mut [u8],
-    pub pitch: usize,
-    pub bytes_per_pixel: usize,
-}
-
-impl<'a> FrameBuffer<'a> {
-    pub fn new_ppu(buffer: &'a mut [u8]) -> Self {
-        FrameBuffer {
-            buffer,
-            pitch: core::ppu::PPU_PITCH,
-            bytes_per_pixel: core::ppu::PPU_BYTES_PER_PIXEL,
-        }
-    }
-}
-
 pub fn truncate_text(s: &str, max_chars: usize) -> String {
     let max_len = s.len().min(max_chars + 2);
     let mut truncated = String::with_capacity(max_len);

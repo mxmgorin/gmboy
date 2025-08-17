@@ -9,6 +9,7 @@ use crate::roms::RomsState;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
 use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
+use arrayvec::ArrayString;
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
@@ -16,12 +17,13 @@ use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use core::emu::EmuAudioCallback;
+use core::ppu::framebuffer::FrameBuffer;
 use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
 use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
@@ -86,9 +88,9 @@ where
     FS: PlatformFileSystem,
     FD: PlatformFileDialog,
 {
+    fps_str: ArrayString<10>,
     audio: AppAudio,
     palettes: Box<[LcdPalette]>,
-    pub min_render_interval: Duration,
     pub video: AppVideo,
     pub state: AppState,
     pub config: AppConfig,
@@ -154,10 +156,10 @@ where
         let roms = RomsState::get_or_create(&platform.fs);
 
         Ok(Self {
-            min_render_interval: config.calc_min_frame_interval(),
             audio: AppAudio::new(sdl, &config.audio),
             menu: AppMenu::new(&roms),
             state: AppState::Paused,
+            fps_str: ArrayString::<10>::new(),
             video,
             palettes,
             config,
@@ -175,53 +177,51 @@ where
             AppState::Paused
         };
 
-        let mut last_render_time = Instant::now();
-        let mut fps_str = arrayvec::ArrayString::<10>::new();
+        loop {
+            input.handle_events(self, emu);
 
-        while self.state != AppState::Quitting {
-            if self.state == AppState::Paused {
-                self.update_pause(emu, input);
-            } else {
-                input.handle_events(self, emu);
-                let on_time = emu.run_frame(self)?;
-                let now = Instant::now();
-                let time_since_last_render = now.duration_since(last_render_time);
-
-                if on_time || time_since_last_render >= self.min_render_interval {
-                    let fps = emu.runtime.cpu.clock.ppu.get_fps();
-                    let buff = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
-                    self.draw_notif(buff);
-
-                    if let Some(new_fps) = fps {
-                        fps_str.clear();
-                        write!(&mut fps_str, "{new_fps:.2}").unwrap();
-                        self.video.ui.fill_fps(buff, &fps_str);
-                    }
-
-                    self.video.draw_buffer(buff);
-                    self.video.show();
-                    last_render_time = now;
-                }
+            match self.state {
+                AppState::Quitting => break,
+                AppState::Paused => self.run_pause(emu),
+                AppState::Running => self.run_game(emu)?,
             }
         }
 
         Ok(())
     }
 
-    pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
-        input.handle_events(self, emu);
+    #[inline]
+    pub fn run_game(&mut self, emu: &mut Emu) -> Result<(), String> {
+        let on_time = emu.run_frame(self)?;
+        let fps = emu.runtime.cpu.clock.ppu.get_fps();
+        let fb = &mut emu.get_framebuffer();
+        self.update_notif(fb);
+
+        if let Some(new_fps) = fps {
+            self.fps_str.clear();
+            write!(&mut self.fps_str, "{new_fps:.2}").unwrap();
+            self.video.ui.fill_fps(fb, &self.fps_str);
+        }
+
+        self.video.draw_buffer(fb.buffer);
+        self.video.try_render(on_time);
+
+        Ok(())
+    }
+
+    pub fn run_pause(&mut self, emu: &mut Emu) {
         emu.runtime.cpu.clock.reset();
-        let buffer = &mut emu.runtime.cpu.clock.ppu.pipeline.buffer;
-        self.draw_menu(buffer);
-        self.draw_notif(buffer);
-        self.video.show();
+        let fb = &mut emu.get_framebuffer();
+        self.draw_menu(fb);
+        self.update_notif(fb);
+        self.video.try_render(true);
 
         thread::sleep(Duration::from_millis(30));
     }
 
-    pub fn draw_notif(&mut self, buff: &mut [u8]) {
+    pub fn update_notif(&mut self, fb: &mut FrameBuffer) {
         let (lines, updated) = self.notifications.update_and_get();
-        self.video.ui.fill_notif(buff, lines);
+        self.video.ui.fill_notif(fb, lines);
 
         if updated {
             self.menu.request_update();
@@ -246,14 +246,14 @@ where
         Ok(())
     }
 
-    fn draw_menu(&mut self, buffer: &mut [u8]) -> bool {
+    fn draw_menu(&mut self, fb: &mut FrameBuffer) -> bool {
         let (items, updated) = self.menu.get_items(&self.config, &self.roms);
 
         if updated {
-            self.video.ui.fill_menu(buffer, items, true, true);
+            self.video.ui.fill_menu(fb, items, true, true);
         }
 
-        self.video.draw_menu(buffer);
+        self.video.draw_menu(&mut fb.buffer);
 
         updated
     }

@@ -7,5 +7,6 @@ mod sprite;
 pub mod tile;
 pub mod vram;
 mod window;
+pub mod framebuffer;
 
 pub use ppu::*;

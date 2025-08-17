@@ -389,7 +389,7 @@ impl AppMenuItem {
             }
             AppMenuItem::BrowseRoms => "Browse".to_string(),
             AppMenuItem::BrowseRomsSubMenu(_) => "Browse Sub".to_string(),
-            AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.frame_skip),
+            AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.video.render.frame_skip),
             AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
         };

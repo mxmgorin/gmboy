@@ -296,7 +296,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameSkip => {
-                let frame_skip = update_frame_skip(config.frame_skip, 1);
+                let frame_skip = update_frame_skip(config.video.render.frame_skip, 1);
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(
                     frame_skip,
                 )))
@@ -506,7 +506,7 @@ impl AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
             }
             AppMenuItem::FrameSkip => {
-                let frame_skip = update_frame_skip(config.frame_skip, -1);
+                let frame_skip = update_frame_skip(config.video.render.frame_skip, -1);
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(
                     frame_skip,
                 )))

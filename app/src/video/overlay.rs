@@ -1,7 +1,8 @@
+use core::ppu::framebuffer::FrameBuffer;
 use crate::video::text::{
     fill_line_outlined, fill_lines, CenterAlignedText, FontSize, TextLinesStyle, TextStyle,
 };
-use crate::video::{fill_buffer, FrameBuffer};
+use crate::video::{fill_buffer};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -19,7 +20,7 @@ impl Overlay {
         }
     }
 
-    pub fn fill_menu(&self, buffer: &mut [u8], lines: &[&str], center: bool, align_center: bool) {
+    pub fn fill_menu(&self, fb: &mut FrameBuffer, lines: &[&str], center: bool, align_center: bool) {
         let menu_width = LCD_X_RES as usize;
         let size = FontSize::Font5x6;
 
@@ -47,11 +48,11 @@ impl Overlay {
             align_center,
         };
 
-        fill_buffer(buffer, self.bg_color, core::ppu::PPU_BYTES_PER_PIXEL);
-        fill_lines(&mut FrameBuffer::new_ppu(buffer), lines, style, x, y);
+        fill_buffer(fb, self.bg_color);
+        fill_lines(fb, lines, style, x, y);
     }
 
-    pub fn fill_fps(&mut self, buffer: &mut [u8], text: &str) {
+    pub fn fill_fps(&mut self, fb: &mut FrameBuffer, text: &str) {
         let style = TextStyle {
             text_color: self.text_color,
             bg_color: self.bg_color,
@@ -61,11 +62,10 @@ impl Overlay {
         let x = LCD_X_RES as usize - padding - style.size.calc_text_width(text);
         let y = LCD_Y_RES as usize - padding - style.size.height();
 
-        fill_line_outlined(&mut FrameBuffer::new_ppu(buffer), text, style, x, y);
+        fill_line_outlined(fb, text, style, x, y);
     }
 
-    pub fn fill_notif(&mut self, buffer: &mut [u8], lines: &[&str]) {
-        let mut fb = FrameBuffer::new_ppu(buffer);
+    pub fn fill_notif(&mut self, fb: &mut FrameBuffer, lines: &[&str]) {
         let style = TextLinesStyle {
             text_color: self.text_color,
             bg_color: Some(self.bg_color),
@@ -74,6 +74,6 @@ impl Overlay {
         };
         let padding = style.size.padding();
 
-        fill_lines(&mut fb, lines, style, padding, padding);
+        fill_lines(fb, lines, style, padding, padding);
     }
 }

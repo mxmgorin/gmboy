@@ -23,7 +23,6 @@ pub struct AppConfig {
     pub current_save_index: usize,
     pub current_load_index: usize,
     pub auto_continue: bool,
-    pub frame_skip: usize,
     pub audio: AudioConfig,
     pub video: VideoConfig,
     pub input: InputConfig,
@@ -64,9 +63,17 @@ pub struct RenderConfig {
     pub backend: VideoBackendType,
     pub sdl2: Sdl2Config,
     pub gl: GlConfig,
+    pub frame_skip: usize,
 }
 
 impl RenderConfig {
+    pub fn calc_min_frame_interval(&self) -> Duration {
+        let frame_skip = self.frame_skip as f32;
+        let frame_skip = frame_skip.clamp(0.0, 59.0);
+
+        Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
+    }
+    
     pub fn change_dim(&mut self, v: f32) {
         self.blend_dim = core::change_f32_rounded(self.blend_dim, v).clamp(0.0, 1.0)
     }
@@ -82,13 +89,6 @@ pub fn update_frame_skip(v: usize, delta: isize) -> usize {
 }
 
 impl AppConfig {
-    pub fn calc_min_frame_interval(&self) -> Duration {
-        let frame_skip = self.frame_skip as f32;
-        let frame_skip = frame_skip.clamp(0.0, 59.0);
-
-        Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
-    }
-
     pub fn get_emu_config(&self) -> &EmuConfig {
         &self.emulation
     }
@@ -202,6 +202,7 @@ impl Default for AppConfig {
                     is_palette_inverted: false,
                 },
                 render: RenderConfig {
+                    frame_skip: 30,
                     frame_blend_mode: FrameBlendMode::None,
                     blend_dim: 1.0,
                     backend: VideoBackendType::Gl,
@@ -220,7 +221,6 @@ impl Default for AppConfig {
                 },
             },
             auto_continue: false,
-            frame_skip: 30,
         }
     }
 }

@@ -276,8 +276,8 @@ impl InputHandler {
                 ChangeAppConfigCmd::NextShader => app.next_shader(),
                 ChangeAppConfigCmd::PrevShader => app.prev_shader(),
                 ChangeAppConfigCmd::FrameSkip(x) => {
-                    app.config.frame_skip = x;
-                    app.min_render_interval = app.config.calc_min_frame_interval();
+                    app.config.video.render.frame_skip = x;
+                    app.video.update_config(&app.config.video);
                 }
             },
             AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
