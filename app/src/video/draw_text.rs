@@ -113,15 +113,15 @@ pub fn fill_text_lines(
         0
     };
 
-    let total_height = lines.len()
-        * (style.size.height() + style.size.line_spacing())
-            .saturating_sub(style.size.line_spacing());
-
     // Draw background rectangle with padding
     if let Some(bg_color) = style.bg_color {
+        let text_height = style.size.height() * lines.len();
+        let lines_height = style.size.line_spacing() * (lines.len().saturating_sub(1));
+        let text_height = text_height + lines_height;
+
         let padding = style.size.padding();
         let w = x + max_line_width + padding;
-        let h = y + total_height + padding;
+        let h = y + text_height + padding;
         let x = y.saturating_sub(padding);
         let y = x.saturating_sub(padding);
         fill_str_rect(fb, w, h, bg_color, x, y);
