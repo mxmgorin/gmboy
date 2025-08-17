@@ -179,6 +179,7 @@ impl PixelColor {
     }
 
     /// Convert to RGB888 (full 8-bit channels)
+    #[inline]
     pub fn as_rgb_bytes(&self) -> [u8; 3] {
         let r = ((self.rgb565 >> 11) & 0x1F) as u8;
         let g = ((self.rgb565 >> 5) & 0x3F) as u8;
@@ -191,11 +192,20 @@ impl PixelColor {
         ]
     }
 
+    #[inline]
+    pub fn as_rgba_bytes(&self) -> [u8; 4] {
+        let rgb = self.as_rgb_bytes();
+
+        [rgb[0], rgb[1], rgb[2], 255]
+    }
+
     /// Return raw RGB565 bytes in **little-endian** order
+    #[inline]
     pub fn as_rgb565_bytes(&self) -> [u8; 2] {
         self.rgb565.to_le_bytes()
     }
 
+    #[inline]
     pub fn zero() -> PixelColor {
         PixelColor::new(0, 0, 0)
     }

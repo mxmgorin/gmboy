@@ -63,6 +63,7 @@ impl AppVideo {
         self.config = config.clone();
     }
 
+    #[inline]
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let buffer = if let Some(blend) = &mut self.frame_blend {
             blend.process_buffer(buffer, &self.config)
@@ -73,6 +74,7 @@ impl AppVideo {
         self.backend.draw_buffer(buffer, &self.config);
     }
 
+    #[inline]
     pub fn draw_menu(&mut self, buffer: &[u8]) {
         self.backend.draw_menu(buffer, &self.config)
     }

@@ -7,10 +7,10 @@ use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
-pub mod text;
 mod font;
 pub mod frame_blend;
 mod sdl2_filters;
+pub mod text;
 mod video;
 pub use video::*;
 
@@ -96,19 +96,21 @@ pub fn fill_buffer(buffer: &mut [u8], color: PixelColor, bytes_per_pixel: usize)
 
 #[inline]
 pub fn draw_color(buffer: &mut [u8], index: usize, color: PixelColor, bytes_per_pixel: usize) {
-    if bytes_per_pixel == 2 {
-        let bytes = color.as_rgb565_bytes();
-        buffer[index] = bytes[0];
-        buffer[index + 1] = bytes[1];
-    } else {
-        let bytes = color.as_rgb_bytes();
-        buffer[index] = bytes[0];
-        buffer[index + 1] = bytes[1];
-        buffer[index + 2] = bytes[2];
+    let bytes: &[u8] = match bytes_per_pixel {
+        2 => &color.as_rgb565_bytes(),
+        3 => &color.as_rgb_bytes(),
+        4 => &color.as_rgba_bytes(),
+        _ => panic!("Unsupported pixel size"),
+    };
 
-        if bytes_per_pixel == 4 {
-            buffer[index + 3] = 255;
-        }
+    // Safety: caller guarantees that `index..index+bytes_per_pixel`
+    // is within the buffer.
+    unsafe {
+        std::ptr::copy_nonoverlapping(
+            bytes.as_ptr(),
+            buffer.as_mut_ptr().add(index),
+            bytes_per_pixel,
+        );
     }
 }
 
@@ -160,6 +162,7 @@ pub enum VideoBackend {
 }
 
 impl VideoBackend {
+    #[inline]
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_buffer(buffer, config),
@@ -167,6 +170,7 @@ impl VideoBackend {
         }
     }
 
+    #[inline]
     pub fn draw_menu(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_menu(buffer, config),
@@ -174,6 +178,7 @@ impl VideoBackend {
         }
     }
 
+    #[inline]
     pub fn show(&mut self) {
         match self {
             VideoBackend::Sdl2(x) => x.show(),

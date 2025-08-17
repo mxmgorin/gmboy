@@ -1,5 +1,6 @@
 use crate::video::text::FontSize;
 
+#[inline]
 pub fn get_char_bitmap(c: char, size: FontSize) -> &'static [u8] {
     match size {
         FontSize::Font3x4 => char_bitmap_3x4(c),
@@ -46,7 +47,7 @@ pub const fn char_bitmap_3x4(c: char) -> &'static [u8; 4] {
         'u' | 'U' => &[0b101, 0b101, 0b101, 0b111],
         'v' | 'V' => &[0b101, 0b101, 0b101, 0b010],
         'w' | 'W' => &[0b101, 0b101, 0b111, 0b111],
-        'x' | 'X' => &[0b101, 0b011, 0b110, 0b101],
+        'x' | 'X' => &[0b101, 0b010, 0b010, 0b101],
         'y' | 'Y' => &[0b101, 0b101, 0b010, 0b010],
         'z' | 'Z' => &[0b111, 0b001, 0b100, 0b111],
         '<' => &[0b001, 0b010, 0b100, 0b010],

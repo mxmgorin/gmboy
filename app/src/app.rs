@@ -196,7 +196,6 @@ where
                         fps_str.clear();
                         write!(&mut fps_str, "{new_fps:.2}").unwrap();
                         self.video.ui.fill_fps(buff, &fps_str);
-                        self.video.draw_buffer(buff);
                     }
 
                     self.video.draw_buffer(buff);
