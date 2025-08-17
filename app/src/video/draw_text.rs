@@ -17,7 +17,77 @@ impl CenterAlignedText {
     }
 }
 
-pub fn draw_text_lines(
+pub fn fill_str_outlined(
+    buffer: &mut [u8],
+    pitch: usize,
+    line: &str,
+    text_color: PixelColor,
+    bg_color: PixelColor,
+    x: usize,
+    y: usize,
+    size: FontSize,
+    bytes_per_pixel: usize,
+) {
+    fill_str_rect(buffer, pitch, line, bg_color, x, y, size, bytes_per_pixel);
+    fill_str(buffer, pitch, line, text_color, x, y, size, bytes_per_pixel);
+}
+
+#[inline]
+pub fn fill_str_rect(
+    buffer: &mut [u8],
+    pitch: usize,
+    line: &str,
+    color: PixelColor,
+    x: usize,
+    y: usize,
+    size: FontSize,
+    bytes_per_pixel: usize,
+) {
+    let line_width = size.calc_text_width(line);
+    let line_height = size.height();
+    let padding = size.padding();
+
+    for py in y.saturating_sub(padding)..y + line_height + padding {
+        for px in x.saturating_sub(padding)..x + line_width + padding {
+            let offset = (py * pitch) + (px * bytes_per_pixel);
+            draw_color(buffer, offset, color, bytes_per_pixel);
+        }
+    }
+}
+
+#[inline]
+pub fn fill_str(
+    buffer: &mut [u8],
+    pitch: usize,
+    line: &str,
+    text_color: PixelColor,
+    mut cursor_x: usize,
+    y: usize,
+    size: FontSize,
+    bytes_per_pixel: usize,
+) {
+    for c in line.chars() {
+        let bitmap = get_char_bitmap(c, size);
+
+        for (row, pixel) in bitmap.iter().enumerate() {
+            for col in 0..size.width() {
+                if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
+                    let text_pixel_x = cursor_x + (col);
+                    let text_pixel_y = y + (row);
+                    let px = text_pixel_x;
+                    let py = text_pixel_y;
+                    let offset = (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
+
+                    draw_color(buffer, offset, text_color, bytes_per_pixel);
+                }
+            }
+        }
+
+        cursor_x += (size.width()) + size.spacing();
+    }
+}
+
+pub fn fill_text_lines(
     buffer: &mut [u8],
     pitch: usize,
     lines: &[&str],

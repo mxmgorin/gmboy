@@ -1,4 +1,6 @@
-use crate::video::draw_text::{draw_text_lines, CenterAlignedText, FontSize};
+use crate::video::draw_text::{
+    fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize,
+};
 use crate::video::{fill_buffer, VideoTexture};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
@@ -13,11 +15,7 @@ pub struct Overlay {
 }
 
 impl Overlay {
-    pub fn new(
-        notif_rect: Rect,
-        text_color: PixelColor,
-        bg_color: PixelColor,
-    ) -> Self {
+    pub fn new(notif_rect: Rect, text_color: PixelColor, bg_color: PixelColor) -> Self {
         Self {
             font_size: FontSize::Font5x6,
             notif_texture: VideoTexture::new(notif_rect, 4),
@@ -48,7 +46,7 @@ impl Overlay {
         }
 
         fill_buffer(buffer, self.bg_color, core::ppu::PPU_BYTES_PER_PIXEL);
-        draw_text_lines(
+        fill_text_lines(
             buffer,
             core::ppu::PPU_PITCH,
             lines,
@@ -65,7 +63,7 @@ impl Overlay {
     pub fn update_notif(&mut self, lines: &[&str]) {
         self.notif_texture.clear();
 
-        draw_text_lines(
+        fill_text_lines(
             &mut self.notif_texture.buffer,
             self.notif_texture.pitch,
             lines,
@@ -83,16 +81,15 @@ impl Overlay {
         let font_size = FontSize::Font3x4;
         let padding = font_size.padding();
 
-        draw_text_lines(
+        fill_str_outlined(
             buffer,
             core::ppu::PPU_PITCH,
-            &[text],
+            text,
             self.text_color,
-            Some(self.bg_color),
+            self.bg_color,
             LCD_X_RES as usize - padding - font_size.calc_text_width(text),
             LCD_Y_RES as usize - padding - font_size.height(),
             font_size,
-            None,
             core::ppu::PPU_BYTES_PER_PIXEL,
         );
     }
