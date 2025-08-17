@@ -1,5 +1,5 @@
-use crate::video::font::get_char_bitmap;
 use crate::video::draw_color;
+use crate::video::font::get_char_bitmap;
 use core::ppu::tile::PixelColor;
 
 #[derive(Clone, Copy)]
@@ -26,31 +26,15 @@ pub fn draw_text_lines(
     x: usize,
     y: usize,
     size: FontSize,
-    scale: usize,
     align_center: Option<CenterAlignedText>,
     bytes_per_pixel: usize,
 ) {
-    if lines.is_empty() {
-        return;
-    }
-
     let max_line_width = if let Some(center) = align_center {
         center.longest_text_width
     } else if bg_color.is_some() {
         lines
             .iter()
-            .map(|line| {
-                line.chars()
-                    .map(|c| {
-                        if c == ' ' || get_char_bitmap(c, size).is_some() {
-                            (size.width() * scale) + size.spacing()
-                        } else {
-                            0
-                        }
-                    })
-                    .sum::<usize>()
-                    .saturating_sub(size.spacing())
-            })
+            .map(|line| size.calc_text_width(line))
             .max()
             .unwrap_or(0)
     } else {
@@ -58,7 +42,7 @@ pub fn draw_text_lines(
     };
 
     let total_height =
-        lines.len() * ((size.height() * scale) + size.line_spacing()) - size.line_spacing();
+        lines.len() * (size.height() + size.line_spacing()).saturating_sub(size.line_spacing());
 
     // Draw background rectangle with padding
     if let Some(bg_color) = bg_color {
@@ -74,71 +58,58 @@ pub fn draw_text_lines(
 
     // Draw text on top
     for (line_index, line) in lines.iter().enumerate() {
-        let mut line_width = 0;
-        for c in line.chars() {
-            if c == ' ' || get_char_bitmap(c, size).is_some() {
-                line_width += (size.width() * scale) + size.spacing();
-            }
-        }
+        let mut line_width = size.calc_text_width(line);
+
         if line_width >= size.spacing() {
             line_width -= size.spacing();
         }
 
         let x_offset = if align_center.is_some() {
-            x + (max_line_width - line_width) / 2
+            x + ((max_line_width - line_width) / 2)
         } else {
             x
         };
 
-        let y_offset = y + line_index * ((size.height() * scale) + size.line_spacing());
+        let y_offset = y + line_index * ((size.height()) + size.line_spacing());
         let mut cursor_x = x_offset;
 
         for c in line.chars() {
-            if c == ' ' {
-                cursor_x += (size.width() * scale) + size.spacing();
-                continue;
-            }
-
-            let Some(bitmap) = get_char_bitmap(c, size) else {
-                continue;
-            };
+            let bitmap = get_char_bitmap(c, size);
 
             for (row, pixel) in bitmap.iter().enumerate() {
                 for col in 0..size.width() {
                     if (pixel >> (size.width() - 1 - col)) & 1 == 1 {
-                        let text_pixel_x = cursor_x + (col * scale);
-                        let text_pixel_y = y_offset + (row * scale);
-                        for dy in 0..scale {
-                            for dx in 0..scale {
-                                let px = text_pixel_x + dx;
-                                let py = text_pixel_y + dy;
-                                let offset = (py.saturating_mul(pitch))
-                                    + (px.saturating_mul(bytes_per_pixel));
+                        let text_pixel_x = cursor_x + (col);
+                        let text_pixel_y = y_offset + (row);
+                        let px = text_pixel_x;
+                        let py = text_pixel_y;
+                        let offset =
+                            (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
 
-                                draw_color(buffer, offset, text_color, bytes_per_pixel);
-                            }
-                        }
+                        draw_color(buffer, offset, text_color, bytes_per_pixel);
                     }
                 }
             }
-            cursor_x += (size.width() * scale) + size.spacing();
+
+            cursor_x += (size.width()) + size.spacing();
         }
     }
 }
 
 #[derive(Clone, Copy)]
 #[allow(dead_code)]
+#[repr(u8)]
 pub enum FontSize {
     Font3x4,
     Font4x5,
     Font5x5,
     Font5x6,
     Font8x8,
-
 }
 
 impl FontSize {
-    pub fn height(self) -> usize {
+    #[inline]
+    pub const fn height(self) -> usize {
         match self {
             FontSize::Font8x8 => 8,
             FontSize::Font5x6 => 6,
@@ -148,7 +119,8 @@ impl FontSize {
         }
     }
 
-    pub fn width(self) -> usize {
+    #[inline]
+    pub const fn width(self) -> usize {
         match self {
             FontSize::Font8x8 => 8,
             FontSize::Font5x6 => 5,
@@ -158,7 +130,8 @@ impl FontSize {
         }
     }
 
-    pub fn spacing(self) -> usize {
+    #[inline]
+    pub const fn spacing(self) -> usize {
         match self {
             FontSize::Font8x8 => 2,
             FontSize::Font5x6 => 1,
@@ -168,7 +141,8 @@ impl FontSize {
         }
     }
 
-    pub fn line_spacing(self) -> usize {
+    #[inline]
+    pub const fn line_spacing(self) -> usize {
         match self {
             FontSize::Font8x8 => 2,
             FontSize::Font5x6 => 2,
@@ -178,7 +152,8 @@ impl FontSize {
         }
     }
 
-    pub fn padding(self) -> usize {
+    #[inline]
+    pub const fn padding(self) -> usize {
         match self {
             FontSize::Font8x8 => 4,
             FontSize::Font5x6 => 4,
@@ -189,10 +164,12 @@ impl FontSize {
     }
 
     /// Calculate the text width based on character count, scale, and character width
+    #[inline]
     pub fn calc_text_width(&self, text: &str) -> usize {
-        self.calc_len_width(text.len())
+        self.calc_len_width(text.chars().count())
     }
 
+    #[inline]
     pub fn calc_len_width(&self, len: usize) -> usize {
         len * self.width() + (len - 1) * self.spacing()
     }

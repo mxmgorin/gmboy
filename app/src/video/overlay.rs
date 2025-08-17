@@ -10,7 +10,6 @@ pub struct Overlay {
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
     font_size: FontSize,
-    scale: usize,
 }
 
 impl Overlay {
@@ -18,14 +17,12 @@ impl Overlay {
         notif_rect: Rect,
         text_color: PixelColor,
         bg_color: PixelColor,
-        overlay_scale: usize,
     ) -> Self {
         Self {
             font_size: FontSize::Font5x6,
             notif_texture: VideoTexture::new(notif_rect, 4),
             bg_color,
             text_color,
-            scale: overlay_scale,
         }
     }
 
@@ -60,7 +57,6 @@ impl Overlay {
             x,
             y,
             self.font_size,
-            1,
             align_center_opt,
             core::ppu::PPU_BYTES_PER_PIXEL,
         );
@@ -78,7 +74,6 @@ impl Overlay {
             self.notif_texture.rect.x as usize,
             self.notif_texture.rect.y as usize,
             self.font_size,
-            self.scale,
             None,
             self.notif_texture.bytes_per_pixel,
         );
@@ -97,7 +92,6 @@ impl Overlay {
             LCD_X_RES as usize - padding - font_size.calc_text_width(text),
             LCD_Y_RES as usize - padding - font_size.height(),
             font_size,
-            1,
             None,
             core::ppu::PPU_BYTES_PER_PIXEL,
         );

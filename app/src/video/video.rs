@@ -36,13 +36,13 @@ impl AppVideo {
         );
         let (mut backend, ui) = match config.render.backend {
             VideoBackendType::Sdl2 => {
-                let ui = Overlay::new(notif_rect, text_color, bg_color, 2);
+                let ui = Overlay::new(notif_rect, text_color, bg_color);
                 let backend = Sdl2Backend::new(sdl, config, game_rect, notif_rect);
 
                 (VideoBackend::Sdl2(backend), ui)
             }
             VideoBackendType::Gl => {
-                let ui = Overlay::new(notif_rect, text_color, bg_color, 1);
+                let ui = Overlay::new(notif_rect, text_color, bg_color);
                 let backend = GlBackend::new(sdl, game_rect, notif_rect, &config.render)?;
 
                 (VideoBackend::Gl(backend), ui)
