@@ -7,8 +7,8 @@ use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
-mod font;
 pub mod draw_text;
+mod font;
 pub mod frame_blend;
 mod sdl2_filters;
 mod video;
@@ -108,6 +108,22 @@ pub fn draw_color(buffer: &mut [u8], index: usize, color: PixelColor, bytes_per_
 
         if bytes_per_pixel == 4 {
             buffer[index + 3] = 255;
+        }
+    }
+}
+
+pub struct FrameBuffer<'a> {
+    pub buffer: &'a mut [u8],
+    pub pitch: usize,
+    pub bytes_per_pixel: usize,
+}
+
+impl<'a> FrameBuffer<'a> {
+    pub fn new_ppu(buffer: &'a mut [u8]) -> Self {
+        FrameBuffer {
+            buffer,
+            pitch: core::ppu::PPU_PITCH,
+            bytes_per_pixel: core::ppu::PPU_BYTES_PER_PIXEL,
         }
     }
 }

@@ -1,5 +1,5 @@
-use crate::video::draw_color;
 use crate::video::font::get_char_bitmap;
+use crate::video::{draw_color, FrameBuffer};
 use core::ppu::tile::PixelColor;
 
 #[derive(Clone, Copy)]
@@ -18,30 +18,26 @@ impl CenterAlignedText {
 }
 
 pub fn fill_str_outlined(
-    buffer: &mut [u8],
-    pitch: usize,
+    fb: &mut FrameBuffer,
     line: &str,
     text_color: PixelColor,
     bg_color: PixelColor,
     x: usize,
     y: usize,
     size: FontSize,
-    bytes_per_pixel: usize,
 ) {
-    fill_str_rect(buffer, pitch, line, bg_color, x, y, size, bytes_per_pixel);
-    fill_str(buffer, pitch, line, text_color, x, y, size, bytes_per_pixel);
+    fill_str_rect(fb, line, bg_color, x, y, size);
+    fill_str(fb, line, text_color, x, y, size);
 }
 
 #[inline]
 pub fn fill_str_rect(
-    buffer: &mut [u8],
-    pitch: usize,
+    fb: &mut FrameBuffer,
     line: &str,
     color: PixelColor,
     x: usize,
     y: usize,
     size: FontSize,
-    bytes_per_pixel: usize,
 ) {
     let line_width = size.calc_text_width(line);
     let line_height = size.height();
@@ -49,22 +45,20 @@ pub fn fill_str_rect(
 
     for py in y.saturating_sub(padding)..y + line_height + padding {
         for px in x.saturating_sub(padding)..x + line_width + padding {
-            let offset = (py * pitch) + (px * bytes_per_pixel);
-            draw_color(buffer, offset, color, bytes_per_pixel);
+            let offset = (py * fb.pitch) + (px * fb.bytes_per_pixel);
+            draw_color(fb.buffer, offset, color, fb.bytes_per_pixel);
         }
     }
 }
 
 #[inline]
 pub fn fill_str(
-    buffer: &mut [u8],
-    pitch: usize,
+    fb: &mut FrameBuffer,
     line: &str,
     text_color: PixelColor,
     mut cursor_x: usize,
     y: usize,
     size: FontSize,
-    bytes_per_pixel: usize,
 ) {
     for c in line.chars() {
         let bitmap = get_char_bitmap(c, size);
@@ -76,9 +70,10 @@ pub fn fill_str(
                     let text_pixel_y = y + (row);
                     let px = text_pixel_x;
                     let py = text_pixel_y;
-                    let offset = (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
+                    let offset =
+                        (py.saturating_mul(fb.pitch)) + (px.saturating_mul(fb.bytes_per_pixel));
 
-                    draw_color(buffer, offset, text_color, bytes_per_pixel);
+                    draw_color(fb.buffer, offset, text_color, fb.bytes_per_pixel);
                 }
             }
         }
@@ -88,8 +83,7 @@ pub fn fill_str(
 }
 
 pub fn fill_text_lines(
-    buffer: &mut [u8],
-    pitch: usize,
+    fb: &mut FrameBuffer,
     lines: &[&str],
     text_color: PixelColor,
     bg_color: Option<PixelColor>,
@@ -97,7 +91,6 @@ pub fn fill_text_lines(
     y: usize,
     size: FontSize,
     align_center: Option<CenterAlignedText>,
-    bytes_per_pixel: usize,
 ) {
     let max_line_width = if let Some(center) = align_center {
         center.longest_text_width
@@ -120,8 +113,8 @@ pub fn fill_text_lines(
 
         for py in y.saturating_sub(padding)..y + total_height + padding {
             for px in x.saturating_sub(padding)..x + max_line_width + padding {
-                let offset = (py * pitch) + (px * bytes_per_pixel);
-                draw_color(buffer, offset, bg_color, bytes_per_pixel);
+                let offset = (py * fb.pitch) + (px * fb.bytes_per_pixel);
+                draw_color(fb.buffer, offset, bg_color, fb.bytes_per_pixel);
             }
         }
     }
@@ -154,9 +147,9 @@ pub fn fill_text_lines(
                         let px = text_pixel_x;
                         let py = text_pixel_y;
                         let offset =
-                            (py.saturating_mul(pitch)) + (px.saturating_mul(bytes_per_pixel));
+                            (py.saturating_mul(fb.pitch)) + (px.saturating_mul(fb.bytes_per_pixel));
 
-                        draw_color(buffer, offset, text_color, bytes_per_pixel);
+                        draw_color(fb.buffer, offset, text_color, fb.bytes_per_pixel);
                     }
                 }
             }

@@ -1,7 +1,5 @@
-use crate::video::draw_text::{
-    fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize,
-};
-use crate::video::{fill_buffer, VideoTexture};
+use crate::video::draw_text::{fill_str_outlined, fill_text_lines, CenterAlignedText, FontSize};
+use crate::video::{fill_buffer, FrameBuffer, VideoTexture};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -47,8 +45,7 @@ impl Overlay {
 
         fill_buffer(buffer, self.bg_color, core::ppu::PPU_BYTES_PER_PIXEL);
         fill_text_lines(
-            buffer,
-            core::ppu::PPU_PITCH,
+            &mut FrameBuffer::new_ppu(buffer),
             lines,
             self.text_color,
             None,
@@ -56,16 +53,19 @@ impl Overlay {
             y,
             self.font_size,
             align_center_opt,
-            core::ppu::PPU_BYTES_PER_PIXEL,
         );
     }
 
     pub fn update_notif(&mut self, lines: &[&str]) {
         self.notif_texture.clear();
+        let mut fb = FrameBuffer {
+            buffer: &mut self.notif_texture.buffer,
+            pitch: self.notif_texture.pitch,
+            bytes_per_pixel: self.notif_texture.bytes_per_pixel,
+        };
 
         fill_text_lines(
-            &mut self.notif_texture.buffer,
-            self.notif_texture.pitch,
+            &mut fb,
             lines,
             self.text_color,
             Some(self.bg_color),
@@ -73,7 +73,6 @@ impl Overlay {
             self.notif_texture.rect.y as usize,
             self.font_size,
             None,
-            self.notif_texture.bytes_per_pixel,
         );
     }
 
@@ -82,15 +81,13 @@ impl Overlay {
         let padding = font_size.padding();
 
         fill_str_outlined(
-            buffer,
-            core::ppu::PPU_PITCH,
+            &mut FrameBuffer::new_ppu(buffer),
             text,
             self.text_color,
             self.bg_color,
             LCD_X_RES as usize - padding - font_size.calc_text_width(text),
             LCD_Y_RES as usize - padding - font_size.height(),
             font_size,
-            core::ppu::PPU_BYTES_PER_PIXEL,
         );
     }
 }
