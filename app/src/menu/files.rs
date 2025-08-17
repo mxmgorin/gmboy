@@ -1,8 +1,9 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::file_browser::{FileBrowser, FILE_BROWSER_BACK_ITEM};
-use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
+use crate::menu::{SubMenu, MAX_MENU_ITEMS_PER_PAGE, MAX_MENU_ITEM_CHARS};
 use std::path::Path;
+use crate::video::truncate_text;
 
 #[derive(Debug)]
 pub struct FilesMenu {
@@ -38,7 +39,7 @@ impl SubMenu for FilesMenu {
                 name = format!("/{name}");
             }
 
-            let name = truncate_menu_item(&name);
+            let name = truncate_text(&name, MAX_MENU_ITEM_CHARS);
 
             if let Some(selected) = selected {
                 if selected == path {
@@ -96,3 +97,4 @@ impl SubMenu for FilesMenu {
         self.fb.prev_page();
     }
 }
+

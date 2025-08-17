@@ -1,9 +1,10 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
-use crate::menu::{truncate_menu_item, SubMenu, MAX_MENU_ITEMS_PER_PAGE};
+use crate::menu::{SubMenu, MAX_MENU_ITEMS_PER_PAGE, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;
 use crate::PlatformFileSystem;
 use std::path::PathBuf;
+use crate::video::truncate_text;
 
 #[derive(Debug, Clone)]
 pub struct RomMenuItem {
@@ -17,7 +18,7 @@ impl RomMenuItem {
         let name = filesystem.get_file_name(&path)?;
 
         Some(Self {
-            name: truncate_menu_item(&name),
+            name: truncate_text(&name, MAX_MENU_ITEM_CHARS),
             path,
         })
     }

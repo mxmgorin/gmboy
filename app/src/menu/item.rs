@@ -1,7 +1,8 @@
 use crate::app::AppCmd;
 use crate::config::AppConfig;
-use crate::menu::{get_menu_item_suffix, truncate_menu_item, SubMenu};
+use crate::menu::{get_menu_item_suffix, SubMenu, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;
+use crate::video::truncate_text;
 
 pub enum AppMenuItem {
     Resume,
@@ -393,6 +394,6 @@ impl AppMenuItem {
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
         };
 
-        truncate_menu_item(&item_str)
+        truncate_text(&item_str, MAX_MENU_ITEM_CHARS)
     }
 }

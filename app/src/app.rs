@@ -288,7 +288,7 @@ where
         self.menu.request_update();
 
         let suffix = if self.config.video.interface.is_palette_inverted {
-            " (inverted)"
+            " (inv)"
         } else {
             ""
         };

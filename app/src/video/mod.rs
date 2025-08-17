@@ -13,6 +13,7 @@ pub mod frame_blend;
 mod sdl2_filters;
 mod video;
 pub use video::*;
+use crate::menu::MAX_MENU_ITEM_CHARS;
 
 mod gl_backend;
 mod overlay;
@@ -126,6 +127,32 @@ impl<'a> FrameBuffer<'a> {
             bytes_per_pixel: core::ppu::PPU_BYTES_PER_PIXEL,
         }
     }
+}
+
+pub fn truncate_text(s: &str, max_chars: usize) -> String {
+    let max_len = s.len().min(max_chars + 2);
+    let mut truncated = String::with_capacity(max_len);
+
+    for (i, ch) in s.chars().enumerate() {
+        if i == max_chars {
+            let ends_with_paren = s.ends_with(')');
+            let total_chars = s.chars().count();
+
+            if total_chars > max_chars + 1 || !ends_with_paren {
+                truncated.push('…');
+            }
+
+            if ends_with_paren {
+                truncated.push(')');
+            }
+
+            break;
+        }
+
+        truncated.push(ch);
+    }
+
+    truncated
 }
 
 pub enum VideoBackend {
