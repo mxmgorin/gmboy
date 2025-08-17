@@ -13,7 +13,6 @@ pub mod frame_blend;
 mod sdl2_filters;
 mod video;
 pub use video::*;
-use crate::menu::MAX_MENU_ITEM_CHARS;
 
 mod gl_backend;
 mod overlay;

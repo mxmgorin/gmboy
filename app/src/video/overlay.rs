@@ -69,7 +69,7 @@ impl Overlay {
         let style = TextLinesStyle {
             text_color: self.text_color,
             bg_color: Some(self.bg_color),
-            size: FontSize::Font4x5,
+            size: FontSize::Font3x4,
             align_center: None,
         };
         let padding = style.size.padding();
