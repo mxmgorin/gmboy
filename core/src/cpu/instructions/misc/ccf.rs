@@ -1,6 +1,15 @@
-use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{FetchedData, InstructionArgs};
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::{Cpu};
+
+impl Cpu {
+    #[inline]
+    pub fn execute_ccf(&mut self, _fetched_data: FetchedData, _args: InstructionArgs) {
+        self.registers.flags.set_n(false);
+        self.registers.flags.set_h(false);
+        self.registers.flags.set_c(!self.registers.flags.get_c());
+    }
+}
 
 /// Complement Carry Flag.
 /// Cycles: 1
@@ -13,10 +22,8 @@ use crate::cpu::{Cpu};
 pub struct CcfInstruction;
 
 impl ExecutableInstruction for CcfInstruction {
-    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.registers.flags.set_n(false);
-        cpu.registers.flags.set_h(false);
-        cpu.registers.flags.set_c(!cpu.registers.flags.get_c());
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        cpu.execute_ccf(fetched_data, InstructionArgs::default(self.get_address_mode()));
     }
 
     fn get_address_mode(&self) -> AddressMode {

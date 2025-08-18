@@ -1174,15 +1174,15 @@ pub const INSTRUCTIONS_BY_OPCODES: [InstructionWrapper; INSTRUCTIONS_LEN] = {
     );
     instructions[0xC2] = InstructionWrapper::new(
         Instruction::Jp(JpInstruction {
-            address_mode: AddressMode::D16,
-            condition_type: Some(ConditionType::NZ),
+            addr_mode: AddressMode::D16,
+            cond_type: Some(ConditionType::NZ),
         }),
         Cpu::fetch_d16,
     );
     instructions[0xC3] = InstructionWrapper::new(
         Instruction::Jp(JpInstruction {
-            address_mode: AddressMode::D16,
-            condition_type: None,
+            addr_mode: AddressMode::D16,
+            cond_type: None,
         }),
         Cpu::fetch_d16,
     );
@@ -1234,8 +1234,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [InstructionWrapper; INSTRUCTIONS_LEN] = {
     );
     instructions[0xCA] = InstructionWrapper::new(
         Instruction::Jp(JpInstruction {
-            address_mode: AddressMode::D16,
-            condition_type: Some(ConditionType::Z),
+            addr_mode: AddressMode::D16,
+            cond_type: Some(ConditionType::Z),
         }),
         Cpu::fetch_d16,
     );
@@ -1267,8 +1267,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [InstructionWrapper; INSTRUCTIONS_LEN] = {
     );
     instructions[0xD2] = InstructionWrapper::new(
         Instruction::Jp(JpInstruction {
-            address_mode: AddressMode::D16,
-            condition_type: Some(ConditionType::NC),
+            addr_mode: AddressMode::D16,
+            cond_type: Some(ConditionType::NC),
         }),
         Cpu::fetch_d16,
     );
@@ -1310,8 +1310,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [InstructionWrapper; INSTRUCTIONS_LEN] = {
     );
     instructions[0xDA] = InstructionWrapper::new(
         Instruction::Jp(JpInstruction {
-            address_mode: AddressMode::D16,
-            condition_type: Some(ConditionType::C),
+            addr_mode: AddressMode::D16,
+            cond_type: Some(ConditionType::C),
         }),
         Cpu::fetch_d16,
     );
@@ -1375,8 +1375,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [InstructionWrapper; INSTRUCTIONS_LEN] = {
     );
     instructions[0xE9] = InstructionWrapper::new(
         Instruction::Jp(JpInstruction {
-            address_mode: AddressMode::R(RegisterType::HL),
-            condition_type: None,
+            addr_mode: AddressMode::R(RegisterType::HL),
+            cond_type: None,
         }),
         |cpu| cpu.fetch_r(RegisterType::HL),
     );

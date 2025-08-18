@@ -1,6 +1,35 @@
-use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{FetchedData, InstructionArgs};
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::{Cpu};
+
+impl Cpu {
+    #[inline]
+    pub fn execute_daa(&mut self, _fetched_data: FetchedData, _args: InstructionArgs) {
+        let mut u: u8 = 0;
+        let mut fc: i32 = 0;
+
+        if self.registers.flags.get_h()
+            || (!self.registers.flags.get_n() && (self.registers.a & 0xF) > 9)
+        {
+            u = 6;
+        }
+
+        if self.registers.flags.get_c() || (!self.registers.flags.get_n() && self.registers.a > 0x99) {
+            u |= 0x60;
+            fc = 1;
+        }
+
+        if self.registers.flags.get_n() {
+            self.registers.a = self.registers.a.wrapping_sub(u);
+        } else {
+            self.registers.a = self.registers.a.wrapping_add(u);
+        };
+
+        self.registers.flags.set_z(self.registers.a == 0);
+        self.registers.flags.set_h(false);
+        self.registers.flags.set_c(fc != 0);
+    }
+}
 
 /// Decimal Adjust Accumulator.
 /// Designed to be used after performing an arithmetic instruction (ADD, ADC, SUB, SBC) whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.
@@ -28,30 +57,8 @@ use crate::cpu::{Cpu};
 pub struct DaaInstruction;
 
 impl ExecutableInstruction for DaaInstruction {
-    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        let mut u: u8 = 0;
-        let mut fc: i32 = 0;
-
-        if cpu.registers.flags.get_h()
-            || (!cpu.registers.flags.get_n() && (cpu.registers.a & 0xF) > 9)
-        {
-            u = 6;
-        }
-
-        if cpu.registers.flags.get_c() || (!cpu.registers.flags.get_n() && cpu.registers.a > 0x99) {
-            u |= 0x60;
-            fc = 1;
-        }
-
-        if cpu.registers.flags.get_n() {
-            cpu.registers.a = cpu.registers.a.wrapping_sub(u);
-        } else {
-            cpu.registers.a = cpu.registers.a.wrapping_add(u);
-        };
-       
-        cpu.registers.flags.set_z(cpu.registers.a == 0);
-        cpu.registers.flags.set_h(false);
-        cpu.registers.flags.set_c(fc != 0);
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        cpu.execute_daa(fetched_data, InstructionArgs::default(self.get_address_mode()));
     }
 
     fn get_address_mode(&self) -> AddressMode {

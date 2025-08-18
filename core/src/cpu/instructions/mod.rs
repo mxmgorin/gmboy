@@ -114,13 +114,13 @@ mod tests {
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
-            if let Some(condition_type) = instr.condition_type {
+            if let Some(condition_type) = instr.cond_type {
                 assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
-            } else if instr.address_mode == AddressMode::D16 {
+            } else if instr.addr_mode == AddressMode::D16 {
                 cpu.step(None).unwrap();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
-            } else if instr.address_mode == AddressMode::R(RegisterType::HL) {
+            } else if instr.addr_mode == AddressMode::R(RegisterType::HL) {
                 cpu.step(None).unwrap();
                 // 1
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());

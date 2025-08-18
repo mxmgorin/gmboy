@@ -34,9 +34,34 @@ use crate::cpu::instructions::rotate::rla::RlaInstruction;
 use crate::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::cpu::instructions::rotate::rra::RraInstruction;
 use crate::cpu::instructions::rotate::rrca::RrcaInstruction;
-use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{ConditionType, FetchedData};
 use crate::cpu::Cpu;
 use std::fmt::Display;
+
+#[derive(Copy, Clone)]
+pub struct InstructionArgs {
+    pub cond_type: Option<ConditionType>,
+    pub addr: u16,
+    pub addr_mode: AddressMode,
+}
+
+impl InstructionArgs {
+    pub const fn new(cond_type: Option<ConditionType>, addr: u16, addr_mode: AddressMode) -> Self {
+        Self {
+            cond_type,
+            addr,
+            addr_mode,
+        }
+    }
+
+    pub const fn default(addr_mode: AddressMode) -> Self {
+        Self {
+            cond_type: None,
+            addr: 0,
+            addr_mode,
+        }
+    }
+}
 
 #[derive(Copy, Clone)]
 pub struct InstructionWrapper {

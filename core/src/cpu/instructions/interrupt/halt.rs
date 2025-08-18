@@ -1,6 +1,14 @@
-use crate::cpu::instructions::FetchedData;
+use crate::cpu::instructions::{FetchedData, InstructionArgs};
 use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
 use crate::cpu::{Cpu};
+
+impl Cpu {
+    #[inline]
+    pub fn execute_halt(&mut self, _fetched_data: FetchedData, _args: InstructionArgs) {
+        self.is_halted = true;
+    }
+}
+
 // The exact behavior of this instruction depends on the state of the IME flag, and whether interrupts are pending (i.e. whether ‘[IE] & [IF]’ is non-zero):
 //
 // If the IME flag is set:
@@ -13,8 +21,8 @@ use crate::cpu::{Cpu};
 pub struct HaltInstruction;
 
 impl ExecutableInstruction for HaltInstruction {
-    fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        cpu.is_halted = true;
+    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        cpu.execute_halt(fetched_data, InstructionArgs::default(self.get_address_mode()));
     }
 
     fn get_address_mode(&self) -> AddressMode {

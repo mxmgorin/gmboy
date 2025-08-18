@@ -1,5 +1,21 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction, FetchedData};
+use crate::cpu::instructions::{AddressMode, ExecutableInstruction, FetchedData, InstructionArgs};
 use crate::cpu::{Cpu};
+
+impl Cpu {
+    #[inline]
+    pub fn execute_rra(&mut self, _fetched_data: FetchedData, _args: InstructionArgs) {
+        let carry: u8 = self.registers.flags.get_c() as u8;
+        let new_c: u8 = self.registers.a & 1;
+
+        self.registers.a >>= 1;
+        self.registers.a |= carry << 7;
+
+        self.registers.flags.set_z(false);
+        self.registers.flags.set_n(false);
+        self.registers.flags.set_h(false);
+        self.registers.flags.set_c(new_c != 0);
+    }
+}
 
 /// Rotate register A right, through the carry flag.
 ///
@@ -22,16 +38,7 @@ pub struct RraInstruction;
 
 impl ExecutableInstruction for RraInstruction {
     fn execute(&self, cpu: &mut Cpu, _fetched_data: FetchedData) {
-        let carry: u8 = cpu.registers.flags.get_c() as u8;
-        let new_c: u8 = cpu.registers.a & 1;
-
-        cpu.registers.a >>= 1;
-        cpu.registers.a |= carry << 7;
-
-        cpu.registers.flags.set_z(false);
-        cpu.registers.flags.set_n(false);
-        cpu.registers.flags.set_h(false);
-        cpu.registers.flags.set_c(new_c != 0);
+        cpu.execute_rra(_fetched_data, InstructionArgs::default(self.get_address_mode()));
     }
 
     fn get_address_mode(&self) -> AddressMode {
