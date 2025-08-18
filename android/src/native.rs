@@ -1,7 +1,7 @@
+use crate::file_dialog::{PICKED_DIR_URI, PICKED_FILE_URI};
 use crate::JVM;
 use jni::objects::{JClass, JObject, JString};
 use jni::JNIEnv;
-use crate::file_dialog::{PICKED_DIR_URI, PICKED_FILE_URI};
 
 /// Called from SDLActivity.onCreate or SDL2 main to store the JavaVM
 #[no_mangle]

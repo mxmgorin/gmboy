@@ -181,7 +181,11 @@ impl InputHandler {
                 ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
                 ChangeAppConfigCmd::Fps => {
                     app.config.video.interface.show_fps = !app.config.video.interface.show_fps;
-                    emu.runtime.cpu.clock.ppu.toggle_fps(app.config.video.interface.show_fps);
+                    emu.runtime
+                        .cpu
+                        .clock
+                        .ppu
+                        .toggle_fps(app.config.video.interface.show_fps);
                 }
                 ChangeAppConfigCmd::SpinDuration(x) => {
                     emu.config.spin_duration = core::change_duration(emu.config.spin_duration, x);
@@ -223,7 +227,8 @@ impl InputHandler {
                         core::change_usize(emu.runtime.cpu.clock.bus.io.apu.config.buffer_size, x)
                             .clamp(0, 2560);
                     emu.runtime.cpu.clock.bus.io.apu.update_buffer_size();
-                    app.config.audio.buffer_size = emu.runtime.cpu.clock.bus.io.apu.config.buffer_size;
+                    app.config.audio.buffer_size =
+                        emu.runtime.cpu.clock.bus.io.apu.config.buffer_size;
                 }
                 ChangeAppConfigCmd::MuteTurbo => {
                     app.config.audio.mute_turbo = !app.config.audio.mute_turbo

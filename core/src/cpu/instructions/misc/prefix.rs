@@ -1,10 +1,10 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction, InstructionArgs};
-use crate::cpu::instructions::{FetchedData, RegisterType};
-use crate::cpu::{Cpu};
+use crate::cpu::instructions::InstructionSpec;
+use crate::cpu::instructions::{FetchedData};
+use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_prefix(&mut self, fetched_data: FetchedData, _args: InstructionArgs) {
+    pub fn execute_prefix(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
         let op = fetched_data.value;
         let reg = decode_reg(op & 0b111);
 
@@ -144,9 +144,6 @@ impl Cpu {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct PrefixInstruction;
-
 const REG_TYPES_BY_OPS: [RegisterType; 8] = [
     RegisterType::B,
     RegisterType::C,
@@ -166,15 +163,4 @@ pub fn decode_reg(reg: u16) -> Option<RegisterType> {
     }
 
     Some(REG_TYPES_BY_OPS[reg as usize])
-}
-
-impl ExecutableInstruction for PrefixInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        cpu.execute_prefix(fetched_data, InstructionArgs::default(self.get_address_mode()));
-
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        AddressMode::D8
-    }
 }

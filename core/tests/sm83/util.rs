@@ -1,5 +1,5 @@
-use crate::Clock;
 use crate::print_with_dashes;
+use crate::Clock;
 use core::bus::Bus;
 use core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
 use core::cpu::{Cpu, Flags, Registers};
@@ -20,7 +20,7 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
         print_with_dashes(&format!(
             "{} ({:?} {:?})",
             title,
-            inst.get_type(),
+            inst.get_mnemonic(),
             inst.get_address_mode()
         ));
         print_with_dashes("Result: FAILED");

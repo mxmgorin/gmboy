@@ -1,8 +1,8 @@
-use core::ppu::framebuffer::FrameBuffer;
+use crate::video::fill_buffer;
 use crate::video::text::{
     fill_line_outlined, fill_lines, CenterAlignedText, FontSize, TextLinesStyle, TextStyle,
 };
-use crate::video::{fill_buffer};
+use core::ppu::framebuffer::FrameBuffer;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -20,7 +20,13 @@ impl Overlay {
         }
     }
 
-    pub fn fill_menu(&self, fb: &mut FrameBuffer, lines: &[&str], center: bool, align_center: bool) {
+    pub fn fill_menu(
+        &self,
+        fb: &mut FrameBuffer,
+        lines: &[&str],
+        center: bool,
+        align_center: bool,
+    ) {
         let menu_width = LCD_X_RES as usize;
         let size = FontSize::Font5x6;
 

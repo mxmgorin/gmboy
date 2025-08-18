@@ -1,6 +1,6 @@
-use std::ops::{Deref, DerefMut};
-use serde::{Deserialize, Serialize};
 use crate::ppu::{PPU_BYTES_PER_PIXEL, PPU_PITCH};
+use serde::{Deserialize, Serialize};
+use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FrameBuffer {
@@ -25,8 +25,6 @@ impl FrameBuffer {
     pub const BYTES_PER_PIXEL: usize = PPU_BYTES_PER_PIXEL;
 
     pub fn new(buffer: Box<[u8]>) -> Self {
-        FrameBuffer {
-            buffer,
-        }
+        FrameBuffer { buffer }
     }
 }

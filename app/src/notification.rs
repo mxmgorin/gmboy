@@ -1,5 +1,5 @@
-use std::time::{Duration, Instant};
 use crate::video::truncate_text;
+use std::time::{Duration, Instant};
 
 const MAX_CHARS: usize = 34;
 const MAX_COUNT: usize = 4;

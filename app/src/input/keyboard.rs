@@ -3,11 +3,11 @@ use crate::input::button::{
     handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
     handle_up,
 };
+use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use sdl2::keyboard::Keycode;
-use crate::{PlatformFileDialog, PlatformFileSystem};
 
 pub fn handle_keyboard<FS, FD>(
     app: &mut App<FS, FD>,
@@ -17,10 +17,10 @@ pub fn handle_keyboard<FS, FD>(
 ) -> Option<AppCmd>
 where
     FS: PlatformFileSystem,
-    FD: PlatformFileDialog
+    FD: PlatformFileDialog,
 {
     log::trace!("handle_keyboard: {keycode:?}");
-    
+
     match keycode {
         Keycode::UP => handle_up(is_pressed, app, emu),
         Keycode::DOWN => handle_down(is_pressed, app, emu),

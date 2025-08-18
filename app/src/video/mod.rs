@@ -1,7 +1,7 @@
-use core::ppu::framebuffer::FrameBuffer;
 use crate::config::VideoConfig;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
+use core::ppu::framebuffer::FrameBuffer;
 use core::ppu::tile::PixelColor;
 use core::ppu::tile::TileData;
 use core::ppu::LCD_X_RES;
@@ -70,7 +70,7 @@ impl VideoTexture {
             bytes_per_pixel,
         }
     }
-    
+
     pub fn clear(&mut self) {
         for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
             self.buffer[i] = 0;
@@ -104,11 +104,7 @@ pub fn draw_color(fb: &mut FrameBuffer, index: usize, color: PixelColor) {
     };
 
     unsafe {
-        std::ptr::copy_nonoverlapping(
-            bytes.as_ptr(),
-            fb.as_mut_ptr().add(index),
-            BPP,
-        );
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), fb.as_mut_ptr().add(index), BPP);
     }
 }
 

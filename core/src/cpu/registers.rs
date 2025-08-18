@@ -1,4 +1,3 @@
-use crate::cpu::instructions::RegisterType;
 use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -20,6 +19,80 @@ pub struct Registers {
     pub l: u8,
     pub sp: u16,
     pub pc: u16,
+}
+
+/// Represents the various CPU registers in a Game Boy CPU.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum RegisterType {
+    /// Accumulator register, used for arithmetic and logic operations.
+    A,
+    /// Flags register, holds condition flags (Z, N, H, C).
+    F,
+    /// General-purpose register B.
+    B,
+    /// General-purpose register C.
+    C,
+    /// General-purpose register D.
+    D,
+    /// General-purpose register E.
+    E,
+    /// High byte of the HL register pair.
+    H,
+    /// Low byte of the HL register pair.
+    L,
+    /// Register pair combining A and F (used for specific operations).
+    AF,
+    /// Register pair combining B and C (used for addressing or data storage).
+    BC,
+    /// Register pair combining D and E (used for addressing or data storage).
+    DE,
+    /// Register pair combining H and L (often used as a memory address pointer).
+    HL,
+    /// Stack pointer, points to the top of the stack.
+    SP,
+    /// Program counter, points to the next instruction to be executed.
+    PC,
+}
+
+impl RegisterType {
+    pub fn is_16bit(&self) -> bool {
+        match self {
+            RegisterType::A
+            | RegisterType::F
+            | RegisterType::B
+            | RegisterType::C
+            | RegisterType::D
+            | RegisterType::E
+            | RegisterType::H
+            | RegisterType::L => false,
+            RegisterType::AF
+            | RegisterType::BC
+            | RegisterType::DE
+            | RegisterType::HL
+            | RegisterType::SP
+            | RegisterType::PC => true,
+        }
+    }
+
+    pub const fn get_all() -> &'static [RegisterType] {
+        &[
+            RegisterType::A,
+            RegisterType::F,
+            RegisterType::B,
+            RegisterType::C,
+            RegisterType::D,
+            RegisterType::E,
+            RegisterType::H,
+            RegisterType::L,
+            RegisterType::AF,
+            RegisterType::BC,
+            RegisterType::DE,
+            RegisterType::HL,
+            RegisterType::SP,
+            RegisterType::PC,
+        ]
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

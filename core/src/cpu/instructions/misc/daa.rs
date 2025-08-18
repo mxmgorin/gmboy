@@ -1,10 +1,30 @@
-use crate::cpu::instructions::{FetchedData, InstructionArgs};
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu};
+use crate::cpu::instructions::{FetchedData, InstructionSpec};
+use crate::cpu::Cpu;
 
 impl Cpu {
-    #[inline]
-    pub fn execute_daa(&mut self, _fetched_data: FetchedData, _args: InstructionArgs) {
+    /// Decimal Adjust Accumulator.
+    /// Designed to be used after performing an arithmetic instruction (ADD, ADC, SUB, SBC) whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.
+    /// The exact behavior of this instruction depends on the state of the subtract flag N:
+    ///
+    /// If the subtract flag N is set:
+    /// Initialize the adjustment to 0.
+    /// If the half-carry flag H is set, then add $6 to the adjustment.
+    /// If the carry flag is set, then add $60 to the adjustment.
+    /// Subtract the adjustment from A.
+    /// Set the carry flag if borrow (i.e. if adjustment > A).
+    /// If the subtract flag N is not set:
+    /// Initialize the adjustment to 0.
+    /// If the half-carry flag H is set or A & $F > $9, then add $6 to the adjustment.
+    /// If the carry flag is set or A > $9F, then add $60 to the adjustment.
+    /// Add the adjustment to A.
+    /// Set the carry flag if overflow from bit 7.
+    /// Cycles: 1
+    /// Bytes: 1
+    /// Flags:
+    /// Z Set if result is 0.
+    /// H 0
+    /// C Set or reset depending on the operation.#[inline]
+    pub fn execute_daa(&mut self, _fetched_data: FetchedData, _args: InstructionSpec) {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 
@@ -14,7 +34,9 @@ impl Cpu {
             u = 6;
         }
 
-        if self.registers.flags.get_c() || (!self.registers.flags.get_n() && self.registers.a > 0x99) {
+        if self.registers.flags.get_c()
+            || (!self.registers.flags.get_n() && self.registers.a > 0x99)
+        {
             u |= 0x60;
             fc = 1;
         }
@@ -28,40 +50,5 @@ impl Cpu {
         self.registers.flags.set_z(self.registers.a == 0);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c(fc != 0);
-    }
-}
-
-/// Decimal Adjust Accumulator.
-/// Designed to be used after performing an arithmetic instruction (ADD, ADC, SUB, SBC) whose inputs were in Binary-Coded Decimal (BCD), adjusting the result to likewise be in BCD.
-/// The exact behavior of this instruction depends on the state of the subtract flag N:
-///
-/// If the subtract flag N is set:
-/// Initialize the adjustment to 0.
-/// If the half-carry flag H is set, then add $6 to the adjustment.
-/// If the carry flag is set, then add $60 to the adjustment.
-/// Subtract the adjustment from A.
-/// Set the carry flag if borrow (i.e. if adjustment > A).
-/// If the subtract flag N is not set:
-/// Initialize the adjustment to 0.
-/// If the half-carry flag H is set or A & $F > $9, then add $6 to the adjustment.
-/// If the carry flag is set or A > $9F, then add $60 to the adjustment.
-/// Add the adjustment to A.
-/// Set the carry flag if overflow from bit 7.
-/// Cycles: 1
-/// Bytes: 1
-/// Flags:
-/// Z Set if result is 0.
-/// H 0
-/// C Set or reset depending on the operation.
-#[derive(Debug, Clone, Copy)]
-pub struct DaaInstruction;
-
-impl ExecutableInstruction for DaaInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        cpu.execute_daa(fetched_data, InstructionArgs::default(self.get_address_mode()));
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        AddressMode::IMP
     }
 }

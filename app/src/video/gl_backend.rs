@@ -22,11 +22,7 @@ pub struct GlBackend {
 }
 
 impl GlBackend {
-    pub fn new(
-        sdl: &Sdl,
-        game_rect: Rect,
-        config: &RenderConfig,
-    ) -> Result<Self, String> {
+    pub fn new(sdl: &Sdl, game_rect: Rect, config: &RenderConfig) -> Result<Self, String> {
         let gl = create_gl_with_fallback(sdl, game_rect.width(), game_rect.height())?;
 
         unsafe {
@@ -267,13 +263,12 @@ impl GlBackend {
                 gl::RGB,
                 gl::UNSIGNED_SHORT_5_6_5,
             );
-            self.prev_buffer = vec![
-                0;
-                RenderConfig::WIDTH
-                    * RenderConfig::HEIGHT
-                    * core::ppu::PPU_BYTES_PER_PIXEL
-            ]
-            .into_boxed_slice();
+            self.prev_buffer =
+                vec![
+                    0;
+                    RenderConfig::WIDTH * RenderConfig::HEIGHT * core::ppu::PPU_BYTES_PER_PIXEL
+                ]
+                .into_boxed_slice();
         } else if frame_blend_mode == ShaderFrameBlendMode::None && !self.prev_buffer.is_empty() {
             self.prev_buffer = Box::new([]);
         }

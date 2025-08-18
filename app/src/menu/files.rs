@@ -2,8 +2,8 @@ use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::file_browser::{FileBrowser, FILE_BROWSER_BACK_ITEM};
 use crate::menu::{SubMenu, MAX_MENU_ITEMS_PER_PAGE, MAX_MENU_ITEM_CHARS};
-use std::path::Path;
 use crate::video::truncate_text;
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct FilesMenu {
@@ -13,7 +13,7 @@ pub struct FilesMenu {
 impl FilesMenu {
     pub fn new(last_path: Option<impl AsRef<Path>>) -> Self {
         let extensions = &["gb", "gbc"];
-        
+
         Self {
             fb: if let Some(last_path) = last_path {
                 FileBrowser::new(last_path, MAX_MENU_ITEMS_PER_PAGE, extensions).unwrap()
@@ -80,7 +80,10 @@ impl SubMenu for FilesMenu {
                     log::error!("{err:?}");
                 }
 
-                (Some(AppCmd::SetFileBrowsePath(self.fb.current_dir.clone())), false)
+                (
+                    Some(AppCmd::SetFileBrowsePath(self.fb.current_dir.clone())),
+                    false,
+                )
             } else {
                 (Some(AppCmd::LoadFile(selected.clone())), false)
             };
@@ -97,4 +100,3 @@ impl SubMenu for FilesMenu {
         self.fb.prev_page();
     }
 }
-

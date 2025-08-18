@@ -1,10 +1,18 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction, InstructionArgs};
+use crate::cpu::instructions::InstructionSpec;
 use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu};
+use crate::cpu::Cpu;
 
 impl Cpu {
+    /// Subtract the value in r8 and the carry flag from A.
+    /// Cycles: 1
+    /// Bytes: 1
+    /// Flags:
+    /// Z Set if result is 0.
+    /// N 1
+    /// H Set if borrow from bit 4.
+    /// C Set if borrow (i.e. if (r8 + carry) > A).
     #[inline]
-    pub fn execute_sbc(&mut self, fetched_data: FetchedData, _args: InstructionArgs) {
+    pub fn execute_sbc(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };
@@ -34,28 +42,5 @@ impl Cpu {
         self.registers.flags.set_n(true);
         self.registers.flags.set_h(h);
         self.registers.flags.set_c(c);
-    }
-}
-
-/// Subtract the value in r8 and the carry flag from A.
-/// Cycles: 1
-/// Bytes: 1
-/// Flags:
-/// Z Set if result is 0.
-/// N 1
-/// H Set if borrow from bit 4.
-/// C Set if borrow (i.e. if (r8 + carry) > A).
-#[derive(Debug, Clone, Copy)]
-pub struct SbcInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for SbcInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        cpu.execute_sbc(fetched_data, InstructionArgs::default(self.address_mode));
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
     }
 }

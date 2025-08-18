@@ -73,7 +73,7 @@ impl RenderConfig {
 
         Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
     }
-    
+
     pub fn change_dim(&mut self, v: f32) {
         self.blend_dim = core::change_f32_rounded(self.blend_dim, v).clamp(0.0, 1.0)
     }

@@ -9,14 +9,14 @@ pub struct FileBrowser {
     entries: Vec<PathBuf>,
     selected_index: usize,
     page_size: usize,
-    extensions: &'static[&'static str],
+    extensions: &'static [&'static str],
 }
 
 impl FileBrowser {
     pub fn new<P: AsRef<Path>>(
         path: P,
         page_size: usize,
-        extensions: &'static[&'static str]
+        extensions: &'static [&'static str],
     ) -> std::io::Result<Self> {
         let current_dir = path.as_ref().to_path_buf().canonicalize()?;
         let mut fm = FileBrowser {
@@ -151,14 +151,13 @@ impl FileBrowser {
             .collect();
 
         // First by "is_dir" (dirs first), then lexicographically
-        entries.sort_by(|a, b| {
-            match (a.is_dir(), b.is_dir()) {
-                (true, false) => std::cmp::Ordering::Less,
-                (false, true) => std::cmp::Ordering::Greater,
-                _ => a.file_name()
-                    .unwrap_or_default()
-                    .cmp(b.file_name().unwrap_or_default()),
-            }
+        entries.sort_by(|a, b| match (a.is_dir(), b.is_dir()) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a
+                .file_name()
+                .unwrap_or_default()
+                .cmp(b.file_name().unwrap_or_default()),
         });
 
         // Insert the "back" item at the top

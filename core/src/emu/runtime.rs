@@ -1,6 +1,6 @@
-use crate::auxiliary::clock::{Clock};
+use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
-use crate::cpu::{Cpu};
+use crate::cpu::Cpu;
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
 use crate::emu::EmuAudioCallback;
@@ -15,15 +15,13 @@ pub enum RunMode {
 }
 
 /// Contains all runnable components.
-pub struct EmuRuntime
-{
+pub struct EmuRuntime {
     pub mode: RunMode,
     pub cpu: Cpu,
     debugger: Option<Debugger>,
 }
 
-impl EmuRuntime
-{
+impl EmuRuntime {
     pub fn new(ppu: Ppu, bus: Bus, debugger: Option<Debugger>) -> Self {
         Self {
             mode: RunMode::Normal,

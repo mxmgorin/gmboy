@@ -31,7 +31,7 @@ impl Mbc for Mbc2 {
                     0 => 1,
                     n => n,
                 };
-                
+
                 self.data.clamp_rom_bank_number();
             }
         }

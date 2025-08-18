@@ -1,5 +1,6 @@
 pub mod fetcher;
 pub mod fifo;
+pub mod framebuffer;
 pub mod lcd;
 pub mod oam;
 pub mod ppu;
@@ -7,6 +8,5 @@ mod sprite;
 pub mod tile;
 pub mod vram;
 mod window;
-pub mod framebuffer;
 
 pub use ppu::*;

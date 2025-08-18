@@ -2,9 +2,9 @@ use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::menu::{SubMenu, MAX_MENU_ITEMS_PER_PAGE, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;
+use crate::video::truncate_text;
 use crate::PlatformFileSystem;
 use std::path::PathBuf;
-use crate::video::truncate_text;
 
 #[derive(Debug, Clone)]
 pub struct RomMenuItem {

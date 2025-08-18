@@ -91,7 +91,7 @@ impl AppVideo {
 
     pub fn try_render(&mut self, on_time: bool) {
         let min_elapsed = self.last_render_time.elapsed() >= self.min_render_interval;
-        
+
         if on_time || min_elapsed {
             self.backend.show();
             self.last_render_time = Instant::now();

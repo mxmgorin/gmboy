@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::ppu::lcd::PixelColor;
+use serde::{Deserialize, Serialize};
 
 const BUFFER_SIZE: usize = MAX_FIFO_SIZE * 2;
 const MAX_FIFO_SIZE: usize = 8;

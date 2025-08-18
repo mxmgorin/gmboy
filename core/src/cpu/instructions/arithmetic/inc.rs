@@ -1,10 +1,10 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction, InstructionArgs};
+use crate::cpu::instructions::InstructionSpec;
 use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu};
+use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_inc(&mut self, fetched_data: FetchedData, _args: InstructionArgs) {
+    pub fn execute_inc(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
         let mut value = fetched_data.value.wrapping_add(1);
 
         match fetched_data.dest {
@@ -30,20 +30,5 @@ impl Cpu {
         self.registers.flags.set_z(value == 0);
         self.registers.flags.set_n(false);
         self.registers.flags.set_h((value & 0x0F) == 0);
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct IncInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for IncInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        cpu.execute_inc(fetched_data, InstructionArgs::default(self.address_mode));
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
     }
 }

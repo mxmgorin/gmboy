@@ -1,14 +1,14 @@
-use crate::auxiliary::clock::{Clock};
-use crate::cpu::instructions::{ConditionType, Instruction, InstructionWrapper};
-use crate::cpu::instructions::{FetchedData, RegisterType};
-use crate::cpu::Registers;
+use crate::auxiliary::clock::Clock;
+use crate::cpu::instructions::{ConditionType, Instruction};
+use crate::cpu::instructions::{FetchedData};
+use crate::cpu::{RegisterType, Registers};
 use serde::{Deserialize, Serialize};
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
 pub struct DebugCtx {
     pub pc: u16,
-    pub instruction: InstructionWrapper,
+    pub instruction: Instruction,
     pub opcode: u8,
     pub fetched_data: FetchedData,
 }

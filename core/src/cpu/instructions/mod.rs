@@ -1,7 +1,7 @@
-pub mod address_mode;
+pub mod fetch;
 mod arithmetic;
 mod bitwise;
-pub mod condition_type;
+pub mod condition;
 pub mod instruction;
 mod interrupt;
 mod jump;
@@ -9,31 +9,11 @@ mod load;
 mod misc;
 pub mod opcodes;
 mod rotate;
-pub use address_mode::*;
-pub use arithmetic::dec::*;
-pub use arithmetic::inc::*;
-pub use bitwise::cpl::*;
-pub use bitwise::or::*;
-pub use bitwise::xor::*;
-pub use condition_type::*;
+pub use fetch::*;
+pub use condition::*;
 pub use instruction::*;
-pub use interrupt::di::*;
-pub use interrupt::ei::*;
-pub use interrupt::halt::*;
-pub use jump::call::*;
-pub use jump::jp::*;
-pub use jump::jr::*;
-pub use jump::ret::*;
-pub use jump::reti::*;
-pub use load::ld::*;
-pub use load::ldh::*;
-pub use misc::ccf::*;
-pub use misc::daa::*;
-pub use misc::nop::*;
 pub use opcodes::*;
-pub use rotate::rlca::*;
-pub use rotate::rra::*;
-pub use rotate::rrca::*;
+
 
 #[cfg(test)]
 mod tests {
@@ -41,9 +21,12 @@ mod tests {
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
     use crate::cpu::instructions::{
-        AddressMode, ConditionType, InstructionType, RegisterType, INSTRUCTIONS_BY_OPCODES,
+        AddressMode
     };
-    use crate::cpu::Cpu;
+    use crate::cpu::{Cpu, RegisterType};
+    use crate::cpu::instructions::condition::ConditionType;
+    use crate::cpu::instructions::instruction::Mnemonic;
+    use crate::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
     use crate::ppu::Ppu;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
@@ -81,7 +64,7 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            if InstructionType::Call != instr.get_type() {
+            if Mnemonic::Call != instr.get_mnemonic() {
                 continue;
             }
 
@@ -107,7 +90,7 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            if InstructionType::Jp != instr.get_type() {
+            if Mnemonic::Jp != instr.get_mnemonic() {
                 continue;
             }
 
@@ -137,7 +120,7 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            if InstructionType::Jr != instr.get_type() {
+            if Mnemonic::Jr != instr.get_mnemonic() {
                 continue;
             }
 
@@ -163,7 +146,7 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            if InstructionType::Ret != instr.get_type() {
+            if Mnemonic::Ret != instr.get_mnemonic() {
                 continue;
             }
 
@@ -189,14 +172,14 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            match instr.get_type() {
-                InstructionType::Jp // has tests
-                | InstructionType::Jr // has tests
-                | InstructionType::Ret // has tests
-                | InstructionType::Call // has tests
-                | InstructionType::Stop // has 0 in matrix, invalid?
-                | InstructionType::Halt // has 0 in matrix, invalid? 
-                | InstructionType::Unknown => continue,
+            match instr.get_mnemonic() {
+                Mnemonic::Jp // has tests
+                | Mnemonic::Jr // has tests
+                | Mnemonic::Ret // has tests
+                | Mnemonic::Call // has tests
+                | Mnemonic::Stop // has 0 in matrix, invalid?
+                | Mnemonic::Halt // has 0 in matrix, invalid? 
+                | Mnemonic::Unknown => continue,
                 _ => {}
             }
 

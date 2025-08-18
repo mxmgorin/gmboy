@@ -1,5 +1,4 @@
-use crate::cpu::instructions::instruction::RegisterType;
-use crate::cpu::Cpu;
+use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline(always)]
@@ -233,33 +232,6 @@ impl Cpu {
     pub const fn fetch_impl(&mut self) -> FetchedData {
         FetchedData::empty()
     }
-
-    pub fn fetch_data(&mut self, address_mode: AddressMode) -> FetchedData {
-        match address_mode {
-            AddressMode::IMP => self.fetch_impl(),
-            AddressMode::R(r1) => self.fetch_r(r1),
-            AddressMode::R_R(r1, r2) => self.fetch_r_r(r1, r2),
-            AddressMode::R_D8(r1) => self.fetch_r_d8(r1),
-            AddressMode::D16 => self.fetch_d16(),
-            AddressMode::R_D16(r1) => self.fetch_r_d16(r1),
-            AddressMode::R_MR(r1, r2) => self.fetch_r_mr(r1, r2),
-            AddressMode::R_HMR(r1, r2) => self.fetch_r_hmr(r1, r2),
-            AddressMode::MR_R(r1, r2) => self.fetch_mr_r(r1, r2),
-            AddressMode::R_HLI(r1) => self.fetch_r_hli(r1),
-            AddressMode::R_HLD(r1) => self.fetch_r_hld(r1),
-            AddressMode::HLI_R(r2) => self.fetch_hli_r(r2),
-            AddressMode::HLD_R(r2) => self.fetch_hld_r(r2),
-            AddressMode::R_A8(r1) => self.fetch_r_a8(r1),
-            AddressMode::R_HA8(r1) => self.fetch_r_ha8(r1),
-            AddressMode::A8_R(r2) => self.fetch_a8_r(r2),
-            AddressMode::LH_SPi8 => self.fetch_lh_spi8(),
-            AddressMode::D8 => self.fetch_d8(),
-            AddressMode::A16_R(r2) => self.fetch_a16_r(r2),
-            AddressMode::MR_D8(r1) => self.fetch_mr_d8(r1),
-            AddressMode::MR(r1) => self.fetch_mr(r1),
-            AddressMode::R_A16(r1) => self.fetch_r_a16(r1),
-        }
-    }
 }
 
 /// Represents the different address modes in the CPU's instruction set.
@@ -422,8 +394,7 @@ mod tests {
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
     use crate::cart::Cart;
-    use crate::cpu::instructions::{AddressMode, RegisterType};
-    use crate::cpu::Cpu;
+    use crate::cpu::{Cpu, RegisterType};
     use crate::ppu::Ppu;
 
     #[test]
@@ -431,9 +402,8 @@ mod tests {
         let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
-        let mode = AddressMode::IMP;
 
-        let data = cpu.fetch_data(mode);
+        let data = cpu.fetch_impl();
 
         assert_eq!(data.value, 0);
     }
@@ -445,9 +415,8 @@ mod tests {
         let mut cpu = Cpu::new(clock);
         for reg_type in RegisterType::get_all().iter().cloned() {
             cpu.registers.set_register(reg_type, 23);
-            let mode = AddressMode::R(reg_type);
 
-            let data = cpu.fetch_data(mode);
+            let data = cpu.fetch_r(reg_type);
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -461,9 +430,8 @@ mod tests {
         let mut cpu = Cpu::new(clock);
         for reg_type in RegisterType::get_all().iter().cloned() {
             cpu.registers.set_register(reg_type, 23);
-            let mode = AddressMode::R_R(RegisterType::BC, reg_type);
 
-            let data = cpu.fetch_data(mode);
+            let data = cpu.fetch_r_r(RegisterType::BC, reg_type);
 
             assert_eq!(data.value, cpu.registers.read_register(reg_type));
             assert_eq!(data.dest.get_addr(), None);
@@ -480,9 +448,8 @@ mod tests {
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
         cpu.registers.pc = pc as u16;
-        let mode = AddressMode::R_D8(RegisterType::A);
 
-        let data = cpu.fetch_data(mode);
+        let data = cpu.fetch_r_d8(RegisterType::A);
 
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
@@ -492,7 +459,6 @@ mod tests {
 
     #[test]
     fn test_r_hli() {
-        let mode = AddressMode::R_HLI(RegisterType::A);
         let mut bytes = vec![0u8; 40000];
         let h_val = 0x40;
         let l_val = 0x00;
@@ -505,7 +471,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = cpu.fetch_data(mode);
+        let data = cpu.fetch_r_hli(RegisterType::A);
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);
@@ -514,7 +480,6 @@ mod tests {
 
     #[test]
     fn test_r_hld() {
-        let mode = AddressMode::R_HLD(RegisterType::A);
         let mut bytes = vec![0u8; 40000];
         let h_val = 0x40;
         let l_val = 0x00;
@@ -527,7 +492,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = cpu.fetch_data(mode);
+        let data = cpu.fetch_r_hld(RegisterType::A);
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);

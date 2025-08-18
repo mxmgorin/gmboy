@@ -1,6 +1,4 @@
-use crate::java::{
-    get_file_name, read_dir, read_uri_bytes,
-};
+use crate::java::{get_file_name, read_dir, read_uri_bytes};
 use app::PlatformFileSystem;
 use std::path::Path;
 

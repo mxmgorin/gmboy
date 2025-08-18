@@ -1,10 +1,10 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction, InstructionArgs};
+use crate::cpu::instructions::InstructionSpec;
 use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu};
+use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_push(&mut self, fetched_data: FetchedData, _args: InstructionArgs) {
+    pub fn execute_push(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };
@@ -16,24 +16,5 @@ impl Cpu {
 
         let lo = self.registers.read_register(r) & 0xFF;
         self.push(lo as u8);
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct PushInstruction {
-    pub address_mode: AddressMode,
-}
-
-// C5: PUSH BC
-// D5: PUSH DE
-// E5: PUSH HL
-// F5: PUSH AF
-impl ExecutableInstruction for PushInstruction {
-    fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        cpu.execute_push(fetched_data, InstructionArgs::default(self.address_mode));
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
     }
 }

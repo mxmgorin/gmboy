@@ -20,11 +20,7 @@ pub struct Sdl2Backend {
 }
 
 impl Sdl2Backend {
-    pub fn new(
-        sdl: &Sdl,
-        config: &VideoConfig,
-        game_rect: Rect,
-    ) -> Self {
+    pub fn new(sdl: &Sdl, config: &VideoConfig, game_rect: Rect) -> Self {
         let video_subsystem = sdl.video().unwrap();
         let window = video_subsystem
             .window("GMBoy SDL2", game_rect.width(), game_rect.height())
@@ -90,7 +86,7 @@ impl Sdl2Backend {
 
     pub fn draw_menu(&mut self, buffer: &[u8], config: &VideoConfig) {
         self.clear();
-        
+
         self.game_texture
             .update(None, buffer, core::ppu::PPU_PITCH)
             .unwrap();

@@ -1,12 +1,12 @@
 use crate::bus::Bus;
 use crate::ppu::fifo::PixelFifo;
+use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::PixelColor;
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
-use std::ptr;
 use serde::{Deserialize, Serialize};
-use crate::ppu::framebuffer::FrameBuffer;
+use std::ptr;
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
@@ -81,7 +81,9 @@ impl PixelFetcher {
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         if line_ticks & 1 != 0 {
             // SAFETY: we control FETCH_HANDLERS and FetchStep
-            unsafe {FETCH_HANDLERS.get_unchecked(self.fetch_step as usize)(self, bus); }
+            unsafe {
+                FETCH_HANDLERS.get_unchecked(self.fetch_step as usize)(self, bus);
+            }
         }
 
         self.try_fifo_pop(bus);
@@ -93,13 +95,15 @@ impl PixelFetcher {
             // For the window layer, bypass scroll_x to avoid horizontal scrolling
             if self.bgw_fetched_data.is_window {
                 // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
-                let index = self.pushed_x
+                let index = self
+                    .pushed_x
                     .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
                 self.push_buffer(index, pixel);
             } else {
                 // For the background layer, apply scroll_x for horizontal scrolling
                 if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
-                    let index = self.pushed_x
+                    let index = self
+                        .pushed_x
                         .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
                     self.push_buffer(index, pixel);
                 }
@@ -127,23 +131,22 @@ impl PixelFetcher {
         let control = lcd.control;
 
         if control.bgw_enabled() {
-            let (map_y, map_x, tile_idx, is_window) = if let Some(tile_idx) =
-                lcd.window.get_tile_idx(self.fetch_x as u16, bus)
-            {
-                (
-                    lcd.ly.wrapping_add(lcd.window.y),
-                    self.fetch_x.wrapping_add(lcd.window.x),
-                    tile_idx,
-                    true,
-                )
-            } else {
-                let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
-                let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                let addr = control.bg_map_area()
-                    + (map_x as u16 / TILE_WIDTH)
-                    + ((map_y as u16 / TILE_HEIGHT) * 32);
-                (map_y, map_x, bus.read(addr), false)
-            };
+            let (map_y, map_x, tile_idx, is_window) =
+                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, bus) {
+                    (
+                        lcd.ly.wrapping_add(lcd.window.y),
+                        self.fetch_x.wrapping_add(lcd.window.x),
+                        tile_idx,
+                        true,
+                    )
+                } else {
+                    let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
+                    let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
+                    let addr = control.bg_map_area()
+                        + (map_x as u16 / TILE_WIDTH)
+                        + ((map_y as u16 / TILE_HEIGHT) * 32);
+                    (map_y, map_x, bus.read(addr), false)
+                };
 
             let fetched = &mut self.bgw_fetched_data;
             fetched.is_window = is_window;
@@ -206,16 +209,20 @@ impl PixelFetcher {
         }
 
         for bit in 0..TILE_BITS_COUNT {
-            let bgw_color_index =
-                get_color_index(self.bgw_fetched_data.byte1, self.bgw_fetched_data.byte2, bit);
+            let bgw_color_index = get_color_index(
+                self.bgw_fetched_data.byte1,
+                self.bgw_fetched_data.byte2,
+                bit,
+            );
 
             let pixel = if obj_enabled {
                 if let Some(sprite_pixel) =
-                    self.sprite_fetcher.fetch_sprite_pixel(lcd, self.fifo_x, bgw_color_index)
+                    self.sprite_fetcher
+                        .fetch_sprite_pixel(lcd, self.fifo_x, bgw_color_index)
                 {
                     sprite_pixel
                 } else {
-                   Self::get_gbw_color(bg_colors, bgw_color_index, bgw_enabled)
+                    Self::get_gbw_color(bg_colors, bgw_color_index, bgw_enabled)
                 }
             } else {
                 Self::get_gbw_color(bg_colors, bgw_color_index, bgw_enabled)

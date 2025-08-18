@@ -2,9 +2,9 @@ use crate::app::AppCmd;
 use crate::config::AppConfig;
 
 pub mod buffer;
+pub mod factory;
 pub mod files;
 pub mod item;
-pub mod factory;
 pub mod menu;
 pub mod roms;
 
@@ -13,8 +13,6 @@ pub use menu::*;
 
 pub const MAX_MENU_ITEMS_PER_PAGE: usize = 12;
 pub const MAX_MENU_ITEM_CHARS: usize = 22;
-
-
 
 pub fn get_menu_item_suffix(enabled: bool) -> &'static str {
     if enabled {

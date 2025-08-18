@@ -1,5 +1,5 @@
-use crate::Ppu;
 use crate::Clock;
+use crate::Ppu;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
@@ -19,7 +19,7 @@ pub fn run_blargg_rom_serial(
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
     let mut debugger = Debugger::new(CpuLogType::None, true);
-    
+
     loop {
         cpu.step(Some(&mut debugger))?;
         let serial_msg = debugger.get_serial_msg().to_lowercase();

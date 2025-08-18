@@ -205,8 +205,7 @@ where
     D: Deserializer<'de>,
 {
     let timestamp = i128::deserialize(deserializer)?;
-    let system_time = SystemTime::UNIX_EPOCH
-        + Duration::from_nanos(timestamp as u64); // careful with overflow
+    let system_time = SystemTime::UNIX_EPOCH + Duration::from_nanos(timestamp as u64); // careful with overflow
     let now_system = SystemTime::now();
     let now_instant = Instant::now();
 
@@ -218,7 +217,7 @@ where
 }
 
 mod instant_serde {
-    pub use super::{serialize, deserialize};
+    pub use super::{deserialize, serialize};
 }
 
 #[cfg(test)]

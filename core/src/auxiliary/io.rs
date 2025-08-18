@@ -42,8 +42,9 @@ impl Io {
             0xFF01 => self.serial.sb,
             0xFF02 => self.serial.sc | SERIAL_SC_UNUSED_MASK,
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.read(address),
-            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS |
-            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.apu.read(address),
+            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
+                self.apu.read(address)
+            }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.lcd.read(address),
             0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => 0xFF,
             0xFF0F => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
@@ -58,14 +59,11 @@ impl Io {
             0xFF01 => self.serial.sb = value,
             0xFF02 => self.serial.sc = value,
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.write(address, value),
-            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS |
-            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.apu.write(address, value),
+            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
+                self.apu.write(address, value)
+            }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.lcd.write(address, value),
-            0xFF4F |
-            0xFF50 |
-            0xFF51..=0xFF55 |
-            0xFF68..=0xFF6B |
-            0xFF70 => { },
+            0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {}
             0xFF0F => self.interrupts.int_flags = value,
             _ => {}
         }

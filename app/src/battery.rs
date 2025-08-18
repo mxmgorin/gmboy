@@ -1,9 +1,9 @@
+use crate::get_base_dir;
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::{fs};
-use crate::get_base_dir;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatterySave {

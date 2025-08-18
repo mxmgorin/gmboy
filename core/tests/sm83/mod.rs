@@ -1,8 +1,8 @@
 mod util;
 
-use core::cpu::instructions::InstructionType;
 use crate::sm83::util::{run_sb_test_cases, run_test_case, Sm83TestCase};
 use core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
+use core::cpu::instructions::Mnemonic;
 use std::time::Duration;
 
 #[test]
@@ -10,7 +10,7 @@ fn test_sm83_all() {
     let mut count = 0;
 
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-        if InstructionType::Unknown == instruction.get_type() {
+        if Mnemonic::Unknown == instruction.get_mnemonic() {
             continue;
         }
 

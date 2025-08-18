@@ -1,8 +1,8 @@
+use crate::get_base_dir;
 use core::save_json_file;
 use serde::{Deserialize, Serialize};
 use std::io;
 use std::path::PathBuf;
-use crate::get_base_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LcdPalette {
