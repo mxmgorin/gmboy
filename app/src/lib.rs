@@ -44,10 +44,8 @@ where
     let mut app = App::new(&mut sdl, config, palettes, platform).unwrap();
     load_cart(&mut app, &mut emu, args);
 
-    if let Err(err) = app.run(&mut emu, &mut input) {
-        log::error!("Failed app run: {err}");
-    }
-
+    app.run(&mut emu, &mut input);
+    
     if let Err(err) = app.save_files(&mut emu) {
         log::error!("Failed app.save_files: {err}");
     }

@@ -24,7 +24,7 @@ pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), Stri
     let instant = Instant::now();
 
     loop {
-        cpu.step(None)?;
+        cpu.step(None);
 
         if cpu.registers.b == 3
             && cpu.registers.c == 5

@@ -170,7 +170,7 @@ where
     }
 
     /// Execution loop
-    pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
+    pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) {
         self.state = if self.config.auto_continue && !emu.runtime.cpu.clock.bus.cart.is_empty() {
             AppState::Running
         } else {
@@ -183,16 +183,14 @@ where
             match self.state {
                 AppState::Quitting => break,
                 AppState::Paused => self.run_pause(emu),
-                AppState::Running => self.run_game(emu)?,
+                AppState::Running => self.run_game(emu),
             }
         }
-
-        Ok(())
     }
 
     #[inline]
-    pub fn run_game(&mut self, emu: &mut Emu) -> Result<(), String> {
-        let on_time = emu.run_frame(self)?;
+    pub fn run_game(&mut self, emu: &mut Emu) {
+        let on_time = emu.run_frame(self);
         let fps = emu.runtime.cpu.clock.ppu.get_fps();
         let fb = &mut emu.get_framebuffer();
         self.update_notif(fb);
@@ -205,8 +203,6 @@ where
 
         self.video.draw_buffer(fb);
         self.video.try_render(on_time);
-
-        Ok(())
     }
 
     pub fn run_pause(&mut self, emu: &mut Emu) {

@@ -35,11 +35,11 @@ impl EmuRuntime {
     }
 
     #[inline]
-    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) -> Result<(), String> {
+    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback){
         let start_frame = self.cpu.clock.ppu.current_frame;
 
         while start_frame == self.cpu.clock.ppu.current_frame {
-            self.cpu.step(self.debugger.as_mut())?;
+            self.cpu.step(self.debugger.as_mut());
 
             if let Some(debugger) = self.debugger.as_mut() {
                 debugger.print_serial()
@@ -51,7 +51,5 @@ impl EmuRuntime {
                 self.cpu.clock.bus.io.apu.clear_buffer();
             }
         }
-
-        Ok(())
     }
 }

@@ -49,7 +49,7 @@ impl Emu {
     }
 
     /// Runs emulation for one frame. Return whether the emulation is on time.
-    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) -> Result<bool, String> {
+    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) -> bool {
         match self.state {
             EmuState::Rewind => {
                 if let Some(state) = self.rewind_buffer.pop_back() {
@@ -57,10 +57,10 @@ impl Emu {
                     thread::sleep(Duration::from_millis(250));
                 }
 
-                self.runtime.run_frame(callback)?;
+                self.runtime.run_frame(callback);
             }
             EmuState::Running => {
-                self.runtime.run_frame(callback)?;
+                self.runtime.run_frame(callback);
                 self.push_rewind();
             }
         };
@@ -73,7 +73,7 @@ impl Emu {
             self.sleep_spin(emulated_time - real_elapsed);
         }
 
-        Ok(on_time)
+        on_time
     }
 
     #[inline]

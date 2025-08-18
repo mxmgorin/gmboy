@@ -81,7 +81,7 @@ impl Cpu {
     pub fn step(
         &mut self,
         mut _debugger: Option<&mut crate::debugger::Debugger>,
-    ) -> Result<(), String> {
+    ) {
         #[cfg(debug_assertions)]
         if let Some(ref mut debugger) = _debugger {
             debugger.print(self, None);
@@ -98,27 +98,20 @@ impl Cpu {
             // Do nothing, just wait for an interrupt to wake up
             self.clock.m_cycles(1);
 
-            return Ok(());
+            return;
         }
 
         #[cfg(debug_assertions)]
         let pc = self.registers.pc;
 
         self.current_opcode = self.read_pc();
-
-        let Some(instruction) = Instruction::get_by_opcode(self.current_opcode) else {
-            return Err(format!(
-                "Unknown instruction OPCODE: {:X}",
-                self.current_opcode,
-            ));
-        };
-
+        let instruction = Instruction::get_by_opcode(self.current_opcode);
         let fetched_data = instruction.fetch(self);
 
         #[cfg(debug_assertions)]
         let inst_ctx = DebugCtx {
             pc,
-            instruction: instruction.clone(),
+            instruction: *instruction,
             opcode: self.current_opcode,
             fetched_data: fetched_data.clone(),
         };
@@ -136,8 +129,6 @@ impl Cpu {
             self.enabling_ime = false;
             self.clock.bus.io.interrupts.ime = true;
         }
-
-        Ok(())
     }
 
     /// Costs 5 M-cycles when an interrupt is executed

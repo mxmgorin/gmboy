@@ -37,15 +37,15 @@ pub struct Instruction {
 }
 
 impl Instruction {
-    pub fn get_by_opcode(opcode: u8) -> Option<&'static Instruction> {
-        INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
+    pub const fn get_by_opcode(opcode: u8) -> &'static Instruction {
+        &INSTRUCTIONS_BY_OPCODES[opcode as usize]
     }
 
-    pub fn execute(self, cpu: &mut Cpu, fetched_data: FetchedData) {
+    pub fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
         (self.execute)(cpu, fetched_data, self.args);
     }
 
-    pub fn fetch(self, cpu: &mut Cpu) -> FetchedData {
+    pub fn fetch(&self, cpu: &mut Cpu) -> FetchedData {
         (self.fetch)(cpu)
     }
 
