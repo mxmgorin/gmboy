@@ -8,151 +8,258 @@ impl AddressMode {
 }
 
 impl Cpu {
-    pub fn fetch_data(&mut self, address_mode: AddressMode) -> FetchedData {
-        let mut fetched_data = FetchedData::empty();
-
-        match address_mode {
-            AddressMode::IMP => (),
-            AddressMode::R(r1) => {
-                fetched_data.value = self.registers.read_register(r1);
-                fetched_data.source = DataSource::Register(r1);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::R_R(r1, r2) => {
-                fetched_data.value = self.registers.read_register(r2);
-                fetched_data.source = DataSource::Register(r2);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::R_D8(r1) => {
-                fetched_data.value = self.read_pc() as u16;
-                fetched_data.source = DataSource::Immediate;
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::D16 => {
-                fetched_data.value = self.read_pc16();
-                fetched_data.source = DataSource::Immediate;
-            }
-            AddressMode::R_D16(r1) => {
-                fetched_data.value = self.read_pc16();
-                fetched_data.source = DataSource::Immediate;
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::R_MR(r1, r2) => {
-                let addr = self.registers.read_register(r2);
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::MemoryRegister(r2, addr);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::R_HMR(r1, r2) => {
-                let addr = self.registers.read_register(r2);
-                let addr = 0xFF00 | addr;
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::MemoryRegister(r2, addr);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::MR_R(r1, r2) => {
-                fetched_data.value = self.registers.read_register(r2);
-                fetched_data.source = DataSource::Register(r2);
-                fetched_data.dest = DataDestination::Memory(self.registers.read_register(r1));
-            }
-            AddressMode::R_HLI(r1) => {
-                let addr = self.registers.read_register(RegisterType::HL);
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::MemoryRegister(RegisterType::HL, addr);
-                fetched_data.dest = DataDestination::Register(r1);
-
-                self.registers.set_hl(addr.wrapping_add(1));
-            }
-            AddressMode::R_HLD(r1) => {
-                let addr = self.registers.read_register(RegisterType::HL);
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::MemoryRegister(RegisterType::HL, addr);
-                fetched_data.dest = DataDestination::Register(r1);
-
-                self.registers.set_hl(addr.wrapping_sub(1));
-            }
-            AddressMode::HLI_R(r2) => {
-                let addr = self.registers.read_register(RegisterType::HL);
-
-                fetched_data.value = self.registers.read_register(r2);
-                fetched_data.source = DataSource::Register(r2);
-                fetched_data.dest = DataDestination::Memory(addr);
-
-                self.registers.set_hl(addr.wrapping_add(1));
-            }
-            AddressMode::HLD_R(r2) => {
-                let addr = self.registers.read_register(RegisterType::HL);
-
-                fetched_data.value = self.registers.read_register(r2);
-                fetched_data.source = DataSource::Register(r2);
-                fetched_data.dest = DataDestination::Memory(addr);
-
-                self.registers.set_hl(addr.wrapping_sub(1));
-            }
-            AddressMode::R_A8(r1) => {
-                let addr = self.read_pc() as u16;
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::Memory(addr);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::R_HA8(r1) => {
-                let addr = self.read_pc() as u16;
-                let addr = 0xFF00 | addr;
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::Memory(addr);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
-            AddressMode::A8_R(r2) => {
-                let addr = self.read_pc() as u16;
-
-                fetched_data.value = self.registers.read_register(r2);
-                fetched_data.source = DataSource::Register(r2);
-                fetched_data.dest = DataDestination::Memory(addr);
-            }
-            AddressMode::LH_SPi8 => {
-                fetched_data.value = self.read_pc() as u16;
-                fetched_data.source = DataSource::Immediate;
-                fetched_data.dest = DataDestination::Register(RegisterType::HL);
-            }
-            AddressMode::D8 => {
-                fetched_data.value = self.read_pc() as u16;
-                fetched_data.source = DataSource::Immediate;
-            }
-            AddressMode::A16_R(r2) => {
-                let addr = self.read_pc16();
-
-                fetched_data.value = self.registers.read_register(r2);
-                fetched_data.source = DataSource::Register(r2);
-                fetched_data.dest = DataDestination::Memory(addr);
-            }
-            AddressMode::MR_D8(r1) => {
-                fetched_data.value = self.read_pc() as u16;
-                fetched_data.source = DataSource::Immediate;
-                fetched_data.dest = DataDestination::Memory(self.registers.read_register(r1));
-            }
-            AddressMode::MR(r1) => {
-                let addr = self.registers.read_register(r1);
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::MemoryRegister(r1, addr);
-                fetched_data.dest = DataDestination::Memory(addr);
-            }
-            AddressMode::R_A16(r1) => {
-                let addr = self.read_pc16();
-
-                fetched_data.value = self.read_memory(addr);
-                fetched_data.source = DataSource::Memory(addr);
-                fetched_data.dest = DataDestination::Register(r1);
-            }
+    #[inline(always)]
+    pub fn fetch_r(&mut self, r1: RegisterType) -> FetchedData {
+        FetchedData {
+            value: self.registers.read_register(r1),
+            source: DataSource::Register(r1),
+            dest: DataDestination::Register(r1),
         }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_r(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+        FetchedData {
+            value: self.registers.read_register(r2),
+            source: DataSource::Register(r2),
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_d8(&mut self, r1: RegisterType) -> FetchedData {
+        FetchedData {
+            value: self.read_pc() as u16,
+            source: DataSource::Immediate,
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_d16(&mut self) -> FetchedData {
+        FetchedData {
+            dest: DataDestination::Memory(0),
+            value: self.read_pc16(),
+            source: DataSource::Immediate,
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_d16(&mut self, r1: RegisterType) -> FetchedData {
+        FetchedData {
+            value: self.read_pc16(),
+            source: DataSource::Immediate,
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_mr(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(r2);
+
+        FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::MemoryRegister(r2, addr),
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_hmr(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(r2);
+        let addr = 0xFF00 | addr;
+
+        FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::MemoryRegister(r2, addr),
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_mr_r(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+        FetchedData {
+            value: self.registers.read_register(r2),
+            source: DataSource::Register(r2),
+            dest: DataDestination::Memory(self.registers.read_register(r1)),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_hli(&mut self, r1: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(RegisterType::HL);
+        let fetched_data = FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::MemoryRegister(RegisterType::HL, addr),
+            dest: DataDestination::Register(r1),
+        };
+
+        self.registers.set_hl(addr.wrapping_add(1));
 
         fetched_data
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_hld(&mut self, r1: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(RegisterType::HL);
+        let fetched_data = FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::MemoryRegister(RegisterType::HL, addr),
+            dest: DataDestination::Register(r1),
+        };
+
+        self.registers.set_hl(addr.wrapping_sub(1));
+
+        fetched_data
+    }
+
+    #[inline(always)]
+    pub fn fetch_hli_r(&mut self, r2: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(RegisterType::HL);
+        let fetched_data = FetchedData {
+            value: self.registers.read_register(r2),
+            source: DataSource::Register(r2),
+            dest: DataDestination::Memory(addr),
+        };
+
+        self.registers.set_hl(addr.wrapping_add(1));
+
+        fetched_data
+    }
+
+    #[inline(always)]
+    pub fn fetch_hld_r(&mut self, r2: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(RegisterType::HL);
+        let fetched_data = FetchedData {
+            value: self.registers.read_register(r2),
+            source: DataSource::Register(r2),
+            dest: DataDestination::Memory(addr),
+        };
+
+        self.registers.set_hl(addr.wrapping_sub(1));
+
+        fetched_data
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_a8(&mut self, r1: RegisterType) -> FetchedData {
+        let addr = self.read_pc() as u16;
+
+        FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::Memory(addr),
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_ha8(&mut self, r1: RegisterType) -> FetchedData {
+        let addr = self.read_pc() as u16;
+        let addr = 0xFF00 | addr;
+
+        FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::Memory(addr),
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_a8_r(&mut self, r2: RegisterType) -> FetchedData {
+        let addr = self.read_pc() as u16;
+
+        FetchedData {
+            value: self.registers.read_register(r2),
+            source: DataSource::Register(r2),
+            dest: DataDestination::Memory(addr),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_lh_spi8(&mut self) -> FetchedData {
+        FetchedData {
+            value: self.read_pc() as u16,
+            source: DataSource::Immediate,
+            dest: DataDestination::Register(RegisterType::HL),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_d8(&mut self) -> FetchedData {
+        FetchedData {
+            dest: DataDestination::Memory(0),
+            value: self.read_pc() as u16,
+            source: DataSource::Immediate,
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_a16_r(&mut self, r2: RegisterType) -> FetchedData {
+        let addr = self.read_pc16();
+
+        FetchedData {
+            value: self.registers.read_register(r2),
+            source: DataSource::Register(r2),
+            dest: DataDestination::Memory(addr),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_mr_d8(&mut self, r1: RegisterType) -> FetchedData {
+        FetchedData {
+            value: self.read_pc() as u16,
+            source: DataSource::Immediate,
+            dest: DataDestination::Memory(self.registers.read_register(r1)),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_mr(&mut self, r1: RegisterType) -> FetchedData {
+        let addr = self.registers.read_register(r1);
+
+        FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::MemoryRegister(r1, addr),
+            dest: DataDestination::Memory(addr),
+        }
+    }
+
+    #[inline(always)]
+    pub fn fetch_r_a16(&mut self, r1: RegisterType) -> FetchedData {
+        let addr = self.read_pc16();
+
+        FetchedData {
+            value: self.read_memory(addr),
+            source: DataSource::Memory(addr),
+            dest: DataDestination::Register(r1),
+        }
+    }
+
+    pub fn fetch_data(&mut self, address_mode: AddressMode) -> FetchedData {
+        match address_mode {
+            AddressMode::IMP => FetchedData::empty(),
+            AddressMode::R(r1) => self.fetch_r(r1),
+            AddressMode::R_R(r1, r2) => self.fetch_r_r(r1, r2),
+            AddressMode::R_D8(r1) => self.fetch_r_d8(r1),
+            AddressMode::D16 => self.fetch_d16(),
+            AddressMode::R_D16(r1) => self.fetch_r_d16(r1),
+            AddressMode::R_MR(r1, r2) => self.fetch_r_mr(r1, r2),
+            AddressMode::R_HMR(r1, r2) => self.fetch_r_hmr(r1, r2),
+            AddressMode::MR_R(r1, r2) => self.fetch_mr_r(r1, r2),
+            AddressMode::R_HLI(r1) => self.fetch_r_hli(r1),
+            AddressMode::R_HLD(r1) => self.fetch_r_hld(r1),
+            AddressMode::HLI_R(r2) => self.fetch_hli_r(r2),
+            AddressMode::HLD_R(r2) => self.fetch_hld_r(r2),
+            AddressMode::R_A8(r1) => self.fetch_r_a8(r1),
+            AddressMode::R_HA8(r1) => self.fetch_r_ha8(r1),
+            AddressMode::A8_R(r2) => self.fetch_a8_r(r2),
+            AddressMode::LH_SPi8 => self.fetch_lh_spi8(),
+            AddressMode::D8 => self.fetch_d8(),
+            AddressMode::A16_R(r2) => self.fetch_a16_r(r2),
+            AddressMode::MR_D8(r1) => self.fetch_mr_d8(r1),
+            AddressMode::MR(r1) => self.fetch_mr(r1),
+            AddressMode::R_A16(r1) => self.fetch_r_a16(r1),
+        }
     }
 }
 
@@ -312,7 +419,7 @@ impl DataSource {
 
 #[cfg(test)]
 mod tests {
-    use crate::auxiliary::clock::{Clock};
+    use crate::auxiliary::clock::Clock;
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
     use crate::cart::Cart;
