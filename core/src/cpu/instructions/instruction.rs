@@ -35,9 +35,29 @@ use crate::cpu::instructions::rotate::rlca::RlcaInstruction;
 use crate::cpu::instructions::rotate::rra::RraInstruction;
 use crate::cpu::instructions::rotate::rrca::RrcaInstruction;
 use crate::cpu::instructions::FetchedData;
-
 use crate::cpu::Cpu;
 use std::fmt::Display;
+
+#[derive(Copy, Clone)]
+pub struct InstructionWrapper {
+    pub instruction: Instruction,
+    pub fetch: fn(&mut Cpu) -> FetchedData,
+}
+
+impl InstructionWrapper {
+    pub const fn unknown(opcode: u8) -> Self {
+        Self::new(Instruction::Unknown(opcode), |_| {
+            panic!("can't fetch for unknown instruction")
+        })
+    }
+
+    pub const fn new(i: Instruction, f: fn(&mut Cpu) -> FetchedData) -> Self {
+        Self {
+            instruction: i,
+            fetch: f,
+        }
+    }
+}
 
 pub trait ExecutableInstruction {
     fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData);
@@ -212,7 +232,7 @@ impl Instruction {
         }
     }
 
-    pub fn get_by_opcode(opcode: u8) -> Option<&'static Instruction> {
+    pub fn get_by_opcode(opcode: u8) -> Option<&'static InstructionWrapper> {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
 
@@ -476,6 +496,6 @@ pub enum InstructionType {
 impl Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = format!("{:?} {:?}", self.get_type(), self.get_address_mode());
-        write!(f, "{:?}", str)
+        write!(f, "{str:?}")
     }
 }

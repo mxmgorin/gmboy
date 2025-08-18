@@ -9,7 +9,6 @@ mod load;
 mod misc;
 pub mod opcodes;
 mod rotate;
-
 pub use address_mode::*;
 pub use arithmetic::dec::*;
 pub use arithmetic::inc::*;
@@ -38,7 +37,7 @@ pub use rotate::rrca::*;
 
 #[cfg(test)]
 mod tests {
-    use crate::auxiliary::clock::{Clock};
+    use crate::auxiliary::clock::Clock;
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
     use crate::cpu::instructions::{
@@ -62,7 +61,10 @@ mod tests {
     #[test]
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let clock = Clock::new(
+            Ppu::default(),
+            Bus::with_bytes(vec![0; 100000], Io::default()),
+        );
         let mut cpu = Cpu::new(clock);
         cpu.registers.pc = 0;
         cpu.clock.bus.write(0, opcode as u8);
@@ -73,10 +75,13 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_call() {
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let clock = Clock::new(
+            Ppu::default(),
+            Bus::with_bytes(vec![0; 100000], Io::default()),
+        );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Call(instr) = *instr else {
+            let Instruction::Call(instr) = instr.instruction else {
                 continue;
             };
             cpu.registers.pc = 0;
@@ -95,10 +100,13 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jp() {
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let clock = Clock::new(
+            Ppu::default(),
+            Bus::with_bytes(vec![0; 100000], Io::default()),
+        );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Jp(instr) = *instr else {
+            let Instruction::Jp(instr) = instr.instruction else {
                 continue;
             };
 
@@ -122,10 +130,13 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_jr() {
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let clock = Clock::new(
+            Ppu::default(),
+            Bus::with_bytes(vec![0; 100000], Io::default()),
+        );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Jr(instr) = *instr else {
+            let Instruction::Jr(instr) = instr.instruction else {
                 continue;
             };
 
@@ -145,10 +156,13 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles_ret() {
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let clock = Clock::new(
+            Ppu::default(),
+            Bus::with_bytes(vec![0; 100000], Io::default()),
+        );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Ret(instr) = *instr else {
+            let Instruction::Ret(instr) = instr.instruction else {
                 continue;
             };
 
@@ -168,10 +182,13 @@ mod tests {
 
     #[test]
     pub fn test_m_cycles() {
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(vec![0; 100000], Io::default()));
+        let clock = Clock::new(
+            Ppu::default(),
+            Bus::with_bytes(vec![0; 100000], Io::default()),
+        );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            match instr {
+            match instr.instruction {
                 Instruction::Jp(_) // has tests
                 | Instruction::Jr(_) // has tests
                 | Instruction::Ret(_) // has tests
@@ -195,8 +212,7 @@ mod tests {
 
             if actual != expected {
                 let msg = format!(
-                    "Invalid M-Cycles for 0x{:02X}: actual={}, expected={}",
-                    opcode, actual, expected
+                    "Invalid M-Cycles for 0x{opcode:02X}: actual={actual}, expected={expected}"
                 );
                 panic!("{}", msg);
             }

@@ -10,7 +10,7 @@ fn test_sm83_all() {
     let mut count = 0;
 
     for (opcode, instruction) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-        if let Instruction::Unknown(_) = instruction {
+        if let Instruction::Unknown(_) = instruction.instruction {
             continue;
         }
 

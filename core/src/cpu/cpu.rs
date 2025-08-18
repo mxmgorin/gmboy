@@ -113,12 +113,12 @@ impl Cpu {
             ));
         };
 
-        let fetched_data = self.fetch_data(instruction.get_address_mode());
+        let fetched_data = (instruction.fetch)(self);
 
         #[cfg(debug_assertions)]
         let inst_ctx = DebugCtx {
             pc,
-            instruction: instruction.to_owned(),
+            instruction: instruction.instruction,
             opcode: self.current_opcode,
             fetched_data: fetched_data.clone(),
         };
@@ -129,7 +129,7 @@ impl Cpu {
         }
 
         let prev_enabling_ime = self.enabling_ime;
-        instruction.execute(self, fetched_data);
+        instruction.instruction.execute(self, fetched_data);
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed

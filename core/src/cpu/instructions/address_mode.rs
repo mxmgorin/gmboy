@@ -1,12 +1,6 @@
 use crate::cpu::instructions::instruction::RegisterType;
 use crate::cpu::Cpu;
 
-impl AddressMode {
-    pub fn is_hl_spi8(self) -> bool {
-        self == AddressMode::LH_SPi8
-    }
-}
-
 impl Cpu {
     #[inline(always)]
     pub fn fetch_r(&mut self, r1: RegisterType) -> FetchedData {
@@ -235,9 +229,14 @@ impl Cpu {
         }
     }
 
+    #[inline(always)]
+    pub const fn fetch_impl(&mut self) -> FetchedData {
+        FetchedData::empty()
+    }
+
     pub fn fetch_data(&mut self, address_mode: AddressMode) -> FetchedData {
         match address_mode {
-            AddressMode::IMP => FetchedData::empty(),
+            AddressMode::IMP => self.fetch_impl(),
             AddressMode::R(r1) => self.fetch_r(r1),
             AddressMode::R_R(r1, r2) => self.fetch_r_r(r1, r2),
             AddressMode::R_D8(r1) => self.fetch_r_d8(r1),
@@ -365,7 +364,7 @@ pub struct FetchedData {
 }
 
 impl FetchedData {
-    pub fn empty() -> FetchedData {
+    pub const fn empty() -> FetchedData {
         Self {
             dest: DataDestination::Memory(0),
             source: DataSource::Immediate,
