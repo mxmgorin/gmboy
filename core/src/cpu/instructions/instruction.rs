@@ -65,21 +65,55 @@ impl InstructionArgs {
 
 #[derive(Copy, Clone)]
 pub struct InstructionWrapper {
-    pub instruction: Instruction,
-    pub fetch: fn(&mut Cpu) -> FetchedData,
+    r#type: InstructionType,
+    args: InstructionArgs,
+    execute: fn(&mut Cpu, fetched_data: FetchedData, arg: InstructionArgs),
+    fetch: fn(&mut Cpu) -> FetchedData,
 }
 
 impl InstructionWrapper {
-    pub const fn unknown(opcode: u8) -> Self {
-        Self::new(Instruction::Unknown(opcode), |_| {
-            panic!("can't fetch for unknown instruction")
-        })
+    pub fn execute(self, cpu: &mut Cpu, fetched_data: FetchedData) {
+        (self.execute)(cpu, fetched_data, self.args);
     }
 
-    pub const fn new(i: Instruction, f: fn(&mut Cpu) -> FetchedData) -> Self {
+    pub fn fetch(self, cpu: &mut Cpu) -> FetchedData {
+        (self.fetch)(cpu)
+    }
+    
+    pub fn get_address_mode(&self) -> AddressMode {
+        self.args.addr_mode
+    }
+    
+    pub fn get_type(&self) -> InstructionType {
+        self.r#type
+    }
+    
+    pub fn get_condition(&self) -> Option<ConditionType> {
+        self.args.cond_type
+    }
+}
+
+impl InstructionWrapper {
+    pub const fn unknown(_opcode: u8) -> Self {
+        Self::new(
+            InstructionType::Unknown,
+            InstructionArgs::default(AddressMode::IMP),
+            |_, _, _| panic!("can't fetch for unknown instruction for opcode"),
+            |_| panic!("can't fetch for unknown instruction"),
+        )
+    }
+
+    pub const fn new(
+        r#type: InstructionType,
+        args: InstructionArgs,
+        execute: fn(&mut Cpu, fetched_data: FetchedData, arg: InstructionArgs),
+        fetch: fn(&mut Cpu) -> FetchedData,
+    ) -> Self {
         Self {
-            instruction: i,
-            fetch: f,
+            r#type,
+            args,
+            execute,
+            fetch,
         }
     }
 }
@@ -220,130 +254,47 @@ impl Instruction {
             Instruction::Unknown(opcode) => {
                 panic!("Can't get_type for unknown instruction {opcode:X}")
             }
-            Instruction::Nop(_) => InstructionType::NOP,
-            Instruction::Inc(_) => InstructionType::INC,
-            Instruction::Dec(_) => InstructionType::DEC,
-            Instruction::Ld(_) => InstructionType::LD,
-            Instruction::Jr(_) => InstructionType::JR,
-            Instruction::Daa(_) => InstructionType::DAA,
-            Instruction::Cpl(_) => InstructionType::CPL,
-            Instruction::Ccf(_) => InstructionType::CCF,
-            Instruction::Halt(_) => InstructionType::HALT,
-            Instruction::Xor(_) => InstructionType::XOR,
-            Instruction::Di(_) => InstructionType::DI,
-            Instruction::Jp(_) => InstructionType::JP,
-            Instruction::Ldh(_) => InstructionType::LDH,
-            Instruction::Call(_) => InstructionType::CALL,
-            Instruction::Rra(_) => InstructionType::RRA,
+            Instruction::Nop(_) => InstructionType::Nop,
+            Instruction::Inc(_) => InstructionType::Inc,
+            Instruction::Dec(_) => InstructionType::Dec,
+            Instruction::Ld(_) => InstructionType::Ld,
+            Instruction::Jr(_) => InstructionType::Jr,
+            Instruction::Daa(_) => InstructionType::Daa,
+            Instruction::Cpl(_) => InstructionType::Cpl,
+            Instruction::Ccf(_) => InstructionType::Ccf,
+            Instruction::Halt(_) => InstructionType::Halt,
+            Instruction::Xor(_) => InstructionType::Xor,
+            Instruction::Di(_) => InstructionType::Di,
+            Instruction::Jp(_) => InstructionType::Jp,
+            Instruction::Ldh(_) => InstructionType::Ldh,
+            Instruction::Call(_) => InstructionType::Call,
+            Instruction::Rra(_) => InstructionType::Rra,
             Instruction::Rla(_) => InstructionType::RLA,
-            Instruction::Rrca(_) => InstructionType::RRCA,
-            Instruction::Rlca(_) => InstructionType::RLCA,
-            Instruction::Or(_) => InstructionType::OR,
-            Instruction::Ret(_) => InstructionType::RET,
-            Instruction::Reti(_) => InstructionType::RETI,
-            Instruction::Ei(_) => InstructionType::EI,
-            Instruction::Scf(_) => InstructionType::SCF,
-            Instruction::Stop(_) => InstructionType::STOP,
-            Instruction::And(_) => InstructionType::AND,
-            Instruction::Push(_) => InstructionType::PUSH,
-            Instruction::Pop(_) => InstructionType::POP,
-            Instruction::Cp(_) => InstructionType::CP,
-            Instruction::Add(_) => InstructionType::ADD,
-            Instruction::Sub(_) => InstructionType::SUB,
-            Instruction::Adc(_) => InstructionType::ADC,
-            Instruction::Rst(_) => InstructionType::RST,
+            Instruction::Rrca(_) => InstructionType::Rrca,
+            Instruction::Rlca(_) => InstructionType::Rlca,
+            Instruction::Or(_) => InstructionType::Or,
+            Instruction::Ret(_) => InstructionType::Ret,
+            Instruction::Reti(_) => InstructionType::Reti,
+            Instruction::Ei(_) => InstructionType::Ei,
+            Instruction::Scf(_) => InstructionType::Scf,
+            Instruction::Stop(_) => InstructionType::Stop,
+            Instruction::And(_) => InstructionType::And,
+            Instruction::Push(_) => InstructionType::Push,
+            Instruction::Pop(_) => InstructionType::Pop,
+            Instruction::Cp(_) => InstructionType::Cp,
+            Instruction::Add(_) => InstructionType::Add,
+            Instruction::Sub(_) => InstructionType::Sub,
+            Instruction::Adc(_) => InstructionType::Adc,
+            Instruction::Rst(_) => InstructionType::Rst,
             Instruction::Prefix(_) => InstructionType::CB,
-            Instruction::Sbc(_) => InstructionType::SBC,
+            Instruction::Sbc(_) => InstructionType::Sbc,
         }
     }
 
     pub fn get_by_opcode(opcode: u8) -> Option<&'static InstructionWrapper> {
         INSTRUCTIONS_BY_OPCODES.get(opcode as usize)
     }
-
-    pub fn to_asm_string(&self, cpu: &Cpu, fetched_data: &FetchedData) -> String {
-        match self.get_address_mode() {
-            AddressMode::IMP => format!("{:?}", self.get_type()),
-            AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
-                format!("{:?} {:?},${:04X}", self.get_type(), r1, fetched_data.value)
-            }
-            AddressMode::R(r1) => {
-                format!("{:?} {:?}", self.get_type(), r1)
-            }
-            AddressMode::R_R(r1, r2) => {
-                format!("{:?} {:?},{:?}", self.get_type(), r1, r2)
-            }
-            AddressMode::MR_R(r1, r2) => {
-                format!("{:?} ({:?}),{:?}", self.get_type(), r1, r2)
-            }
-            AddressMode::MR(r1) => {
-                format!("{:?} ({:?})", self.get_type(), r1)
-            }
-            AddressMode::R_MR(r1, r2) => {
-                format!("{:?} {:?},({:?})", self.get_type(), r1, r2)
-            }
-            AddressMode::R_HMR(r1, r2) => {
-                format!("{:?} {:?},(FF00+{:?})", self.get_type(), r1, r2)
-            }
-            AddressMode::R_D8(r1) | AddressMode::R_A8(r1) | AddressMode::R_HA8(r1) => {
-                format!(
-                    "{:?} {:?},${:02X}",
-                    self.get_type(),
-                    r1,
-                    fetched_data.value & 0xFF
-                )
-            }
-            AddressMode::R_HLI(r1) => {
-                format!("{:?} {:?},(HL+)", self.get_type(), r1)
-            }
-            AddressMode::R_HLD(r1) => {
-                format!("{:?} {:?},(HL-)", self.get_type(), r1)
-            }
-            AddressMode::HLI_R(r1) => {
-                format!("{:?} (HL+),{:?}", self.get_type(), r1)
-            }
-            AddressMode::HLD_R(r1) => {
-                format!("{:?} (HL-),{:?}", self.get_type(), r1)
-            }
-            AddressMode::A8_R(r2) => {
-                format!(
-                    "{:?} ${:02X},{:?}",
-                    self.get_type(),
-                    cpu.clock.bus.read(cpu.registers.pc - 1),
-                    r2
-                )
-            }
-            AddressMode::LH_SPi8 => {
-                format!(
-                    "{:?} (HL,SP+{:?})",
-                    self.get_type(),
-                    fetched_data.value & 0xFF
-                )
-            }
-            AddressMode::D8 => {
-                format!("{:?} ${:02X}", self.get_type(), fetched_data.value & 0xFF)
-            }
-            AddressMode::D16 => {
-                format!("{:?} ${:04X}", self.get_type(), fetched_data.value)
-            }
-            AddressMode::MR_D8(r1) => {
-                format!(
-                    "{:?} ({:?}),${:02X}",
-                    self.get_type(),
-                    r1,
-                    fetched_data.value & 0xFF
-                )
-            }
-            AddressMode::A16_R(r2) => {
-                format!(
-                    "{:?} (${:04X}),{:?}",
-                    self.get_type(),
-                    fetched_data.value,
-                    r2
-                )
-            }
-        }
-    }
+   
 }
 
 /// Represents the various CPU registers in a Game Boy CPU.
@@ -421,77 +372,79 @@ impl RegisterType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
 pub enum InstructionType {
+    Unknown,
     /// No Operation
-    NOP,
+    Nop,
     /// Load (LD) instruction
-    LD,
+    Ld,
     /// Increment (INC) instruction
-    INC,
+    Inc,
     /// Decrement (DEC) instruction
-    DEC,
+    Dec,
     /// Rotate Left Circular (RLCA) instruction
-    RLCA,
+    Rlca,
     /// Add (ADD) instruction
-    ADD,
+    Add,
     /// Rotate Right Circular (RRCA) instruction
-    RRCA,
+    Rrca,
     /// Stop execution
-    STOP,
+    Stop,
     /// Rotate Left (RLA) instruction
     RLA,
     /// Jump Relative (JR) instruction
-    JR,
+    Jr,
     /// Rotate Right (RRA) instruction
-    RRA,
+    Rra,
     /// Decimal Adjust Accumulator (DAA) instruction
-    DAA,
+    Daa,
     /// Complement (CPL) instruction
-    CPL,
+    Cpl,
     /// Set Carry Flag (SCF) instruction
-    SCF,
+    Scf,
     /// Complement Carry Flag (CCF) instruction
-    CCF,
+    Ccf,
     /// Halt execution
-    HALT,
+    Halt,
     /// Add with Carry (ADC) instruction
-    ADC,
+    Adc,
     /// Subtract (SUB) instruction
-    SUB,
+    Sub,
     /// Subtract with Carry (SBC) instruction
-    SBC,
+    Sbc,
     /// Logical AND (AND) instruction
-    AND,
+    And,
     /// Logical XOR (XOR) instruction
-    XOR,
+    Xor,
     /// Logical OR (OR) instruction
-    OR,
+    Or,
     /// Compare (CP) instruction
-    CP,
+    Cp,
     /// Pop value from stack (POP) instruction
-    POP,
+    Pop,
     /// Jump (JP) instruction
-    JP,
+    Jp,
     /// Push value to stack (PUSH) instruction
-    PUSH,
+    Push,
     /// Return from function (RET) instruction
-    RET,
+    Ret,
     /// CB prefix instruction (used for extended instructions)
     CB,
     /// Call function (CALL) instruction
-    CALL,
+    Call,
     /// Return from interrupt (RETI) instruction
-    RETI,
+    Reti,
     /// Load high byte (LDH) instruction
-    LDH,
+    Ldh,
     /// Jump to address in HL register (JPHL) instruction
     JPHL,
     /// Disable interrupts (DI) instruction
-    DI,
+    Di,
     /// Enable interrupts (EI) instruction
-    EI,
+    Ei,
     /// Restart (RST) instruction
-    RST,
+    Rst,
     /// Error instruction
     ERR,
     /// Rotate Left Circular (RLC) instruction
@@ -516,6 +469,7 @@ pub enum InstructionType {
     RES,
     /// Set bit in register (SET) instruction
     SET,
+    Prefix,
 }
 
 impl Display for Instruction {

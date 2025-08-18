@@ -1,5 +1,5 @@
 use crate::auxiliary::clock::{Clock};
-use crate::cpu::instructions::{ConditionType, ExecutableInstruction, Instruction};
+use crate::cpu::instructions::{ConditionType, Instruction, InstructionWrapper};
 use crate::cpu::instructions::{FetchedData, RegisterType};
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
 pub struct DebugCtx {
     pub pc: u16,
-    pub instruction: Instruction,
+    pub instruction: InstructionWrapper,
     pub opcode: u8,
     pub fetched_data: FetchedData,
 }
@@ -113,12 +113,12 @@ impl Cpu {
             ));
         };
 
-        let fetched_data = (instruction.fetch)(self);
+        let fetched_data = instruction.fetch(self);
 
         #[cfg(debug_assertions)]
         let inst_ctx = DebugCtx {
             pc,
-            instruction: instruction.instruction,
+            instruction: instruction.clone(),
             opcode: self.current_opcode,
             fetched_data: fetched_data.clone(),
         };
@@ -129,7 +129,7 @@ impl Cpu {
         }
 
         let prev_enabling_ime = self.enabling_ime;
-        instruction.instruction.execute(self, fetched_data);
+        instruction.execute(self, fetched_data);
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed

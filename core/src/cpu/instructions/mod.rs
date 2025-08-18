@@ -41,7 +41,7 @@ mod tests {
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
     use crate::cpu::instructions::{
-        AddressMode, ConditionType, Instruction, RegisterType, INSTRUCTIONS_BY_OPCODES,
+        AddressMode, ConditionType, InstructionType, RegisterType, INSTRUCTIONS_BY_OPCODES,
     };
     use crate::cpu::Cpu;
     use crate::ppu::Ppu;
@@ -81,14 +81,15 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Call(instr) = instr.instruction else {
+            if InstructionType::Call != instr.get_type() {
                 continue;
-            };
+            }
+
             cpu.registers.pc = 0;
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
-            if let Some(condition_type) = instr.condition_type {
+            if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 6, M_CYCLES_BY_OPCODES[opcode]);
             } else {
                 cpu.step(None).unwrap();
@@ -106,21 +107,21 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Jp(instr) = instr.instruction else {
+            if InstructionType::Jp != instr.get_type() {
                 continue;
-            };
+            }
 
             cpu.registers.pc = 0;
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
-            if let Some(condition_type) = instr.cond_type {
+            if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
-            } else if instr.addr_mode == AddressMode::D16 {
+            } else if instr.get_address_mode() == AddressMode::D16 {
                 cpu.step(None).unwrap();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
-            } else if instr.addr_mode == AddressMode::R(RegisterType::HL) {
+            } else if instr.get_address_mode() == AddressMode::R(RegisterType::HL) {
                 cpu.step(None).unwrap();
                 // 1
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
@@ -136,15 +137,15 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Jr(instr) = instr.instruction else {
+            if InstructionType::Jr != instr.get_type() {
                 continue;
-            };
+            }
 
             cpu.registers.pc = 0;
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
-            if let Some(condition_type) = instr.condition_type {
+            if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 3, 2);
             } else {
                 cpu.step(None).unwrap();
@@ -162,15 +163,15 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            let Instruction::Ret(instr) = instr.instruction else {
+            if InstructionType::Ret != instr.get_type() {
                 continue;
-            };
+            }
 
             cpu.registers.pc = 0;
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
 
-            if let Some(condition_type) = instr.condition_type {
+            if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 5, 2);
             } else {
                 cpu.step(None).unwrap();
@@ -188,14 +189,14 @@ mod tests {
         );
         let mut cpu = Cpu::new(clock);
         for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
-            match instr.instruction {
-                Instruction::Jp(_) // has tests
-                | Instruction::Jr(_) // has tests
-                | Instruction::Ret(_) // has tests
-                | Instruction::Call(_) // has tests
-                | Instruction::Stop(_) // has 0 in matrix, invalid? 
-                | Instruction::Halt(_) // has 0 in matrix, invalid? 
-                | Instruction::Unknown(_) => continue,
+            match instr.get_type() {
+                InstructionType::Jp // has tests
+                | InstructionType::Jr // has tests
+                | InstructionType::Ret // has tests
+                | InstructionType::Call // has tests
+                | InstructionType::Stop // has 0 in matrix, invalid?
+                | InstructionType::Halt // has 0 in matrix, invalid? 
+                | InstructionType::Unknown => continue,
                 _ => {}
             }
 

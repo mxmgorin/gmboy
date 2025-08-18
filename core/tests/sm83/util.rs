@@ -2,7 +2,6 @@ use crate::Clock;
 use crate::print_with_dashes;
 use core::bus::Bus;
 use core::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
-use core::cpu::instructions::ExecutableInstruction;
 use core::cpu::{Cpu, Flags, Registers};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -17,7 +16,7 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let result = test_case.validate_final_state(&cpu);
 
     if let Err(err) = result {
-        let inst = INSTRUCTIONS_BY_OPCODES[cpu.current_opcode as usize].instruction;
+        let inst = INSTRUCTIONS_BY_OPCODES[cpu.current_opcode as usize];
         print_with_dashes(&format!(
             "{} ({:?} {:?})",
             title,
