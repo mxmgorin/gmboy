@@ -95,7 +95,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_hli(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_r_hli_a(&mut self) -> FetchedData {
+        let r1 = RegisterType::A;
+
         let addr = self.registers.read_register(RegisterType::HL);
         let fetched_data = FetchedData {
             value: self.read_memory(addr),
@@ -487,7 +489,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        let data = cpu.fetch_r_hli(RegisterType::A);
+        let data = cpu.fetch_r_hli_a();
 
         assert_eq!(data.value, addr_value as u16);
         assert_eq!(data.dest.get_addr(), None);
