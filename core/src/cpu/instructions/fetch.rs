@@ -45,7 +45,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_d16(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_r_d16<const R: u8>(&mut self) -> FetchedData {
+        let r1 = RegisterType::from_u8(R);
+
         FetchedData {
             value: self.read_pc16(),
             source: DataSource::Immediate,
