@@ -13,7 +13,10 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_r(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+    pub fn fetch_r_r<const R1: u8, const R2: u8>(&mut self) -> FetchedData {
+        let r1 = RegisterType::from_u8(R1);
+        let r2 = RegisterType::from_u8(R2);
+
         FetchedData {
             value: self.registers.read_register(r2),
             source: DataSource::Register(r2),
@@ -431,14 +434,14 @@ mod tests {
         let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
-        for reg_type in RegisterType::get_all().iter().cloned() {
-            cpu.registers.set_register(reg_type, 23);
+        const R1: RegisterType = RegisterType::BC;
+        const R2: RegisterType = RegisterType::A;
+        cpu.registers.set_register(R2, 23);
 
-            let data = cpu.fetch_r_r(RegisterType::BC, reg_type);
+        let data = cpu.fetch_r_r::<{ R1 as u8 }, { R2 as u8 }>();
 
-            assert_eq!(data.value, cpu.registers.read_register(reg_type));
-            assert_eq!(data.dest.get_addr(), None);
-        }
+        assert_eq!(data.value, cpu.registers.read_register(R2));
+        assert_eq!(data.dest.get_addr(), None);
     }
 
     #[test]
@@ -453,7 +456,7 @@ mod tests {
         cpu.registers.pc = pc as u16;
         const REG_TYPE: RegisterType = RegisterType::A;
 
-        let data = cpu.fetch_r_d8::<{REG_TYPE as u8}>();
+        let data = cpu.fetch_r_d8::<{ REG_TYPE as u8 }>();
 
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
