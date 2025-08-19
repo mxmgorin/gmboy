@@ -1,9 +1,9 @@
-use crate::cpu::instructions::{FetchedData, InstructionSpec};
+use crate::cpu::instructions::{FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_or(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_or(&mut self, fetched_data: FetchedData) {
         let value = fetched_data.value & 0xFF;
         self.registers.a |= value as u8;
 

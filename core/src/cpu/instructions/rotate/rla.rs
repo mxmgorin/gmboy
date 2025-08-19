@@ -1,9 +1,9 @@
-use crate::cpu::instructions::{FetchedData, InstructionSpec};
+use crate::cpu::instructions::{FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_rla(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_rla(&mut self, _fetched_data: FetchedData) {
         let u: u8 = self.registers.a;
         let cf: u8 = self.registers.flags.get_c() as u8;
         let c: u8 = (u >> 7) & 1;

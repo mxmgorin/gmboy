@@ -1,30 +1,30 @@
-use crate::cpu::instructions::InstructionSpec;
+
 use crate::cpu::instructions::{ConditionType, FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_ret_no(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ret_no(&mut self, _fetched_data: FetchedData) {
         self.execute_ret(None);
     }
 
     #[inline]
-    pub fn execute_ret_z(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ret_z(&mut self, _fetched_data: FetchedData) {
         self.execute_ret(Some(ConditionType::Z));
     }
 
     #[inline]
-    pub fn execute_ret_nc(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ret_nc(&mut self, _fetched_data: FetchedData) {
         self.execute_ret(Some(ConditionType::NC));
     }
 
     #[inline]
-    pub fn execute_ret_c(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ret_c(&mut self, _fetched_data: FetchedData) {
         self.execute_ret(Some(ConditionType::C));
     }
 
     #[inline]
-    pub fn execute_ret_nz(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ret_nz(&mut self, _fetched_data: FetchedData) {
         self.execute_ret(Some(ConditionType::NZ));
     }
 

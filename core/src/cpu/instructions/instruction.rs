@@ -32,7 +32,7 @@ impl InstructionSpec {
 pub struct Instruction {
     mnemonic: Mnemonic,
     spec: InstructionSpec,
-    execute: fn(&mut Cpu, fetched_data: FetchedData, spec: InstructionSpec),
+    execute: fn(&mut Cpu, fetched_data: FetchedData),
     fetch: fn(&mut Cpu) -> FetchedData,
 }
 
@@ -42,7 +42,7 @@ impl Instruction {
     }
 
     pub fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        (self.execute)(cpu, fetched_data, self.spec);
+        (self.execute)(cpu, fetched_data);
     }
 
     pub fn fetch(&self, cpu: &mut Cpu) -> FetchedData {
@@ -65,7 +65,7 @@ impl Instruction {
         Self::new(
             Mnemonic::Unknown,
             InstructionSpec::default(AddressMode::IMP),
-            |_, _, _| panic!("can't fetch for unknown instruction for opcode"),
+            |_, _| panic!("can't fetch for unknown instruction for opcode"),
             |_| panic!("can't fetch for unknown instruction"),
         )
     }
@@ -73,7 +73,7 @@ impl Instruction {
     pub const fn new(
         mnemonic: Mnemonic,
         spec: InstructionSpec,
-        execute: fn(&mut Cpu, fetched_data: FetchedData, arg: InstructionSpec),
+        execute: fn(&mut Cpu, fetched_data: FetchedData),
         fetch: fn(&mut Cpu) -> FetchedData,
     ) -> Self {
         Self {

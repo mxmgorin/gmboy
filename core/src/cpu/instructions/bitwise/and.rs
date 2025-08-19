@@ -1,9 +1,9 @@
-use crate::cpu::instructions::{FetchedData, InstructionSpec};
+use crate::cpu::instructions::{FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_and(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_and(&mut self, fetched_data: FetchedData) {
         self.registers.a &= fetched_data.value as u8;
 
         self.registers.flags.set_z(self.registers.a == 0);

@@ -1,9 +1,8 @@
-use crate::cpu::instructions::{InstructionSpec};
 use crate::cpu::instructions::{DataDestination, DataSource, FetchedData};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
-    pub fn execute_ld_lh_spi8(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ld_lh_spi8(&mut self, fetched_data: FetchedData) {
         let h_flag = (self.registers.sp & 0xF) + (fetched_data.value & 0xF) >= 0x10;
         let c_flag = (self.registers.sp & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
 
@@ -23,7 +22,7 @@ impl Cpu {
     }
 
     #[inline]
-    pub fn execute_ld(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ld(&mut self, fetched_data: FetchedData) {
         match fetched_data.dest {
             DataDestination::Register(r) => {
                 if let DataSource::Register(src_r) = fetched_data.source {

@@ -1,9 +1,9 @@
-use crate::cpu::instructions::{FetchedData, InstructionSpec};
+use crate::cpu::instructions::{FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_rlca(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_rlca(&mut self, _fetched_data: FetchedData) {
         let mut u: u8 = self.registers.a;
         let c: bool = (u >> 7) & 1 != 0;
         u = (u << 1) | c as u8;

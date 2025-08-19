@@ -1,4 +1,4 @@
-use crate::cpu::instructions::InstructionSpec;
+
 use crate::cpu::Cpu;
 
 use crate::cpu::instructions::FetchedData;
@@ -14,7 +14,7 @@ impl Cpu {
     /// H Set if borrow from bit 4.
     /// C Set if borrow (i.e. if r8 > A).
     #[inline]
-    pub fn execute_cp(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_cp(&mut self, fetched_data: FetchedData) {
         let fetched_value_i32 = fetched_data.value as i32;
         let reg_i32 = self.registers.a as i32;
         let result: i32 = reg_i32.wrapping_sub(fetched_value_i32);

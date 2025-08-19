@@ -1,10 +1,10 @@
-use crate::cpu::instructions::InstructionSpec;
+
 use crate::cpu::instructions::{DataDestination, FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_ldh(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_ldh(&mut self, fetched_data: FetchedData) {
         match fetched_data.dest {
             DataDestination::Register(_) => {
                 self.registers.a = fetched_data.value as u8;

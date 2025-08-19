@@ -1,10 +1,10 @@
-use crate::cpu::instructions::InstructionSpec;
+
 use crate::cpu::instructions::{DataDestination, FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_push(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_push(&mut self, fetched_data: FetchedData) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };

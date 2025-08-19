@@ -1,29 +1,29 @@
-use crate::cpu::instructions::{ConditionType, FetchedData, InstructionSpec};
+use crate::cpu::instructions::{ConditionType, FetchedData};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_jr_no(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_jr_no(&mut self, fetched_data: FetchedData) {
         self.execute_jr_inner(fetched_data, None);
     }
 
     #[inline]
-    pub fn execute_jr_nz(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_jr_nz(&mut self, fetched_data: FetchedData) {
         self.execute_jr_inner(fetched_data, Some(ConditionType::NZ));
     }
 
     #[inline]
-    pub fn execute_jr_z(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_jr_z(&mut self, fetched_data: FetchedData) {
         self.execute_jr_inner(fetched_data, Some(ConditionType::Z));
     }
 
     #[inline]
-    pub fn execute_jr_nc(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_jr_nc(&mut self, fetched_data: FetchedData) {
         self.execute_jr_inner(fetched_data, Some(ConditionType::NC));
     }
 
     #[inline]
-    pub fn execute_jr_c(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_jr_c(&mut self, fetched_data: FetchedData) {
         self.execute_jr_inner(fetched_data, Some(ConditionType::C));
     }
 

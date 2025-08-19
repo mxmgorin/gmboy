@@ -1,4 +1,4 @@
-use crate::cpu::instructions::InstructionSpec;
+
 use crate::cpu::instructions::{DataDestination, FetchedData};
 use crate::cpu::Cpu;
 
@@ -12,7 +12,7 @@ impl Cpu {
     /// H Set if borrow from bit 4.
     /// C Set if borrow (i.e. if (r8 + carry) > A).
     #[inline]
-    pub fn execute_sbc(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
+    pub fn execute_sbc(&mut self, fetched_data: FetchedData) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };
