@@ -9,7 +9,7 @@ impl Cpu {
     /// N 1
     /// H 1
     #[inline]
-    pub fn execute_cpl(&mut self, _fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_cpl(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
         self.registers.a = !self.registers.a;
 
         self.registers.flags.set_n(true);

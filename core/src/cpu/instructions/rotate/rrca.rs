@@ -3,7 +3,7 @@ use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_rrca(&mut self, _fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_rrca(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
         let b: u8 = self.registers.a & 1;
         self.registers.a >>= 1;
         self.registers.a |= b << 7;

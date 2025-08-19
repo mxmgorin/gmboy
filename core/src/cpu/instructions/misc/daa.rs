@@ -24,7 +24,7 @@ impl Cpu {
     /// Z Set if result is 0.
     /// H 0
     /// C Set or reset depending on the operation.#[inline]
-    pub fn execute_daa(&mut self, _fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_daa(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 

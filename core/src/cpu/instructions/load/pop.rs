@@ -4,7 +4,7 @@ use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_pop(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_pop(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };

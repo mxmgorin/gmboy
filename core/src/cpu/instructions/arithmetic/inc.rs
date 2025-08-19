@@ -4,7 +4,7 @@ use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_inc(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_inc(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         let mut value = fetched_data.value.wrapping_add(1);
 
         match fetched_data.dest {

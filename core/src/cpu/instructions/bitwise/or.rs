@@ -3,7 +3,7 @@ use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_or(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_or(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         let value = fetched_data.value & 0xFF;
         self.registers.a |= value as u8;
 

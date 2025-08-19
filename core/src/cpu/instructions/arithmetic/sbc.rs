@@ -12,7 +12,7 @@ impl Cpu {
     /// H Set if borrow from bit 4.
     /// C Set if borrow (i.e. if (r8 + carry) > A).
     #[inline]
-    pub fn execute_sbc(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_sbc(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         let DataDestination::Register(r) = fetched_data.dest else {
             unreachable!();
         };

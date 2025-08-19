@@ -4,7 +4,7 @@ use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_prefix(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_prefix(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         let op = fetched_data.value;
         let reg = decode_reg(op & 0b111);
 

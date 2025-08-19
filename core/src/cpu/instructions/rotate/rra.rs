@@ -18,7 +18,7 @@ impl Cpu {
     /// N 0
     /// H 0
     /// C Set according to result.#[inline]
-    pub fn execute_rra(&mut self, _fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_rra(&mut self, _fetched_data: FetchedData, _spec: InstructionSpec) {
         let carry: u8 = self.registers.flags.get_c() as u8;
         let new_c: u8 = self.registers.a & 1;
 

@@ -72,13 +72,13 @@ impl Instruction {
 
     pub const fn new(
         mnemonic: Mnemonic,
-        args: InstructionSpec,
+        spec: InstructionSpec,
         execute: fn(&mut Cpu, fetched_data: FetchedData, arg: InstructionSpec),
         fetch: fn(&mut Cpu) -> FetchedData,
     ) -> Self {
         Self {
             mnemonic,
-            spec: args,
+            spec,
             execute,
             fetch,
         }

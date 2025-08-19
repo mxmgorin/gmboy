@@ -3,7 +3,7 @@ use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_and(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_and(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         self.registers.a &= fetched_data.value as u8;
 
         self.registers.flags.set_z(self.registers.a == 0);

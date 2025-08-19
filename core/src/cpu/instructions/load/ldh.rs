@@ -4,7 +4,7 @@ use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_ldh(&mut self, fetched_data: FetchedData, _args: InstructionSpec) {
+    pub fn execute_ldh(&mut self, fetched_data: FetchedData, _spec: InstructionSpec) {
         match fetched_data.dest {
             DataDestination::Register(_) => {
                 self.registers.a = fetched_data.value as u8;
