@@ -1208,13 +1208,13 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xC2] = Instruction::new(
         Mnemonic::Jp,
         InstructionSpec::new(Some(ConditionType::NZ), 0, AddressMode::D16),
-        Cpu::execute_jp,
+        Cpu::execute_jp_nz,
         Cpu::fetch_d16,
     );
     instructions[0xC3] = Instruction::new(
         Mnemonic::Jp,
         InstructionSpec::default(AddressMode::D16),
-        Cpu::execute_jp,
+        Cpu::execute_jp_no,
         Cpu::fetch_d16,
     );
     instructions[0xC5] = Instruction::new(
@@ -1268,7 +1268,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xCA] = Instruction::new(
         Mnemonic::Jp,
         InstructionSpec::new(Some(ConditionType::Z), 0, AddressMode::D16),
-        Cpu::execute_jp,
+        Cpu::execute_jp_z,
         Cpu::fetch_d16,
     );
     instructions[0xCB] = Instruction::new(
@@ -1306,7 +1306,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xD2] = Instruction::new(
         Mnemonic::Jp,
         InstructionSpec::new(Some(ConditionType::NC), 0, AddressMode::D16),
-        Cpu::execute_jp,
+        Cpu::execute_jp_nc,
         Cpu::fetch_d16,
     );
     instructions[0xD4] = Instruction::new(
@@ -1354,7 +1354,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xDA] = Instruction::new(
         Mnemonic::Jp,
         InstructionSpec::new(Some(ConditionType::C), 0, AddressMode::D16),
-        Cpu::execute_jp,
+        Cpu::execute_jp_c,
         Cpu::fetch_d16,
     );
     instructions[0xDE] = Instruction::new(
@@ -1422,7 +1422,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xE9] = Instruction::new(
         Mnemonic::Jp,
         InstructionSpec::default(AddressMode::R(RegisterType::HL)),
-        Cpu::execute_jp,
+        Cpu::execute_jp_no_hl,
         Cpu::fetch_r::<{RegisterType::HL as u8}>,
     );
     instructions[0xEE] = Instruction::new(
