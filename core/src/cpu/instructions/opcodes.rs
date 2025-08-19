@@ -33,7 +33,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::BC, RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::BC, RegisterType::A),
+        Cpu::fetch_mr_r::<{ RegisterType::BC as u8 }, { RegisterType::A as u8 }>,
     );
     instructions[0x03] = Instruction::new(
         Mnemonic::Inc,
@@ -131,7 +131,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::DE, RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::DE, RegisterType::A),
+        Cpu::fetch_mr_r::<{ RegisterType::DE as u8 }, { RegisterType::A as u8 }>,
     );
     instructions[0x13] = Instruction::new(
         Mnemonic::Inc,
@@ -713,43 +713,43 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::B)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::B),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::B as u8 }>,
     );
     instructions[0x71] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::C)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::C),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::C as u8 }>,
     );
     instructions[0x72] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::D)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::D),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::D as u8 }>,
     );
     instructions[0x73] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::E)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::E),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::E as u8 }>,
     );
     instructions[0x74] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::H)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::H),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::H as u8 }>,
     );
     instructions[0x75] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::L)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::L),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::L as u8 }>,
     );
     instructions[0x77] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::HL, RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_r(RegisterType::HL, RegisterType::A),
+        Cpu::fetch_mr_r::<{ RegisterType::HL as u8 }, { RegisterType::A as u8 }>,
     );
     instructions[0x78] = Instruction::new(
         Mnemonic::Ld,
@@ -1387,7 +1387,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ldh,
         InstructionSpec::default(AddressMode::MR_R(RegisterType::C, RegisterType::A)),
         Cpu::execute_ldh,
-        |cpu| cpu.fetch_mr_r(RegisterType::C, RegisterType::A),
+        Cpu::fetch_mr_r::<{ RegisterType::C as u8 }, { RegisterType::A as u8 }>,
     );
     instructions[0xE5] = Instruction::new(
         Mnemonic::Push,

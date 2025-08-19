@@ -83,7 +83,10 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_mr_r(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+    pub fn fetch_mr_r<const R1: u8, const R2: u8>(&mut self) -> FetchedData {
+        let r1 = RegisterType::from_u8(R1);
+        let r2 = RegisterType::from_u8(R2);
+
         FetchedData {
             value: self.registers.read_register(r2),
             source: DataSource::Register(r2),
