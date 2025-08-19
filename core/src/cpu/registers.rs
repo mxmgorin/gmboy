@@ -26,36 +26,56 @@ pub struct Registers {
 #[repr(u8)]
 pub enum RegisterType {
     /// Accumulator register, used for arithmetic and logic operations.
-    A,
+    A = 0,
     /// Flags register, holds condition flags (Z, N, H, C).
-    F,
+    F = 1,
     /// General-purpose register B.
-    B,
+    B = 2,
     /// General-purpose register C.
-    C,
+    C = 3,
     /// General-purpose register D.
-    D,
+    D = 4,
     /// General-purpose register E.
-    E,
+    E = 5,
     /// High byte of the HL register pair.
-    H,
+    H = 6,
     /// Low byte of the HL register pair.
-    L,
+    L = 7,
     /// Register pair combining A and F (used for specific operations).
-    AF,
+    AF = 8,
     /// Register pair combining B and C (used for addressing or data storage).
-    BC,
+    BC = 9,
     /// Register pair combining D and E (used for addressing or data storage).
-    DE,
+    DE = 10,
     /// Register pair combining H and L (often used as a memory address pointer).
-    HL,
+    HL = 11,
     /// Stack pointer, points to the top of the stack.
-    SP,
+    SP = 12,
     /// Program counter, points to the next instruction to be executed.
-    PC,
+    PC = 13,
 }
 
 impl RegisterType {
+    pub const fn from_u8(v: u8) -> Self {
+        match v {
+            0 => Self::A,
+            1 => Self::F,
+            2 => Self::B,
+            3 => Self::C,
+            4 => Self::D,
+            5 => Self::E,
+            6 => Self::H,
+            7 => Self::L,
+            8 => Self::AF,
+            9 => Self::BC,
+            10 => Self::DE,
+            11 => Self::HL,
+            12 => Self::SP,
+            13 => Self::PC,
+            _ => panic!("invalid 8-bit register id"),
+        }
+    }
+
     pub fn is_16bit(&self) -> bool {
         match self {
             RegisterType::A

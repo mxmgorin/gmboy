@@ -2,7 +2,9 @@ use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline(always)]
-    pub fn fetch_r(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_r<const R: u8>(&mut self) -> FetchedData {
+        let r1 = RegisterType::from_u8(R);
+
         FetchedData {
             value: self.registers.read_register(r1),
             source: DataSource::Register(r1),
@@ -413,14 +415,13 @@ mod tests {
         let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
-        for reg_type in RegisterType::get_all().iter().cloned() {
-            cpu.registers.set_register(reg_type, 23);
+        const REG_TYPE: RegisterType = RegisterType::B;
+        cpu.registers.set_register(REG_TYPE, 23);
 
-            let data = cpu.fetch_r(reg_type);
+        let data = cpu.fetch_r::<{ REG_TYPE as u8 }>();
 
-            assert_eq!(data.value, cpu.registers.read_register(reg_type));
-            assert_eq!(data.dest.get_addr(), None);
-        }
+        assert_eq!(data.value, cpu.registers.read_register(REG_TYPE));
+        assert_eq!(data.dest.get_addr(), None);
     }
 
     #[test]
