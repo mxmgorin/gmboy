@@ -156,17 +156,6 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_a8(&mut self, r1: RegisterType) -> FetchedData {
-        let addr = self.read_pc() as u16;
-
-        FetchedData {
-            value: self.read_memory(addr),
-            source: DataSource::Memory(addr),
-            dest: DataDestination::Register(r1),
-        }
-    }
-
-    #[inline(always)]
     pub fn fetch_r_ha8(&mut self, r1: RegisterType) -> FetchedData {
         let addr = self.read_pc() as u16;
         let addr = 0xFF00 | addr;
