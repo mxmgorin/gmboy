@@ -156,7 +156,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_ha8(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_r_ha8_a(&mut self) -> FetchedData {
+        let r1 = RegisterType::A;
         let addr = self.read_pc() as u16;
         let addr = 0xFF00 | addr;
 
@@ -168,7 +169,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_a8_r(&mut self, r2: RegisterType) -> FetchedData {
+    pub fn fetch_a8_r_a(&mut self) -> FetchedData {
+        let r2 = RegisterType::A;
         let addr = self.read_pc() as u16;
 
         FetchedData {

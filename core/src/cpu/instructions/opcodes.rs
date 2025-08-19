@@ -1375,7 +1375,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ldh,
         InstructionSpec::default(AddressMode::A8_R(RegisterType::A)),
         Cpu::execute_ldh,
-        |cpu| cpu.fetch_a8_r(RegisterType::A),
+        Cpu::fetch_a8_r_a,
     );
     instructions[0xE1] = Instruction::new(
         Mnemonic::Pop,
@@ -1443,7 +1443,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ldh,
         InstructionSpec::default(AddressMode::R_HA8(RegisterType::A)),
         Cpu::execute_ldh,
-        |cpu| cpu.fetch_r_ha8(RegisterType::A),
+        Cpu::fetch_r_ha8_a,
     );
     instructions[0xF1] = Instruction::new(
         Mnemonic::Pop,
