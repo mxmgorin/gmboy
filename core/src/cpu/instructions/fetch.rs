@@ -126,7 +126,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_hli_r(&mut self, r2: RegisterType) -> FetchedData {
+    pub fn fetch_hli_r_a(&mut self) -> FetchedData {
+        let r2 = RegisterType::A;
         let addr = self.registers.read_register(RegisterType::HL);
         let fetched_data = FetchedData {
             value: self.registers.read_register(r2),
@@ -140,7 +141,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_hld_r(&mut self, r2: RegisterType) -> FetchedData {
+    pub fn fetch_hld_r_a(&mut self) -> FetchedData {
+        let r2 = RegisterType::A;
         let addr = self.registers.read_register(RegisterType::HL);
         let fetched_data = FetchedData {
             value: self.registers.read_register(r2),

@@ -229,7 +229,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::HLI_R(RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_hli_r(RegisterType::A),
+        Cpu::fetch_hli_r_a,
     );
     instructions[0x23] = Instruction::new(
         Mnemonic::Inc,
@@ -327,7 +327,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::HLD_R(RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_hld_r(RegisterType::A),
+        Cpu::fetch_hld_r_a,
     );
     instructions[0x33] = Instruction::new(
         Mnemonic::Inc,
