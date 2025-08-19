@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::cpu::instructions::{AddressMode, FetchedData, Instruction};
+use crate::cpu::instructions::{AddressMode, FetchedData, Instruction, Mnemonic};
 use crate::cpu::{Cpu, DebugCtx};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -97,12 +97,14 @@ impl Debugger {
         if self.cpu_log_type != CpuLogType::Assembly {
             return;
         }
+        let mode = instruction.get_address_mode();
+        let mnemonic = instruction.get_mnemonic();
 
         log::info!(
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             cpu.clock.get_t_cycles(),
             pc,
-            get_asm_string(instruction, cpu, fetched_data),
+            get_asm_string(mode, mnemonic, cpu, fetched_data),
             opcode,
             cpu.clock.bus.read(pc.wrapping_add(1)),
             cpu.clock.bus.read(pc.wrapping_add(2)),
@@ -118,86 +120,77 @@ impl Debugger {
     }
 }
 
-pub fn get_asm_string(inst: &Instruction, cpu: &Cpu, fetched_data: &FetchedData) -> String {
-    match inst.get_address_mode() {
-        AddressMode::IMP => format!("{:?}", inst.get_mnemonic()),
+pub fn get_asm_string(
+    mode: AddressMode,
+    mnemonic: Mnemonic,
+    cpu: &Cpu,
+    fetched_data: &FetchedData,
+) -> String {
+    match mode {
+        AddressMode::IMP => format!("{:?}", mnemonic),
         AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
-            format!("{:?} {:?},${:04X}", inst.get_mnemonic(), r1, fetched_data.value)
+            format!("{:?} {:?},${:04X}", mnemonic, r1, fetched_data.value)
         }
         AddressMode::R(r1) => {
-            format!("{:?} {:?}", inst.get_mnemonic(), r1)
+            format!("{:?} {:?}", mnemonic, r1)
         }
         AddressMode::R_R(r1, r2) => {
-            format!("{:?} {:?},{:?}", inst.get_mnemonic(), r1, r2)
+            format!("{:?} {:?},{:?}", mnemonic, r1, r2)
         }
         AddressMode::MR_R(r1, r2) => {
-            format!("{:?} ({:?}),{:?}", inst.get_mnemonic(), r1, r2)
+            format!("{:?} ({:?}),{:?}", mnemonic, r1, r2)
         }
         AddressMode::MR(r1) => {
-            format!("{:?} ({:?})", inst.get_mnemonic(), r1)
+            format!("{:?} ({:?})", mnemonic, r1)
         }
         AddressMode::R_MR(r1, r2) => {
-            format!("{:?} {:?},({:?})", inst.get_mnemonic(), r1, r2)
+            format!("{:?} {:?},({:?})", mnemonic, r1, r2)
         }
         AddressMode::R_HMR(r1, r2) => {
-            format!("{:?} {:?},(FF00+{:?})", inst.get_mnemonic(), r1, r2)
+            format!("{:?} {:?},(FF00+{:?})", mnemonic, r1, r2)
         }
         AddressMode::R_D8(r1) | AddressMode::R_A8(r1) | AddressMode::R_HA8(r1) => {
-            format!(
-                "{:?} {:?},${:02X}",
-                inst.get_mnemonic(),
-                r1,
-                fetched_data.value & 0xFF
-            )
+            format!("{:?} {:?},${:02X}", mnemonic, r1, fetched_data.value & 0xFF)
         }
         AddressMode::R_HLI(r1) => {
-            format!("{:?} {:?},(HL+)", inst.get_mnemonic(), r1)
+            format!("{:?} {:?},(HL+)", mnemonic, r1)
         }
         AddressMode::R_HLD(r1) => {
-            format!("{:?} {:?},(HL-)", inst.get_mnemonic(), r1)
+            format!("{:?} {:?},(HL-)", mnemonic, r1)
         }
         AddressMode::HLI_R(r1) => {
-            format!("{:?} (HL+),{:?}", inst.get_mnemonic(), r1)
+            format!("{:?} (HL+),{:?}", mnemonic, r1)
         }
         AddressMode::HLD_R(r1) => {
-            format!("{:?} (HL-),{:?}", inst.get_mnemonic(), r1)
+            format!("{:?} (HL-),{:?}", mnemonic, r1)
         }
         AddressMode::A8_R(r2) => {
             format!(
                 "{:?} ${:02X},{:?}",
-                inst.get_mnemonic(),
+                mnemonic,
                 cpu.clock.bus.read(cpu.registers.pc - 1),
                 r2
             )
         }
         AddressMode::LH_SPi8 => {
-            format!(
-                "{:?} (HL,SP+{:?})",
-                inst.get_mnemonic(),
-                fetched_data.value & 0xFF
-            )
+            format!("{:?} (HL,SP+{:?})", mnemonic, fetched_data.value & 0xFF)
         }
         AddressMode::D8 => {
-            format!("{:?} ${:02X}", inst.get_mnemonic(), fetched_data.value & 0xFF)
+            format!("{:?} ${:02X}", mnemonic, fetched_data.value & 0xFF)
         }
         AddressMode::D16 => {
-            format!("{:?} ${:04X}", inst.get_mnemonic(), fetched_data.value)
+            format!("{:?} ${:04X}", mnemonic, fetched_data.value)
         }
         AddressMode::MR_D8(r1) => {
             format!(
                 "{:?} ({:?}),${:02X}",
-                inst.get_mnemonic(),
+                mnemonic,
                 r1,
                 fetched_data.value & 0xFF
             )
         }
         AddressMode::A16_R(r2) => {
-            format!(
-                "{:?} (${:04X}),{:?}",
-                inst.get_mnemonic(),
-                fetched_data.value,
-                r2
-            )
+            format!("{:?} (${:04X}),{:?}", mnemonic, fetched_data.value, r2)
         }
     }
 }

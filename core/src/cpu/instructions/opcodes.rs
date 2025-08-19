@@ -1484,7 +1484,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xF8] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::LH_SPi8),
-        Cpu::execute_ld,
+        Cpu::execute_ld_lh_spi8,
         Cpu::fetch_lh_spi8,
     );
     instructions[0xF9] = Instruction::new(
