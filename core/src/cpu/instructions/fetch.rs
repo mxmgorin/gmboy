@@ -69,7 +69,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_hmr(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+    pub fn fetch_r_hmr_a_c(&mut self) -> FetchedData {
+        let r1 = RegisterType::A;
+        let r2 = RegisterType::C;
         let addr = self.registers.read_register(r2);
         let addr = 0xFF00 | addr;
 

@@ -1455,7 +1455,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ldh,
         InstructionSpec::default(AddressMode::R_HMR(RegisterType::A, RegisterType::C)),
         Cpu::execute_ldh,
-        |cpu| cpu.fetch_r_hmr(RegisterType::A, RegisterType::C),
+        Cpu::fetch_r_hmr_a_c,
     );
     instructions[0xF3] = Instruction::new(
         Mnemonic::Di,
