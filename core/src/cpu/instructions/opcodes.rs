@@ -69,7 +69,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::A16_R(RegisterType::SP)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_a16_r(RegisterType::SP),
+        Cpu::fetch_a16_r::<{RegisterType::SP as u8}>,
     );
     instructions[0x09] = Instruction::new(
         Mnemonic::Add,
@@ -339,19 +339,19 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Inc,
         InstructionSpec::default(AddressMode::MR(RegisterType::HL)),
         Cpu::execute_inc,
-        |cpu| cpu.fetch_mr(RegisterType::HL),
+        Cpu::fetch_mr_hl,
     );
     instructions[0x35] = Instruction::new(
         Mnemonic::Dec,
         InstructionSpec::default(AddressMode::MR(RegisterType::HL)),
         Cpu::execute_dec,
-        |cpu| cpu.fetch_mr(RegisterType::HL),
+        Cpu::fetch_mr_hl,
     );
     instructions[0x36] = Instruction::new(
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::MR_D8(RegisterType::HL)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_mr_d8(RegisterType::HL),
+        Cpu::fetch_mr_d8_hl,
     );
     instructions[0x37] = Instruction::new(
         Mnemonic::Scf,
@@ -1417,7 +1417,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::A16_R(RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_a16_r(RegisterType::A),
+        Cpu::fetch_a16_r::<{RegisterType::A as u8}>
     );
     instructions[0xE9] = Instruction::new(
         Mnemonic::Jp,
@@ -1497,7 +1497,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
         Mnemonic::Ld,
         InstructionSpec::default(AddressMode::R_A16(RegisterType::A)),
         Cpu::execute_ld,
-        |cpu| cpu.fetch_r_a16(RegisterType::A),
+        Cpu::fetch_r_a16_a,
     );
     instructions[0xFB] = Instruction::new(
         Mnemonic::Ei,

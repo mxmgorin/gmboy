@@ -199,7 +199,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_a16_r(&mut self, r2: RegisterType) -> FetchedData {
+    pub fn fetch_a16_r<const R2: u8>(&mut self) -> FetchedData {
+        let r2 = RegisterType::from_u8(R2);
         let addr = self.read_pc16();
 
         FetchedData {
@@ -210,7 +211,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_mr_d8(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_mr_d8_hl(&mut self) -> FetchedData {
+        let r1 = RegisterType::HL;
+
         FetchedData {
             value: self.read_pc() as u16,
             source: DataSource::Immediate,
@@ -219,7 +222,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_mr(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_mr_hl(&mut self) -> FetchedData {
+        let r1 = RegisterType::HL;
         let addr = self.registers.read_register(r1);
 
         FetchedData {
@@ -230,7 +234,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_a16(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_r_a16_a(&mut self) -> FetchedData {
+        let r1 = RegisterType::A;
         let addr = self.read_pc16();
 
         FetchedData {
