@@ -1238,7 +1238,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xC4] = Instruction::new(
         Mnemonic::Call,
         InstructionSpec::new(Some(ConditionType::NZ), 0, AddressMode::D16),
-        Cpu::execute_call,
+        Cpu::execute_call_nz,
         Cpu::fetch_d16,
     );
     instructions[0xC8] = Instruction::new(
@@ -1256,13 +1256,13 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xCC] = Instruction::new(
         Mnemonic::Call,
         InstructionSpec::new(Some(ConditionType::Z), 0, AddressMode::D16),
-        Cpu::execute_call,
+        Cpu::execute_call_z,
         Cpu::fetch_d16,
     );
     instructions[0xCD] = Instruction::new(
         Mnemonic::Call,
         InstructionSpec::default(AddressMode::D16),
-        Cpu::execute_call,
+        Cpu::execute_call_no,
         Cpu::fetch_d16,
     );
     instructions[0xCA] = Instruction::new(
@@ -1312,7 +1312,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xD4] = Instruction::new(
         Mnemonic::Call,
         InstructionSpec::new(Some(ConditionType::NC), 0, AddressMode::D16),
-        Cpu::execute_call,
+        Cpu::execute_call_nc,
         Cpu::fetch_d16,
     );
     instructions[0xD5] = Instruction::new(
@@ -1348,7 +1348,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xDC] = Instruction::new(
         Mnemonic::Call,
         InstructionSpec::new(Some(ConditionType::C), 0, AddressMode::D16),
-        Cpu::execute_call,
+        Cpu::execute_call_c,
         Cpu::fetch_d16,
     );
     instructions[0xDA] = Instruction::new(

@@ -34,7 +34,7 @@ impl Cpu {
     }
 
     /// Costs 2 M-Cycles with push PC
-    #[inline]
+    #[inline(always)]
     pub fn goto_addr(&mut self, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
         if ConditionType::check_cond(&self.registers, cond) {
             self.clock.m_cycles(1); // internal: branch decision?
