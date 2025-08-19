@@ -31,8 +31,8 @@ impl InstructionSpec {
 #[derive(Copy, Clone)]
 pub struct Instruction {
     mnemonic: Mnemonic,
-    args: InstructionSpec,
-    execute: fn(&mut Cpu, fetched_data: FetchedData, arg: InstructionSpec),
+    spec: InstructionSpec,
+    execute: fn(&mut Cpu, fetched_data: FetchedData, spec: InstructionSpec),
     fetch: fn(&mut Cpu) -> FetchedData,
 }
 
@@ -42,7 +42,7 @@ impl Instruction {
     }
 
     pub fn execute(&self, cpu: &mut Cpu, fetched_data: FetchedData) {
-        (self.execute)(cpu, fetched_data, self.args);
+        (self.execute)(cpu, fetched_data, self.spec);
     }
 
     pub fn fetch(&self, cpu: &mut Cpu) -> FetchedData {
@@ -50,7 +50,7 @@ impl Instruction {
     }
 
     pub fn get_address_mode(&self) -> AddressMode {
-        self.args.addr_mode
+        self.spec.addr_mode
     }
 
     pub fn get_mnemonic(&self) -> Mnemonic {
@@ -58,7 +58,7 @@ impl Instruction {
     }
 
     pub fn get_condition(&self) -> Option<ConditionType> {
-        self.args.cond_type
+        self.spec.cond_type
     }
 
     pub const fn unknown(_opcode: u8) -> Self {
@@ -78,7 +78,7 @@ impl Instruction {
     ) -> Self {
         Self {
             mnemonic,
-            args,
+            spec: args,
             execute,
             fetch,
         }
