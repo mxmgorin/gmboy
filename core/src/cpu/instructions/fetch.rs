@@ -56,7 +56,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_mr(&mut self, r1: RegisterType, r2: RegisterType) -> FetchedData {
+    pub fn fetch_r_mr<const R1: u8, const R2: u8>(&mut self) -> FetchedData {
+        let r1 = RegisterType::from_u8(R1);
+        let r2 = RegisterType::from_u8(R2);
         let addr = self.registers.read_register(r2);
 
         FetchedData {
