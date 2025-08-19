@@ -22,7 +22,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_d8(&mut self, r1: RegisterType) -> FetchedData {
+    pub fn fetch_r_d8<const R: u8>(&mut self) -> FetchedData {
+        let r1 = RegisterType::from_u8(R);
+
         FetchedData {
             value: self.read_pc() as u16,
             source: DataSource::Immediate,
@@ -449,8 +451,9 @@ mod tests {
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
         cpu.registers.pc = pc as u16;
+        const REG_TYPE: RegisterType = RegisterType::A;
 
-        let data = cpu.fetch_r_d8(RegisterType::A);
+        let data = cpu.fetch_r_d8::<{REG_TYPE as u8}>();
 
         assert_eq!(data.value as u8, value);
         assert_eq!(data.dest.get_addr(), None);
