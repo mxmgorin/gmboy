@@ -76,7 +76,7 @@ impl RegisterType {
         }
     }
 
-    pub fn is_16bit(&self) -> bool {
+    pub const fn is_16bit(&self) -> bool {
         match self {
             RegisterType::A
             | RegisterType::F

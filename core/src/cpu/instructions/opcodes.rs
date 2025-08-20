@@ -74,8 +74,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::HL, RegisterType::BC),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::HL as u8 }, { RegisterType::BC as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::BC as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x0A] = Instruction::new(
         InstructionSpec::new(
@@ -171,8 +171,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::HL, RegisterType::DE),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::HL as u8 }, { RegisterType::DE as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::DE as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x1A] = Instruction::new(
         InstructionSpec::new(
@@ -263,8 +263,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::HL, RegisterType::HL),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::HL as u8 }, { RegisterType::HL as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::HL as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x2A] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::R_HLI(RegisterType::A)),
@@ -350,8 +350,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::HL, RegisterType::SP),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::HL as u8 }, { RegisterType::SP as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::SP as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x3A] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::R_HLD(RegisterType::A)),
@@ -1035,8 +1035,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::B),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::B as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::B as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x81] = Instruction::new(
         InstructionSpec::new(
@@ -1045,8 +1045,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::C),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x82] = Instruction::new(
         InstructionSpec::new(
@@ -1055,8 +1055,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::D),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::D as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::D as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x83] = Instruction::new(
         InstructionSpec::new(
@@ -1065,8 +1065,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::E),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::E as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::E as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x84] = Instruction::new(
         InstructionSpec::new(
@@ -1075,8 +1075,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::H),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::H as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::H as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x85] = Instruction::new(
         InstructionSpec::new(
@@ -1085,8 +1085,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::L),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::L as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::L as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x86] = Instruction::new(
         InstructionSpec::new(
@@ -1095,8 +1095,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_MR(RegisterType::A, RegisterType::HL),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_mr::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>,
+        Cpu::fetch_and_execute_add_r_mr::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x87] = Instruction::new(
         InstructionSpec::new(
@@ -1105,8 +1105,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_R(RegisterType::A, RegisterType::A),
         ),
-        Cpu::execute_add,
-        Cpu::fetch_r_r::<{ RegisterType::A as u8 }, { RegisterType::A as u8 }>,
+        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::A as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0x88] = Instruction::new(
         InstructionSpec::new(
@@ -1703,8 +1703,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xC6] = Instruction::new(
         InstructionSpec::new(Mnemonic::Add, None, 0, AddressMode::R_D8(RegisterType::A)),
-        Cpu::execute_add,
-        Cpu::fetch_r_d8::<{ RegisterType::A as u8 }>,
+        Cpu::fetch_and_execute_add_r_d8::<{ RegisterType::A as u8 }>,
+        Cpu::fetch_dummy,
     );
     instructions[0xC7] = Instruction::new(
         InstructionSpec::new(Mnemonic::Rst, None, 0x00, AddressMode::IMP),
@@ -1862,8 +1862,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xE8] = Instruction::new(
         InstructionSpec::new(Mnemonic::Add, None, 0, AddressMode::R_D8(RegisterType::SP)),
-        Cpu::execute_add,
-        Cpu::fetch_r_d8::<{ RegisterType::SP as u8 }>,
+        Cpu::fetch_and_execute_add_sp,
+        Cpu::fetch_dummy,
     );
     instructions[0xEA] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::A16_R(RegisterType::A)),
