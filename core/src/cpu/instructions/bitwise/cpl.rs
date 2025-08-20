@@ -1,4 +1,4 @@
-use crate::cpu::instructions::{FetchedData};
+
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -9,7 +9,7 @@ impl Cpu {
     /// N 1
     /// H 1
     #[inline]
-    pub fn execute_cpl(&mut self, _fetched_data: FetchedData) {
+    pub fn execute_cpl(&mut self) {
         self.registers.a = !self.registers.a;
 
         self.registers.flags.set_n(true);

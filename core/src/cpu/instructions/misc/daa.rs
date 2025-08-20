@@ -1,4 +1,4 @@
-use crate::cpu::instructions::{FetchedData};
+
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -24,7 +24,7 @@ impl Cpu {
     /// Z Set if result is 0.
     /// H 0
     /// C Set or reset depending on the operation.#[inline]
-    pub fn execute_daa(&mut self, _fetched_data: FetchedData) {
+    pub fn execute_daa(&mut self) {
         let mut u: u8 = 0;
         let mut fc: i32 = 0;
 

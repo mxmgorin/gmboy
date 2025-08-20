@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -345,11 +346,17 @@ pub enum AddressMode {
     R_A16(RegisterType),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FetchedData {
     pub dest: DataDestination,
     pub source: DataSource,
     pub value: u16,
+}
+
+impl Default for FetchedData {
+    fn default() -> Self {
+        Self::empty()
+    }
 }
 
 impl FetchedData {
@@ -362,7 +369,7 @@ impl FetchedData {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize,)]
 pub enum DataDestination {
     Register(RegisterType),
     Memory(u16),
@@ -377,7 +384,7 @@ impl DataDestination {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum DataSource {
     MemoryRegister(RegisterType, u16),
     Register(RegisterType),

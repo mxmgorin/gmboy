@@ -1,5 +1,5 @@
 
-use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::instructions::{DataDestination};
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -12,18 +12,18 @@ impl Cpu {
     /// H Set if borrow from bit 4.
     /// C Set if borrow (i.e. if (r8 + carry) > A).
     #[inline]
-    pub fn execute_sbc(&mut self, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
+    pub fn execute_sbc(&mut self) {
+        let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
             unreachable!();
         };
 
         let c_val = self.registers.flags.get_c();
-        let val_plus_c = fetched_data.value.wrapping_add(c_val as u16) as u8;
+        let val_plus_c = self.step_ctx.fetched_data.value.wrapping_add(c_val as u16) as u8;
         let r_val = self.registers.read_register(r);
 
         let c_val_i32 = c_val as i32;
         let r_val_i32 = r_val as i32;
-        let fetched_val_i32 = fetched_data.value as i32;
+        let fetched_val_i32 = self.step_ctx.fetched_data.value as i32;
 
         let h = (r_val_i32 & 0xF)
             .wrapping_sub(fetched_val_i32 & 0xF)

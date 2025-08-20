@@ -1,5 +1,5 @@
 use crate::bus::Bus;
-use crate::cpu::instructions::{AddressMode, FetchedData, Instruction, Mnemonic};
+use crate::cpu::instructions::{AddressMode, Instruction, Mnemonic};
 use crate::cpu::{Cpu, DebugCtx};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -37,7 +37,7 @@ impl Debugger {
         self.print_gb_doctor_info(cpu);
 
         if let Some(ctx) = ctx {
-            self.print_cpu_info(cpu, ctx.pc, &ctx.instruction, ctx.opcode, &ctx.fetched_data);
+            self.print_cpu_info(cpu, ctx.pc, &ctx.instruction);
         }
     }
 
@@ -91,8 +91,6 @@ impl Debugger {
         cpu: &Cpu,
         pc: u16,
         instruction: &Instruction,
-        opcode: u8,
-        fetched_data: &FetchedData,
     ) {
         if self.cpu_log_type != CpuLogType::Assembly {
             return;
@@ -104,8 +102,8 @@ impl Debugger {
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             cpu.clock.get_t_cycles(),
             pc,
-            get_asm_string(mode, mnemonic, cpu, fetched_data),
-            opcode,
+            get_asm_string(mode, mnemonic, cpu),
+            cpu.step_ctx.opcode,
             cpu.clock.bus.read(pc.wrapping_add(1)),
             cpu.clock.bus.read(pc.wrapping_add(2)),
             cpu.registers.a,
@@ -124,8 +122,9 @@ pub fn get_asm_string(
     mode: AddressMode,
     mnemonic: Mnemonic,
     cpu: &Cpu,
-    fetched_data: &FetchedData,
 ) -> String {
+    let fetched_data = cpu.step_ctx.fetched_data.clone();
+
     match mode {
         AddressMode::IMP => format!("{:?}", mnemonic),
         AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {

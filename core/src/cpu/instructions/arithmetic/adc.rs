@@ -1,15 +1,15 @@
 
-use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::instructions::{DataDestination};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_adc(&mut self, fetched_data: FetchedData) {
-        let DataDestination::Register(_) = fetched_data.dest else {
+    pub fn execute_adc(&mut self) {
+        let DataDestination::Register(_) = self.step_ctx.fetched_data.dest else {
             unreachable!();
         };
 
-        let u: u16 = fetched_data.value;
+        let u: u16 = self.step_ctx.fetched_data.value;
         let a: u16 = self.registers.a as u16;
         let c: u16 = self.registers.flags.get_c() as u16;
 

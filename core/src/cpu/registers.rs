@@ -22,7 +22,7 @@ pub struct Registers {
 }
 
 /// Represents the various CPU registers in a Game Boy CPU.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum RegisterType {
     /// Accumulator register, used for arithmetic and logic operations.

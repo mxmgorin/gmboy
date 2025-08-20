@@ -1,10 +1,10 @@
-use crate::cpu::instructions::{FetchedData};
+
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_or(&mut self, fetched_data: FetchedData) {
-        let value = fetched_data.value & 0xFF;
+    pub fn execute_or(&mut self) {
+        let value = self.step_ctx.fetched_data.value & 0xFF;
         self.registers.a |= value as u8;
 
         self.registers.flags.set_z(self.registers.a == 0);

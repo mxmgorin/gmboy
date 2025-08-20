@@ -1,11 +1,11 @@
 
-use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::instructions::{DataDestination};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_pop(&mut self, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
+    pub fn execute_pop(&mut self) {
+        let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
             unreachable!();
         };
 

@@ -1,16 +1,16 @@
 
-use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::instructions::{DataDestination};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline]
-    pub fn execute_sub(&mut self, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
+    pub fn execute_sub(&mut self) {
+        let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
             unreachable!();
         };
 
         let reg_val = self.registers.read_register(r);
-        let result = reg_val.wrapping_sub(fetched_data.value);
+        let result = reg_val.wrapping_sub(self.step_ctx.fetched_data.value);
 
         let reg_val_i32 = reg_val as i32;
         let fetched_val_i32 = result as i32;

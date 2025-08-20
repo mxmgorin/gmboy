@@ -1,10 +1,10 @@
-use crate::cpu::instructions::{FetchedData};
+
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_prefix(&mut self, fetched_data: FetchedData) {
-        let op = fetched_data.value;
+    pub fn execute_prefix(&mut self) {
+        let op = self.step_ctx.fetched_data.value;
         let reg = decode_reg(op & 0b111);
 
         let Some(reg) = reg else {

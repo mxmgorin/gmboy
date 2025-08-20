@@ -1,6 +1,6 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::instructions::{ConditionType, Instruction};
-use crate::cpu::instructions::{FetchedData};
+use crate::cpu::instructions::{ConditionType, FetchedData, Instruction};
+
 use crate::cpu::{RegisterType, Registers};
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +9,10 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 pub struct DebugCtx {
     pub pc: u16,
     pub instruction: Instruction,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct StepCtx {
     pub opcode: u8,
     pub fetched_data: FetchedData,
 }
@@ -17,9 +21,9 @@ pub struct DebugCtx {
 pub struct Cpu {
     pub registers: Registers,
     pub enabling_ime: bool,
-    pub current_opcode: u8,
     pub is_halted: bool,
     pub clock: Clock,
+    pub step_ctx: StepCtx,
 }
 
 impl Cpu {
@@ -27,7 +31,7 @@ impl Cpu {
         Self {
             registers: Default::default(),
             enabling_ime: false,
-            current_opcode: 0,
+            step_ctx: StepCtx::default(),
             is_halted: false,
             clock,
         }
@@ -104,16 +108,14 @@ impl Cpu {
         #[cfg(debug_assertions)]
         let pc = self.registers.pc;
 
-        self.current_opcode = self.read_pc();
-        let instruction = Instruction::get_by_opcode(self.current_opcode);
-        let fetched_data = instruction.fetch(self);
+        self.step_ctx.opcode = self.read_pc();
+        let instruction = Instruction::get_by_opcode(self.step_ctx.opcode);
+        self.step_ctx.fetched_data = instruction.fetch(self);
 
         #[cfg(debug_assertions)]
         let inst_ctx = DebugCtx {
             pc,
             instruction: *instruction,
-            opcode: self.current_opcode,
-            fetched_data: fetched_data.clone(),
         };
         #[cfg(debug_assertions)]
         if let Some(debugger) = _debugger {
@@ -122,7 +124,7 @@ impl Cpu {
         }
 
         let prev_enabling_ime = self.enabling_ime;
-        instruction.execute(self, fetched_data);
+        instruction.execute(self);
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed

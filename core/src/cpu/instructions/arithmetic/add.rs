@@ -1,22 +1,22 @@
 
-use crate::cpu::instructions::{DataDestination, FetchedData};
+use crate::cpu::instructions::{DataDestination};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_add(&mut self, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
+    pub fn execute_add(&mut self) {
+        let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
             unreachable!();
         };
 
         let reg_val = self.registers.read_register(r);
-        let mut reg_val_u32: u32 = reg_val as u32 + fetched_data.value as u32;
+        let mut reg_val_u32: u32 = reg_val as u32 + self.step_ctx.fetched_data.value as u32;
         let is_sp = r == RegisterType::SP;
 
         if !is_sp && r.is_16bit() {
             self.clock.m_cycles(1);
-            let h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
-            let n = (reg_val as u32) + (fetched_data.value as u32);
+            let h = (reg_val & 0xFFF) + (self.step_ctx.fetched_data.value & 0xFFF) >= 0x1000;
+            let n = (reg_val as u32) + (self.step_ctx.fetched_data.value as u32);
             let c = n >= 0x10000;
 
             self.registers.flags.set_h(h);
@@ -26,18 +26,18 @@ impl Cpu {
             reg_val_u32 = self
                 .registers
                 .read_register(r)
-                .wrapping_add(fetched_data.value as i8 as u16) as u32;
+                .wrapping_add(self.step_ctx.fetched_data.value as i8 as u16) as u32;
 
-            let h = (reg_val & 0xF) + (fetched_data.value & 0xF) >= 0x10;
-            let c = (reg_val & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
+            let h = (reg_val & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
+            let c = (reg_val & 0xFF) + (self.step_ctx.fetched_data.value & 0xFF) >= 0x100;
 
             self.registers.flags.set_z(false);
             self.registers.flags.set_h(h);
             self.registers.flags.set_c(c);
         } else {
             let z = (reg_val_u32 & 0xFF) == 0;
-            let h = (reg_val & 0xF) + (fetched_data.value & 0xF) >= 0x10;
-            let c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
+            let h = (reg_val & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
+            let c = ((reg_val as i32) & 0xFF) + ((self.step_ctx.fetched_data.value as i32) & 0xFF) >= 0x100;
 
             self.registers.flags.set_z(z);
             self.registers.flags.set_h(h);
