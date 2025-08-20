@@ -82,10 +82,7 @@ impl Cpu {
         self.clock.m_cycles(1);
     }
 
-    pub fn step(
-        &mut self,
-        mut _debugger: Option<&mut crate::debugger::Debugger>,
-    ) {
+    pub fn step(&mut self, mut _debugger: Option<&mut crate::debugger::Debugger>) {
         #[cfg(debug_assertions)]
         if let Some(ref mut debugger) = _debugger {
             debugger.print(self, None);
@@ -113,13 +110,14 @@ impl Cpu {
         self.step_ctx.fetched_data = instruction.fetch(self);
 
         #[cfg(debug_assertions)]
-        let inst_ctx = DebugCtx {
-            pc,
-            instruction: *instruction,
-        };
-        #[cfg(debug_assertions)]
         if let Some(debugger) = _debugger {
-            debugger.print(self, Some(inst_ctx));
+            debugger.print(
+                self,
+                Some(DebugCtx {
+                    pc,
+                    instruction: *instruction,
+                }),
+            );
             debugger.update_serial(&mut self.clock.bus);
         }
 

@@ -250,6 +250,12 @@ impl Cpu {
     pub const fn fetch_impl(&mut self) -> FetchedData {
         FetchedData::empty()
     }
+
+    /// temp method used for fetch_execute instructions
+    #[inline(always)]
+    pub const fn fetch_dummy(&mut self) -> FetchedData {
+        FetchedData::empty()
+    }
 }
 
 /// Represents the different address modes in the CPU's instruction set.

@@ -34,10 +34,10 @@ impl Debugger {
     }
 
     pub fn print(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {
-        self.print_gb_doctor_info(cpu);
+        self.print_gb_doctor(cpu);
 
         if let Some(ctx) = ctx {
-            self.print_cpu_info(cpu, ctx.pc, &ctx.instruction);
+            self.print_asm(cpu, ctx.pc, &ctx.instruction);
         }
     }
 
@@ -58,7 +58,7 @@ impl Debugger {
         }
     }
 
-    fn print_gb_doctor_info(&self, cpu: &Cpu) {
+    pub fn print_gb_doctor(&self, cpu: &Cpu) {
         if self.cpu_log_type != CpuLogType::GbDoctor {
             return;
         }
@@ -70,7 +70,7 @@ impl Debugger {
             cpu.clock.bus.read(cpu.registers.pc.wrapping_add(2)),
             cpu.clock.bus.read(cpu.registers.pc.wrapping_add(3))
         );
-        log::info!(
+        println!(
             "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} {}",
             cpu.registers.a,
             cpu.registers.flags.byte,
@@ -86,7 +86,7 @@ impl Debugger {
         );
     }
 
-    fn print_cpu_info(
+    pub fn print_asm(
         &self,
         cpu: &Cpu,
         pc: u16,
@@ -95,6 +95,7 @@ impl Debugger {
         if self.cpu_log_type != CpuLogType::Assembly {
             return;
         }
+        
         let mode = instruction.get_address_mode();
         let mnemonic = instruction.get_mnemonic();
 
