@@ -3,15 +3,25 @@ use crate::cpu::instructions::{DataDestination};
 use crate::cpu::Cpu;
 
 impl Cpu {
-    /// Subtract the value in r8 and the carry flag from A.
-    /// Cycles: 1
-    /// Bytes: 1
-    /// Flags:
-    /// Z Set if result is 0.
-    /// N 1
-    /// H Set if borrow from bit 4.
-    /// C Set if borrow (i.e. if (r8 + carry) > A).
-    #[inline]
+    #[inline(always)]
+    pub fn fetch_execute_sbc_r_r<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_r_r::<R1, R2>();
+        self.execute_sbc();
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_sbc_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_r_mr::<R1, R2>();
+        self.execute_sbc();
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_sbc_r_d8<const R1: u8>(&mut self) {
+        self.fetch_r_d8::<R1>();
+        self.execute_sbc();
+    }
+
+    #[inline(always)]
     pub fn execute_sbc(&mut self) {
         let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
             unreachable!();
