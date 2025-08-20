@@ -1,17 +1,25 @@
-
 use crate::cpu::Cpu;
 
 impl Cpu {
-    /// ComPare the value in A with the value in r8.
-    /// This subtracts the value in r8 from A and sets flags accordingly, but discards the result.
-    /// Cycles: 1
-    /// Bytes: 1
-    /// Flags:
-    /// Z Set if result is 0.
-    /// N 1
-    /// H Set if borrow from bit 4.
-    /// C Set if borrow (i.e. if r8 > A).
-    #[inline]
+    #[inline(always)]
+    pub fn fetch_execute_cp_r_d8<const R1: u8>(&mut self) {
+        self.step_ctx.fetched_data = self.fetch_r_d8::<R1>();
+        self.execute_cp();
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_cp_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        self.step_ctx.fetched_data = self.fetch_r_mr::<R1, R2>();
+        self.execute_cp();
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_cp_r_r<const R1: u8, const R2: u8>(&mut self) {
+        self.step_ctx.fetched_data = self.fetch_r_r::<R1, R2>();
+        self.execute_cp();
+    }
+
+    #[inline(always)]
     pub fn execute_cp(&mut self) {
         let fetched_value_i32 = self.step_ctx.fetched_data.value as i32;
         let reg_i32 = self.registers.a as i32;
