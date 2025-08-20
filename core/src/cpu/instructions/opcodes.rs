@@ -294,7 +294,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x2F] = Instruction::new(
         InstructionSpec::new(Mnemonic::Cpl, None, 0, AddressMode::IMP),
         Cpu::execute_cpl,
-        Cpu::fetch_impl,
+        Cpu::fetch_d,
     );
 
     // 0x3X
