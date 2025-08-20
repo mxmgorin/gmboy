@@ -8,29 +8,27 @@ pub struct InstructionSpec {
     pub cond_type: Option<ConditionType>,
     pub addr: u16,
     pub addr_mode: AddressMode,
+    pub mnemonic: Mnemonic,
 }
 
 impl InstructionSpec {
-    pub const fn new(cond_type: Option<ConditionType>, addr: u16, addr_mode: AddressMode) -> Self {
+    pub const fn new(
+        mnemonic: Mnemonic,
+        cond_type: Option<ConditionType>,
+        addr: u16,
+        addr_mode: AddressMode,
+    ) -> Self {
         Self {
             cond_type,
             addr,
             addr_mode,
-        }
-    }
-
-    pub const fn default(addr_mode: AddressMode) -> Self {
-        Self {
-            cond_type: None,
-            addr: 0,
-            addr_mode,
+            mnemonic,
         }
     }
 }
 
 #[derive(Copy, Clone)]
 pub struct Instruction {
-    mnemonic: Mnemonic,
     spec: InstructionSpec,
     execute: fn(&mut Cpu, fetched_data: FetchedData),
     fetch: fn(&mut Cpu) -> FetchedData,
@@ -54,7 +52,7 @@ impl Instruction {
     }
 
     pub fn get_mnemonic(&self) -> Mnemonic {
-        self.mnemonic
+        self.spec.mnemonic
     }
 
     pub fn get_condition(&self) -> Option<ConditionType> {
@@ -63,21 +61,18 @@ impl Instruction {
 
     pub const fn unknown(_opcode: u8) -> Self {
         Self::new(
-            Mnemonic::Unknown,
-            InstructionSpec::default(AddressMode::IMP),
+            InstructionSpec::new(Mnemonic::Unknown, None, 0, AddressMode::IMP),
             |_, _| panic!("can't fetch for unknown instruction for opcode"),
             |_| panic!("can't fetch for unknown instruction"),
         )
     }
 
     pub const fn new(
-        mnemonic: Mnemonic,
         spec: InstructionSpec,
         execute: fn(&mut Cpu, fetched_data: FetchedData),
         fetch: fn(&mut Cpu) -> FetchedData,
     ) -> Self {
         Self {
-            mnemonic,
             spec,
             execute,
             fetch,
