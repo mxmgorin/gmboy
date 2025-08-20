@@ -874,7 +874,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0x76] = Instruction::new(
         InstructionSpec::new(Mnemonic::Halt, None, 0, AddressMode::IMP),
         Cpu::execute_halt,
-        Cpu::fetch_impl,
+        Cpu::fetch_d,
     );
     instructions[0x70] = Instruction::new(
         InstructionSpec::new(
@@ -1910,7 +1910,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xF3] = Instruction::new(
         InstructionSpec::new(Mnemonic::Di, None, 0, AddressMode::IMP),
         Cpu::execute_di,
-        Cpu::fetch_impl,
+        Cpu::fetch_d,
     );
     instructions[0xF5] = Instruction::new(
         InstructionSpec::new(Mnemonic::Push, None, 0, AddressMode::R(RegisterType::AF)),
@@ -1950,7 +1950,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xFB] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ei, None, 0, AddressMode::IMP),
         Cpu::execute_ei,
-        Cpu::fetch_impl,
+        Cpu::fetch_d,
     );
     instructions[0xFE] = Instruction::new(
         InstructionSpec::new(Mnemonic::Cp, None, 0, AddressMode::R_D8(RegisterType::A)),

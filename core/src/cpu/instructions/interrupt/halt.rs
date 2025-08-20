@@ -11,7 +11,7 @@ impl Cpu {
     // If the IME flag is not set, and some interrupt is pending:
     // The CPU continues execution after the HALT, but the byte after it is read twice in a row (PC is not incremented, due to a hardware bug).
 
-    #[inline]
+    #[inline(always)]
     pub fn execute_halt(&mut self) {
         self.is_halted = true;
     }
