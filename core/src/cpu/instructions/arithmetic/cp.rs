@@ -3,19 +3,19 @@ use crate::cpu::Cpu;
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_cp_r_d8<const R1: u8>(&mut self) {
-        self.step_ctx.fetched_data = self.fetch_r_d8::<R1>();
+        self.fetch_r_d8::<R1>();
         self.execute_cp();
     }
 
     #[inline(always)]
     pub fn fetch_execute_cp_r_mr<const R1: u8, const R2: u8>(&mut self) {
-        self.step_ctx.fetched_data = self.fetch_r_mr::<R1, R2>();
+        self.fetch_r_mr::<R1, R2>();
         self.execute_cp();
     }
 
     #[inline(always)]
     pub fn fetch_execute_cp_r_r<const R1: u8, const R2: u8>(&mut self) {
-        self.step_ctx.fetched_data = self.fetch_r_r::<R1, R2>();
+        self.fetch_r_r::<R1, R2>();
         self.execute_cp();
     }
 

@@ -4,7 +4,7 @@ use crate::cpu::{Cpu, RegisterType};
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_dec_r<const R1: u8>(&mut self) {
-        self.step_ctx.fetched_data = self.fetch_r::<R1>();
+        self.fetch_r::<R1>();
         let mut value = self.step_ctx.fetched_data.value.wrapping_sub(1);
         let r1 = RegisterType::from_u8(R1);
 
@@ -20,7 +20,7 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_dec_mr_hl(&mut self) {
-        self.step_ctx.fetched_data = self.fetch_mr_hl();
+        self.fetch_mr_hl();
         let value = self.step_ctx.fetched_data.value.wrapping_sub(1);
         let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
             unreachable!()

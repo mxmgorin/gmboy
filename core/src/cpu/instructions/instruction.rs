@@ -1,6 +1,6 @@
 use crate::cpu::instructions::fetch::AddressMode;
 use crate::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
-use crate::cpu::instructions::{ConditionType, FetchedData};
+use crate::cpu::instructions::{ConditionType};
 use crate::cpu::Cpu;
 
 #[derive(Copy, Clone)]
@@ -31,20 +31,23 @@ impl InstructionSpec {
 pub struct Instruction {
     spec: InstructionSpec,
     execute: fn(&mut Cpu),
-    fetch: fn(&mut Cpu) -> FetchedData,
+    fetch: fn(&mut Cpu),
 }
 
 impl Instruction {
+    #[inline(always)]
     pub const fn get_by_opcode(opcode: u8) -> &'static Instruction {
         &INSTRUCTIONS_BY_OPCODES[opcode as usize]
     }
 
+    #[inline(always)]
     pub fn execute(&self, cpu: &mut Cpu) {
         (self.execute)(cpu);
     }
 
-    pub fn fetch(&self, cpu: &mut Cpu) -> FetchedData {
-        (self.fetch)(cpu)
+    #[inline(always)]
+    pub fn fetch(&self, cpu: &mut Cpu) {
+        (self.fetch)(cpu);
     }
 
     pub fn get_address_mode(&self) -> AddressMode {
@@ -70,7 +73,7 @@ impl Instruction {
     pub const fn new(
         spec: InstructionSpec,
         execute: fn(&mut Cpu),
-        fetch: fn(&mut Cpu) -> FetchedData,
+        fetch: fn(&mut Cpu),
     ) -> Self {
         Self {
             spec,
