@@ -1,26 +1,36 @@
-
-use crate::cpu::instructions::{DataDestination};
-use crate::cpu::Cpu;
+use crate::cpu::instructions::DataDestination;
+use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
-    #[inline]
-    pub fn execute_dec(&mut self) {
+    #[inline(always)]
+    pub fn fetch_execute_dec_r<const R1: u8>(&mut self) {
+        self.step_ctx.fetched_data = self.fetch_r::<R1>();
         let mut value = self.step_ctx.fetched_data.value.wrapping_sub(1);
+        let r1 = RegisterType::from_u8(R1);
 
-        match self.step_ctx.fetched_data.dest {
-            DataDestination::Register(r) => {
-                if r.is_16bit() {
-                    self.clock.m_cycles(1);
-                }
-
-                self.registers.set_register(r, value);
-                value = self.registers.read_register(r);
-            }
-            DataDestination::Memory(addr) => {
-                self.write_to_memory(addr, value as u8);
-            }
+        if r1.is_16bit() {
+            self.clock.m_cycles(1);
         }
 
+        self.registers.set_register(r1, value);
+        value = self.registers.read_register(r1);
+
+        self.set_flags_dec(value);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_dec_mr_hl(&mut self) {
+        self.step_ctx.fetched_data = self.fetch_mr_hl();
+        let value = self.step_ctx.fetched_data.value.wrapping_sub(1);
+        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
+            unreachable!()
+        };
+
+        self.write_to_memory(addr, value as u8);
+        self.set_flags_dec(value);
+    }
+
+    fn set_flags_dec(&mut self, value: u16) {
         if (self.step_ctx.opcode & 0x0B) == 0x0B {
             return;
         }
