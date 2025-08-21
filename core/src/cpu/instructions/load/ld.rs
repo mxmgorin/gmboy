@@ -1,4 +1,4 @@
-use crate::cpu::instructions::{DataDestination, DataSource};
+use crate::cpu::instructions::DataDestination;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -53,8 +53,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_execute_ld_r_mr_dec<const R1: u8, const R2: u8>(&mut self) {
-        self.fetch_r_mr_dec::<R1, R2>();
+    pub fn fetch_execute_ld_r_mrd<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_r_mrd::<R1, R2>();
         self.ld_r_r::<R1, R2>();
     }
 
@@ -87,8 +87,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_execute_ld_hli_r<const R2: u8>(&mut self) {
-        self.fetch_hli_r::<R2>();
+    pub fn fetch_execute_ld_mri_r<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_mri_r::<R1, R2>();
         let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
             unreachable!()
         };
@@ -97,15 +97,14 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_execute_ld_r_hli<const R1: u8>(&mut self) {
-        const R2: u8 = RegisterType::HL as u8;
-        self.fetch_r_hli::<R1>();
+    pub fn fetch_execute_ld_r_mri<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_r_mri::<R1, R2>();
         self.ld_r_r::<R1, R2>();
     }
 
     #[inline(always)]
-    pub fn fetch_execute_ld_hld_r<const R2: u8>(&mut self) {
-        self.fetch_hld_r::<R2>();
+    pub fn fetch_execute_ld_mrd_r<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_mrd_r::<R1, R2>();
         let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
             unreachable!()
         };
@@ -124,43 +123,10 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn execute_ld(&mut self) {
-        match self.step_ctx.fetched_data.dest {
-            DataDestination::Register(r) => {
-                if let DataSource::Register(src_r) = self.step_ctx.fetched_data.source {
-                    if r.is_16bit() && src_r.is_16bit() {
-                        self.clock.m_cycles(1);
-                    }
-                }
+    fn ld_addr_r<const R: u8>(&mut self, addr: u16) {
+        let r = RegisterType::from_u8(R);
 
-                self.registers
-                    .set_register(r, self.step_ctx.fetched_data.value);
-            }
-            DataDestination::Memory(addr) => match self.step_ctx.fetched_data.source {
-                DataSource::Memory(_) => unreachable!(),
-                DataSource::Register(r) | DataSource::MemoryRegister(r, _) => {
-                    if r.is_16bit() {
-                        self.write_to_memory(
-                            addr + 1,
-                            ((self.step_ctx.fetched_data.value >> 8) & 0xFF) as u8,
-                        );
-                        self.write_to_memory(addr, (self.step_ctx.fetched_data.value & 0xFF) as u8);
-                    } else {
-                        self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);
-                    }
-                }
-                DataSource::Immediate => {
-                    self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);
-                }
-            },
-        }
-    }
-
-    #[inline(always)]
-    fn ld_addr_r<const R2: u8>(&mut self, addr: u16) {
-        let r2 = RegisterType::from_u8(R2);
-
-        if r2.is_16bit() {
+        if r.is_16bit() {
             self.write_to_memory(
                 addr + 1,
                 ((self.step_ctx.fetched_data.value >> 8) & 0xFF) as u8,
