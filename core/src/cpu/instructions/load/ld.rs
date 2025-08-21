@@ -43,13 +43,19 @@ impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ld_r_r<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_r_r::<R1, R2>();
-        self.ld_to_r_from_r::<R1, R2>();
+        self.ld_r_r::<R1, R2>();
     }
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_mr<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_r_mr::<R1, R2>();
-        self.ld_to_r_from_r::<R1, R2>();
+        self.ld_r_r::<R1, R2>();
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ld_r_mr_dec<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_r_mr_dec::<R1, R2>();
+        self.ld_r_r::<R1, R2>();
     }
 
     #[inline(always)]
@@ -67,7 +73,7 @@ impl Cpu {
             unreachable!()
         };
 
-        self.ld_to_addr_from_r::<R2>(addr);
+        self.ld_addr_r::<R2>(addr);
     }
 
     #[inline(always)]
@@ -77,7 +83,44 @@ impl Cpu {
             unreachable!()
         };
 
-        self.ld_to_addr_from_r::<R2>(addr);
+        self.ld_addr_r::<R2>(addr);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ld_hli_r<const R2: u8>(&mut self) {
+        self.fetch_hli_r::<R2>();
+        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
+            unreachable!()
+        };
+
+        self.ld_addr_r::<R2>(addr);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ld_r_hli<const R1: u8>(&mut self) {
+        const R2: u8 = RegisterType::HL as u8;
+        self.fetch_r_hli::<R1>();
+        self.ld_r_r::<R1, R2>();
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ld_hld_r<const R2: u8>(&mut self) {
+        self.fetch_hld_r::<R2>();
+        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
+            unreachable!()
+        };
+
+        self.ld_addr_r::<R2>(addr);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ld_mr_d8<const R1: u8>(&mut self) {
+        self.fetch_mr_d8::<R1>();
+        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
+            unreachable!()
+        };
+
+        self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);
     }
 
     #[inline(always)]
@@ -114,7 +157,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn ld_to_addr_from_r<const R2: u8>(&mut self, addr: u16) {
+    fn ld_addr_r<const R2: u8>(&mut self, addr: u16) {
         let r2 = RegisterType::from_u8(R2);
 
         if r2.is_16bit() {
@@ -129,7 +172,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn ld_to_r_from_r<const R1: u8, const R2: u8>(&mut self) {
+    fn ld_r_r<const R1: u8, const R2: u8>(&mut self) {
         let r1 = RegisterType::from_u8(R1);
         let r2 = RegisterType::from_u8(R1);
 

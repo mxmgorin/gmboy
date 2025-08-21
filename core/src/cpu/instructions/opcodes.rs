@@ -161,7 +161,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x18] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jr, None, 0, AddressMode::D8),
-        Cpu::fetch_execute_jr_d8::<{ConditionType::None as u8}>,
+        Cpu::fetch_execute_jr_d8::<{ ConditionType::None as u8 }>,
         Cpu::d,
     );
     instructions[0x19] = Instruction::new(
@@ -213,7 +213,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0x2X
     instructions[0x20] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jr, Some(ConditionType::NZ), 0, AddressMode::D8),
-        Cpu::fetch_execute_jr_d8::<{ConditionType::NZ as u8}>,
+        Cpu::fetch_execute_jr_d8::<{ ConditionType::NZ as u8 }>,
         Cpu::d,
     );
     instructions[0x21] = Instruction::new(
@@ -223,8 +223,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x22] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::HLI_R(RegisterType::A)),
-        Cpu::execute_ld,
-        Cpu::fetch_hli_r_a,
+        Cpu::fetch_execute_ld_hli_r::<{ RegisterType::A as u8 }>,
+        Cpu::d,
     );
     instructions[0x23] = Instruction::new(
         InstructionSpec::new(Mnemonic::Inc, None, 0, AddressMode::R(RegisterType::HL)),
@@ -253,7 +253,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x28] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jr, Some(ConditionType::Z), 0, AddressMode::D8),
-        Cpu::fetch_execute_jr_d8::<{ConditionType::Z as u8}>,
+        Cpu::fetch_execute_jr_d8::<{ ConditionType::Z as u8 }>,
         Cpu::d,
     );
     instructions[0x29] = Instruction::new(
@@ -268,8 +268,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x2A] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::R_HLI(RegisterType::A)),
-        Cpu::execute_ld,
-        Cpu::fetch_r_hli_a,
+        Cpu::fetch_execute_ld_r_hli::<{ RegisterType::A as u8 }>,
+        Cpu::d,
     );
     instructions[0x2B] = Instruction::new(
         InstructionSpec::new(Mnemonic::Dec, None, 0, AddressMode::R(RegisterType::HL)),
@@ -300,7 +300,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0x3X
     instructions[0x30] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jr, Some(ConditionType::NC), 0, AddressMode::D8),
-        Cpu::fetch_execute_jr_d8::<{ConditionType::NC as u8}>,
+        Cpu::fetch_execute_jr_d8::<{ ConditionType::NC as u8 }>,
         Cpu::d,
     );
     instructions[0x31] = Instruction::new(
@@ -310,8 +310,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x32] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::HLD_R(RegisterType::A)),
-        Cpu::execute_ld,
-        Cpu::fetch_hld_r_a,
+        Cpu::fetch_execute_ld_hld_r::<{ RegisterType::A as u8 }>,
+        Cpu::d,
     );
     instructions[0x33] = Instruction::new(
         InstructionSpec::new(Mnemonic::Inc, None, 0, AddressMode::R(RegisterType::SP)),
@@ -330,8 +330,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x36] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::MR_D8(RegisterType::HL)),
-        Cpu::execute_ld,
-        Cpu::fetch_mr_d8_hl,
+        Cpu::fetch_execute_ld_mr_d8::<{ RegisterType::HL as u8 }>,
+        Cpu::d,
     );
     instructions[0x37] = Instruction::new(
         InstructionSpec::new(Mnemonic::Scf, None, 0, AddressMode::IMP),
@@ -340,7 +340,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x38] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jr, Some(ConditionType::C), 0, AddressMode::D8),
-        Cpu::fetch_execute_jr_d8::<{ConditionType::C as u8}>,
+        Cpu::fetch_execute_jr_d8::<{ ConditionType::C as u8 }>,
         Cpu::d,
     );
     instructions[0x39] = Instruction::new(
@@ -355,8 +355,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0x3A] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::R_HLD(RegisterType::A)),
-        Cpu::execute_ld,
-        Cpu::fetch_r_hld_a,
+        Cpu::fetch_execute_ld_r_mr_dec::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>,
+        Cpu::d,
     );
     instructions[0x3B] = Instruction::new(
         InstructionSpec::new(Mnemonic::Dec, None, 0, AddressMode::R(RegisterType::SP)),
@@ -1688,12 +1688,12 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xC2] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::NZ), 0, AddressMode::D16),
-        Cpu::fetch_execute_jp_d16::<{ConditionType::NZ as u8}>,
+        Cpu::fetch_execute_jp_d16::<{ ConditionType::NZ as u8 }>,
         Cpu::d,
     );
     instructions[0xC3] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, None, 0, AddressMode::D16),
-        Cpu::fetch_execute_jp_d16::<{ConditionType::None as u8}>,
+        Cpu::fetch_execute_jp_d16::<{ ConditionType::None as u8 }>,
         Cpu::d,
     );
     instructions[0xC5] = Instruction::new(
@@ -1713,7 +1713,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xC4] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::NZ), 0, AddressMode::D16),
-        Cpu::fetch_execute_call_d16::<{ConditionType::NZ as u8}>,
+        Cpu::fetch_execute_call_d16::<{ ConditionType::NZ as u8 }>,
         Cpu::d,
     );
     instructions[0xC8] = Instruction::new(
@@ -1728,17 +1728,17 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xCC] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::Z), 0, AddressMode::D16),
-        Cpu::fetch_execute_call_d16::<{ConditionType::Z as u8}>,
+        Cpu::fetch_execute_call_d16::<{ ConditionType::Z as u8 }>,
         Cpu::d,
     );
     instructions[0xCD] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, None, 0, AddressMode::D16),
-        Cpu::fetch_execute_call_d16::<{ConditionType::None as u8}>,
+        Cpu::fetch_execute_call_d16::<{ ConditionType::None as u8 }>,
         Cpu::d,
     );
     instructions[0xCA] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::Z), 0, AddressMode::D16),
-        Cpu::fetch_execute_jp_d16::<{ConditionType::Z as u8}>,
+        Cpu::fetch_execute_jp_d16::<{ ConditionType::Z as u8 }>,
         Cpu::d,
     );
     instructions[0xCB] = Instruction::new(
@@ -1770,12 +1770,12 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xD2] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::NC), 0, AddressMode::D16),
-        Cpu::fetch_execute_jp_d16::<{ConditionType::NC as u8}>,
+        Cpu::fetch_execute_jp_d16::<{ ConditionType::NC as u8 }>,
         Cpu::d,
     );
     instructions[0xD4] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::NC), 0, AddressMode::D16),
-        Cpu::fetch_execute_call_d16::<{ConditionType::NC as u8}>,
+        Cpu::fetch_execute_call_d16::<{ ConditionType::NC as u8 }>,
         Cpu::d,
     );
     instructions[0xD5] = Instruction::new(
@@ -1805,12 +1805,12 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xDC] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::C), 0, AddressMode::D16),
-        Cpu::fetch_execute_call_d16::<{ConditionType::C as u8}>,
+        Cpu::fetch_execute_call_d16::<{ ConditionType::C as u8 }>,
         Cpu::d,
     );
     instructions[0xDA] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::C), 0, AddressMode::D16),
-        Cpu::fetch_execute_jp_d16::<{ConditionType::C as u8}>,
+        Cpu::fetch_execute_jp_d16::<{ ConditionType::C as u8 }>,
         Cpu::d,
     );
     instructions[0xDE] = Instruction::new(
@@ -1944,7 +1944,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xFA] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ld, None, 0, AddressMode::R_A16(RegisterType::A)),
-        Cpu::fetch_execute_ld_r_a16::<{ RegisterType::A as u8}>,
+        Cpu::fetch_execute_ld_r_a16::<{ RegisterType::A as u8 }>,
         Cpu::d,
     );
     instructions[0xFB] = Instruction::new(

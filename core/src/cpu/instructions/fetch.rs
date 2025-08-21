@@ -96,9 +96,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_hli_a(&mut self) {
-        let r1 = RegisterType::A;
-
+    pub fn fetch_r_hli<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
         let addr = self.registers.read_register(RegisterType::HL);
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
@@ -110,12 +109,14 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_hld_a(&mut self) {
-        let r1 = RegisterType::A;
-        let addr = self.registers.read_register(RegisterType::HL);
+    pub fn fetch_r_mr_dec<const R1: u8, const R2: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        let r2 = RegisterType::from_u8(R2);
+
+        let addr = self.registers.read_register(r2);
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::MemoryRegister(RegisterType::HL, addr),
+            source: DataSource::MemoryRegister(r2, addr),
             dest: DataDestination::Register(r1),
         };
 
@@ -123,8 +124,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_hli_r_a(&mut self) {
-        let r2 = RegisterType::A;
+    pub fn fetch_hli_r<const R2: u8>(&mut self) {
+        let r2 = RegisterType::from_u8(R2);
         let addr = self.registers.read_register(RegisterType::HL);
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
@@ -136,8 +137,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_hld_r_a(&mut self) {
-        let r2 = RegisterType::A;
+    pub fn fetch_hld_r<const R2: u8>(&mut self) {
+        let r2 = RegisterType::from_u8(R2);
         let addr = self.registers.read_register(RegisterType::HL);
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
@@ -204,8 +205,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_mr_d8_hl(&mut self) {
-        let r1 = RegisterType::HL;
+    pub fn fetch_mr_d8<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
@@ -478,7 +479,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        cpu.fetch_r_hli_a();
+        cpu.fetch_r_hli::<{RegisterType::HL as u8}>();
 
         assert_eq!(cpu.step_ctx.fetched_data.value, addr_value as u16);
         assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
@@ -499,7 +500,7 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        cpu.fetch_r_hld_a();
+        cpu.fetch_r_mr_dec::<{RegisterType::A as u8}, {RegisterType::HL as u8}>();
 
         assert_eq!(cpu.step_ctx.fetched_data.value, addr_value as u16);
         assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
