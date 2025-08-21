@@ -42,14 +42,20 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_r<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
-        let r2 = RegisterType::from_u8(R1);
         self.fetch_r_r::<R1, R2>();
+        self.ld_to_r_from_r::<R1, R2>();
+    }
 
-        if r1.is_16bit() && r2.is_16bit() {
-            self.clock.m_cycles(1);
-        }
+    #[inline(always)]
+    pub fn fetch_execute_ld_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_r_mr::<R1, R2>();
+        self.ld_to_r_from_r::<R1, R2>();
+    }
 
+    #[inline(always)]
+    pub fn fetch_execute_ld_r_a16<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        self.fetch_r_a16::<R1>();
         self.registers
             .set_register(r1, self.step_ctx.fetched_data.value);
     }
@@ -72,20 +78,6 @@ impl Cpu {
         };
 
         self.ld_to_addr_from_r::<R2>(addr);
-    }
-    
-    fn ld_to_addr_from_r<const R2: u8>(&mut self, addr: u16) {
-        let r2 = RegisterType::from_u8(R2);
-        
-        if r2.is_16bit() {
-            self.write_to_memory(
-                addr + 1,
-                ((self.step_ctx.fetched_data.value >> 8) & 0xFF) as u8,
-            );
-            self.write_to_memory(addr, (self.step_ctx.fetched_data.value & 0xFF) as u8);
-        } else {
-            self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);
-        }
     }
 
     #[inline(always)]
@@ -119,5 +111,33 @@ impl Cpu {
                 }
             },
         }
+    }
+
+    #[inline(always)]
+    fn ld_to_addr_from_r<const R2: u8>(&mut self, addr: u16) {
+        let r2 = RegisterType::from_u8(R2);
+
+        if r2.is_16bit() {
+            self.write_to_memory(
+                addr + 1,
+                ((self.step_ctx.fetched_data.value >> 8) & 0xFF) as u8,
+            );
+            self.write_to_memory(addr, (self.step_ctx.fetched_data.value & 0xFF) as u8);
+        } else {
+            self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);
+        }
+    }
+
+    #[inline(always)]
+    fn ld_to_r_from_r<const R1: u8, const R2: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        let r2 = RegisterType::from_u8(R1);
+
+        if r1.is_16bit() && r2.is_16bit() {
+            self.clock.m_cycles(1);
+        }
+
+        self.registers
+            .set_register(r1, self.step_ctx.fetched_data.value);
     }
 }

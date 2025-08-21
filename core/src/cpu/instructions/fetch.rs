@@ -227,8 +227,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_a16_a(&mut self) {
-        let r1 = RegisterType::A;
+    pub fn fetch_r_a16<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
         let addr = self.read_pc16();
 
         self.step_ctx.fetched_data = FetchedData {
