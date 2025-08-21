@@ -183,8 +183,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_mr_hl(&mut self) {
-        let r1 = RegisterType::HL;
+    pub fn fetch_mr<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
         let addr = self.registers.read_register(r1);
 
         self.step_ctx.fetched_data = FetchedData {

@@ -17,8 +17,8 @@ impl Cpu {
     }
 
     #[inline]
-    pub fn fetch_execute_inc_mr_hl(&mut self) {
-        self.fetch_mr_hl();
+    pub fn fetch_execute_inc_mr<const R1: u8>(&mut self) {
+        self.fetch_mr::<R1>();
         let mut value = self.step_ctx.fetched_data.value.wrapping_add(1);
         value &= 0xFF; // Ensure it fits into 8 bits
         self.write_to_memory(self.step_ctx.fetched_data.addr, value as u8);

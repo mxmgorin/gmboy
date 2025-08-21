@@ -87,8 +87,8 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0x32] =
         Cpu::fetch_execute_ld_mrd_r::<{ RegisterType::HL as u8 }, { RegisterType::A as u8 }>;
     array[0x33] = Cpu::fetch_execute_inc_r::<{ RegisterType::SP as u8 }>;
-    array[0x34] = Cpu::fetch_execute_inc_mr_hl;
-    array[0x35] = Cpu::fetch_execute_dec_mr_hl;
+    array[0x34] = Cpu::fetch_execute_inc_mr::<{ RegisterType::HL as u8 }>;
+    array[0x35] = Cpu::fetch_execute_dec_mr::<{ RegisterType::HL as u8 }>;
     array[0x36] = Cpu::fetch_execute_ld_mr_d8::<{ RegisterType::HL as u8 }>;
     array[0x37] = Cpu::execute_scf;
     array[0x38] = Cpu::fetch_execute_jr_d8::<{ JumpCondition::C as u8 }>;
