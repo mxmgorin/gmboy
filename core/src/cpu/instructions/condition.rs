@@ -14,6 +14,19 @@ pub enum ConditionType {
     C,
 }
 
+impl ConditionType {
+    pub fn from_u8(n: u8) -> Self {
+        match n {
+            0 => ConditionType::None,
+            1 => ConditionType::NZ,
+            2 => ConditionType::Z,
+            3 => ConditionType::NC,
+            4 => ConditionType::C,
+            _ => panic!("invalid 8-bit ConditionType"),
+        }
+    }
+}
+
 impl Cpu {
     #[inline(always)]
     pub fn check_cond(&mut self, cond: ConditionType) -> bool {

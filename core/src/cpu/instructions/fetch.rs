@@ -243,7 +243,7 @@ impl Cpu {
 
     /// temp method used for fetch_execute instructions
     #[inline(always)]
-    pub const fn fetch_d(&mut self) {}
+    pub const fn d(&mut self) {}
 }
 
 /// Represents the different address modes in the CPU's instruction set.

@@ -3,32 +3,15 @@ use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline(always)]
-    pub fn execute_call_no(&mut self) {
-        self.goto_addr(self.step_ctx.fetched_data.value, true);
+    pub fn fetch_execute_call_d16<const C: u8>(&mut self) {
+        self.fetch_d16();
+        self.execute_call::<C>();
     }
 
     #[inline(always)]
-    pub fn execute_call_z(&mut self) {
-        self.execute_call(self.step_ctx.fetched_data.value, ConditionType::Z);
-    }
-
-    #[inline(always)]
-    pub fn execute_call_nc(&mut self) {
-        self.execute_call(self.step_ctx.fetched_data.value, ConditionType::NC);
-    }
-
-    #[inline(always)]
-    pub fn execute_call_c(&mut self) {
-        self.execute_call(self.step_ctx.fetched_data.value, ConditionType::C);
-    }
-
-    #[inline(always)]
-    pub fn execute_call_nz(&mut self) {
-        self.execute_call(self.step_ctx.fetched_data.value, ConditionType::NZ);
-    }
-
-    #[inline(always)]
-    pub fn execute_call(&mut self, addr: u16, cond: ConditionType) {
+    fn execute_call<const C: u8>(&mut self) {
+        let cond = ConditionType::from_u8(C);
+        let addr = self.step_ctx.fetched_data.value;
         self.goto_addr_with_cond(cond, addr, true);
     }
 }
