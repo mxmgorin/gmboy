@@ -8,7 +8,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r1),
-            source: DataSource::Register(r1),
             dest: DataDestination::Register(r1),
         };
     }
@@ -20,7 +19,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            source: DataSource::Register(r2),
             dest: DataDestination::Register(r1),
         };
     }
@@ -31,7 +29,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
-            source: DataSource::Immediate,
             dest: DataDestination::Register(r1),
         };
     }
@@ -41,7 +38,6 @@ impl Cpu {
         self.step_ctx.fetched_data = FetchedData {
             dest: DataDestination::Memory(0),
             value: self.read_pc16(),
-            source: DataSource::Immediate,
         };
     }
 
@@ -51,7 +47,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc16(),
-            source: DataSource::Immediate,
             dest: DataDestination::Register(r1),
         };
     }
@@ -64,7 +59,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::MemoryRegister(r2, addr),
             dest: DataDestination::Register(r1),
         };
     }
@@ -78,7 +72,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::MemoryRegister(r2, addr),
             dest: DataDestination::Register(r1),
         };
     }
@@ -90,7 +83,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            source: DataSource::Register(r2),
             dest: DataDestination::Memory(self.registers.read_register(r1)),
         };
     }
@@ -103,7 +95,6 @@ impl Cpu {
         let addr = self.registers.read_register(r2);
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::MemoryRegister(r2, addr),
             dest: DataDestination::Register(r1),
         };
 
@@ -118,7 +109,6 @@ impl Cpu {
         let addr = self.registers.read_register(r2);
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::MemoryRegister(r2, addr),
             dest: DataDestination::Register(r1),
         };
 
@@ -132,7 +122,6 @@ impl Cpu {
         let addr = self.registers.read_register(r1);
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            source: DataSource::Register(r2),
             dest: DataDestination::Memory(addr),
         };
 
@@ -146,7 +135,6 @@ impl Cpu {
         let addr = self.registers.read_register(r1);
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            source: DataSource::Register(r2),
             dest: DataDestination::Memory(addr),
         };
 
@@ -161,7 +149,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::Memory(addr),
             dest: DataDestination::Register(r1),
         }
     }
@@ -173,7 +160,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            source: DataSource::Register(r2),
             dest: DataDestination::Memory(addr),
         }
     }
@@ -182,7 +168,6 @@ impl Cpu {
     pub fn fetch_lh_spi8(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
-            source: DataSource::Immediate,
             dest: DataDestination::Register(RegisterType::HL),
         }
     }
@@ -192,7 +177,6 @@ impl Cpu {
         self.step_ctx.fetched_data = FetchedData {
             dest: DataDestination::Memory(0),
             value: self.read_pc() as u16,
-            source: DataSource::Immediate,
         }
     }
 
@@ -203,7 +187,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            source: DataSource::Register(r2),
             dest: DataDestination::Memory(addr),
         }
     }
@@ -214,7 +197,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
-            source: DataSource::Immediate,
             dest: DataDestination::Memory(self.registers.read_register(r1)),
         }
     }
@@ -226,7 +208,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::MemoryRegister(r1, addr),
             dest: DataDestination::Memory(addr),
         }
     }
@@ -238,7 +219,6 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            source: DataSource::Memory(addr),
             dest: DataDestination::Register(r1),
         }
     }
@@ -341,7 +321,6 @@ pub enum AddressMode {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FetchedData {
     pub dest: DataDestination,
-    pub source: DataSource,
     pub value: u16,
 }
 
@@ -355,7 +334,6 @@ impl FetchedData {
     pub const fn empty() -> FetchedData {
         Self {
             dest: DataDestination::Memory(0),
-            source: DataSource::Immediate,
             value: 0,
         }
     }
@@ -372,34 +350,6 @@ impl DataDestination {
         match self {
             DataDestination::Register(_) => None,
             DataDestination::Memory(addr) => Some(addr),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum DataSource {
-    MemoryRegister(RegisterType, u16),
-    Register(RegisterType),
-    Memory(u16),
-    Immediate,
-}
-
-impl DataSource {
-    pub fn get_addr(self) -> Option<u16> {
-        match self {
-            DataSource::MemoryRegister(_, addr) => Some(addr),
-            DataSource::Register(_) => None,
-            DataSource::Memory(addr) => Some(addr),
-            DataSource::Immediate => None,
-        }
-    }
-
-    pub fn get_register(self) -> Option<RegisterType> {
-        match self {
-            DataSource::MemoryRegister(r, _) => Some(r),
-            DataSource::Register(r) => Some(r),
-            DataSource::Memory(_) => None,
-            DataSource::Immediate => None,
         }
     }
 }
