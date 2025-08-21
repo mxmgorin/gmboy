@@ -39,15 +39,21 @@ impl Cpu {
 
     /// Costs 2 M-Cycles with push PC
     #[inline(always)]
-    pub fn goto_addr(&mut self, cond: Option<ConditionType>, addr: u16, push_pc: bool) {
-        if ConditionType::check_cond(&self.registers, cond) {
-            self.clock.m_cycles(1); // internal: branch decision?
-            if push_pc {
-                self.push16(self.registers.pc);
-            }
-
-            self.registers.pc = addr;
+    pub fn goto_addr_with_cond(&mut self, cond: ConditionType, addr: u16, push_pc: bool) {
+        if self.check_cond(cond) {
+            self.goto_addr(addr, push_pc);
         }
+    }
+
+    #[inline(always)]
+    pub fn goto_addr(&mut self, addr: u16, push_pc: bool) {
+        self.clock.m_cycles(1); // internal: branch decision?
+
+        if push_pc {
+            self.push16(self.registers.pc);
+        }
+
+        self.registers.pc = addr;
     }
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
@@ -140,7 +146,7 @@ impl Cpu {
 
                 self.is_halted = false;
                 self.clock.bus.io.interrupts.acknowledge_interrupt(it);
-                self.goto_addr(None, addr, true);
+                self.goto_addr_with_cond(ConditionType::None, addr, true);
 
                 self.clock.m_cycles(1);
             }

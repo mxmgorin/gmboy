@@ -258,6 +258,7 @@ mod tests {
                 cpu.step(None);
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
+            ConditionType::None => {}
         }
     }
 }

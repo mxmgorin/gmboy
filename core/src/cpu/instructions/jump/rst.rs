@@ -44,6 +44,6 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_rst(&mut self, addr: u16) {
-        self.goto_addr(None, addr, true);
+        self.goto_addr(addr, true);
     }
 }

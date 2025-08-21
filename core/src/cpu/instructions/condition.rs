@@ -1,8 +1,9 @@
-use crate::cpu::Registers;
+use crate::cpu::Cpu;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum ConditionType {
+    None,
     /// Non-zero: Execute if Z is not set.
     NZ,
     /// Zero: Execute if Z is set.
@@ -13,18 +14,15 @@ pub enum ConditionType {
     C,
 }
 
-impl ConditionType {
+impl Cpu {
     #[inline(always)]
-    pub fn check_cond(registers: &Registers, cond: Option<ConditionType>) -> bool {
-        let Some(cond) = cond else {
-            return true;
-        };
-
+    pub fn check_cond(&mut self, cond: ConditionType) -> bool {
         match cond {
-            ConditionType::C => registers.flags.get_c(),
-            ConditionType::NC => !registers.flags.get_c(),
-            ConditionType::Z => registers.flags.get_z(),
-            ConditionType::NZ => !registers.flags.get_z(),
+            ConditionType::C => self.registers.flags.get_c(),
+            ConditionType::NC => !self.registers.flags.get_c(),
+            ConditionType::Z => self.registers.flags.get_z(),
+            ConditionType::NZ => !self.registers.flags.get_z(),
+            ConditionType::None => true,
         }
     }
 }
