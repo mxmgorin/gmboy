@@ -1,75 +1,48 @@
-use crate::cpu::instructions::fetch::AddressMode;
-use crate::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
-use crate::cpu::instructions::{ConditionType};
-use crate::cpu::Cpu;
-
-#[derive(Copy, Clone)]
-pub struct InstructionSpec {
-    pub cond_type: Option<ConditionType>,
-    pub addr: u16,
-    pub addr_mode: AddressMode,
-    pub mnemonic: Mnemonic,
-}
-
-impl InstructionSpec {
-    pub const fn new(
-        mnemonic: Mnemonic,
-        cond_type: Option<ConditionType>,
-        addr: u16,
-        addr_mode: AddressMode,
-    ) -> Self {
-        Self {
-            cond_type,
-            addr,
-            addr_mode,
-            mnemonic,
-        }
-    }
-}
+use crate::cpu::fetch::AddressMode;
+use crate::cpu::instructions::opcode::INSTRUCTIONS;
+use crate::cpu::instructions::JumpCondition;
 
 #[derive(Copy, Clone)]
 pub struct Instruction {
-    spec: InstructionSpec,
-    execute: fn(&mut Cpu),
+    pub cond_type: Option<JumpCondition>,
+    pub operand_addr: u16,
+    pub addr_mode: AddressMode,
+    pub mnemonic: Mnemonic,
 }
 
 impl Instruction {
     #[inline(always)]
     pub const fn get_by_opcode(opcode: u8) -> &'static Instruction {
-        &INSTRUCTIONS_BY_OPCODES[opcode as usize]
-    }
-
-    #[inline(always)]
-    pub fn execute(&self, cpu: &mut Cpu) {
-        (self.execute)(cpu);
+        &INSTRUCTIONS[opcode as usize]
     }
 
     pub fn get_address_mode(&self) -> AddressMode {
-        self.spec.addr_mode
+        self.addr_mode
     }
 
     pub fn get_mnemonic(&self) -> Mnemonic {
-        self.spec.mnemonic
+        self.mnemonic
     }
 
-    pub fn get_condition(&self) -> Option<ConditionType> {
-        self.spec.cond_type
+    pub fn get_condition(&self) -> Option<JumpCondition> {
+        self.cond_type
     }
 
     pub const fn unknown(_opcode: u8) -> Self {
-        Self::new(
-            InstructionSpec::new(Mnemonic::Unknown, None, 0, AddressMode::IMP),
-            |_| panic!("can't fetch for unknown instruction for opcode"),
-        )
+        Self::new(Mnemonic::Unknown, None, 0, AddressMode::IMP)
     }
 
     pub const fn new(
-        spec: InstructionSpec,
-        execute: fn(&mut Cpu),
+        mnemonic: Mnemonic,
+        cond_type: Option<JumpCondition>,
+        addr: u16,
+        addr_mode: AddressMode,
     ) -> Self {
         Self {
-            spec,
-            execute,
+            cond_type,
+            operand_addr: addr,
+            addr_mode,
+            mnemonic,
         }
     }
 }

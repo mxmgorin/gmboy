@@ -1,11 +1,11 @@
-use crate::cpu::instructions::ConditionType;
+use crate::cpu::instructions::JumpCondition;
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline(always)]
     pub fn execute_ret<const C: u8>(&mut self) {
-        let cond = ConditionType::from_u8(C);
-        if cond != ConditionType::None {
+        let cond = JumpCondition::from_u8(C);
+        if cond != JumpCondition::None {
             self.clock.m_cycles(1);
         }
 

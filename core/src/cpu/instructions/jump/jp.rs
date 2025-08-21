@@ -1,4 +1,4 @@
-use crate::cpu::instructions::ConditionType;
+use crate::cpu::instructions::JumpCondition;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -16,7 +16,7 @@ impl Cpu {
 
     #[inline(always)]
     fn execute_jp<const C: u8>(&mut self) {
-        let cond = ConditionType::from_u8(C);
+        let cond = JumpCondition::from_u8(C);
         let addr = self.step_ctx.fetched_data.value;
         self.goto_addr_with_cond(cond, addr, false);
     }

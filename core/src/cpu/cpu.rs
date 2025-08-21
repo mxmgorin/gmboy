@@ -1,5 +1,5 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::instructions::{ConditionType, FetchedData, Instruction};
+use crate::cpu::instructions::{JumpCondition, FetchedData};
 
 use crate::cpu::{RegisterType, Registers};
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,6 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
 pub struct DebugCtx {
     pub pc: u16,
-    pub instruction: Instruction,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -39,7 +38,7 @@ impl Cpu {
 
     /// Costs 2 M-Cycles with push PC
     #[inline(always)]
-    pub fn goto_addr_with_cond(&mut self, cond: ConditionType, addr: u16, push_pc: bool) {
+    pub fn goto_addr_with_cond(&mut self, cond: JumpCondition, addr: u16, push_pc: bool) {
         if self.check_cond(cond) {
             self.goto_addr(addr, push_pc);
         }
@@ -92,6 +91,8 @@ impl Cpu {
         #[cfg(debug_assertions)]
         if let Some(ref mut debugger) = _debugger {
             debugger.print(self, None);
+            debugger.update_serial(&mut self.clock.bus);
+
         }
 
         self.handle_interrupts();
@@ -108,26 +109,9 @@ impl Cpu {
             return;
         }
 
-        #[cfg(debug_assertions)]
-        let pc = self.registers.pc;
-
         self.step_ctx.opcode = self.read_pc();
-        let instruction = Instruction::get_by_opcode(self.step_ctx.opcode);
-
-        #[cfg(debug_assertions)]
-        if let Some(debugger) = _debugger {
-            debugger.print(
-                self,
-                Some(DebugCtx {
-                    pc,
-                    instruction: *instruction,
-                }),
-            );
-            debugger.update_serial(&mut self.clock.bus);
-        }
-
         let prev_enabling_ime = self.enabling_ime;
-        instruction.execute(self);
+        self.execute_opcode();
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed
@@ -145,7 +129,7 @@ impl Cpu {
 
                 self.is_halted = false;
                 self.clock.bus.io.interrupts.acknowledge_interrupt(it);
-                self.goto_addr_with_cond(ConditionType::None, addr, true);
+                self.goto_addr_with_cond(JumpCondition::None, addr, true);
 
                 self.clock.m_cycles(1);
             }

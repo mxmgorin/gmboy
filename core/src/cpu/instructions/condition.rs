@@ -2,7 +2,7 @@ use crate::cpu::Cpu;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum ConditionType {
+pub enum JumpCondition {
     None,
     /// Non-zero: Execute if Z is not set.
     NZ,
@@ -14,28 +14,28 @@ pub enum ConditionType {
     C,
 }
 
-impl ConditionType {
+impl JumpCondition {
     pub fn from_u8(n: u8) -> Self {
         match n {
-            0 => ConditionType::None,
-            1 => ConditionType::NZ,
-            2 => ConditionType::Z,
-            3 => ConditionType::NC,
-            4 => ConditionType::C,
-            _ => panic!("invalid 8-bit ConditionType"),
+            0 => JumpCondition::None,
+            1 => JumpCondition::NZ,
+            2 => JumpCondition::Z,
+            3 => JumpCondition::NC,
+            4 => JumpCondition::C,
+            _ => panic!("invalid 8-bit JumpCondition"),
         }
     }
 }
 
 impl Cpu {
     #[inline(always)]
-    pub fn check_cond(&mut self, cond: ConditionType) -> bool {
+    pub fn check_cond(&mut self, cond: JumpCondition) -> bool {
         match cond {
-            ConditionType::C => self.registers.flags.get_c(),
-            ConditionType::NC => !self.registers.flags.get_c(),
-            ConditionType::Z => self.registers.flags.get_z(),
-            ConditionType::NZ => !self.registers.flags.get_z(),
-            ConditionType::None => true,
+            JumpCondition::C => self.registers.flags.get_c(),
+            JumpCondition::NC => !self.registers.flags.get_c(),
+            JumpCondition::Z => self.registers.flags.get_z(),
+            JumpCondition::NZ => !self.registers.flags.get_z(),
+            JumpCondition::None => true,
         }
     }
 }

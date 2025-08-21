@@ -1,4 +1,3 @@
-pub mod fetch;
 mod arithmetic;
 mod bitwise;
 pub mod condition;
@@ -7,26 +6,25 @@ mod interrupt;
 mod jump;
 mod load;
 mod misc;
-pub mod opcodes;
+pub mod opcode;
 mod rotate;
-pub use fetch::*;
+
+pub use crate::cpu::fetch::*;
 pub use condition::*;
 pub use instruction::*;
-pub use opcodes::*;
+pub use opcode::*;
 
-
+pub const INSTRUCTIONS_COUNT: usize = 256;
 #[cfg(test)]
 mod tests {
     use crate::auxiliary::clock::Clock;
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
-    use crate::cpu::instructions::{
-        AddressMode
-    };
+    use crate::cpu::instructions::AddressMode;
     use crate::cpu::{Cpu, RegisterType};
-    use crate::cpu::instructions::condition::ConditionType;
+    use crate::cpu::instructions::condition::JumpCondition;
     use crate::cpu::instructions::instruction::Mnemonic;
-    use crate::cpu::instructions::opcodes::INSTRUCTIONS_BY_OPCODES;
+    use crate::cpu::instructions::opcode::INSTRUCTIONS;
     use crate::ppu::Ppu;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
@@ -63,7 +61,7 @@ mod tests {
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
-        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+        for (opcode, instr) in INSTRUCTIONS.iter().enumerate() {
             if Mnemonic::Call != instr.get_mnemonic() {
                 continue;
             }
@@ -89,7 +87,7 @@ mod tests {
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
-        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+        for (opcode, instr) in INSTRUCTIONS.iter().enumerate() {
             if Mnemonic::Jp != instr.get_mnemonic() {
                 continue;
             }
@@ -119,7 +117,7 @@ mod tests {
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
-        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+        for (opcode, instr) in INSTRUCTIONS.iter().enumerate() {
             if Mnemonic::Jr != instr.get_mnemonic() {
                 continue;
             }
@@ -145,7 +143,7 @@ mod tests {
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
-        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+        for (opcode, instr) in INSTRUCTIONS.iter().enumerate() {
             if Mnemonic::Ret != instr.get_mnemonic() {
                 continue;
             }
@@ -171,7 +169,7 @@ mod tests {
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
-        for (opcode, instr) in INSTRUCTIONS_BY_OPCODES.iter().enumerate() {
+        for (opcode, instr) in INSTRUCTIONS.iter().enumerate() {
             match instr.get_mnemonic() {
                 Mnemonic::Jp // has tests
                 | Mnemonic::Jr // has tests
@@ -205,12 +203,12 @@ mod tests {
 
     pub fn assert_for_condition(
         cpu: &mut Cpu,
-        condition_type: ConditionType,
+        condition_type: JumpCondition,
         m_cycles_set: usize,
         m_cycles_not: usize,
     ) {
         match condition_type {
-            ConditionType::NC => {
+            JumpCondition::NC => {
                 cpu.registers.flags.set_c(false);
                 cpu.step(None);
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
@@ -222,7 +220,7 @@ mod tests {
                 cpu.step(None);
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
-            ConditionType::C => {
+            JumpCondition::C => {
                 cpu.registers.flags.set_c(false);
                 cpu.step(None);
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
@@ -234,7 +232,7 @@ mod tests {
                 cpu.step(None);
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
-            ConditionType::NZ => {
+            JumpCondition::NZ => {
                 cpu.registers.flags.set_z(false);
                 cpu.step(None);
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
@@ -246,7 +244,7 @@ mod tests {
                 cpu.step(None);
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
-            ConditionType::Z => {
+            JumpCondition::Z => {
                 cpu.registers.flags.set_z(false);
                 cpu.step(None);
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
@@ -258,7 +256,7 @@ mod tests {
                 cpu.step(None);
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
-            ConditionType::None => {}
+            JumpCondition::None => {}
         }
     }
 }

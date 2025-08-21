@@ -37,7 +37,8 @@ impl Debugger {
         self.print_gb_doctor(cpu);
 
         if let Some(ctx) = ctx {
-            self.print_asm(cpu, ctx.pc, &ctx.instruction);
+            let instruction = Instruction::get_by_opcode(cpu.step_ctx.opcode);
+            self.print_asm(cpu, ctx.pc, instruction);
         }
     }
 
