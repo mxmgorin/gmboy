@@ -113,7 +113,6 @@ impl Cpu {
 
         self.step_ctx.opcode = self.read_pc();
         let instruction = Instruction::get_by_opcode(self.step_ctx.opcode);
-        instruction.fetch(self);
 
         #[cfg(debug_assertions)]
         if let Some(debugger) = _debugger {

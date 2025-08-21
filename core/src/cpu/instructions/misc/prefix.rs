@@ -3,7 +3,8 @@ use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_prefix(&mut self) {
+    pub fn fetch_execute_prefix(&mut self) {
+        self.fetch_d8();
         let op = self.step_ctx.fetched_data.value;
         let reg = decode_reg(op & 0b111);
 

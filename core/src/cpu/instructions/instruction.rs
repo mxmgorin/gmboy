@@ -31,7 +31,6 @@ impl InstructionSpec {
 pub struct Instruction {
     spec: InstructionSpec,
     execute: fn(&mut Cpu),
-    fetch: fn(&mut Cpu),
 }
 
 impl Instruction {
@@ -43,11 +42,6 @@ impl Instruction {
     #[inline(always)]
     pub fn execute(&self, cpu: &mut Cpu) {
         (self.execute)(cpu);
-    }
-
-    #[inline(always)]
-    pub fn fetch(&self, cpu: &mut Cpu) {
-        (self.fetch)(cpu);
     }
 
     pub fn get_address_mode(&self) -> AddressMode {
@@ -66,19 +60,16 @@ impl Instruction {
         Self::new(
             InstructionSpec::new(Mnemonic::Unknown, None, 0, AddressMode::IMP),
             |_| panic!("can't fetch for unknown instruction for opcode"),
-            |_| panic!("can't fetch for unknown instruction"),
         )
     }
 
     pub const fn new(
         spec: InstructionSpec,
         execute: fn(&mut Cpu),
-        fetch: fn(&mut Cpu),
     ) -> Self {
         Self {
             spec,
             execute,
-            fetch,
         }
     }
 }

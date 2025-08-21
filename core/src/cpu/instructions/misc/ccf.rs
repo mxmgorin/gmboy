@@ -8,7 +8,8 @@ impl Cpu {
     /// Flags:
     /// N 0
     /// H 0
-    /// C Inverted#[inline]
+    /// C Inverted
+    #[inline]
     pub fn execute_ccf(&mut self) {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);

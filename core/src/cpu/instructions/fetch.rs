@@ -242,13 +242,6 @@ impl Cpu {
             dest: DataDestination::Register(r1),
         }
     }
-
-    #[inline(always)]
-    pub const fn fetch_impl(&mut self) {}
-
-    /// temp method used for fetch_execute instructions
-    #[inline(always)]
-    pub const fn d(&mut self) {}
 }
 
 /// Represents the different address modes in the CPU's instruction set.
