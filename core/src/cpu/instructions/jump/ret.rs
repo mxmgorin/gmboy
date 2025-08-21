@@ -2,33 +2,9 @@ use crate::cpu::instructions::ConditionType;
 use crate::cpu::Cpu;
 
 impl Cpu {
-    #[inline]
-    pub fn execute_ret_no(&mut self) {
-        self.execute_ret(ConditionType::None);
-    }
-
-    #[inline]
-    pub fn execute_ret_z(&mut self) {
-        self.execute_ret(ConditionType::Z);
-    }
-
-    #[inline]
-    pub fn execute_ret_nc(&mut self) {
-        self.execute_ret(ConditionType::NC);
-    }
-
-    #[inline]
-    pub fn execute_ret_c(&mut self) {
-        self.execute_ret(ConditionType::C);
-    }
-
-    #[inline]
-    pub fn execute_ret_nz(&mut self) {
-        self.execute_ret(ConditionType::NZ);
-    }
-
     #[inline(always)]
-    pub fn execute_ret(&mut self, cond: ConditionType) {
+    pub fn execute_ret<const C: u8>(&mut self) {
+        let cond = ConditionType::from_u8(C);
         if cond != ConditionType::None {
             self.clock.m_cycles(1);
         }

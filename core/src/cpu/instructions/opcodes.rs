@@ -1678,8 +1678,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0xCX
     instructions[0xC0] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ret, Some(ConditionType::NZ), 0, AddressMode::IMP),
-        Cpu::execute_ret_nz,
-        Cpu::fetch_impl,
+        Cpu::execute_ret::<{ ConditionType::NZ as u8 }>,
+        Cpu::d,
     );
     instructions[0xC1] = Instruction::new(
         InstructionSpec::new(Mnemonic::Pop, None, 0, AddressMode::R(RegisterType::BC)),
@@ -1718,13 +1718,13 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xC8] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ret, Some(ConditionType::Z), 0, AddressMode::IMP),
-        Cpu::execute_ret_z,
-        Cpu::fetch_impl,
+        Cpu::execute_ret::<{ ConditionType::Z as u8 }>,
+        Cpu::d,
     );
     instructions[0xC9] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ret, None, 0, AddressMode::IMP),
-        Cpu::execute_ret_no,
-        Cpu::fetch_impl,
+        Cpu::execute_ret::<{ ConditionType::None as u8 }>,
+        Cpu::d,
     );
     instructions[0xCC] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::Z), 0, AddressMode::D16),
@@ -1760,8 +1760,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0xDX
     instructions[0xD0] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ret, Some(ConditionType::NC), 0, AddressMode::IMP),
-        Cpu::execute_ret_nc,
-        Cpu::fetch_impl,
+        Cpu::execute_ret::<{ ConditionType::NC as u8 }>,
+        Cpu::d,
     );
     instructions[0xD1] = Instruction::new(
         InstructionSpec::new(Mnemonic::Pop, None, 0, AddressMode::R(RegisterType::DE)),
@@ -1795,13 +1795,13 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xD8] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ret, Some(ConditionType::C), 0, AddressMode::IMP),
-        Cpu::execute_ret_c,
-        Cpu::fetch_impl,
+        Cpu::execute_ret::<{ ConditionType::C as u8 }>,
+        Cpu::d,
     );
     instructions[0xD9] = Instruction::new(
         InstructionSpec::new(Mnemonic::Reti, None, 0, AddressMode::IMP),
         Cpu::execute_reti,
-        Cpu::fetch_impl,
+        Cpu::d,
     );
     instructions[0xDC] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::C), 0, AddressMode::D16),
