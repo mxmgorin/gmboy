@@ -1,4 +1,3 @@
-use crate::cpu::instructions::DataDestination;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -22,11 +21,7 @@ impl Cpu {
     pub fn fetch_execute_dec_mr_hl(&mut self) {
         self.fetch_mr_hl();
         let value = self.step_ctx.fetched_data.value.wrapping_sub(1);
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.write_to_memory(addr, value as u8);
+        self.write_to_memory(self.step_ctx.fetched_data.addr, value as u8);
         self.set_flags_dec(value);
     }
 

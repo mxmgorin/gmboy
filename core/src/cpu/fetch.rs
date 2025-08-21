@@ -5,74 +5,59 @@ impl Cpu {
     #[inline(always)]
     pub fn fetch_r<const R: u8>(&mut self) {
         let r1 = RegisterType::from_u8(R);
-
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.read_register(r1),
-            dest: DataDestination::Register(r1),
-        };
+        self.step_ctx.fetched_data.value = self.registers.read_register(r1);
     }
 
     #[inline(always)]
     pub fn fetch_r_r<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let r2 = RegisterType::from_u8(R2);
-
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.read_register(r2),
-            dest: DataDestination::Register(r1),
-        };
+        self.step_ctx.fetched_data.value = self.registers.read_register(r2);
     }
 
     #[inline(always)]
     pub fn fetch_r_d8<const R: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R);
-
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
-            dest: DataDestination::Register(r1),
+            addr: 0,
         };
     }
 
     #[inline(always)]
     pub fn fetch_d16(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
-            dest: DataDestination::Memory(0),
             value: self.read_pc16(),
+            addr: 0,
         };
     }
 
     #[inline(always)]
     pub fn fetch_r_d16<const R: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R);
-
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc16(),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         };
     }
 
     #[inline(always)]
     pub fn fetch_r_mr<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let r2 = RegisterType::from_u8(R2);
         let addr = self.registers.read_register(r2);
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         };
     }
 
     #[inline(always)]
     pub fn fetch_r_hmr<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let r2 = RegisterType::from_u8(R2);
         let addr = self.registers.read_register(r2);
         let addr = 0xFF00 | addr;
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         };
     }
 
@@ -83,19 +68,17 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            dest: DataDestination::Memory(self.registers.read_register(r1)),
+            addr: self.registers.read_register(r1),
         };
     }
 
     #[inline(always)]
     pub fn fetch_r_mri<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let r2 = RegisterType::from_u8(R2);
-
         let addr = self.registers.read_register(r2);
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         };
 
         self.registers.set_hl(addr.wrapping_add(1));
@@ -103,13 +86,12 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_r_mrd<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let r2 = RegisterType::from_u8(R2);
 
         let addr = self.registers.read_register(r2);
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         };
 
         self.registers.set_hl(addr.wrapping_sub(1));
@@ -122,7 +104,7 @@ impl Cpu {
         let addr = self.registers.read_register(r1);
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            dest: DataDestination::Memory(addr),
+            addr,
         };
 
         self.registers.set_hl(addr.wrapping_add(1));
@@ -135,7 +117,7 @@ impl Cpu {
         let addr = self.registers.read_register(r1);
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            dest: DataDestination::Memory(addr),
+            addr,
         };
 
         self.registers.set_hl(addr.wrapping_sub(1));
@@ -143,13 +125,12 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_r_ha8<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let addr = self.read_pc() as u16;
         let addr = 0xFF00 | addr;
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         }
     }
 
@@ -160,7 +141,7 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            dest: DataDestination::Memory(addr),
+            addr,
         }
     }
 
@@ -168,15 +149,15 @@ impl Cpu {
     pub fn fetch_lh_spi8(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
-            dest: DataDestination::Register(RegisterType::HL),
+            addr: 0,
         }
     }
 
     #[inline(always)]
     pub fn fetch_d8(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
-            dest: DataDestination::Memory(0),
             value: self.read_pc() as u16,
+            addr: 0,
         }
     }
 
@@ -187,7 +168,7 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.registers.read_register(r2),
-            dest: DataDestination::Memory(addr),
+            addr,
         }
     }
 
@@ -197,7 +178,7 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
-            dest: DataDestination::Memory(self.registers.read_register(r1)),
+            addr: self.registers.read_register(r1),
         }
     }
 
@@ -208,18 +189,17 @@ impl Cpu {
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Memory(addr),
+            addr,
         }
     }
 
     #[inline(always)]
     pub fn fetch_r_a16<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let addr = self.read_pc16();
 
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_memory(addr),
-            dest: DataDestination::Register(r1),
+            addr: 0,
         }
     }
 }
@@ -318,40 +298,10 @@ pub enum AddressMode {
     R_A16(RegisterType),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct FetchedData {
-    pub dest: DataDestination,
+    pub addr: u16,
     pub value: u16,
-}
-
-impl Default for FetchedData {
-    fn default() -> Self {
-        Self::empty()
-    }
-}
-
-impl FetchedData {
-    pub const fn empty() -> FetchedData {
-        Self {
-            dest: DataDestination::Memory(0),
-            value: 0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum DataDestination {
-    Register(RegisterType),
-    Memory(u16),
-}
-
-impl DataDestination {
-    pub fn get_addr(self) -> Option<u16> {
-        match self {
-            DataDestination::Register(_) => None,
-            DataDestination::Memory(addr) => Some(addr),
-        }
-    }
 }
 
 #[cfg(test)]
@@ -373,8 +323,11 @@ mod tests {
 
         cpu.fetch_r::<{ REG_TYPE as u8 }>();
 
-        assert_eq!(cpu.step_ctx.fetched_data.value, cpu.registers.read_register(REG_TYPE));
-        assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
+        assert_eq!(
+            cpu.step_ctx.fetched_data.value,
+            cpu.registers.read_register(REG_TYPE)
+        );
+        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
     }
 
     #[test]
@@ -388,8 +341,11 @@ mod tests {
 
         cpu.fetch_r_r::<{ R1 as u8 }, { R2 as u8 }>();
 
-        assert_eq!(cpu.step_ctx.fetched_data.value, cpu.registers.read_register(R2));
-        assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
+        assert_eq!(
+            cpu.step_ctx.fetched_data.value,
+            cpu.registers.read_register(R2)
+        );
+        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
     }
 
     #[test]
@@ -407,7 +363,7 @@ mod tests {
         cpu.fetch_r_d8::<{ REG_TYPE as u8 }>();
 
         assert_eq!(cpu.step_ctx.fetched_data.value as u8, value);
-        assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
+        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
         assert_eq!(cpu.registers.pc, pc as u16 + 1);
         //assert_eq!(self.clock.t_cycles, 4);
     }
@@ -426,10 +382,10 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        cpu.fetch_r_mri::<{RegisterType::A as u8}, {RegisterType::HL as u8}>();
+        cpu.fetch_r_mri::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>();
 
         assert_eq!(cpu.step_ctx.fetched_data.value, addr_value as u16);
-        assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
+        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
         assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_add(1));
     }
 
@@ -447,10 +403,10 @@ mod tests {
         cpu.registers.h = h_val;
         cpu.registers.l = l_val;
 
-        cpu.fetch_r_mrd::<{RegisterType::A as u8}, {RegisterType::HL as u8}>();
+        cpu.fetch_r_mrd::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>();
 
         assert_eq!(cpu.step_ctx.fetched_data.value, addr_value as u16);
-        assert_eq!(cpu.step_ctx.fetched_data.dest.get_addr(), None);
+        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
         assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_sub(1));
     }
 }

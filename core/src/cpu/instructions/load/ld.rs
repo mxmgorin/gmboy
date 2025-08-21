@@ -1,4 +1,3 @@
-use crate::cpu::instructions::DataDestination;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -69,31 +68,19 @@ impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ld_mr_r<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_mr_r::<R1, R2>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.ld_addr_r::<R2>(addr);
+        self.ld_addr_r::<R2>(self.step_ctx.fetched_data.addr);
     }
 
     #[inline(always)]
     pub fn fetch_execute_ld_a16_r<const R2: u8>(&mut self) {
         self.fetch_a16_r::<R2>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.ld_addr_r::<R2>(addr);
+        self.ld_addr_r::<R2>(self.step_ctx.fetched_data.addr);
     }
 
     #[inline(always)]
     pub fn fetch_execute_ld_mri_r<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_mri_r::<R1, R2>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.ld_addr_r::<R2>(addr);
+        self.ld_addr_r::<R2>(self.step_ctx.fetched_data.addr);
     }
 
     #[inline(always)]
@@ -105,21 +92,13 @@ impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ld_mrd_r<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_mrd_r::<R1, R2>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.ld_addr_r::<R2>(addr);
+        self.ld_addr_r::<R2>(self.step_ctx.fetched_data.addr);
     }
 
     #[inline(always)]
     pub fn fetch_execute_ld_mr_d8<const R1: u8>(&mut self) {
         self.fetch_mr_d8::<R1>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);
+        self.write_to_memory(self.step_ctx.fetched_data.addr, self.step_ctx.fetched_data.value as u8);
     }
 
     #[inline(always)]

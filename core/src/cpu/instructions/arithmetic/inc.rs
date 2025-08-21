@@ -1,4 +1,3 @@
-use crate::cpu::instructions::DataDestination;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -21,13 +20,8 @@ impl Cpu {
     pub fn fetch_execute_inc_mr_hl(&mut self) {
         self.fetch_mr_hl();
         let mut value = self.step_ctx.fetched_data.value.wrapping_add(1);
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        // uses only HL
         value &= 0xFF; // Ensure it fits into 8 bits
-        self.write_to_memory(addr, value as u8);
+        self.write_to_memory(self.step_ctx.fetched_data.addr, value as u8);
         self.set_flags_inc(value);
     }
 

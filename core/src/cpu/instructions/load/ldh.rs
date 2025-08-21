@@ -1,25 +1,22 @@
-use crate::cpu::instructions::DataDestination;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ldh_a8_r<const R2: u8>(&mut self) {
         self.fetch_a8_r::<R2>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.write_to_memory(addr | 0xFF00, self.step_ctx.fetched_data.value as u8);
+        self.write_to_memory(
+            self.step_ctx.fetched_data.addr | 0xFF00,
+            self.step_ctx.fetched_data.value as u8,
+        );
     }
 
     #[inline(always)]
     pub fn fetch_execute_ldh_mr_r<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_mr_r::<R1, R2>();
-        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
-            unreachable!()
-        };
-
-        self.write_to_memory(addr | 0xFF00, self.step_ctx.fetched_data.value as u8);
+        self.write_to_memory(
+            self.step_ctx.fetched_data.addr | 0xFF00,
+            self.step_ctx.fetched_data.value as u8,
+        );
     }
 
     #[inline(always)]
