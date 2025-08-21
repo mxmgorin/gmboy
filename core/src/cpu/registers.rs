@@ -258,7 +258,7 @@ impl Registers {
     }
 
     #[inline]
-    pub fn set_register(&mut self, register_type: RegisterType, value: u16) {
+    pub const fn set_register(&mut self, register_type: RegisterType, value: u16) {
         match register_type {
             RegisterType::A => self.a = (value & 0xFF) as u8,
             RegisterType::F => self.flags.byte = (value & 0xFF) as u8,
@@ -278,25 +278,25 @@ impl Registers {
     }
 
     #[inline]
-    pub fn set_af(&mut self, value: u16) {
+    pub const fn set_af(&mut self, value: u16) {
         self.a = ((value & 0xFF00) >> 8) as u8;
         self.flags.byte = (value & 0xFF) as u8;
     }
 
     #[inline]
-    pub fn set_bc(&mut self, value: u16) {
+    pub const fn set_bc(&mut self, value: u16) {
         self.b = ((value & 0xFF00) >> 8) as u8;
         self.c = (value & 0xFF) as u8;
     }
 
     #[inline]
-    pub fn set_de(&mut self, value: u16) {
+    pub const fn set_de(&mut self, value: u16) {
         self.d = ((value & 0xFF00) >> 8) as u8;
         self.e = (value & 0xFF) as u8;
     }
 
     #[inline]
-    pub fn set_hl(&mut self, value: u16) {
+    pub const fn set_hl(&mut self, value: u16) {
         self.h = ((value & 0xFF00) >> 8) as u8;
         self.l = (value & 0xFF) as u8;
     }
