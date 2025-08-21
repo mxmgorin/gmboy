@@ -1688,13 +1688,13 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xC2] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::NZ), 0, AddressMode::D16),
-        Cpu::execute_jp_nz,
-        Cpu::fetch_d16,
+        Cpu::fetch_execute_jp_d16::<{ConditionType::NZ as u8}>,
+        Cpu::d,
     );
     instructions[0xC3] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, None, 0, AddressMode::D16),
-        Cpu::execute_jp_no,
-        Cpu::fetch_d16,
+        Cpu::fetch_execute_jp_d16::<{ConditionType::None as u8}>,
+        Cpu::d,
     );
     instructions[0xC5] = Instruction::new(
         InstructionSpec::new(Mnemonic::Push, None, 0, AddressMode::R(RegisterType::BC)),
@@ -1738,8 +1738,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xCA] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::Z), 0, AddressMode::D16),
-        Cpu::execute_jp_z,
-        Cpu::fetch_d16,
+        Cpu::fetch_execute_jp_d16::<{ConditionType::Z as u8}>,
+        Cpu::d,
     );
     instructions[0xCB] = Instruction::new(
         InstructionSpec::new(Mnemonic::Prefix, None, 0, AddressMode::D8),
@@ -1770,8 +1770,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xD2] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::NC), 0, AddressMode::D16),
-        Cpu::execute_jp_nc,
-        Cpu::fetch_d16,
+        Cpu::fetch_execute_jp_d16::<{ConditionType::NC as u8}>,
+        Cpu::d,
     );
     instructions[0xD4] = Instruction::new(
         InstructionSpec::new(Mnemonic::Call, Some(ConditionType::NC), 0, AddressMode::D16),
@@ -1810,8 +1810,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     );
     instructions[0xDA] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, Some(ConditionType::C), 0, AddressMode::D16),
-        Cpu::execute_jp_c,
-        Cpu::fetch_d16,
+        Cpu::fetch_execute_jp_d16::<{ConditionType::C as u8}>,
+        Cpu::d,
     );
     instructions[0xDE] = Instruction::new(
         InstructionSpec::new(Mnemonic::Sbc, None, 0, AddressMode::R_D8(RegisterType::A)),
@@ -1873,7 +1873,7 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     instructions[0xE9] = Instruction::new(
         InstructionSpec::new(Mnemonic::Jp, None, 0, AddressMode::R(RegisterType::HL)),
         Cpu::execute_jp_no_hl,
-        Cpu::fetch_r::<{ RegisterType::HL as u8 }>,
+        Cpu::d,
     );
     instructions[0xEE] = Instruction::new(
         InstructionSpec::new(Mnemonic::Xor, None, 0, AddressMode::R_D8(RegisterType::A)),
