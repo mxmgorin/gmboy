@@ -1827,8 +1827,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0xEX
     instructions[0xE0] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ldh, None, 0, AddressMode::A8_R(RegisterType::A)),
-        Cpu::execute_ldh,
-        Cpu::fetch_a8_r::<{ RegisterType::A as u8 }>,
+        Cpu::fetch_execute_ldh_a8_r::<{ RegisterType::A as u8 }>,
+        Cpu::d,
     );
     instructions[0xE1] = Instruction::new(
         InstructionSpec::new(Mnemonic::Pop, None, 0, AddressMode::R(RegisterType::HL)),
@@ -1842,8 +1842,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::MR_R(RegisterType::C, RegisterType::A),
         ),
-        Cpu::execute_ldh,
-        Cpu::fetch_mr_r::<{ RegisterType::C as u8 }, { RegisterType::A as u8 }>,
+        Cpu::fetch_execute_ldh_mr_r::<{ RegisterType::C as u8 }, { RegisterType::A as u8 }>,
+        Cpu::d,
     );
     instructions[0xE5] = Instruction::new(
         InstructionSpec::new(Mnemonic::Push, None, 0, AddressMode::R(RegisterType::HL)),
@@ -1889,8 +1889,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
     // 0xFX
     instructions[0xF0] = Instruction::new(
         InstructionSpec::new(Mnemonic::Ldh, None, 0, AddressMode::R_HA8(RegisterType::A)),
-        Cpu::execute_ldh,
-        Cpu::fetch_r_ha8::<{ RegisterType::A as u8 }>,
+        Cpu::fetch_execute_ldh_r_ha8::<{ RegisterType::A as u8 }>,
+        Cpu::d,
     );
     instructions[0xF1] = Instruction::new(
         InstructionSpec::new(Mnemonic::Pop, None, 0, AddressMode::R(RegisterType::AF)),
@@ -1904,8 +1904,8 @@ pub const INSTRUCTIONS_BY_OPCODES: [Instruction; INSTRUCTIONS_LEN] = {
             0,
             AddressMode::R_HMR(RegisterType::A, RegisterType::C),
         ),
-        Cpu::execute_ldh,
-        Cpu::fetch_r_hmr::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>,
+        Cpu::fetch_execute_ldh_r_hmr::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>,
+        Cpu::d,
     );
     instructions[0xF3] = Instruction::new(
         InstructionSpec::new(Mnemonic::Di, None, 0, AddressMode::IMP),

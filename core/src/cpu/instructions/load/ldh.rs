@@ -1,17 +1,40 @@
-
-use crate::cpu::instructions::{DataDestination};
-use crate::cpu::Cpu;
+use crate::cpu::instructions::DataDestination;
+use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
-    #[inline]
-    pub fn execute_ldh(&mut self) {
-        match self.step_ctx.fetched_data.dest {
-            DataDestination::Register(_) => {
-                self.registers.a = self.step_ctx.fetched_data.value as u8;
-            }
-            DataDestination::Memory(addr) => {
-                self.write_to_memory(addr | 0xFF00, self.step_ctx.fetched_data.value as u8);
-            }
-        }
+    #[inline(always)]
+    pub fn fetch_execute_ldh_a8_r<const R2: u8>(&mut self) {
+        self.fetch_a8_r::<R2>();
+        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
+            unreachable!()
+        };
+
+        self.write_to_memory(addr | 0xFF00, self.step_ctx.fetched_data.value as u8);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ldh_mr_r<const R1: u8, const R2: u8>(&mut self) {
+        self.fetch_mr_r::<R1, R2>();
+        let DataDestination::Memory(addr) = self.step_ctx.fetched_data.dest else {
+            unreachable!()
+        };
+
+        self.write_to_memory(addr | 0xFF00, self.step_ctx.fetched_data.value as u8);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ldh_r_ha8<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        self.fetch_r_ha8::<R1>();
+        self.registers
+            .set_register(r1, self.step_ctx.fetched_data.value);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_ldh_r_hmr<const R1: u8, const R2: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        self.fetch_r_hmr::<R1, R2>();
+        self.registers
+            .set_register(r1, self.step_ctx.fetched_data.value);
     }
 }
