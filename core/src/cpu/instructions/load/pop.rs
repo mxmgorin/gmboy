@@ -1,22 +1,19 @@
-
-use crate::cpu::instructions::{DataDestination};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
-    #[inline]
-    pub fn execute_pop(&mut self) {
-        let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
-            unreachable!();
-        };
+    #[inline(always)]
+    pub fn fetch_execute_pop<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        self.fetch_r::<R1>();
 
         let lo = self.pop() as u16;
         let hi = self.pop() as u16;
         let addr = (hi << 8) | lo;
 
-        if r == RegisterType::AF {
-            self.registers.set_register(r, addr & 0xFFF0);
+        if r1 == RegisterType::AF {
+            self.registers.set_register(r1, addr & 0xFFF0);
         } else {
-            self.registers.set_register(r, addr);
+            self.registers.set_register(r1, addr);
         }
     }
 }

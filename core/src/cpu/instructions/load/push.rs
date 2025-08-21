@@ -1,20 +1,18 @@
 
 use crate::cpu::instructions::{DataDestination};
-use crate::cpu::Cpu;
+use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline]
-    pub fn execute_push(&mut self) {
-        let DataDestination::Register(r) = self.step_ctx.fetched_data.dest else {
-            unreachable!();
-        };
-
+    pub fn fetch_execute_push<const R1: u8>(&mut self) {
+        let r1 = RegisterType::from_u8(R1);
+        self.fetch_r::<R1>();
         self.clock.m_cycles(1);
 
-        let hi = (self.registers.read_register(r) >> 8) & 0xFF;
+        let hi = (self.registers.read_register(r1) >> 8) & 0xFF;
         self.push(hi as u8);
 
-        let lo = self.registers.read_register(r) & 0xFF;
+        let lo = self.registers.read_register(r1) & 0xFF;
         self.push(lo as u8);
     }
 }
