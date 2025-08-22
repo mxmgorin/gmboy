@@ -6,6 +6,7 @@ impl Cpu {
         let op = self.step_ctx.fetched_data.value as u8;
         let bit = get_cb_bit(op);
         let register = get_register(op);
+
         let val = (register.get)(self);
         self.registers.flags.set_z((val & (1 << bit)) == 0);
         self.registers.flags.set_n(false);
@@ -17,6 +18,7 @@ impl Cpu {
         let op = self.step_ctx.fetched_data.value as u8;
         let bit = get_cb_bit(op);
         let register = get_register(op);
+
         let mut val = (register.get)(self);
         val &= !(1 << bit);
         (register.set)(self, val);
@@ -27,6 +29,7 @@ impl Cpu {
         let op = self.step_ctx.fetched_data.value as u8;
         let bit = get_cb_bit(op);
         let register = get_register(op);
+
         let mut reg_val = (register.get)(self);
         reg_val |= 1 << bit;
         (register.set)(self, reg_val);
@@ -36,6 +39,7 @@ impl Cpu {
     fn execute_cb_rlc(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let reg_val = (register.get)(self);
         let carry = (reg_val & 0x80) != 0; // Check MSB for carry
         let result = (reg_val << 1) | (carry as u8); // Rotate left and wrap MSB to LSB
@@ -45,13 +49,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c(carry);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_rrc(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let mut reg_val = (register.get)(self);
         let old = reg_val;
         reg_val = reg_val >> 1 | (old << 7);
@@ -61,13 +65,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c(old & 1 != 0);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_rl(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let mut reg_val = (register.get)(self);
         let old = reg_val;
         let flag_c = self.registers.flags.get_c();
@@ -79,13 +83,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c((old & 0x80) != 0);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_rr(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let mut reg_val = (register.get)(self);
         let old = reg_val;
         let flag_c = self.registers.flags.get_c();
@@ -97,13 +101,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c((old & 1) != 0);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_sla(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let mut reg_val = (register.get)(self);
         let old = reg_val;
         reg_val <<= 1;
@@ -114,13 +118,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c((old & 0x80) != 0);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_sra(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let reg_val = (register.get)(self);
         let u: i8 = reg_val as i8;
         let u = (u >> 1) as u8;
@@ -133,13 +137,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c(carry);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_swap(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let mut reg_val = (register.get)(self);
         reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
         (register.set)(self, reg_val);
@@ -148,13 +152,13 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c(false);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
     fn execute_cb_srl(&mut self) {
         let op = self.step_ctx.fetched_data.value;
         let register = get_register(op as u8);
+
         let reg_val = (register.get)(self);
         let u = reg_val >> 1;
 
@@ -164,7 +168,6 @@ impl Cpu {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
         self.registers.flags.set_c((reg_val & 1) != 0);
-        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
