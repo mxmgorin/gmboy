@@ -1,4 +1,3 @@
-
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -141,6 +140,43 @@ impl Cpu {
         }
 
         self.clock.tick_m_cycles(1);
+    }
+
+    #[inline(always)]
+    fn read_register8(&mut self, rt: RegisterType) -> u8 {
+        match rt {
+            RegisterType::A => self.registers.a,
+            RegisterType::F => self.registers.flags.byte,
+            RegisterType::B => self.registers.b,
+            RegisterType::C => self.registers.c,
+            RegisterType::D => self.registers.d,
+            RegisterType::E => self.registers.e,
+            RegisterType::H => self.registers.h,
+            RegisterType::L => self.registers.l,
+            RegisterType::HL => {
+                self.read_memory(self.registers.read_register::<{ RegisterType::HL as u8 }>())
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline(always)]
+    fn set_register8(&mut self, rt: RegisterType, val: u8) {
+        match rt {
+            RegisterType::A => self.registers.a = val,
+            RegisterType::F => self.registers.flags.byte = val,
+            RegisterType::B => self.registers.b = val,
+            RegisterType::C => self.registers.c = val,
+            RegisterType::D => self.registers.d = val,
+            RegisterType::E => self.registers.e = val,
+            RegisterType::H => self.registers.h = val,
+            RegisterType::L => self.registers.l = val,
+            RegisterType::HL => self.write_to_memory(
+                self.registers.read_register::<{ RegisterType::HL as u8 }>(),
+                val,
+            ),
+            _ => unreachable!(),
+        }
     }
 }
 

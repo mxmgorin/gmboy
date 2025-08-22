@@ -41,7 +41,7 @@ impl Cpu {
         let addr = self.registers.read_register::<R2>();
 
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr: 0,
         };
     }
@@ -52,7 +52,7 @@ impl Cpu {
         let addr = 0xFF00 | addr;
 
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr: 0,
         };
     }
@@ -69,7 +69,7 @@ impl Cpu {
     pub fn fetch_r_mri<const R1: u8, const R2: u8>(&mut self) {
         let addr = self.registers.read_register::<R2>();
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr: 0,
         };
 
@@ -80,7 +80,7 @@ impl Cpu {
     pub fn fetch_r_mrd<const R1: u8, const R2: u8>(&mut self) {
         let addr = self.registers.read_register::<R2>();
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr: 0,
         };
 
@@ -115,7 +115,7 @@ impl Cpu {
         let addr = 0xFF00 | addr;
 
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr: 0,
         }
     }
@@ -165,7 +165,7 @@ impl Cpu {
         let addr = self.registers.read_register::<R1>();
 
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr,
         }
     }
@@ -175,7 +175,7 @@ impl Cpu {
         let addr = self.read_pc16();
 
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr),
+            value: self.read_memory(addr) as u16,
             addr: 0,
         }
     }
