@@ -323,7 +323,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0xCC] = Cpu::fetch_execute_call_d16::<{ JumpCondition::Z as u8 }>;
     array[0xCD] = Cpu::fetch_execute_call_d16::<{ JumpCondition::None as u8 }>;
     array[0xCA] = Cpu::fetch_execute_jp_d16::<{ JumpCondition::Z as u8 }>;
-    array[0xCB] = Cpu::fetch_execute_prefix;
+    array[0xCB] = Cpu::fetch_execute_cb;
     array[0xCE] = Cpu::fetch_and_execute_adc_r_d8;
     array[0xCF] = Cpu::execute_rst_0x08;
 

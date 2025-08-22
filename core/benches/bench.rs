@@ -52,7 +52,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
             |mut cpu| {
                 for _ in 0..50_000 {
-                    cpu.fetch_execute_prefix();
+                    cpu.fetch_execute_cb();
                     cpu.registers.pc += 1;
                 }
             },
