@@ -12,7 +12,7 @@ impl Cpu {
         }
 
         self.registers.set_register::<R1>(value);
-        value = self.registers.read_register(r1);
+        value = self.registers.read_register::<R1>();
 
         self.set_flags_dec(value);
     }

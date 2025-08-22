@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, RegisterType};
+use crate::cpu::{Cpu};
 
 impl Cpu {
     #[inline(always)]
@@ -21,10 +21,9 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_sbc<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         let c_val = self.registers.flags.get_c();
         let val_plus_c = self.step_ctx.fetched_data.value.wrapping_add(c_val as u16) as u8;
-        let r_val = self.registers.read_register(r1);
+        let r_val = self.registers.read_register::<R1>();
 
         let c_val_i32 = c_val as i32;
         let r_val_i32 = r_val as i32;

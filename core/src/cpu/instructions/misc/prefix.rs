@@ -2,11 +2,11 @@
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     pub fn fetch_execute_prefix(&mut self) {
         self.fetch_d8();
         let op = self.step_ctx.fetched_data.value;
-        let reg = decode_reg(op & 0b111);
+        let reg = decode_register(op & 0b111);
 
         let Some(reg) = reg else {
             return;
@@ -14,7 +14,7 @@ impl Cpu {
 
         let bit = (op >> 3) & 0b111;
         let bit_op = (op >> 6) & 0b11;
-        let mut reg_val = self.read_reg8(reg);
+        let mut reg_val = self.read_register8(reg);
 
         match bit_op {
             1 => {
@@ -27,13 +27,13 @@ impl Cpu {
             2 => {
                 // RST
                 reg_val &= !(1 << bit);
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
                 return;
             }
             3 => {
                 // SET
                 reg_val |= 1 << bit;
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
                 return;
             }
             _ => {}
@@ -47,7 +47,7 @@ impl Cpu {
                 let carry = (reg_val & 0x80) != 0; // Check MSB for carry
                 let result = (reg_val << 1) | (carry as u8); // Rotate left and wrap MSB to LSB
 
-                self.set_reg8(reg, result);
+                self.set_register8(reg, result);
                 self.registers.flags.set_z(result == 0);
                 self.registers.flags.set_n(false);
                 self.registers.flags.set_h(false);
@@ -58,7 +58,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val = reg_val >> 1 | (old << 7);
 
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
                 self.registers.flags.set_h(false);
@@ -69,7 +69,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val = (reg_val << 1) | (flag_c as u8);
 
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -81,7 +81,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val = (reg_val >> 1) | ((flag_c as u8) << 7);
 
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -93,7 +93,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val <<= 1;
 
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -107,7 +107,7 @@ impl Cpu {
                 let result = (reg_val >> 1) | (reg_val & 0x80); // Shift right and preserve MSB
                 let carry = reg_val & 0x01 != 0; // Save LSB as Carry
 
-                self.set_reg8(reg, result);
+                self.set_register8(reg, result);
 
                 self.registers.flags.set_z(u == 0);
                 self.registers.flags.set_n(false);
@@ -117,7 +117,7 @@ impl Cpu {
             6 => {
                 // SWAP
                 reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
-                self.set_reg8(reg, reg_val);
+                self.set_register8(reg, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -128,7 +128,7 @@ impl Cpu {
                 // SRL
                 let u = reg_val >> 1;
 
-                self.set_reg8(reg, u);
+                self.set_register8(reg, u);
 
                 self.registers.flags.set_z(u == 0);
                 self.registers.flags.set_n(false);
@@ -155,7 +155,7 @@ const REG_TYPES_BY_OPS: [RegisterType; 8] = [
     RegisterType::A,
 ];
 
-pub fn decode_reg(reg: u16) -> Option<RegisterType> {
+pub const fn decode_register(reg: u16) -> Option<RegisterType> {
     let reg = reg as u8;
 
     if reg > 0b111 {

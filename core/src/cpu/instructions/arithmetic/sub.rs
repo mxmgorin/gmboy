@@ -21,8 +21,7 @@ impl Cpu {
     }
 
     pub fn execute_sub<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
-        let reg_val = self.registers.read_register(r1);
+        let reg_val = self.registers.read_register::<R1>();
         let result = reg_val.wrapping_sub(self.step_ctx.fetched_data.value);
 
         let reg_val_i32 = reg_val as i32;

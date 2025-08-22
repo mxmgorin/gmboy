@@ -200,8 +200,10 @@ impl Default for Registers {
 
 impl Registers {
     #[inline(always)]
-    pub fn read_register(&self, register_type: RegisterType) -> u16 {
-        match register_type {
+    pub fn read_register<const R: u8>(&self) -> u16 {
+        let r = RegisterType::from_u8(R);
+
+        match r {
             RegisterType::A => self.a as u16,
             RegisterType::F => self.flags.byte as u16,
             RegisterType::B => self.b as u16,
@@ -242,7 +244,7 @@ impl Registers {
     #[inline(always)]
     pub const fn set_register<const R: u8>(&mut self, value: u16) {
         let r = RegisterType::from_u8(R);
-        
+
         match r {
             RegisterType::A => self.a = (value & 0xFF) as u8,
             RegisterType::F => self.flags.byte = (value & 0xFF) as u8,
