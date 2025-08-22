@@ -41,11 +41,12 @@ impl Clock {
         self.time = Instant::now();
     }
 
-    pub fn m_cycles(&mut self, m_cycles: usize) {
+    #[inline(always)]
+    pub fn tick_m_cycles(&mut self, m_cycles: usize) {
         self.m_cycles = self.m_cycles.wrapping_add(m_cycles);
 
         for _ in 0..m_cycles {
-            self.t_cycles(T_CYCLES_PER_M_CYCLE);
+            self.tick_t_cycles(T_CYCLES_PER_M_CYCLE);
             Dma::tick(&mut self.bus);
         }
     }
@@ -59,7 +60,7 @@ impl Clock {
     }
 
     #[inline(always)]
-    fn t_cycles(&mut self, t_cycles: usize) {
+    fn tick_t_cycles(&mut self, t_cycles: usize) {
         for _ in 0..t_cycles {
             self.bus.io.timer.tick(&mut self.bus.io.interrupts);
             self.ppu.tick(&mut self.bus);

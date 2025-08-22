@@ -20,7 +20,7 @@ impl Cpu {
             self.registers.sp.wrapping_add(offset_e as u16),
         );
 
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
     }
 
     #[inline(always)]
@@ -122,7 +122,7 @@ impl Cpu {
         let r2 = RegisterType::from_u8(R1);
 
         if r1.is_16bit() && r2.is_16bit() {
-            self.clock.m_cycles(1);
+            self.clock.tick_m_cycles(1);
         }
 
         self.registers

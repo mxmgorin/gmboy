@@ -6,7 +6,7 @@ impl Cpu {
     pub fn execute_ret<const C: u8>(&mut self) {
         let cond = JumpCondition::from_u8(C);
         if cond != JumpCondition::None {
-            self.clock.m_cycles(1);
+            self.clock.tick_m_cycles(1);
         }
 
         if self.check_cond(cond) {
@@ -15,7 +15,7 @@ impl Cpu {
 
             let addr = (hi << 8) | lo;
             self.registers.pc = addr;
-            self.clock.m_cycles(1); // internal: set PC?
+            self.clock.tick_m_cycles(1); // internal: set PC?
         }
     }
 }

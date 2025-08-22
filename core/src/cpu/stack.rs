@@ -6,14 +6,14 @@ impl Cpu {
     pub fn push(&mut self, value: u8) {
         self.registers.sp = self.registers.sp.wrapping_sub(1);
         self.clock.bus.write(self.registers.sp, value);
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
     }
 
     /// Costs 1 M-Cycle.
     pub fn pop(&mut self) -> u8 {
         let value = self.clock.bus.read(self.registers.sp);
         self.registers.sp = self.registers.sp.wrapping_add(1);
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
 
         value
     }

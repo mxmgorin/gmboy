@@ -46,7 +46,7 @@ impl Cpu {
 
     #[inline(always)]
     pub fn goto_addr(&mut self, addr: u16, push_pc: bool) {
-        self.clock.m_cycles(1); // internal: branch decision?
+        self.clock.tick_m_cycles(1); // internal: branch decision?
 
         if push_pc {
             self.push16(self.registers.pc);
@@ -60,7 +60,7 @@ impl Cpu {
     pub fn read_pc(&mut self) -> u8 {
         let value = self.clock.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
 
         value
     }
@@ -75,7 +75,7 @@ impl Cpu {
     #[inline]
     pub fn read_memory(&mut self, address: u16) -> u16 {
         let value = self.clock.bus.read(address) as u16;
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
 
         value
     }
@@ -84,7 +84,7 @@ impl Cpu {
     #[inline]
     pub fn write_to_memory(&mut self, address: u16, value: u8) {
         self.clock.bus.write(address, value);
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
     }
 
     pub fn step(&mut self, mut _debugger: Option<&mut crate::debugger::Debugger>) {
@@ -104,7 +104,7 @@ impl Cpu {
             }
 
             // Do nothing, just wait for an interrupt to wake up
-            self.clock.m_cycles(1);
+            self.clock.tick_m_cycles(1);
 
             return;
         }
@@ -125,13 +125,13 @@ impl Cpu {
         if self.clock.bus.io.interrupts.ime {
             if let Some((addr, it)) = self.clock.bus.io.interrupts.get_pending() {
                 // execute interrupt handler
-                self.clock.m_cycles(2);
+                self.clock.tick_m_cycles(2);
 
                 self.is_halted = false;
                 self.clock.bus.io.interrupts.acknowledge_interrupt(it);
                 self.goto_addr_with_cond(JumpCondition::None, addr, true);
 
-                self.clock.m_cycles(1);
+                self.clock.tick_m_cycles(1);
             }
 
             self.enabling_ime = false;

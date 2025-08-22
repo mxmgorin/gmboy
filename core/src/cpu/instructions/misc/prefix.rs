@@ -140,7 +140,7 @@ impl Cpu {
             }
         }
 
-        self.clock.m_cycles(1);
+        self.clock.tick_m_cycles(1);
     }
 }
 

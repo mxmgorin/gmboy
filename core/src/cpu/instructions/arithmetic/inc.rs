@@ -8,7 +8,7 @@ impl Cpu {
         let value = self.step_ctx.fetched_data.value.wrapping_add(1);
 
         if r1.is_16bit() {
-            self.clock.m_cycles(1);
+            self.clock.tick_m_cycles(1);
         }
 
         self.registers.set_register(r1, value);

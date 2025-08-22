@@ -7,7 +7,7 @@ impl Cpu {
         self.fetch_r_d8::<{ R1 as u8 }>();
         let reg_val = self.registers.read_register(R1);
 
-        self.clock.m_cycles(2);
+        self.clock.tick_m_cycles(2);
         let reg_val_u32 =
             self.registers
                 .read_register(R1)
@@ -49,7 +49,7 @@ impl Cpu {
         let reg_val_u32: u32 = reg_val as u32 + self.step_ctx.fetched_data.value as u32;
 
         if r.is_16bit() { // but not for SP
-            self.clock.m_cycles(1);
+            self.clock.tick_m_cycles(1);
             let h = (reg_val & 0xFFF) + (self.step_ctx.fetched_data.value & 0xFFF) >= 0x1000;
             let n = (reg_val as u32) + (self.step_ctx.fetched_data.value as u32);
             let c = n >= 0x10000;
