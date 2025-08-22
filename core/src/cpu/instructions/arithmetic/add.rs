@@ -2,7 +2,7 @@ use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline(always)]
-    pub fn fetch_and_execute_add_sp(&mut self) {
+    pub fn fetch_execute_add_sp(&mut self) {
         const R1: RegisterType = RegisterType::SP;
         self.fetch_r_d8::<{ R1 as u8 }>();
         let reg_val = self.registers.read_register::<{ R1 as u8 }>();
@@ -25,19 +25,19 @@ impl Cpu {
             .set_register::<{ R1 as u8 }>((reg_val_u32 & 0xFFFF) as u16);
     }
     #[inline(always)]
-    pub fn fetch_and_execute_add_r_r<const R1: u8, const R2: u8>(&mut self) {
+    pub fn fetch_execute_add_r_r<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_r_r::<R1, R2>();
         self.execute_add::<R1>();
     }
 
     #[inline(always)]
-    pub fn fetch_and_execute_add_r_mr<const R1: u8, const R2: u8>(&mut self) {
+    pub fn fetch_execute_add_r_mr<const R1: u8, const R2: u8>(&mut self) {
         self.fetch_r_mr::<R1, R2>();
         self.execute_add::<R1>();
     }
 
     #[inline(always)]
-    pub fn fetch_and_execute_add_r_d8<const R1: u8>(&mut self) {
+    pub fn fetch_execute_add_r_d8<const R1: u8>(&mut self) {
         self.fetch_r_d8::<R1>();
         self.execute_add::<R1>();
     }

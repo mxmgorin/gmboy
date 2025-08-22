@@ -30,7 +30,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0x07] = Cpu::execute_rlca;
     array[0x08] = Cpu::fetch_execute_ld_a16_r::<{ RegisterType::SP as u8 }>;
     array[0x09] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::BC as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::BC as u8 }>;
     array[0x0A] =
         Cpu::fetch_execute_ld_r_mr::<{ RegisterType::A as u8 }, { RegisterType::BC as u8 }>;
     array[0x0B] = Cpu::fetch_execute_dec_r::<{ RegisterType::BC as u8 }>;
@@ -51,7 +51,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0x17] = Cpu::execute_rla;
     array[0x18] = Cpu::fetch_execute_jr_d8::<{ JumpCondition::None as u8 }>;
     array[0x19] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::DE as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::DE as u8 }>;
     array[0x1A] =
         Cpu::fetch_execute_ld_r_mr::<{ RegisterType::A as u8 }, { RegisterType::DE as u8 }>;
     array[0x1B] = Cpu::fetch_execute_dec_r::<{ RegisterType::DE as u8 }>;
@@ -72,7 +72,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0x27] = Cpu::execute_daa;
     array[0x28] = Cpu::fetch_execute_jr_d8::<{ JumpCondition::Z as u8 }>;
     array[0x29] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::HL as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::HL as u8 }>;
     array[0x2A] =
         Cpu::fetch_execute_ld_r_mri::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>;
     array[0x2B] = Cpu::fetch_execute_dec_r::<{ RegisterType::HL as u8 }>;
@@ -93,7 +93,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0x37] = Cpu::execute_scf;
     array[0x38] = Cpu::fetch_execute_jr_d8::<{ JumpCondition::C as u8 }>;
     array[0x39] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::SP as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::HL as u8 }, { RegisterType::SP as u8 }>;
     array[0x3A] =
         Cpu::fetch_execute_ld_r_mrd::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>;
     array[0x3B] = Cpu::fetch_execute_dec_r::<{ RegisterType::SP as u8 }>;
@@ -190,36 +190,36 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
 
     // 0x8X
     array[0x80] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::B as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::B as u8 }>;
     array[0x81] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>;
     array[0x82] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::D as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::D as u8 }>;
     array[0x83] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::E as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::E as u8 }>;
     array[0x84] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::H as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::H as u8 }>;
     array[0x85] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::L as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::L as u8 }>;
     array[0x86] =
-        Cpu::fetch_and_execute_add_r_mr::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>;
+        Cpu::fetch_execute_add_r_mr::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>;
     array[0x87] =
-        Cpu::fetch_and_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::A as u8 }>;
+        Cpu::fetch_execute_add_r_r::<{ RegisterType::A as u8 }, { RegisterType::A as u8 }>;
     array[0x88] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::B as u8 }>;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::B as u8 }>;
     array[0x89] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::C as u8 }>;
     array[0x8A] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::D as u8 }>;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::D as u8 }>;
     array[0x8B] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::E as u8 }>;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::E as u8 }>;
     array[0x8C] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::H as u8 }>;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::H as u8 }>;
     array[0x8D] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::L as u8 }>;
-    array[0x8E] = Cpu::fetch_and_execute_adc_r_mr;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::L as u8 }>;
+    array[0x8E] = Cpu::fetch_execute_adc_r_mr;
     array[0x8F] =
-        Cpu::fetch_and_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::A as u8 }>;
+        Cpu::fetch_execute_adc_r_r::<{ RegisterType::A as u8 }, { RegisterType::A as u8 }>;
 
     // 0x9X
     array[0x90] =
@@ -315,7 +315,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0xC2] = Cpu::fetch_execute_jp_d16::<{ JumpCondition::NZ as u8 }>;
     array[0xC3] = Cpu::fetch_execute_jp_d16::<{ JumpCondition::None as u8 }>;
     array[0xC5] = Cpu::fetch_execute_push::<{ RegisterType::BC as u8 }>;
-    array[0xC6] = Cpu::fetch_and_execute_add_r_d8::<{ RegisterType::A as u8 }>;
+    array[0xC6] = Cpu::fetch_execute_add_r_d8::<{ RegisterType::A as u8 }>;
     array[0xC7] = Cpu::execute_rst_0x00;
     array[0xC4] = Cpu::fetch_execute_call_d16::<{ JumpCondition::NZ as u8 }>;
     array[0xC8] = Cpu::execute_ret::<{ JumpCondition::Z as u8 }>;
@@ -324,7 +324,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0xCD] = Cpu::fetch_execute_call_d16::<{ JumpCondition::None as u8 }>;
     array[0xCA] = Cpu::fetch_execute_jp_d16::<{ JumpCondition::Z as u8 }>;
     array[0xCB] = Cpu::fetch_execute_cb;
-    array[0xCE] = Cpu::fetch_and_execute_adc_r_d8;
+    array[0xCE] = Cpu::fetch_execute_adc_r_d8;
     array[0xCF] = Cpu::execute_rst_0x08;
 
     // 0xDX
@@ -350,7 +350,7 @@ pub const EXECUTE_FNS: [fn(&mut Cpu); INSTRUCTIONS_COUNT] = {
     array[0xE5] = Cpu::fetch_execute_push::<{ RegisterType::HL as u8 }>;
     array[0xE6] = Cpu::fetch_execute_and_r_d8::<{ RegisterType::A as u8 }>;
     array[0xE7] = Cpu::execute_rst_0x20;
-    array[0xE8] = Cpu::fetch_and_execute_add_sp;
+    array[0xE8] = Cpu::fetch_execute_add_sp;
     array[0xEA] = Cpu::fetch_execute_ld_a16_r::<{ RegisterType::A as u8 }>;
     array[0xE9] = Cpu::execute_jp_no_hl;
     array[0xEE] = Cpu::fetch_execute_xor_r_d8::<{ RegisterType::A as u8 }>;
