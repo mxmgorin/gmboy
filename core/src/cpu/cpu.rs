@@ -1,7 +1,6 @@
 use crate::auxiliary::clock::Clock;
 use crate::cpu::instructions::{JumpCondition, FetchedData};
-
-use crate::cpu::{RegisterType, Registers};
+use crate::cpu::{Registers};
 use serde::{Deserialize, Serialize};
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
