@@ -17,7 +17,7 @@ use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::path::PathBuf;
 
 pub fn get_cart() -> Cart {
-    let path = PathBuf::from("benches").join("roms").join("dmg-acid2.gb");
+    let path = PathBuf::from("benches").join("roms").join("cpu_instrs.gb");
 
     Cart::new(read_bytes(&path).unwrap()).unwrap()
 }
