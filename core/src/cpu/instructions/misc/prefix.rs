@@ -5,15 +5,16 @@ impl Cpu {
     pub fn fetch_execute_prefix(&mut self) {
         self.fetch_d8();
         let op = self.step_ctx.fetched_data.value;
-        let reg = decode_register(op & 0b111);
+        let register_index = (op & 0b111) as usize;
 
-        let Some(reg) = reg else {
+        if register_index > REGISTER_FNS.len() {
             return;
-        };
+        }
 
+        let register = REGISTER_FNS[register_index];
         let bit = (op >> 3) & 0b111;
         let bit_op = (op >> 6) & 0b11;
-        let mut reg_val = self.read_register8(reg);
+        let mut reg_val = (register.get)(self);
 
         match bit_op {
             1 => {
@@ -26,13 +27,13 @@ impl Cpu {
             2 => {
                 // RST
                 reg_val &= !(1 << bit);
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
                 return;
             }
             3 => {
                 // SET
                 reg_val |= 1 << bit;
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
                 return;
             }
             _ => {}
@@ -46,7 +47,7 @@ impl Cpu {
                 let carry = (reg_val & 0x80) != 0; // Check MSB for carry
                 let result = (reg_val << 1) | (carry as u8); // Rotate left and wrap MSB to LSB
 
-                self.set_register8(reg, result);
+                (register.set)(self, result);
                 self.registers.flags.set_z(result == 0);
                 self.registers.flags.set_n(false);
                 self.registers.flags.set_h(false);
@@ -57,7 +58,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val = reg_val >> 1 | (old << 7);
 
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
                 self.registers.flags.set_h(false);
@@ -68,7 +69,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val = (reg_val << 1) | (flag_c as u8);
 
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -80,7 +81,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val = (reg_val >> 1) | ((flag_c as u8) << 7);
 
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -92,7 +93,7 @@ impl Cpu {
                 let old = reg_val;
                 reg_val <<= 1;
 
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -106,7 +107,7 @@ impl Cpu {
                 let result = (reg_val >> 1) | (reg_val & 0x80); // Shift right and preserve MSB
                 let carry = reg_val & 0x01 != 0; // Save LSB as Carry
 
-                self.set_register8(reg, result);
+                (register.set)(self, result);
 
                 self.registers.flags.set_z(u == 0);
                 self.registers.flags.set_n(false);
@@ -116,7 +117,7 @@ impl Cpu {
             6 => {
                 // SWAP
                 reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
-                self.set_register8(reg, reg_val);
+                (register.set)(self, reg_val);
 
                 self.registers.flags.set_z(reg_val == 0);
                 self.registers.flags.set_n(false);
@@ -127,7 +128,7 @@ impl Cpu {
                 // SRL
                 let u = reg_val >> 1;
 
-                self.set_register8(reg, u);
+                (register.set)(self, u);
 
                 self.registers.flags.set_z(u == 0);
                 self.registers.flags.set_n(false);
@@ -143,7 +144,9 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn read_register8(&mut self, rt: RegisterType) -> u8 {
+    fn get_register8<const R: u8>(&mut self) -> u8 {
+        let rt = RegisterType::from_u8(R);
+
         match rt {
             RegisterType::A => self.registers.a,
             RegisterType::F => self.registers.flags.byte,
@@ -161,7 +164,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn set_register8(&mut self, rt: RegisterType, val: u8) {
+    fn set_register8<const R: u8>(&mut self, val: u8) {
+        let rt = RegisterType::from_u8(R);
         match rt {
             RegisterType::A => self.registers.a = val,
             RegisterType::F => self.registers.flags.byte = val,
@@ -180,23 +184,28 @@ impl Cpu {
     }
 }
 
-const REG_TYPES_BY_OPS: [RegisterType; 8] = [
-    RegisterType::B,
-    RegisterType::C,
-    RegisterType::D,
-    RegisterType::E,
-    RegisterType::H,
-    RegisterType::L,
-    RegisterType::HL,
-    RegisterType::A,
-];
-
-pub const fn decode_register(reg: u16) -> Option<RegisterType> {
-    let reg = reg as u8;
-
-    if reg > 0b111 {
-        return None;
-    }
-
-    Some(REG_TYPES_BY_OPS[reg as usize])
+#[derive(Clone, Copy)]
+struct RegisterFn {
+    get: fn(&mut Cpu) -> u8,
+    set: fn(&mut Cpu, u8),
 }
+
+impl RegisterFn {
+    pub const fn new<const R: u8>() -> Self {
+        Self {
+            set: Cpu::set_register8::<R>,
+            get: Cpu::get_register8::<R>,
+        }
+    }
+}
+
+const REGISTER_FNS: [RegisterFn; 8] = [
+    RegisterFn::new::<{ RegisterType::B as u8 }>(),
+    RegisterFn::new::<{ RegisterType::C as u8 }>(),
+    RegisterFn::new::<{ RegisterType::D as u8 }>(),
+    RegisterFn::new::<{ RegisterType::E as u8 }>(),
+    RegisterFn::new::<{ RegisterType::H as u8 }>(),
+    RegisterFn::new::<{ RegisterType::L as u8 }>(),
+    RegisterFn::new::<{ RegisterType::HL as u8 }>(),
+    RegisterFn::new::<{ RegisterType::A as u8 }>(),
+];

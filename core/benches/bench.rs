@@ -41,6 +41,25 @@ fn criterion_benchmark(c: &mut Criterion) {
         );
     });
 
+    c.bench_function("fetch_execute_prefix_500_000", |b| {
+        b.iter_batched(
+            || {
+                let ppu = Ppu::default();
+                let bus = Bus::new(get_cart(), Default::default());
+                let clock = Clock::new(ppu, bus);
+
+                Cpu::new(clock)
+            },
+            |mut cpu| {
+                for _ in 0..50_000 {
+                    cpu.fetch_execute_prefix();
+                    cpu.registers.pc += 1;
+                }
+            },
+            BatchSize::LargeInput,
+        );
+    });
+
     c.bench_function("timer_tick_5_000_000", |b| {
         b.iter_batched(
             || {
