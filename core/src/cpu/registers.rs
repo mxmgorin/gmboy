@@ -121,26 +121,8 @@ pub struct Flags {
 }
 
 impl Flags {
-    pub fn boot() -> Flags {
+    pub const fn boot() -> Flags {
         Self { byte: 0xB0 }
-    }
-
-    pub fn set(&mut self, z: Option<bool>, n: Option<bool>, h: Option<bool>, c: Option<bool>) {
-        if let Some(z) = z {
-            set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, z);
-        }
-
-        if let Some(n) = n {
-            set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, n);
-        }
-
-        if let Some(h) = h {
-            set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, h);
-        }
-
-        if let Some(c) = c {
-            set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, c);
-        }
     }
 
     #[inline]
