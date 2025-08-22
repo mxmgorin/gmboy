@@ -1,6 +1,7 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::instructions::{JumpCondition, FetchedData};
-use crate::cpu::{Registers};
+use crate::cpu::instructions::{FetchedData, JumpCondition};
+use crate::cpu::interrupts::InterruptType;
+use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
@@ -91,7 +92,6 @@ impl Cpu {
         if let Some(ref mut debugger) = _debugger {
             debugger.print(self, None);
             debugger.update_serial(&mut self.clock.bus);
-
         }
 
         self.handle_interrupts();
@@ -120,20 +120,37 @@ impl Cpu {
     }
 
     /// Costs 5 M-cycles when an interrupt is executed
+    #[inline]
     pub fn handle_interrupts(&mut self) {
         if self.clock.bus.io.interrupts.ime {
-            if let Some((addr, it)) = self.clock.bus.io.interrupts.get_pending() {
-                // execute interrupt handler
-                self.clock.tick_m_cycles(2);
-
-                self.is_halted = false;
-                self.clock.bus.io.interrupts.acknowledge_interrupt(it);
-                self.goto_addr_with_cond(JumpCondition::None, addr, true);
-
-                self.clock.tick_m_cycles(1);
+            for (it, handler) in INTERRUPT_HANDLERS {
+                if self.clock.bus.io.interrupts.is_pending(it) {
+                    handler(self);
+                    break;
+                }
             }
 
             self.enabling_ime = false;
         }
     }
+
+    #[inline]
+    fn handle_interrupt(&mut self, addr: u16, it: InterruptType) {
+        self.clock.tick_m_cycles(2);
+
+        self.is_halted = false;
+        self.clock.bus.io.interrupts.acknowledge_interrupt(it);
+        self.goto_addr_with_cond(JumpCondition::None, addr, true);
+
+        self.clock.tick_m_cycles(1);
+    }
 }
+
+
+pub const INTERRUPT_HANDLERS: [(InterruptType, fn(&mut Cpu)); 5] = [
+    (InterruptType::VBlank, |cpu| cpu.handle_interrupt(0x40, InterruptType::VBlank)),
+    (InterruptType::LCDStat, |cpu| cpu.handle_interrupt(0x48, InterruptType::LCDStat)),
+    (InterruptType::Timer, |cpu| cpu.handle_interrupt(0x50, InterruptType::Timer)),
+    (InterruptType::Serial, |cpu| cpu.handle_interrupt(0x58, InterruptType::Serial)),
+    (InterruptType::Joypad, |cpu| cpu.handle_interrupt(0x60, InterruptType::Joypad)),
+];

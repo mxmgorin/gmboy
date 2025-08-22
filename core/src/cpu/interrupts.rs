@@ -1,13 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-const INTERRUPTS_BY_ADDRESSES: [(u16, InterruptType); 5] = [
-    (0x40, InterruptType::VBlank),
-    (0x48, InterruptType::LCDStat),
-    (0x50, InterruptType::Timer),
-    (0x58, InterruptType::Serial),
-    (0x60, InterruptType::Joypad),
-];
-
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptType {
@@ -29,24 +21,17 @@ pub struct Interrupts {
 }
 
 impl Interrupts {
-    pub fn get_pending(&mut self) -> Option<(u16, InterruptType)> {
-        for (address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
-            if self.is_pending(interrupt_type) {
-                return Some((address, interrupt_type));
-            }
-        }
-
-        None
-    }
-
+    #[inline]
     pub fn request_interrupt(&mut self, it: InterruptType) {
         self.int_flags |= it as u8;
     }
 
+    #[inline]
     pub fn any_is_pending(&self) -> bool {
         (self.int_flags & self.ie_register) != 0
     }
 
+    #[inline]
     pub fn acknowledge_interrupt(&mut self, it: InterruptType) {
         let it = it as u8;
 
@@ -54,7 +39,8 @@ impl Interrupts {
         self.ime = false;
     }
 
-    fn is_pending(&self, it: InterruptType) -> bool {
+    #[inline]
+    pub fn is_pending(&self, it: InterruptType) -> bool {
         let it = it as u8;
         let is_requested = self.int_flags & it != 0;
         let is_enabled = self.ie_register & it != 0;
@@ -66,13 +52,14 @@ impl Interrupts {
 #[cfg(test)]
 pub mod tests {
     use super::*;
+    use crate::cpu::INTERRUPT_HANDLERS;
 
     #[test]
     pub fn test_check_interrupts_enabled() {
         let mut interrupts = Interrupts::default();
         interrupts.ie_register = 0xFF;
 
-        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+        for (interrupt_type, _) in INTERRUPT_HANDLERS {
             interrupts.request_interrupt(interrupt_type);
             assert!(interrupts.is_pending(interrupt_type));
         }
@@ -82,7 +69,7 @@ pub mod tests {
     pub fn test_check_interrupts_disabled() {
         let interrupts = Interrupts::default();
 
-        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+        for (interrupt_type, _) in INTERRUPT_HANDLERS {
             assert!(!interrupts.is_pending(interrupt_type));
         }
     }
@@ -91,7 +78,7 @@ pub mod tests {
     pub fn test_interrupts() {
         let mut interrupts = Interrupts::default();
 
-        for (_address, interrupt_type) in INTERRUPTS_BY_ADDRESSES {
+        for (interrupt_type, _) in INTERRUPT_HANDLERS {
             assert!(!interrupts.is_pending(interrupt_type));
 
             interrupts.ie_register |= interrupt_type as u8;
