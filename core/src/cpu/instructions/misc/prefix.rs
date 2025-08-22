@@ -39,8 +39,6 @@ impl Cpu {
             _ => {}
         }
 
-        let flag_c = self.registers.flags.get_c();
-
         match bit {
             0 => {
                 // RLC
@@ -67,6 +65,7 @@ impl Cpu {
             2 => {
                 // RL
                 let old = reg_val;
+                let flag_c = self.registers.flags.get_c();
                 reg_val = (reg_val << 1) | (flag_c as u8);
 
                 (register.set)(self, reg_val);
@@ -79,6 +78,7 @@ impl Cpu {
             3 => {
                 // RR
                 let old = reg_val;
+                let flag_c = self.registers.flags.get_c();
                 reg_val = (reg_val >> 1) | ((flag_c as u8) << 7);
 
                 (register.set)(self, reg_val);
