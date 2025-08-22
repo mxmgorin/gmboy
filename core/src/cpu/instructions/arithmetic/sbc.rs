@@ -41,7 +41,7 @@ impl Cpu {
 
         let result = r_val.wrapping_sub(val_plus_c as u16);
 
-        self.registers.set_register(r1, result);
+        self.registers.set_register::<R1>(result);
 
         self.registers.flags.set_z(result == 0);
         self.registers.flags.set_n(true);

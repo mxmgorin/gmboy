@@ -11,9 +11,9 @@ impl Cpu {
             self.clock.tick_m_cycles(1);
         }
 
-        self.registers.set_register(r1, value);
+        self.registers.set_register::<R1>(value);
         let value = self.registers.read_register(r1);
-        self.set_flags_inc(value);
+        self.set_flags(value);
     }
 
     #[inline]
@@ -22,11 +22,11 @@ impl Cpu {
         let mut value = self.step_ctx.fetched_data.value.wrapping_add(1);
         value &= 0xFF; // Ensure it fits into 8 bits
         self.write_to_memory(self.step_ctx.fetched_data.addr, value as u8);
-        self.set_flags_inc(value);
+        self.set_flags(value);
     }
 
     #[inline(always)]
-    fn set_flags_inc(&mut self, value: u16) {
+    fn set_flags(&mut self, value: u16) {
         if (self.step_ctx.opcode & 0x03) == 0x03 {
             return;
         }

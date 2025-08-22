@@ -319,7 +319,7 @@ mod tests {
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
         const REG_TYPE: RegisterType = RegisterType::B;
-        cpu.registers.set_register(REG_TYPE, 23);
+        cpu.registers.set_register::<{ REG_TYPE as u8 }>(23);
 
         cpu.fetch_r::<{ REG_TYPE as u8 }>();
 
@@ -337,7 +337,7 @@ mod tests {
         let mut cpu = Cpu::new(clock);
         const R1: RegisterType = RegisterType::BC;
         const R2: RegisterType = RegisterType::A;
-        cpu.registers.set_register(R2, 23);
+        cpu.registers.set_register::<{R2 as u8}>(23);
 
         cpu.fetch_r_r::<{ R1 as u8 }, { R2 as u8 }>();
 

@@ -15,8 +15,7 @@ impl Cpu {
 
         let offset_e = self.step_ctx.fetched_data.value as i8; // truncate to 8 bits (+8e)
 
-        self.registers.set_register(
-            RegisterType::HL,
+        self.registers.set_register::<{RegisterType::HL as u8}>(
             self.registers.sp.wrapping_add(offset_e as u16),
         );
 
@@ -25,18 +24,16 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_d8<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         self.fetch_r_d8::<R1>();
         self.registers
-            .set_register(r1, self.step_ctx.fetched_data.value);
+            .set_register::<R1>(self.step_ctx.fetched_data.value);
     }
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_d16<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         self.fetch_r_d16::<R1>();
         self.registers
-            .set_register(r1, self.step_ctx.fetched_data.value);
+            .set_register::<R1>(self.step_ctx.fetched_data.value);
     }
 
     #[inline(always)]
@@ -59,10 +56,9 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_a16<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         self.fetch_r_a16::<R1>();
         self.registers
-            .set_register(r1, self.step_ctx.fetched_data.value);
+            .set_register::<R1>(self.step_ctx.fetched_data.value);
     }
 
     #[inline(always)]
@@ -126,6 +122,6 @@ impl Cpu {
         }
 
         self.registers
-            .set_register(r1, self.step_ctx.fetched_data.value);
+            .set_register::<R1>(self.step_ctx.fetched_data.value);
     }
 }

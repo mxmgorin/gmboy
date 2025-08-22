@@ -22,7 +22,7 @@ impl Cpu {
 
         self.registers.flags.set_n(false);
         self.registers
-            .set_register(R1, (reg_val_u32 & 0xFFFF) as u16);
+            .set_register::<{R1 as u8}>((reg_val_u32 & 0xFFFF) as u16);
     }
     #[inline(always)]
     pub fn fetch_and_execute_add_r_r<const R1: u8, const R2: u8>(&mut self) {
@@ -44,11 +44,11 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_add<const R1: u8>(&mut self) {
-        let r = RegisterType::from_u8(R1);
-        let reg_val = self.registers.read_register(r);
+        let r1 = RegisterType::from_u8(R1);
+        let reg_val = self.registers.read_register(r1);
         let reg_val_u32: u32 = reg_val as u32 + self.step_ctx.fetched_data.value as u32;
 
-        if r.is_16bit() { // but not for SP
+        if r1.is_16bit() { // but not for SP
             self.clock.tick_m_cycles(1);
             let h = (reg_val & 0xFFF) + (self.step_ctx.fetched_data.value & 0xFFF) >= 0x1000;
             let n = (reg_val as u32) + (self.step_ctx.fetched_data.value as u32);
@@ -69,6 +69,6 @@ impl Cpu {
 
         self.registers.flags.set_n(false);
         self.registers
-            .set_register(r, (reg_val_u32 & 0xFFFF) as u16);
+            .set_register::<R1>((reg_val_u32 & 0xFFFF) as u16);
     }
 }

@@ -31,7 +31,7 @@ impl Cpu {
         let h = ((reg_val_i32 & 0xF).wrapping_sub(fetched_val_i32 & 0xF)) < 0;
         let c = reg_val_i32.wrapping_sub(fetched_val_i32) < 0;
 
-        self.registers.set_register(r1, result);
+        self.registers.set_register::<R1>(result);
 
         self.registers.flags.set_z(result == 0);
         self.registers.flags.set_n(true);

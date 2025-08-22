@@ -1,4 +1,4 @@
-use crate::cpu::{Cpu, RegisterType};
+use crate::cpu::{Cpu};
 
 impl Cpu {
     #[inline(always)]
@@ -21,17 +21,15 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ldh_r_ha8<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         self.fetch_r_ha8::<R1>();
         self.registers
-            .set_register(r1, self.step_ctx.fetched_data.value);
+            .set_register::<R1>(self.step_ctx.fetched_data.value);
     }
 
     #[inline(always)]
     pub fn fetch_execute_ldh_r_hmr<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
         self.fetch_r_hmr::<R1, R2>();
         self.registers
-            .set_register(r1, self.step_ctx.fetched_data.value);
+            .set_register::<R1>(self.step_ctx.fetched_data.value);
     }
 }

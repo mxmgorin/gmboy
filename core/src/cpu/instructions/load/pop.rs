@@ -11,9 +11,9 @@ impl Cpu {
         let addr = (hi << 8) | lo;
 
         if r1 == RegisterType::AF {
-            self.registers.set_register(r1, addr & 0xFFF0);
+            self.registers.set_register::<R1>(addr & 0xFFF0);
         } else {
-            self.registers.set_register(r1, addr);
+            self.registers.set_register::<R1>(addr);
         }
     }
 }
