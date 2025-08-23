@@ -1,6 +1,6 @@
+use core::cpu::jit::x64::compiler::JitCompiler;
 use std::hint::black_box;
 use core::cpu::RegisterType;
-use core::cpu::jit::jit_x64::JitX64;
 use core::apu::Apu;
 use core::auxiliary::clock::Clock;
 use core::auxiliary::timer::Timer;
@@ -31,7 +31,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let bus = Bus::new(get_cart(), Default::default());
         let clock = Clock::new(ppu, bus);
         let mut cpu = Cpu::new(clock);
-        let jit = JitX64::default();
+        let jit = JitCompiler::default();
 
         b.iter(|| {
             for _ in 0..100_000 {
@@ -57,7 +57,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let ppu = Ppu::default();
         let bus = Bus::new(get_cart(), Default::default());
         let clock = Clock::new(ppu, bus);
-        let jit = JitX64::default();
+        let jit = JitCompiler::default();
         let mut cpu = Cpu::new(clock);
         cpu.step_ctx.opcode = 0x41;
         cpu.registers

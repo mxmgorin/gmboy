@@ -1,12 +1,12 @@
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
-use crate::cpu::jit::jit_x64::JitX64;
 use crate::cpu::Cpu;
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
 use crate::emu::EmuAudioCallback;
 use crate::ppu::Ppu;
 use serde::{Deserialize, Serialize};
+use crate::cpu::jit::x64::compiler::JitCompiler;
 
 #[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub enum RunMode {
@@ -20,13 +20,13 @@ pub struct EmuRuntime {
     pub mode: RunMode,
     pub cpu: Cpu,
     debugger: Option<Debugger>,
-    jit: Option<JitX64>,
+    jit: Option<JitCompiler>,
 }
 
 impl EmuRuntime {
     pub fn new(ppu: Ppu, bus: Bus, debugger: Option<Debugger>) -> Self {
         #[cfg(all(feature = "jit", target_arch = "x86_64"))]
-        let jit = Some(JitX64::default());
+        let jit = Some(JitCompiler::default());
 
         #[cfg(all(feature = "jit", not(target_arch = "x86_64")))]
         let jit = None;

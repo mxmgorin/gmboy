@@ -1,9 +1,9 @@
 use crate::auxiliary::clock::Clock;
 use crate::cpu::instructions::{FetchedData, JumpCondition};
 use crate::cpu::interrupts::InterruptType;
-use crate::cpu::jit::jit_x64::JitX64;
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
+use crate::cpu::jit::x64::compiler::JitCompiler;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
@@ -63,7 +63,7 @@ impl Cpu {
     }
 
     /// Reads 16bit immediate data by PC and increments PC + 2. Costs 1 M-Cycle.
-    #[inline]
+    #[inline(always)]
     pub fn read_pc16(&mut self) -> u16 {
         u16::from_le_bytes([self.read_pc(), self.read_pc()])
     }
@@ -87,7 +87,7 @@ impl Cpu {
     pub fn step(
         &mut self,
         mut _debugger: Option<&mut crate::debugger::Debugger>,
-        jit: Option<&JitX64>,
+        jit: Option<&JitCompiler>,
     ) {
         #[cfg(any(feature = "debug", debug_assertions))]
         if let Some(debugger) = _debugger.as_mut() {
