@@ -112,13 +112,11 @@ impl Cpu {
         self.step_ctx.opcode = self.read_pc();
         let prev_enabling_ime = self.enabling_ime;
 
-        if let Some(jit) = jit {
-            if !jit.execute_opcode(self) {
-                self.execute_opcode();
-            }
-        } else {
-            self.execute_opcode();
-        }
+        #[cfg(feature = "jit")]
+        self.execute_opcode_jit(jit);
+
+        #[cfg(not(feature = "jit"))]
+        self.execute_opcode();
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed

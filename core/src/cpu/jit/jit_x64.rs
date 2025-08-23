@@ -14,8 +14,8 @@ impl Default for JitX64 {
             fns: [None; 256],
             _bufs: Vec::new(),
         };
-        
-        jit.fill_opcodes();
+
+        jit.emit_fns();
 
         jit
     }
@@ -57,10 +57,78 @@ impl JitX64 {
             }
         }
     }
-    
-    fn fill_opcodes(&mut self) {
+
+    fn emit_fns(&mut self) {
+        // 0x4X
         self.emit_ld_r_r(0x40, RegisterType::B, RegisterType::B);
         self.emit_ld_r_r(0x41, RegisterType::B, RegisterType::C);
+        self.emit_ld_r_r(0x42, RegisterType::B, RegisterType::D);
+        self.emit_ld_r_r(0x43, RegisterType::B, RegisterType::E);
+        self.emit_ld_r_r(0x44, RegisterType::B, RegisterType::H);
+        self.emit_ld_r_r(0x45, RegisterType::B, RegisterType::L);
+        //self.emit_ld_r_r(0x46] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::B, RegisterType::HL);
+        self.emit_ld_r_r(0x47, RegisterType::B, RegisterType::A);
+        self.emit_ld_r_r(0x48, RegisterType::C, RegisterType::B);
+        self.emit_ld_r_r(0x49, RegisterType::C, RegisterType::C);
+        self.emit_ld_r_r(0x4A, RegisterType::C, RegisterType::D);
+        self.emit_ld_r_r(0x4B, RegisterType::C, RegisterType::E);
+        self.emit_ld_r_r(0x4C, RegisterType::C, RegisterType::H);
+        self.emit_ld_r_r(0x4D, RegisterType::C, RegisterType::L);
+        //self.emit_ld_r_r(0x4E] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::C, RegisterType::HL);
+        self.emit_ld_r_r(0x4F, RegisterType::C, RegisterType::A);
+
+        // 0x5X
+        self.emit_ld_r_r(0x50, RegisterType::D, RegisterType::B);
+        self.emit_ld_r_r(0x51, RegisterType::D, RegisterType::C);
+        self.emit_ld_r_r(0x52, RegisterType::D, RegisterType::D);
+        self.emit_ld_r_r(0x53, RegisterType::D, RegisterType::E);
+        self.emit_ld_r_r(0x54, RegisterType::D, RegisterType::H);
+        self.emit_ld_r_r(0x55, RegisterType::D, RegisterType::L);
+        //self.emit_ld_r_r(0x56] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::D, RegisterType::HL);
+        self.emit_ld_r_r(0x57, RegisterType::D, RegisterType::A);
+        self.emit_ld_r_r(0x58, RegisterType::E, RegisterType::B);
+        self.emit_ld_r_r(0x59, RegisterType::E, RegisterType::C);
+        self.emit_ld_r_r(0x5A, RegisterType::E, RegisterType::D);
+        self.emit_ld_r_r(0x5B, RegisterType::E, RegisterType::E);
+        self.emit_ld_r_r(0x5C, RegisterType::E, RegisterType::H);
+        self.emit_ld_r_r(0x5D, RegisterType::E, RegisterType::L);
+        //self.emit_ld_r_r(0x5E] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::E, RegisterType::HL);
+        self.emit_ld_r_r(0x5F, RegisterType::E, RegisterType::A);
+
+        // 0x6X
+        self.emit_ld_r_r(0x60, RegisterType::H, RegisterType::B);
+        self.emit_ld_r_r(0x61, RegisterType::H, RegisterType::C);
+        self.emit_ld_r_r(0x62, RegisterType::H, RegisterType::D);
+        self.emit_ld_r_r(0x63, RegisterType::H, RegisterType::E);
+        self.emit_ld_r_r(0x64, RegisterType::H, RegisterType::H);
+        self.emit_ld_r_r(0x65, RegisterType::H, RegisterType::L);
+        //self.emit_ld_r_r(0x66] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::H, RegisterType::HL);
+        self.emit_ld_r_r(0x67, RegisterType::H, RegisterType::A);
+        self.emit_ld_r_r(0x68, RegisterType::L, RegisterType::B);
+        self.emit_ld_r_r(0x69, RegisterType::L, RegisterType::C);
+        self.emit_ld_r_r(0x6A, RegisterType::L, RegisterType::D);
+        self.emit_ld_r_r(0x6B, RegisterType::L, RegisterType::E);
+        self.emit_ld_r_r(0x6C, RegisterType::L, RegisterType::H);
+        self.emit_ld_r_r(0x6D, RegisterType::L, RegisterType::L);
+        //self.emit_ld_r_r(0x6E] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::L, RegisterType::HL);
+        self.emit_ld_r_r(0x6F, RegisterType::L, RegisterType::A);
+
+        // 0x7X
+        self.emit_ld_r_r(0x78, RegisterType::A, RegisterType::B);
+        self.emit_ld_r_r(0x79, RegisterType::A, RegisterType::C);
+        self.emit_ld_r_r(0x7A, RegisterType::A, RegisterType::D);
+        self.emit_ld_r_r(0x7B, RegisterType::A, RegisterType::E);
+        self.emit_ld_r_r(0x7C, RegisterType::A, RegisterType::H);
+        self.emit_ld_r_r(0x7D, RegisterType::A, RegisterType::L);
+        //self.emit_ld_r_r(0x7E] =
+        //    Cpu::fetch_execute_ld_r_mr::<{ RegisterType::A, RegisterType::HL);
+        self.emit_ld_r_r(0x7F, RegisterType::A, RegisterType::A);
     }
 }
 

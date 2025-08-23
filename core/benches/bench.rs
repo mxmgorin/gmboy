@@ -26,22 +26,31 @@ pub fn get_cart() -> Cart {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("cpu_step_500_000", |b| {
-        b.iter_batched(
-            || {
-                let ppu = Ppu::default();
-                let bus = Bus::new(get_cart(), Default::default());
-                let clock = Clock::new(ppu, bus);
+    c.bench_function("jit_cpu_step", |b| {
+        let ppu = Ppu::default();
+        let bus = Bus::new(get_cart(), Default::default());
+        let clock = Clock::new(ppu, bus);
+        let mut cpu = Cpu::new(clock);
+        let jit = JitX64::default();
 
-                Cpu::new(clock)
-            },
-            |mut cpu| {
-                for _ in 0..500_000 {
-                    cpu.step(None, None);
-                }
-            },
-            BatchSize::LargeInput,
-        );
+        b.iter(|| {
+            for _ in 0..100_000 {
+                cpu.step(None, Some(&jit));
+            }
+        });
+    });
+
+    c.bench_function("cpu_step", |b| {
+        let ppu = Ppu::default();
+        let bus = Bus::new(get_cart(), Default::default());
+        let clock = Clock::new(ppu, bus);
+        let mut cpu = Cpu::new(clock);
+
+        b.iter(|| {
+            for _ in 0..100_000 {
+                cpu.step(None, None);
+            }
+        });
     });
 
     c.bench_function("jit_ld_r_r", |b| {

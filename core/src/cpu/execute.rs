@@ -1,7 +1,19 @@
 use crate::cpu::instructions::*;
 use crate::cpu::{Cpu, RegisterType};
+use crate::cpu::jit::jit_x64::JitX64;
 
 impl Cpu {
+    #[inline(always)]
+    pub fn execute_opcode_jit(&mut self, jit: Option<&JitX64>) {
+        if let Some(jit) = jit {
+            if !jit.execute_opcode(self) {
+                self.execute_opcode();
+            }
+        } else {
+            self.execute_opcode();
+        }
+    }
+
     #[inline(always)]
     pub fn execute_opcode(&mut self) {
         let opcode = self.step_ctx.opcode;
