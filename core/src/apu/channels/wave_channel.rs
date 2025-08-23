@@ -69,6 +69,7 @@ impl Default for WaveChannel {
 }
 
 impl WaveChannel {
+    #[inline]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             CH3_NR30_DAC_ENABLE_ADDRESS => self.nrx0_dac_enable.read(),
@@ -80,6 +81,7 @@ impl WaveChannel {
         }
     }
 
+    #[inline]
     pub fn write(&mut self, address: u16, value: u8, nr52_master_ctrl: &mut NR52) {
         match address {
             CH3_NR30_DAC_ENABLE_ADDRESS => self.nrx0_dac_enable.byte = value,
@@ -100,17 +102,20 @@ impl WaveChannel {
         }
     }
 
+    #[inline]
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
         self.length_timer
             .tick(master_ctrl, &mut self.nrx3x4_period_and_ctrl.nrx4);
     }
 
+    #[inline]
     pub fn tick(&mut self) {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.wave_ram.inc_sample_index();
         }
     }
 
+    #[inline]
     fn trigger(&mut self, master_ctrl: &mut NR52) {
         master_ctrl.activate_ch3();
 
@@ -133,16 +138,19 @@ pub struct WaveRam {
 }
 
 impl WaveRam {
+    #[inline]
     pub fn read(&self, addr: u16) -> u8 {
         let addr = addr - CH3_WAVE_RAM_START;
         self.bytes[addr as usize]
     }
 
+    #[inline]
     pub fn write(&mut self, addr: u16, value: u8) {
         let index = addr - CH3_WAVE_RAM_START;
         self.bytes[index as usize] = value;
     }
 
+    #[inline]
     fn read_sample(&self) -> u8 {
         let byte_index = self.sample_index / 2;
         let is_high_nibble = self.sample_index % 2 == 0;
@@ -154,15 +162,18 @@ impl WaveRam {
         }
     }
 
+    #[inline]
     pub fn inc_sample_index(&mut self) {
         self.sample_index = (self.sample_index + 1) % 32;
         self.sample_buffer = self.read_sample();
     }
 
+    #[inline]
     pub fn reset_sample_index(&mut self) {
         self.sample_index = 0;
     }
 
+    #[inline]
     pub fn clear_sample_buffer(&mut self) {
         self.sample_index = 0;
         self.sample_buffer = 0;

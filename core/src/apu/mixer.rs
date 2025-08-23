@@ -14,6 +14,7 @@ pub struct Mixer {
 
 impl Mixer {
     /// Combines samples from all channels
+    #[inline]
     pub fn mix(&self) -> (f32, f32) {
         let mut left_sample = 0.0;
         let mut right_sample = 0.0;
@@ -62,6 +63,7 @@ impl Mixer {
         )
     }
 
+    #[inline(always)]
     fn amplify(&self, sample_left: f32, sample_right: f32) -> (f32, f32) {
         let left_sample = apply_volume(sample_left, self.nr50_volume.left_volume());
         let right_sample = apply_volume(sample_right, self.nr50_volume.right_volume());
@@ -70,10 +72,12 @@ impl Mixer {
     }
 }
 
+#[inline(always)]
 fn adjust_volume(sample: f32) -> f32 {
     sample
 }
 
+#[inline(always)]
 fn apply_volume(sample: f32, volume: u8) -> f32 {
     let volume_factor = (volume as f32 + 1.0) / 8.0;
     sample * volume_factor

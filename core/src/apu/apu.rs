@@ -87,8 +87,8 @@ impl Apu {
         }
 
         Self {
-            ch1: SquareChannel::ch1(),
-            ch2: SquareChannel::ch2(),
+            ch1: SquareChannel::new_ch1(),
+            ch2: SquareChannel::new_ch2(),
             ch3: WaveChannel::default(),
             ch4: NoiseChannel::default(),
             nr52: NR52::default(),
@@ -102,6 +102,7 @@ impl Apu {
         }
     }
 
+    #[inline]
     pub fn update_buffer_size(&mut self) {
         self.buffer = vec![0.0; self.config.buffer_size].into_boxed_slice();
         self.clear_buffer();
@@ -129,6 +130,7 @@ impl Apu {
         }
     }
 
+    #[inline]
     pub fn push_buffer(&mut self, output_left: f32, output_right: f32) {
         let buffer_len = self.buffer.len();
         debug_assert!(buffer_len % 2 == 0);
@@ -170,18 +172,22 @@ impl Apu {
         self.buffer_idx += 2;
     }
 
+    #[inline]
     pub fn get_buffer(&self) -> &[f32] {
         &self.buffer[0..self.buffer_idx]
     }
 
+    #[inline]
     pub fn clear_buffer(&mut self) {
         self.buffer_idx = 0;
     }
 
+    #[inline]
     pub fn buffer_ready(&self) -> bool {
         self.buffer_idx >= self.config.buffer_size / 2
     }
 
+    #[inline]
     pub fn write(&mut self, address: u16, value: u8) {
         if (CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END).contains(&address) {
             self.ch3.wave_ram.write(address, value);
@@ -243,6 +249,7 @@ impl Apu {
         }
     }
 
+    #[inline]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.read(address),
@@ -263,19 +270,8 @@ impl Apu {
         }
     }
 
-    // Step   Length Ctr  Vol Env     Sweep
-    // ---------------------------------------
-    // 0      Clock       -           -
-    // 1      -           -           -
-    // 2      Clock       -           Clock
-    // 3      -           -           -
-    // 4      Clock       -           -
-    // 5      -           -           -
-    // 6      Clock       -           Clock
-    // 7      -           Clock       -
-    // ---------------------------------------
-    // Rate   256 Hz      64 Hz       128 Hz
     /// The frame sequencer generates low frequency clocks for the modulation units. It is clocked by a 512 Hz timer.
+    #[inline]
     fn sequence_frame(&mut self) {
         if self.ticks_count % FRAME_SEQUENCER_DIV as u32 != 0 {
             return;
@@ -292,6 +288,18 @@ impl Apu {
 
 type FrameStepFn = fn(&mut Apu);
 
+// Step   Length Ctr  Vol Env     Sweep
+// ---------------------------------------
+// 0      Clock       -           -
+// 1      -           -           -
+// 2      Clock       -           Clock
+// 3      -           -           -
+// 4      Clock       -           -
+// 5      -           -           -
+// 6      Clock       -           Clock
+// 7      -           Clock       -
+// ---------------------------------------
+// Rate   256 Hz      64 Hz       128 Hz
 const FRAME_STEP_FNS: [FrameStepFn; 8] = [
     tick_length_all,           // step 0
     noop,                      // step 1
@@ -303,6 +311,7 @@ const FRAME_STEP_FNS: [FrameStepFn; 8] = [
     tick_envelope_some,        // step 7
 ];
 
+#[inline(always)]
 fn tick_length_all(apu: &mut Apu) {
     apu.ch1.tick_length(&mut apu.nr52);
     apu.ch2.tick_length(&mut apu.nr52);
@@ -310,17 +319,20 @@ fn tick_length_all(apu: &mut Apu) {
     apu.ch4.tick_length(&mut apu.nr52);
 }
 
+#[inline(always)]
 fn tick_length_all_and_sweep(apu: &mut Apu) {
     tick_length_all(apu);
     apu.ch1.tick_sweep(&mut apu.nr52);
 }
 
+#[inline(always)]
 fn tick_envelope_some(apu: &mut Apu) {
     apu.ch1.tick_envelope();
     apu.ch2.tick_envelope();
     apu.ch4.tick_envelope();
 }
 
+#[inline(always)]
 fn noop(_apu: &mut Apu) {}
 
 /// FF26 — NR52: Audio master control
@@ -330,6 +342,7 @@ pub struct NR52 {
 }
 
 impl NR52 {
+    #[inline]
     pub fn write(&mut self, value: u8) {
         let prev_enabled = self.is_audio_on();
         let new_enabled = get_bit_flag(value, 7);
@@ -343,39 +356,48 @@ impl NR52 {
         }
     }
 
+    #[inline]
     pub fn read(&self) -> u8 {
         self.byte | 0b0111_0000 // Bits 4-6 always read as 1
     }
 
+    #[inline]
     pub fn is_audio_on(&self) -> bool {
         get_bit_flag(self.byte, 7)
     }
 
+    #[inline]
     pub fn is_ch1_on(&self) -> bool {
         get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH1))
     }
 
+    #[inline]
     pub fn is_ch2_on(&self) -> bool {
         get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH2))
     }
 
+    #[inline]
     pub fn is_ch3_on(&self) -> bool {
         get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH3))
     }
 
+    #[inline]
     pub fn is_ch4_on(&self) -> bool {
         get_bit_flag(self.byte, Self::get_enable_bit_pos(ChannelType::CH4))
     }
 
     /// Only the status of the channels’ generation circuits is reported
+    #[inline]
     pub fn is_ch_on(&self, ch_type: ChannelType) -> bool {
         get_bit_flag(self.byte, Self::get_enable_bit_pos(ch_type))
     }
 
+    #[inline]
     pub fn deactivate_ch(&mut self, ch_type: ChannelType) {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), false);
     }
 
+    #[inline]
     pub fn deactivate_ch4(&mut self) {
         set_bit(
             &mut self.byte,
@@ -384,6 +406,7 @@ impl NR52 {
         );
     }
 
+    #[inline]
     pub fn activate_ch1(&mut self) {
         set_bit(
             &mut self.byte,
@@ -392,6 +415,7 @@ impl NR52 {
         );
     }
 
+    #[inline]
     pub fn activate_ch2(&mut self) {
         set_bit(
             &mut self.byte,
@@ -400,6 +424,7 @@ impl NR52 {
         );
     }
 
+    #[inline]
     pub fn activate_ch3(&mut self) {
         set_bit(
             &mut self.byte,
@@ -408,6 +433,7 @@ impl NR52 {
         );
     }
 
+    #[inline]
     pub fn activate_ch4(&mut self) {
         set_bit(
             &mut self.byte,
@@ -416,10 +442,12 @@ impl NR52 {
         );
     }
 
+    #[inline]
     pub fn activate_ch(&mut self, ch_type: ChannelType) {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), true);
     }
 
+    #[inline]
     fn get_enable_bit_pos(ch_type: ChannelType) -> u8 {
         match ch_type {
             ChannelType::CH1 => 0,

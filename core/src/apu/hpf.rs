@@ -32,6 +32,7 @@ impl Hpf {
     /// When all four channel DACs are off, the master volume units are disconnected from the sound
     /// output and the output level becomes 0. When any channel DAC is on, a high-pass filter
     /// capacitor is connected which slowly removes any DC component from the signal
+    #[inline(always)]
     pub fn apply_filter(&mut self, left_input: f32, right_input: f32) -> (f32, f32) {
         if self.dac1_enabled || self.dac2_enabled || self.dac3_enabled || self.dac4_enabled {
             let left_out = left_input - self.left_capacitor;
@@ -49,6 +50,7 @@ impl Hpf {
 }
 
 /// 0.999958 and 0.998943 for MGB&CGB
+#[inline(always)]
 fn calc_charge_factor(sampling_freq: u32) -> f32 {
     0.999958_f32.powf(4194304.0 / sampling_freq as f32)
 }

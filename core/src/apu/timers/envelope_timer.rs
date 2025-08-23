@@ -27,10 +27,12 @@ impl EnvelopeTimer {
         }
     }
 
+    #[inline(always)]
     pub fn get_volume(&self) -> u8 {
         self.volume
     }
 
+    #[inline(always)]
     pub fn reload(&mut self, nrx2: NRx2) {
         self.volume = nrx2.initial_volume();
         self.counter = nrx2.sweep_pace();
