@@ -26,6 +26,7 @@ impl Mbc1 {
         }
     }
 
+    #[inline(always)]
     fn is_multicart(rom_bytes: &[u8]) -> bool {
         // Only 8 Mbit MBC1 multicarts exist
         if rom_bytes.len() != 1_048_576 {
@@ -46,6 +47,7 @@ impl Mbc1 {
         nintendo_logo_count >= 3
     }
 
+    #[inline(always)]
     pub fn get_effective_rom_bank_number(&self, address: u16) -> u8 {
         if address < 0x4000 {
             match self.banking_mode {
@@ -65,6 +67,7 @@ impl Mbc1 {
         }
     }
 
+    #[inline(always)]
     pub fn get_rom_bank_mask(&self) -> u8 {
         let required_bits = (usize::BITS - (self.data.rom_banks_count - 1).leading_zeros()) as u8;
         let mask = (1 << required_bits) - 1;
@@ -72,12 +75,14 @@ impl Mbc1 {
         mask as u8
     }
 
+    #[inline(always)]
     pub fn get_rom_address(address: u16, bank_number: u8) -> usize {
         (address as usize & 0x3FFF) | (bank_number as usize * ROM_BANK_SIZE)
     }
 }
 
 impl Mbc for Mbc1 {
+    #[inline]
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         let bank = self.get_effective_rom_bank_number(address);
         let address = Mbc1::get_rom_address(address, bank) & (cart_data.len() - 1);
@@ -85,6 +90,7 @@ impl Mbc for Mbc1 {
         cart_data.read(address)
     }
 
+    #[inline]
     fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
@@ -103,10 +109,12 @@ impl Mbc for Mbc1 {
         }
     }
 
+    #[inline]
     fn read_ram(&self, address: u16) -> u8 {
         self.data.read_ram(address, self.banking_mode)
     }
 
+    #[inline]
     fn write_ram(&mut self, address: u16, value: u8) {
         self.data.write_ram(address, value, self.banking_mode);
     }

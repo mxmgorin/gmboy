@@ -44,6 +44,7 @@ pub struct FallingEdgeDetector {
 }
 
 impl FallingEdgeDetector {
+    #[inline(always)]
     pub fn detect(&mut self, div: u16, tac: u8) -> bool {
         let clock_bit = get_bit_flag16(div, get_clock_bit_position(tac));
         let enable_bit = get_bit_flag(tac, TAC_ENABLE_BIT);
@@ -56,6 +57,7 @@ impl FallingEdgeDetector {
     }
 }
 
+#[inline(always)]
 fn get_clock_bit_position(tac: u8) -> u8 {
     match tac & 0b11 {
         // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
@@ -101,6 +103,7 @@ impl Default for Timer {
 }
 
 impl Timer {
+    #[inline]
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if let Some(tima_overflow_ticks) = self.tima_overflow_ticks.as_mut() {
@@ -123,6 +126,7 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     fn inc_tima(&mut self) {
         let (tima, tima_overflow) = self.tima.overflowing_add(1);
         self.write_tima(tima);
@@ -136,6 +140,7 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     fn get_clock_bit_position(&self) -> u8 {
         match self.tac & 0b11 {
             // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles

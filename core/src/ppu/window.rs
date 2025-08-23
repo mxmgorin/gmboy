@@ -13,15 +13,18 @@ pub struct LcdWindow {
 }
 
 impl LcdWindow {
+    #[inline(always)]
     pub fn on(&self, lcd: &Lcd) -> bool {
         self.is_visible(lcd)
             && lcd.ly >= self.y
             && (lcd.ly as u16) < (self.y as u16 + LCD_Y_RES as u16)
     }
+    #[inline(always)]
     pub fn is_visible(&self, lcd: &Lcd) -> bool {
         lcd.control.win_enable() && self.x <= 166 && self.y < LCD_Y_RES
     }
 
+    #[inline]
     pub fn get_tile_idx(&self, fetch_x: u16, bus: &Bus) -> Option<u8> {
         if !self.is_visible(&bus.io.lcd) {
             return None;

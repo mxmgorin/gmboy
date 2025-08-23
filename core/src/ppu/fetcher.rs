@@ -78,6 +78,7 @@ impl Default for PixelFetcher {
 }
 
 impl PixelFetcher {
+    #[inline]
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         if line_ticks & 1 != 0 {
             // SAFETY: we control FETCH_HANDLERS and FetchStep
@@ -89,6 +90,7 @@ impl PixelFetcher {
         self.try_fifo_pop(bus);
     }
 
+    #[inline]
     fn try_fifo_pop(&mut self, bus: &Bus) {
         if let Some(pixel) = self.pixel_fifo.pop() {
             // Check if we are in the window or background layer
@@ -113,6 +115,7 @@ impl PixelFetcher {
         }
     }
 
+    #[inline]
     fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
         let base = index * PPU_BYTES_PER_PIXEL;
         let bytes = pixel.as_rgb565_bytes();
@@ -192,6 +195,7 @@ impl PixelFetcher {
         }
     }
 
+    #[inline]
     fn try_fifo_push(&mut self, bus: &Bus) -> bool {
         if self.pixel_fifo.is_full() {
             return false;
@@ -246,6 +250,7 @@ impl PixelFetcher {
         }
     }
 
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.fetch_step = FetchStep::Tile;
         self.line_x = 0;
@@ -254,10 +259,12 @@ impl PixelFetcher {
         self.fifo_x = 0;
     }
 
+    #[inline(always)]
     pub fn clear(&mut self) {
         self.pixel_fifo.clear();
     }
 
+    #[inline(always)]
     pub fn is_full(&self) -> bool {
         self.pushed_x >= LCD_X_RES as usize
     }

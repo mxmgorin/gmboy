@@ -18,10 +18,12 @@ impl Mbc5 {
 }
 
 impl Mbc for Mbc5 {
+    #[inline]
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         self.data.read_rom(cart_data, address)
     }
 
+    #[inline]
     fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
@@ -44,10 +46,12 @@ impl Mbc for Mbc5 {
         }
     }
 
+    #[inline]
     fn read_ram(&self, address: u16) -> u8 {
         self.data.read_ram(address, BankingMode::RamBanking)
     }
 
+    #[inline]
     fn write_ram(&mut self, address: u16, value: u8) {
         self.data.write_ram(address, value, BankingMode::RamBanking);
     }

@@ -18,10 +18,12 @@ impl Mbc2 {
 }
 
 impl Mbc for Mbc2 {
+    #[inline]
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         self.data.read_rom(cart_data, address)
     }
 
+    #[inline]
     fn write_rom(&mut self, address: u16, value: u8) {
         if let 0x0000..=0x3FFF = address {
             if address & 0x100 == 0 {
@@ -37,6 +39,7 @@ impl Mbc for Mbc2 {
         }
     }
 
+    #[inline]
     fn read_ram(&self, address: u16) -> u8 {
         if !self.data.ram_enabled {
             return 0xFF;
@@ -46,6 +49,7 @@ impl Mbc for Mbc2 {
         self.data.read_ram_byte(address) | 0xF0
     }
 
+    #[inline]
     fn write_ram(&mut self, address: u16, value: u8) {
         self.data.write_ram(address, value, BankingMode::RamBanking);
     }

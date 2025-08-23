@@ -128,6 +128,7 @@ impl MbcData {
         }
     }
 
+    #[inline(always)]
     pub fn read_ram_byte(&self, index: usize) -> u8 {
         unsafe { *self.ram_bytes.get_unchecked(index) }
     }
@@ -144,10 +145,12 @@ impl MbcData {
         }
     }
 
+    #[inline(always)]
     pub fn write_ram_enabled(&mut self, value: u8) {
         self.ram_enabled = value & 0xF == 0xA;
     }
 
+    #[inline(always)]
     fn effective_ram_bank(&self, banking_mode: BankingMode) -> usize {
         if self.ram_bytes.len() <= RAM_BANK_SIZE {
             0
@@ -160,6 +163,7 @@ impl MbcData {
         }
     }
 
+    #[inline]
     pub fn read_ram(&self, address: u16, banking_mode: BankingMode) -> u8 {
         if !self.ram_enabled || self.ram_bytes.is_empty() {
             return 0xFF;
@@ -175,6 +179,7 @@ impl MbcData {
         }
     }
 
+    #[inline]
     pub fn write_ram(&mut self, address: u16, value: u8, banking_mode: BankingMode) {
         if !self.ram_enabled || self.ram_bytes.is_empty() {
             return;

@@ -46,6 +46,7 @@ impl Ppu {
         self.fps.as_mut().map(|x| x.get())
     }
 
+    #[inline(always)]
     pub fn tick(&mut self, bus: &mut Bus) {
         self.line_ticks += 1;
 
@@ -57,6 +58,7 @@ impl Ppu {
         }
     }
 
+    #[inline(always)]
     pub fn mode_oam(&mut self, bus: &mut Bus) {
         if self.line_ticks >= 80 {
             bus.io.lcd.status.set_ppu_mode(PpuMode::Transfer);
@@ -74,6 +76,7 @@ impl Ppu {
         }
     }
 
+    #[inline(always)]
     fn mode_transfer(&mut self, bus: &mut Bus) {
         self.pipeline.process(bus, self.line_ticks);
 
@@ -87,6 +90,7 @@ impl Ppu {
         }
     }
 
+    #[inline(always)]
     fn mode_vblank(&mut self, io: &mut Io) {
         if self.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);
@@ -100,6 +104,7 @@ impl Ppu {
         }
     }
 
+    #[inline(always)]
     fn mode_hblank(&mut self, io: &mut Io) {
         if self.line_ticks >= TICKS_PER_LINE {
             io.lcd.increment_ly(&mut io.interrupts);

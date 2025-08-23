@@ -12,6 +12,7 @@ pub struct Dma {
 }
 
 impl Dma {
+    #[inline]
     pub fn start(&mut self, address: u8) {
         if self.is_active {
             self.queue_addr = Some((address as u16) << 8);
@@ -30,6 +31,7 @@ impl Dma {
     }
 
     /// Executes a single OAM DMA write and auto-increments the internal index cursor.
+    #[inline]
     pub fn tick(bus: &mut Bus) {
         if !bus.dma.is_active {
             return;

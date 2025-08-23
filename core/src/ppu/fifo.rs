@@ -24,6 +24,7 @@ impl Default for PixelFifo {
 }
 
 impl PixelFifo {
+    #[inline]
     pub fn push(&mut self, pixel: PixelColor) {
         // SAFETY:
         // - we change tail only here and don't give any mut reference
@@ -35,6 +36,7 @@ impl PixelFifo {
         self.size += 1;
     }
 
+    #[inline]
     pub fn pop(&mut self) -> Option<PixelColor> {
         if self.size > MAX_FIFO_SIZE {
             // SAFETY:
@@ -50,12 +52,14 @@ impl PixelFifo {
         None
     }
 
+    #[inline(always)]
     pub fn clear(&mut self) {
         self.head = 0;
         self.tail = 0;
         self.size = 0;
     }
 
+    #[inline(always)]
     pub fn is_full(&self) -> bool {
         self.size > MAX_FIFO_SIZE
     }

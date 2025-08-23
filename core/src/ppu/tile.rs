@@ -36,12 +36,14 @@ pub struct TileLineData {
 
 impl TileLineData {
     /// Mutable view as 2-byte array slice
+    #[inline(always)]
     pub fn as_bytes_mut(&mut self) -> &mut [u8; 2] {
         // SAFETY: TileLineData is #[repr(C)] with exactly 2 u8 fields, no padding
         unsafe { &mut *(self as *mut TileLineData as *mut [u8; 2]) }
     }
 
     /// View entry as 4-byte array slice
+    #[inline(always)]
     pub fn as_bytes(&self) -> &[u8; 2] {
         // SAFETY: TileLineData is #[repr(C)] with exactly 2 u8 fields, no padding
         unsafe { &*(self as *const TileLineData as *const [u8; 2]) }
@@ -72,6 +74,7 @@ impl PixelData {
         Self { byte1, byte2, bit }
     }
 
+    #[inline(always)]
     pub fn into_color_index(self) -> usize {
         get_color_index(self.byte1, self.byte2, self.bit)
     }

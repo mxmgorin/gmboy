@@ -38,6 +38,7 @@ pub struct Joypad {
 }
 
 impl Joypad {
+    #[inline(always)]
     pub fn handle(&mut self, button: JoypadButton, is_pressed: bool) {
         match button {
             JoypadButton::Start => self.start = is_pressed,
@@ -51,6 +52,7 @@ impl Joypad {
         }
     }
 
+    #[inline(always)]
     pub fn get_byte(&self) -> u8 {
         if self.actions_selected {
             ((!self.a as u8) << A_OR_RIGHT_BIT)
@@ -67,6 +69,7 @@ impl Joypad {
         }
     }
 
+    #[inline(always)]
     pub fn set_byte(&mut self, value: u8) {
         self.directions_selected = (value & 0x10) == 0;
         self.actions_selected = (value & 0x20) == 0;

@@ -81,10 +81,12 @@ pub struct Serial {
 const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 
 impl Serial {
+    #[inline(always)]
     pub fn has_data(&self) -> bool {
         self.sc == 0x81
     }
 
+    #[inline(always)]
     pub fn take_data(&mut self) -> u8 {
         self.sc = 0;
 

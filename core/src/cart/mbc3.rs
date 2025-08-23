@@ -33,14 +33,17 @@ impl Default for Rtc {
 }
 
 impl Rtc {
+    #[inline(always)]
     pub fn is_selected(&self) -> bool {
         (0x08..=0x0C).contains(&self.selected_register)
     }
 
+    #[inline(always)]
     pub fn reset_selected(&mut self) {
         self.selected_register = 0;
     }
 
+    #[inline(always)]
     pub fn latch_clock(&mut self) {
         let now = SystemTime::now();
         let elapsed = now.duration_since(self.start).unwrap_or(Duration::ZERO);
@@ -88,6 +91,7 @@ pub struct RtcRegisters {
 }
 
 impl RtcRegisters {
+    #[inline(always)]
     pub fn read(&self, address: u8) -> u8 {
         match address {
             0x08 => self.seconds,
@@ -115,6 +119,7 @@ impl RtcRegisters {
         }
     }
 
+    #[inline(always)]
     pub fn write(&mut self, address: u8, value: u8) {
         match address {
             0x08 => self.seconds = value % 60,
@@ -144,10 +149,12 @@ impl Mbc3 {
 }
 
 impl Mbc for Mbc3 {
+    #[inline]
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         self.data.read_rom(cart_data, address)
     }
 
+    #[inline]
     fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
@@ -178,6 +185,7 @@ impl Mbc for Mbc3 {
         }
     }
 
+    #[inline]
     fn read_ram(&self, address: u16) -> u8 {
         if self.rtc.is_selected() {
             return self.rtc.registers_latched.read(self.rtc.selected_register);
@@ -186,6 +194,7 @@ impl Mbc for Mbc3 {
         self.data.read_ram(address, BankingMode::RamBanking)
     }
 
+    #[inline]
     fn write_ram(&mut self, address: u16, value: u8) {
         if self.rtc.is_selected() {
             return self

@@ -78,6 +78,7 @@ impl Lcd {
         }
     }
 
+    #[inline(always)]
     pub fn apply_colors(&mut self, colors: [PixelColor; 4]) {
         self.current_colors = colors;
         self.bg_colors = colors;
@@ -85,6 +86,7 @@ impl Lcd {
         self.sp2_colors = colors;
     }
 
+    #[inline]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,
@@ -103,6 +105,7 @@ impl Lcd {
         }
     }
 
+    #[inline]
     pub fn set_pallet(&mut self, colors: [PixelColor; 4]) {
         self.current_colors = colors;
 
@@ -113,6 +116,7 @@ impl Lcd {
         }
     }
 
+    #[inline]
     fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
         let colors: &mut [PixelColor; 4] = match pallet_type {
             1 => &mut self.sp1_colors,
@@ -126,6 +130,7 @@ impl Lcd {
         colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
     }
 
+    #[inline]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte = value,
@@ -153,6 +158,7 @@ impl Lcd {
         }
     }
 
+    #[inline(always)]
     pub fn increment_ly(&mut self, interrupts: &mut Interrupts) {
         if self.window.is_visible(self) && self.window.on(self) {
             self.window.line_number += 1;
@@ -162,12 +168,14 @@ impl Lcd {
         self.compare_ly(interrupts);
     }
 
+    #[inline(always)]
     pub fn reset_ly(&mut self, interrupts: &mut Interrupts) {
         self.ly = 0;
         self.window.line_number = 0;
         self.compare_ly(interrupts);
     }
 
+    #[inline(always)]
     fn compare_ly(&mut self, interrupts: &mut Interrupts) {
         if self.ly == self.ly_compare {
             self.status.lyc_set(true);
@@ -194,13 +202,16 @@ impl Default for LcdControl {
 }
 
 impl LcdControl {
+    #[inline(always)]
     pub fn bgw_enabled(&self) -> bool {
         get_bit_flag(self.byte, 0)
     }
+    #[inline(always)]
     pub fn obj_enabled(&self) -> bool {
         get_bit_flag(self.byte, 1)
     }
 
+    #[inline(always)]
     pub fn obj_height(&self) -> u8 {
         if get_bit_flag(self.byte, 2) {
             16
@@ -209,6 +220,7 @@ impl LcdControl {
         }
     }
 
+    #[inline(always)]
     pub fn bg_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 3) {
             BG_TILE_MAP_2_ADDR_START
@@ -217,6 +229,7 @@ impl LcdControl {
         }
     }
 
+    #[inline(always)]
     pub fn bgw_data_area(&self) -> u16 {
         if get_bit_flag(self.byte, 4) {
             TILE_SET_DATA_1_START
@@ -225,10 +238,12 @@ impl LcdControl {
         }
     }
 
+    #[inline(always)]
     pub fn win_enable(&self) -> bool {
         get_bit_flag(self.byte, 5)
     }
 
+    #[inline(always)]
     pub fn win_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 6) {
             BG_TILE_MAP_2_ADDR_START
@@ -237,6 +252,7 @@ impl LcdControl {
         }
     }
 
+    #[inline(always)]
     pub fn lcd_enable(&self) -> bool {
         get_bit_flag(self.byte, 7)
     }
@@ -249,23 +265,28 @@ pub struct LcdStatus {
 }
 
 impl LcdStatus {
+    #[inline(always)]
     pub fn ppu_mode(&self) -> PpuMode {
         PpuMode::from(self.byte)
     }
 
+    #[inline(always)]
     pub fn set_ppu_mode(&mut self, mode: PpuMode) {
         self.byte &= !0b11;
         self.byte |= mode as u8;
     }
 
+    #[inline(always)]
     pub fn lyc(&self) -> bool {
         get_bit_flag(self.byte, 2)
     }
 
+    #[inline(always)]
     pub fn lyc_set(&mut self, b: bool) {
         set_bit(&mut self.byte, 2, b);
     }
 
+    #[inline(always)]
     pub fn is_stat_interrupt(&self, src: LcdStatSrc) -> bool {
         self.byte & (src as u8) != 0
     }

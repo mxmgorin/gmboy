@@ -154,14 +154,17 @@ impl CartData {
         Self { bytes }
     }
 
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.bytes.len()
     }
 
+    #[inline(always)]
     pub fn read(&self, addr: usize) -> u8 {
         unsafe { *self.bytes.get_unchecked(addr) }
     }
 
+    #[inline(always)]
     pub fn write(&mut self, addr: u16, value: u8) {
         unsafe {
             *self.bytes.get_unchecked_mut(addr as usize) = value;
@@ -176,10 +179,12 @@ impl CartData {
         CartHeader::parse_cart_type(&self.bytes)
     }
 
+    #[inline(always)]
     pub fn get_rom_size(&self) -> Result<RomSize, String> {
         CartHeader::parse_rom_size(&self.bytes)
     }
 
+    #[inline(always)]
     pub fn get_ram_size(&self) -> Result<RamSize, String> {
         CartHeader::parse_ram_size(&self.bytes)
     }

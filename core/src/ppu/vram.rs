@@ -45,13 +45,13 @@ impl VideoRam {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn read(&self, addr: u16) -> u8 {
         let addr = (addr - VRAM_ADDR_START) as usize;
         unsafe { *self.bytes.get_unchecked(addr) }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn write(&mut self, addr: u16, val: u8) {
         let addr = (addr - VRAM_ADDR_START) as usize;
         unsafe {
@@ -59,12 +59,12 @@ impl VideoRam {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn get_tile_line(&self, addr: u16) -> TileLineData {
         TileLineData::new(self.read(addr), self.read(addr + 1))
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn get_tile(&self, addr: u16) -> TileData {
         let mut tile = TileData::default();
 
