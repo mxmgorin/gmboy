@@ -21,7 +21,7 @@ pub fn run_blargg_rom_serial(
     let mut debugger = Debugger::new(CpuLogType::None, true);
 
     loop {
-        cpu.step(Some(&mut debugger));
+        cpu.step(Some(&mut debugger), None);
         let serial_msg = debugger.get_serial_msg().to_lowercase();
 
         if serial_msg.contains("passed") {
@@ -49,7 +49,7 @@ pub fn run_blargg_rom_memory(
     let instant = Instant::now();
 
     loop {
-        cpu.step(None);
+        cpu.step(None, None);
         let b1 = cpu.clock.bus.read(0xA001);
         let b2 = cpu.clock.bus.read(0xA002);
         let b3 = cpu.clock.bus.read(0xA003);

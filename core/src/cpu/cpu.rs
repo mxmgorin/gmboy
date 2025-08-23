@@ -1,6 +1,7 @@
 use crate::auxiliary::clock::Clock;
 use crate::cpu::instructions::{FetchedData, JumpCondition};
 use crate::cpu::interrupts::InterruptType;
+use crate::cpu::jit::jit_x64::JitX64;
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
 
@@ -83,9 +84,13 @@ impl Cpu {
         self.clock.tick_m_cycles(1);
     }
 
-    pub fn step(&mut self, mut _debugger: Option<&mut crate::debugger::Debugger>) {
+    pub fn step(
+        &mut self,
+        mut _debugger: Option<&mut crate::debugger::Debugger>,
+        jit: Option<&JitX64>,
+    ) {
         #[cfg(any(feature = "debug", debug_assertions))]
-        if let Some(ref mut debugger) = _debugger {
+        if let Some(debugger) = _debugger.as_mut() {
             debugger.print(self);
             debugger.update_serial(&mut self.clock.bus);
         }
@@ -106,7 +111,14 @@ impl Cpu {
 
         self.step_ctx.opcode = self.read_pc();
         let prev_enabling_ime = self.enabling_ime;
-        self.execute_opcode();
+
+        if let Some(jit) = jit {
+            if !jit.execute_opcode(self) {
+                self.execute_opcode();
+            }
+        } else {
+            self.execute_opcode();
+        }
 
         if self.enabling_ime && prev_enabling_ime {
             // execute after next instruction when flag is changed

@@ -1,3 +1,6 @@
+use std::hint::black_box;
+use core::cpu::RegisterType;
+use core::cpu::jit::jit_x64::JitX64;
 use core::apu::Apu;
 use core::auxiliary::clock::Clock;
 use core::auxiliary::timer::Timer;
@@ -34,11 +37,44 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
             |mut cpu| {
                 for _ in 0..500_000 {
-                    cpu.step(None);
+                    cpu.step(None, None);
                 }
             },
             BatchSize::LargeInput,
         );
+    });
+
+    c.bench_function("jit_ld_r_r", |b| {
+        let ppu = Ppu::default();
+        let bus = Bus::new(get_cart(), Default::default());
+        let clock = Clock::new(ppu, bus);
+        let jit = JitX64::default();
+        let mut cpu = Cpu::new(clock);
+        cpu.step_ctx.opcode = 0x41;
+        cpu.registers
+            .set_register::<{ RegisterType::C as u8 }>(black_box(42));
+
+        b.iter(|| {
+            for _ in 0..1000 {
+                jit.execute_opcode(&mut cpu);
+            }
+        });
+    });
+
+    c.bench_function("ld_r_r", |b| {
+        let ppu = Ppu::default();
+        let bus = Bus::new(get_cart(), Default::default());
+        let clock = Clock::new(ppu, bus);
+        let mut cpu = Cpu::new(clock);
+        cpu.step_ctx.opcode = 0x41;
+        cpu.registers
+            .set_register::<{ RegisterType::C as u8 }>(black_box(42));
+
+        b.iter(|| {
+            for _ in 0..1000 {
+                cpu.execute_opcode();
+            }
+        });
     });
 
     c.bench_function("fetch_execute_prefix_500_000", |b| {

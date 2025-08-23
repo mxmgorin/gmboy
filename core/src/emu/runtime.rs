@@ -1,5 +1,6 @@
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
+use crate::cpu::jit::jit_x64::JitX64;
 use crate::cpu::Cpu;
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
@@ -19,14 +20,25 @@ pub struct EmuRuntime {
     pub mode: RunMode,
     pub cpu: Cpu,
     debugger: Option<Debugger>,
+    jit: Option<JitX64>,
 }
 
 impl EmuRuntime {
     pub fn new(ppu: Ppu, bus: Bus, debugger: Option<Debugger>) -> Self {
+        #[cfg(all(feature = "jit", target_arch = "x86_64"))]
+        let jit = Some(JitX64::default());
+
+        #[cfg(all(feature = "jit", not(target_arch = "x86_64")))]
+        let jit = None;
+
+        #[cfg(not(feature = "jit"))]
+        let jit = None;
+
         Self {
             mode: RunMode::Normal,
             cpu: Cpu::new(Clock::new(ppu, bus)),
             debugger,
+            jit,
         }
     }
 
@@ -39,7 +51,7 @@ impl EmuRuntime {
         let start_frame = self.cpu.clock.ppu.current_frame;
 
         while start_frame == self.cpu.clock.ppu.current_frame {
-            self.cpu.step(self.debugger.as_mut());
+            self.cpu.step(self.debugger.as_mut(), self.jit.as_ref());
 
             if let Some(debugger) = self.debugger.as_mut() {
                 debugger.print_serial()
