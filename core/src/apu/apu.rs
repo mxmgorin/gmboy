@@ -238,7 +238,7 @@ impl Apu {
                     return;
                 }
 
-                panic!("Invalid APU address: {:x}", address);
+                panic!("Invalid APU address: {address:x}");
             }
         }
     }
@@ -258,7 +258,7 @@ impl Apu {
                     return 0xFF;
                 }
 
-                panic!("Invalid APU address: {:x}", address);
+                panic!("Invalid APU address: {address:x}");
             }
         }
     }
@@ -277,56 +277,51 @@ impl Apu {
     // Rate   256 Hz      64 Hz       128 Hz
     /// The frame sequencer generates low frequency clocks for the modulation units. It is clocked by a 512 Hz timer.
     fn sequence_frame(&mut self) {
-        if self.ticks_count % FRAME_SEQUENCER_DIV as u32 == 0 {
-            match self.frame_sequencer_step {
-                0 => {
-                    // tick_length
-                    self.ch1.tick_length(&mut self.nr52);
-                    self.ch2.tick_length(&mut self.nr52);
-                    self.ch3.tick_length(&mut self.nr52);
-                    self.ch4.tick_length(&mut self.nr52);
-                }
-                1 => {}
-                2 => {
-                    // tick length, sweep
-                    self.ch1.tick_length(&mut self.nr52);
-                    self.ch2.tick_length(&mut self.nr52);
-                    self.ch3.tick_length(&mut self.nr52);
-                    self.ch4.tick_length(&mut self.nr52);
-
-                    self.ch1.tick_sweep(&mut self.nr52);
-                }
-                3 => {}
-                4 => {
-                    // tick_length
-                    self.ch1.tick_length(&mut self.nr52);
-                    self.ch2.tick_length(&mut self.nr52);
-                    self.ch3.tick_length(&mut self.nr52);
-                    self.ch4.tick_length(&mut self.nr52);
-                }
-                5 => {}
-                6 => {
-                    // tick length, sweep
-                    self.ch1.tick_length(&mut self.nr52);
-                    self.ch2.tick_length(&mut self.nr52);
-                    self.ch3.tick_length(&mut self.nr52);
-                    self.ch4.tick_length(&mut self.nr52);
-
-                    self.ch1.tick_sweep(&mut self.nr52);
-                }
-                7 => {
-                    // tick envelope
-                    self.ch1.tick_envelope();
-                    self.ch2.tick_envelope();
-                    self.ch4.tick_envelope();
-                }
-                _ => unreachable!(),
-            }
-
-            self.frame_sequencer_step = (self.frame_sequencer_step + 1) & 7;
+        if self.ticks_count % FRAME_SEQUENCER_DIV as u32 != 0 {
+            return;
         }
+
+        // SAFETY: there is 8 steps and frame_sequencer_step is in range 0-7
+        unsafe {
+            FRAME_STEP_FNS.get_unchecked(self.frame_sequencer_step as usize)(self);
+        }
+
+        self.frame_sequencer_step = (self.frame_sequencer_step + 1) & 7;
     }
 }
+
+type FrameStepFn = fn(&mut Apu);
+
+const FRAME_STEP_FNS: [FrameStepFn; 8] = [
+    tick_length_all,           // step 0
+    noop,                      // step 1
+    tick_length_all_and_sweep, // step 2
+    noop,                      // step 3
+    tick_length_all,           // step 4
+    noop,                      // step 5
+    tick_length_all_and_sweep, // step 6
+    tick_envelope_some,        // step 7
+];
+
+fn tick_length_all(apu: &mut Apu) {
+    apu.ch1.tick_length(&mut apu.nr52);
+    apu.ch2.tick_length(&mut apu.nr52);
+    apu.ch3.tick_length(&mut apu.nr52);
+    apu.ch4.tick_length(&mut apu.nr52);
+}
+
+fn tick_length_all_and_sweep(apu: &mut Apu) {
+    tick_length_all(apu);
+    apu.ch1.tick_sweep(&mut apu.nr52);
+}
+
+fn tick_envelope_some(apu: &mut Apu) {
+    apu.ch1.tick_envelope();
+    apu.ch2.tick_envelope();
+    apu.ch4.tick_envelope();
+}
+
+fn noop(_apu: &mut Apu) {}
 
 /// FF26 — NR52: Audio master control
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
