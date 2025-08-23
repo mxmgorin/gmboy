@@ -15,7 +15,7 @@ impl Cpu {
 
         let offset_e = self.step_ctx.fetched_data.value as i8; // truncate to 8 bits (+8e)
 
-        self.registers.set_register::<{RegisterType::HL as u8}>(
+        self.registers.set_register::<{ RegisterType::HL as u8 }>(
             self.registers.sp.wrapping_add(offset_e as u16),
         );
 
@@ -94,7 +94,10 @@ impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ld_mr_d8<const R1: u8>(&mut self) {
         self.fetch_mr_d8::<R1>();
-        self.write_to_memory(self.step_ctx.fetched_data.addr, self.step_ctx.fetched_data.value as u8);
+        self.write_to_memory(
+            self.step_ctx.fetched_data.addr,
+            self.step_ctx.fetched_data.value as u8,
+        );
     }
 
     #[inline(always)]

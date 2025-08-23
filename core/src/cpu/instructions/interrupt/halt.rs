@@ -1,4 +1,3 @@
-
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -10,7 +9,6 @@ impl Cpu {
     // As soon as an interrupt becomes pending, the CPU resumes execution. This is like the above, except that the handler is not called.
     // If the IME flag is not set, and some interrupt is pending:
     // The CPU continues execution after the HALT, but the byte after it is read twice in a row (PC is not incremented, due to a hardware bug).
-
     #[inline(always)]
     pub fn execute_halt(&mut self) {
         self.is_halted = true;

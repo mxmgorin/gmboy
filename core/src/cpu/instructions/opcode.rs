@@ -1,5 +1,5 @@
-use crate::cpu::instructions::condition::JumpCondition;
 use crate::cpu::fetch::AddressMode;
+use crate::cpu::instructions::condition::JumpCondition;
 use crate::cpu::instructions::*;
 use crate::cpu::RegisterType;
 

@@ -1,4 +1,3 @@
-
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -13,13 +12,13 @@ impl Cpu {
         self.fetch_r_mr::<R1, R2>();
         self.execute_and();
     }
-    
+
     #[inline(always)]
     pub fn fetch_execute_and_r_d8<const R1: u8>(&mut self) {
         self.fetch_r_d8::<R1>();
         self.execute_and();
     }
-    
+
     #[inline(always)]
     pub fn execute_and(&mut self) {
         self.registers.a &= self.step_ctx.fetched_data.value as u8;

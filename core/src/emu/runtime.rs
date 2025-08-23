@@ -35,7 +35,7 @@ impl EmuRuntime {
     }
 
     #[inline]
-    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback){
+    pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) {
         let start_frame = self.cpu.clock.ppu.current_frame;
 
         while start_frame == self.cpu.clock.ppu.current_frame {

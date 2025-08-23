@@ -1,5 +1,4 @@
-
-use crate::cpu::{Cpu};
+use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline(always)]

@@ -20,11 +20,11 @@ mod tests {
     use crate::auxiliary::clock::Clock;
     use crate::auxiliary::io::Io;
     use crate::bus::Bus;
-    use crate::cpu::instructions::AddressMode;
-    use crate::cpu::{Cpu, RegisterType};
     use crate::cpu::instructions::condition::JumpCondition;
     use crate::cpu::instructions::instruction::Mnemonic;
     use crate::cpu::instructions::opcode::INSTRUCTIONS;
+    use crate::cpu::instructions::AddressMode;
+    use crate::cpu::{Cpu, RegisterType};
     use crate::ppu::Ppu;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [

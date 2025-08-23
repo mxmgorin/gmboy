@@ -15,7 +15,7 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_adc_r_mr(&mut self) {
-            self.fetch_r_mr::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>();
+        self.fetch_r_mr::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>();
 
         self.execute_adc();
     }

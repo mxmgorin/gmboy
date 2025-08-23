@@ -1,4 +1,3 @@
-
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -19,7 +18,7 @@ impl Cpu {
         self.fetch_r_mr::<R1, R2>();
         self.execute_or();
     }
-    
+
     #[inline(always)]
     pub fn execute_or(&mut self) {
         let value = self.step_ctx.fetched_data.value & 0xFF;

@@ -2,7 +2,6 @@ use crate::cpu::instructions::JumpCondition;
 use crate::cpu::Cpu;
 
 impl Cpu {
-
     #[inline(always)]
     pub fn fetch_execute_jr_d8<const C: u8>(&mut self) {
         self.fetch_d8();

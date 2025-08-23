@@ -1,6 +1,5 @@
 use crate::cpu::Cpu;
 
-
 impl Cpu {
     #[inline(always)]
     pub fn execute_rst_0x00(&mut self) {
