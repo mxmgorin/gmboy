@@ -6,10 +6,6 @@ use serde::{Deserialize, Serialize};
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
-pub struct DebugCtx {
-    pub pc: u16,
-}
-
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct StepCtx {
     pub opcode: u8,
@@ -88,9 +84,9 @@ impl Cpu {
     }
 
     pub fn step(&mut self, mut _debugger: Option<&mut crate::debugger::Debugger>) {
-        #[cfg(debug_assertions)]
+        #[cfg(any(feature = "debug", debug_assertions))]
         if let Some(ref mut debugger) = _debugger {
-            debugger.print(self, None);
+            debugger.print(self);
             debugger.update_serial(&mut self.clock.bus);
         }
 
@@ -146,11 +142,20 @@ impl Cpu {
     }
 }
 
-
 pub const INTERRUPT_HANDLERS: [(InterruptType, fn(&mut Cpu)); 5] = [
-    (InterruptType::VBlank, |cpu| cpu.handle_interrupt(0x40, InterruptType::VBlank)),
-    (InterruptType::LCDStat, |cpu| cpu.handle_interrupt(0x48, InterruptType::LCDStat)),
-    (InterruptType::Timer, |cpu| cpu.handle_interrupt(0x50, InterruptType::Timer)),
-    (InterruptType::Serial, |cpu| cpu.handle_interrupt(0x58, InterruptType::Serial)),
-    (InterruptType::Joypad, |cpu| cpu.handle_interrupt(0x60, InterruptType::Joypad)),
+    (InterruptType::VBlank, |cpu| {
+        cpu.handle_interrupt(0x40, InterruptType::VBlank)
+    }),
+    (InterruptType::LCDStat, |cpu| {
+        cpu.handle_interrupt(0x48, InterruptType::LCDStat)
+    }),
+    (InterruptType::Timer, |cpu| {
+        cpu.handle_interrupt(0x50, InterruptType::Timer)
+    }),
+    (InterruptType::Serial, |cpu| {
+        cpu.handle_interrupt(0x58, InterruptType::Serial)
+    }),
+    (InterruptType::Joypad, |cpu| {
+        cpu.handle_interrupt(0x60, InterruptType::Joypad)
+    }),
 ];

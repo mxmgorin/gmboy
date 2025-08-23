@@ -45,7 +45,7 @@ where
     load_cart(&mut app, &mut emu, args);
 
     app.run(&mut emu, &mut input);
-    
+
     if let Err(err) = app.save_files(&mut emu) {
         log::error!("Failed app.save_files: {err}");
     }
@@ -61,7 +61,15 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let bus = Bus::new(Cart::empty(), Io::new(lcd, apu));
     let mut ppu = Ppu::default();
     ppu.toggle_fps(config.video.interface.show_fps);
+
+    #[cfg(feature = "debug")]
+    let debugger = Some(core::debugger::Debugger::new(
+        core::debugger::CpuLogType::Asm,
+        false,
+    ));
+    #[cfg(not(feature = "debug"))]
     let debugger = None;
+
     let runtime = EmuRuntime::new(ppu, bus, debugger);
 
     Emu::new(emu_config.clone(), runtime).unwrap()

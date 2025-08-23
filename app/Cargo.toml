@@ -9,6 +9,7 @@ default = ["file-dialog", "file-browser"]
 file-dialog = []
 file-browser = []
 sdl2-bundled = ["sdl2/bundled"]
+debug = ["core/debug"]
 
 [dependencies]
 core = { path = "../core" }

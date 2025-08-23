@@ -9,6 +9,7 @@ default = ["file-dialog", "file-browser"]
 file-dialog = ["tinyfiledialogs", "app/file-dialog"]
 file-browser = ["app/file-browser"]
 sdl2-bundled = ["app/sdl2-bundled"]
+debug = ["app/debug"]
 
 [dependencies]
 core = { path = "../core" }

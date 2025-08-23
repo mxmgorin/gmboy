@@ -1,6 +1,6 @@
 use crate::bus::Bus;
 use crate::cpu::instructions::{AddressMode, Instruction, Mnemonic};
-use crate::cpu::{Cpu, DebugCtx};
+use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -15,8 +15,8 @@ pub struct Debugger {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum CpuLogType {
     None,
-    Assembly,
-    GbDoctor,
+    Asm,
+    GbDoc,
 }
 
 impl Debugger {
@@ -33,13 +33,9 @@ impl Debugger {
         }
     }
 
-    pub fn print(&mut self, cpu: &mut Cpu, ctx: Option<DebugCtx>) {
+    pub fn print(&mut self, cpu: &mut Cpu) {
         self.print_gb_doctor(cpu);
-
-        if let Some(ctx) = ctx {
-            let instruction = Instruction::get_by_opcode(cpu.step_ctx.opcode);
-            self.print_asm(cpu, ctx.pc, instruction);
-        }
+        self.print_asm(cpu);
     }
 
     pub fn print_serial(&self) {
@@ -60,7 +56,7 @@ impl Debugger {
     }
 
     pub fn print_gb_doctor(&self, cpu: &Cpu) {
-        if self.cpu_log_type != CpuLogType::GbDoctor {
+        if self.cpu_log_type != CpuLogType::GbDoc {
             return;
         }
 
@@ -87,18 +83,15 @@ impl Debugger {
         );
     }
 
-    pub fn print_asm(
-        &self,
-        cpu: &Cpu,
-        pc: u16,
-        instruction: &Instruction,
-    ) {
-        if self.cpu_log_type != CpuLogType::Assembly {
+    pub fn print_asm(&self, cpu: &Cpu) {
+        if self.cpu_log_type != CpuLogType::Asm {
             return;
         }
-        
+
+        let instruction = Instruction::get_by_opcode(cpu.step_ctx.opcode);
         let mode = instruction.get_address_mode();
         let mnemonic = instruction.get_mnemonic();
+        let pc = cpu.registers.pc - 1;
 
         log::info!(
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
@@ -120,78 +113,85 @@ impl Debugger {
     }
 }
 
-pub fn get_asm_string(
-    mode: AddressMode,
-    mnemonic: Mnemonic,
-    cpu: &Cpu,
-) -> String {
-    let fetched_data = cpu.step_ctx.fetched_data.clone();
-
-    match mode {
-        AddressMode::IMP => format!("{:?}", mnemonic),
+pub fn get_asm_string(mode: AddressMode, mnemonic: Mnemonic, cpu: &Cpu) -> String {
+    let str = match mode {
+        AddressMode::IMP => format!("{mnemonic:?}"),
         AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
-            format!("{:?} {:?},${:04X}", mnemonic, r1, fetched_data.value)
+            format!(
+                "{mnemonic:?} {r1:?},${:04X}",
+                cpu.step_ctx.fetched_data.value
+            )
         }
         AddressMode::R(r1) => {
-            format!("{:?} {:?}", mnemonic, r1)
+            format!("{mnemonic:?} {r1:?}")
         }
         AddressMode::R_R(r1, r2) => {
-            format!("{:?} {:?},{:?}", mnemonic, r1, r2)
+            format!("{mnemonic:?} {r1:?},{r2:?}")
         }
         AddressMode::MR_R(r1, r2) => {
-            format!("{:?} ({:?}),{:?}", mnemonic, r1, r2)
+            format!("{mnemonic:?} ({r1:?}),{r2:?}")
         }
         AddressMode::MR(r1) => {
-            format!("{:?} ({:?})", mnemonic, r1)
+            format!("{mnemonic:?} ({r1:?})")
         }
         AddressMode::R_MR(r1, r2) => {
-            format!("{:?} {:?},({:?})", mnemonic, r1, r2)
+            format!("{mnemonic:?} {r1:?},({r2:?})")
         }
         AddressMode::R_HMR(r1, r2) => {
-            format!("{:?} {:?},(FF00+{:?})", mnemonic, r1, r2)
+            format!("{mnemonic:?} {r1:?},(FF00+{r2:?})")
         }
         AddressMode::R_D8(r1) | AddressMode::R_A8(r1) | AddressMode::R_HA8(r1) => {
-            format!("{:?} {:?},${:02X}", mnemonic, r1, fetched_data.value & 0xFF)
+            format!(
+                "{mnemonic:?} {r1:?},${:02X}",
+                cpu.step_ctx.fetched_data.value & 0xFF
+            )
         }
         AddressMode::R_HLI(r1) => {
-            format!("{:?} {:?},(HL+)", mnemonic, r1)
+            format!("{mnemonic:?} {r1:?},(HL+)")
         }
         AddressMode::R_HLD(r1) => {
-            format!("{:?} {:?},(HL-)", mnemonic, r1)
+            format!("{mnemonic:?} {r1:?},(HL-)")
         }
         AddressMode::HLI_R(r1) => {
-            format!("{:?} (HL+),{:?}", mnemonic, r1)
+            format!("{mnemonic:?} (HL+),{r1:?}")
         }
         AddressMode::HLD_R(r1) => {
-            format!("{:?} (HL-),{:?}", mnemonic, r1)
+            format!("{mnemonic:?} (HL-),{r1:?}")
         }
         AddressMode::A8_R(r2) => {
             format!(
-                "{:?} ${:02X},{:?}",
-                mnemonic,
-                cpu.clock.bus.read(cpu.registers.pc - 1),
-                r2
+                "{mnemonic:?} ${:02X},{r2:?}",
+                cpu.clock.bus.read(cpu.registers.pc - 1)
             )
         }
         AddressMode::LH_SPi8 => {
-            format!("{:?} (HL,SP+{:?})", mnemonic, fetched_data.value & 0xFF)
+            format!(
+                "{mnemonic:?} (HL,SP+{:?})",
+                cpu.step_ctx.fetched_data.value & 0xFF
+            )
         }
         AddressMode::D8 => {
-            format!("{:?} ${:02X}", mnemonic, fetched_data.value & 0xFF)
+            format!(
+                "{mnemonic:?} ${:02X}",
+                cpu.step_ctx.fetched_data.value & 0xFF
+            )
         }
         AddressMode::D16 => {
-            format!("{:?} ${:04X}", mnemonic, fetched_data.value)
+            format!("{mnemonic:?} ${:04X}", cpu.step_ctx.fetched_data.value)
         }
         AddressMode::MR_D8(r1) => {
             format!(
-                "{:?} ({:?}),${:02X}",
-                mnemonic,
-                r1,
-                fetched_data.value & 0xFF
+                "{mnemonic:?} ({r1:?}),${:02X}",
+                cpu.step_ctx.fetched_data.value & 0xFF
             )
         }
         AddressMode::A16_R(r2) => {
-            format!("{:?} (${:04X}),{:?}", mnemonic, fetched_data.value, r2)
+            format!(
+                "{mnemonic:?} (${:04X}),{r2:?}",
+                cpu.step_ctx.fetched_data.value
+            )
         }
-    }
+    };
+
+    str.to_uppercase()
 }

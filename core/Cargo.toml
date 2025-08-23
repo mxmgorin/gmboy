@@ -6,6 +6,7 @@ authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
 default = []
+debug = []
 
 [dependencies]
 serde_json = "1.0.*"
