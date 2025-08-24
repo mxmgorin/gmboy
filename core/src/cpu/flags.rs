@@ -141,6 +141,12 @@ impl Flags {
                 self.set_h_inner((lhs & 0xF) + 1 > 0xF);
                 self.lazy = LazyFlags::None;
             }
+            LazyFlags::Dec8 { lhs, result } => {
+                self.set_z_inner(result == 0);
+                self.set_n_inner(true);
+                self.set_h_inner((lhs & 0xF) == 0);
+                self.lazy = LazyFlags::None;
+            }
             LazyFlags::Rla { carry } => {
                 self.set_z_inner(false);
                 self.set_n_inner(false);
@@ -205,6 +211,7 @@ pub enum LazyFlags {
         result: u8,
     },
     Inc8 { lhs: u8, result: u8 },
+    Dec8 { lhs: u8, result: u8 },
     Rla {
         carry: bool,
     },
