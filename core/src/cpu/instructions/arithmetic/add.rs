@@ -1,4 +1,5 @@
 use crate::cpu::{Cpu, RegisterType};
+use crate::cpu::flags::LazyFlags;
 
 impl Cpu {
     #[inline(always)]
@@ -62,15 +63,12 @@ impl Cpu {
         } else {
             let result = lhs + rhs;
             self.registers.set_register::<R1>(result);
-            let z = (result & 0xFF) == 0;
-            let h = (lhs & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
-            let c =
-                ((lhs as i32) & 0xFF) + ((self.step_ctx.fetched_data.value as i32) & 0xFF) >= 0x100;
-
-            self.registers.flags.set_z(z);
-            self.registers.flags.set_h(h);
-            self.registers.flags.set_c(c);
-            self.registers.flags.set_n(false);
+            self.registers.flags.set_lazy(LazyFlags::Add8 {
+                lhs: lhs as u8,
+                rhs: rhs as u8,
+                carry_in: 0,
+                result: result as u8,
+            });
         }
     }
 }

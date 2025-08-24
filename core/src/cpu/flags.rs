@@ -48,21 +48,25 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_z(&mut self, v: bool) {
+        self.flush_lazy();
         set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_n(&mut self, v: bool) {
+        self.flush_lazy();
         set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_h(&mut self, v: bool) {
+        self.flush_lazy();
         set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_c(&mut self, v: bool) {
+        self.flush_lazy();
         set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
 
@@ -100,10 +104,10 @@ impl Flags {
                 carry_in,
                 result,
             } => {
-                self.set_z(result == 0);
-                self.set_n(false);
-                self.set_h((lhs & 0xF) + (rhs & 0xF) + carry_in > 0xF);
-                self.set_c((lhs as u16 + rhs as u16 + carry_in as u16) > 0xFF);
+                self.set_z_inner(result == 0);
+                self.set_n_inner(false);
+                self.set_h_inner((lhs & 0xF) + (rhs & 0xF) + carry_in > 0xF);
+                self.set_c_inner((lhs as u16 + rhs as u16 + carry_in as u16) > 0xFF);
                 self.lazy = LazyFlags::None;
             }
             LazyFlags::Sub8 {
@@ -112,17 +116,17 @@ impl Flags {
                 carry_in,
                 result,
             } => {
-                self.set_z(result == 0);
-                self.set_n(true);
-                self.set_h((lhs & 0xF) < ((rhs & 0xF) + carry_in));
-                self.set_c((lhs as u16) < (rhs as u16 + carry_in as u16));
+                self.set_z_inner(result == 0);
+                self.set_n_inner(true);
+                self.set_h_inner((lhs & 0xF) < ((rhs & 0xF) + carry_in));
+                self.set_c_inner((lhs as u16) < (rhs as u16 + carry_in as u16));
                 self.lazy = LazyFlags::None;
             }
             LazyFlags::Rla { carry } => {
-                self.set_z(false);
-                self.set_n(false);
-                self.set_h(false);
-                self.set_c(carry);
+                self.set_z_inner(false);
+                self.set_n_inner(false);
+                self.set_h_inner(false);
+                self.set_c_inner(carry);
                 self.lazy = LazyFlags::None;
             }
         }
@@ -138,6 +142,26 @@ impl Flags {
         .iter()
         .map(|&(flag, c)| if flag { c } else { '-' })
         .collect()
+    }
+
+    #[inline(always)]
+    fn set_z_inner(&mut self, v: bool) {
+        set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline(always)]
+    fn set_n_inner(&mut self, v: bool) {
+        set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline(always)]
+    fn set_h_inner(&mut self, v: bool) {
+        set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
+    }
+
+    #[inline(always)]
+    fn set_c_inner(&mut self, v: bool) {
+        set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
 }
 
