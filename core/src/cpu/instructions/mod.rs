@@ -185,6 +185,7 @@ mod tests {
                 continue; // todo: investigate
             }
 
+            println!("{:?}", instr.get_mnemonic());
             cpu.registers.pc = 0;
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);

@@ -30,6 +30,11 @@ impl Flags {
     }
 
     #[inline(always)]
+    pub fn set_lazy(&mut self, lazy: LazyFlags) {
+        self.lazy = lazy;
+    }
+
+    #[inline(always)]
     pub fn get_byte(&mut self) -> u8 {
         self.flush_lazy();
         self.byte
@@ -43,25 +48,21 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_z(&mut self, v: bool) {
-        self.flush_lazy();
         set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_n(&mut self, v: bool) {
-        self.flush_lazy();
         set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_h(&mut self, v: bool) {
-        self.flush_lazy();
         set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_c(&mut self, v: bool) {
-        self.flush_lazy();
         set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
 

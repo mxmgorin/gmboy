@@ -1,3 +1,4 @@
+use crate::cpu::flags::LazyFlags;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -22,15 +23,17 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_adc(&mut self) {
-        let u: u16 = self.step_ctx.fetched_data.value;
-        let a: u16 = self.registers.a as u16;
-        let c: u16 = self.registers.flags.get_c() as u16;
+        let lhs = self.registers.a;
+        let rhs = self.step_ctx.fetched_data.value as u8;
+        let carry_in = self.registers.flags.get_c() as u8;
 
-        self.registers.a = ((a + u + c) & 0xFF) as u8;
-
-        self.registers.flags.set_z(self.registers.a == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h((a & 0xF) + (u & 0xF) + c > 0xF);
-        self.registers.flags.set_c(a + u + c > 0xFF);
+        let result = lhs.wrapping_add(rhs).wrapping_add(carry_in);
+        self.registers.a = result;
+        self.registers.flags.set_lazy(LazyFlags::Add8 {
+            lhs,
+            rhs,
+            carry_in,
+            result,
+        });
     }
 }
