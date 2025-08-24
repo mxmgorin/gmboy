@@ -1,3 +1,4 @@
+use crate::cpu::flags::LazyFlags;
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -20,20 +21,15 @@ impl Cpu {
     }
 
     pub fn execute_sub<const R1: u8>(&mut self) {
-        let reg_val = self.registers.read_register::<R1>();
-        let result = reg_val.wrapping_sub(self.step_ctx.fetched_data.value);
-
-        let reg_val_i32 = reg_val as i32;
-        let fetched_val_i32 = result as i32;
-
-        let h = ((reg_val_i32 & 0xF).wrapping_sub(fetched_val_i32 & 0xF)) < 0;
-        let c = reg_val_i32.wrapping_sub(fetched_val_i32) < 0;
-
-        self.registers.set_register::<R1>(result);
-
-        self.registers.flags.set_z(result == 0);
-        self.registers.flags.set_n(true);
-        self.registers.flags.set_h(h);
-        self.registers.flags.set_c(c);
+        let lhs = self.registers.read_register8::<R1>();
+        let rhs = self.step_ctx.fetched_data.value as u8;
+        let result = lhs.wrapping_sub(rhs);
+        self.registers.set_register8::<R1>(result);
+        self.registers.flags.set_lazy(LazyFlags::Sub8 {
+            lhs,
+            rhs,
+            carry_in: 0,
+            result,
+        });
     }
 }

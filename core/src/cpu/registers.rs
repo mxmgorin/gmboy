@@ -150,6 +150,23 @@ impl Registers {
     }
 
     #[inline(always)]
+    pub fn read_register8<const R: u8>(&mut self) -> u8 {
+        let r = RegisterType::from_u8(R);
+
+        match r {
+            RegisterType::A => self.a,
+            RegisterType::F => self.flags.get_byte(),
+            RegisterType::B => self.b,
+            RegisterType::C => self.c,
+            RegisterType::D => self.d,
+            RegisterType::E => self.e,
+            RegisterType::H => self.h,
+            RegisterType::L => self.l,
+            _ => panic!("not 8-bit register"),
+        }
+    }
+
+    #[inline(always)]
     pub fn get_af(&mut self) -> u16 {
         (self.a as u16) << 8 | self.flags.get_byte() as u16
     }
@@ -188,6 +205,23 @@ impl Registers {
             RegisterType::HL => self.set_hl(value),
             RegisterType::PC => self.pc = value,
             RegisterType::SP => self.sp = value,
+        }
+    }
+
+    #[inline(always)]
+    pub const fn set_register8<const R: u8>(&mut self, value: u8) {
+        let r = RegisterType::from_u8(R);
+
+        match r {
+            RegisterType::A => self.a = value,
+            RegisterType::F => self.flags.set_byte(value),
+            RegisterType::B => self.b = value,
+            RegisterType::C => self.c = value,
+            RegisterType::D => self.d = value,
+            RegisterType::E => self.e = value,
+            RegisterType::H => self.h = value,
+            RegisterType::L => self.l = value,
+            _ => panic!("not 8-bit register"),
         }
     }
 
