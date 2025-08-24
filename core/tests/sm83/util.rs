@@ -1,8 +1,9 @@
+use core::cpu::flags::Flags;
 use crate::print_with_dashes;
 use crate::Clock;
 use core::bus::Bus;
 use core::cpu::instructions::opcode::INSTRUCTIONS;
-use core::cpu::{Cpu, Flags, Registers};
+use core::cpu::{Cpu, Registers};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
