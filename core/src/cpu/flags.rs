@@ -110,6 +110,19 @@ impl Flags {
                 self.set_c_inner((lhs as u16 + rhs as u16 + carry_in as u16) > 0xFF);
                 self.lazy = LazyFlags::None;
             }
+            LazyFlags::Add16 { lhs, rhs } => {
+                self.set_n_inner(false);
+                self.set_h_inner(((lhs & 0x0FFF) + (rhs & 0x0FFF)) > 0x0FFF);
+                self.set_c_inner((lhs as u32 + rhs as u32) > 0xFFFF);
+                self.lazy = LazyFlags::None;
+            }
+            LazyFlags::AddSpE8 { lhs, rhs } => {
+                self.set_z_inner(false);
+                self.set_n_inner(false);
+                self.set_h_inner((lhs & 0xF) + (rhs & 0xF) > 0xF);
+                self.set_c_inner(((lhs & 0xFF) + (rhs & 0xFF)) > 0xFF);
+                self.lazy = LazyFlags::None;
+            }
             LazyFlags::Sub8 {
                 lhs,
                 rhs,
@@ -174,6 +187,11 @@ pub enum LazyFlags {
         carry_in: u8,
         result: u8,
     },
+    Add16 {
+        lhs: u16,
+        rhs: u16,
+    },
+    AddSpE8 { lhs: u16, rhs: u16 },
     Sub8 {
         lhs: u8,
         rhs: u8,
