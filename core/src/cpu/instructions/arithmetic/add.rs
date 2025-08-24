@@ -44,32 +44,33 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_add<const R1: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
-        let reg_val = self.registers.read_register::<R1>();
-        let reg_val_u32: u32 = reg_val as u32 + self.step_ctx.fetched_data.value as u32;
+        let lhs = self.registers.read_register::<R1>();
+        let rhs = self.step_ctx.fetched_data.value;
 
-        if r1.is_16bit() {
+        if RegisterType::from_u8(R1).is_16bit() {
             // but not for SP
+            let result: u32 = lhs as u32 + rhs as u32;
+            self.registers.set_register::<R1>((result & 0xFFFF) as u16);
             self.clock.tick_m_cycles(1);
-            let h = (reg_val & 0xFFF) + (self.step_ctx.fetched_data.value & 0xFFF) >= 0x1000;
-            let n = (reg_val as u32) + (self.step_ctx.fetched_data.value as u32);
+            let h = (lhs & 0xFFF) + (self.step_ctx.fetched_data.value & 0xFFF) >= 0x1000;
+            let n = (lhs as u32) + (self.step_ctx.fetched_data.value as u32);
             let c = n >= 0x10000;
 
             self.registers.flags.set_h(h);
             self.registers.flags.set_c(c);
+            self.registers.flags.set_n(false);
         } else {
-            let z = (reg_val_u32 & 0xFF) == 0;
-            let h = (reg_val & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
-            let c = ((reg_val as i32) & 0xFF) + ((self.step_ctx.fetched_data.value as i32) & 0xFF)
-                >= 0x100;
+            let result = lhs + rhs;
+            self.registers.set_register::<R1>(result);
+            let z = (result & 0xFF) == 0;
+            let h = (lhs & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
+            let c =
+                ((lhs as i32) & 0xFF) + ((self.step_ctx.fetched_data.value as i32) & 0xFF) >= 0x100;
 
             self.registers.flags.set_z(z);
             self.registers.flags.set_h(h);
             self.registers.flags.set_c(c);
+            self.registers.flags.set_n(false);
         }
-
-        self.registers.flags.set_n(false);
-        self.registers
-            .set_register::<R1>((reg_val_u32 & 0xFFFF) as u16);
     }
 }
