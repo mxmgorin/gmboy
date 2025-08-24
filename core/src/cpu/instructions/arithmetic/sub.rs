@@ -21,7 +21,7 @@ impl Cpu {
     }
 
     pub fn execute_sub<const R1: u8>(&mut self) {
-        let lhs = self.registers.read_register8::<R1>();
+        let lhs = self.registers.get_register8::<R1>();
         let rhs = self.step_ctx.fetched_data.value as u8;
         let result = lhs.wrapping_sub(rhs);
         self.registers.set_register8::<R1>(result);

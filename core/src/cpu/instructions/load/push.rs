@@ -6,10 +6,10 @@ impl Cpu {
         self.fetch_r::<R1>();
         self.clock.tick_m_cycles(1);
 
-        let hi = (self.registers.read_register::<R1>() >> 8) & 0xFF;
+        let hi = (self.registers.get_register::<R1>() >> 8) & 0xFF;
         self.push(hi as u8);
 
-        let lo = self.registers.read_register::<R1>() & 0xFF;
+        let lo = self.registers.get_register::<R1>() & 0xFF;
         self.push(lo as u8);
     }
 }

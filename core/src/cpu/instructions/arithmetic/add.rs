@@ -35,7 +35,7 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_add<const R1: u8>(&mut self) {
-        let lhs = self.registers.read_register::<R1>();
+        let lhs = self.registers.get_register::<R1>();
         let rhs = self.step_ctx.fetched_data.value;
 
         if RegisterType::from_u8(R1).is_16bit() {

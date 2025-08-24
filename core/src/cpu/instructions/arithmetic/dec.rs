@@ -6,7 +6,7 @@ impl Cpu {
         self.fetch_r::<R1>();
         let mut value = self.step_ctx.fetched_data.value.wrapping_sub(1);
         self.registers.set_register::<R1>(value);
-        value = self.registers.read_register::<R1>();
+        value = self.registers.get_register::<R1>();
 
         if RegisterType::from_u8(R1).is_16bit() {
             self.clock.tick_m_cycles(1);

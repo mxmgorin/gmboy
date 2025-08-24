@@ -178,7 +178,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn get_register8<const R: u8>(&mut self) -> u8 {
+    fn get_register8_cb<const R: u8>(&mut self) -> u8 {
         let rt = RegisterType::from_u8(R);
 
         match rt {
@@ -191,7 +191,7 @@ impl Cpu {
             RegisterType::H => self.registers.h,
             RegisterType::L => self.registers.l,
             RegisterType::HL => {
-                let addr = self.registers.read_register::<{ RegisterType::HL as u8 }>();
+                let addr = self.registers.get_register::<{ RegisterType::HL as u8 }>();
                 self.read_memory(addr)
             }
             _ => unreachable!(),
@@ -199,7 +199,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn set_register8<const R: u8>(&mut self, val: u8) {
+    fn set_register8_cb<const R: u8>(&mut self, val: u8) {
         let rt = RegisterType::from_u8(R);
         match rt {
             RegisterType::A => self.registers.a = val,
@@ -211,7 +211,7 @@ impl Cpu {
             RegisterType::H => self.registers.h = val,
             RegisterType::L => self.registers.l = val,
             RegisterType::HL => {
-                let addr = self.registers.read_register::<{ RegisterType::HL as u8 }>();
+                let addr = self.registers.get_register::<{ RegisterType::HL as u8 }>();
                 self.write_to_memory(addr, val)
             }
             _ => unreachable!(),
@@ -232,8 +232,8 @@ struct RegisterFn {
 impl RegisterFn {
     pub const fn new<const R: u8>() -> Self {
         Self {
-            set: Cpu::set_register8::<R>,
-            get: Cpu::get_register8::<R>,
+            set: Cpu::set_register8_cb::<R>,
+            get: Cpu::get_register8_cb::<R>,
         }
     }
 }

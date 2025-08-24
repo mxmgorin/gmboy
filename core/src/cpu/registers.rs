@@ -128,7 +128,7 @@ impl Default for Registers {
 
 impl Registers {
     #[inline(always)]
-    pub fn read_register<const R: u8>(&mut self) -> u16 {
+    pub fn get_register<const R: u8>(&mut self) -> u16 {
         let r = RegisterType::from_u8(R);
 
         match r {
@@ -150,7 +150,7 @@ impl Registers {
     }
 
     #[inline(always)]
-    pub fn read_register8<const R: u8>(&mut self) -> u8 {
+    pub fn get_register8<const R: u8>(&mut self) -> u8 {
         let r = RegisterType::from_u8(R);
 
         match r {
