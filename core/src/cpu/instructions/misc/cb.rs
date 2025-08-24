@@ -183,7 +183,7 @@ impl Cpu {
 
         match rt {
             RegisterType::A => self.registers.a,
-            RegisterType::F => self.registers.flags.byte,
+            RegisterType::F => self.registers.flags.get_byte(),
             RegisterType::B => self.registers.b,
             RegisterType::C => self.registers.c,
             RegisterType::D => self.registers.d,
@@ -191,7 +191,8 @@ impl Cpu {
             RegisterType::H => self.registers.h,
             RegisterType::L => self.registers.l,
             RegisterType::HL => {
-                self.read_memory(self.registers.read_register::<{ RegisterType::HL as u8 }>())
+                let addr = self.registers.read_register::<{ RegisterType::HL as u8 }>();
+                self.read_memory(addr)
             }
             _ => unreachable!(),
         }
@@ -202,17 +203,17 @@ impl Cpu {
         let rt = RegisterType::from_u8(R);
         match rt {
             RegisterType::A => self.registers.a = val,
-            RegisterType::F => self.registers.flags.byte = val,
+            RegisterType::F => self.registers.flags.set_byte(val),
             RegisterType::B => self.registers.b = val,
             RegisterType::C => self.registers.c = val,
             RegisterType::D => self.registers.d = val,
             RegisterType::E => self.registers.e = val,
             RegisterType::H => self.registers.h = val,
             RegisterType::L => self.registers.l = val,
-            RegisterType::HL => self.write_to_memory(
-                self.registers.read_register::<{ RegisterType::HL as u8 }>(),
-                val,
-            ),
+            RegisterType::HL => {
+                let addr = self.registers.read_register::<{ RegisterType::HL as u8 }>();
+                self.write_to_memory(addr, val)
+            }
             _ => unreachable!(),
         }
     }

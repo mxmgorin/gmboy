@@ -12,6 +12,7 @@ impl Cpu {
     pub fn execute_ccf(&mut self) {
         self.registers.flags.set_n(false);
         self.registers.flags.set_h(false);
-        self.registers.flags.set_c(!self.registers.flags.get_c());
+        let c = self.registers.flags.get_c();
+        self.registers.flags.set_c(!c);
     }
 }

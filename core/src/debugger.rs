@@ -55,7 +55,7 @@ impl Debugger {
         }
     }
 
-    pub fn print_gb_doctor(&self, cpu: &Cpu) {
+    pub fn print_gb_doctor(&self, cpu: &mut Cpu) {
         if self.cpu_log_type != CpuLogType::GbDoc {
             return;
         }
@@ -70,7 +70,7 @@ impl Debugger {
         println!(
             "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} {}",
             cpu.registers.a,
-            cpu.registers.flags.byte,
+            cpu.registers.flags.get_byte(),
             cpu.registers.b,
             cpu.registers.c,
             cpu.registers.d,
@@ -83,7 +83,7 @@ impl Debugger {
         );
     }
 
-    pub fn print_asm(&self, cpu: &Cpu) {
+    pub fn print_asm(&self, cpu: &mut Cpu) {
         if self.cpu_log_type != CpuLogType::Asm {
             return;
         }
@@ -102,7 +102,7 @@ impl Debugger {
             cpu.clock.bus.read(pc.wrapping_add(1)),
             cpu.clock.bus.read(pc.wrapping_add(2)),
             cpu.registers.a,
-            cpu.registers.flags,
+            cpu.registers.flags.display(),
             cpu.registers.b,
             cpu.registers.c,
             cpu.registers.d,

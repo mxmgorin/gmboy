@@ -1,7 +1,7 @@
-use core::cpu::flags::Flags;
 use crate::print_with_dashes;
 use crate::Clock;
 use core::bus::Bus;
+use core::cpu::flags::Flags;
 use core::cpu::instructions::opcode::INSTRUCTIONS;
 use core::cpu::{Cpu, Registers};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let mut cpu = setup_cpu(test_case);
     cpu.step(None);
 
-    let result = test_case.validate_final_state(&cpu);
+    let result = test_case.validate_final_state(&mut cpu);
 
     if let Err(err) = result {
         let inst = INSTRUCTIONS[cpu.step_ctx.opcode as usize];
@@ -102,7 +102,7 @@ impl Sm83TestCase {
         serde_json::from_str(json).unwrap()
     }
 
-    pub fn validate_final_state(&self, cpu: &Cpu) -> Result<(), String> {
+    pub fn validate_final_state(&self, cpu: &mut Cpu) -> Result<(), String> {
         if cpu.registers.a != self.final_state.a {
             return Err(format!(
                 "Invalid A: actual={}, expected={}",
@@ -133,10 +133,10 @@ impl Sm83TestCase {
                 cpu.registers.e, self.final_state.e
             ));
         }
-        if cpu.registers.flags.byte != self.final_state.f {
+        if cpu.registers.flags.get_byte() != self.final_state.f {
             return Err(format!(
                 "Invalid F: actual={}, expected={}",
-                cpu.registers.flags.byte, self.final_state.f
+                cpu.registers.flags.get_byte(), self.final_state.f
             ));
         }
         if cpu.registers.h != self.final_state.h {
@@ -243,9 +243,7 @@ pub fn setup_bus(test_case: &Sm83TestCase) -> Bus {
 pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
     cpu.registers = Registers {
         a: test_case.initial_state.a,
-        flags: Flags {
-            byte: test_case.initial_state.f,
-        },
+        flags: Flags::new(test_case.initial_state.f),
         b: test_case.initial_state.b,
         c: test_case.initial_state.c,
         d: test_case.initial_state.d,
