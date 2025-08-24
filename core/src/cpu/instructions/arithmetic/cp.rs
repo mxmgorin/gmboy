@@ -1,3 +1,4 @@
+use crate::cpu::flags::LazyFlags;
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -21,14 +22,14 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_cp(&mut self) {
-        let fetched_value_i32 = self.step_ctx.fetched_data.value as i32;
-        let reg_i32 = self.registers.a as i32;
-        let result: i32 = reg_i32.wrapping_sub(fetched_value_i32);
-        let reg_value_diff = (reg_i32 & 0x0F) - (fetched_value_i32 & 0x0F);
-
-        self.registers.flags.set_z(result == 0);
-        self.registers.flags.set_n(true);
-        self.registers.flags.set_h(reg_value_diff < 0);
-        self.registers.flags.set_c(result < 0);
+        let lhs = self.registers.a;
+        let rhs = self.step_ctx.fetched_data.value as u8;
+        let result = lhs.wrapping_sub(rhs);
+        self.registers.flags.set_lazy(LazyFlags::Sub8 {
+            lhs,
+            rhs,
+            carry_in: 0,
+            result,
+        });
     }
 }
