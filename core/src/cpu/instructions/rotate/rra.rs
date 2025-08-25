@@ -17,6 +17,7 @@ impl Cpu {
     /// N 0
     /// H 0
     /// C Set according to result.#[inline]
+    #[inline(always)]
     pub fn execute_rra(&mut self) {
         let carry: u8 = self.registers.flags.get_c() as u8;
         let new_c: u8 = self.registers.a & 1;

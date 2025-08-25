@@ -1,7 +1,7 @@
 use crate::cpu::Cpu;
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     pub fn execute_nop(&mut self) {
         // does nothing
     }

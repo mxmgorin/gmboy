@@ -1,6 +1,6 @@
 use crate::cpu::Cpu;
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     pub fn execute_stop(&mut self) {}
 }

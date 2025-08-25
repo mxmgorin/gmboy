@@ -1,7 +1,7 @@
 use crate::cpu::Cpu;
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     pub fn execute_rlca(&mut self) {
         let mut u: u8 = self.registers.a;
         let c: bool = (u >> 7) & 1 != 0;

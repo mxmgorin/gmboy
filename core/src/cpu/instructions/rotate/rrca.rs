@@ -1,7 +1,7 @@
 use crate::cpu::Cpu;
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     pub fn execute_rrca(&mut self) {
         let b: u8 = self.registers.a & 1;
         self.registers.a >>= 1;
