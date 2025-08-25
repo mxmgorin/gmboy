@@ -105,10 +105,7 @@ impl Cpu {
 
     #[inline(always)]
     fn ld_r_r<const R1: u8, const R2: u8>(&mut self) {
-        let r1 = RegisterType::from_u8(R1);
-        let r2 = RegisterType::from_u8(R1);
-
-        if r1.is_16bit() && r2.is_16bit() {
+        if RegisterType::from_u8(R1).is_16bit() && RegisterType::from_u8(R2).is_16bit() {
             self.clock.tick_m_cycles(1);
         }
 

@@ -6,9 +6,7 @@ impl Cpu {
     pub fn execute_rlca(&mut self) {
         let lhs = self.registers.a;
         let carry = (lhs >> 7) & 1;
-        let result = (lhs << 1) | carry;
-        self.registers.a = result;
-
+        self.registers.a = (lhs << 1) | carry;
         self.registers.flags.set(FlagsCtx::rlca(carry));
     }
 }

@@ -1,5 +1,5 @@
-use crate::cpu::Cpu;
 use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline(always)]
@@ -22,10 +22,8 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_and(&mut self) {
-        let result = self.registers.a & self.step_ctx.fetched_data.value as u8;
-        self.registers.a = result;
-
-        self.registers.flags.set(FlagsCtx::and(result));
+        self.registers.a &= self.step_ctx.fetched_data.value as u8;
+        self.registers.flags.set(FlagsCtx::and(self.registers.a));
     }
 }
 

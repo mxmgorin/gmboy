@@ -7,7 +7,6 @@ impl Cpu {
         let lhs = self.registers.a & 1;
         self.registers.a >>= 1;
         self.registers.a |= lhs << 7;
-
         self.registers.flags.set(FlagsCtx::rra(lhs));
     }
 }

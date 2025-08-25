@@ -23,7 +23,6 @@ impl Cpu {
     #[inline(always)]
     pub fn execute_xor(&mut self) {
         self.registers.a ^= (self.step_ctx.fetched_data.value & 0xFF) as u8;
-
         // todo: for some reason fails test when lazy is used
         self.registers
             .flags
