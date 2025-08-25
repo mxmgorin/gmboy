@@ -5,6 +5,9 @@ use std::mem;
 use crate::cpu::instructions::arithmetic::dec::Dec8FlagsCtx;
 use crate::cpu::instructions::arithmetic::inc::Inc8FlagsCtx;
 use crate::cpu::instructions::arithmetic::sub::Sub8FlagsCtx;
+use crate::cpu::instructions::bitwise::and::AndFlagsCtx;
+use crate::cpu::instructions::bitwise::cpl::CplFlagsCtx;
+use crate::cpu::instructions::bitwise::or::OrFlagsCtx;
 use crate::cpu::instructions::rotate::rla::RlaFlagsCtx;
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
@@ -38,6 +41,12 @@ impl Flags {
     #[inline(always)]
     pub fn set(&mut self, ctx: FlagsCtx) {
         self.pending = ctx;
+    }
+
+    #[inline(always)]
+    pub fn force_set(&mut self, ctx: FlagsCtx) {
+        self.pending = ctx;
+        self.apply_pending();
     }
 
     #[inline(always)]
@@ -149,9 +158,13 @@ pub enum FlagsCtx {
     Inc8(Inc8FlagsCtx),
     Dec8(Dec8FlagsCtx),
     Rla(RlaFlagsCtx),
+    And(AndFlagsCtx),
+    Cpl(CplFlagsCtx),
+    Or(OrFlagsCtx),
 }
 
 impl FlagsCtx {
+    #[inline(always)]
     pub fn apply(self, flags: &mut Flags) {
         match self {
             FlagsCtx::None => {}
@@ -162,6 +175,9 @@ impl FlagsCtx {
             FlagsCtx::Inc8(x) => x.apply(flags),
             FlagsCtx::Dec8(x) => x.apply(flags),
             FlagsCtx::Rla(x) => x.apply(flags),
+            FlagsCtx::And(x) => x.apply(flags),
+            FlagsCtx::Cpl(x) => x.apply(flags),
+            FlagsCtx::Or(x) => x.apply(flags),
         }
     }
 }

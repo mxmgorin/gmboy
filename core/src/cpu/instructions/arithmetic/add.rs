@@ -60,7 +60,7 @@ impl Cpu {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub struct Add8FlagsCtx {
     pub lhs: u8,
     pub rhs: u8,

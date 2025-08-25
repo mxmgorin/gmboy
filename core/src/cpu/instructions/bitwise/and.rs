@@ -1,4 +1,6 @@
+use serde::{Deserialize, Serialize};
 use crate::cpu::Cpu;
+use crate::cpu::flags::{Flags, FlagsCtx};
 
 impl Cpu {
     #[inline(always)]
@@ -21,11 +23,24 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_and(&mut self) {
-        self.registers.a &= self.step_ctx.fetched_data.value as u8;
+        let result = self.registers.a & self.step_ctx.fetched_data.value as u8;
+        self.registers.a = result;
 
-        self.registers.flags.set_z(self.registers.a == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(true);
-        self.registers.flags.set_c(false);
+        self.registers.flags.set(FlagsCtx::And(AndFlagsCtx {result}));
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AndFlagsCtx {
+    pub result: u8,
+}
+
+impl AndFlagsCtx {
+    #[inline(always)]
+    pub fn apply(&self, flags: &mut Flags) {
+        flags.set_z_inner(self.result == 0);
+        flags.set_n_inner(false);
+        flags.set_h_inner(true);
+        flags.set_c_inner(false);
     }
 }
