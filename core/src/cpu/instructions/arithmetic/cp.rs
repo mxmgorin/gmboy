@@ -4,7 +4,7 @@ use crate::cpu::Cpu;
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_cp_r_d8<const R1: u8>(&mut self) {
-        self.fetch_r_d8::<R1>();
+        self.fetch_r_d8();
         self.execute_cp();
     }
 

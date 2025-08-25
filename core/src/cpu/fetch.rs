@@ -13,7 +13,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_d8<const R: u8>(&mut self) {
+    pub fn fetch_r_d8(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
             addr: 0,
@@ -29,7 +29,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_d16<const R: u8>(&mut self) {
+    pub fn fetch_r_d16(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc16(),
             addr: 0,
@@ -110,14 +110,19 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_ha8<const R1: u8>(&mut self) {
+    pub fn fetch_r_ha8(&mut self) {
+        self.step_ctx.fetched_data = FetchedData {
+            value: self.read_ha8() as u16,
+            addr: 0,
+        }
+    }
+
+    #[inline(always)]
+    pub fn read_ha8(&mut self) -> u8 {
         let addr = self.read_pc() as u16;
         let addr = 0xFF00 | addr;
 
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
-            addr: 0,
-        }
+        self.read_memory(addr)
     }
 
     #[inline(always)]
@@ -171,7 +176,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_a16<const R1: u8>(&mut self) {
+    pub fn fetch_r_a16(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_a16() as u16,
             addr: 0,
@@ -339,9 +344,7 @@ mod tests {
         let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
         let mut cpu = Cpu::new(clock);
         cpu.registers.pc = pc as u16;
-        const REG_TYPE: RegisterType = RegisterType::A;
-
-        cpu.fetch_r_d8::<{ REG_TYPE as u8 }>();
+        cpu.fetch_r_d8();
 
         assert_eq!(cpu.step_ctx.fetched_data.value as u8, value);
         assert_eq!(cpu.step_ctx.fetched_data.addr, 0);

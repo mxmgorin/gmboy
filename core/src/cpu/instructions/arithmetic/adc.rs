@@ -4,7 +4,7 @@ use crate::cpu::{Cpu, RegisterType};
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_adc_r_d8(&mut self) {
-        self.fetch_r_d8::<{ RegisterType::A as u8 }>();
+        self.fetch_r_d8();
         self.execute_adc();
     }
 

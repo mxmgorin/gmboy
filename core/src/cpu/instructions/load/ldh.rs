@@ -21,9 +21,8 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ldh_r_ha8<const R1: u8>(&mut self) {
-        self.fetch_r_ha8::<R1>();
-        self.registers
-            .set_register::<R1>(self.step_ctx.fetched_data.value);
+        let data = self.read_ha8();
+        self.registers.set_register8::<R1>(data);
     }
 
     #[inline(always)]

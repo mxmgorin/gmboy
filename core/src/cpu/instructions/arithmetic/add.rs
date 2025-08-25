@@ -4,7 +4,7 @@ use crate::cpu::{Cpu, RegisterType};
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_add_sp_e8(&mut self) {
-        self.fetch_r_d8::<{ RegisterType::SP as u8 }>();
+        self.fetch_r_d8();
         let lhs = self.registers.sp;
         let rhs = self.step_ctx.fetched_data.value;
 
@@ -27,7 +27,7 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_add_r_d8<const R1: u8>(&mut self) {
-        self.fetch_r_d8::<R1>();
+        self.fetch_r_d8();
         self.execute_add::<R1>();
     }
 
