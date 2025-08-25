@@ -33,8 +33,8 @@ impl Cpu {
 impl FlagsOp {
     #[inline(always)]
     pub fn inc8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_inner(data.result == 0);
-        flags.set_n_inner(false);
-        flags.set_h_inner((data.lhs & 0xF) + 1 > 0xF);
+        flags.set_z_raw(data.result == 0);
+        flags.set_n_raw(false);
+        flags.set_h_raw((data.lhs & 0xF) + 1 > 0xF);
     }
 }

@@ -12,7 +12,7 @@ impl Cpu {
 
 impl FlagsOp {
     pub fn cpl(_data: FlagsData, flags: &mut Flags) {
-        flags.set_n_inner(true);
-        flags.set_h_inner(true);
+        flags.set_n_raw(true);
+        flags.set_h_raw(true);
     }
 }

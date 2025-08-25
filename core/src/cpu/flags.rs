@@ -53,30 +53,6 @@ impl Flags {
     }
 
     #[inline(always)]
-    pub fn set_z(&mut self, v: bool) {
-        self.apply_pending();
-        set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
-    }
-
-    #[inline(always)]
-    pub fn set_n(&mut self, v: bool) {
-        self.apply_pending();
-        set_bit(&mut self.byte, NEGATIVE_FLAG_BYTE_POSITION, v);
-    }
-
-    #[inline(always)]
-    pub fn set_h(&mut self, v: bool) {
-        self.apply_pending();
-        set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
-    }
-
-    #[inline(always)]
-    pub fn set_c(&mut self, v: bool) {
-        self.apply_pending();
-        set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
-    }
-
-    #[inline(always)]
     pub fn get_z(&mut self) -> bool {
         self.apply_pending();
         get_bit_flag(self.byte, ZERO_FLAG_BYTE_POSITION)
@@ -97,9 +73,26 @@ impl Flags {
     #[inline(always)]
     pub fn set_zhc(&mut self, z: bool, h: bool, c: bool) {
         self.apply_pending();
-        self.set_z_inner(z);
-        self.set_h_inner(h);
-        self.set_c_inner(c);
+        self.set_z_raw(z);
+        self.set_h_raw(h);
+        self.set_c_raw(c);
+    }
+
+    #[inline(always)]
+    pub fn set_znhc(&mut self, z: bool, n: bool, h: bool, c: bool) {
+        self.pending = None;
+        self.set_z_raw(z);
+        self.set_n_raw(n);
+        self.set_h_raw(h);
+        self.set_c_raw(c);
+    }
+
+    #[inline(always)]
+    pub fn set_znh(&mut self, z: bool, n: bool, h: bool) {
+        self.apply_pending();
+        self.set_z_raw(z);
+        self.set_n_raw(n);
+        self.set_h_raw(h);
     }
 
     #[inline(always)]
@@ -134,22 +127,22 @@ impl Flags {
     }
 
     #[inline(always)]
-    pub fn set_z_inner(&mut self, v: bool) {
+    pub fn set_z_raw(&mut self, v: bool) {
         set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
-    pub fn set_n_inner(&mut self, v: bool) {
+    pub fn set_n_raw(&mut self, v: bool) {
         set_bit(&mut self.byte, NEGATIVE_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
-    pub fn set_h_inner(&mut self, v: bool) {
+    pub fn set_h_raw(&mut self, v: bool) {
         set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
-    pub fn set_c_inner(&mut self, v: bool) {
+    pub fn set_c_raw(&mut self, v: bool) {
         set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
 }
@@ -190,7 +183,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs,
                 rhs,
-                carry_in : 0,
+                carry_in: 0,
                 result: 0,
             },
         }
@@ -203,7 +196,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs,
                 rhs,
-                carry_in : 0,
+                carry_in: 0,
                 result: 0,
             },
         }
@@ -229,7 +222,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
-                carry_in : 0,
+                carry_in: 0,
                 result,
             },
         }
@@ -242,7 +235,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
-                carry_in : 0,
+                carry_in: 0,
                 result,
             },
         }
@@ -255,7 +248,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs: 0,
                 rhs: 0,
-                carry_in : 0,
+                carry_in: 0,
                 result,
             },
         }
@@ -276,7 +269,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs: 0,
                 rhs: 0,
-                carry_in : 0,
+                carry_in: 0,
                 result,
             },
         }
@@ -289,7 +282,7 @@ impl FlagsCtx {
             data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
-                carry_in : 0,
+                carry_in: 0,
                 result: 0,
             },
         }
@@ -383,8 +376,8 @@ const APPLY_TABLE: [ApplyFlagsFn; 14] = [
     FlagsOp::and,       // 7
     FlagsOp::cpl,       // 8
     FlagsOp::or,        // 9
-    FlagsOp::rlca, // 10
-    FlagsOp::rra, // 11
-    FlagsOp::ccf, // 12
-    FlagsOp::ccf, // 13
+    FlagsOp::rlca,      // 10
+    FlagsOp::rra,       // 11
+    FlagsOp::ccf,       // 12
+    FlagsOp::ccf,       // 13
 ];

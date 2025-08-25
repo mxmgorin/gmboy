@@ -10,8 +10,8 @@ impl Cpu {
 
 impl FlagsOp {
     pub fn scf(_data: FlagsData, flags: &mut Flags) {
-        flags.set_n_inner(false);
-        flags.set_h_inner(false);
-        flags.set_c_inner(true);
+        flags.set_n_raw(false);
+        flags.set_h_raw(false);
+        flags.set_c_raw(true);
     }
 }

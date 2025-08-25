@@ -41,18 +41,18 @@ pub struct OrFlagsCtx {
 impl OrFlagsCtx {
     #[inline(always)]
     pub fn apply(&self, flags: &mut Flags) {
-        flags.set_z_inner(self.result == 0);
-        flags.set_n_inner(false);
-        flags.set_h_inner(false);
-        flags.set_c_inner(false);
+        flags.set_z_raw(self.result == 0);
+        flags.set_n_raw(false);
+        flags.set_h_raw(false);
+        flags.set_c_raw(false);
     }
 }
 
 impl FlagsOp {
     pub fn or(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_inner(data.result == 0);
-        flags.set_n_inner(false);
-        flags.set_h_inner(false);
-        flags.set_c_inner(false);
+        flags.set_z_raw(data.result == 0);
+        flags.set_n_raw(false);
+        flags.set_h_raw(false);
+        flags.set_c_raw(false);
     }
 }

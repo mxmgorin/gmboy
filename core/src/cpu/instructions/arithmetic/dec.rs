@@ -30,8 +30,8 @@ impl Cpu {
 
 impl FlagsOp {
     pub fn dec8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_inner(data.result == 0);
-        flags.set_n_inner(true);
-        flags.set_h_inner((data.lhs & 0xF) == 0);
+        flags.set_z_raw(data.result == 0);
+        flags.set_n_raw(true);
+        flags.set_h_raw((data.lhs & 0xF) == 0);
     }
 }

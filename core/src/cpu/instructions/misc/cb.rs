@@ -8,9 +8,9 @@ impl Cpu {
         let register = get_register(op);
 
         let val = (register.get)(self);
-        self.registers.flags.set_z((val & (1 << bit)) == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(true);
+        self.registers
+            .flags
+            .set_znh((val & (1 << bit)) == 0, false, true);
     }
 
     #[inline(always)]
@@ -45,10 +45,9 @@ impl Cpu {
         let result = (reg_val << 1) | (carry as u8); // Rotate left and wrap MSB to LSB
 
         (register.set)(self, result);
-        self.registers.flags.set_z(result == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(carry);
+        self.registers
+            .flags
+            .set_znhc(result == 0, false, false, carry);
     }
 
     #[inline(always)]
@@ -61,10 +60,9 @@ impl Cpu {
         reg_val = reg_val >> 1 | (old << 7);
 
         (register.set)(self, reg_val);
-        self.registers.flags.set_z(reg_val == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(old & 1 != 0);
+        self.registers
+            .flags
+            .set_znhc(reg_val == 0, false, false, old & 1 != 0);
     }
 
     #[inline(always)]
@@ -78,11 +76,9 @@ impl Cpu {
         reg_val = (reg_val << 1) | (flag_c as u8);
 
         (register.set)(self, reg_val);
-
-        self.registers.flags.set_z(reg_val == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c((old & 0x80) != 0);
+        self.registers
+            .flags
+            .set_znhc(reg_val == 0, false, false, (old & 0x80) != 0);
     }
 
     #[inline(always)]
@@ -96,11 +92,9 @@ impl Cpu {
         reg_val = (reg_val >> 1) | ((flag_c as u8) << 7);
 
         (register.set)(self, reg_val);
-
-        self.registers.flags.set_z(reg_val == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c((old & 1) != 0);
+        self.registers
+            .flags
+            .set_znhc(reg_val == 0, false, false, (old & 1) != 0);
     }
 
     #[inline(always)]
@@ -113,11 +107,9 @@ impl Cpu {
         reg_val <<= 1;
 
         (register.set)(self, reg_val);
-
-        self.registers.flags.set_z(reg_val == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c((old & 0x80) != 0);
+        self.registers
+            .flags
+            .set_znhc(reg_val == 0, false, false, (old & 0x80) != 0);
     }
 
     #[inline(always)]
@@ -132,11 +124,7 @@ impl Cpu {
         let carry = reg_val & 0x01 != 0; // Save LSB as Carry
 
         (register.set)(self, result);
-
-        self.registers.flags.set_z(u == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(carry);
+        self.registers.flags.set_znhc(u == 0, false, false, carry);
     }
 
     #[inline(always)]
@@ -146,12 +134,11 @@ impl Cpu {
 
         let mut reg_val = (register.get)(self);
         reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
-        (register.set)(self, reg_val);
 
-        self.registers.flags.set_z(reg_val == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(false);
+        (register.set)(self, reg_val);
+        self.registers
+            .flags
+            .set_znhc(reg_val == 0, false, false, false);
     }
 
     #[inline(always)]
@@ -163,11 +150,9 @@ impl Cpu {
         let u = reg_val >> 1;
 
         (register.set)(self, u);
-
-        self.registers.flags.set_z(u == 0);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c((reg_val & 1) != 0);
+        self.registers
+            .flags
+            .set_znhc(u == 0, false, false, (reg_val & 1) != 0);
     }
 
     #[inline(always)]

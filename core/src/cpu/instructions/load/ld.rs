@@ -4,14 +4,9 @@ impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ld_lh_spi8(&mut self) {
         self.fetch_lh_spi8();
-        let h_flag = (self.registers.sp & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
-        let c_flag =
-            (self.registers.sp & 0xFF) + (self.step_ctx.fetched_data.value & 0xFF) >= 0x100;
-
-        self.registers.flags.set_z(false);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(h_flag);
-        self.registers.flags.set_c(c_flag);
+        let h = (self.registers.sp & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
+        let c = (self.registers.sp & 0xFF) + (self.step_ctx.fetched_data.value & 0xFF) >= 0x100;
+        self.registers.flags.set_znhc(false, false, h, c);
 
         let offset_e = self.step_ctx.fetched_data.value as i8; // truncate to 8 bits (+8e)
 

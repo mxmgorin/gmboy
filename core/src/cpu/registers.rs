@@ -279,7 +279,7 @@ mod tests {
         let mut regs = Registers::default();
         regs.flags.set_byte(0b10000000);
 
-        regs.flags.set_c(true);
+        regs.flags.set_c_raw(true);
 
         assert!(regs.flags.get_z());
     }

@@ -16,9 +16,9 @@ impl Cpu {
 impl FlagsOp {
     #[inline(always)]
     pub fn rlca(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_inner(false);
-        flags.set_n_inner(false);
-        flags.set_h_inner(false);
-        flags.set_c_inner(data.carry_in != 0);
+        flags.set_z_raw(false);
+        flags.set_n_raw(false);
+        flags.set_h_raw(false);
+        flags.set_c_raw(data.carry_in != 0);
     }
 }

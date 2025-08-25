@@ -33,9 +33,9 @@ impl Cpu {
 
 impl FlagsOp {
     pub fn sub8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_inner(data.result == 0);
-        flags.set_n_inner(true);
-        flags.set_h_inner((data.lhs as u8 & 0xF) < ((data.rhs as u8 & 0xF) + data.carry_in));
-        flags.set_c_inner((data.lhs) < (data.rhs + data.carry_in as u16));
+        flags.set_z_raw(data.result == 0);
+        flags.set_n_raw(true);
+        flags.set_h_raw((data.lhs as u8 & 0xF) < ((data.rhs as u8 & 0xF) + data.carry_in));
+        flags.set_c_raw((data.lhs) < (data.rhs + data.carry_in as u16));
     }
 }

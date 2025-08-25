@@ -32,9 +32,9 @@ impl Cpu {
 impl FlagsOp {
     #[inline(always)]
     pub fn and(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_inner(data.result == 0);
-        flags.set_n_inner(false);
-        flags.set_h_inner(true);
-        flags.set_c_inner(false);
+        flags.set_z_raw(data.result == 0);
+        flags.set_n_raw(false);
+        flags.set_h_raw(true);
+        flags.set_c_raw(false);
     }
 }
