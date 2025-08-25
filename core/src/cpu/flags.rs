@@ -275,6 +275,30 @@ impl FlagsCtx {
             },
         }
     }
+
+    pub fn rlca(carry_in: u8) -> Self {
+        Self {
+            op: FlagsOp::Rlca,
+            data: FlagsCtxData {
+                lhs: 0,
+                rhs: 0,
+                carry_in,
+                result: 0,
+            },
+        }
+    }
+
+    pub fn rra(lhs: u8) -> Self {
+        Self {
+            op: FlagsOp::Rra,
+            data: FlagsCtxData {
+                lhs: lhs as u16,
+                rhs: 0,
+                carry_in: 0,
+                result: 0,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -298,11 +322,13 @@ pub enum FlagsOp {
     And = 7,
     Cpl = 8,
     Or = 9,
+    Rlca = 10,
+    Rra = 11,
 }
 
 type ApplyFlagsFn = fn(FlagsCtxData, &mut Flags);
 
-const APPLY_TABLE: [ApplyFlagsFn; 10] = [
+const APPLY_TABLE: [ApplyFlagsFn; 12] = [
     FlagsOp::add8,      // 0
     FlagsOp::add16,     // 1
     FlagsOp::add_sp_e8, // 2
@@ -313,4 +339,6 @@ const APPLY_TABLE: [ApplyFlagsFn; 10] = [
     FlagsOp::and,       // 7
     FlagsOp::cpl,       // 8
     FlagsOp::or,        // 9
+    FlagsOp::rlca, // 10
+    FlagsOp::rra, // 11
 ];

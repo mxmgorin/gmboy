@@ -1,33 +1,25 @@
 use crate::cpu::Cpu;
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
 
 impl Cpu {
-    /// Rotate register A right, through the carry flag.
-    ///
-    ///   ┏━━━━━━━ A ━━━━━━━┓ ┏━ Flags ━┓
-    /// ┌─╂→ b7 → ... → b0 ─╂─╂→   C   ─╂─┐
-    /// │ ┗━━━━━━━━━━━━━━━━━┛ ┗━━━━━━━━━┛ │
-    /// └─────────────────────────────────┘
-    /// Cycles: 1
-    ///
-    /// Bytes: 1
-    ///
-    /// Flags:
-    ///
-    /// Z 0
-    /// N 0
-    /// H 0
-    /// C Set according to result.#[inline]
     #[inline(always)]
     pub fn execute_rra(&mut self) {
-        let carry: u8 = self.registers.flags.get_c() as u8;
-        let new_c: u8 = self.registers.a & 1;
+        let carry = self.registers.flags.get_c() as u8;
+        let lhs = self.registers.a;
 
         self.registers.a >>= 1;
         self.registers.a |= carry << 7;
 
-        self.registers.flags.set_z(false);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(new_c != 0);
+        self.registers.flags.force_set(FlagsCtx::rra(lhs));
+    }
+}
+
+impl FlagsOp {
+    #[inline(always)]
+    pub fn rra(data: FlagsCtxData, flags: &mut Flags) {
+        flags.set_z_inner(false);
+        flags.set_n_inner(false);
+        flags.set_h_inner(false);
+        flags.set_c_inner((data.lhs & 1) != 0);
     }
 }
