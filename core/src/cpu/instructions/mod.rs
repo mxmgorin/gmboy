@@ -1,13 +1,13 @@
-mod arithmetic;
-mod bitwise;
+pub mod arithmetic;
+pub mod bitwise;
 pub mod condition;
 pub mod instruction;
-mod interrupt;
-mod jump;
-mod load;
-mod misc;
+pub mod interrupt;
+pub mod jump;
+pub mod load;
+pub mod misc;
 pub mod opcode;
-mod rotate;
+pub mod rotate;
 
 pub use crate::cpu::fetch::*;
 pub use condition::*;

@@ -1,5 +1,6 @@
-use crate::cpu::flags::LazyFlags;
+use crate::cpu::flags::FlagsCtx;
 use crate::cpu::Cpu;
+use crate::cpu::instructions::arithmetic::sub::Sub8FlagsCtx;
 
 impl Cpu {
     #[inline(always)]
@@ -25,11 +26,11 @@ impl Cpu {
         let lhs = self.registers.a;
         let rhs = self.step_ctx.fetched_data.value as u8;
         let result = lhs.wrapping_sub(rhs);
-        self.registers.flags.set_lazy(LazyFlags::Sub8 {
+        self.registers.flags.set(FlagsCtx::Sub8(Sub8FlagsCtx {
             lhs,
             rhs,
             carry_in: 0,
             result,
-        });
+        }));
     }
 }

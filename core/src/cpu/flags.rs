@@ -1,5 +1,11 @@
+use crate::cpu::instructions::arithmetic::add::{Add16FlagsCtx, Add8FlagsCtx, AddSpE8FlagsCtx};
 use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
+use std::mem;
+use crate::cpu::instructions::arithmetic::dec::Dec8FlagsCtx;
+use crate::cpu::instructions::arithmetic::inc::Inc8FlagsCtx;
+use crate::cpu::instructions::arithmetic::sub::Sub8FlagsCtx;
+use crate::cpu::instructions::rotate::rla::RlaFlagsCtx;
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
 const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
@@ -9,14 +15,14 @@ const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Flags {
     byte: u8,
-    lazy: LazyFlags,
+    pending: FlagsCtx,
 }
 
 impl Default for Flags {
     fn default() -> Self {
         Self {
             byte: 0xB0,
-            lazy: LazyFlags::None,
+            pending: FlagsCtx::None,
         }
     }
 }
@@ -25,136 +31,79 @@ impl Flags {
     pub fn new(byte: u8) -> Flags {
         Self {
             byte,
-            lazy: LazyFlags::None,
+            pending: FlagsCtx::None,
         }
     }
 
     #[inline(always)]
-    pub fn set_lazy(&mut self, lazy: LazyFlags) {
-        self.lazy = lazy;
+    pub fn set(&mut self, ctx: FlagsCtx) {
+        self.pending = ctx;
     }
 
     #[inline(always)]
     pub fn get_byte(&mut self) -> u8 {
-        self.flush_lazy();
+        self.apply_pending();
         self.byte
     }
 
     #[inline(always)]
     pub const fn set_byte(&mut self, byte: u8) {
-        self.lazy = LazyFlags::None;
+        self.pending = FlagsCtx::None;
         self.byte = byte;
     }
 
     #[inline(always)]
     pub fn set_z(&mut self, v: bool) {
-        self.flush_lazy();
+        self.apply_pending();
         set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_n(&mut self, v: bool) {
-        self.flush_lazy();
+        self.apply_pending();
         set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_h(&mut self, v: bool) {
-        self.flush_lazy();
+        self.apply_pending();
         set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn set_c(&mut self, v: bool) {
-        self.flush_lazy();
+        self.apply_pending();
         set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
     pub fn get_z(&mut self) -> bool {
-        self.flush_lazy();
+        self.apply_pending();
         get_bit_flag(self.byte, ZERO_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     pub fn get_n(&mut self) -> bool {
-        self.flush_lazy();
+        self.apply_pending();
         get_bit_flag(self.byte, SUBTRACT_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     pub fn get_h(&mut self) -> bool {
-        self.flush_lazy();
+        self.apply_pending();
         get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     pub fn get_c(&mut self) -> bool {
-        self.flush_lazy();
+        self.apply_pending();
         get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION)
     }
 
     #[inline]
-    fn flush_lazy(&mut self) {
-        match self.lazy {
-            LazyFlags::None => {}
-            LazyFlags::Add8 {
-                lhs,
-                rhs,
-                carry_in,
-                result,
-            } => {
-                self.set_z_inner(result == 0);
-                self.set_n_inner(false);
-                self.set_h_inner((lhs & 0xF) + (rhs & 0xF) + carry_in > 0xF);
-                self.set_c_inner((lhs as u16 + rhs as u16 + carry_in as u16) > 0xFF);
-                self.lazy = LazyFlags::None;
-            }
-            LazyFlags::Add16 { lhs, rhs } => {
-                self.set_n_inner(false);
-                self.set_h_inner(((lhs & 0x0FFF) + (rhs & 0x0FFF)) > 0x0FFF);
-                self.set_c_inner((lhs as u32 + rhs as u32) > 0xFFFF);
-                self.lazy = LazyFlags::None;
-            }
-            LazyFlags::AddSpE8 { lhs, rhs } => {
-                self.set_z_inner(false);
-                self.set_n_inner(false);
-                self.set_h_inner((lhs & 0xF) + (rhs & 0xF) > 0xF);
-                self.set_c_inner(((lhs & 0xFF) + (rhs & 0xFF)) > 0xFF);
-                self.lazy = LazyFlags::None;
-            }
-            LazyFlags::Sub8 {
-                lhs,
-                rhs,
-                carry_in,
-                result,
-            } => {
-                self.set_z_inner(result == 0);
-                self.set_n_inner(true);
-                self.set_h_inner((lhs & 0xF) < ((rhs & 0xF) + carry_in));
-                self.set_c_inner((lhs as u16) < (rhs as u16 + carry_in as u16));
-                self.lazy = LazyFlags::None;
-            }
-            LazyFlags::Inc8 { lhs, result } => {
-                self.set_z_inner(result == 0);
-                self.set_n_inner(false);
-                self.set_h_inner((lhs & 0xF) + 1 > 0xF);
-                self.lazy = LazyFlags::None;
-            }
-            LazyFlags::Dec8 { lhs, result } => {
-                self.set_z_inner(result == 0);
-                self.set_n_inner(true);
-                self.set_h_inner((lhs & 0xF) == 0);
-                self.lazy = LazyFlags::None;
-            }
-            LazyFlags::Rla { carry } => {
-                self.set_z_inner(false);
-                self.set_n_inner(false);
-                self.set_h_inner(false);
-                self.set_c_inner(carry);
-                self.lazy = LazyFlags::None;
-            }
-        }
+    fn apply_pending(&mut self) {
+        let pending = mem::replace(&mut self.pending, FlagsCtx::None);
+        pending.apply(self);
     }
 
     pub fn display(&mut self) -> String {
@@ -170,49 +119,49 @@ impl Flags {
     }
 
     #[inline(always)]
-    fn set_z_inner(&mut self, v: bool) {
+    pub fn set_z_inner(&mut self, v: bool) {
         set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
-    fn set_n_inner(&mut self, v: bool) {
+    pub fn set_n_inner(&mut self, v: bool) {
         set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
-    fn set_h_inner(&mut self, v: bool) {
+    pub fn set_h_inner(&mut self, v: bool) {
         set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
-    fn set_c_inner(&mut self, v: bool) {
+    pub fn set_c_inner(&mut self, v: bool) {
         set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum LazyFlags {
+pub enum FlagsCtx {
     None,
-    Add8 {
-        lhs: u8,
-        rhs: u8,
-        carry_in: u8,
-        result: u8,
-    },
-    Add16 {
-        lhs: u16,
-        rhs: u16,
-    },
-    AddSpE8 { lhs: u16, rhs: u16 },
-    Sub8 {
-        lhs: u8,
-        rhs: u8,
-        carry_in: u8,
-        result: u8,
-    },
-    Inc8 { lhs: u8, result: u8 },
-    Dec8 { lhs: u8, result: u8 },
-    Rla {
-        carry: bool,
-    },
+    Add8(Add8FlagsCtx),
+    Add16(Add16FlagsCtx),
+    AddSpE8(AddSpE8FlagsCtx),
+    Sub8(Sub8FlagsCtx),
+    Inc8(Inc8FlagsCtx),
+    Dec8(Dec8FlagsCtx),
+    Rla(RlaFlagsCtx),
+}
+
+impl FlagsCtx {
+    pub fn apply(self, flags: &mut Flags) {
+        match self {
+            FlagsCtx::None => {}
+            FlagsCtx::Add8(x) => x.apply(flags),
+            FlagsCtx::Add16(x) => x.apply(flags),
+            FlagsCtx::AddSpE8(x) => x.apply(flags),
+            FlagsCtx::Sub8(x) => x.apply(flags),
+            FlagsCtx::Inc8(x) => x.apply(flags),
+            FlagsCtx::Dec8(x) => x.apply(flags),
+            FlagsCtx::Rla(x) => x.apply(flags),
+        }
+    }
 }

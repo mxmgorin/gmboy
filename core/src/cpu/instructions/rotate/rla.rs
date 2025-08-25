@@ -1,17 +1,29 @@
+use crate::cpu::flags::{Flags, FlagsCtx};
 use crate::cpu::Cpu;
+use serde::{Deserialize, Serialize};
 
 impl Cpu {
-    #[inline]
+    #[inline(always)]
     pub fn execute_rla(&mut self) {
-        let u: u8 = self.registers.a;
-        let cf: u8 = self.registers.flags.get_c() as u8;
-        let c: u8 = (u >> 7) & 1;
+        let lhs = self.registers.a;
+        let carry_in = self.registers.flags.get_c() as u8;
+        self.registers.a = (lhs << 1) | carry_in;
 
-        self.registers.a = (u << 1) | cf;
+        self.registers.flags.set(FlagsCtx::Rla(RlaFlagsCtx { lhs }));
+    }
+}
 
-        self.registers.flags.set_z(false);
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(c != 0);
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RlaFlagsCtx {
+    pub lhs: u8,
+}
+
+impl RlaFlagsCtx {
+    #[inline(always)]
+    pub fn apply(&self, flags: &mut Flags) {
+        flags.set_z_inner(false);
+        flags.set_n_inner(false);
+        flags.set_h_inner(false);
+        flags.set_c_inner(((self.lhs >> 7) & 1) != 0);
     }
 }

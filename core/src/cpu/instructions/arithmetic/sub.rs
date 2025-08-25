@@ -1,5 +1,6 @@
-use crate::cpu::flags::LazyFlags;
+use crate::cpu::flags::{Flags, FlagsCtx};
 use crate::cpu::Cpu;
+use serde::{Deserialize, Serialize};
 
 impl Cpu {
     #[inline(always)]
@@ -25,11 +26,29 @@ impl Cpu {
         let rhs = self.step_ctx.fetched_data.value as u8;
         let result = lhs.wrapping_sub(rhs);
         self.registers.set_register8::<R1>(result);
-        self.registers.flags.set_lazy(LazyFlags::Sub8 {
+        self.registers.flags.set(FlagsCtx::Sub8(Sub8FlagsCtx {
             lhs,
             rhs,
             carry_in: 0,
             result,
-        });
+        }));
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Sub8FlagsCtx {
+    pub lhs: u8,
+    pub rhs: u8,
+    pub carry_in: u8,
+    pub result: u8,
+}
+
+impl Sub8FlagsCtx {
+    #[inline(always)]
+    pub fn apply(&self, flags: &mut Flags) {
+        flags.set_z_inner(self.result == 0);
+        flags.set_n_inner(true);
+        flags.set_h_inner((self.lhs & 0xF) < ((self.rhs & 0xF) + self.carry_in));
+        flags.set_c_inner((self.lhs as u16) < (self.rhs as u16 + self.carry_in as u16));
     }
 }

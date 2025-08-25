@@ -1,4 +1,5 @@
-use crate::cpu::flags::LazyFlags;
+use crate::cpu::flags::FlagsCtx;
+use crate::cpu::instructions::arithmetic::add::Add8FlagsCtx;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -29,11 +30,11 @@ impl Cpu {
 
         let result = lhs.wrapping_add(rhs).wrapping_add(carry_in);
         self.registers.a = result;
-        self.registers.flags.set_lazy(LazyFlags::Add8 {
+        self.registers.flags.set(FlagsCtx::Add8(Add8FlagsCtx {
             lhs,
             rhs,
             carry_in,
             result,
-        });
+        }));
     }
 }
