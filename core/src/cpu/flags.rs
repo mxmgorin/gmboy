@@ -2,7 +2,7 @@ use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
 const ZERO_FLAG_BYTE_POSITION: u8 = 7;
-const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
+const NEGATIVE_FLAG_BYTE_POSITION: u8 = 6;
 const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
 const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
@@ -61,7 +61,7 @@ impl Flags {
     #[inline(always)]
     pub fn set_n(&mut self, v: bool) {
         self.apply_pending();
-        set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
+        set_bit(&mut self.byte, NEGATIVE_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]
@@ -85,19 +85,33 @@ impl Flags {
     #[inline(always)]
     pub fn get_n(&mut self) -> bool {
         self.apply_pending();
-        get_bit_flag(self.byte, SUBTRACT_FLAG_BYTE_POSITION)
+        get_bit_flag(self.byte, NEGATIVE_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
-    pub fn get_h(&mut self) -> bool {
+    pub fn get_hnc(&mut self) -> (bool, bool, bool) {
         self.apply_pending();
-        get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
+        (self.get_h(), self.get_n(), self.get_c())
+    }
+
+    #[inline(always)]
+    pub fn set_zhc(&mut self, z: bool, h: bool, c: bool) {
+        self.apply_pending();
+        self.set_z_inner(z);
+        self.set_h_inner(h);
+        self.set_c_inner(c);
     }
 
     #[inline(always)]
     pub fn get_c(&mut self) -> bool {
         self.apply_pending();
         get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION)
+    }
+
+    #[inline(always)]
+    pub fn get_h(&mut self) -> bool {
+        self.apply_pending();
+        get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
     }
 
     #[inline]
@@ -126,7 +140,7 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_n_inner(&mut self, v: bool) {
-        set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, v);
+        set_bit(&mut self.byte, NEGATIVE_FLAG_BYTE_POSITION, v);
     }
 
     #[inline(always)]

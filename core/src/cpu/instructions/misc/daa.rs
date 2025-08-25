@@ -25,30 +25,25 @@ impl Cpu {
     /// C Set or reset depending on the operation.
     #[inline(always)]
     pub fn execute_daa(&mut self) {
-        let mut u: u8 = 0;
-        let mut fc: i32 = 0;
+        let lhs = self.registers.a;
+        let (h, n, c) = self.registers.flags.get_hnc();
+        let mut u = if h || (!n && (lhs & 0xF) > 9) { 6 } else { 0 };
 
-        if self.registers.flags.get_h()
-            || (!self.registers.flags.get_n() && (self.registers.a & 0xF) > 9)
-        {
-            u = 6;
-        }
-
-        if self.registers.flags.get_c()
-            || (!self.registers.flags.get_n() && self.registers.a > 0x99)
-        {
+        let fc = if c || (!n && lhs > 0x99) {
             u |= 0x60;
-            fc = 1;
-        }
-
-        if self.registers.flags.get_n() {
-            self.registers.a = self.registers.a.wrapping_sub(u);
+            1
         } else {
-            self.registers.a = self.registers.a.wrapping_add(u);
+            0
         };
 
-        self.registers.flags.set_z(self.registers.a == 0);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(fc != 0);
+        if n {
+            self.registers.a = lhs.wrapping_sub(u);
+        } else {
+            self.registers.a = lhs.wrapping_add(u);
+        };
+
+        self.registers
+            .flags
+            .set_zhc(self.registers.a == 0, false, fc != 0);
     }
 }
