@@ -3,15 +3,15 @@ use crate::cpu::Cpu;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum JumpCondition {
-    None,
+    None = 0,
     /// Non-zero: Execute if Z is not set.
-    NZ,
+    NZ = 1,
     /// Zero: Execute if Z is set.
-    Z,
+    Z = 2,
     /// Non-carry: Execute if C is not set.
-    NC,
+    NC = 3,
     /// Carry: Execute if C is set.
-    C,
+    C = 4,
 }
 
 impl JumpCondition {
@@ -29,8 +29,8 @@ impl JumpCondition {
 
 impl Cpu {
     #[inline(always)]
-    pub fn check_cond(&mut self, cond: JumpCondition) -> bool {
-        match cond {
+    pub fn check_cond<const C: u8>(&mut self) -> bool {
+        match JumpCondition::from_u8(C) {
             JumpCondition::C => self.registers.flags.get_c(),
             JumpCondition::NC => !self.registers.flags.get_c(),
             JumpCondition::Z => self.registers.flags.get_z(),

@@ -4,13 +4,11 @@ use crate::cpu::Cpu;
 impl Cpu {
     #[inline(always)]
     pub fn execute_ret<const C: u8>(&mut self) {
-        let cond = JumpCondition::from_u8(C);
-
-        if cond != JumpCondition::None {
+        if JumpCondition::from_u8(C) != JumpCondition::None {
             self.clock.tick_m_cycles(1);
         }
 
-        if self.check_cond(cond) {
+        if self.check_cond::<C>() {
             let lo = self.pop() as u16;
             let hi = self.pop() as u16;
 

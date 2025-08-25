@@ -1,5 +1,5 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::instructions::{FetchedData, JumpCondition};
+use crate::cpu::instructions::{FetchedData};
 use crate::cpu::interrupts::InterruptType;
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
@@ -34,8 +34,8 @@ impl Cpu {
 
     /// Costs 2 M-Cycles with push PC
     #[inline(always)]
-    pub fn goto_addr_with_cond(&mut self, cond: JumpCondition, addr: u16, push_pc: bool) {
-        if self.check_cond(cond) {
+    pub fn goto_addr_with_cond<const C: u8>(&mut self, addr: u16, push_pc: bool) {
+        if self.check_cond::<C>() {
             self.goto_addr(addr, push_pc);
         }
     }
@@ -136,7 +136,7 @@ impl Cpu {
 
         self.is_halted = false;
         self.clock.bus.io.interrupts.acknowledge_interrupt(it);
-        self.goto_addr_with_cond(JumpCondition::None, addr, true);
+        self.goto_addr(addr, true);
 
         self.clock.tick_m_cycles(1);
     }
