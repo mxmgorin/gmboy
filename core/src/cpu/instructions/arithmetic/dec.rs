@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -29,7 +29,7 @@ impl Cpu {
 }
 
 impl FlagsOp {
-    pub fn dec8(data: FlagsCtxData, flags: &mut Flags) {
+    pub fn dec8(data: FlagsData, flags: &mut Flags) {
         flags.set_z_inner(data.result == 0);
         flags.set_n_inner(true);
         flags.set_h_inner((data.lhs & 0xF) == 0);

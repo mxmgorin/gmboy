@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -55,7 +55,7 @@ impl Cpu {
 
 impl FlagsOp {
     #[inline(always)]
-    pub fn add8(data: FlagsCtxData, flags: &mut Flags) {
+    pub fn add8(data: FlagsData, flags: &mut Flags) {
         flags.set_z_inner(data.result == 0);
         flags.set_n_inner(false);
         flags.set_h_inner((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry_in > 0xF);
@@ -63,14 +63,14 @@ impl FlagsOp {
     }
 
     #[inline(always)]
-    pub fn add16(data: FlagsCtxData, flags: &mut Flags) {
+    pub fn add16(data: FlagsData, flags: &mut Flags) {
         flags.set_n_inner(false);
         flags.set_h_inner(((data.lhs & 0x0FFF) + (data.rhs & 0x0FFF)) > 0x0FFF);
         flags.set_c_inner((data.lhs as u32 + data.rhs as u32) > 0xFFFF);
     }
 
     #[inline(always)]
-    pub fn add_sp_e8(data: FlagsCtxData, flags: &mut Flags) {
+    pub fn add_sp_e8(data: FlagsData, flags: &mut Flags) {
         flags.set_z_inner(false);
         flags.set_n_inner(false);
         flags.set_h_inner((data.lhs & 0xF) + (data.rhs & 0xF) > 0xF);

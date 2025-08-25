@@ -1,10 +1,17 @@
 use crate::cpu::Cpu;
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 
 impl Cpu {
     #[inline(always)]
     pub fn execute_scf(&mut self) {
-        self.registers.flags.set_n(false);
-        self.registers.flags.set_h(false);
-        self.registers.flags.set_c(true);
+        self.registers.flags.set(FlagsCtx::scf());
+    }
+}
+
+impl FlagsOp {
+    pub fn scf(_data: FlagsData, flags: &mut Flags) {
+        flags.set_n_inner(false);
+        flags.set_h_inner(false);
+        flags.set_c_inner(true);
     }
 }

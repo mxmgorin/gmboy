@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -14,7 +14,7 @@ impl Cpu {
 
 impl FlagsOp {
     #[inline(always)]
-    pub fn rla(data: FlagsCtxData, flags: &mut Flags) {
+    pub fn rla(data: FlagsData, flags: &mut Flags) {
         flags.set_z_inner(false);
         flags.set_n_inner(false);
         flags.set_h_inner(false);

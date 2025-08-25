@@ -143,7 +143,7 @@ impl Flags {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlagsCtx {
     op: FlagsOp,
-    data: FlagsCtxData,
+    data: FlagsData,
 }
 
 impl FlagsCtx {
@@ -156,10 +156,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn add8(lhs: u8, rhs: u8, carry_in: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Add8,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: lhs as u16,
                 rhs: rhs as u16,
                 carry_in,
@@ -168,10 +169,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn add16(lhs: u16, rhs: u16) -> Self {
         Self {
             op: FlagsOp::Add16,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs,
                 rhs,
                 carry_in : 0,
@@ -180,10 +182,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn add_sp_e8(lhs: u16, rhs: u16) -> Self {
         Self {
             op: FlagsOp::AddSpE8,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs,
                 rhs,
                 carry_in : 0,
@@ -192,10 +195,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn sub8(lhs: u8, rhs: u8, carry_in: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Sub8,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: lhs as u16,
                 rhs: rhs as u16,
                 carry_in,
@@ -204,10 +208,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn dec8(lhs: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Dec8,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
                 carry_in : 0,
@@ -216,10 +221,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn inc8(lhs: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Inc8,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
                 carry_in : 0,
@@ -228,10 +234,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn and(result: u8) -> Self {
         Self {
             op: FlagsOp::And,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: 0,
                 rhs: 0,
                 carry_in : 0,
@@ -240,22 +247,19 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn cpl() -> Self {
         Self {
             op: FlagsOp::Cpl,
-            data: FlagsCtxData {
-                lhs: 0,
-                rhs: 0,
-                carry_in : 0,
-                result: 0,
-            },
+            data: FlagsData::default(),
         }
     }
 
+    #[inline(always)]
     pub fn or(result: u8) -> Self {
         Self {
             op: FlagsOp::Or,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: 0,
                 rhs: 0,
                 carry_in : 0,
@@ -264,10 +268,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn rla(lhs: u8) -> Self {
         Self {
             op: FlagsOp::Rla,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
                 carry_in : 0,
@@ -276,10 +281,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn rlca(carry_in: u8) -> Self {
         Self {
             op: FlagsOp::Rlca,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: 0,
                 rhs: 0,
                 carry_in,
@@ -288,10 +294,11 @@ impl FlagsCtx {
         }
     }
 
+    #[inline(always)]
     pub fn rra(lhs: u8) -> Self {
         Self {
             op: FlagsOp::Rra,
-            data: FlagsCtxData {
+            data: FlagsData {
                 lhs: lhs as u16,
                 rhs: 0,
                 carry_in: 0,
@@ -299,10 +306,31 @@ impl FlagsCtx {
             },
         }
     }
+
+    #[inline(always)]
+    pub fn ccf(carry_in: u8) -> Self {
+        Self {
+            op: FlagsOp::Ccf,
+            data: FlagsData {
+                lhs: 0,
+                rhs: 0,
+                carry_in,
+                result: 0,
+            },
+        }
+    }
+
+    #[inline(always)]
+    pub fn scf() -> Self {
+        Self {
+            op: FlagsOp::Scf,
+            data: FlagsData::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct FlagsCtxData {
+pub struct FlagsData {
     pub lhs: u16,
     pub rhs: u16,
     pub carry_in: u8,
@@ -324,11 +352,13 @@ pub enum FlagsOp {
     Or = 9,
     Rlca = 10,
     Rra = 11,
+    Ccf = 12,
+    Scf = 13,
 }
 
-type ApplyFlagsFn = fn(FlagsCtxData, &mut Flags);
+type ApplyFlagsFn = fn(FlagsData, &mut Flags);
 
-const APPLY_TABLE: [ApplyFlagsFn; 12] = [
+const APPLY_TABLE: [ApplyFlagsFn; 14] = [
     FlagsOp::add8,      // 0
     FlagsOp::add16,     // 1
     FlagsOp::add_sp_e8, // 2
@@ -341,4 +371,6 @@ const APPLY_TABLE: [ApplyFlagsFn; 12] = [
     FlagsOp::or,        // 9
     FlagsOp::rlca, // 10
     FlagsOp::rra, // 11
+    FlagsOp::ccf, // 12
+    FlagsOp::ccf, // 13
 ];

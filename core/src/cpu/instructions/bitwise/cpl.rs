@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -11,7 +11,7 @@ impl Cpu {
 }
 
 impl FlagsOp {
-    pub fn cpl(_data: FlagsCtxData, flags: &mut Flags) {
+    pub fn cpl(_data: FlagsData, flags: &mut Flags) {
         flags.set_n_inner(true);
         flags.set_h_inner(true);
     }
