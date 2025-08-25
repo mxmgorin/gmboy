@@ -9,14 +9,14 @@ const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Flags {
     byte: u8,
-    pending: Option<FlagsCtx>,
+    pending: FlagsCtx,
 }
 
 impl Default for Flags {
     fn default() -> Self {
         Self {
             byte: 0xB0,
-            pending: None,
+            pending: FlagsCtx::default(),
         }
     }
 }
@@ -25,18 +25,18 @@ impl Flags {
     pub fn new(byte: u8) -> Flags {
         Self {
             byte,
-            pending: None,
+            pending: FlagsCtx::default(),
         }
     }
 
     #[inline(always)]
     pub fn set(&mut self, ctx: FlagsCtx) {
-        self.pending = Some(ctx);
+        self.pending = ctx;
     }
 
     #[inline(always)]
     pub fn force_set(&mut self, ctx: FlagsCtx) {
-        self.pending = Some(ctx);
+        self.pending = ctx;
         self.apply_pending();
     }
 
@@ -48,7 +48,7 @@ impl Flags {
 
     #[inline(always)]
     pub const fn set_byte(&mut self, byte: u8) {
-        self.pending = None;
+        self.pending.op = FlagsOp::Nop;
         self.byte = byte;
     }
 
@@ -80,7 +80,7 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_znhc(&mut self, z: bool, n: bool, h: bool, c: bool) {
-        self.pending = None;
+        self.pending.op = FlagsOp::Nop;
         self.set_z_raw(z);
         self.set_n_raw(n);
         self.set_h_raw(h);
@@ -107,11 +107,10 @@ impl Flags {
         get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
     }
 
-    #[inline]
+    #[inline(always)]
     fn apply_pending(&mut self) {
-        if let Some(pending) = self.pending.take() {
-            pending.apply(self);
-        }
+        let pending = std::mem::take(&mut self.pending);
+        pending.apply(self);
     }
 
     pub fn display(&mut self) -> String {
@@ -151,6 +150,15 @@ impl Flags {
 pub struct FlagsCtx {
     op: FlagsOp,
     data: FlagsData,
+}
+
+impl Default for FlagsCtx {
+    fn default() -> Self {
+        Self {
+            op: FlagsOp::Nop,
+            data: Default::default(),
+        }
+    }
 }
 
 impl FlagsCtx {
@@ -349,7 +357,7 @@ impl FlagsCtx {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, Copy)]
 pub struct FlagsData {
     pub lhs: u16,
     pub rhs: u16,
@@ -358,7 +366,7 @@ pub struct FlagsData {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub enum FlagsOp {
     Add8 = 0,
     Add16 = 1,
@@ -375,11 +383,17 @@ pub enum FlagsOp {
     Ccf = 12,
     Scf = 13,
     Ld = 14,
+    Nop = 15,
+}
+
+impl FlagsOp {
+    #[inline(always)]
+    pub fn nop(_data: FlagsData, _flags: &mut Flags) {}
 }
 
 type ApplyFlagsFn = fn(FlagsData, &mut Flags);
 
-const APPLY_TABLE: [ApplyFlagsFn; 15] = [
+const APPLY_TABLE: [ApplyFlagsFn; 16] = [
     FlagsOp::add8,      // 0
     FlagsOp::add16,     // 1
     FlagsOp::add_sp_e8, // 2
@@ -395,4 +409,5 @@ const APPLY_TABLE: [ApplyFlagsFn; 15] = [
     FlagsOp::ccf,       // 12
     FlagsOp::ccf,       // 13
     FlagsOp::ld,        // 14
+    FlagsOp::nop,
 ];
