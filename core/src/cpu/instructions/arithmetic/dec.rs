@@ -1,5 +1,4 @@
-use serde::{Deserialize, Serialize};
-use crate::cpu::flags::{Flags, FlagsCtx};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -15,9 +14,7 @@ impl Cpu {
             let lhs = self.step_ctx.fetched_data.value as u8;
             let result = lhs.wrapping_sub(1);
             self.registers.set_register8::<R1>(result);
-            self.registers
-                .flags
-                .set(FlagsCtx::Dec8(Dec8FlagsCtx { lhs, result }));
+            self.registers.flags.set(FlagsCtx::dec8(lhs, result));
         }
     }
 
@@ -27,23 +24,14 @@ impl Cpu {
         let lhs = self.step_ctx.fetched_data.value as u8;
         let result = lhs.wrapping_sub(1);
         self.write_to_memory(self.step_ctx.fetched_data.addr, result);
-        self.registers
-            .flags
-            .set(FlagsCtx::Dec8(Dec8FlagsCtx { lhs, result }));
+        self.registers.flags.set(FlagsCtx::dec8(lhs, result));
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Dec8FlagsCtx {
-    pub lhs: u8,
-    pub result: u8,
-}
-
-impl Dec8FlagsCtx {
-    #[inline(always)]
-    pub fn apply(&self, flags: &mut Flags) {
-        flags.set_z_inner(self.result == 0);
+impl FlagsOp {
+    pub fn dec8(data: FlagsCtxData, flags: &mut Flags) {
+        flags.set_z_inner(data.result == 0);
         flags.set_n_inner(true);
-        flags.set_h_inner((self.lhs & 0xF) == 0);
+        flags.set_h_inner((data.lhs & 0xF) == 0);
     }
 }

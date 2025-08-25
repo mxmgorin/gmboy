@@ -1,6 +1,5 @@
-use crate::cpu::flags::{Flags, FlagsCtx};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
-use serde::{Deserialize, Serialize};
 
 impl Cpu {
     #[inline(always)]
@@ -11,9 +10,7 @@ impl Cpu {
 
         self.clock.tick_m_cycles(2);
         self.registers.sp = self.registers.sp.wrapping_add(rhs as i8 as u16);
-        self.registers
-            .flags
-            .set(FlagsCtx::AddSpE8(AddSpE8FlagsCtx { lhs, rhs }));
+        self.registers.flags.set(FlagsCtx::add_sp_e8(lhs, rhs));
     }
 
     #[inline(always)]
@@ -36,75 +33,47 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_add<const R1: u8>(&mut self) {
-        let lhs = self.registers.get_register::<R1>();
-        let rhs = self.step_ctx.fetched_data.value;
-
         if RegisterType::from_u8(R1).is_16bit() {
             // but not for SP
+            let lhs = self.registers.get_register::<R1>();
+            let rhs = self.step_ctx.fetched_data.value;
             let result = lhs.wrapping_add(rhs);
             self.registers.set_register::<R1>(result);
             self.clock.tick_m_cycles(1);
+            self.registers.flags.set(FlagsCtx::add16(lhs, rhs));
+        } else {
+            let lhs = self.registers.get_register8::<R1>();
+            let rhs = self.step_ctx.fetched_data.value as u8;
+            let result = lhs.wrapping_add(rhs);
+            self.registers.set_register8::<R1>(result);
             self.registers
                 .flags
-                .set(FlagsCtx::Add16(Add16FlagsCtx { lhs, rhs }));
-        } else {
-            let result = lhs.wrapping_add(rhs);
-            self.registers.set_register::<R1>(result);
-            self.registers.flags.set(FlagsCtx::Add8(Add8FlagsCtx {
-                lhs: lhs as u8,
-                rhs: rhs as u8,
-                carry_in: 0,
-                result: result as u8,
-            }));
+                .set(FlagsCtx::add8(lhs, rhs, 0, result));
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
-pub struct Add8FlagsCtx {
-    pub lhs: u8,
-    pub rhs: u8,
-    pub carry_in: u8,
-    pub result: u8,
-}
-
-impl Add8FlagsCtx {
+impl FlagsOp {
     #[inline(always)]
-    pub fn apply(&self, flags: &mut Flags) {
-        flags.set_z_inner(self.result == 0);
+    pub fn add8(data: FlagsCtxData, flags: &mut Flags) {
+        flags.set_z_inner(data.result == 0);
         flags.set_n_inner(false);
-        flags.set_h_inner((self.lhs & 0xF) + (self.rhs & 0xF) + self.carry_in > 0xF);
-        flags.set_c_inner((self.lhs as u16 + self.rhs as u16 + self.carry_in as u16) > 0xFF);
+        flags.set_h_inner((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry_in > 0xF);
+        flags.set_c_inner((data.lhs + data.rhs + data.carry_in as u16) > 0xFF);
     }
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Add16FlagsCtx {
-    pub lhs: u16,
-    pub rhs: u16,
-}
-
-impl Add16FlagsCtx {
     #[inline(always)]
-    pub fn apply(&self, flags: &mut Flags) {
+    pub fn add16(data: FlagsCtxData, flags: &mut Flags) {
         flags.set_n_inner(false);
-        flags.set_h_inner(((self.lhs & 0x0FFF) + (self.rhs & 0x0FFF)) > 0x0FFF);
-        flags.set_c_inner((self.lhs as u32 + self.rhs as u32) > 0xFFFF);
+        flags.set_h_inner(((data.lhs & 0x0FFF) + (data.rhs & 0x0FFF)) > 0x0FFF);
+        flags.set_c_inner((data.lhs as u32 + data.rhs as u32) > 0xFFFF);
     }
-}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AddSpE8FlagsCtx {
-    pub lhs: u16,
-    pub rhs: u16,
-}
-
-impl AddSpE8FlagsCtx {
     #[inline(always)]
-    pub fn apply(&self, flags: &mut Flags) {
+    pub fn add_sp_e8(data: FlagsCtxData, flags: &mut Flags) {
         flags.set_z_inner(false);
         flags.set_n_inner(false);
-        flags.set_h_inner((self.lhs & 0xF) + (self.rhs & 0xF) > 0xF);
-        flags.set_c_inner(((self.lhs & 0xFF) + (self.rhs & 0xFF)) > 0xFF);
+        flags.set_h_inner((data.lhs & 0xF) + (data.rhs & 0xF) > 0xF);
+        flags.set_c_inner(((data.lhs & 0xFF) + (data.rhs & 0xFF)) > 0xFF);
     }
 }

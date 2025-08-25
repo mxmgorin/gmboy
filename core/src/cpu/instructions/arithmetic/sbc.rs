@@ -1,5 +1,4 @@
 use crate::cpu::flags::FlagsCtx;
-use crate::cpu::instructions::arithmetic::sub::Sub8FlagsCtx;
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -29,11 +28,11 @@ impl Cpu {
 
         let result = lhs.wrapping_sub(rhs).wrapping_sub(carry_in);
         self.registers.set_register8::<R1>(result);
-        self.registers.flags.set(FlagsCtx::Sub8(Sub8FlagsCtx {
+        self.registers.flags.set(FlagsCtx::sub8(
             lhs,
             rhs,
             carry_in,
             result,
-        }));
+        ));
     }
 }

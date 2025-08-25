@@ -1,6 +1,5 @@
-use crate::cpu::Cpu;
 use crate::cpu::flags::FlagsCtx;
-use crate::cpu::instructions::bitwise::or::OrFlagsCtx;
+use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline(always)]
@@ -28,6 +27,6 @@ impl Cpu {
         // todo: for some reason fails test when lazy is used
         self.registers
             .flags
-            .force_set(FlagsCtx::Or(OrFlagsCtx { result: self.registers.a }));
+            .force_set(FlagsCtx::or(self.registers.a));
     }
 }

@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx};
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsCtxData, FlagsOp};
 use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +29,7 @@ impl Cpu {
 
         self.registers
             .flags
-            .set(FlagsCtx::Or(OrFlagsCtx { result }))
+            .set(FlagsCtx::or(result))
     }
 }
 
@@ -42,6 +42,15 @@ impl OrFlagsCtx {
     #[inline(always)]
     pub fn apply(&self, flags: &mut Flags) {
         flags.set_z_inner(self.result == 0);
+        flags.set_n_inner(false);
+        flags.set_h_inner(false);
+        flags.set_c_inner(false);
+    }
+}
+
+impl FlagsOp {
+    pub fn or(data: FlagsCtxData, flags: &mut Flags) {
+        flags.set_z_inner(data.result == 0);
         flags.set_n_inner(false);
         flags.set_h_inner(false);
         flags.set_c_inner(false);
