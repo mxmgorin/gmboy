@@ -19,16 +19,14 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_d8<const R1: u8>(&mut self) {
-        self.fetch_r_d8::<R1>();
-        self.registers
-            .set_register::<R1>(self.step_ctx.fetched_data.value);
+        let rhs = self.read_pc();
+        self.registers.set_register8::<R1>(rhs);
     }
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_d16<const R1: u8>(&mut self) {
-        self.fetch_r_d16::<R1>();
-        self.registers
-            .set_register::<R1>(self.step_ctx.fetched_data.value);
+        let rhs = self.read_pc16();
+        self.registers.set_register::<R1>(rhs);
     }
 
     #[inline(always)]
@@ -51,9 +49,8 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_ld_r_a16<const R1: u8>(&mut self) {
-        self.fetch_r_a16::<R1>();
-        self.registers
-            .set_register::<R1>(self.step_ctx.fetched_data.value);
+        let rhs = self.read_a16();
+        self.registers.set_register8::<R1>(rhs);
     }
 
     #[inline(always)]
@@ -97,13 +94,9 @@ impl Cpu {
 
     #[inline(always)]
     fn ld_addr_r<const R: u8>(&mut self, addr: u16) {
-        let r = RegisterType::from_u8(R);
-
-        if r.is_16bit() {
-            self.write_to_memory(
-                addr + 1,
-                ((self.step_ctx.fetched_data.value >> 8) & 0xFF) as u8,
-            );
+        if RegisterType::from_u8(R).is_16bit() {
+            let value_l = ((self.step_ctx.fetched_data.value >> 8) & 0xFF) as u8;
+            self.write_to_memory(addr + 1, value_l);
             self.write_to_memory(addr, (self.step_ctx.fetched_data.value & 0xFF) as u8);
         } else {
             self.write_to_memory(addr, self.step_ctx.fetched_data.value as u8);

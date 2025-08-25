@@ -172,12 +172,16 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_r_a16<const R1: u8>(&mut self) {
-        let addr = self.read_pc16();
-
         self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
+            value: self.read_a16() as u16,
             addr: 0,
         }
+    }
+
+    #[inline(always)]
+    pub fn read_a16(&mut self) -> u8 {
+        let addr = self.read_pc16();
+        self.read_memory(addr)
     }
 }
 
