@@ -18,31 +18,30 @@ pub mod emu;
 pub mod ppu;
 
 /// Returns true if the n-th bit of byte is set, false otherwise.
-#[inline]
+#[inline(always)]
 pub fn get_bit_flag(byte: u8, pos: u8) -> bool {
     byte & (1 << pos) != 0
 }
 
-#[inline]
+#[inline(always)]
 pub fn get_bit_flag16(val: u16, pos: u8) -> bool {
     get_bit16(val, pos) != 0
 }
 
-#[inline]
+#[inline(always)]
 pub fn get_bit16(val: u16, pos: u8) -> u16 {
     val & (1 << pos)
 }
 
 /// Sets or clears the n-th bit of `a` based on the value of `on`.
-#[inline]
+#[inline(always)]
 pub fn set_bit(a: &mut u8, n: u8, on: bool) {
-    if on {
-        *a |= 1 << n; // Set the n-th bit to 1
-    } else {
-        *a &= !(1 << n); // Set the n-th bit to 0
-    }
+    let mask = 1 << n;
+    let v = (-(on as i8) as u8) & mask; // either 0 or mask
+    *a = (*a & !mask) | v;
 }
 
+#[inline(always)]
 pub fn struct_to_bytes_mut<T>(s: &mut T) -> &mut [u8] {
     // Convert the mutable reference to a mutable raw pointer
     let ptr = s as *mut T as *mut u8;

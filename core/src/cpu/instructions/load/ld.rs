@@ -1,18 +1,18 @@
+use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_ld_lh_spi8(&mut self) {
         self.fetch_lh_spi8();
-        let h = (self.registers.sp & 0xF) + (self.step_ctx.fetched_data.value & 0xF) >= 0x10;
-        let c = (self.registers.sp & 0xFF) + (self.step_ctx.fetched_data.value & 0xFF) >= 0x100;
-        self.registers.flags.set_znhc(false, false, h, c);
+        let lhs = self.step_ctx.fetched_data.value;
+        let rhs = self.registers.sp;
 
-        let offset_e = self.step_ctx.fetched_data.value as i8; // truncate to 8 bits (+8e)
-
-        self.registers.set_register::<{ RegisterType::HL as u8 }>(
-            self.registers.sp.wrapping_add(offset_e as u16),
-        );
+        let offset_e = lhs as i8; // truncate to 8 bits (+8e)
+        let result = self.registers.sp.wrapping_add(offset_e as u16);
+        self.registers
+            .set_register::<{ RegisterType::HL as u8 }>(result);
+        self.registers.flags.set(FlagsCtx::ld(lhs, rhs));
 
         self.clock.tick_m_cycles(1);
     }
@@ -121,5 +121,15 @@ impl Cpu {
 
         self.registers
             .set_register::<R1>(self.step_ctx.fetched_data.value);
+    }
+}
+
+impl FlagsOp {
+    #[inline(always)]
+    pub fn ld(data: FlagsData, flags: &mut Flags) {
+        flags.set_z_raw(false);
+        flags.set_n_raw(false);
+        flags.set_h_raw((data.lhs & 0xF) + (data.rhs & 0xF) >= 0x10);
+        flags.set_c_raw((data.lhs & 0xFF) + (data.rhs & 0xFF) >= 0x100);
     }
 }

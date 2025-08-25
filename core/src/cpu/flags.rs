@@ -334,6 +334,19 @@ impl FlagsCtx {
             data: FlagsData::default(),
         }
     }
+
+    #[inline(always)]
+    pub fn ld(lhs: u16, rhs: u16) -> Self {
+        Self {
+            op: FlagsOp::Ld,
+            data: FlagsData {
+                lhs,
+                rhs,
+                carry_in: 0,
+                result: 0,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -361,11 +374,12 @@ pub enum FlagsOp {
     Rra = 11,
     Ccf = 12,
     Scf = 13,
+    Ld = 14,
 }
 
 type ApplyFlagsFn = fn(FlagsData, &mut Flags);
 
-const APPLY_TABLE: [ApplyFlagsFn; 14] = [
+const APPLY_TABLE: [ApplyFlagsFn; 15] = [
     FlagsOp::add8,      // 0
     FlagsOp::add16,     // 1
     FlagsOp::add_sp_e8, // 2
@@ -380,4 +394,5 @@ const APPLY_TABLE: [ApplyFlagsFn; 14] = [
     FlagsOp::rra,       // 11
     FlagsOp::ccf,       // 12
     FlagsOp::ccf,       // 13
+    FlagsOp::ld,        // 14
 ];
