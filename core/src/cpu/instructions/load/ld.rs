@@ -12,7 +12,7 @@ impl Cpu {
         let result = self.registers.sp.wrapping_add(offset_e as u16);
         self.registers
             .set_register::<{ RegisterType::HL as u8 }>(result);
-        self.registers.flags.set(FlagsCtx::ld(lhs, rhs));
+        self.registers.flags.set(FlagsCtx::new_ld(lhs, rhs));
 
         self.clock.tick_m_cycles(1);
     }

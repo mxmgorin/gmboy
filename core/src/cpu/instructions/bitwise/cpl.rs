@@ -5,7 +5,7 @@ impl Cpu {
     #[inline(always)]
     pub fn execute_cpl(&mut self) {
         self.registers.a = !self.registers.a;
-        self.registers.flags.set(FlagsCtx::cpl())
+        self.registers.flags.set(FlagsCtx::new_cpl())
     }
 }
 

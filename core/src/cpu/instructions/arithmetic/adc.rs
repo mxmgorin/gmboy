@@ -31,6 +31,6 @@ impl Cpu {
         self.registers.a = result;
         self.registers
             .flags
-            .set(FlagsCtx::add8(lhs, rhs, carry_in, result));
+            .set(FlagsCtx::new_add8(lhs, rhs, carry_in, result));
     }
 }

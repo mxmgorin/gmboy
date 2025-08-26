@@ -10,7 +10,7 @@ impl Cpu {
 
         self.clock.tick_m_cycles(2);
         self.registers.sp = self.registers.sp.wrapping_add(rhs as i8 as u16);
-        self.registers.flags.set(FlagsCtx::add_sp_e8(lhs, rhs));
+        self.registers.flags.set(FlagsCtx::new_add_sp_e8(lhs, rhs));
     }
 
     #[inline(always)]
@@ -40,7 +40,7 @@ impl Cpu {
             let result = lhs.wrapping_add(rhs);
             self.registers.set_register::<R1>(result);
             self.clock.tick_m_cycles(1);
-            self.registers.flags.set(FlagsCtx::add16(lhs, rhs));
+            self.registers.flags.set(FlagsCtx::new_add16(lhs, rhs));
         } else {
             let lhs = self.registers.get_register8::<R1>();
             let rhs = self.step_ctx.fetched_data.value as u8;
@@ -48,7 +48,7 @@ impl Cpu {
             self.registers.set_register8::<R1>(result);
             self.registers
                 .flags
-                .set(FlagsCtx::add8(lhs, rhs, 0, result));
+                .set(FlagsCtx::new_add8(lhs, rhs, 0, result));
         }
     }
 }
@@ -58,8 +58,8 @@ impl FlagsOp {
     pub fn add8(data: FlagsData, flags: &mut Flags) {
         flags.set_z_raw(data.result == 0);
         flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry_in > 0xF);
-        flags.set_c_raw((data.lhs + data.rhs + data.carry_in as u16) > 0xFF);
+        flags.set_h_raw((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry > 0xF);
+        flags.set_c_raw((data.lhs + data.rhs + data.carry as u16) > 0xFF);
     }
 
     #[inline(always)]

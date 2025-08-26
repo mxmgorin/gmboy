@@ -4,7 +4,7 @@ use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
 impl Cpu {
     #[inline(always)]
     pub fn execute_scf(&mut self) {
-        self.registers.flags.set(FlagsCtx::scf());
+        self.registers.flags.set(FlagsCtx::new_scf());
     }
 }
 

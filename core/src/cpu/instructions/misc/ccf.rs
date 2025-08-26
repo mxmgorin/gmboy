@@ -5,7 +5,7 @@ impl Cpu {
     #[inline(always)]
     pub fn execute_ccf(&mut self) {
         let carry = self.registers.flags.get_c() as u8;
-        self.registers.flags.set(FlagsCtx::ccf(carry));
+        self.registers.flags.set(FlagsCtx::new_ccf(carry));
     }
 }
 
@@ -14,6 +14,6 @@ impl FlagsOp {
     pub fn ccf(data: FlagsData, flags: &mut Flags) {
         flags.set_n_raw(false);
         flags.set_h_raw(false);
-        flags.set_c_raw(data.carry_in == 0);
+        flags.set_c_raw(data.carry == 0);
     }
 }

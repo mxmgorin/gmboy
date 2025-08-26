@@ -7,7 +7,7 @@ impl Cpu {
         let lhs = self.registers.a;
         let carry = (lhs >> 7) & 1;
         self.registers.a = (lhs << 1) | carry;
-        self.registers.flags.set(FlagsCtx::rlca(carry));
+        self.registers.flags.set(FlagsCtx::new_rlca(carry));
     }
 }
 
@@ -17,6 +17,6 @@ impl FlagsOp {
         flags.set_z_raw(false);
         flags.set_n_raw(false);
         flags.set_h_raw(false);
-        flags.set_c_raw(data.carry_in != 0);
+        flags.set_c_raw(data.carry != 0);
     }
 }

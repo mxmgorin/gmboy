@@ -24,7 +24,7 @@ impl Cpu {
     #[inline(always)]
     pub fn execute_or(&mut self) {
         self.registers.a |= self.step_ctx.fetched_data.value as u8;
-        self.registers.flags.set(FlagsCtx::or(self.registers.a))
+        self.registers.flags.set(FlagsCtx::new_or(self.registers.a))
     }
 }
 

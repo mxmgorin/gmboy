@@ -23,7 +23,7 @@ impl Cpu {
     #[inline(always)]
     pub fn execute_and(&mut self) {
         self.registers.a &= self.step_ctx.fetched_data.value as u8;
-        self.registers.flags.set(FlagsCtx::and(self.registers.a));
+        self.registers.flags.set(FlagsCtx::new_and(self.registers.a));
     }
 }
 

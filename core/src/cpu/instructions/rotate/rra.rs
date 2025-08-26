@@ -8,7 +8,7 @@ impl Cpu {
         let lhs = self.registers.a;
         self.registers.a >>= 1;
         self.registers.a |= carry << 7;
-        self.registers.flags.force_set(FlagsCtx::rra(lhs));
+        self.registers.flags.force_set(FlagsCtx::new_rra(lhs));
     }
 }
 

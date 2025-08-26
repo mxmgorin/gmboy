@@ -28,7 +28,7 @@ impl Cpu {
 
         let result = lhs.wrapping_sub(rhs).wrapping_sub(carry_in);
         self.registers.set_register8::<R1>(result);
-        self.registers.flags.set(FlagsCtx::sub8(
+        self.registers.flags.set(FlagsCtx::new_sub8(
             lhs,
             rhs,
             carry_in,
