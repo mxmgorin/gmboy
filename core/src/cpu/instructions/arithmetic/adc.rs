@@ -1,4 +1,3 @@
-use crate::cpu::flags::FlagsCtx;
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -31,6 +30,6 @@ impl Cpu {
         self.registers.a = result;
         self.registers
             .flags
-            .set(FlagsCtx::new_add8(lhs, rhs, carry_in, result));
+            .op_add8(lhs, rhs, carry_in, result);
     }
 }

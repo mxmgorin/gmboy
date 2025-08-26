@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -14,7 +14,7 @@ impl Cpu {
             let lhs = self.step_ctx.fetched_data.value as u8;
             let result = lhs.wrapping_sub(1);
             self.registers.set_register8::<R1>(result);
-            self.registers.flags.set(FlagsCtx::new_dec8(lhs, result));
+            self.registers.flags.op_dec8(lhs, result);
         }
     }
 
@@ -24,7 +24,7 @@ impl Cpu {
         let lhs = self.step_ctx.fetched_data.value as u8;
         let result = lhs.wrapping_sub(1);
         self.write_to_memory(self.step_ctx.fetched_data.addr, result);
-        self.registers.flags.set(FlagsCtx::new_dec8(lhs, result));
+        self.registers.flags.op_dec8(lhs, result);
     }
 }
 

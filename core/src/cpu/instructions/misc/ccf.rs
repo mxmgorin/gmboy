@@ -1,11 +1,11 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
 
 impl Cpu {
     #[inline(always)]
     pub fn execute_ccf(&mut self) {
         let carry = self.registers.flags.get_c() as u8;
-        self.registers.flags.set(FlagsCtx::new_ccf(carry));
+        self.registers.flags.op_ccf(carry);
     }
 }
 

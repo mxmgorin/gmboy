@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -27,7 +27,7 @@ impl Cpu {
         self.registers.set_register8::<R1>(result);
         self.registers
             .flags
-            .set(FlagsCtx::new_sub8(lhs, rhs, 0, result));
+            .op_sub8(lhs, rhs, 0, result);
     }
 }
 

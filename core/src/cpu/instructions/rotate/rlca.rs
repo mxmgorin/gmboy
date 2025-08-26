@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -7,7 +7,7 @@ impl Cpu {
         let lhs = self.registers.a;
         let carry = (lhs >> 7) & 1;
         self.registers.a = (lhs << 1) | carry;
-        self.registers.flags.set(FlagsCtx::new_rlca(carry));
+        self.registers.flags.op_rlca(carry);
     }
 }
 

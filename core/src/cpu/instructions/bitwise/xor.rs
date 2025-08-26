@@ -1,4 +1,3 @@
-use crate::cpu::flags::FlagsCtx;
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -26,6 +25,6 @@ impl Cpu {
         // todo: for some reason fails test when lazy is used
         self.registers
             .flags
-            .force_set(FlagsCtx::new_or(self.registers.a));
+            .force_op_or(self.registers.a);
     }
 }

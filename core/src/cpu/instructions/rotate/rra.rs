@@ -1,5 +1,5 @@
 use crate::cpu::Cpu;
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 
 impl Cpu {
     #[inline(always)]
@@ -8,7 +8,7 @@ impl Cpu {
         let lhs = self.registers.a;
         self.registers.a >>= 1;
         self.registers.a |= carry << 7;
-        self.registers.flags.force_set(FlagsCtx::new_rra(lhs));
+        self.registers.flags.force_op_rra(lhs);
     }
 }
 

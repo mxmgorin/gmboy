@@ -1,4 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -10,7 +10,7 @@ impl Cpu {
 
         self.clock.tick_m_cycles(2);
         self.registers.sp = self.registers.sp.wrapping_add(rhs as i8 as u16);
-        self.registers.flags.set(FlagsCtx::new_add_sp_e8(lhs, rhs));
+        self.registers.flags.op_add_sp_e8(lhs, rhs);
     }
 
     #[inline(always)]
@@ -40,7 +40,7 @@ impl Cpu {
             let result = lhs.wrapping_add(rhs);
             self.registers.set_register::<R1>(result);
             self.clock.tick_m_cycles(1);
-            self.registers.flags.set(FlagsCtx::new_add16(lhs, rhs));
+            self.registers.flags.op_add16(lhs, rhs);
         } else {
             let lhs = self.registers.get_register8::<R1>();
             let rhs = self.step_ctx.fetched_data.value as u8;
@@ -48,7 +48,7 @@ impl Cpu {
             self.registers.set_register8::<R1>(result);
             self.registers
                 .flags
-                .set(FlagsCtx::new_add8(lhs, rhs, 0, result));
+                .op_add8(lhs, rhs, 0, result);
         }
     }
 }

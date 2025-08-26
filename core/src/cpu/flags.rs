@@ -30,17 +30,6 @@ impl Flags {
     }
 
     #[inline(always)]
-    pub fn set(&mut self, ctx: FlagsCtx) {
-        self.pending = ctx;
-    }
-
-    #[inline(always)]
-    pub fn force_set(&mut self, ctx: FlagsCtx) {
-        self.pending = ctx;
-        self.compute_pending();
-    }
-
-    #[inline(always)]
     pub fn get_byte(&mut self) -> u8 {
         self.compute_pending();
         self.byte
@@ -148,6 +137,91 @@ impl Flags {
     pub fn set_c_raw(&mut self, v: bool) {
         set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, v);
     }
+
+    #[inline(always)]
+    pub fn op_add8(&mut self, lhs: u8, rhs: u8, carry: u8, result: u8) {
+        self.pending = FlagsCtx::new_add8(lhs, rhs, carry, result);
+    }
+
+    #[inline(always)]
+    pub fn op_add16(&mut self, lhs: u16, rhs: u16) {
+        self.pending = FlagsCtx::new_add16(lhs, rhs);
+    }
+
+    #[inline(always)]
+    pub fn op_add_sp_e8(&mut self, lhs: u16, rhs: u16) {
+        self.pending = FlagsCtx::new_add_sp_e8(lhs, rhs);
+    }
+
+    #[inline(always)]
+    pub fn op_sub8(&mut self, lhs: u8, rhs: u8, carry: u8, result: u8) {
+        self.pending = FlagsCtx::new_sub8(lhs, rhs, carry, result);
+    }
+
+    #[inline(always)]
+    pub fn op_dec8(&mut self, lhs: u8, result: u8) {
+        self.pending = FlagsCtx::new_dec8(lhs, result);
+    }
+
+    #[inline(always)]
+    pub fn op_inc8(&mut self, lhs: u8, result: u8) {
+        self.pending = FlagsCtx::new_inc8(lhs, result);
+    }
+
+    #[inline(always)]
+    pub fn op_and(&mut self, result: u8) {
+        self.pending = FlagsCtx::new_and(result);
+    }
+
+    #[inline(always)]
+    pub fn op_cpl(&mut self) {
+        self.pending = FlagsCtx::new_cpl();
+    }
+
+    #[inline(always)]
+    pub fn op_or(&mut self, result: u8) {
+        self.pending = FlagsCtx::new_or(result);
+    }
+
+    #[inline(always)]
+    pub fn force_op_or(&mut self, result: u8) {
+        FlagsOp::or(FlagsData::with_result(result), self);
+    }
+
+    #[inline(always)]
+    pub fn op_rla(&mut self, lhs: u8) {
+        self.pending = FlagsCtx::new_rla(lhs);
+    }
+
+    #[inline(always)]
+    pub fn op_rlca(&mut self, carry: u8) {
+        self.pending = FlagsCtx::new_rlca(carry);
+    }
+
+    #[inline(always)]
+    pub fn op_rra(&mut self, lhs: u8) {
+        self.pending = FlagsCtx::new_rra(lhs);
+    }
+
+    #[inline(always)]
+    pub fn force_op_rra(&mut self, lhs: u8) {
+        FlagsOp::rra(FlagsData::with_lhs(lhs as u16), self);
+    }
+
+    #[inline(always)]
+    pub fn op_ccf(&mut self, carry: u8) {
+        self.pending = FlagsCtx::new_ccf(carry);
+    }
+
+    #[inline(always)]
+    pub fn op_scf(&mut self) {
+        self.pending = FlagsCtx::new_scf();
+    }
+
+    #[inline(always)]
+    pub fn op_ld(&mut self, lhs: u16, rhs: u16) {
+        self.pending = FlagsCtx::new_ld(lhs, rhs);
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -176,7 +250,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_add8(lhs: u8, rhs: u8, carry: u8, result: u8) -> Self {
+    fn new_add8(lhs: u8, rhs: u8, carry: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Add8,
             data: FlagsData::new(lhs as u16, rhs as u16, carry, result),
@@ -184,7 +258,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_add16(lhs: u16, rhs: u16) -> Self {
+    fn new_add16(lhs: u16, rhs: u16) -> Self {
         Self {
             op: FlagsOp::Add16,
             data: FlagsData::with_lhs_rhs(lhs, rhs),
@@ -192,7 +266,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_add_sp_e8(lhs: u16, rhs: u16) -> Self {
+    fn new_add_sp_e8(lhs: u16, rhs: u16) -> Self {
         Self {
             op: FlagsOp::AddSpE8,
             data: FlagsData::with_lhs_rhs(lhs, rhs),
@@ -200,7 +274,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_sub8(lhs: u8, rhs: u8, carry: u8, result: u8) -> Self {
+    fn new_sub8(lhs: u8, rhs: u8, carry: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Sub8,
             data: FlagsData::new(lhs as u16, rhs as u16, carry, result),
@@ -208,7 +282,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_dec8(lhs: u8, result: u8) -> Self {
+    fn new_dec8(lhs: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Dec8,
             data: FlagsData::with_lhs_result(lhs as u16, result),
@@ -216,7 +290,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_inc8(lhs: u8, result: u8) -> Self {
+    fn new_inc8(lhs: u8, result: u8) -> Self {
         Self {
             op: FlagsOp::Inc8,
             data: FlagsData::with_lhs_result(lhs as u16, result),
@@ -224,7 +298,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_and(result: u8) -> Self {
+    fn new_and(result: u8) -> Self {
         Self {
             op: FlagsOp::And,
             data: FlagsData::with_result(result),
@@ -232,7 +306,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_cpl() -> Self {
+    fn new_cpl() -> Self {
         Self {
             op: FlagsOp::Cpl,
             data: FlagsData::default(),
@@ -240,7 +314,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_or(result: u8) -> Self {
+    fn new_or(result: u8) -> Self {
         Self {
             op: FlagsOp::Or,
             data: FlagsData::with_result(result),
@@ -248,7 +322,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_rla(lhs: u8) -> Self {
+    fn new_rla(lhs: u8) -> Self {
         Self {
             op: FlagsOp::Rla,
             data: FlagsData::with_lhs(lhs as u16),
@@ -256,7 +330,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_rlca(carry: u8) -> Self {
+    fn new_rlca(carry: u8) -> Self {
         Self {
             op: FlagsOp::Rlca,
             data: FlagsData::with_carry(carry),
@@ -264,7 +338,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_rra(lhs: u8) -> Self {
+    fn new_rra(lhs: u8) -> Self {
         Self {
             op: FlagsOp::Rra,
             data: FlagsData::with_lhs(lhs as u16),
@@ -272,7 +346,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_ccf(carry: u8) -> Self {
+    fn new_ccf(carry: u8) -> Self {
         Self {
             op: FlagsOp::Ccf,
             data: FlagsData::with_carry(carry),
@@ -280,7 +354,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_scf() -> Self {
+    fn new_scf() -> Self {
         Self {
             op: FlagsOp::Scf,
             data: FlagsData::default(),
@@ -288,7 +362,7 @@ impl FlagsCtx {
     }
 
     #[inline(always)]
-    pub fn new_ld(lhs: u16, rhs: u16) -> Self {
+    fn new_ld(lhs: u16, rhs: u16) -> Self {
         Self {
             op: FlagsOp::Ld,
             data: FlagsData::with_lhs_rhs(lhs, rhs),

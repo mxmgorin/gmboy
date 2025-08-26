@@ -1,4 +1,3 @@
-use crate::cpu::flags::FlagsCtx;
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -25,11 +24,11 @@ impl Cpu {
         let lhs = self.registers.a;
         let rhs = self.step_ctx.fetched_data.value as u8;
         let result = lhs.wrapping_sub(rhs);
-        self.registers.flags.set(FlagsCtx::new_sub8(
+        self.registers.flags.op_sub8(
             lhs,
             rhs,
             0,
             result,
-        ));
+        );
     }
 }
