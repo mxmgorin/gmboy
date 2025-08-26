@@ -67,7 +67,11 @@ impl Flags {
     #[inline(always)]
     pub fn get_hnc(&mut self) -> (bool, bool, bool) {
         self.compute_pending();
-        (self.get_h(), self.get_n(), self.get_c())
+        (
+            get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION),
+            get_bit_flag(self.byte, NEGATIVE_FLAG_BYTE_POSITION),
+            get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION),
+        )
     }
 
     #[inline(always)]
