@@ -1,3 +1,4 @@
+use std::hint::black_box;
 use core::apu::Apu;
 use core::auxiliary::clock::Clock;
 use core::auxiliary::timer::Timer;
@@ -22,23 +23,38 @@ pub fn get_cart() -> Cart {
     Cart::new(read_bytes(&path).unwrap()).unwrap()
 }
 
-fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("cpu_step_500_000", |b| {
-        b.iter_batched(
-            || {
-                let ppu = Ppu::default();
-                let bus = Bus::new(get_cart(), Default::default());
-                let clock = Clock::new(ppu, bus);
+pub fn new_cpu(cart: Option<Cart>) -> Cpu {
+    let bus = if let Some(cart) = cart {
+        Bus::new(cart, Default::default())
+    } else {
+        Bus::with_bytes(vec![0; 100000], Default::default())
+    };
+    let clock = Clock::new(Ppu::default(), bus);
 
-                Cpu::new(clock)
-            },
-            |mut cpu| {
-                for _ in 0..500_000 {
-                    cpu.step(None);
+    Cpu::new(clock)
+}
+
+fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("daa", |b| {
+        let mut cpu = new_cpu(None);
+
+        b.iter(|| {
+            // test all possible A + flags combinations
+            for a in 0..=255u8 {
+                for n in 0..=1 {
+                    for h in 0..=1 {
+                        for c in 0..=1 {
+                            cpu.registers.a = black_box(a);
+                            cpu.registers.flags.set_n_raw(black_box(n) != 0);
+                            cpu.registers.flags.set_h_raw(black_box(h) != 0);
+                            cpu.registers.flags.set_c_raw(black_box(c) != 0);
+
+                            cpu.execute_daa();
+                        }
+                    }
                 }
-            },
-            BatchSize::LargeInput,
-        );
+            }
+        });
     });
 
     c.bench_function("fetch_execute_prefix_500_000", |b| {
