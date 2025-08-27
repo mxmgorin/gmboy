@@ -119,7 +119,7 @@ pub fn get_asm_string(mode: AddressMode, mnemonic: Mnemonic, cpu: &Cpu) -> Strin
         AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
             format!(
                 "{mnemonic:?} {r1:?},${:04X}",
-                cpu.step_ctx.fetched_data.value
+                0 //cpu.step_ctx.fetched_data.value
             )
         }
         AddressMode::R(r1) => {
@@ -143,7 +143,8 @@ pub fn get_asm_string(mode: AddressMode, mnemonic: Mnemonic, cpu: &Cpu) -> Strin
         AddressMode::R_D8(r1) | AddressMode::R_A8(r1) | AddressMode::R_HA8(r1) => {
             format!(
                 "{mnemonic:?} {r1:?},${:02X}",
-                cpu.step_ctx.fetched_data.value & 0xFF
+                0,
+                //cpu.step_ctx.fetched_data.value & 0xFF
             )
         }
         AddressMode::R_HLI(r1) => {
@@ -167,28 +168,28 @@ pub fn get_asm_string(mode: AddressMode, mnemonic: Mnemonic, cpu: &Cpu) -> Strin
         AddressMode::LH_SPi8 => {
             format!(
                 "{mnemonic:?} (HL,SP+{:?})",
-                cpu.step_ctx.fetched_data.value & 0xFF
+                0, //cpu.step_ctx.fetched_data.value & 0xFF
             )
         }
         AddressMode::D8 => {
             format!(
                 "{mnemonic:?} ${:02X}",
-                cpu.step_ctx.fetched_data.value & 0xFF
+                0, //cpu.step_ctx.fetched_data.value & 0xFF
             )
         }
         AddressMode::D16 => {
-            format!("{mnemonic:?} ${:04X}", cpu.step_ctx.fetched_data.value)
+            format!("{mnemonic:?} ${:04X}", 0) // cpu.step_ctx.fetched_data.value
         }
         AddressMode::MR_D8(r1) => {
             format!(
                 "{mnemonic:?} ({r1:?}),${:02X}",
-                cpu.step_ctx.fetched_data.value & 0xFF
+                0 //cpu.step_ctx.fetched_data.value & 0xFF
             )
         }
         AddressMode::A16_R(r2) => {
             format!(
                 "{mnemonic:?} (${:04X}),{r2:?}",
-                cpu.step_ctx.fetched_data.value
+                0, //cpu.step_ctx.fetched_data.value
             )
         }
     };

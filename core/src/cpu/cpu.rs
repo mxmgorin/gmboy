@@ -1,5 +1,4 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::instructions::FetchedData;
 use crate::cpu::interrupts::InterruptType;
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
@@ -9,7 +8,6 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct StepCtx {
     pub opcode: u8,
-    pub fetched_data: FetchedData,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]

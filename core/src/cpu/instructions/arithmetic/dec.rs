@@ -18,10 +18,9 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_dec_mr<const R1: u8>(&mut self) {
-        self.fetch_mr::<R1>();
-        let lhs = self.step_ctx.fetched_data.value as u8;
+        let (addr, lhs) = self.read_addr_mr::<R1>();
         let result = lhs.wrapping_sub(1);
-        self.write_to_memory(self.step_ctx.fetched_data.addr, result);
+        self.write_to_memory(addr, result);
         self.registers.flags.op_dec8(lhs, result);
     }
 }

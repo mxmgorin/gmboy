@@ -10,6 +10,14 @@ impl Cpu {
     }
 
     #[inline(always)]
+    pub fn read_addr_mr<const R1: u8>(&mut self) -> (u16, u8) {
+        let addr = self.registers.get_register::<R1>();
+        let value = self.read_memory(addr);
+
+        (addr, value)
+    }
+
+    #[inline(always)]
     pub fn read_hmr<const R2: u8>(&mut self) -> u8 {
         let addr = self.registers.get_register::<R2>();
         let addr = 0xFF00 | addr;
@@ -87,24 +95,6 @@ impl Cpu {
     #[inline(always)]
     pub fn read_mr_d8<const R1: u8>(&mut self) -> (u16, u8) {
         (self.registers.get_register::<R1>(), self.read_pc())
-    }
-
-    #[inline(always)]
-    pub fn fetch_mr<const R1: u8>(&mut self) {
-        let addr = self.registers.get_register::<R1>();
-
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
-            addr,
-        }
-    }
-
-    #[inline(always)]
-    pub fn fetch_r_a16(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_a16() as u16,
-            addr: 0,
-        }
     }
 
     #[inline(always)]

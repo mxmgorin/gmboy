@@ -3,7 +3,6 @@ use crate::cpu::{Cpu, RegisterType};
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_inc_r<const R1: u8>(&mut self) {
-
         if RegisterType::from_u8(R1).is_16bit() {
             let lhs = self.registers.get_register::<R1>();
             let result = lhs.wrapping_add(1);
@@ -19,12 +18,10 @@ impl Cpu {
 
     #[inline]
     pub fn fetch_execute_inc_mr<const R1: u8>(&mut self) {
-        self.fetch_mr::<R1>();
-        let lhs = self.step_ctx.fetched_data.value as u8;
+        let (addr, lhs) = self.read_addr_mr::<R1>();
         let result = lhs.wrapping_add(1);
 
-        self.write_to_memory(self.step_ctx.fetched_data.addr, result);
+        self.write_to_memory(addr, result);
         self.registers.flags.op_inc8(lhs, result);
     }
 }
-
