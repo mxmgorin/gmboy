@@ -3,24 +3,27 @@ use serde::{Deserialize, Serialize};
 
 type ComputeFlagsFn = fn(FlagsData, &mut Flags);
 
-const COMPUTE_TABLE: [ComputeFlagsFn; 16] = [
-    FlagsOp::add8,      // 0
-    FlagsOp::add16,     // 1
-    FlagsOp::add_sp_e8, // 2
-    FlagsOp::sub8,      // 3
-    FlagsOp::inc8,      // 4
-    FlagsOp::dec8,      // 5
-    FlagsOp::rla,       // 6
-    FlagsOp::and,       // 7
-    FlagsOp::cpl,       // 8
-    FlagsOp::or,        // 9
-    FlagsOp::rlca,      // 10
-    FlagsOp::rra,       // 11
-    FlagsOp::ccf,       // 12
-    FlagsOp::ccf,       // 13
-    FlagsOp::ld,        // 14
-    FlagsOp::nop,
-];
+const COMPUTE_FNS: [ComputeFlagsFn; 16] = {
+    let mut table = [FlagsOp::nop as ComputeFlagsFn; 16];
+    table[FlagsOp::Add8 as usize] = FlagsOp::add8;
+    table[FlagsOp::Add16 as usize] = FlagsOp::add16;
+    table[FlagsOp::AddSpE8 as usize] = FlagsOp::add_sp_e8;
+    table[FlagsOp::Sub8 as usize] = FlagsOp::sub8;
+    table[FlagsOp::Inc8 as usize] = FlagsOp::inc8;
+    table[FlagsOp::Dec8 as usize] = FlagsOp::dec8;
+    table[FlagsOp::Rla as usize] = FlagsOp::rla;
+    table[FlagsOp::And as usize] = FlagsOp::and;
+    table[FlagsOp::Cpl as usize] = FlagsOp::cpl;
+    table[FlagsOp::Or as usize] = FlagsOp::or;
+    table[FlagsOp::Rlca as usize] = FlagsOp::rlca;
+    table[FlagsOp::Rra as usize] = FlagsOp::rra;
+    table[FlagsOp::Ccf as usize] = FlagsOp::ccf;
+    table[FlagsOp::Scf as usize] = FlagsOp::scf;
+    table[FlagsOp::Ld as usize] = FlagsOp::ld;
+    table[FlagsOp::Nop as usize] = FlagsOp::nop;
+
+    table
+};
 
 #[repr(u8)]
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
@@ -182,7 +185,7 @@ impl FlagsCtx {
         let index = self.op as usize;
 
         unsafe {
-            COMPUTE_TABLE.get_unchecked(index)(self.data, flags);
+            COMPUTE_FNS.get_unchecked(index)(self.data, flags);
         }
     }
 
