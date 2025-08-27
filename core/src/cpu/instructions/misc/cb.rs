@@ -2,8 +2,7 @@ use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
     #[inline(always)]
-    fn execute_cb_bit(&mut self) {
-        let op = self.step_ctx.fetched_data.value as u8;
+    fn execute_cb_bit(&mut self, op: u8) {
         let bit = get_cb_bit(op);
         let register = get_register(op);
 
@@ -14,8 +13,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_res(&mut self) {
-        let op = self.step_ctx.fetched_data.value as u8;
+    fn execute_cb_res(&mut self, op: u8) {
         let bit = get_cb_bit(op);
         let register = get_register(op);
 
@@ -25,8 +23,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_set(&mut self) {
-        let op = self.step_ctx.fetched_data.value as u8;
+    fn execute_cb_set(&mut self, op: u8) {
         let bit = get_cb_bit(op);
         let register = get_register(op);
 
@@ -36,9 +33,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_rlc(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_rlc(&mut self, op: u8) {
+        let register = get_register(op);
 
         let reg_val = (register.get)(self);
         let carry = (reg_val & 0x80) != 0; // Check MSB for carry
@@ -51,9 +47,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_rrc(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_rrc(&mut self, op: u8) {
+        let register = get_register(op);
 
         let mut reg_val = (register.get)(self);
         let old = reg_val;
@@ -66,9 +61,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_rl(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_rl(&mut self, op: u8) {
+        let register = get_register(op);
 
         let mut reg_val = (register.get)(self);
         let old = reg_val;
@@ -82,9 +76,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_rr(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_rr(&mut self, op: u8) {
+        let register = get_register(op);
 
         let mut reg_val = (register.get)(self);
         let old = reg_val;
@@ -98,9 +91,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_sla(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_sla(&mut self, op: u8) {
+        let register = get_register(op);
 
         let mut reg_val = (register.get)(self);
         let old = reg_val;
@@ -113,9 +105,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_sra(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_sra(&mut self, op: u8) {
+        let register = get_register(op);
 
         let reg_val = (register.get)(self);
         let u: i8 = reg_val as i8;
@@ -128,9 +119,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_swap(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_swap(&mut self, op: u8) {
+        let register = get_register(op);
 
         let mut reg_val = (register.get)(self);
         reg_val = ((reg_val & 0xF0) >> 4) | ((reg_val & 0x0F) << 4);
@@ -142,9 +132,8 @@ impl Cpu {
     }
 
     #[inline(always)]
-    fn execute_cb_srl(&mut self) {
-        let op = self.step_ctx.fetched_data.value;
-        let register = get_register(op as u8);
+    fn execute_cb_srl(&mut self, op: u8) {
+        let register = get_register(op);
 
         let reg_val = (register.get)(self);
         let u = reg_val >> 1;
@@ -157,9 +146,8 @@ impl Cpu {
 
     #[inline(always)]
     pub fn fetch_execute_cb(&mut self) {
-        self.fetch_d8();
-        let op = self.step_ctx.fetched_data.value;
-        CB_FNS[op as usize](self);
+        let op = self.read_d8();
+        CB_FNS[op as usize](self, op);
     }
 
     #[inline(always)]
@@ -203,8 +191,8 @@ impl Cpu {
         }
     }
 
-    fn invalid_cb(&mut self) {
-        panic!("INVALID CB");
+    fn invalid_cb(&mut self, op: u8) {
+        panic!("INVALID CB: {op}");
     }
 }
 
@@ -234,7 +222,7 @@ const REGISTER_FNS: [RegisterFn; 8] = [
     RegisterFn::new::<{ RegisterType::A as u8 }>(),
 ];
 
-type CbFn = fn(&mut Cpu);
+type CbFn = fn(&mut Cpu, u8);
 
 #[inline(always)]
 const fn get_cb_bit(op: u8) -> u8 {

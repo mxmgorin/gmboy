@@ -3,40 +3,6 @@ use serde::{Deserialize, Serialize};
 
 impl Cpu {
     #[inline(always)]
-    pub fn fetch_r_d8(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_pc() as u16,
-            addr: 0,
-        };
-    }
-
-    #[inline(always)]
-    pub fn fetch_d16(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_pc16(),
-            addr: 0,
-        };
-    }
-
-    #[inline(always)]
-    pub fn fetch_r_d16(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_pc16(),
-            addr: 0,
-        };
-    }
-
-    #[inline(always)]
-    pub fn fetch_r_mr<const R1: u8, const R2: u8>(&mut self) {
-        let addr = self.registers.get_register::<R2>();
-
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
-            addr: 0,
-        };
-    }
-
-    #[inline(always)]
     pub fn read_mr<const R2: u8>(&mut self) -> u8 {
         let addr = self.registers.get_register::<R2>();
 
@@ -44,22 +10,11 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_hmr<const R1: u8, const R2: u8>(&mut self) {
+    pub fn read_hmr<const R2: u8>(&mut self) -> u8 {
         let addr = self.registers.get_register::<R2>();
         let addr = 0xFF00 | addr;
 
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
-            addr: 0,
-        };
-    }
-
-    #[inline(always)]
-    pub fn fetch_mr_r<const R1: u8, const R2: u8>(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.get_register::<R2>(),
-            addr: self.registers.get_register::<R1>(),
-        };
+        self.read_memory(addr)
     }
 
     #[inline(always)]
@@ -68,17 +23,6 @@ impl Cpu {
             self.registers.get_register::<R1>(),
             self.registers.get_register::<R2>(),
         )
-    }
-
-    #[inline(always)]
-    pub fn fetch_r_mri<const R1: u8, const R2: u8>(&mut self) {
-        let addr = self.registers.get_register::<R2>();
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
-            addr: 0,
-        };
-
-        self.registers.set_hl(addr.wrapping_add(1));
     }
 
     #[inline(always)]
@@ -91,34 +35,12 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_r_mrd<const R1: u8, const R2: u8>(&mut self) {
-        let addr = self.registers.get_register::<R2>();
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_memory(addr) as u16,
-            addr: 0,
-        };
-
-        self.registers.set_hl(addr.wrapping_sub(1));
-    }
-
-    #[inline(always)]
     pub fn read_r_mrd<const R1: u8, const R2: u8>(&mut self) -> u8 {
         let addr = self.registers.get_register::<R2>();
         let value = self.read_memory(addr);
         self.registers.set_hl(addr.wrapping_sub(1));
 
         value
-    }
-
-    #[inline(always)]
-    pub fn fetch_mri_r<const R1: u8, const R2: u8>(&mut self) {
-        let addr = self.registers.get_register::<R1>();
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.get_register::<R2>(),
-            addr,
-        };
-
-        self.registers.set_hl(addr.wrapping_add(1));
     }
 
     #[inline(always)]
@@ -131,31 +53,12 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_mrd_r<const R1: u8, const R2: u8>(&mut self) {
-        let addr = self.registers.get_register::<R1>();
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.get_register::<R2>(),
-            addr,
-        };
-
-        self.registers.set_hl(addr.wrapping_sub(1));
-    }
-
-    #[inline(always)]
     pub fn read_mrd_r<const R1: u8, const R2: u8>(&mut self) -> (u16, u16) {
         let addr = self.registers.get_register::<R1>();
         let value = self.registers.get_register::<R2>();
         self.registers.set_hl(addr.wrapping_sub(1));
 
         (addr, value)
-    }
-
-    #[inline(always)]
-    pub fn fetch_r_ha8(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_ha8() as u16,
-            addr: 0,
-        }
     }
 
     #[inline(always)]
@@ -167,40 +70,18 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_a8_r<const R2: u8>(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.get_register::<R2>(),
-            addr: self.read_pc() as u16,
-        }
+    pub fn read_a8_r8<const R2: u8>(&mut self) -> (u8, u8) {
+        (self.read_pc(), self.registers.get_register8::<R2>())
     }
 
     #[inline(always)]
-    pub fn fetch_d8(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_pc() as u16,
-            addr: 0,
-        }
-    }
-
-    #[inline(always)]
-    pub fn fetch_a16_r<const R2: u8>(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.registers.get_register::<R2>(),
-            addr: self.read_pc16(),
-        }
+    pub fn read_d8(&mut self) -> u8 {
+        self.read_pc()
     }
 
     #[inline(always)]
     pub fn read_a16_r<const R2: u8>(&mut self) -> (u16, u16) {
         (self.read_pc16(), self.registers.get_register::<R2>())
-    }
-
-    #[inline(always)]
-    pub fn fetch_mr_d8<const R1: u8>(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_pc() as u16,
-            addr: self.registers.get_register::<R1>(),
-        }
     }
 
     #[inline(always)]
@@ -331,74 +212,4 @@ pub enum AddressMode {
 pub struct FetchedData {
     pub addr: u16,
     pub value: u16,
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::auxiliary::clock::Clock;
-    use crate::auxiliary::io::Io;
-    use crate::bus::Bus;
-    use crate::cart::Cart;
-    use crate::cpu::{Cpu, RegisterType};
-    use crate::ppu::Ppu;
-
-    #[test]
-    fn test_fetch_r_d8() {
-        let pc = 4;
-        let value = 25;
-        let mut bytes = vec![0u8; 8000].into_boxed_slice();
-        bytes[pc] = value;
-        let cart = Cart::new(bytes).unwrap();
-        let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
-        let mut cpu = Cpu::new(clock);
-        cpu.registers.pc = pc as u16;
-        cpu.fetch_r_d8();
-
-        assert_eq!(cpu.step_ctx.fetched_data.value as u8, value);
-        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
-        assert_eq!(cpu.registers.pc, pc as u16 + 1);
-        //assert_eq!(self.clock.t_cycles, 4);
-    }
-
-    #[test]
-    fn test_r_hli() {
-        let mut bytes = vec![0u8; 40000];
-        let h_val = 0x40;
-        let l_val = 0x00;
-        let hl_val = u16::from_le_bytes([l_val, h_val]);
-        let addr_value = 123;
-        bytes[hl_val as usize] = addr_value;
-
-        let clock = Clock::new(Ppu::default(), Bus::with_bytes(bytes, Io::default()));
-        let mut cpu = Cpu::new(clock);
-        cpu.registers.h = h_val;
-        cpu.registers.l = l_val;
-
-        cpu.fetch_r_mri::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>();
-
-        assert_eq!(cpu.step_ctx.fetched_data.value, addr_value as u16);
-        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
-        assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_add(1));
-    }
-
-    #[test]
-    fn test_r_hld() {
-        let mut bytes = vec![0u8; 40000];
-        let h_val = 0x40;
-        let l_val = 0x00;
-        let hl_val = u16::from_le_bytes([l_val, h_val]);
-        let addr_value = 123;
-        bytes[hl_val as usize] = addr_value;
-        let cart = Cart::new(bytes.into_boxed_slice()).unwrap();
-        let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
-        let mut cpu = Cpu::new(clock);
-        cpu.registers.h = h_val;
-        cpu.registers.l = l_val;
-
-        cpu.fetch_r_mrd::<{ RegisterType::A as u8 }, { RegisterType::HL as u8 }>();
-
-        assert_eq!(cpu.step_ctx.fetched_data.value, addr_value as u16);
-        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
-        assert_eq!(cpu.registers.get_hl(), hl_val.wrapping_sub(1));
-    }
 }
