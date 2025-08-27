@@ -5,7 +5,8 @@ edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
-default = ["lazy-flags"]
+#default = ["lazy-flags"]
+default = []
 debug = []
 lazy-flags = []
 
