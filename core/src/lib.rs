@@ -19,23 +19,23 @@ pub mod ppu;
 
 /// Returns true if the n-th bit of byte is set, false otherwise.
 #[inline(always)]
-pub fn get_bit_flag(byte: u8, pos: u8) -> bool {
+pub const fn get_bit_flag(byte: u8, pos: u8) -> bool {
     byte & (1 << pos) != 0
 }
 
 #[inline(always)]
-pub fn get_bit_flag16(val: u16, pos: u8) -> bool {
+pub const fn get_bit_flag16(val: u16, pos: u8) -> bool {
     get_bit16(val, pos) != 0
 }
 
 #[inline(always)]
-pub fn get_bit16(val: u16, pos: u8) -> u16 {
+pub const fn get_bit16(val: u16, pos: u8) -> u16 {
     val & (1 << pos)
 }
 
 /// Sets or clears the n-th bit of `a` based on the value of `on`.
 #[inline(always)]
-pub fn set_bit(a: &mut u8, n: u8, on: bool) {
+pub const fn set_bit(a: &mut u8, n: u8, on: bool) {
     let mask = 1 << n;
     let v = (-(on as i8) as u8) & mask; // either 0 or mask
     *a = (*a & !mask) | v;

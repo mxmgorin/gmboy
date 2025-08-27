@@ -35,6 +35,24 @@ pub fn new_cpu(cart: Option<Cart>) -> Cpu {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("cpu_step_500_000", |b| {
+        b.iter_batched(
+            || {
+                let ppu = Ppu::default();
+                let bus = Bus::new(get_cart(), Default::default());
+                let clock = Clock::new(ppu, bus);
+
+                Cpu::new(clock)
+            },
+            |mut cpu| {
+                for _ in 0..500_000 {
+                    cpu.step(None);
+                }
+            },
+            BatchSize::LargeInput,
+        );
+    });
+
     c.bench_function("daa", |b| {
         let mut cpu = new_cpu(None);
 

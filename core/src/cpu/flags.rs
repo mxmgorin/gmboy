@@ -1,4 +1,4 @@
-use crate::cpu::flags_op::{FlagsCtx, FlagsData, FlagsOp};
+use crate::cpu::flags_op::{FlagsCtx, FlagsOp};
 use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
@@ -32,13 +32,16 @@ impl Flags {
 
     #[inline(always)]
     pub fn get_byte(&mut self) -> u8 {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
         self.byte
     }
 
     #[inline(always)]
     pub const fn set_byte(&mut self, byte: u8) {
+        #[cfg(feature = "lazy-flags")]
         self.pending.clear();
+
         self.byte = byte;
     }
 
@@ -49,19 +52,25 @@ impl Flags {
 
     #[inline(always)]
     pub fn get_z(&mut self) -> bool {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         get_bit_flag(self.byte, ZERO_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     pub fn get_n(&mut self) -> bool {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         get_bit_flag(self.byte, NEGATIVE_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     pub fn get_hnc(&mut self) -> (bool, bool, bool) {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         (
             get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION),
             get_bit_flag(self.byte, NEGATIVE_FLAG_BYTE_POSITION),
@@ -71,7 +80,9 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_zhc(&mut self, z: bool, h: bool, c: bool) {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         self.set_z_raw(z);
         self.set_h_raw(h);
         self.set_c_raw(c);
@@ -79,7 +90,9 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_znhc(&mut self, z: bool, n: bool, h: bool, c: bool) {
+        #[cfg(feature = "lazy-flags")]
         self.pending.clear();
+
         self.set_z_raw(z);
         self.set_n_raw(n);
         self.set_h_raw(h);
@@ -88,7 +101,9 @@ impl Flags {
 
     #[inline(always)]
     pub fn set_znh(&mut self, z: bool, n: bool, h: bool) {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         self.set_z_raw(z);
         self.set_n_raw(n);
         self.set_h_raw(h);
@@ -96,20 +111,27 @@ impl Flags {
 
     #[inline(always)]
     pub fn get_c(&mut self) -> bool {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     pub fn get_h(&mut self) -> bool {
+        #[cfg(feature = "lazy-flags")]
         self.compute_pending();
+
         get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
     }
 
     #[inline(always)]
     fn compute_pending(&mut self) {
-        let pending = std::mem::take(&mut self.pending);
-        pending.compute(self);
+        #[cfg(feature = "lazy-flags")]
+        {
+            let pending = std::mem::take(&mut self.pending);
+            pending.compute(self);
+        }
     }
 
     #[inline(always)]
@@ -147,7 +169,10 @@ impl Flags {
 
     #[inline(always)]
     pub fn op_add8(&mut self, lhs: u8, rhs: u8, carry: u8, result: u8) {
-        self.pending = FlagsCtx::new_add8(lhs, rhs, carry, result);
+        #[cfg(feature = "lazy-flags")]
+        {
+            self.pending = FlagsCtx::new_add8(lhs, rhs, carry, result);
+        }
     }
 
     #[inline(always)]
@@ -192,7 +217,7 @@ impl Flags {
 
     #[inline(always)]
     pub fn force_op_or(&mut self, result: u8) {
-        FlagsOp::or(FlagsData::with_result(result), self);
+        FlagsOp::or(self, result);
     }
 
     #[inline(always)]
@@ -212,7 +237,7 @@ impl Flags {
 
     #[inline(always)]
     pub fn force_op_rra(&mut self, lhs: u8) {
-        FlagsOp::rra(FlagsData::with_lhs(lhs as u16), self);
+        FlagsOp::rra(self, lhs);
     }
 
     #[inline(always)]
