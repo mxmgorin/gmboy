@@ -56,6 +56,9 @@ impl EmuRuntime {
                 self.cpu.step_debug(debugger);
             }
 
+            #[cfg(not(feature = "debug"))]
+            self.cpu.step();
+
             if self.cpu.clock.bus.io.apu.buffer_ready() {
                 let output = self.cpu.clock.bus.io.apu.get_buffer();
                 callback.update(output, self);
