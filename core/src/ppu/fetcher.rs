@@ -12,7 +12,7 @@ pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
 type FetchFn = fn(&mut PixelFetcher, &Bus);
 
-const FETCH_HANDLERS: [FetchFn; 5] = [
+const FETCH_FNS: [FetchFn; 5] = [
     PixelFetcher::fetch_tile,
     PixelFetcher::fetch_data0,
     PixelFetcher::fetch_data1,
@@ -82,10 +82,11 @@ impl Default for PixelFetcher {
 impl PixelFetcher {
     #[inline(always)]
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
+        // fetch on odd lines
         if line_ticks & 1 != 0 {
-            // SAFETY: we control FETCH_HANDLERS and FetchStep
+            // SAFETY: we control FETCH_FNS and FetchStep
             unsafe {
-                FETCH_HANDLERS.get_unchecked(self.fetch_step as usize)(self, bus);
+                FETCH_FNS.get_unchecked(self.fetch_step as usize)(self, bus);
             }
         }
 
