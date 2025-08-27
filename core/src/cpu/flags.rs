@@ -2,10 +2,10 @@ use crate::cpu::flags_op::{FlagsCtx, FlagsData, FlagsOp};
 use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
-const ZERO_FLAG_BYTE_POSITION: u8 = 7;
-const NEGATIVE_FLAG_BYTE_POSITION: u8 = 6;
-const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
-const CARRY_FLAG_BYTE_POSITION: u8 = 4;
+pub const ZERO_FLAG_BYTE_POSITION: u8 = 7;
+pub const NEGATIVE_FLAG_BYTE_POSITION: u8 = 6;
+pub const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
+pub const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Flags {
@@ -39,6 +39,11 @@ impl Flags {
     #[inline(always)]
     pub const fn set_byte(&mut self, byte: u8) {
         self.pending.clear();
+        self.byte = byte;
+    }
+
+    #[inline(always)]
+    pub const fn set_byte_raw(&mut self, byte: u8) {
         self.byte = byte;
     }
 

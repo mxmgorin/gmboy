@@ -1,4 +1,7 @@
-use crate::cpu::flags::Flags;
+use crate::cpu::flags::{
+    Flags, CARRY_FLAG_BYTE_POSITION, HALF_CARRY_FLAG_BYTE_POSITION, NEGATIVE_FLAG_BYTE_POSITION,
+    ZERO_FLAG_BYTE_POSITION,
+};
 use serde::{Deserialize, Serialize};
 
 type ComputeFlagsFn = fn(FlagsData, &mut Flags);
@@ -50,12 +53,20 @@ impl FlagsOp {
     #[inline(always)]
     pub fn nop(_: FlagsData, _: &mut Flags) {}
 
+    /// Z=depends on Result, N=0, H=depends on lhs and rhs, C=depends on lhs and rhs
     #[inline(always)]
     pub fn add8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry > 0xF);
-        flags.set_c_raw((data.lhs + data.rhs + data.carry as u16) > 0xFF);
+        // Z flag (bit 7)
+        let z = (data.result == 0) as u8;
+        // H flag (bit 5): lower nibble carry including carry-in
+        let h = (((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry) > 0xF) as u8;
+        // C flag (bit 4): full-byte carry including carry-in
+        let c = ((data.lhs + data.rhs + data.carry as u16) > 0xFF) as u8;
+        // Pack all flags: Z=bit7, N=0, H=bit5, C=bit4
+        let f = (z << ZERO_FLAG_BYTE_POSITION)
+            | (h << HALF_CARRY_FLAG_BYTE_POSITION)
+            | (c << CARRY_FLAG_BYTE_POSITION);
+        flags.set_byte_raw(f);
     }
 
     #[inline(always)]
@@ -65,12 +76,17 @@ impl FlagsOp {
         flags.set_c_raw((data.lhs as u32 + data.rhs as u32) > 0xFFFF);
     }
 
+    /// Z=0, N=0, H=depends on lhs and rhs, C=depends on lhs and rhs
     #[inline(always)]
     pub fn add_sp_e8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs & 0xF) + (data.rhs & 0xF) > 0xF);
-        flags.set_c_raw(((data.lhs & 0xFF) + (data.rhs & 0xFF)) > 0xFF);
+        // Half-carry (bit 5)
+        let h = (((data.lhs & 0xF) + (data.rhs & 0xF)) > 0xF) as u8;
+        // Carry (bit 4)
+        let c = (((data.lhs & 0xFF) + (data.rhs & 0xFF)) > 0xFF) as u8;
+
+        // Pack flags: Z=0, N=0, H and C only
+        let f = (h << HALF_CARRY_FLAG_BYTE_POSITION) | (c << CARRY_FLAG_BYTE_POSITION);
+        flags.set_byte_raw(f);
     }
 
     pub fn dec8(data: FlagsData, flags: &mut Flags) {
@@ -86,19 +102,29 @@ impl FlagsOp {
         flags.set_h_raw((data.lhs & 0xF) + 1 > 0xF);
     }
 
+    /// Z=depends on Result, N=1, H=depends on lhs, rhs, carry, C=depends on lhs, rhs, carry
     pub fn sub8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(true);
-        flags.set_h_raw((data.lhs as u8 & 0xF) < ((data.rhs as u8 & 0xF) + data.carry));
-        flags.set_c_raw((data.lhs) < (data.rhs + data.carry as u16));
+        // Z flag (bit 7)
+        let z = (data.result == 0) as u8;
+        // H flag (bit 5): borrow from lower nibble
+        let h = ((data.lhs as u8 & 0xF) < ((data.rhs as u8 & 0xF) + data.carry)) as u8;
+        // C flag (bit 4): borrow from full byte
+        let c = (data.lhs < data.rhs + data.carry as u16) as u8;
+        // Pack flags: Z=bit7, N=1, H=bit5, C=bit4
+        let f = (z << ZERO_FLAG_BYTE_POSITION)
+            | (1 << NEGATIVE_FLAG_BYTE_POSITION)
+            | (h << HALF_CARRY_FLAG_BYTE_POSITION)
+            | (c << CARRY_FLAG_BYTE_POSITION);
+        flags.set_byte_raw(f);
     }
 
+    /// Z=depends on Result, N=0, H=1, C=0
     #[inline(always)]
     pub fn and(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(false);
-        flags.set_h_raw(true);
-        flags.set_c_raw(false);
+        // Z (bit 7), H (bit 5)
+        let z = (data.result == 0) as u8;
+        let f = (z << ZERO_FLAG_BYTE_POSITION) | 0x20;
+        flags.set_byte_raw(f);
     }
 
     pub fn cpl(_data: FlagsData, flags: &mut Flags) {
@@ -106,19 +132,25 @@ impl FlagsOp {
         flags.set_h_raw(true);
     }
 
+    /// Z=depends on Result, N=0, H=0, C=0
     pub fn or(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw(false);
+        // Z flag is bit 7, others are 0
+        let z = (data.result == 0) as u8;
+        let f = z << ZERO_FLAG_BYTE_POSITION; // only Z is conditionally set
+        flags.set_byte_raw(f);
     }
 
+    /// Z=0, N=0, H=depends on lhs and rhs, C=depends on lhs and rhs
     #[inline(always)]
     pub fn ld(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs & 0xF) + (data.rhs & 0xF) >= 0x10);
-        flags.set_c_raw((data.lhs & 0xFF) + (data.rhs & 0xFF) >= 0x100);
+        // Half-carry (bit 5)
+        let h = (((data.lhs & 0xF) + (data.rhs & 0xF)) >= 0x10) as u8;
+        // Carry (bit 4)
+        let c = (((data.lhs & 0xFF) + (data.rhs & 0xFF)) >= 0x100) as u8;
+
+        // Z=0, N=0, pack H and C
+        let f = (h << HALF_CARRY_FLAG_BYTE_POSITION) | (c << CARRY_FLAG_BYTE_POSITION);
+        flags.set_byte_raw(f);
     }
 
     #[inline(always)]
@@ -136,26 +168,34 @@ impl FlagsOp {
 
     #[inline(always)]
     pub fn rla(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw(((data.lhs >> 7) & 1) != 0);
+        // Carry comes from bit 7 of lhs
+        let c = ((data.lhs >> 7) & 1) as u8;
+
+        // Only C (bit 4) can be set
+        let f = c << CARRY_FLAG_BYTE_POSITION;
+        flags.set_byte_raw(f);
     }
 
+    /// Z=0, N=0, H=0, C=depends on carry
     #[inline(always)]
     pub fn rlca(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw(data.carry != 0);
+        // C flag comes directly from carry
+        let c = (data.carry != 0) as u8;
+
+        // Only bit 4 (C) can be set
+        let f = c << CARRY_FLAG_BYTE_POSITION;
+        flags.set_byte_raw(f);
     }
 
+    /// Z=0, N=0, H=0, C=depends on lhs
     #[inline(always)]
     pub fn rra(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw((data.lhs & 1) != 0);
+        // C flag comes from bit 0 of lhs
+        let c = (data.lhs & 1) as u8;
+
+        // Only bit 4 (C) can be set
+        let f = c << CARRY_FLAG_BYTE_POSITION;
+        flags.set_byte_raw(f);
     }
 }
 
