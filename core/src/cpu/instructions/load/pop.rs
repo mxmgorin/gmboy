@@ -3,8 +3,6 @@ use crate::cpu::{Cpu, RegisterType};
 impl Cpu {
     #[inline(always)]
     pub fn fetch_execute_pop<const R1: u8>(&mut self) {
-        self.fetch_r::<R1>();
-
         let lo = self.pop() as u16;
         let hi = self.pop() as u16;
         let addr = (hi << 8) | lo;

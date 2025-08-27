@@ -3,7 +3,6 @@ use crate::cpu::Cpu;
 impl Cpu {
     #[inline]
     pub fn fetch_execute_push<const R1: u8>(&mut self) {
-        self.fetch_r::<R1>();
         self.clock.tick_m_cycles(1);
 
         let hi = (self.registers.get_register::<R1>() >> 8) & 0xFF;

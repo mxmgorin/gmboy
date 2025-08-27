@@ -3,11 +3,6 @@ use serde::{Deserialize, Serialize};
 
 impl Cpu {
     #[inline(always)]
-    pub fn fetch_r<const R1: u8>(&mut self) {
-        self.step_ctx.fetched_data.value = self.registers.get_register::<R1>();
-    }
-
-    #[inline(always)]
     pub fn fetch_r_r<const R1: u8, const R2: u8>(&mut self) {
         self.step_ctx.fetched_data.value = self.registers.get_register::<R2>();
     }
@@ -298,23 +293,6 @@ mod tests {
     use crate::cart::Cart;
     use crate::cpu::{Cpu, RegisterType};
     use crate::ppu::Ppu;
-
-    #[test]
-    fn test_fetch_r() {
-        let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
-        let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
-        let mut cpu = Cpu::new(clock);
-        const REG_TYPE: RegisterType = RegisterType::B;
-        cpu.registers.set_register::<{ REG_TYPE as u8 }>(23);
-
-        cpu.fetch_r::<{ REG_TYPE as u8 }>();
-
-        assert_eq!(
-            cpu.step_ctx.fetched_data.value,
-            cpu.registers.get_register::<{ REG_TYPE as u8 }>()
-        );
-        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
-    }
 
     #[test]
     fn test_fetch_r_r() {

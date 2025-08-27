@@ -3,8 +3,7 @@ use crate::cpu::{Cpu, RegisterType};
 impl Cpu {
     #[inline(always)]
     pub fn execute_jp_no_hl(&mut self) {
-        self.fetch_r::<{ RegisterType::HL as u8 }>();
-        self.registers.pc = self.step_ctx.fetched_data.value;
+        self.registers.pc = self.registers.get_register::<{ RegisterType::HL as u8 }>();
     }
 
     #[inline(always)]
