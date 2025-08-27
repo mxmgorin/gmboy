@@ -10,7 +10,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn read_addr_mr<const R1: u8>(&mut self) -> (u16, u8) {
+    pub fn read_mr_with_addr<const R1: u8>(&mut self) -> (u16, u8) {
         let addr = self.registers.get_register::<R1>();
         let value = self.read_memory(addr);
 
@@ -69,6 +69,7 @@ impl Cpu {
         (addr, value)
     }
 
+    /// Reads value of immediate 8-bit high address
     #[inline(always)]
     pub fn read_ha8(&mut self) -> u8 {
         let addr = self.read_pc() as u16;
@@ -97,6 +98,7 @@ impl Cpu {
         (self.registers.get_register::<R1>(), self.read_pc())
     }
 
+    /// Reads value of immediate address 16 bit
     #[inline(always)]
     pub fn read_a16(&mut self) -> u8 {
         let addr = self.read_pc16();

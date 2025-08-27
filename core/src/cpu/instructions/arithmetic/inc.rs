@@ -18,7 +18,7 @@ impl Cpu {
 
     #[inline]
     pub fn fetch_execute_inc_mr<const R1: u8>(&mut self) {
-        let (addr, lhs) = self.read_addr_mr::<R1>();
+        let (addr, lhs) = self.read_mr_with_addr::<R1>();
         let result = lhs.wrapping_add(1);
 
         self.write_to_memory(addr, result);
