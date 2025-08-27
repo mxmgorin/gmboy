@@ -3,11 +3,6 @@ use serde::{Deserialize, Serialize};
 
 impl Cpu {
     #[inline(always)]
-    pub fn fetch_r_r<const R1: u8, const R2: u8>(&mut self) {
-        self.step_ctx.fetched_data.value = self.registers.get_register::<R2>();
-    }
-
-    #[inline(always)]
     pub fn fetch_r_d8(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
@@ -42,6 +37,13 @@ impl Cpu {
     }
 
     #[inline(always)]
+    pub fn read_mr<const R2: u8>(&mut self) -> u8 {
+        let addr = self.registers.get_register::<R2>();
+
+        self.read_memory(addr)
+    }
+
+    #[inline(always)]
     pub fn fetch_r_hmr<const R1: u8, const R2: u8>(&mut self) {
         let addr = self.registers.get_register::<R2>();
         let addr = 0xFF00 | addr;
@@ -61,6 +63,14 @@ impl Cpu {
     }
 
     #[inline(always)]
+    pub fn read_mr_r<const R1: u8, const R2: u8>(&mut self) -> (u16, u16) {
+        (
+            self.registers.get_register::<R1>(),
+            self.registers.get_register::<R2>(),
+        )
+    }
+
+    #[inline(always)]
     pub fn fetch_r_mri<const R1: u8, const R2: u8>(&mut self) {
         let addr = self.registers.get_register::<R2>();
         self.step_ctx.fetched_data = FetchedData {
@@ -69,6 +79,15 @@ impl Cpu {
         };
 
         self.registers.set_hl(addr.wrapping_add(1));
+    }
+
+    #[inline(always)]
+    pub fn read_mri<const R2: u8>(&mut self) -> u8 {
+        let addr = self.registers.get_register::<R2>();
+        let val = self.read_memory(addr);
+        self.registers.set_hl(addr.wrapping_add(1));
+
+        val
     }
 
     #[inline(always)]
@@ -83,6 +102,15 @@ impl Cpu {
     }
 
     #[inline(always)]
+    pub fn read_r_mrd<const R1: u8, const R2: u8>(&mut self) -> u8 {
+        let addr = self.registers.get_register::<R2>();
+        let value = self.read_memory(addr);
+        self.registers.set_hl(addr.wrapping_sub(1));
+
+        value
+    }
+
+    #[inline(always)]
     pub fn fetch_mri_r<const R1: u8, const R2: u8>(&mut self) {
         let addr = self.registers.get_register::<R1>();
         self.step_ctx.fetched_data = FetchedData {
@@ -94,6 +122,15 @@ impl Cpu {
     }
 
     #[inline(always)]
+    pub fn read_mri_r<const R1: u8, const R2: u8>(&mut self) -> (u16, u16) {
+        let addr = self.registers.get_register::<R1>();
+        let value = self.registers.get_register::<R2>();
+        self.registers.set_hl(addr.wrapping_add(1));
+
+        (addr, value)
+    }
+
+    #[inline(always)]
     pub fn fetch_mrd_r<const R1: u8, const R2: u8>(&mut self) {
         let addr = self.registers.get_register::<R1>();
         self.step_ctx.fetched_data = FetchedData {
@@ -102,6 +139,15 @@ impl Cpu {
         };
 
         self.registers.set_hl(addr.wrapping_sub(1));
+    }
+
+    #[inline(always)]
+    pub fn read_mrd_r<const R1: u8, const R2: u8>(&mut self) -> (u16, u16) {
+        let addr = self.registers.get_register::<R1>();
+        let value = self.registers.get_register::<R2>();
+        self.registers.set_hl(addr.wrapping_sub(1));
+
+        (addr, value)
     }
 
     #[inline(always)]
@@ -129,14 +175,6 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn fetch_lh_spi8(&mut self) {
-        self.step_ctx.fetched_data = FetchedData {
-            value: self.read_pc() as u16,
-            addr: 0,
-        }
-    }
-
-    #[inline(always)]
     pub fn fetch_d8(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
@@ -153,11 +191,21 @@ impl Cpu {
     }
 
     #[inline(always)]
+    pub fn read_a16_r<const R2: u8>(&mut self) -> (u16, u16) {
+        (self.read_pc16(), self.registers.get_register::<R2>())
+    }
+
+    #[inline(always)]
     pub fn fetch_mr_d8<const R1: u8>(&mut self) {
         self.step_ctx.fetched_data = FetchedData {
             value: self.read_pc() as u16,
             addr: self.registers.get_register::<R1>(),
         }
+    }
+
+    #[inline(always)]
+    pub fn read_mr_d8<const R1: u8>(&mut self) -> (u16, u8) {
+        (self.registers.get_register::<R1>(), self.read_pc())
     }
 
     #[inline(always)]
@@ -293,24 +341,6 @@ mod tests {
     use crate::cart::Cart;
     use crate::cpu::{Cpu, RegisterType};
     use crate::ppu::Ppu;
-
-    #[test]
-    fn test_fetch_r_r() {
-        let cart = Cart::new(vec![0u8; 1000].into_boxed_slice()).unwrap();
-        let clock = Clock::new(Ppu::default(), Bus::new(cart, Io::default()));
-        let mut cpu = Cpu::new(clock);
-        const R1: RegisterType = RegisterType::BC;
-        const R2: RegisterType = RegisterType::A;
-        cpu.registers.set_register::<{ R2 as u8 }>(23);
-
-        cpu.fetch_r_r::<{ R1 as u8 }, { R2 as u8 }>();
-
-        assert_eq!(
-            cpu.step_ctx.fetched_data.value,
-            cpu.registers.get_register::<{ R2 as u8 }>()
-        );
-        assert_eq!(cpu.step_ctx.fetched_data.addr, 0);
-    }
 
     #[test]
     fn test_fetch_r_d8() {
