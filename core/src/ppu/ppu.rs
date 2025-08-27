@@ -28,6 +28,7 @@ pub struct Ppu {
 }
 
 impl Ppu {
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.line_ticks = 0;
         self.current_frame = 0;
@@ -42,6 +43,7 @@ impl Ppu {
         }
     }
 
+    #[inline(always)]
     pub fn get_fps(&mut self) -> Option<f32> {
         self.fps.as_mut().map(|x| x.get())
     }
@@ -156,6 +158,7 @@ impl Default for Fps {
 }
 
 impl Fps {
+    #[inline(always)]
     pub fn update(&mut self) {
         let now = self.timer.elapsed();
         let frame_time = (now - self.prev_frame_time).as_secs_f32();
@@ -176,6 +179,7 @@ impl Fps {
         }
     }
 
+    #[inline(always)]
     pub fn get(&mut self) -> f32 {
         self.fps
     }

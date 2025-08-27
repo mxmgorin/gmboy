@@ -64,12 +64,14 @@ pub struct Pixel {
 }
 
 impl Pixel {
+    #[inline(always)]
     pub fn new(color: PixelColor, color_id: ColorId) -> Pixel {
         Pixel { color, color_id }
     }
 }
 
 impl PixelData {
+    #[inline(always)]
     pub fn new(byte1: u8, byte2: u8, bit: u8) -> PixelData {
         Self { byte1, byte2, bit }
     }
@@ -102,11 +104,13 @@ impl From<usize> for ColorId {
 }
 
 impl ColorId {
+    #[inline(always)]
     pub fn new(byte1: u8, byte2: u8, bit: u8) -> ColorId {
         get_color_index(byte1, byte2, bit).into()
     }
 }
 
+#[inline(always)]
 pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
     let bit1 = (byte1 >> (7 - bit)) & 0x01;
     let bit2 = (byte2 >> (7 - bit)) & 0x01;
@@ -115,6 +119,7 @@ pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
 }
 
 impl TileLineData {
+    #[inline(always)]
     pub fn new(byte_one: u8, byte_two: u8) -> TileLineData {
         Self {
             byte1: byte_one,
@@ -122,10 +127,12 @@ impl TileLineData {
         }
     }
 
+    #[inline(always)]
     pub fn get_color_id(&self, bit: u8) -> ColorId {
         ColorId::new(self.byte1, self.byte2, bit)
     }
 
+    #[inline(always)]
     pub fn iter_color_ids(&self) -> impl Iterator<Item = ColorId> {
         TileLineIterator {
             bit: 0,

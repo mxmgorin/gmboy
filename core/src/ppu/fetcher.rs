@@ -32,6 +32,7 @@ pub struct BgwFetchedData {
 }
 
 impl BgwFetchedData {
+    #[inline(always)]
     pub fn get_data_addr(&mut self) -> u16 {
         let tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
 
@@ -40,6 +41,7 @@ impl BgwFetchedData {
             .wrapping_add(tile_y as u16)
     }
 
+    #[inline(always)]
     pub fn normalize_tile_idx(&mut self) {
         if self.data_area == 0x8800 {
             self.tile_idx = self.tile_idx.wrapping_add(128);
@@ -78,7 +80,7 @@ impl Default for PixelFetcher {
 }
 
 impl PixelFetcher {
-    #[inline]
+    #[inline(always)]
     pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
         if line_ticks & 1 != 0 {
             // SAFETY: we control FETCH_HANDLERS and FetchStep
@@ -90,7 +92,7 @@ impl PixelFetcher {
         self.try_fifo_pop(bus);
     }
 
-    #[inline]
+    #[inline(always)]
     fn try_fifo_pop(&mut self, bus: &Bus) {
         if let Some(pixel) = self.pixel_fifo.pop() {
             // Check if we are in the window or background layer
@@ -115,7 +117,7 @@ impl PixelFetcher {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
         let base = index * PPU_BYTES_PER_PIXEL;
         let bytes = pixel.as_rgb565_bytes();
@@ -195,7 +197,7 @@ impl PixelFetcher {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn try_fifo_push(&mut self, bus: &Bus) -> bool {
         if self.pixel_fifo.is_full() {
             return false;

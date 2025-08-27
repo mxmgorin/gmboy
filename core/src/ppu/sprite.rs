@@ -22,6 +22,7 @@ pub struct SpriteFetcher {
 }
 
 impl SpriteFetcher {
+    #[inline(always)]
     pub fn load_line_sprites(&mut self, bus: &mut Bus) {
         self.line_sprites_count = 0;
         let cur_y: i32 = bus.io.lcd.ly as i32;
@@ -73,6 +74,7 @@ impl SpriteFetcher {
         }
     }
 
+    #[inline(always)]
     pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
         let fetch_x = fetch_x as i32;
@@ -105,6 +107,7 @@ impl SpriteFetcher {
         (sprite_x as i32 - 8) + (scroll_x as i32 % 8)
     }
 
+    #[inline(always)]
     pub fn fetch_sprite_data(&mut self, bus: &Bus, byte_offset: u16) {
         let cur_y: i32 = bus.io.lcd.ly as i32;
         let sprite_height: u8 = bus.io.lcd.control.obj_height();
@@ -148,6 +151,7 @@ impl SpriteFetcher {
         }
     }
 
+    #[inline(always)]
     pub fn fetch_sprite_pixel(
         &self,
         lcd: &Lcd,

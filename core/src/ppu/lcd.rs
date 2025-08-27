@@ -86,7 +86,7 @@ impl Lcd {
         self.sp2_colors = colors;
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,
@@ -105,7 +105,7 @@ impl Lcd {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn set_pallet(&mut self, colors: [PixelColor; 4]) {
         self.current_colors = colors;
 
@@ -116,7 +116,7 @@ impl Lcd {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
         let colors: &mut [PixelColor; 4] = match pallet_type {
             1 => &mut self.sp1_colors,
@@ -130,7 +130,7 @@ impl Lcd {
         colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte = value,

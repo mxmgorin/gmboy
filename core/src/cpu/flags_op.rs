@@ -60,6 +60,7 @@ impl FlagsOp {
         flags.set_byte_raw(f);
     }
 
+    #[inline(always)]
     pub fn dec8(flags: &mut Flags, lhs: u8, result: u8) {
         flags.set_z_raw(result == 0);
         flags.set_n_raw(true);
@@ -74,6 +75,7 @@ impl FlagsOp {
     }
 
     /// Z=depends on Result, N=1, H=depends on lhs, rhs, carry, C=depends on lhs, rhs, carry
+    #[inline(always)]
     pub fn sub8(flags: &mut Flags, lhs: u8, rhs: u8, result: u8, carry: u8) {
         // Z flag (bit 7)
         let z = (result == 0) as u8;
@@ -98,12 +100,14 @@ impl FlagsOp {
         flags.set_byte_raw(f);
     }
 
+    #[inline(always)]
     pub fn cpl(flags: &mut Flags) {
         flags.set_n_raw(true);
         flags.set_h_raw(true);
     }
 
     /// Z=depends on Result, N=0, H=0, C=0
+    #[inline(always)]
     pub fn or(flags: &mut Flags, result: u8) {
         // Z flag is bit 7, others are 0
         let z = (result == 0) as u8;
@@ -130,6 +134,7 @@ impl FlagsOp {
         flags.set_c_raw(carry == 0);
     }
 
+    #[inline(always)]
     pub fn scf(flags: &mut Flags) {
         flags.set_n_raw(false);
         flags.set_h_raw(false);

@@ -26,7 +26,7 @@ impl Default for OamRam {
 }
 
 impl OamRam {
-    #[inline]
+    #[inline(always)]
     pub fn read(&self, addr: u16) -> u8 {
         let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
@@ -36,7 +36,7 @@ impl OamRam {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn write(&mut self, addr: u16, value: u8) {
         let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
@@ -47,7 +47,7 @@ impl OamRam {
     }
 
     /// Determine the index in the oam_ram array and the specific byte to update
-    #[inline]
+    #[inline(always)]
     fn get_index_and_offset(&self, addr: u16) -> (usize, usize) {
         let addr = addr - OAM_ADDR_START;
         let item_index = (addr / 4) as usize; // Each `OamItem` is 4 bytes
