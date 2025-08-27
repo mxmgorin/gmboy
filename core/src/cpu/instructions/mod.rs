@@ -49,7 +49,7 @@ mod tests {
         let mut cpu = Cpu::new(clock);
         cpu.registers.pc = 0;
         cpu.clock.bus.write(0, opcode as u8);
-        cpu.step(None);
+        cpu.step();
 
         assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
     }
@@ -73,7 +73,7 @@ mod tests {
             if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 6, M_CYCLES_BY_OPCODES[opcode]);
             } else {
-                cpu.step(None);
+                cpu.step();
                 // 6
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -99,11 +99,11 @@ mod tests {
             if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 4, M_CYCLES_BY_OPCODES[opcode]);
             } else if instr.get_address_mode() == AddressMode::D16 {
-                cpu.step(None);
+                cpu.step();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             } else if instr.get_address_mode() == AddressMode::R(RegisterType::HL) {
-                cpu.step(None);
+                cpu.step();
                 // 1
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -129,7 +129,7 @@ mod tests {
             if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 3, 2);
             } else {
-                cpu.step(None);
+                cpu.step();
                 // 3
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -155,7 +155,7 @@ mod tests {
             if let Some(condition_type) = instr.get_condition() {
                 assert_for_condition(&mut cpu, condition_type, 5, 2);
             } else {
-                cpu.step(None);
+                cpu.step();
                 // 4
                 assert_eq!(M_CYCLES_BY_OPCODES[opcode], cpu.clock.get_m_cycles());
             };
@@ -189,7 +189,7 @@ mod tests {
             cpu.registers.pc = 0;
             cpu.clock.reset();
             cpu.clock.bus.write(0, opcode as u8);
-            cpu.step(None);
+            cpu.step();
             let expected = M_CYCLES_BY_OPCODES[opcode];
             let actual = cpu.clock.get_m_cycles();
 
@@ -211,50 +211,50 @@ mod tests {
         match condition_type {
             JumpCondition::NC => {
                 cpu.registers.flags.set_c_raw(false);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
                 cpu.registers.flags.set_c_raw(true);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
             JumpCondition::C => {
                 cpu.registers.flags.set_c_raw(false);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
                 cpu.registers.flags.set_c_raw(true);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
             JumpCondition::NZ => {
                 cpu.registers.flags.set_z_raw(false);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
                 cpu.registers.flags.set_z_raw(true);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
             }
             JumpCondition::Z => {
                 cpu.registers.flags.set_z_raw(false);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_not, cpu.clock.get_m_cycles());
 
                 cpu.registers.pc = 0;
                 cpu.clock.reset();
 
                 cpu.registers.flags.set_z_raw(true);
-                cpu.step(None);
+                cpu.step();
                 assert_eq!(m_cycles_set, cpu.clock.get_m_cycles());
             }
             JumpCondition::None => {}

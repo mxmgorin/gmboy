@@ -46,7 +46,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
             |mut cpu| {
                 for _ in 0..500_000 {
-                    cpu.step(None);
+                    cpu.step();
                 }
             },
             BatchSize::LargeInput,

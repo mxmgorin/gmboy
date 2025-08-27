@@ -12,7 +12,7 @@ pub fn run_test_case(test_case: &Sm83TestCase, print_result: bool) {
     let title = format!("Test case '{}'", test_case.name);
 
     let mut cpu = setup_cpu(test_case);
-    cpu.step(None);
+    cpu.step();
 
     let result = test_case.validate_final_state(&mut cpu);
 

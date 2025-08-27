@@ -1,5 +1,5 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::instructions::{FetchedData};
+use crate::cpu::instructions::FetchedData;
 use crate::cpu::interrupts::InterruptType;
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
@@ -52,7 +52,7 @@ impl Cpu {
     }
 
     /// Reads 8bit immediate data by PC and increments PC + 1. Costs 1 M-Cycle.
-    #[inline]
+    #[inline(always)]
     pub fn read_pc(&mut self) -> u8 {
         let value = self.clock.bus.read(self.registers.pc);
         self.registers.pc = self.registers.pc.wrapping_add(1);
@@ -62,13 +62,13 @@ impl Cpu {
     }
 
     /// Reads 16bit immediate data by PC and increments PC + 2. Costs 1 M-Cycle.
-    #[inline]
+    #[inline(always)]
     pub fn read_pc16(&mut self) -> u16 {
         u16::from_le_bytes([self.read_pc(), self.read_pc()])
     }
 
     /// Reads data from memory. Costs 1 M-Cycle.
-    #[inline]
+    #[inline(always)]
     pub fn read_memory(&mut self, address: u16) -> u8 {
         let value = self.clock.bus.read(address);
         self.clock.tick_m_cycles(1);
@@ -77,19 +77,21 @@ impl Cpu {
     }
 
     /// Writes to memory. Costs 1 M-Cycle.
-    #[inline]
+    #[inline(always)]
     pub fn write_to_memory(&mut self, address: u16, value: u8) {
         self.clock.bus.write(address, value);
         self.clock.tick_m_cycles(1);
     }
 
-    pub fn step(&mut self, mut _debugger: Option<&mut crate::debugger::Debugger>) {
-        #[cfg(any(feature = "debug", debug_assertions))]
-        if let Some(ref mut debugger) = _debugger {
-            debugger.print(self);
-            debugger.update_serial(&mut self.clock.bus);
-        }
+    #[inline]
+    pub fn step_debug(&mut self, debugger: &mut crate::debugger::Debugger) {
+        debugger.print(self);
+        debugger.update_serial(&mut self.clock.bus);
+        self.step();
+    }
 
+    #[inline]
+    pub fn step(&mut self) {
         self.handle_interrupts();
 
         if self.is_halted {
@@ -116,7 +118,7 @@ impl Cpu {
     }
 
     /// Costs 5 M-cycles when an interrupt is executed
-    #[inline]
+    #[inline(always)]
     pub fn handle_interrupts(&mut self) {
         if self.clock.bus.io.interrupts.ime {
             for (it, handler) in INTERRUPT_HANDLERS {
@@ -130,7 +132,7 @@ impl Cpu {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn handle_interrupt(&mut self, addr: u16, it: InterruptType) {
         self.clock.tick_m_cycles(2);
 

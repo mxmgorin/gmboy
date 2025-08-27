@@ -63,16 +63,16 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     ppu.toggle_fps(config.video.interface.show_fps);
 
     #[cfg(feature = "debug")]
-    let debugger = Some(core::debugger::Debugger::new(
-        core::debugger::CpuLogType::Asm,
-        false,
-    ));
+    {
+        let debugger = core::debugger::Debugger::new(
+            core::debugger::CpuLogType::Asm,
+            false,
+        );
+        return Emu::new(emu_config.clone(), EmuRuntime::new(ppu, bus)).unwrap();
+    }
+
     #[cfg(not(feature = "debug"))]
-    let debugger = None;
-
-    let runtime = EmuRuntime::new(ppu, bus, debugger);
-
-    Emu::new(emu_config.clone(), runtime).unwrap()
+    Emu::new(emu_config.clone(), EmuRuntime::new(ppu, bus)).unwrap()
 }
 
 pub fn load_cart<FS, FD>(app: &mut App<FS, FD>, emu: &mut Emu, mut args: Vec<String>)

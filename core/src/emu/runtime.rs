@@ -1,6 +1,7 @@
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cpu::Cpu;
+#[cfg(feature = "debug")]
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
 use crate::emu::EmuAudioCallback;
@@ -18,15 +19,26 @@ pub enum RunMode {
 pub struct EmuRuntime {
     pub mode: RunMode,
     pub cpu: Cpu,
+    #[cfg(feature = "debug")]
     debugger: Option<Debugger>,
 }
 
 impl EmuRuntime {
+    #[cfg(feature = "debug")]
     pub fn new(ppu: Ppu, bus: Bus, debugger: Option<Debugger>) -> Self {
         Self {
             mode: RunMode::Normal,
             cpu: Cpu::new(Clock::new(ppu, bus)),
+            #[cfg(feature = "debug")]
             debugger,
+        }
+    }
+
+    #[cfg(not(feature = "debug"))]
+    pub fn new(ppu: Ppu, bus: Bus) -> Self {
+        Self {
+            mode: RunMode::Normal,
+            cpu: Cpu::new(Clock::new(ppu, bus)),
         }
     }
 
@@ -39,10 +51,9 @@ impl EmuRuntime {
         let start_frame = self.cpu.clock.ppu.current_frame;
 
         while start_frame == self.cpu.clock.ppu.current_frame {
-            self.cpu.step(self.debugger.as_mut());
-
+            #[cfg(feature = "debug")]
             if let Some(debugger) = self.debugger.as_mut() {
-                debugger.print_serial()
+                self.cpu.step_debug(debugger);
             }
 
             if self.cpu.clock.bus.io.apu.buffer_ready() {
