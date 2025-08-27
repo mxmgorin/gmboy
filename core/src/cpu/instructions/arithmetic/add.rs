@@ -1,4 +1,3 @@
-use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -50,30 +49,5 @@ impl Cpu {
                 .flags
                 .op_add8(lhs, rhs, 0, result);
         }
-    }
-}
-
-impl FlagsOp {
-    #[inline(always)]
-    pub fn add8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs as u8 & 0xF) + (data.rhs as u8 & 0xF) + data.carry > 0xF);
-        flags.set_c_raw((data.lhs + data.rhs + data.carry as u16) > 0xFF);
-    }
-
-    #[inline(always)]
-    pub fn add16(data: FlagsData, flags: &mut Flags) {
-        flags.set_n_raw(false);
-        flags.set_h_raw(((data.lhs & 0x0FFF) + (data.rhs & 0x0FFF)) > 0x0FFF);
-        flags.set_c_raw((data.lhs as u32 + data.rhs as u32) > 0xFFFF);
-    }
-
-    #[inline(always)]
-    pub fn add_sp_e8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs & 0xF) + (data.rhs & 0xF) > 0xF);
-        flags.set_c_raw(((data.lhs & 0xFF) + (data.rhs & 0xFF)) > 0xFF);
     }
 }

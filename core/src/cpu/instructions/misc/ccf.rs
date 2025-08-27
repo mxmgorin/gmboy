@@ -1,4 +1,3 @@
-use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
 
 impl Cpu {
@@ -9,11 +8,3 @@ impl Cpu {
     }
 }
 
-impl FlagsOp {
-    #[inline(always)]
-    pub fn ccf(data: FlagsData, flags: &mut Flags) {
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw(data.carry == 0);
-    }
-}

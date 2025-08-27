@@ -1,4 +1,3 @@
-use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -25,13 +24,5 @@ impl Cpu {
         let result = lhs.wrapping_sub(1);
         self.write_to_memory(self.step_ctx.fetched_data.addr, result);
         self.registers.flags.op_dec8(lhs, result);
-    }
-}
-
-impl FlagsOp {
-    pub fn dec8(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(true);
-        flags.set_h_raw((data.lhs & 0xF) == 0);
     }
 }

@@ -1,6 +1,4 @@
-use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::Cpu;
-use serde::{Deserialize, Serialize};
 
 impl Cpu {
     #[inline(always)]
@@ -25,29 +23,5 @@ impl Cpu {
     pub fn execute_or(&mut self) {
         self.registers.a |= self.step_ctx.fetched_data.value as u8;
         self.registers.flags.op_or(self.registers.a)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
-pub struct OrFlagsCtx {
-    pub result: u8,
-}
-
-impl OrFlagsCtx {
-    #[inline(always)]
-    pub fn apply(&self, flags: &mut Flags) {
-        flags.set_z_raw(self.result == 0);
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw(false);
-    }
-}
-
-impl FlagsOp {
-    pub fn or(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(data.result == 0);
-        flags.set_n_raw(false);
-        flags.set_h_raw(false);
-        flags.set_c_raw(false);
     }
 }

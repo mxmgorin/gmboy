@@ -1,4 +1,3 @@
-use crate::cpu::flags::{Flags, FlagsData, FlagsOp};
 use crate::cpu::{Cpu, RegisterType};
 
 impl Cpu {
@@ -111,15 +110,5 @@ impl Cpu {
 
         self.registers
             .set_register::<R1>(self.step_ctx.fetched_data.value);
-    }
-}
-
-impl FlagsOp {
-    #[inline(always)]
-    pub fn ld(data: FlagsData, flags: &mut Flags) {
-        flags.set_z_raw(false);
-        flags.set_n_raw(false);
-        flags.set_h_raw((data.lhs & 0xF) + (data.rhs & 0xF) >= 0x10);
-        flags.set_c_raw((data.lhs & 0xFF) + (data.rhs & 0xFF) >= 0x100);
     }
 }
