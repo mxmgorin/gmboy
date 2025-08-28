@@ -42,11 +42,12 @@ impl EmuRuntime {
         }
     }
 
+    #[inline]
     pub fn set_mode(&mut self, mode: RunMode) {
         self.mode = mode;
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) {
         let start_frame = self.cpu.clock.ppu.current_frame;
 

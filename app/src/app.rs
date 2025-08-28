@@ -188,7 +188,7 @@ where
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn run_game(&mut self, emu: &mut Emu) {
         let on_time = emu.run_frame(self);
         let fps = emu.runtime.cpu.clock.ppu.get_fps();
@@ -205,6 +205,7 @@ where
         self.video.try_render(on_time);
     }
 
+    #[inline(always)]
     pub fn run_pause(&mut self, emu: &mut Emu) {
         emu.runtime.cpu.clock.reset();
         let fb = &mut emu.get_framebuffer();
@@ -215,6 +216,7 @@ where
         thread::sleep(Duration::from_millis(30));
     }
 
+    #[inline(always)]
     pub fn update_notif(&mut self, fb: &mut FrameBuffer) {
         let (lines, updated) = self.notifications.update_and_get();
         self.video.ui.fill_notif(fb, lines);
@@ -242,6 +244,7 @@ where
         Ok(())
     }
 
+    #[inline(always)]
     fn draw_menu(&mut self, fb: &mut FrameBuffer) -> bool {
         let (items, updated) = self.menu.get_items(&self.config, &self.roms);
 

@@ -44,6 +44,7 @@ impl Notifications {
         self.updated = true;
     }
 
+    #[inline(always)]
     pub fn update_and_get(&mut self) -> (&[&str], bool) {
         let now = Instant::now();
         self.buffer.clear();

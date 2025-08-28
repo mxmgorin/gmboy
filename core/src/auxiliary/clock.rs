@@ -36,6 +36,7 @@ impl Clock {
         }
     }
 
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.m_cycles = 0;
         self.time = Instant::now();
@@ -51,10 +52,12 @@ impl Clock {
         }
     }
 
+    #[inline(always)]
     pub fn get_m_cycles(&self) -> usize {
         self.m_cycles
     }
 
+    #[inline(always)]
     pub fn get_t_cycles(&self) -> usize {
         self.m_cycles * T_CYCLES_PER_M_CYCLE
     }

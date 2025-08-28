@@ -102,12 +102,13 @@ impl Apu {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn update_buffer_size(&mut self) {
         self.buffer = vec![0.0; self.config.buffer_size].into_boxed_slice();
         self.clear_buffer();
     }
 
+    #[inline(always)]
     pub fn tick(&mut self) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.sequence_frame();
@@ -130,7 +131,7 @@ impl Apu {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn push_buffer(&mut self, output_left: f32, output_right: f32) {
         let buffer_len = self.buffer.len();
         debug_assert!(buffer_len % 2 == 0);
@@ -172,22 +173,22 @@ impl Apu {
         self.buffer_idx += 2;
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn get_buffer(&self) -> &[f32] {
         &self.buffer[0..self.buffer_idx]
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn clear_buffer(&mut self) {
         self.buffer_idx = 0;
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn buffer_ready(&self) -> bool {
         self.buffer_idx >= self.config.buffer_size / 2
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
         if (CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END).contains(&address) {
             self.ch3.wave_ram.write(address, value);
@@ -249,7 +250,7 @@ impl Apu {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.read(address),
@@ -271,7 +272,7 @@ impl Apu {
     }
 
     /// The frame sequencer generates low frequency clocks for the modulation units. It is clocked by a 512 Hz timer.
-    #[inline]
+    #[inline(always)]
     fn sequence_frame(&mut self) {
         if self.ticks_count % FRAME_SEQUENCER_DIV as u32 != 0 {
             return;

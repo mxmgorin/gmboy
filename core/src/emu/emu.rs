@@ -43,12 +43,13 @@ impl Emu {
         })
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn get_framebuffer(&mut self) -> &mut FrameBuffer {
         &mut self.runtime.cpu.clock.ppu.pipeline.buffer
     }
 
     /// Runs emulation for one frame. Return whether the emulation is on time.
+    #[inline(always)]
     pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) -> bool {
         match self.state {
             EmuState::Rewind => {
@@ -76,7 +77,7 @@ impl Emu {
         on_time
     }
 
-    #[inline]
+    #[inline(always)]
     fn sleep_spin(&self, duration: Duration) {
         let start = Instant::now();
 
@@ -92,6 +93,7 @@ impl Emu {
         }
     }
 
+    #[inline(always)]
     fn calc_emulated_time(&mut self) -> Duration {
         let speed_multiplier = match self.runtime.mode {
             RunMode::Normal => self.config.normal_speed,
@@ -112,6 +114,7 @@ impl Emu {
         Duration::from_nanos(emulated_duration_ns)
     }
 
+    #[inline(always)]
     pub fn create_save_state(&self) -> EmuSaveState {
         EmuSaveState {
             cpu: self.runtime.cpu.clone(),
@@ -119,6 +122,7 @@ impl Emu {
         }
     }
 
+    #[inline(always)]
     fn push_rewind(&mut self) {
         if self.config.rewind_size > 0 {
             let now = Instant::now();

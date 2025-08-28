@@ -58,6 +58,7 @@ impl Overlay {
         fill_lines(fb, lines, style, x, y);
     }
 
+    #[inline(always)]
     pub fn fill_fps(&mut self, fb: &mut FrameBuffer, text: &str) {
         let style = TextStyle {
             text_color: self.text_color,
@@ -71,6 +72,7 @@ impl Overlay {
         fill_line_outlined(fb, text, style, x, y);
     }
 
+    #[inline(always)]
     pub fn fill_notif(&mut self, fb: &mut FrameBuffer, lines: &[&str]) {
         let style = TextLinesStyle {
             text_color: self.text_color,

@@ -80,15 +80,17 @@ impl AppVideo {
         self.backend.draw_buffer(buffer, &self.config);
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn draw_menu(&mut self, buffer: &[u8]) {
         self.backend.draw_menu(buffer, &self.config)
     }
 
+    #[inline(always)]
     pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
         self.backend.draw_tiles(tiles);
     }
 
+    #[inline(always)]
     pub fn try_render(&mut self, on_time: bool) {
         let min_elapsed = self.last_render_time.elapsed() >= self.min_render_interval;
 

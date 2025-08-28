@@ -37,6 +37,7 @@ impl AppMenu {
         }
     }
 
+    #[inline(always)]
     pub fn request_update(&mut self) {
         self.updated = true;
     }
@@ -72,6 +73,7 @@ impl AppMenu {
         (self.buffer.get(), updated)
     }
 
+    #[inline]
     pub fn move_up(&mut self) {
         self.updated = true;
 
@@ -85,6 +87,7 @@ impl AppMenu {
         self.selected_index = core::move_prev_wrapped(self.selected_index, self.items.len() - 1);
     }
 
+    #[inline]
     pub fn move_down(&mut self) {
         self.updated = true;
         if let Some(curr) = self.items.get_mut(self.selected_index) {
