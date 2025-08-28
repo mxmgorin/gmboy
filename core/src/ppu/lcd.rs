@@ -79,14 +79,6 @@ impl Lcd {
     }
 
     #[inline(always)]
-    pub fn apply_colors(&mut self, colors: [PixelColor; 4]) {
-        self.current_colors = colors;
-        self.bg_colors = colors;
-        self.sp1_colors = colors;
-        self.sp2_colors = colors;
-    }
-
-    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,
@@ -117,6 +109,15 @@ impl Lcd {
         colors[1] = self.current_colors[((palette_data >> 2) & 0b11) as usize];
         colors[2] = self.current_colors[((palette_data >> 4) & 0b11) as usize];
         colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
+    }
+
+    #[inline(always)]
+    pub fn set_colors(&mut self, colors: [PixelColor; 4]) {
+        self.current_colors = colors;
+        // re-apply existing palette mappings
+        self.update_palette(self.bg_palette, 0);
+        self.update_palette(self.obj_palette[0], 1);
+        self.update_palette(self.obj_palette[1], 2);
     }
 
     #[inline(always)]
