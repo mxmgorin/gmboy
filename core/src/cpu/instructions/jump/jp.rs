@@ -14,6 +14,6 @@ impl Cpu {
 
     #[inline(always)]
     fn execute_jp<const C: u8>(&mut self, addr: u16) {
-        self.goto_addr_with_cond::<C>(addr, false);
+        self.goto_addr_with_cond::<C>(addr);
     }
 }

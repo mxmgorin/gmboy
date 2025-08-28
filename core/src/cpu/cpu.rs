@@ -32,20 +32,29 @@ impl Cpu {
 
     /// Costs 2 M-Cycles with push PC
     #[inline(always)]
-    pub fn goto_addr_with_cond<const C: u8>(&mut self, addr: u16, push_pc: bool) {
+    pub fn goto_addr_with_cond<const C: u8>(&mut self, addr: u16) {
         if self.check_cond::<C>() {
-            self.goto_addr(addr, push_pc);
+            self.goto_addr(addr);
         }
     }
 
     #[inline(always)]
-    pub fn goto_addr(&mut self, addr: u16, push_pc: bool) {
-        self.clock.tick_m_cycles(1); // internal: branch decision?
-
-        if push_pc {
-            self.push16(self.registers.pc);
+    pub fn goto_addr_push_pc_with_cond<const C: u8>(&mut self, addr: u16) {
+        if self.check_cond::<C>() {
+            self.goto_addr_push_pc(addr);
         }
+    }
 
+    #[inline(always)]
+    pub fn goto_addr(&mut self, addr: u16) {
+        self.clock.tick_m_cycles(1); // internal: branch decision?
+        self.registers.pc = addr;
+    }
+
+    #[inline(always)]
+    pub fn goto_addr_push_pc(&mut self, addr: u16) {
+        self.clock.tick_m_cycles(1); // internal: branch decision?
+        self.push16(self.registers.pc);
         self.registers.pc = addr;
     }
 
@@ -136,7 +145,7 @@ impl Cpu {
 
         self.is_halted = false;
         self.clock.bus.io.interrupts.acknowledge_interrupt(it);
-        self.goto_addr(addr, true);
+        self.goto_addr_push_pc(addr);
 
         self.clock.tick_m_cycles(1);
     }

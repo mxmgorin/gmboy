@@ -43,6 +43,6 @@ impl Cpu {
 
     #[inline(always)]
     pub fn execute_rst(&mut self, addr: u16) {
-        self.goto_addr(addr, true);
+        self.goto_addr_push_pc(addr);
     }
 }
