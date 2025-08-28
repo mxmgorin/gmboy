@@ -15,6 +15,7 @@ pub const NR41_CH4_LENGTH_TIMER_ADDRESS: u16 = 0xFF20;
 pub const NR42_CH4_VOLUME_ENVELOPE_ADDRESS: u16 = 0xFF21;
 pub const NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS: u16 = 0xFF22;
 pub const NR44_CH4_CONTROL_ADDRESS: u16 = 0xFF23;
+pub const NR44_CH4_UNUSED_MASK: u8 = 0b0011_1111;
 
 const DIVISORS: [u16; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
 
@@ -70,13 +71,15 @@ impl DigitalSampleProducer for NoiseChannel {
 impl NoiseChannel {
     #[inline]
     pub fn read(&self, addr: u16) -> u8 {
-        match addr {
+        let val = match addr {
             NR41_CH4_LENGTH_TIMER_ADDRESS => 0xFF,
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => self.nrx2_envelope_and_dac.byte,
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte,
             NR44_CH4_CONTROL_ADDRESS => self.nrx4_ctrl.read(),
-            _ => panic!("Invalid NoiseChannel address: {:#X}", addr),
-        }
+            _ => panic!("Invalid NoiseChannel address: {addr:#X}"),
+        };
+
+        val | NR44_CH4_UNUSED_MASK
     }
 
     #[inline]

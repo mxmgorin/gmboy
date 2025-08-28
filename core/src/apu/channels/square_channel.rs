@@ -16,6 +16,7 @@ pub const CH2_START_ADDRESS: u16 = NR20_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 pub const CH2_END_ADDRESS: u16 = NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 
 pub const NR10_CH1_SWEEP_ADDRESS: u16 = 0xFF10;
+const NR10_CH1_UNUSED_MASK: u8 = 0b1000_0000;
 pub const NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS: u16 = 0xFF11;
 pub const NR12_CH1_VOL_ENVELOPE_ADDRESS: u16 = 0xFF12;
 pub const NR13_CH1_PERIOD_LOW_ADDRESS: u16 = 0xFF13;
@@ -100,7 +101,7 @@ impl SquareChannel {
     pub fn read(&self, address: u16) -> u8 {
         let offset = self.get_offset(address);
 
-        match offset {
+        let val = match offset {
             0 => {
                 if let Some(sweep_timer) = &self.sweep_timer {
                     sweep_timer.nr10.byte
@@ -112,8 +113,10 @@ impl SquareChannel {
             2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
             4 => self.nrx3x4_period_and_ctrl.nrx4.read(),
-            _ => panic!("Invalid Square address: {:#X}", address),
-        }
+            _ => panic!("Invalid Square address: {address:#X}"),
+        };
+
+        val | NR10_CH1_UNUSED_MASK
     }
 
     #[inline]

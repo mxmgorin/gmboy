@@ -149,7 +149,7 @@ Passes all of 356 000 tests ✅
 | oam_dma/oam_dma_restart.gb ✅ | halt_ime0_ei.gb ✅            | tim10.gb ✅                 |
 | oam_dma/oam_dma_start.gb ✅   | halt_ime0_nointr_timing.gb ✅ | tim10_div_trigger.gb ✅     |
 | sources-GS ✅                 | halt_ime1_timing.gb ✅        | tim11.gb ✅                 |
-| unused_hwio-GS.gb ❌          | halt_ime1_timing2-GS.gb ✅    | tim11_div_trigger.gb ✅     |
+| unused_hwio-GS.gb ✅          | halt_ime1_timing2-GS.gb ✅    | tim11_div_trigger.gb ✅     |
 | ie_push.gb ❌                 | jp_cc_timing.gb ✅            | tima_reload.gb ✅           |
 |                              | jp_timing.gb ✅               | tima_write_reloading.gb ✅  |
 |                              | ld_hl_sp_e_timing.gb ✅       | tma_write_reloading.gb ✅   |

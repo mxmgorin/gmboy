@@ -80,7 +80,6 @@ fn test_bits_reg_f() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_bits_unused_hwio_gs() {
     let name = "unused_hwio-GS";
