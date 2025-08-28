@@ -151,7 +151,9 @@ impl Cpu {
     }
 }
 
-pub const INTERRUPT_HANDLERS: [(InterruptType, fn(&mut Cpu)); 5] = [
+type InterruptHandler = (InterruptType, fn(&mut Cpu));
+
+pub const INTERRUPT_HANDLERS: [InterruptHandler; 5] = [
     (InterruptType::VBlank, |cpu| {
         cpu.handle_interrupt(0x40, InterruptType::VBlank)
     }),
