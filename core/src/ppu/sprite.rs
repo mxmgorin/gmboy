@@ -25,8 +25,8 @@ impl SpriteFetcher {
     #[inline(always)]
     pub fn load_line_sprites(&mut self, bus: &mut Bus) {
         self.line_sprites_count = 0;
-        let cur_y: i32 = bus.io.lcd.ly as i32;
-        let sprite_height = bus.io.lcd.control.get_obj_height() as i32;
+        let cur_y = bus.io.lcd.ly;
+        let sprite_height = bus.io.lcd.control.get_obj_height();
 
         for ram_entry in bus.oam_ram.entries.iter() {
             if ram_entry.x == 0 {
@@ -40,7 +40,7 @@ impl SpriteFetcher {
             }
 
             // Check if the sprite is on the current scanline
-            if ram_entry.y as i32 <= cur_y + 16 && ram_entry.y as i32 + sprite_height > cur_y + 16 {
+            if ram_entry.y <= cur_y + 16 && ram_entry.y + sprite_height > cur_y + 16 {
                 let mut inserted = false;
 
                 // Iterate through sorted list to insert at correct position
@@ -77,14 +77,13 @@ impl SpriteFetcher {
     #[inline(always)]
     pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
-        let fetch_x = fetch_x as i32;
 
         for idx in 0..self.line_sprites_count {
             let sprite = unsafe { self.line_sprites.get_unchecked(idx) };
             let sp_x = self.calc_sprite_x(sprite.x, scroll_x);
 
-            if (sp_x >= fetch_x && sp_x < fetch_x + 8)
-                || (sp_x + 8 >= fetch_x && sp_x + 8 < fetch_x + 8)
+            if (sp_x >= fetch_x && sp_x < fetch_x.wrapping_add(8))
+                || (sp_x.wrapping_add(8) >= fetch_x && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
             {
                 // need to add
                 unsafe {
@@ -103,8 +102,8 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    fn calc_sprite_x(&self, sprite_x: u8, scroll_x: u8) -> i32 {
-        (sprite_x as i32 - 8) + (scroll_x as i32 % 8)
+    fn calc_sprite_x(&self, sprite_x: u8, scroll_x: u8) -> u8 {
+        sprite_x.wrapping_sub(8).wrapping_add(scroll_x % 8)
     }
 
     #[inline(always)]
@@ -162,11 +161,11 @@ impl SpriteFetcher {
             let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
             let sprite_x = self.calc_sprite_x(sprite.x, lcd.scroll_x);
 
-            if sprite_x + 8 < fifo_x as i32 {
+            if sprite_x.wrapping_add(8) < fifo_x {
                 continue; // Skip past sprites
             }
 
-            let offset = fifo_x as i32 - sprite_x;
+            let offset = fifo_x.wrapping_sub(sprite_x);
             if !(0..=7).contains(&offset) {
                 continue; // Out of sprite range
             }
@@ -179,7 +178,7 @@ impl SpriteFetcher {
 
             let data = unsafe { self.fetched_sprite_data.get_unchecked(i) };
             let color_index =
-                get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit as u8);
+                get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit);
 
             if color_index == 0 {
                 continue; // Transparent

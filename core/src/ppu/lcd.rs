@@ -106,17 +106,6 @@ impl Lcd {
     }
 
     #[inline(always)]
-    pub fn set_pallet(&mut self, colors: [PixelColor; 4]) {
-        self.current_colors = colors;
-
-        for (i, color) in self.current_colors.iter().enumerate() {
-            self.sp1_colors[i] = *color;
-            self.sp2_colors[i] = *color;
-            self.bg_colors[i] = *color;
-        }
-    }
-
-    #[inline(always)]
     fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
         let colors: &mut [PixelColor; 4] = match pallet_type {
             1 => &mut self.sp1_colors,

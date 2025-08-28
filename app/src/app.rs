@@ -279,7 +279,7 @@ where
             .get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
-        emu.runtime.cpu.clock.bus.io.lcd.set_pallet(colors);
+        emu.runtime.cpu.clock.bus.io.lcd.apply_colors(colors);
         self.menu.request_update();
 
         let suffix = if self.config.video.interface.is_palette_inverted {
