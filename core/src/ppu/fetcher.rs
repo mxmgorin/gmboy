@@ -136,7 +136,7 @@ impl PixelFetcher {
         let lcd = &bus.io.lcd;
         let control = lcd.control;
 
-        if control.bgw_enabled() {
+        if control.is_bgw_enabled() {
             let (map_y, map_x, tile_idx, is_window) =
                 if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, bus) {
                     (
@@ -148,7 +148,7 @@ impl PixelFetcher {
                 } else {
                     let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
                     let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                    let addr = control.bg_map_area()
+                    let addr = control.get_bg_map_area()
                         + (map_x as u16 / TILE_WIDTH)
                         + ((map_y as u16 / TILE_HEIGHT) * 32);
                     (map_y, map_x, bus.read(addr), false)
@@ -159,11 +159,11 @@ impl PixelFetcher {
             fetched.map_y = map_y;
             fetched.map_x = map_x;
             fetched.tile_idx = tile_idx;
-            fetched.data_area = control.bgw_data_area();
+            fetched.data_area = control.get_bgw_data_area();
             fetched.normalize_tile_idx();
         }
 
-        if control.obj_enabled() {
+        if control.is_obj_enabled() {
             self.sprite_fetcher
                 .fetch_sprite_tiles(lcd.scroll_x, self.fetch_x);
         }
@@ -206,8 +206,8 @@ impl PixelFetcher {
 
         let lcd = &bus.io.lcd;
         let control = lcd.control;
-        let obj_enabled = control.obj_enabled();
-        let bgw_enabled = control.bgw_enabled();
+        let obj_enabled = control.is_obj_enabled();
+        let bgw_enabled = control.is_bgw_enabled();
         let bg_colors = &lcd.bg_colors;
         let x: i32 = self.fetch_x.wrapping_sub(8 - (lcd.scroll_x % 8)) as i32;
 

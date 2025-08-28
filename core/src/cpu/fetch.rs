@@ -10,7 +10,7 @@ impl Cpu {
     }
 
     #[inline(always)]
-    pub fn read_mr_with_addr<const R1: u8>(&mut self) -> (u16, u8) {
+    pub fn read_mr_addr_val<const R1: u8>(&mut self) -> (u16, u8) {
         let addr = self.registers.get_register::<R1>();
         let value = self.read_memory(addr);
 

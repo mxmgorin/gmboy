@@ -26,7 +26,7 @@ impl SpriteFetcher {
     pub fn load_line_sprites(&mut self, bus: &mut Bus) {
         self.line_sprites_count = 0;
         let cur_y: i32 = bus.io.lcd.ly as i32;
-        let sprite_height = bus.io.lcd.control.obj_height() as i32;
+        let sprite_height = bus.io.lcd.control.get_obj_height() as i32;
 
         for ram_entry in bus.oam_ram.entries.iter() {
             if ram_entry.x == 0 {
@@ -110,7 +110,7 @@ impl SpriteFetcher {
     #[inline(always)]
     pub fn fetch_sprite_data(&mut self, bus: &Bus, byte_offset: u16) {
         let cur_y: i32 = bus.io.lcd.ly as i32;
-        let sprite_height: u8 = bus.io.lcd.control.obj_height();
+        let sprite_height: u8 = bus.io.lcd.control.get_obj_height();
 
         for i in 0..self.fetched_sprites_count {
             let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };

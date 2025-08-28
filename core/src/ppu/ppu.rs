@@ -52,7 +52,7 @@ impl Ppu {
     pub fn tick(&mut self, bus: &mut Bus) {
         self.line_ticks += 1;
 
-        match bus.io.lcd.status.ppu_mode() {
+        match bus.io.lcd.status.get_ppu_mode() {
             PpuMode::Oam => self.mode_oam(bus),
             PpuMode::Transfer => self.mode_transfer(bus),
             PpuMode::HBlank => self.mode_hblank(&mut bus.io),

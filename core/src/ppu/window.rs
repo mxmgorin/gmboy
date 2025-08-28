@@ -21,7 +21,7 @@ impl LcdWindow {
     }
     #[inline(always)]
     pub fn is_visible(&self, lcd: &Lcd) -> bool {
-        lcd.control.win_enable() && self.x <= 166 && self.y < LCD_Y_RES
+        lcd.control.is_win_enabled() && self.x <= 166 && self.y < LCD_Y_RES
     }
 
     #[inline(always)]
@@ -39,7 +39,7 @@ impl LcdWindow {
         {
             let w_tile_x = (fetch_x - self.x as u16) / 8; // Convert pixel X to tile X
             let w_tile_y = (self.line_number / 8) as u16; // Convert pixel Y to tile Y
-            let area = bus.io.lcd.control.win_map_area(); // Get window tile map base address (0x9800 or 0x9C00)
+            let area = bus.io.lcd.control.get_win_map_area(); // Get window tile map base address (0x9800 or 0x9C00)
             let addr = area + w_tile_x + (w_tile_y * 32); // Calculate correct tile map index
 
             return Some(bus.read(addr)); // Fetch tile index from VRAM

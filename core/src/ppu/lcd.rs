@@ -178,12 +178,12 @@ impl Lcd {
     #[inline(always)]
     fn compare_ly(&mut self, interrupts: &mut Interrupts) {
         if self.ly == self.ly_compare {
-            self.status.lyc_set(true);
+            self.status.set_lyc(true);
 
             if self.status.is_stat_interrupt(LcdStatSrc::Lyc) {
                 interrupts.request_interrupt(InterruptType::LCDStat);
             } else {
-                self.status.lyc_set(false);
+                self.status.set_lyc(false);
             }
         }
     }
@@ -203,16 +203,16 @@ impl Default for LcdControl {
 
 impl LcdControl {
     #[inline(always)]
-    pub fn bgw_enabled(&self) -> bool {
+    pub fn is_bgw_enabled(&self) -> bool {
         get_bit_flag(self.byte, 0)
     }
     #[inline(always)]
-    pub fn obj_enabled(&self) -> bool {
+    pub fn is_obj_enabled(&self) -> bool {
         get_bit_flag(self.byte, 1)
     }
 
     #[inline(always)]
-    pub fn obj_height(&self) -> u8 {
+    pub fn get_obj_height(&self) -> u8 {
         if get_bit_flag(self.byte, 2) {
             16
         } else {
@@ -221,7 +221,7 @@ impl LcdControl {
     }
 
     #[inline(always)]
-    pub fn bg_map_area(&self) -> u16 {
+    pub fn get_bg_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 3) {
             BG_TILE_MAP_2_ADDR_START
         } else {
@@ -230,7 +230,7 @@ impl LcdControl {
     }
 
     #[inline(always)]
-    pub fn bgw_data_area(&self) -> u16 {
+    pub fn get_bgw_data_area(&self) -> u16 {
         if get_bit_flag(self.byte, 4) {
             TILE_SET_DATA_1_START
         } else {
@@ -239,12 +239,12 @@ impl LcdControl {
     }
 
     #[inline(always)]
-    pub fn win_enable(&self) -> bool {
+    pub fn is_win_enabled(&self) -> bool {
         get_bit_flag(self.byte, 5)
     }
 
     #[inline(always)]
-    pub fn win_map_area(&self) -> u16 {
+    pub fn get_win_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 6) {
             BG_TILE_MAP_2_ADDR_START
         } else {
@@ -253,10 +253,12 @@ impl LcdControl {
     }
 
     #[inline(always)]
-    pub fn lcd_enable(&self) -> bool {
+    pub fn is_lcd_enabled(&self) -> bool {
         get_bit_flag(self.byte, 7)
     }
 }
+
+pub const PPU_MODE_MASK: u8 = 0b11;
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 #[repr(C)]
@@ -266,23 +268,23 @@ pub struct LcdStatus {
 
 impl LcdStatus {
     #[inline(always)]
-    pub fn ppu_mode(&self) -> PpuMode {
+    pub fn get_ppu_mode(&self) -> PpuMode {
         PpuMode::from(self.byte)
     }
 
     #[inline(always)]
     pub fn set_ppu_mode(&mut self, mode: PpuMode) {
-        self.byte &= !0b11;
+        self.byte &= !PPU_MODE_MASK;
         self.byte |= mode as u8;
     }
 
     #[inline(always)]
-    pub fn lyc(&self) -> bool {
+    pub fn get_lyc(&self) -> bool {
         get_bit_flag(self.byte, 2)
     }
 
     #[inline(always)]
-    pub fn lyc_set(&mut self, b: bool) {
+    pub fn set_lyc(&mut self, b: bool) {
         set_bit(&mut self.byte, 2, b);
     }
 
@@ -293,14 +295,16 @@ impl LcdStatus {
 }
 
 #[derive(Copy, Clone, PartialEq)]
+#[repr(u8)]
 pub enum PpuMode {
-    HBlank,
-    VBlank,
-    Oam,
-    Transfer,
+    HBlank = 0,
+    VBlank = 1,
+    Oam = 2,
+    Transfer = 3,
 }
 
 #[derive(Copy, Clone)]
+#[repr(u8)]
 pub enum LcdStatSrc {
     HBlank = 1 << 3,
     VBlank = 1 << 4,
@@ -309,8 +313,9 @@ pub enum LcdStatSrc {
 }
 
 impl From<u8> for PpuMode {
+    #[inline(always)]
     fn from(value: u8) -> Self {
-        match value & 0b11 {
+        match value & PPU_MODE_MASK {
             0 => PpuMode::HBlank,
             1 => PpuMode::VBlank,
             2 => PpuMode::Oam,
