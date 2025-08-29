@@ -20,10 +20,8 @@ impl Cpu {
 
     /// Costs 2 M-cycles.
     pub fn push16(&mut self, val: u16) {
-        let high_byte = (val >> 8) & 0xFF;
-        self.push(high_byte as u8);
-
-        let low_byte = val & 0xFF;
-        self.push(low_byte as u8);
+        let [lo, hi] = u16::to_le_bytes(val);
+        self.push(hi);
+        self.push(lo);
     }
 }

@@ -173,10 +173,10 @@ impl Sm83TestCase {
             }
         }
         if let Some(ie) = self.final_state.ie {
-            if cpu.clock.bus.io.interrupts.ie_register != ie {
+            if cpu.clock.bus.io.interrupts.ie != ie {
                 return Err(format!(
                     "Invalid IE: actual={}, expected={}",
-                    cpu.clock.bus.io.interrupts.ie_register, ie
+                    cpu.clock.bus.io.interrupts.ie, ie
                 ));
             }
         }
@@ -254,7 +254,7 @@ pub fn set_cpu_state(cpu: &mut Cpu, test_case: &Sm83TestCase) {
         pc: test_case.initial_state.pc,
     };
     if let Some(ie) = test_case.initial_state.ie {
-        cpu.clock.bus.io.interrupts.ie_register = ie;
+        cpu.clock.bus.io.interrupts.ie = ie;
     }
     if let Some(ime) = test_case.initial_state.ime {
         cpu.clock.bus.io.interrupts.ime = ime != 0

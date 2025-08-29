@@ -84,7 +84,7 @@ impl Bus {
             0xFEA0..=0xFEFF => 0xFF,
             0xFF00..=0xFF7F => self.io.read(address),
             0xFF80..=0xFFFE => self.ram.high_ram_read(address),
-            0xFFFF => self.io.interrupts.ie_register,
+            0xFFFF => self.io.interrupts.ie,
         }
     }
 
@@ -118,7 +118,7 @@ impl Bus {
             0xFEA0..=0xFEFF => {}
             0xFF00..=0xFF7F => self.io.write(address, value),
             0xFF80..=0xFFFE => self.ram.high_ram_write(address, value),
-            0xFFFF => self.io.interrupts.ie_register = value,
+            0xFFFF => self.io.interrupts.ie = value,
         }
     }
 }

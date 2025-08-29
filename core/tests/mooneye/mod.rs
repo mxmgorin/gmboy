@@ -98,7 +98,6 @@ fn test_instr_daa() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_interrupts_ie_push() {
     let name = "ie_push";

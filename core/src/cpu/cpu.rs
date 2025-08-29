@@ -1,5 +1,4 @@
 use crate::auxiliary::clock::Clock;
-use crate::cpu::interrupts::InterruptType;
 use crate::cpu::Registers;
 use serde::{Deserialize, Serialize};
 
@@ -102,7 +101,7 @@ impl Cpu {
         self.handle_interrupts();
 
         if self.is_halted {
-            if !self.clock.bus.io.interrupts.ime && self.clock.bus.io.interrupts.any_is_pending() {
+            if !self.clock.bus.io.interrupts.ime && self.clock.bus.io.interrupts.has_pending() {
                 // HALT bug: continue executing instructions
                 self.is_halted = false;
             }
@@ -123,50 +122,4 @@ impl Cpu {
             self.clock.bus.io.interrupts.ime = true;
         }
     }
-
-    /// Costs 5 M-cycles when an interrupt is executed
-    #[inline(always)]
-    pub fn handle_interrupts(&mut self) {
-        if self.clock.bus.io.interrupts.ime {
-            for (it, handler) in INTERRUPT_HANDLERS {
-                if self.clock.bus.io.interrupts.is_pending(it) {
-                    handler(self);
-                    break;
-                }
-            }
-
-            self.enabling_ime = false;
-        }
-    }
-
-    #[inline(always)]
-    fn handle_interrupt(&mut self, addr: u16, it: InterruptType) {
-        self.clock.tick_m_cycles(2);
-
-        self.is_halted = false;
-        self.clock.bus.io.interrupts.acknowledge_interrupt(it);
-        self.goto_addr_push_pc(addr);
-
-        self.clock.tick_m_cycles(1);
-    }
 }
-
-type InterruptHandler = (InterruptType, fn(&mut Cpu));
-
-pub const INTERRUPT_HANDLERS: [InterruptHandler; 5] = [
-    (InterruptType::VBlank, |cpu| {
-        cpu.handle_interrupt(0x40, InterruptType::VBlank)
-    }),
-    (InterruptType::LCDStat, |cpu| {
-        cpu.handle_interrupt(0x48, InterruptType::LCDStat)
-    }),
-    (InterruptType::Timer, |cpu| {
-        cpu.handle_interrupt(0x50, InterruptType::Timer)
-    }),
-    (InterruptType::Serial, |cpu| {
-        cpu.handle_interrupt(0x58, InterruptType::Serial)
-    }),
-    (InterruptType::Joypad, |cpu| {
-        cpu.handle_interrupt(0x60, InterruptType::Joypad)
-    }),
-];
