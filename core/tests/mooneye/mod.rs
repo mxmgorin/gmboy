@@ -646,3 +646,28 @@ fn test_mbc5_rom_512kb() {
 
     assert_result_path(path, result);
 }
+
+#[test]
+fn test_ei_sequence() {
+    let path = PathBuf::from("tests/mooneye/acceptance/other/ei_sequence.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_if_ie_registers() {
+    let path = PathBuf::from("tests/mooneye/acceptance/other/if_ie_registers.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_rapid_di_ei() {
+    let path = PathBuf::from("tests/mooneye/acceptance/other/rapid_di_ei.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
