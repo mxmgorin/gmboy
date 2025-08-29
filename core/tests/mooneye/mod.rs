@@ -683,3 +683,109 @@ fn test_all_ppu() {
 
     assert!(!failed);
 }
+
+#[ignore]
+#[test]
+fn test_hblank_ly_scx_timing_gs() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/hblank_ly_scx_timing-GS.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_intr_1_2_timing_gs() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_1_2_timing-GS.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_intr_2_0_timing() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_0_timing.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_intr_2_mode0_timing() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode0_timing.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_intr_2_mode0_timing_sprites() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_intr_2_mode3_timing() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode3_timing.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_intr_2_oam_ok_timing() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_oam_ok_timing.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_lcdon_timing_gs() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/lcdon_timing-GS.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_lcdon_write_timing_gs() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/lcdon_write_timing-GS.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_stat_irq_blocking() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_irq_blocking-GS.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_stat_lyc_onoff() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_lyc_onoff.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_vblank_stat_intr_gs() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/vblank_stat_intr-GS.gb");
+    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}

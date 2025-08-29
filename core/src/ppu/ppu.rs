@@ -53,10 +53,10 @@ impl Ppu {
         self.line_ticks += 1;
 
         match bus.io.lcd.status.get_ppu_mode() {
-            PpuMode::Oam => self.mode_oam(bus),
-            PpuMode::Transfer => self.mode_transfer(bus),
             PpuMode::HBlank => self.mode_hblank(&mut bus.io),
             PpuMode::VBlank => self.mode_vblank(&mut bus.io),
+            PpuMode::Oam => self.mode_oam(bus),
+            PpuMode::Transfer => self.mode_transfer(bus),
         }
     }
 
@@ -67,11 +67,6 @@ impl Ppu {
             self.pipeline.reset();
         }
 
-        // todo:
-        // GB fetches sprites progressively during the first 80 ticks of the scanline, not instantly
-        //if self.line_ticks % 2 == 0 && self.line_ticks < 80 {
-        //    self.pipeline.sprite_fetcher.load_next_sprite(bus);
-        //}
         if self.line_ticks == 1 {
             // read oam on the first tick only
             self.pipeline.sprite_fetcher.load_line_sprites(bus);
@@ -84,11 +79,7 @@ impl Ppu {
 
         if self.pipeline.is_full() {
             self.pipeline.clear();
-            bus.io.lcd.status.set_ppu_mode(PpuMode::HBlank);
-
-            if bus.io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
-                bus.io.interrupts.request_interrupt(InterruptType::LCDStat);
-            }
+            self.set_ppu_mode_stat_int(PpuMode::HBlank, LcdStatSrc::HBlank, &mut bus.io);
         }
     }
 
@@ -98,7 +89,7 @@ impl Ppu {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly as usize >= LINES_PER_FRAME {
-                io.lcd.status.set_ppu_mode(PpuMode::Oam);
+                self.set_ppu_mode_stat_int(PpuMode::Oam, LcdStatSrc::Oam, io);
                 io.lcd.reset_ly(&mut io.interrupts);
             }
 
@@ -112,23 +103,27 @@ impl Ppu {
             io.lcd.increment_ly(&mut io.interrupts);
 
             if io.lcd.ly >= LCD_Y_RES {
-                io.lcd.status.set_ppu_mode(PpuMode::VBlank);
+                self.set_ppu_mode_stat_int(PpuMode::VBlank, LcdStatSrc::VBlank, io);
                 io.interrupts.request_interrupt(InterruptType::VBlank);
-
-                if io.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
-                    io.interrupts.request_interrupt(InterruptType::LCDStat);
-                }
-
                 self.current_frame += 1;
 
                 if let Some(fps) = self.fps.as_mut() {
                     fps.update()
                 }
             } else {
-                io.lcd.status.set_ppu_mode(PpuMode::Oam);
+                self.set_ppu_mode_stat_int(PpuMode::Oam, LcdStatSrc::Oam, io);
             }
 
             self.line_ticks = 0;
+        }
+    }
+
+    #[inline(always)]
+    fn set_ppu_mode_stat_int(&mut self, mode: PpuMode, stat: LcdStatSrc, io: &mut Io) {
+        io.lcd.status.set_ppu_mode(mode);
+
+        if io.lcd.status.is_stat_interrupt(stat) {
+            io.interrupts.request_interrupt(InterruptType::LCDStat);
         }
     }
 }
