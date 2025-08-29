@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use core::auxiliary::clock::Clock;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
 use std::fmt::Display;
+use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -14,6 +16,29 @@ pub fn run_mooneye_rom(
     let path = get_mooneye_rom_path(&format!("{name}.gb"), category);
 
     run_mooneye_rom_path(path, timeout)
+}
+
+pub fn run_mooneye_dir_roms(dir_path: PathBuf, take: usize, skip: usize, timeout: Duration) -> HashMap<PathBuf, Result<(), String>> {
+    let dir = fs::read_dir(dir_path).unwrap();
+
+    let roms: Vec<_> = dir
+        .filter_map(|dir| {
+            if let Ok(entry) = dir {
+                Some(entry.path())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let mut results = HashMap::with_capacity(roms.len());
+
+    for path in roms.into_iter().skip(skip).take(take) {
+        let result = run_mooneye_rom_path(path.clone(), timeout);
+        results.insert(path, result);
+    }
+
+    results
 }
 
 pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), String> {
@@ -53,7 +78,7 @@ pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), Stri
 }
 
 pub fn assert_result(name: &str, category: Option<MooneyeRomCategory>, result: Result<(), String>) {
-    let path = get_mooneye_rom_path(&format!("{}.gb", name), category);
+    let path = get_mooneye_rom_path(&format!("{name}.gb"), category);
 
     assert_result_path(path, result);
 }
@@ -63,6 +88,16 @@ pub fn assert_result_path(path: PathBuf, result: Result<(), String>) {
 
     if let Err(err) = result {
         panic!("{path}: FAILED\n{err}")
+    } else {
+        println!("{path}: OK");
+    }
+}
+
+pub fn print_result_path(path: PathBuf, result: Result<(), String>) {
+    let path = path.to_string_lossy().to_string();
+
+    if let Err(err) = result {
+        eprint!("{path}: FAILED\n{err}")
     } else {
         println!("{path}: OK");
     }

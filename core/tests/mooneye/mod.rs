@@ -1,6 +1,4 @@
-use crate::mooneye::util::{
-    assert_result, assert_result_path, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory,
-};
+use crate::mooneye::util::{assert_result, assert_result_path, print_result_path, run_mooneye_dir_roms, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory};
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -669,4 +667,19 @@ fn test_rapid_di_ei() {
     let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
+}
+
+#[ignore]
+#[test]
+fn test_all_ppu() {
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu");
+    let results = run_mooneye_dir_roms(path, 1, 0, TIMEOUT);
+    let mut failed = false;
+
+    for (path, result) in results.into_iter() {
+        failed = result.is_err();
+        print_result_path(path, result);
+    }
+
+    assert!(!failed);
 }
