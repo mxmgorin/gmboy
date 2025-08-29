@@ -663,7 +663,6 @@ fn test_if_ie_registers() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_rapid_di_ei() {
     let path = PathBuf::from("tests/mooneye/acceptance/other/rapid_di_ei.gb");

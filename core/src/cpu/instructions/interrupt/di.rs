@@ -5,5 +5,6 @@ impl Cpu {
     #[inline(always)]
     pub fn execute_di(&mut self) {
         self.clock.bus.io.interrupts.ime = false;
+        self.enabling_ime = false;
     }
 }
