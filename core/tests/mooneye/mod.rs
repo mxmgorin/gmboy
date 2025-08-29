@@ -269,7 +269,6 @@ fn test_call_timing2() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_di_timing_gs() {
     let name = "di_timing-GS";
@@ -333,7 +332,6 @@ fn test_halt_ime1_timing2_gs() {
     assert_result(name, category, result);
 }
 
-#[ignore] // FIXME
 #[test]
 fn test_intr_timing() {
     let name = "intr_timing";

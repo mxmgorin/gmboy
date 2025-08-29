@@ -42,7 +42,7 @@ impl Cpu {
                 0x0000
             },
         };
-        self.clock.tick_m_cycles(2);
+        self.clock.tick_m_cycles(1);
     }
 }
 
