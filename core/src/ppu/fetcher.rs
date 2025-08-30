@@ -1,7 +1,7 @@
 use crate::bus::Bus;
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::framebuffer::FrameBuffer;
-use crate::ppu::lcd::PixelColor;
+use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
@@ -90,11 +90,11 @@ impl PixelFetcher {
             }
         }
 
-        self.try_fifo_pop(bus);
+        self.try_fifo_pop(&bus.io.lcd);
     }
 
     #[inline(always)]
-    fn try_fifo_pop(&mut self, bus: &Bus) {
+    fn try_fifo_pop(&mut self, lcd: &Lcd) {
         if let Some(pixel) = self.pixel_fifo.pop() {
             // Check if we are in the window or background layer
             // For the window layer, bypass scroll_x to avoid horizontal scrolling
@@ -102,16 +102,14 @@ impl PixelFetcher {
                 // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
                 let index = self
                     .pushed_x
-                    .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
+                    .wrapping_add(lcd.ly as usize * LCD_X_RES as usize);
                 self.push_buffer(index, pixel);
-            } else {
+            } else if self.line_x >= lcd.scroll_x % TILE_WIDTH as u8 {
                 // For the background layer, apply scroll_x for horizontal scrolling
-                if self.line_x >= bus.io.lcd.scroll_x % TILE_WIDTH as u8 {
-                    let index = self
-                        .pushed_x
-                        .wrapping_add(bus.io.lcd.ly as usize * LCD_X_RES as usize);
-                    self.push_buffer(index, pixel);
-                }
+                let index = self
+                    .pushed_x
+                    .wrapping_add(lcd.ly as usize * LCD_X_RES as usize);
+                self.push_buffer(index, pixel);
             }
 
             self.line_x += 1;

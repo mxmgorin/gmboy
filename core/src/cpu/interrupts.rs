@@ -78,7 +78,7 @@ impl Interrupts {
         None
     }
     #[inline(always)]
-    pub fn request_interrupt(&mut self, it: InterruptType) {
+    pub const fn request_interrupt(&mut self, it: InterruptType) {
         self.int_flags |= it as u8;
     }
 

@@ -258,28 +258,28 @@ pub struct LcdStatus {
 
 impl LcdStatus {
     #[inline(always)]
-    pub fn get_ppu_mode(&self) -> PpuMode {
-        PpuMode::from(self.byte)
+    pub const fn get_ppu_mode(&self) -> PpuMode {
+        PpuMode::from_u8(self.byte)
     }
 
     #[inline(always)]
-    pub fn set_ppu_mode(&mut self, mode: PpuMode) {
+    pub const fn set_ppu_mode(&mut self, mode: PpuMode) {
         self.byte &= !PPU_MODE_MASK;
         self.byte |= mode as u8;
     }
 
     #[inline(always)]
-    pub fn get_lyc(&self) -> bool {
+    pub const fn get_lyc(&self) -> bool {
         get_bit_flag(self.byte, 2)
     }
 
     #[inline(always)]
-    pub fn set_lyc(&mut self, b: bool) {
+    pub const fn set_lyc(&mut self, b: bool) {
         set_bit(&mut self.byte, 2, b);
     }
 
     #[inline(always)]
-    pub fn is_stat_interrupt(&self, src: LcdStatSrc) -> bool {
+    pub const fn is_stat_interrupt(&self, src: LcdStatSrc) -> bool {
         self.byte & (src as u8) != 0
     }
 }
@@ -302,9 +302,9 @@ pub enum LcdStatSrc {
     Lyc = 1 << 6,
 }
 
-impl From<u8> for PpuMode {
+impl PpuMode {
     #[inline(always)]
-    fn from(value: u8) -> Self {
+    pub const fn from_u8(value: u8) -> Self {
         match value & PPU_MODE_MASK {
             0 => PpuMode::HBlank,
             1 => PpuMode::VBlank,
