@@ -3,8 +3,7 @@ use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::Ram;
 use crate::cart::Cart;
 use crate::ppu::lcd::LCD_DMA_ADDRESS;
-use crate::ppu::oam::OamRam;
-use crate::ppu::vram::{VideoRam, VRAM_ADDR_END, VRAM_ADDR_START};
+use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
 
 pub const ECHO_MIRROR_OFFSET: u16 = 0x2000;
@@ -16,8 +15,6 @@ pub struct Bus {
     pub io: Io,
     flat_mem: Option<Vec<u8>>,
     pub dma: Dma,
-    pub video_ram: VideoRam,
-    pub oam_ram: OamRam,
 }
 
 impl Bus {
@@ -28,8 +25,6 @@ impl Bus {
             io: self.io.clone(),
             flat_mem: self.flat_mem.clone(),
             dma: self.dma.clone(),
-            video_ram: self.video_ram.clone(),
-            oam_ram: self.oam_ram.clone(),
         }
     }
 
@@ -40,8 +35,6 @@ impl Bus {
             io,
             flat_mem: None,
             dma: Default::default(),
-            video_ram: Default::default(),
-            oam_ram: Default::default(),
         }
     }
 
@@ -67,7 +60,7 @@ impl Bus {
 
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(address),
-            VRAM_ADDR_START..=VRAM_ADDR_END => self.video_ram.read(address),
+            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(address),
             0xC000..=0xDFFF => self.ram.working_ram_read(address),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
@@ -79,7 +72,7 @@ impl Bus {
                     return 0xFF;
                 }
 
-                self.oam_ram.read(address)
+                self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
             0xFF00..=0xFF7F => self.io.read(address),
@@ -101,7 +94,7 @@ impl Bus {
 
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(address, value),
-            VRAM_ADDR_START..=VRAM_ADDR_END => self.video_ram.write(address, value),
+            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(address, value),
             0xC000..=0xDFFF => self.ram.working_ram_write(address, value),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
@@ -113,7 +106,7 @@ impl Bus {
                     return;
                 }
 
-                self.oam_ram.write(address, value)
+                self.io.ppu.oam_ram.write(address, value)
             }
             0xFEA0..=0xFEFF => {}
             0xFF00..=0xFF7F => self.io.write(address, value),

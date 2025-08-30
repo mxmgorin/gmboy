@@ -4,7 +4,8 @@ use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cpu::interrupts::Interrupts;
-use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
+use crate::ppu::lcd::{LCD_ADDRESS_END, LCD_ADDRESS_START};
+use crate::ppu::Ppu;
 use serde::{Deserialize, Serialize};
 
 const IO_IF_UNUSED_MASK: u8 = 0b1110_0000;
@@ -18,19 +19,19 @@ pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
     pub interrupts: Interrupts,
-    pub lcd: Lcd,
     pub joypad: Joypad,
     pub apu: Apu,
+    pub ppu: Ppu,
 }
 
 impl Io {
-    pub fn new(lcd: Lcd, apu: Apu) -> Self {
+    pub fn new(ppu: Ppu, apu: Apu) -> Self {
         Io {
             serial: Serial::default(),
             timer: Timer::default(),
             interrupts: Interrupts::default(),
-            lcd,
             joypad: Default::default(),
+            ppu,
             apu,
         }
     }
@@ -45,7 +46,7 @@ impl Io {
             AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
                 self.apu.read(address)
             }
-            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.lcd.read(address),
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(address),
             0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => 0xFF,
             0xFF0F => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
             _ => 0xFF,
@@ -62,7 +63,7 @@ impl Io {
             AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
                 self.apu.write(address, value)
             }
-            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.lcd.write(address, value),
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(address, value),
             0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {}
             0xFF0F => self.interrupts.int_flags = value,
             _ => {}

@@ -1,8 +1,8 @@
-use crate::auxiliary::io::Io;
-use crate::bus::Bus;
-use crate::cpu::interrupts::InterruptType;
+use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::fetcher::PixelFetcher;
-use crate::ppu::lcd::{LcdStatSrc, PpuMode};
+use crate::ppu::lcd::{Lcd, LcdStatSrc, PpuMode};
+use crate::ppu::oam::OamRam;
+use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
@@ -25,9 +25,19 @@ pub struct Ppu {
     pub pipeline: PixelFetcher,
     line_ticks: usize,
     fps: Option<Fps>,
+    pub video_ram: VideoRam,
+    pub oam_ram: OamRam,
+    pub lcd: Lcd,
 }
 
 impl Ppu {
+    pub fn new(lcd: Lcd) -> Self {
+        Self {
+            lcd,
+            ..Default::default()
+        }
+    }
+
     #[inline(always)]
     pub fn reset(&mut self) {
         self.line_ticks = 0;
@@ -49,49 +59,51 @@ impl Ppu {
     }
 
     #[inline(always)]
-    pub fn tick(&mut self, bus: &mut Bus) {
+    pub fn tick(&mut self, interrupts: &mut Interrupts) {
         self.line_ticks += 1;
 
-        match bus.io.lcd.status.get_ppu_mode() {
-            PpuMode::HBlank => self.mode_hblank(&mut bus.io),
-            PpuMode::VBlank => self.mode_vblank(&mut bus.io),
-            PpuMode::Oam => self.mode_oam(bus),
-            PpuMode::Transfer => self.mode_transfer(bus),
+        match self.lcd.status.get_ppu_mode() {
+            PpuMode::HBlank => self.mode_hblank(interrupts),
+            PpuMode::VBlank => self.mode_vblank(interrupts),
+            PpuMode::Oam => self.mode_oam(),
+            PpuMode::Transfer => self.mode_transfer(interrupts),
         }
     }
 
     #[inline(always)]
-    pub fn mode_oam(&mut self, bus: &mut Bus) {
+    pub fn mode_oam(&mut self) {
         if self.line_ticks >= 80 {
-            self.set_mode_transfer(&mut bus.io);
+            self.set_mode_transfer();
             self.pipeline.reset();
         }
 
         if self.line_ticks == 1 {
             // read oam on the first tick only
-            self.pipeline.sprite_fetcher.load_line_sprites(bus);
+            self.pipeline
+                .sprite_fetcher
+                .load_line_sprites(&self.lcd, &self.oam_ram);
         }
     }
 
     #[inline(always)]
-    fn mode_transfer(&mut self, bus: &mut Bus) {
-        self.pipeline.process(bus, self.line_ticks);
+    fn mode_transfer(&mut self, interrupts: &mut Interrupts) {
+        self.pipeline
+            .process(&self.lcd, &self.video_ram, self.line_ticks);
 
         if self.pipeline.is_full() {
             self.pipeline.clear();
-            // STAT mode=0 interrupt happens one cycle before the actual mode switch!
-            self.set_mode_hblank(&mut bus.io);
+            self.set_mode_hblank(interrupts);
         }
     }
 
     #[inline(always)]
-    fn mode_vblank(&mut self, io: &mut Io) {
+    fn mode_vblank(&mut self, interrupts: &mut Interrupts) {
         if self.line_ticks >= TICKS_PER_LINE {
-            io.lcd.increment_ly(&mut io.interrupts);
+            self.lcd.increment_ly(interrupts);
 
-            if io.lcd.ly as usize >= LINES_PER_FRAME {
-                self.set_mode_oam(io);
-                io.lcd.reset_ly(&mut io.interrupts);
+            if self.lcd.ly as usize >= LINES_PER_FRAME {
+                self.set_mode_oam(interrupts);
+                self.lcd.reset_ly(interrupts);
             }
 
             self.line_ticks = 0;
@@ -99,19 +111,19 @@ impl Ppu {
     }
 
     #[inline(always)]
-    fn mode_hblank(&mut self, io: &mut Io) {
+    fn mode_hblank(&mut self, interrupts: &mut Interrupts) {
         if self.line_ticks >= TICKS_PER_LINE {
-            io.lcd.increment_ly(&mut io.interrupts);
+            self.lcd.increment_ly(interrupts);
 
-            if io.lcd.ly >= LCD_Y_RES {
-                self.set_mode_vblank(io);
+            if self.lcd.ly >= LCD_Y_RES {
+                self.set_mode_vblank(interrupts);
                 self.current_frame += 1;
 
                 if let Some(fps) = self.fps.as_mut() {
                     fps.update()
                 }
             } else {
-                self.set_mode_oam(io);
+                self.set_mode_oam(interrupts);
             }
 
             self.line_ticks = 0;
@@ -119,36 +131,36 @@ impl Ppu {
     }
 
     #[inline(always)]
-    const fn set_mode_oam(&mut self, io: &mut Io) {
-        io.lcd.status.set_ppu_mode(PpuMode::Oam);
+    const fn set_mode_oam(&mut self, interrupts: &mut Interrupts) {
+        self.lcd.status.set_ppu_mode(PpuMode::Oam);
 
-        if io.lcd.status.is_stat_interrupt(LcdStatSrc::Oam) {
-            io.interrupts.request_interrupt(InterruptType::LCDStat);
+        if self.lcd.status.is_stat_interrupt(LcdStatSrc::Oam) {
+            interrupts.request_interrupt(InterruptType::LCDStat);
         }
     }
 
     #[inline(always)]
-    const fn set_mode_transfer(&mut self, io: &mut Io) {
-        io.lcd.status.set_ppu_mode(PpuMode::Transfer);
+    const fn set_mode_transfer(&mut self) {
+        self.lcd.status.set_ppu_mode(PpuMode::Transfer);
     }
 
     #[inline(always)]
-    const fn set_mode_hblank(&mut self, io: &mut Io) {
-        io.lcd.status.set_ppu_mode(PpuMode::HBlank);
+    const fn set_mode_hblank(&mut self, interrupts: &mut Interrupts) {
+        self.lcd.status.set_ppu_mode(PpuMode::HBlank);
 
         // TODO: STAT mode=0 interrupt happens one cycle before the actual mode switch!
-        if io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
-            io.interrupts.request_interrupt(InterruptType::LCDStat);
+        if self.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
+            interrupts.request_interrupt(InterruptType::LCDStat);
         }
     }
 
     #[inline(always)]
-    const fn set_mode_vblank(&mut self, io: &mut Io) {
-        io.lcd.status.set_ppu_mode(PpuMode::VBlank);
-        io.interrupts.request_interrupt(InterruptType::VBlank);
+    const fn set_mode_vblank(&mut self, interrupts: &mut Interrupts) {
+        self.lcd.status.set_ppu_mode(PpuMode::VBlank);
+        interrupts.request_interrupt(InterruptType::VBlank);
 
-        if io.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
-            io.interrupts.request_interrupt(InterruptType::LCDStat);
+        if self.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
+            interrupts.request_interrupt(InterruptType::LCDStat);
         }
     }
 }

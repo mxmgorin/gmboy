@@ -224,7 +224,7 @@ pub struct Cycle(pub u16, pub u8, pub String);
 
 pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
     let bus = setup_bus(test_case);
-    let clock = Clock::new(Default::default(), bus);
+    let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     set_cpu_state(&mut cpu, test_case);
 

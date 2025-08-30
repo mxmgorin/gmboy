@@ -25,7 +25,6 @@ mod tests {
     use crate::cpu::instructions::opcode::INSTRUCTIONS;
     use crate::cpu::instructions::AddressMode;
     use crate::cpu::{Cpu, RegisterType};
-    use crate::ppu::Ppu;
 
     const M_CYCLES_BY_OPCODES: [usize; 0x100] = [
         1, 3, 2, 2, 1, 1, 2, 1, 5, 2, 2, 2, 1, 1, 2, 1, 0, 3, 2, 2, 1, 1, 2, 1, 3, 2, 2, 2, 1, 1,
@@ -43,7 +42,6 @@ mod tests {
     pub fn test_m_cycles_ldh_f0() {
         let opcode = 0xF0;
         let clock = Clock::new(
-            Ppu::default(),
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
@@ -57,7 +55,6 @@ mod tests {
     #[test]
     pub fn test_m_cycles_call() {
         let clock = Clock::new(
-            Ppu::default(),
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
@@ -83,7 +80,6 @@ mod tests {
     #[test]
     pub fn test_m_cycles_jp() {
         let clock = Clock::new(
-            Ppu::default(),
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
@@ -113,7 +109,6 @@ mod tests {
     #[test]
     pub fn test_m_cycles_jr() {
         let clock = Clock::new(
-            Ppu::default(),
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
@@ -139,7 +134,6 @@ mod tests {
     #[test]
     pub fn test_m_cycles_ret() {
         let clock = Clock::new(
-            Ppu::default(),
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);
@@ -165,7 +159,6 @@ mod tests {
     #[test]
     pub fn test_m_cycles() {
         let clock = Clock::new(
-            Ppu::default(),
             Bus::with_bytes(vec![0; 100000], Io::default()),
         );
         let mut cpu = Cpu::new(clock);

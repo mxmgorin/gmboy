@@ -10,6 +10,7 @@ use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
 use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::Lcd;
+use crate::ppu::Ppu;
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use std::{mem, thread};
@@ -45,7 +46,7 @@ impl Emu {
 
     #[inline(always)]
     pub fn get_framebuffer(&mut self) -> &mut FrameBuffer {
-        &mut self.runtime.cpu.clock.ppu.pipeline.buffer
+        &mut self.runtime.cpu.clock.bus.io.ppu.pipeline.buffer
     }
 
     /// Runs emulation for one frame. Return whether the emulation is on time.
@@ -140,12 +141,12 @@ impl Emu {
     }
 
     pub fn load_cart(&mut self, cart: Cart) {
+        let lcd = Lcd::new(self.runtime.cpu.clock.bus.io.ppu.lcd.current_colors);
+        let ppu = Ppu::new(lcd);
         let apu = Apu::new(self.runtime.cpu.clock.bus.io.apu.config.clone());
-        let lcd = Lcd::new(self.runtime.cpu.clock.bus.io.lcd.current_colors);
-        let io = Io::new(lcd, apu);
+        let io = Io::new(ppu, apu);
         let bus = Bus::new(cart, io);
-        self.runtime.cpu.clock.ppu.reset();
-        let clock = Clock::new(self.runtime.cpu.clock.ppu.clone(), bus);
+        let clock = Clock::new(bus);
         self.runtime.cpu = Cpu::new(clock);
 
         self.state = EmuState::Running;

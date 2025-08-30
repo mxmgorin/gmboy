@@ -1,5 +1,4 @@
 use core::auxiliary::clock::Clock;
-use core::ppu::Ppu;
 
 mod blargg;
 mod mooneye;

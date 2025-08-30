@@ -57,7 +57,7 @@ impl Dma {
         };
         let byte = bus.read(addr);
         let dest_addr = OAM_ADDR_START + bus.dma.current_index;
-        bus.oam_ram.write(dest_addr, byte);
+        bus.io.ppu.oam_ram.write(dest_addr, byte);
         bus.dma.current_index = bus.dma.current_index.wrapping_add(1);
         bus.dma.is_active = bus.dma.current_index < 160;
     }

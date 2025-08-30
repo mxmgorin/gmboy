@@ -5,7 +5,6 @@ use crate::cpu::Cpu;
 use crate::debugger::Debugger;
 pub use crate::emu::state::{EmuSaveState, SaveStateCmd};
 use crate::emu::EmuAudioCallback;
-use crate::ppu::Ppu;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
@@ -25,20 +24,20 @@ pub struct EmuRuntime {
 
 impl EmuRuntime {
     #[cfg(feature = "debug")]
-    pub fn new(ppu: Ppu, bus: Bus, debugger: Option<Debugger>) -> Self {
+    pub fn new(bus: Bus, debugger: Option<Debugger>) -> Self {
         Self {
             mode: RunMode::Normal,
-            cpu: Cpu::new(Clock::new(ppu, bus)),
+            cpu: Cpu::new(Clock::new(bus)),
             #[cfg(feature = "debug")]
             debugger,
         }
     }
 
     #[cfg(not(feature = "debug"))]
-    pub fn new(ppu: Ppu, bus: Bus) -> Self {
+    pub fn new(bus: Bus) -> Self {
         Self {
             mode: RunMode::Normal,
-            cpu: Cpu::new(Clock::new(ppu, bus)),
+            cpu: Cpu::new(Clock::new(bus)),
         }
     }
 
@@ -49,9 +48,9 @@ impl EmuRuntime {
 
     #[inline(always)]
     pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) {
-        let start_frame = self.cpu.clock.ppu.current_frame;
+        let start_frame = self.cpu.clock.bus.io.ppu.current_frame;
 
-        while start_frame == self.cpu.clock.ppu.current_frame {
+        while start_frame == self.cpu.clock.bus.io.ppu.current_frame {
             #[cfg(feature = "debug")]
             if let Some(debugger) = self.debugger.as_mut() {
                 self.cpu.step_debug(debugger);

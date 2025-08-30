@@ -1,16 +1,16 @@
-use crate::bus::Bus;
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprite::SpriteFetcher;
 use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::vram::VideoRam;
 use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
 use serde::{Deserialize, Serialize};
 use std::ptr;
 
 pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
 
-type FetchFn = fn(&mut PixelFetcher, &Bus);
+type FetchFn = fn(&mut PixelFetcher, &Lcd, &VideoRam);
 
 const FETCH_FNS: [FetchFn; 5] = [
     PixelFetcher::fetch_tile,
@@ -81,16 +81,16 @@ impl Default for PixelFetcher {
 
 impl PixelFetcher {
     #[inline(always)]
-    pub fn process(&mut self, bus: &Bus, line_ticks: usize) {
+    pub fn process(&mut self, lcd: &Lcd, vram: &VideoRam, line_ticks: usize) {
         // fetch on odd lines
         if line_ticks & 1 != 0 {
             // SAFETY: we control FETCH_FNS and FetchStep
             unsafe {
-                FETCH_FNS.get_unchecked(self.fetch_step as usize)(self, bus);
+                FETCH_FNS.get_unchecked(self.fetch_step as usize)(self, lcd, vram);
             }
         }
 
-        self.try_fifo_pop(&bus.io.lcd);
+        self.try_fifo_pop(lcd);
     }
 
     #[inline(always)]
@@ -130,13 +130,12 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    fn fetch_tile(&mut self, bus: &Bus) {
-        let lcd = &bus.io.lcd;
+    fn fetch_tile(&mut self, lcd: &Lcd, vram: &VideoRam) {
         let control = lcd.control;
 
         if control.is_bgw_enabled() {
             let (map_y, map_x, tile_idx, is_window) =
-                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, bus) {
+                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, lcd, vram) {
                     (
                         lcd.ly.wrapping_add(lcd.window.y),
                         self.fetch_x.wrapping_add(lcd.window.x),
@@ -149,7 +148,7 @@ impl PixelFetcher {
                     let addr = control.get_bg_map_area()
                         + (map_x as u16 / TILE_WIDTH)
                         + ((map_y as u16 / TILE_HEIGHT) * 32);
-                    (map_y, map_x, bus.read(addr), false)
+                    (map_y, map_x, vram.read(addr), false)
                 };
 
             let fetched = &mut self.bgw_fetched_data;
@@ -171,38 +170,37 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    fn fetch_data0(&mut self, bus: &Bus) {
-        self.bgw_fetched_data.byte1 = bus.read(self.bgw_fetched_data.get_data_addr());
-        self.sprite_fetcher.fetch_sprite_data(bus, 0);
+    fn fetch_data0(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        self.bgw_fetched_data.byte1 = vram.read(self.bgw_fetched_data.get_data_addr());
+        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 0);
         self.fetch_step = FetchStep::Data1;
     }
 
     #[inline(always)]
-    fn fetch_data1(&mut self, bus: &Bus) {
-        self.bgw_fetched_data.byte2 = bus.read(self.bgw_fetched_data.get_data_addr() + 1);
-        self.sprite_fetcher.fetch_sprite_data(bus, 1);
+    fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        self.bgw_fetched_data.byte2 = vram.read(self.bgw_fetched_data.get_data_addr() + 1);
+        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 1);
         self.fetch_step = FetchStep::Idle;
     }
 
     #[inline(always)]
-    fn fetch_idle(&mut self, _bus: &Bus) {
+    fn fetch_idle(&mut self, _: &Lcd, _: &VideoRam) {
         self.fetch_step = FetchStep::Push;
     }
 
     #[inline(always)]
-    fn fetch_push(&mut self, bus: &Bus) {
-        if self.try_fifo_push(bus) {
+    fn fetch_push(&mut self, lcd: &Lcd, _: &VideoRam) {
+        if self.try_fifo_push(lcd) {
             self.fetch_step = FetchStep::Tile;
         }
     }
 
     #[inline(always)]
-    fn try_fifo_push(&mut self, bus: &Bus) -> bool {
+    fn try_fifo_push(&mut self, lcd: &Lcd) -> bool {
         if self.pixel_fifo.is_full() {
             return false;
         }
 
-        let lcd = &bus.io.lcd;
         let control = lcd.control;
         let obj_enabled = control.is_obj_enabled();
         let bgw_enabled = control.is_bgw_enabled();

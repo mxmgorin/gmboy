@@ -1,6 +1,5 @@
 use crate::auxiliary::dma::Dma;
 use crate::bus::Bus;
-use crate::ppu::Ppu;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
@@ -12,7 +11,6 @@ pub struct Clock {
     pub time: Instant,
     m_cycles: usize,
     pub bus: Bus,
-    pub ppu: Ppu,
 }
 
 impl Default for Clock {
@@ -21,16 +19,14 @@ impl Default for Clock {
             time: Instant::now(),
             m_cycles: 0,
             bus: Default::default(),
-            ppu: Default::default(),
         }
     }
 }
 
 impl Clock {
-    pub fn new(ppu: Ppu, bus: Bus) -> Self {
+    pub fn new(bus: Bus) -> Self {
         Self {
             time: Instant::now(),
-            ppu,
             bus,
             m_cycles: 0,
         }
@@ -66,7 +62,7 @@ impl Clock {
     fn tick_t_cycles(&mut self, t_cycles: usize) {
         for _ in 0..t_cycles {
             self.bus.io.timer.tick(&mut self.bus.io.interrupts);
-            self.ppu.tick(&mut self.bus);
+            self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
             self.bus.io.apu.tick();
         }
     }

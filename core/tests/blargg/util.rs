@@ -1,5 +1,4 @@
 use crate::Clock;
-use crate::Ppu;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
@@ -15,7 +14,7 @@ pub fn run_blargg_rom_serial(
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
     let bus = Bus::new(cart, Default::default());
-    let clock = Clock::new(Ppu::default(), bus);
+    let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
     let mut debugger = Debugger::new(CpuLogType::None, true);
@@ -44,7 +43,7 @@ pub fn run_blargg_rom_memory(
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
     let bus = Bus::new(cart, Default::default());
-    let clock = Clock::new(Ppu::default(), bus);
+    let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
 

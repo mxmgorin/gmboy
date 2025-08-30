@@ -44,7 +44,7 @@ pub fn run_mooneye_dir_roms(dir_path: PathBuf, take: usize, skip: usize, timeout
 pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), String> {
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
     let bus = Bus::new(cart, Default::default());
-    let clock = Clock::new(Default::default(), bus);
+    let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
 

@@ -1,10 +1,10 @@
-use crate::bus::Bus;
 use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::lcd::{Lcd, PixelColor};
-use crate::ppu::oam::OamEntry;
+use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
     get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
 };
+use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
@@ -23,12 +23,12 @@ pub struct SpriteFetcher {
 
 impl SpriteFetcher {
     #[inline(always)]
-    pub fn load_line_sprites(&mut self, bus: &mut Bus) {
+    pub fn load_line_sprites(&mut self, lcd: &Lcd, oam_ram: &OamRam) {
         self.line_sprites_count = 0;
-        let cur_y = bus.io.lcd.ly;
-        let sprite_height = bus.io.lcd.control.get_obj_height();
+        let cur_y = lcd.ly;
+        let sprite_height = lcd.control.get_obj_height();
 
-        for ram_entry in bus.oam_ram.entries.iter() {
+        for ram_entry in oam_ram.entries.iter() {
             if ram_entry.x == 0 {
                 // Not visible (X = 0 means hidden on real hardware)
                 continue;
@@ -83,7 +83,8 @@ impl SpriteFetcher {
             let sp_x = self.calc_sprite_x(sprite.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x.wrapping_add(8))
-                || (sp_x.wrapping_add(8) >= fetch_x && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
+                || (sp_x.wrapping_add(8) >= fetch_x
+                    && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
             {
                 // need to add
                 unsafe {
@@ -107,9 +108,9 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn fetch_sprite_data(&mut self, bus: &Bus, byte_offset: u16) {
-        let cur_y: i32 = bus.io.lcd.ly as i32;
-        let sprite_height: u8 = bus.io.lcd.control.get_obj_height();
+    pub fn fetch_sprite_data(&mut self, lcd: &Lcd, vram: &VideoRam, byte_offset: u16) {
+        let cur_y: i32 = lcd.ly as i32;
+        let sprite_height: u8 = lcd.control.get_obj_height();
 
         for i in 0..self.fetched_sprites_count {
             let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
@@ -139,7 +140,7 @@ impl SpriteFetcher {
                 .wrapping_add(byte_offset);
 
             let data = unsafe { self.fetched_sprite_data.get_unchecked_mut(i) };
-            let value = bus.read(addr);
+            let value = vram.read(addr);
 
             unsafe {
                 *data
@@ -177,8 +178,7 @@ impl SpriteFetcher {
             };
 
             let data = unsafe { self.fetched_sprite_data.get_unchecked(i) };
-            let color_index =
-                get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit);
+            let color_index = get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit);
 
             if color_index == 0 {
                 continue; // Transparent

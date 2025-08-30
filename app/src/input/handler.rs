@@ -184,6 +184,8 @@ impl InputHandler {
                     emu.runtime
                         .cpu
                         .clock
+                        .bus
+                        .io
                         .ppu
                         .toggle_fps(app.config.video.interface.show_fps);
                 }

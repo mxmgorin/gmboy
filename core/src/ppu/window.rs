@@ -1,7 +1,7 @@
-use crate::bus::Bus;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use serde::{Deserialize, Serialize};
+use crate::ppu::vram::VideoRam;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LcdWindow {
@@ -25,8 +25,8 @@ impl LcdWindow {
     }
 
     #[inline(always)]
-    pub fn get_tile_idx(&self, fetch_x: u16, bus: &Bus) -> Option<u8> {
-        if !self.is_visible(&bus.io.lcd) {
+    pub fn get_tile_idx(&self, fetch_x: u16, lcd: &Lcd, vram: &VideoRam) -> Option<u8> {
+        if !self.is_visible(lcd) {
             return None;
         }
 
@@ -34,15 +34,15 @@ impl LcdWindow {
 
         if fetch_x >= self.x as u16
             && fetch_x < self.x as u16 + LCD_X_RES as u16 + 14
-            && bus.io.lcd.ly as u16 >= self.y as u16
-            && (bus.io.lcd.ly as u16) < self.y as u16 + LCD_Y_RES as u16
+            && lcd.ly as u16 >= self.y as u16
+            && (lcd.ly as u16) < self.y as u16 + LCD_Y_RES as u16
         {
             let w_tile_x = (fetch_x - self.x as u16) / 8; // Convert pixel X to tile X
             let w_tile_y = (self.line_number / 8) as u16; // Convert pixel Y to tile Y
-            let area = bus.io.lcd.control.get_win_map_area(); // Get window tile map base address (0x9800 or 0x9C00)
+            let area = lcd.control.get_win_map_area(); // Get window tile map base address (0x9800 or 0x9C00)
             let addr = area + w_tile_x + (w_tile_y * 32); // Calculate correct tile map index
 
-            return Some(bus.read(addr)); // Fetch tile index from VRAM
+            return Some(vram.read(addr)); // Fetch tile index from VRAM
         }
 
         None

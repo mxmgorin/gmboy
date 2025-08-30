@@ -57,10 +57,10 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let colors = config.video.interface.get_palette_colors(palettes);
 
     let lcd = Lcd::new(colors);
-    let apu = Apu::new(apu_config);
-    let bus = Bus::new(Cart::empty(), Io::new(lcd, apu));
-    let mut ppu = Ppu::default();
+    let mut ppu = Ppu::new(lcd);
     ppu.toggle_fps(config.video.interface.show_fps);
+    let apu = Apu::new(apu_config);    
+    let bus = Bus::new(Cart::empty(), Io::new(ppu, apu));
 
     #[cfg(feature = "debug")]
     {
@@ -68,11 +68,11 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
             core::debugger::CpuLogType::Asm,
             false,
         );
-        return Emu::new(emu_config.clone(), EmuRuntime::new(ppu, bus)).unwrap();
+        return Emu::new(emu_config.clone(), EmuRuntime::new(bus)).unwrap();
     }
 
     #[cfg(not(feature = "debug"))]
-    Emu::new(emu_config.clone(), EmuRuntime::new(ppu, bus)).unwrap()
+    Emu::new(emu_config.clone(), EmuRuntime::new(bus)).unwrap()
 }
 
 pub fn load_cart<FS, FD>(app: &mut App<FS, FD>, emu: &mut Emu, mut args: Vec<String>)

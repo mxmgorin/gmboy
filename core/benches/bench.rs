@@ -29,7 +29,7 @@ pub fn new_cpu(cart: Option<Cart>) -> Cpu {
     } else {
         Bus::with_bytes(vec![0; 100000], Default::default())
     };
-    let clock = Clock::new(Ppu::default(), bus);
+    let clock = Clock::new(bus);
 
     Cpu::new(clock)
 }
@@ -38,9 +38,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("cpu_step_500_000", |b| {
         b.iter_batched(
             || {
-                let ppu = Ppu::default();
                 let bus = Bus::new(get_cart(), Default::default());
-                let clock = Clock::new(ppu, bus);
+                let clock = Clock::new(bus);
 
                 Cpu::new(clock)
             },
@@ -78,9 +77,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("fetch_execute_prefix_500_000", |b| {
         b.iter_batched(
             || {
-                let ppu = Ppu::default();
                 let bus = Bus::new(get_cart(), Default::default());
-                let clock = Clock::new(ppu, bus);
+                let clock = Clock::new(bus);
 
                 Cpu::new(clock)
             },
@@ -119,7 +117,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             },
             |(mut ppu, mut bus)| {
                 for _ in 0..5_000_000 {
-                    ppu.tick(&mut bus);
+                    ppu.tick(&mut bus.io.interrupts);
                 }
             },
             BatchSize::LargeInput,
