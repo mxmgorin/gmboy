@@ -75,9 +75,7 @@ impl Ppu {
         if self.line_ticks >= 80 {
             self.set_mode_transfer();
             self.pipeline.reset();
-        }
-
-        if self.line_ticks == 1 {
+        } else if self.line_ticks == 1 {
             // read oam on the first tick only
             self.pipeline
                 .sprite_fetcher

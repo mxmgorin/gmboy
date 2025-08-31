@@ -25,7 +25,7 @@ impl SpriteFetcher {
     #[inline(always)]
     pub fn load_line_sprites(&mut self, lcd: &Lcd, oam_ram: &OamRam) {
         self.line_sprites_count = 0;
-        let cur_y = lcd.ly;
+        let cur_y = lcd.ly.wrapping_add(16);
         let sprite_height = lcd.control.get_obj_height();
 
         for ram_entry in oam_ram.entries.iter() {
@@ -40,7 +40,7 @@ impl SpriteFetcher {
             }
 
             // Check if the sprite is on the current scanline
-            if ram_entry.y <= cur_y + 16 && ram_entry.y + sprite_height > cur_y + 16 {
+            if ram_entry.y <= cur_y && ram_entry.y + sprite_height > cur_y {
                 let mut inserted = false;
 
                 // Iterate through sorted list to insert at correct position
@@ -109,16 +109,15 @@ impl SpriteFetcher {
 
     #[inline(always)]
     pub fn fetch_sprite_data(&mut self, lcd: &Lcd, vram: &VideoRam, byte_offset: u16) {
-        let cur_y: i32 = lcd.ly as i32;
-        let sprite_height: u8 = lcd.control.get_obj_height();
+        let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
+        let sprite_height = lcd.control.get_obj_height();
 
         for i in 0..self.fetched_sprites_count {
             let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
 
-            let mut tile_y: u8 = cur_y
-                .wrapping_add(TILE_BIT_SIZE as i32)
-                .wrapping_sub(sprite.y as i32)
-                .wrapping_mul(TILE_LINE_BYTES_COUNT as i32) as u8;
+            let mut tile_y = cur_y
+                .wrapping_sub(sprite.y)
+                .wrapping_mul(TILE_LINE_BYTES_COUNT as u8);
 
             if sprite.f_y_flip() {
                 tile_y = sprite_height
