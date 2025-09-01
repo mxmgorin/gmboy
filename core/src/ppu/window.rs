@@ -1,7 +1,7 @@
 use crate::ppu::lcd::Lcd;
+use crate::ppu::vram::VideoRam;
 use crate::ppu::{LCD_X_RES, LCD_Y_RES};
 use serde::{Deserialize, Serialize};
-use crate::ppu::vram::VideoRam;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct LcdWindow {
@@ -30,7 +30,7 @@ impl LcdWindow {
             return None;
         }
 
-        let fetch_x = fetch_x + 7;
+        let fetch_x = fetch_x.wrapping_add(7);
 
         if fetch_x >= self.x as u16
             && fetch_x < self.x as u16 + LCD_X_RES as u16 + 14

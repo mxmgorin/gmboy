@@ -20,31 +20,28 @@ const FETCH_FNS: [FetchFn; 5] = [
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BgwFetchedData {
-    pub tile_idx: u8,
+    pub addr: u16,
     pub byte1: u8,
     pub byte2: u8,
-    pub map_x: u8,
-    pub map_y: u8,
-    pub data_area: u16,
     pub is_window: bool,
 }
 
-impl BgwFetchedData {
-    #[inline(always)]
-    pub fn get_data_addr(&mut self) -> u16 {
-        let tile_y = (self.map_y % TILE_HEIGHT as u8) * 2;
+#[inline(always)]
+pub fn get_bgw_tile_addr(tile_idx: u8, map_y: u8, data_area: u16) -> u16 {
+    let tile_y = (map_y % TILE_HEIGHT as u8) * 2;
 
-        self.data_area
-            .wrapping_add(self.tile_idx as u16 * 16)
-            .wrapping_add(tile_y as u16)
+    data_area
+        .wrapping_add(tile_idx as u16 * 16)
+        .wrapping_add(tile_y as u16)
+}
+
+#[inline(always)]
+pub fn normalize_bgw_tile_idx(tile_idx: u8, data_area: u16) -> u8 {
+    if data_area == 0x8800 {
+        return tile_idx.wrapping_add(128);
     }
 
-    #[inline(always)]
-    pub fn normalize_tile_idx(&mut self) {
-        if self.data_area == 0x8800 {
-            self.tile_idx = self.tile_idx.wrapping_add(128);
-        }
-    }
+    tile_idx
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,85 +111,6 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
-        let base = index * PPU_BYTES_PER_PIXEL;
-        let bytes = pixel.as_rgb565_bytes();
-
-        unsafe {
-            let dst = self.buffer.as_mut_ptr().add(base);
-            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, PPU_BYTES_PER_PIXEL);
-        }
-
-        self.pushed_x += 1;
-    }
-
-    #[inline(always)]
-    fn fetch_tile(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        let control = lcd.control;
-
-        if control.is_bgw_enabled() {
-            let (map_y, map_x, tile_idx, is_window) =
-                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, lcd, vram) {
-                    (
-                        lcd.ly.wrapping_add(lcd.window.y),
-                        self.fetch_x.wrapping_add(lcd.window.x),
-                        tile_idx,
-                        true,
-                    )
-                } else {
-                    let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
-                    let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                    let addr = control.get_bg_map_area()
-                        + (map_x as u16 / TILE_WIDTH)
-                        + ((map_y as u16 / TILE_HEIGHT) * 32);
-                    (map_y, map_x, vram.read(addr), false)
-                };
-
-            let fetched = &mut self.bgw_fetched_data;
-            fetched.is_window = is_window;
-            fetched.map_y = map_y;
-            fetched.map_x = map_x;
-            fetched.tile_idx = tile_idx;
-            fetched.data_area = control.get_bgw_data_area();
-            fetched.normalize_tile_idx();
-        }
-
-        if control.is_obj_enabled() {
-            self.sprite_fetcher
-                .fetch_sprites(lcd.scroll_x, self.fetch_x);
-        }
-
-        self.fetch_step = FetchStep::Data0;
-        self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
-    }
-
-    #[inline(always)]
-    fn fetch_data0(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.bgw_fetched_data.byte1 = vram.read(self.bgw_fetched_data.get_data_addr());
-        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 0);
-        self.fetch_step = FetchStep::Data1;
-    }
-
-    #[inline(always)]
-    fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.bgw_fetched_data.byte2 = vram.read(self.bgw_fetched_data.get_data_addr() + 1);
-        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 1);
-        self.fetch_step = FetchStep::Idle;
-    }
-
-    #[inline(always)]
-    fn fetch_idle(&mut self, _: &Lcd, _: &VideoRam) {
-        self.fetch_step = FetchStep::Push;
-    }
-
-    #[inline(always)]
-    fn fetch_push(&mut self, lcd: &Lcd, _: &VideoRam) {
-        if self.try_fifo_push(lcd) {
-            self.fetch_step = FetchStep::Tile;
-        }
-    }
-
-    #[inline(always)]
     fn try_fifo_push(&mut self, lcd: &Lcd) -> bool {
         if self.pixel_fifo.is_full() {
             return false;
@@ -233,6 +151,80 @@ impl PixelFetcher {
         }
 
         true
+    }
+
+    #[inline(always)]
+    fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
+        let base = index * PPU_BYTES_PER_PIXEL;
+        let bytes = pixel.as_rgb565_bytes();
+
+        unsafe {
+            let dst = self.buffer.as_mut_ptr().add(base);
+            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, PPU_BYTES_PER_PIXEL);
+        }
+
+        self.pushed_x += 1;
+    }
+
+    #[inline(always)]
+    fn fetch_tile(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        let control = lcd.control;
+
+        if control.is_bgw_enabled() {
+            let (map_y, tile_idx) =
+                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, lcd, vram) {
+                    self.bgw_fetched_data.is_window = true;
+
+                    (lcd.ly.wrapping_add(lcd.window.y), tile_idx)
+                } else {
+                    let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
+                    let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
+                    let addr = control.get_bg_map_area()
+                        + (map_x as u16 / TILE_WIDTH)
+                        + ((map_y as u16 / TILE_HEIGHT) * 32);
+                    self.bgw_fetched_data.is_window = false;
+
+                    (map_y, vram.read(addr))
+                };
+
+            let data_area = control.get_bgw_data_area();
+            let tile_idx = normalize_bgw_tile_idx(tile_idx, data_area);
+            self.bgw_fetched_data.addr = get_bgw_tile_addr(tile_idx, map_y, data_area)
+        }
+
+        if control.is_obj_enabled() {
+            self.sprite_fetcher
+                .fetch_sprites(lcd.scroll_x, self.fetch_x);
+        }
+
+        self.fetch_step = FetchStep::Data0;
+        self.fetch_x = self.fetch_x.wrapping_add(TILE_WIDTH as u8);
+    }
+
+    #[inline(always)]
+    fn fetch_data0(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        self.bgw_fetched_data.byte1 = vram.read(self.bgw_fetched_data.addr);
+        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 0);
+        self.fetch_step = FetchStep::Data1;
+    }
+
+    #[inline(always)]
+    fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        self.bgw_fetched_data.byte2 = vram.read(self.bgw_fetched_data.addr.wrapping_add(1));
+        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 1);
+        self.fetch_step = FetchStep::Idle;
+    }
+
+    #[inline(always)]
+    fn fetch_idle(&mut self, _: &Lcd, _: &VideoRam) {
+        self.fetch_step = FetchStep::Push;
+    }
+
+    #[inline(always)]
+    fn fetch_push(&mut self, lcd: &Lcd, _: &VideoRam) {
+        if self.try_fifo_push(lcd) {
+            self.fetch_step = FetchStep::Tile;
+        }
     }
 
     #[inline(always)]
