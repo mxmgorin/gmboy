@@ -8,8 +8,6 @@ use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
 use serde::{Deserialize, Serialize};
 use std::ptr;
 
-pub const MAX_FIFO_SPRITES_SIZE: usize = 10;
-
 type FetchFn = fn(&mut PixelFetcher, &Lcd, &VideoRam);
 
 const FETCH_FNS: [FetchFn; 5] = [
@@ -51,16 +49,15 @@ impl BgwFetchedData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PixelFetcher {
-    pub sprite_fetcher: SpriteFetcher,
     pub buffer: FrameBuffer,
-
+    pub sprite_fetcher: SpriteFetcher,
     fetch_step: FetchStep,
     line_x: u8,
     fetch_x: u8,
     fifo_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
-    pushed_x: usize,
+    pub pushed_x: usize,
 }
 
 impl Default for PixelFetcher {
@@ -162,7 +159,7 @@ impl PixelFetcher {
 
         if control.is_obj_enabled() {
             self.sprite_fetcher
-                .fetch_sprite_tiles(lcd.scroll_x, self.fetch_x);
+                .fetch_sprites(lcd.scroll_x, self.fetch_x);
         }
 
         self.fetch_step = FetchStep::Data0;
@@ -252,20 +249,11 @@ impl PixelFetcher {
     #[inline(always)]
     pub fn reset(&mut self) {
         self.fetch_step = FetchStep::Tile;
+        self.pixel_fifo.clear();
         self.line_x = 0;
         self.fetch_x = 0;
         self.pushed_x = 0;
         self.fifo_x = 0;
-    }
-
-    #[inline(always)]
-    pub fn clear(&mut self) {
-        self.pixel_fifo.clear();
-    }
-
-    #[inline(always)]
-    pub fn is_full(&self) -> bool {
-        self.pushed_x >= LCD_X_RES as usize
     }
 }
 

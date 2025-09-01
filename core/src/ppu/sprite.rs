@@ -1,4 +1,3 @@
-use crate::ppu::fetcher::MAX_FIFO_SPRITES_SIZE;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
@@ -7,6 +6,8 @@ use crate::ppu::tile::{
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
+const MAX_SPRITES_COUNT: usize = 10;
+
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct SpriteFetchedData {
     pub tile_line: TileLineData,
@@ -14,16 +15,16 @@ pub struct SpriteFetchedData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SpriteFetcher {
-    pub line_sprites_count: usize,
-    pub line_sprites: [OamEntry; MAX_FIFO_SPRITES_SIZE],
-    pub fetched_sprites_count: usize,
-    pub fetched_sprites: [OamEntry; 3], // entries fetched during pipeline.
-    pub fetched_sprite_data: [SpriteFetchedData; 3],
+    line_sprites_count: usize,
+    line_sprites: [OamEntry; MAX_SPRITES_COUNT],
+    fetched_sprites_count: usize,
+    fetched_sprites: [OamEntry; 3],
+    fetched_sprites_data: [SpriteFetchedData; 3],
 }
 
 impl SpriteFetcher {
     #[inline(always)]
-    pub fn load_line_sprites(&mut self, lcd: &Lcd, oam_ram: &OamRam) {
+    pub fn find_line_sprites(&mut self, lcd: &Lcd, oam_ram: &OamRam) {
         self.line_sprites_count = 0;
         let cur_y = lcd.ly.wrapping_add(16);
         let sprite_height = lcd.control.get_obj_height();
@@ -34,7 +35,7 @@ impl SpriteFetcher {
                 continue;
             }
 
-            if self.line_sprites_count >= MAX_FIFO_SPRITES_SIZE {
+            if self.line_sprites_count >= MAX_SPRITES_COUNT {
                 // Already reached max sprites per scanline (Game Boy limit = 10)
                 break;
             }
@@ -75,7 +76,7 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn fetch_sprite_tiles(&mut self, scroll_x: u8, fetch_x: u8) {
+    pub fn fetch_sprites(&mut self, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
 
         for idx in 0..self.line_sprites_count {
@@ -138,7 +139,7 @@ impl SpriteFetcher {
                 .wrapping_add(tile_y as u16)
                 .wrapping_add(byte_offset);
 
-            let data = unsafe { self.fetched_sprite_data.get_unchecked_mut(i) };
+            let data = unsafe { self.fetched_sprites_data.get_unchecked_mut(i) };
             let value = vram.read(addr);
 
             unsafe {
@@ -176,7 +177,7 @@ impl SpriteFetcher {
                 offset
             };
 
-            let data = unsafe { self.fetched_sprite_data.get_unchecked(i) };
+            let data = unsafe { self.fetched_sprites_data.get_unchecked(i) };
             let color_index = get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit);
 
             if color_index == 0 {

@@ -73,13 +73,12 @@ impl Ppu {
     #[inline(always)]
     pub fn mode_oam(&mut self) {
         if self.line_ticks >= 80 {
-            self.set_mode_transfer();
             self.pipeline.reset();
+            self.set_mode_transfer();
         } else if self.line_ticks == 1 {
-            // read oam on the first tick only
             self.pipeline
                 .sprite_fetcher
-                .load_line_sprites(&self.lcd, &self.oam_ram);
+                .find_line_sprites(&self.lcd, &self.oam_ram);
         }
     }
 
@@ -88,8 +87,7 @@ impl Ppu {
         self.pipeline
             .process(&self.lcd, &self.video_ram, self.line_ticks);
 
-        if self.pipeline.is_full() {
-            self.pipeline.clear();
+        if self.pipeline.pushed_x >= LCD_X_RES as usize {
             self.set_mode_hblank(interrupts);
         }
     }
