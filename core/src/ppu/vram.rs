@@ -60,25 +60,34 @@ impl VideoRam {
     }
 
     #[inline(always)]
-    pub fn get_tile_line(&self, addr: u16) -> TileLineData {
-        TileLineData::new(self.read(addr), self.read(addr + 1))
+    pub fn read_tile_line(&self, addr: u16) -> TileLineData {
+        let addr = (addr - VRAM_ADDR_START) as usize;
+
+        unsafe {
+            TileLineData::new(
+                *self.bytes.get_unchecked(addr),
+                *self.bytes.get_unchecked(addr.wrapping_add(1)),
+            )
+        }
     }
 
     #[inline(always)]
-    pub fn get_tile(&self, addr: u16) -> TileData {
+    pub fn read_tile(&self, addr: u16) -> TileData {
         let mut tile = TileData::default();
 
         for line_y in 0..TILE_HEIGHT as usize {
-            tile.lines[line_y] = self.get_tile_line(addr + (line_y * TILE_LINE_BYTES_COUNT) as u16);
+            tile.lines[line_y] =
+                self.read_tile_line(addr + (line_y * TILE_LINE_BYTES_COUNT) as u16);
         }
 
         tile
     }
 
+    #[inline(always)]
     pub fn iter_tiles(&self) -> impl Iterator<Item = TileData> + '_ {
         (0..384).map(move |i| {
             let addr = TILE_SET_DATA_1_START + (i as u16 * TILE_BIT_SIZE);
-            self.get_tile(addr)
+            self.read_tile(addr)
         })
     }
 }
@@ -93,7 +102,7 @@ impl Iterator for TilesIterator<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_address < TILE_SET_2_END {
-            let tile = self.video_ram.get_tile(self.current_address);
+            let tile = self.video_ram.read_tile(self.current_address);
             self.current_address += TILE_BIT_SIZE;
 
             return Some(tile);
