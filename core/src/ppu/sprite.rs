@@ -1,7 +1,7 @@
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
-    get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
+    get_color_idx, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
 };
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
@@ -161,18 +161,18 @@ impl SpriteFetcher {
                 offset
             };
 
-            let color_index = get_color_index(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
+            let color_idx = get_color_idx(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
 
-            if color_index == 0 {
+            if color_idx == 0 {
                 continue; // Transparent
             }
 
             if !sprite.oam.f_bgp() || bg_color_index == 0 {
                 let color = unsafe {
                     if sprite.oam.f_pn() {
-                        lcd.sp2_colors.get_unchecked(color_index)
+                        lcd.sp2_colors.get_unchecked(color_idx)
                     } else {
-                        lcd.sp1_colors.get_unchecked(color_index)
+                        lcd.sp1_colors.get_unchecked(color_idx)
                     }
                 };
 

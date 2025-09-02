@@ -78,7 +78,7 @@ impl PixelData {
 
     #[inline(always)]
     pub fn into_color_index(self) -> usize {
-        get_color_index(self.byte1, self.byte2, self.bit)
+        get_color_idx(self.byte1, self.byte2, self.bit)
     }
 }
 
@@ -106,12 +106,12 @@ impl From<usize> for ColorId {
 impl ColorId {
     #[inline(always)]
     pub fn new(byte1: u8, byte2: u8, bit: u8) -> ColorId {
-        get_color_index(byte1, byte2, bit).into()
+        get_color_idx(byte1, byte2, bit).into()
     }
 }
 
 #[inline(always)]
-pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
+pub fn get_color_idx(byte1: u8, byte2: u8, bit: u8) -> usize {
     let bit1 = (byte1 >> (7 - bit)) & 0x01;
     let bit2 = (byte2 >> (7 - bit)) & 0x01;
 
