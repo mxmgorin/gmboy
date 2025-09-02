@@ -134,7 +134,7 @@ impl PixelFetcher {
             let pixel = if obj_enabled {
                 if let Some(sprite_pixel) =
                     self.sprite_fetcher
-                        .fetch_sprite_pixel(lcd, self.fifo_x, bgw_color_index)
+                        .get_sprite_pixel(lcd, self.fifo_x, bgw_color_index)
                 {
                     sprite_pixel
                 } else {
@@ -193,7 +193,7 @@ impl PixelFetcher {
 
         if control.is_obj_enabled() {
             self.sprite_fetcher
-                .fetch_sprites(lcd.scroll_x, self.fetch_x);
+                .fetch_sprites(lcd, vram, lcd.scroll_x, self.fetch_x);
         }
 
         self.fetch_step = FetchStep::Data0;
@@ -201,14 +201,12 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    fn fetch_data0(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 0);
+    fn fetch_data0(&mut self, _: &Lcd, _: &VideoRam) {
         self.fetch_step = FetchStep::Data1;
     }
 
     #[inline(always)]
-    fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.sprite_fetcher.fetch_sprite_data(lcd, vram, 1);
+    fn fetch_data1(&mut self, _: &Lcd, _: &VideoRam) {
         self.fetch_step = FetchStep::Idle;
     }
 

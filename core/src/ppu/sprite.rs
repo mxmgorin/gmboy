@@ -11,6 +11,7 @@ const MAX_SPRITES_COUNT: usize = 10;
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct SpriteFetchedData {
     pub tile_line: TileLineData,
+    pub oam: OamEntry,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -18,8 +19,7 @@ pub struct SpriteFetcher {
     line_sprites_count: usize,
     line_sprites: [OamEntry; MAX_SPRITES_COUNT],
     fetched_sprites_count: usize,
-    fetched_sprites: [OamEntry; 3],
-    fetched_sprites_data: [SpriteFetchedData; 3],
+    fetched_sprites: [SpriteFetchedData; 3],
 }
 
 impl SpriteFetcher {
@@ -76,22 +76,49 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn fetch_sprites(&mut self, scroll_x: u8, fetch_x: u8) {
+    pub fn fetch_sprites(&mut self, lcd: &Lcd, vram: &VideoRam, scroll_x: u8, fetch_x: u8) {
         self.fetched_sprites_count = 0;
+        let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
+        let sprite_height = lcd.control.get_obj_height();
 
         for idx in 0..self.line_sprites_count {
-            let sprite = unsafe { self.line_sprites.get_unchecked(idx) };
-            let sp_x = self.calc_sprite_x(sprite.x, scroll_x);
+            let oam = unsafe { self.line_sprites.get_unchecked(idx) };
+            let sp_x = self.calc_sprite_x(oam.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x.wrapping_add(8))
                 || (sp_x.wrapping_add(8) >= fetch_x
                     && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
             {
                 // need to add
+                let mut tile_y = cur_y
+                    .wrapping_sub(oam.y)
+                    .wrapping_mul(TILE_LINE_BYTES_COUNT as u8);
+
+                if oam.f_y_flip() {
+                    tile_y = sprite_height
+                        .wrapping_mul(2)
+                        .wrapping_sub(2)
+                        .wrapping_sub(tile_y);
+                }
+
+                let tile_index = if sprite_height == 16 {
+                    // remove last bit
+                    oam.tile_index & !1
+                } else {
+                    oam.tile_index
+                };
+
+                let addr = TILE_SET_DATA_1_START
+                    .wrapping_add(tile_index as u16 * TILE_BIT_SIZE)
+                    .wrapping_add(tile_y as u16);
+                let tile_line = vram.read_tile_line(addr);
+
                 unsafe {
-                    *self
+                    let sprite = self
                         .fetched_sprites
-                        .get_unchecked_mut(self.fetched_sprites_count) = *sprite;
+                        .get_unchecked_mut(self.fetched_sprites_count);
+                    sprite.oam = *oam;
+                    sprite.tile_line = tile_line;
                 };
                 self.fetched_sprites_count += 1;
             }
@@ -109,50 +136,7 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn fetch_sprite_data(&mut self, lcd: &Lcd, vram: &VideoRam, byte_offset: u16) {
-        let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
-        let sprite_height = lcd.control.get_obj_height();
-
-        for i in 0..self.fetched_sprites_count {
-            let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
-
-            let mut tile_y = cur_y
-                .wrapping_sub(sprite.y)
-                .wrapping_mul(TILE_LINE_BYTES_COUNT as u8);
-
-            if sprite.f_y_flip() {
-                tile_y = sprite_height
-                    .wrapping_mul(2)
-                    .wrapping_sub(2)
-                    .wrapping_sub(tile_y);
-            }
-
-            let tile_index = if sprite_height == 16 {
-                // remove last bit
-                sprite.tile_index & !1
-            } else {
-                sprite.tile_index
-            };
-
-            let addr = TILE_SET_DATA_1_START
-                .wrapping_add(tile_index as u16 * TILE_BIT_SIZE)
-                .wrapping_add(tile_y as u16)
-                .wrapping_add(byte_offset);
-
-            let data = unsafe { self.fetched_sprites_data.get_unchecked_mut(i) };
-            let value = vram.read(addr);
-
-            unsafe {
-                *data
-                    .tile_line
-                    .as_bytes_mut()
-                    .get_unchecked_mut(byte_offset as usize) = value;
-            }
-        }
-    }
-
-    #[inline(always)]
-    pub fn fetch_sprite_pixel(
+    pub fn get_sprite_pixel(
         &self,
         lcd: &Lcd,
         fifo_x: u8,
@@ -160,7 +144,7 @@ impl SpriteFetcher {
     ) -> Option<PixelColor> {
         for i in 0..self.fetched_sprites_count {
             let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
-            let sprite_x = self.calc_sprite_x(sprite.x, lcd.scroll_x);
+            let sprite_x = self.calc_sprite_x(sprite.oam.x, lcd.scroll_x);
 
             if sprite_x.wrapping_add(8) < fifo_x {
                 continue; // Skip past sprites
@@ -171,22 +155,21 @@ impl SpriteFetcher {
                 continue; // Out of sprite range
             }
 
-            let bit = if sprite.f_x_flip() {
+            let bit = if sprite.oam.f_x_flip() {
                 7 - offset
             } else {
                 offset
             };
 
-            let data = unsafe { self.fetched_sprites_data.get_unchecked(i) };
-            let color_index = get_color_index(data.tile_line.byte1, data.tile_line.byte2, bit);
+            let color_index = get_color_index(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
 
             if color_index == 0 {
                 continue; // Transparent
             }
 
-            if !sprite.f_bgp() || bg_color_index == 0 {
+            if !sprite.oam.f_bgp() || bg_color_index == 0 {
                 let color = unsafe {
-                    if sprite.f_pn() {
+                    if sprite.oam.f_pn() {
                         lcd.sp2_colors.get_unchecked(color_index)
                     } else {
                         lcd.sp1_colors.get_unchecked(color_index)
