@@ -2,7 +2,7 @@ use crate::ppu::fifo::PixelFifo;
 use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprite::SpriteFetcher;
-use crate::ppu::tile::{get_color_index, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::tile::{get_color_index, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::vram::VideoRam;
 use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
 use serde::{Deserialize, Serialize};
@@ -20,9 +20,7 @@ const FETCH_FNS: [FetchFn; 5] = [
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BgwFetchedData {
-    pub addr: u16,
-    pub byte1: u8,
-    pub byte2: u8,
+    pub tile_line: TileLineData,
     pub is_window: bool,
 }
 
@@ -128,8 +126,8 @@ impl PixelFetcher {
 
         for bit in 0..TILE_BITS_COUNT {
             let bgw_color_index = get_color_index(
-                self.bgw_fetched_data.byte1,
-                self.bgw_fetched_data.byte2,
+                self.bgw_fetched_data.tile_line.byte1,
+                self.bgw_fetched_data.tile_line.byte2,
                 bit,
             );
 
@@ -189,7 +187,8 @@ impl PixelFetcher {
 
             let data_area = control.get_bgw_data_area();
             let tile_idx = normalize_bgw_tile_idx(tile_idx, data_area);
-            self.bgw_fetched_data.addr = get_bgw_tile_addr(tile_idx, map_y, data_area)
+            let addr = get_bgw_tile_addr(tile_idx, map_y, data_area);
+            self.bgw_fetched_data.tile_line = vram.read_tile_line(addr);
         }
 
         if control.is_obj_enabled() {
@@ -203,14 +202,12 @@ impl PixelFetcher {
 
     #[inline(always)]
     fn fetch_data0(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.bgw_fetched_data.byte1 = vram.read(self.bgw_fetched_data.addr);
         self.sprite_fetcher.fetch_sprite_data(lcd, vram, 0);
         self.fetch_step = FetchStep::Data1;
     }
 
     #[inline(always)]
     fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.bgw_fetched_data.byte2 = vram.read(self.bgw_fetched_data.addr.wrapping_add(1));
         self.sprite_fetcher.fetch_sprite_data(lcd, vram, 1);
         self.fetch_step = FetchStep::Idle;
     }
