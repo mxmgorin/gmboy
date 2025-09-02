@@ -134,7 +134,7 @@ impl PixelFetcher {
             let pixel = if obj_enabled {
                 if let Some(sprite_pixel) =
                     self.sprite_fetcher
-                        .get_sprite_pixel(lcd, self.fifo_x, bgw_color_index)
+                        .get_sprite_color(lcd, self.fifo_x, bgw_color_index)
                 {
                     sprite_pixel
                 } else {

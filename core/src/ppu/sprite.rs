@@ -136,7 +136,7 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn get_sprite_pixel(
+    pub fn get_sprite_color(
         &self,
         lcd: &Lcd,
         fifo_x: u8,
