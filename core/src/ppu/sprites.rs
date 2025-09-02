@@ -6,7 +6,8 @@ use crate::ppu::tile::{
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
-const MAX_SPRITES_COUNT: usize = 10;
+const MAX_LINE_SPRITES_COUNT: usize = 10;
+const MAX_FETCHED_SPRITES_COUNT: usize = 3;
 
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct SpriteFetchedData {
@@ -17,15 +18,15 @@ pub struct SpriteFetchedData {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SpriteFetcher {
     line_sprites_count: usize,
-    line_sprites: [OamEntry; MAX_SPRITES_COUNT],
+    line_sprites: [OamEntry; MAX_LINE_SPRITES_COUNT],
     fetched_sprites_count: usize,
-    fetched_sprites: [SpriteFetchedData; 3],
+    fetched_sprites: [SpriteFetchedData; MAX_FETCHED_SPRITES_COUNT],
 }
 
 impl SpriteFetcher {
     #[inline(always)]
-    pub fn find_line_sprites(&mut self, lcd: &Lcd, oam_ram: &OamRam) {
-        self.line_sprites_count = 0;
+    pub fn scan_oam(&mut self, lcd: &Lcd, oam_ram: &OamRam) {
+        let mut line_sprites_count = 0;
         let cur_y = lcd.ly.wrapping_add(16);
         let sprite_height = lcd.control.get_obj_height();
 
@@ -35,22 +36,17 @@ impl SpriteFetcher {
                 continue;
             }
 
-            if self.line_sprites_count >= MAX_SPRITES_COUNT {
-                // Already reached max sprites per scanline (Game Boy limit = 10)
-                break;
-            }
-
             // Check if the sprite is on the current scanline
             if ram_entry.y <= cur_y && ram_entry.y + sprite_height > cur_y {
                 let mut inserted = false;
 
                 // Iterate through sorted list to insert at correct position
-                for i in 0..self.line_sprites_count {
+                for i in 0..line_sprites_count {
                     let current_entry = unsafe { self.line_sprites.get_unchecked(i) };
 
                     if ram_entry.x < current_entry.x && ram_entry.x != current_entry.x {
                         // Sort by X first, then by OAM index if X is the same
-                        for j in (i..self.line_sprites_count).rev() {
+                        for j in (i..line_sprites_count).rev() {
                             unsafe {
                                 *self.line_sprites.get_unchecked_mut(j + 1) =
                                     *self.line_sprites.get_unchecked(j)
@@ -58,7 +54,6 @@ impl SpriteFetcher {
                         }
 
                         unsafe { *self.line_sprites.get_unchecked_mut(i) = *ram_entry };
-                        self.line_sprites_count += 1;
                         inserted = true;
                         break;
                     }
@@ -67,27 +62,34 @@ impl SpriteFetcher {
                 if !inserted {
                     // If no earlier insertion, push to the back
                     unsafe {
-                        *self.line_sprites.get_unchecked_mut(self.line_sprites_count) = *ram_entry;
+                        *self.line_sprites.get_unchecked_mut(line_sprites_count) = *ram_entry;
                     }
-                    self.line_sprites_count += 1;
                 }
+
+                line_sprites_count += 1;
+            }
+
+            if line_sprites_count >= MAX_LINE_SPRITES_COUNT {
+                break;
             }
         }
+
+        self.line_sprites_count = line_sprites_count;
     }
 
     #[inline(always)]
     pub fn fetch_sprites(&mut self, lcd: &Lcd, vram: &VideoRam, scroll_x: u8, fetch_x: u8) {
-        self.fetched_sprites_count = 0;
+        let mut fetched_sprites_count = 0;
         let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
         let sprite_height = lcd.control.get_obj_height();
 
         for idx in 0..self.line_sprites_count {
-            let oam = unsafe { self.line_sprites.get_unchecked(idx) };
+            let oam = unsafe { *self.line_sprites.get_unchecked(idx) };
             let sp_x = self.calc_sprite_x(oam.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x.wrapping_add(8))
                 || (sp_x.wrapping_add(8) >= fetch_x
-                    && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
+                && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
             {
                 // need to add
                 let mut tile_y = cur_y
@@ -116,18 +118,20 @@ impl SpriteFetcher {
                 unsafe {
                     let sprite = self
                         .fetched_sprites
-                        .get_unchecked_mut(self.fetched_sprites_count);
-                    sprite.oam = *oam;
+                        .get_unchecked_mut(fetched_sprites_count);
+                    sprite.oam = oam;
                     sprite.tile_line = tile_line;
                 };
-                self.fetched_sprites_count += 1;
+                fetched_sprites_count += 1;
             }
 
-            if self.fetched_sprites_count >= self.fetched_sprites.len() {
+            if fetched_sprites_count >= MAX_FETCHED_SPRITES_COUNT {
                 // max 3 sprites on pixels
                 break;
             }
         }
+
+        self.fetched_sprites_count = fetched_sprites_count;
     }
 
     #[inline(always)]
@@ -142,9 +146,11 @@ impl SpriteFetcher {
         fifo_x: u8,
         bg_color_index: usize,
     ) -> Option<PixelColor> {
+        let scroll_x = lcd.scroll_x;
+
         for i in 0..self.fetched_sprites_count {
             let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
-            let sprite_x = self.calc_sprite_x(sprite.oam.x, lcd.scroll_x);
+            let sprite_x = self.calc_sprite_x(sprite.oam.x, scroll_x);
 
             if sprite_x.wrapping_add(8) < fifo_x {
                 continue; // Skip past sprites

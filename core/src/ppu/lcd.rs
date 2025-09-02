@@ -168,9 +168,8 @@ impl Lcd {
     #[inline(always)]
     fn compare_ly(&mut self, interrupts: &mut Interrupts) {
         if self.ly == self.ly_compare {
-            self.status.set_lyc(true);
-
             if self.status.is_stat_interrupt(LcdStatSrc::Lyc) {
+                self.status.set_lyc(true);
                 interrupts.request_interrupt(InterruptType::LCDStat);
             } else {
                 self.status.set_lyc(false);

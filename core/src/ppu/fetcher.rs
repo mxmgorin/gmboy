@@ -1,12 +1,9 @@
 use crate::ppu::fifo::PixelFifo;
-use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::{Lcd, PixelColor};
-use crate::ppu::sprite::SpriteFetcher;
+use crate::ppu::sprites::SpriteFetcher;
 use crate::ppu::tile::{get_color_idx, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::vram::VideoRam;
-use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL};
 use serde::{Deserialize, Serialize};
-use std::ptr;
 
 type FetchFn = fn(&mut PixelFetcher, &Lcd, &VideoRam);
 
@@ -44,7 +41,6 @@ pub fn normalize_bgw_tile_idx(tile_idx: u8, data_area: u16) -> u8 {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PixelFetcher {
-    pub buffer: FrameBuffer,
     pub sprite_fetcher: SpriteFetcher,
     fetch_step: FetchStep,
     line_x: u8,
@@ -52,7 +48,6 @@ pub struct PixelFetcher {
     fifo_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
-    pub pushed_x: usize,
 }
 
 impl Default for PixelFetcher {
@@ -61,11 +56,9 @@ impl Default for PixelFetcher {
             fetch_step: FetchStep::Tile,
             pixel_fifo: Default::default(),
             line_x: 0,
-            pushed_x: 0,
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
-            buffer: FrameBuffer::new(vec![0; PPU_BUFFER_LEN].into_boxed_slice()),
             sprite_fetcher: Default::default(),
         }
     }
@@ -73,7 +66,7 @@ impl Default for PixelFetcher {
 
 impl PixelFetcher {
     #[inline(always)]
-    pub fn process(&mut self, lcd: &Lcd, vram: &VideoRam, line_ticks: usize) {
+    pub fn fetch(&mut self, lcd: &Lcd, vram: &VideoRam, line_ticks: usize) -> Option<PixelColor> {
         // fetch on odd lines
         if line_ticks & 1 != 0 {
             // SAFETY: we control FETCH_FNS and FetchStep
@@ -82,30 +75,30 @@ impl PixelFetcher {
             }
         }
 
-        self.try_fifo_pop(lcd);
+        self.try_fifo_pop(lcd.scroll_x)
     }
 
     #[inline(always)]
-    fn try_fifo_pop(&mut self, lcd: &Lcd) {
+    fn try_fifo_pop(&mut self, scroll_x: u8) -> Option<PixelColor> {
         if let Some(pixel) = self.pixel_fifo.pop() {
+            self.line_x += 1;
+
             // Check if we are in the window or background layer
             // For the window layer, bypass scroll_x to avoid horizontal scrolling
-            if self.bgw_fetched_data.is_window {
-                // No horizontal scroll for window, only adjust based on `line_x` and `pushed_x`
-                let index = self
-                    .pushed_x
-                    .wrapping_add(lcd.ly as usize * LCD_X_RES as usize);
-                self.push_buffer(index, pixel);
-            } else if self.line_x >= lcd.scroll_x % TILE_WIDTH as u8 {
+            let pixel = if self.bgw_fetched_data.is_window {
+                // No horizontal scroll for window
+                Some(pixel)
+            } else if self.line_x >= scroll_x % TILE_WIDTH as u8 {
                 // For the background layer, apply scroll_x for horizontal scrolling
-                let index = self
-                    .pushed_x
-                    .wrapping_add(lcd.ly as usize * LCD_X_RES as usize);
-                self.push_buffer(index, pixel);
-            }
+                Some(pixel)
+            } else {
+                None
+            };
 
-            self.line_x += 1;
+            return pixel;
         }
+
+        None
     }
 
     #[inline(always)]
@@ -149,19 +142,6 @@ impl PixelFetcher {
         }
 
         true
-    }
-
-    #[inline(always)]
-    fn push_buffer(&mut self, index: usize, pixel: PixelColor) {
-        let base = index * PPU_BYTES_PER_PIXEL;
-        let bytes = pixel.as_rgb565_bytes();
-
-        unsafe {
-            let dst = self.buffer.as_mut_ptr().add(base);
-            ptr::copy_nonoverlapping(bytes.as_ptr(), dst, PPU_BYTES_PER_PIXEL);
-        }
-
-        self.pushed_x += 1;
     }
 
     #[inline(always)]
@@ -223,12 +203,11 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    pub fn reset(&mut self) {
+    pub const fn reset(&mut self) {
         self.fetch_step = FetchStep::Tile;
         self.pixel_fifo.clear();
         self.line_x = 0;
         self.fetch_x = 0;
-        self.pushed_x = 0;
         self.fifo_x = 0;
     }
 }

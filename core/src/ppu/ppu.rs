@@ -1,5 +1,6 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::fetcher::PixelFetcher;
+use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::{Lcd, LcdStatSrc, PpuMode};
 use crate::ppu::oam::OamRam;
 use crate::ppu::vram::VideoRam;
@@ -21,13 +22,14 @@ pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Ppu {
-    pub current_frame: usize,
-    pub pipeline: PixelFetcher,
-    line_ticks: usize,
-    fps: Option<Fps>,
+    pub buffer: FrameBuffer,
     pub video_ram: VideoRam,
     pub oam_ram: OamRam,
     pub lcd: Lcd,
+    pub current_frame: usize,
+    line_ticks: usize,
+    fps: Option<Fps>,
+    fetcher: PixelFetcher,
 }
 
 impl Ppu {
@@ -36,13 +38,6 @@ impl Ppu {
             lcd,
             ..Default::default()
         }
-    }
-
-    #[inline(always)]
-    pub fn reset(&mut self) {
-        self.line_ticks = 0;
-        self.current_frame = 0;
-        self.pipeline.reset();
     }
 
     pub fn toggle_fps(&mut self, enable: bool) {
@@ -71,23 +66,34 @@ impl Ppu {
     }
 
     #[inline(always)]
-    pub fn mode_oam(&mut self) {
+    pub fn reset(&mut self) {
+        self.line_ticks = 0;
+        self.current_frame = 0;
+        self.buffer.reset();
+        self.fetcher.reset();
+    }
+
+    #[inline(always)]
+    fn mode_oam(&mut self) {
         if self.line_ticks >= 80 {
-            self.pipeline.reset();
-            self.set_mode_transfer();
-        } else if self.line_ticks == 1 {
-            self.pipeline
+            self.fetcher
                 .sprite_fetcher
-                .find_line_sprites(&self.lcd, &self.oam_ram);
+                .scan_oam(&self.lcd, &self.oam_ram);
+            self.set_mode_transfer();
         }
     }
 
     #[inline(always)]
     fn mode_transfer(&mut self, interrupts: &mut Interrupts) {
-        self.pipeline
-            .process(&self.lcd, &self.video_ram, self.line_ticks);
+        let color = self
+            .fetcher
+            .fetch(&self.lcd, &self.video_ram, self.line_ticks);
 
-        if self.pipeline.pushed_x >= LCD_X_RES as usize {
+        if let Some(color) = color {
+            self.buffer.push(self.lcd.ly as usize, color);
+        }
+
+        if self.buffer.count() >= LCD_X_RES as usize {
             self.set_mode_hblank(interrupts);
         }
     }
@@ -137,6 +143,8 @@ impl Ppu {
 
     #[inline(always)]
     const fn set_mode_transfer(&mut self) {
+        self.buffer.reset();
+        self.fetcher.reset();
         self.lcd.status.set_ppu_mode(PpuMode::Transfer);
     }
 

@@ -4,7 +4,7 @@ pub mod framebuffer;
 pub mod lcd;
 pub mod oam;
 pub mod ppu;
-mod sprite;
+mod sprites;
 pub mod tile;
 pub mod vram;
 mod window;

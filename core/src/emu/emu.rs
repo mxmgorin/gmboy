@@ -46,7 +46,7 @@ impl Emu {
 
     #[inline(always)]
     pub fn get_framebuffer(&mut self) -> &mut FrameBuffer {
-        &mut self.runtime.cpu.clock.bus.io.ppu.pipeline.buffer
+        &mut self.runtime.cpu.clock.bus.io.ppu.buffer
     }
 
     /// Runs emulation for one frame. Return whether the emulation is on time.

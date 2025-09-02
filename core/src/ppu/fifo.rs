@@ -53,7 +53,7 @@ impl PixelFifo {
     }
 
     #[inline(always)]
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.head = 0;
         self.tail = 0;
         self.size = 0;
