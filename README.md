@@ -9,7 +9,10 @@ ___
 [![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
 [![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
-![Platform](https://img.shields.io/badge/platform-Linux%20|%20Windows%20|%20Mac-blue)
+![Linux](https://img.shields.io/badge/Linux-blue?logo=linux)
+![Windows](https://img.shields.io/badge/Windows-blue?logo=windows)
+![Mac](https://img.shields.io/badge/Mac-blue?logo=apple)
+![Android](https://img.shields.io/badge/Android-blue?logo=android)
 <!-- [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
 <p align="center">
@@ -27,9 +30,10 @@ ___
 `GMBoy` is a Game Boy emulator written in Rust, built as a deep dive into emulation and hardware design.
 It focuses on clean code, hardware accuracy, and good performance, making it both a learning project and a solid emulator.
 
-✅ Thorough testing: passes most community test suites (blargg’s, mooneye) for verifing accuracy  
-✅ Modern features: save states, visual filters, re-bindable combo controls, and more  
-✅ Cross-platform: Windows, macOS, Linux, powered by **SDL2** for audio, input, and window management, with an optional **OpenGL** backend for hardware-accelerated rendering and shader support
+✅ High accuracy: passes most Blargg’s & Mooneye test suites  
+✅ Good performance: optimized CPU and graphics  
+✅ Modern features: save states, visual filters, re-bindable combos, and more  
+✅ Cross-platform: Windows, macOS, Linux, Android; SDL2 + optional OpenGL  
 
 📥 [Download the latest release here](https://github.com/mxmgorin/gmboy/releases/latest)
 
@@ -53,6 +57,7 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 - **Visual Filters**  – Apply grid, subpixel, scanline, dot-matrix, or vignette effects for a retro look.
 - **OpenGL** – Hardware-accelerated graphics with support for shaders and improved performance.
 - **ROM Scanning**  – Set a ROM directory and launch games directly from the menu.
+- **File Browser** – Load ROMs and save files easily from a built-in browser interface.
 - **Custom Controls**  – Rebind gamepad inputs and combos via `bindings.json`.
 - **Palettes**  – Switch between multiple color palettes or add your own in `palettes.json`.
 - **Settings**  – Adjust different aspects through the built-in menu or edit `config.json` manually.
@@ -61,11 +66,12 @@ It focuses on clean code, hardware accuracy, and good performance, making it bot
 
 🚧 **Planned Features**
 
+- JIT recompilation
 - Game Boy Color (GBC) mode support
-- Ongoing improvements and ongoing bug fixes
-- WebAssembly, Android, and ARM builds for wider platform support
+- WebAssembly builds for wider platform support
 - Audio visualizer for debugging and fun audio feedback
 - Custom palette loader and editor to tweak game colors
+- Ongoing improvements and ongoing bug fixes
 
 ## Default bindings
 
@@ -183,6 +189,11 @@ Passes all of 356 000 tests ✅
 | rom_512kb.gb ✅              |                   |                    |
 
 
+## License
+
+This project is licensed under the terms of the **GNU General Public License v3.0 (GPLv3)**.  
+See the [LICENSE](LICENSE) file for the full text.
+
 ## References
 
 Here are some useful resources for Game Boy development and emulation:
@@ -196,7 +207,10 @@ Here are some useful resources for Game Boy development and emulation:
 
 ## Acknowledgments
 
-- [SM83 Tests](https://github.com/SingleStepTests/sm83)
-- [GB Test ROMs](https://github.com/retrio/gb-test-roms)
-- [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite)
-- [DMG acid2 Test](https://github.com/mattcurrie/dmg-acid2)
+This project makes use of the following resources:
+
+- [SM83 Tests](https://github.com/SingleStepTests/sm83) - CPU instruction tests
+- [GB Test ROMs](https://github.com/retrio/gb-test-roms) - general accuracy tests
+- [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite) - general accuracy tests
+- [DMG acid2 Test](https://github.com/mattcurrie/dmg-acid2) - PPU testing
+- [SameBoy](https://github.com/LIJI32/SameBoy) - shaders (modified for compatibility with GLES)
