@@ -19,12 +19,12 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install targets
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin -p desktop
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Build universal binary
         run: |
-          cargo build --release --target=aarch64-apple-darwin
-          cargo build --release --target=x86_64-apple-darwin
+          cargo build --release --target=aarch64-apple-darwin -p desktop
+          cargo build --release --target=x86_64-apple-darwin -p desktop
           mkdir -p target/universal/release
           lipo -create -output target/universal/release/gmboy \
             target/aarch64-apple-darwin/release/gmboy \
