@@ -1,21 +1,26 @@
 use crate::audio::AppAudio;
+use crate::battery::BatterySave;
 use crate::config::{AppConfig, VideoBackendType, VideoConfig};
 use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
-use crate::roms::RomsList;
+use crate::palette::LcdPalette;
+use crate::roms::RomsState;
 use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
+use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
+use arrayvec::ArrayString;
 use core::auxiliary::joypad::JoypadButton;
-use core::emu::battery::BatterySave;
+use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use core::emu::EmuAudioCallback;
-use core::ppu::palette::LcdPalette;
+use core::ppu::framebuffer::FrameBuffer;
 use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
+use std::fmt::Write;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
@@ -27,7 +32,7 @@ pub enum AppCmd {
     ToggleMenu,
     ToggleRewind,
     LoadFile(PathBuf),
-    RestartGame,
+    RestartRom,
     ChangeMode(RunMode),
     SaveState(SaveStateCmd, Option<usize>),
     SelectRom,
@@ -35,6 +40,7 @@ pub enum AppCmd {
     ChangeConfig(ChangeAppConfigCmd),
     SelectRomsDir,
     EmuButton(JoypadButton),
+    SetFileBrowsePath(PathBuf),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -67,6 +73,7 @@ pub enum ChangeAppConfigCmd {
     Video(VideoConfig),
     NextShader,
     PrevShader,
+    FrameSkip(usize),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -76,7 +83,12 @@ pub enum AppState {
     Quitting,
 }
 
-pub struct App {
+pub struct App<FS, FD>
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
+    fps_str: ArrayString<10>,
     audio: AppAudio,
     palettes: Box<[LcdPalette]>,
     pub video: AppVideo,
@@ -84,9 +96,15 @@ pub struct App {
     pub config: AppConfig,
     pub menu: AppMenu,
     pub notifications: Notifications,
+    pub platform: AppPlatform<FS, FD>,
+    pub roms: RomsState,
 }
 
-impl EmuAudioCallback for App {
+impl<FS, FD> EmuAudioCallback for App<FS, FD>
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
     fn update(&mut self, output: &[f32], runtime: &EmuRuntime) {
         if self.config.audio.mute {
             return;
@@ -104,22 +122,28 @@ impl EmuAudioCallback for App {
     }
 }
 
-impl App {
+impl<FS, FD> App<FS, FD>
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
     pub fn new(
         sdl: &mut Sdl,
         mut config: AppConfig,
         palettes: Box<[LcdPalette]>,
+        platform: AppPlatform<FS, FD>,
     ) -> Result<Self, String> {
         let colors = config.video.interface.get_palette_colors(&palettes);
-        let roms = RomsList::get_or_create();
         let mut notifications = Notifications::new(Duration::from_secs(3));
 
         let video = AppVideo::new(sdl, colors[0], colors[3], &config.video);
         let video = match video {
             Ok(video) => video,
             Err(err) => {
+                log::error!("Failed to init AppVideo: {err}");
                 if config.video.render.backend == VideoBackendType::Gl {
-                    let msg = "GL init failed, using SDL2";
+                    let msg = "GL init failed, fallback to SDL2";
+                    log::info!("{msg}");
                     notifications.add(msg);
                     config.video.render.backend = VideoBackendType::Sdl2;
 
@@ -129,70 +153,84 @@ impl App {
                 }
             }
         };
+        let roms = RomsState::get_or_create(&platform.fs);
 
         Ok(Self {
             audio: AppAudio::new(sdl, &config.audio),
-            video,
-            menu: AppMenu::new(roms.get_last_path().is_some()),
+            menu: AppMenu::new(&roms),
             state: AppState::Paused,
+            fps_str: ArrayString::<10>::new(),
+            video,
             palettes,
             config,
             notifications,
+            platform,
+            roms,
         })
     }
 
     /// Execution loop
-    pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) -> Result<(), String> {
-        self.state = if self.config.auto_continue && !emu.runtime.bus.cart.is_empty() {
+    pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) {
+        self.state = if self.config.auto_continue && !emu.runtime.cpu.clock.bus.cart.is_empty() {
             AppState::Running
         } else {
             AppState::Paused
         };
 
-        while self.state != AppState::Quitting {
-            if self.state == AppState::Paused {
-                self.update_pause(emu, input);
-            } else {
-                input.handle_events(self, emu);
-                emu.run_frame(self)?;
+        loop {
+            input.handle_events(self, emu);
 
-                self.video.draw_buffer(&emu.runtime.ppu.pipeline.buffer);
-                self.draw_notification(emu.runtime.ppu.get_fps());
-                self.video.show();
-                self.video
-                    .draw_tiles(emu.runtime.bus.video_ram.iter_tiles());
+            match self.state {
+                AppState::Quitting => break,
+                AppState::Paused => self.run_pause(emu),
+                AppState::Running => self.run_game(emu),
             }
         }
-
-        Ok(())
     }
 
-    pub fn update_pause(&mut self, emu: &mut Emu, input: &mut InputHandler) {
-        input.handle_events(self, emu);
-        emu.runtime.clock.reset();
-        self.draw_menu();
-        self.draw_notification(None);
-        self.video.show();
+    #[inline(always)]
+    pub fn run_game(&mut self, emu: &mut Emu) {
+        let on_time = emu.run_frame(self);
+        let fps = emu.runtime.cpu.clock.bus.io.ppu.get_fps();
+        let fb = &mut emu.get_framebuffer();
+        self.update_notif(fb);
+
+        if let Some(new_fps) = fps {
+            self.fps_str.clear();
+            write!(&mut self.fps_str, "{new_fps:.2}").unwrap();
+            self.video.ui.fill_fps(fb, &self.fps_str);
+        }
+
+        self.video.draw_buffer(fb);
+        self.video.try_render(on_time);
+    }
+
+    #[inline(always)]
+    pub fn run_pause(&mut self, emu: &mut Emu) {
+        emu.runtime.cpu.clock.reset();
+        let fb = &mut emu.get_framebuffer();
+        self.draw_menu(fb);
+        self.update_notif(fb);
+        self.video.try_render(true);
+
         thread::sleep(Duration::from_millis(30));
     }
 
-    pub fn draw_notification(&mut self, fps: Option<(&str, bool)>) {
+    #[inline(always)]
+    pub fn update_notif(&mut self, fb: &mut FrameBuffer) {
         let (lines, updated) = self.notifications.update_and_get();
+        self.video.ui.fill_notif(fb, lines);
 
-        if lines.is_empty() {
-            if let Some((fps, updated)) = fps {
-                if updated {
-                    self.video.ui.update_fps(fps);
-                }
+        if updated {
+            self.menu.request_update();
+        }
+    }
 
-                self.video.draw_fps();
+    pub fn restart_rom(&mut self, emu: &mut Emu) {
+        if let Some(cart_path) = self.roms.get_last_path() {
+            if let Err(err) = self.load_cart_file(emu, &cart_path.to_path_buf()) {
+                log::warn!("Failed to load cart file: {err}");
             }
-        } else if updated || !lines.is_empty() {
-            if updated {
-                self.video.ui.update_notif(lines);
-            }
-
-            self.video.draw_notif();
         }
     }
 
@@ -206,14 +244,17 @@ impl App {
         Ok(())
     }
 
-    fn draw_menu(&mut self) {
-        let (items, updated) = self.menu.get_items(&self.config);
+    #[inline(always)]
+    fn draw_menu(&mut self, fb: &mut FrameBuffer) -> bool {
+        let (items, updated) = self.menu.get_items(&self.config, &self.roms);
 
         if updated {
-            self.video.ui.update_menu(items, true, true);
+            self.video.ui.fill_menu(fb, items, true, true);
         }
 
-        self.video.draw_menu();
+        self.video.draw_menu(fb);
+
+        updated
     }
 
     pub fn next_palette(&mut self, emu: &mut Emu) {
@@ -241,11 +282,11 @@ impl App {
             .get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
-        emu.runtime.bus.io.lcd.set_pallet(colors);
+        emu.runtime.cpu.clock.bus.io.ppu.lcd.set_colors(colors);
         self.menu.request_update();
 
         let suffix = if self.config.video.interface.is_palette_inverted {
-            " (inverted)"
+            " (inv)"
         } else {
             ""
         };
@@ -280,16 +321,16 @@ impl App {
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {
-        let library = RomsList::get_or_create();
-        let name = library.get_last_file_stem().unwrap();
+        let path = self.roms.get_last_path().unwrap();
+        let name = self.platform.fs.get_file_name(path).unwrap();
 
         match event {
             SaveStateCmd::Create => {
                 let save_state = emu.create_save_state();
                 let index = index.unwrap_or(self.config.current_save_index).to_string();
 
-                if let Err(err) = save_state.save_file(&name, &index) {
-                    eprintln!("Failed save_state: {err}");
+                if let Err(err) = AppConfigFile::write_save_state_file(&save_state, &name, &index) {
+                    log::error!("Failed save_state: {err}");
                     return;
                 }
 
@@ -298,21 +339,21 @@ impl App {
             }
             SaveStateCmd::Load => {
                 let index = index.unwrap_or(self.config.current_load_index).to_string();
-                let save_state = core::emu::runtime::EmuSaveState::load_file(&name, &index);
+                let save_state = AppConfigFile::read_save_state_file(&name, &index);
 
                 let Ok(save_state) = save_state else {
-                    eprintln!("Failed load save_state: {}", save_state.unwrap_err());
+                    log::error!("Failed load save_state: {}", save_state.unwrap_err());
                     return;
                 };
 
                 emu.load_save_state(save_state);
-                emu.runtime.bus.io.lcd.apply_colors(
+                emu.runtime.cpu.clock.bus.io.ppu.lcd.set_colors(
                     self.config
                         .video
                         .interface
                         .get_palette_colors(&self.palettes),
                 );
-                emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
+                emu.runtime.cpu.clock.bus.io.apu.config = self.config.audio.get_apu_config();
 
                 let msg = format!("Loaded save state: {index}");
                 self.notifications.add(msg);
@@ -322,85 +363,110 @@ impl App {
     }
 
     pub fn save_files(&mut self, emu: &mut Emu) -> Result<(), String> {
+        self.roms.save_file();
         // save config
         self.config.set_emu_config(emu.config.clone());
+
         if let Err(err) = self.config.save_file().map_err(|e| e.to_string()) {
-            eprint!("Failed config.save: {err}");
+            log::warn!("Failed config.save: {err}");
         }
 
-        let library = RomsList::get_or_create();
-        let name = library.get_last_file_stem();
+        let roms = RomsState::get_or_create(&self.platform.fs);
+        let path = roms.get_last_path();
+
+        let Some(path) = path else {
+            return Ok(());
+        };
+
+        let name = self.platform.fs.get_file_name(path);
 
         let Some(name) = name else {
-            return Err("Failed get_last_file_stem: not found".to_string());
+            return Err("Failed filesystem.get_file_name: not found".to_string());
         };
 
         // save sram for battery emulation
-        if let Some(bytes) = emu.runtime.bus.cart.dump_ram() {
+        if let Some(bytes) = emu.runtime.cpu.clock.bus.cart.dump_ram() {
             let battery = BatterySave::from_bytes(bytes)
                 .save_file(&name)
                 .map_err(|e| e.to_string());
 
             if let Err(err) = battery {
-                eprint!("Failed BatterySave: {err}");
+                log::warn!("Failed BatterySave: {err}");
             };
         }
 
         if self.config.auto_save_state {
-            if let Err(err) = emu
-                .create_save_state()
-                .save_file(&name, AUTO_SAVE_STATE_SUFFIX)
+            let state = emu.create_save_state();
+            if let Err(err) =
+                AppConfigFile::write_save_state_file(&state, &name, AUTO_SAVE_STATE_SUFFIX)
             {
-                eprintln!("Failed save_state: {err}");
+                log::warn!("Failed save_state: {err}");
             }
         }
 
         Ok(())
     }
 
-    pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) {
-        let lib_path = RomsList::get_path();
-        let mut library = RomsList::get_or_create();
-        let is_reload = library.get_last_path().map(|x| x.as_path()) == Some(path)
-            && !emu.runtime.bus.cart.is_empty();
+    pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) -> Result<(), String> {
+        let is_reload = self.roms.get_last_path().map(|x| x.as_path()) == Some(path)
+            && !emu.runtime.cpu.clock.bus.cart.is_empty();
+        let file_name = self
+            .platform
+            .fs
+            .get_file_name(path)
+            .ok_or("filesystem.get_file_name: None")?;
+        let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
+        let cart_bytes = self
+            .platform
+            .fs
+            .read_file_bytes(path)
+            .ok_or("filesystem.read_file_bytes: None")?;
+        let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string())?;
+        _ = core::print_cart(&cart).map_err(|e| log::error!("Failed print_cart: {e}"));
 
-        if emu.load_cart_file(path).is_err() {
-            library.remove(path);
-            return;
+        if let Some(ram_bytes) = ram_bytes {
+            cart.load_ram(ram_bytes);
         }
 
-        library.add(path.to_path_buf());
+        emu.load_cart(cart);
+        self.roms.insert_or_update(path.to_path_buf());
 
-        if let Err(err) = core::save_json_file(&lib_path, &library) {
-            eprintln!("Failed save RomsLibrary: {err}");
-        }
-
-        emu.runtime.bus.io.lcd.apply_colors(
+        emu.runtime.cpu.clock.bus.io.ppu.lcd.set_colors(
             self.config
                 .video
                 .interface
                 .get_palette_colors(&self.palettes),
         );
-        emu.runtime.bus.io.apu.config = self.config.audio.get_apu_config();
+        emu.runtime
+            .cpu
+            .clock
+            .bus
+            .io
+            .ppu
+            .toggle_fps(self.config.video.interface.show_fps);
+
+        emu.runtime.cpu.clock.bus.io.apu.config = self.config.audio.get_apu_config();
         self.state = AppState::Running;
-        self.menu = AppMenu::new(!emu.runtime.bus.cart.is_empty());
+        self.menu = AppMenu::new(&self.roms);
 
         if !is_reload && self.config.auto_save_state {
-            let name = path.file_stem().unwrap().to_str().expect("cart is valid");
-            let save_state =
-                core::emu::state::EmuSaveState::load_file(name, AUTO_SAVE_STATE_SUFFIX);
+            let path = self.roms.get_last_path().unwrap();
+            let name = self.platform.fs.get_file_name(path).unwrap();
+            let save_state = AppConfigFile::read_save_state_file(&name, AUTO_SAVE_STATE_SUFFIX);
 
             if let Ok(save_state) = save_state {
                 emu.load_save_state(save_state);
             } else {
-                eprintln!("Failed load save_state: {}", save_state.unwrap_err());
+                log::warn!("Failed load save_state: {}", save_state.unwrap_err());
             };
         }
+
+        Ok(())
     }
 
     pub fn change_volume(&mut self, emu: &mut Emu, delta: f32) {
-        emu.runtime.bus.io.apu.config.change_volume(delta);
-        self.config.audio.volume = emu.runtime.bus.io.apu.config.volume;
+        emu.runtime.cpu.clock.bus.io.apu.config.change_volume(delta);
+        self.config.audio.volume = emu.runtime.cpu.clock.bus.io.apu.config.volume;
 
         let msg = format!("Volume: {}", self.config.audio.volume * 100.0);
         self.notifications.add(msg);

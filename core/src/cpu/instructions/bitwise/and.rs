@@ -1,24 +1,27 @@
-use crate::cpu::instructions::FetchedData;
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-#[derive(Debug, Clone, Copy)]
-pub struct AndInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for AndInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        cpu.registers.a &= fetched_data.value as u8;
-        cpu.registers.flags.set(
-            Some(cpu.registers.a == 0),
-            Some(false),
-            Some(true),
-            Some(false),
-        );
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_and_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let rhs = self.registers.get_register8::<R2>();
+        self.execute_and(rhs);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_and_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        let rhs = self.read_mr::<R2>();
+        self.execute_and(rhs);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_and_r_d8<const R1: u8>(&mut self) {
+        let rhs = self.read_pc();
+        self.execute_and(rhs);
+    }
+
+    #[inline(always)]
+    pub fn execute_and(&mut self, rhs: u8) {
+        self.registers.a &= rhs;
+        self.registers.flags.op_and(self.registers.a);
     }
 }

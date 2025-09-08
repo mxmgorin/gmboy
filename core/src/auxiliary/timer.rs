@@ -44,6 +44,7 @@ pub struct FallingEdgeDetector {
 }
 
 impl FallingEdgeDetector {
+    #[inline(always)]
     pub fn detect(&mut self, div: u16, tac: u8) -> bool {
         let clock_bit = get_bit_flag16(div, get_clock_bit_position(tac));
         let enable_bit = get_bit_flag(tac, TAC_ENABLE_BIT);
@@ -56,6 +57,7 @@ impl FallingEdgeDetector {
     }
 }
 
+#[inline(always)]
 fn get_clock_bit_position(tac: u8) -> u8 {
     match tac & 0b11 {
         // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
@@ -101,6 +103,7 @@ impl Default for Timer {
 }
 
 impl Timer {
+    #[inline]
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
         if let Some(tima_overflow_ticks) = self.tima_overflow_ticks.as_mut() {
@@ -112,7 +115,6 @@ impl Timer {
                 self.tima_overflow_ticks = None;
                 self.disabling_glitch = false;
             } else {
-                //println!("SKIP {}", tima_overflow_ticks);
                 *tima_overflow_ticks += 1;
             }
         }
@@ -124,6 +126,7 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     fn inc_tima(&mut self) {
         let (tima, tima_overflow) = self.tima.overflowing_add(1);
         self.write_tima(tima);
@@ -137,6 +140,7 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     fn get_clock_bit_position(&self) -> u8 {
         match self.tac & 0b11 {
             // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
@@ -151,11 +155,13 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     fn is_enabled(&self) -> bool {
         // If bit 2 of TAC is set to 0 then the timer is disabled
         self.tac & (1 << TAC_ENABLE_BIT) != 0
     }
 
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             TIMER_DIV_ADDRESS => self.reset_div(),
@@ -168,10 +174,11 @@ impl Timer {
                 self.tma = value;
             }
             TIMER_TAC_ADDRESS => self.write_tac(value),
-            _ => panic!("Invalid Timer address: {:02X}", address),
+            _ => panic!("Invalid Timer address: {address:02X}"),
         }
     }
 
+    #[inline(always)]
     fn write_tima(&mut self, value: u8) {
         if let Some(overflow_ticks) = self.tima_overflow_ticks {
             if overflow_ticks == TIMA_RELOAD_DELAY_TICKS {
@@ -187,6 +194,7 @@ impl Timer {
         self.tima = value;
     }
 
+    #[inline(always)]
     pub fn reset_div(&mut self) {
         self.div = 0;
 
@@ -198,6 +206,7 @@ impl Timer {
         //}
     }
 
+    #[inline(always)]
     pub fn write_tac(&mut self, value: u8) {
         let old_is_enabled = self.is_enabled();
         let old_clock_bit = self.get_clock_bit_position();
@@ -228,6 +237,7 @@ impl Timer {
         }
     }
 
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             TIMER_DIV_ADDRESS => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
@@ -243,7 +253,7 @@ impl Timer {
             }
             TIMER_TMA_ADDRESS => self.tma,
             TIMER_TAC_ADDRESS => self.tac | TIMER_TAC_UNUSED_MASK,
-            _ => panic!("Invalid Timer address: {:02X}", address),
+            _ => panic!("Invalid Timer address: {address:02X}"),
         }
     }
 }

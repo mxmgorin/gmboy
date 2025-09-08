@@ -16,6 +16,7 @@ pub enum ChannelType {
 }
 
 impl ChannelType {
+    #[inline]
     pub fn get_start_address(&self) -> u16 {
         match self {
             ChannelType::CH1 => CH1_START_ADDRESS,

@@ -18,36 +18,38 @@ impl Mbc2 {
 }
 
 impl Mbc for Mbc2 {
+    #[inline]
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         self.data.read_rom(cart_data, address)
     }
 
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
-        match address {
-            0x0000..=0x3FFF => {
-                if address & 0x100 == 0 {
-                    self.data.ram_enabled = value & 0xF == 0xA;
-                } else {
-                    self.data.rom_bank_number = match (value as u16) & 0x0F {
-                        0 => 1,
-                        n => n,
-                    };
-                    self.data.clamp_rom_bank_number();
-                }
+    #[inline]
+    fn write_rom(&mut self, address: u16, value: u8) {
+        if let 0x0000..=0x3FFF = address {
+            if address & 0x100 == 0 {
+                self.data.ram_enabled = value & 0xF == 0xA;
+            } else {
+                self.data.rom_bank_number = match (value as u16) & 0x0F {
+                    0 => 1,
+                    n => n,
+                };
+
+                self.data.clamp_rom_bank_number();
             }
-            _ => {}
         }
     }
 
+    #[inline]
     fn read_ram(&self, address: u16) -> u8 {
         if !self.data.ram_enabled {
             return 0xFF;
         }
 
         let address = (address as usize) & 0x1FF; // wrap every 512 bytes
-        self.data.ram_bytes[address] | 0xF0
+        self.data.read_ram_byte(address) | 0xF0
     }
 
+    #[inline]
     fn write_ram(&mut self, address: u16, value: u8) {
         self.data.write_ram(address, value, BankingMode::RamBanking);
     }

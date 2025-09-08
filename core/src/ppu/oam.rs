@@ -26,31 +26,28 @@ impl Default for OamRam {
 }
 
 impl OamRam {
+    #[inline(always)]
     pub fn read(&self, addr: u16) -> u8 {
         let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
-        match byte_offset {
-            0 => self.entries[item_index].y,
-            1 => self.entries[item_index].x,
-            2 => self.entries[item_index].tile_index,
-            3 => self.entries[item_index].flags,
-            _ => unreachable!(),
+        unsafe {
+            let entry = self.entries.get_unchecked(item_index);
+            *entry.as_bytes().get_unchecked(byte_offset)
         }
     }
 
+    #[inline(always)]
     pub fn write(&mut self, addr: u16, value: u8) {
         let (item_index, byte_offset) = self.get_index_and_offset(addr);
 
-        match byte_offset {
-            0 => self.entries[item_index].y = value,
-            1 => self.entries[item_index].x = value,
-            2 => self.entries[item_index].tile_index = value,
-            3 => self.entries[item_index].flags = value,
-            _ => unreachable!(),
-        };
+        unsafe {
+            let entry = self.entries.get_unchecked_mut(item_index);
+            *entry.as_bytes_mut().get_unchecked_mut(byte_offset) = value;
+        }
     }
 
     /// Determine the index in the oam_ram array and the specific byte to update
+    #[inline(always)]
     fn get_index_and_offset(&self, addr: u16) -> (usize, usize) {
         let addr = addr - OAM_ADDR_START;
         let item_index = (addr / 4) as usize; // Each `OamItem` is 4 bytes
@@ -66,7 +63,7 @@ impl OamRam {
 //  Bit4   Palette number  **Non CGB Mode Only** (0=OBP0, 1=OBP1)
 //  Bit3   Tile VRAM-Bank  **CGB Mode Only**     (0=Bank 0, 1=Bank 1)
 //  Bit2-0 Palette number  **CGB Mode Only**     (OBP0-7)
-#[repr(C)]
+#[repr(C, packed)]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct OamEntry {
     pub y: u8,
@@ -76,26 +73,46 @@ pub struct OamEntry {
 }
 
 impl OamEntry {
+    /// Mutable view as 4-byte array slice
+    #[inline(always)]
+    fn as_bytes_mut(&mut self) -> &mut [u8; 4] {
+        // SAFETY: OamEntry is #[repr(C)] with exactly 4 u8 fields, no padding
+        unsafe { &mut *(self as *mut OamEntry as *mut [u8; 4]) }
+    }
+
+    /// View entry as 4-byte array slice
+    #[inline(always)]
+    fn as_bytes(&self) -> &[u8; 4] {
+        // SAFETY: OamEntry is #[repr(C)] with exactly 4 u8 fields, no padding
+        unsafe { &*(self as *const OamEntry as *const [u8; 4]) }
+    }
+
+    #[inline(always)]
     pub fn f_cgb_pn(&self) -> u8 {
         self.flags & 0b0000_0111 // Extract bits 0-2
     }
 
+    #[inline(always)]
     pub fn f_cgb_vram_bank(&self) -> bool {
         (self.flags & 0b0000_1000) != 0 // Bit 3
     }
 
+    #[inline(always)]
     pub fn f_pn(&self) -> bool {
         (self.flags & 0b0001_0000) != 0 // Bit 4
     }
 
+    #[inline(always)]
     pub fn f_x_flip(&self) -> bool {
         (self.flags & 0b0010_0000) != 0 // Bit 5
     }
 
+    #[inline(always)]
     pub fn f_y_flip(&self) -> bool {
         (self.flags & 0b0100_0000) != 0 // Bit 6
     }
 
+    #[inline(always)]
     pub fn f_bgp(&self) -> bool {
         (self.flags & 0b1000_0000) != 0 // Bit 7
     }
@@ -122,11 +139,7 @@ impl<'de> Visitor<'de> for OamArrayVisitor {
     type Value = [OamEntry; OAM_ENTRIES_COUNT];
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            formatter,
-            "an array of {} OamEntry items",
-            OAM_ENTRIES_COUNT
-        )
+        write!(formatter, "an array of {OAM_ENTRIES_COUNT} OamEntry items")
     }
 
     fn visit_seq<A>(self, mut seq: A) -> Result<[OamEntry; OAM_ENTRIES_COUNT], A::Error>

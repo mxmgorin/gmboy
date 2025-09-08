@@ -33,27 +33,41 @@ impl Default for Ram {
 }
 
 impl Ram {
+    #[inline]
     pub fn working_ram_read(&self, addr: u16) -> u8 {
-        self.working_ram[normalize_w_addr(addr)]
+        // SAFETY: address is matched in bus
+        unsafe { *self.working_ram.get_unchecked(normalize_w_addr(addr)) }
     }
 
+    #[inline]
     pub fn working_ram_write(&mut self, addr: u16, val: u8) {
-        self.working_ram[normalize_w_addr(addr)] = val;
+        // SAFETY: address is matched in bus
+        unsafe {
+            *self.working_ram.get_unchecked_mut(normalize_w_addr(addr)) = val;
+        }
     }
 
+    #[inline]
     pub fn high_ram_read(&self, addr: u16) -> u8 {
-        self.high_ram[normalize_h_addr(addr)]
+        // SAFETY: address is matched in bus
+        unsafe { *self.high_ram.get_unchecked(normalize_h_addr(addr)) }
     }
 
+    #[inline]
     pub fn high_ram_write(&mut self, addr: u16, val: u8) {
-        self.high_ram[normalize_h_addr(addr)] = val;
+        // SAFETY: address is matched in bus
+        unsafe {
+            *self.high_ram.get_unchecked_mut(normalize_h_addr(addr)) = val;
+        }
     }
 }
 
+#[inline]
 fn normalize_w_addr(addr: u16) -> usize {
     addr as usize - W_RAM_ADDR_START
 }
 
+#[inline]
 fn normalize_h_addr(addr: u16) -> usize {
     addr as usize - H_RAM_ADDR_START
 }
@@ -79,7 +93,7 @@ where
         type Value = [u8; W_RAM_SIZE];
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            write!(formatter, "an array of {} u8", W_RAM_SIZE)
+            write!(formatter, "an array of {W_RAM_SIZE} u8")
         }
 
         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
@@ -122,7 +136,7 @@ where
         type Value = [u8; H_RAM_SIZE];
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            write!(formatter, "an array of {} u8", H_RAM_SIZE)
+            write!(formatter, "an array of {H_RAM_SIZE} u8")
         }
 
         fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>

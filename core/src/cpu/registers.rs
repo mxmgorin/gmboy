@@ -1,12 +1,5 @@
-use crate::cpu::instructions::RegisterType;
-use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-
-const ZERO_FLAG_BYTE_POSITION: u8 = 7;
-const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
-const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
-const CARRY_FLAG_BYTE_POSITION: u8 = 4;
+use crate::cpu::flags::Flags;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Registers {
@@ -22,63 +15,97 @@ pub struct Registers {
     pub pc: u16,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Flags {
-    pub byte: u8,
+/// Represents the various CPU registers in a Game Boy CPU.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[repr(u8)]
+pub enum RegisterType {
+    /// Accumulator register, used for arithmetic and logic operations.
+    A = 0,
+    /// Flags register, holds condition flags (Z, N, H, C).
+    F = 1,
+    /// General-purpose register B.
+    B = 2,
+    /// General-purpose register C.
+    C = 3,
+    /// General-purpose register D.
+    D = 4,
+    /// General-purpose register E.
+    E = 5,
+    /// High byte of the HL register pair.
+    H = 6,
+    /// Low byte of the HL register pair.
+    L = 7,
+    /// Register pair combining A and F (used for specific operations).
+    AF = 8,
+    /// Register pair combining B and C (used for addressing or data storage).
+    BC = 9,
+    /// Register pair combining D and E (used for addressing or data storage).
+    DE = 10,
+    /// Register pair combining H and L (often used as a memory address pointer).
+    HL = 11,
+    /// Stack pointer, points to the top of the stack.
+    SP = 12,
+    /// Program counter, points to the next instruction to be executed.
+    PC = 13,
 }
 
-impl Flags {
-    pub fn boot() -> Flags {
-        Self { byte: 0xB0 }
-    }
-
-    pub fn set(&mut self, z: Option<bool>, n: Option<bool>, h: Option<bool>, c: Option<bool>) {
-        if let Some(z) = z {
-            set_bit(&mut self.byte, ZERO_FLAG_BYTE_POSITION, z);
-        }
-
-        if let Some(n) = n {
-            set_bit(&mut self.byte, SUBTRACT_FLAG_BYTE_POSITION, n);
-        }
-
-        if let Some(h) = h {
-            set_bit(&mut self.byte, HALF_CARRY_FLAG_BYTE_POSITION, h);
-        }
-
-        if let Some(c) = c {
-            set_bit(&mut self.byte, CARRY_FLAG_BYTE_POSITION, c);
+impl RegisterType {
+    pub const fn from_u8(v: u8) -> Self {
+        match v {
+            0 => Self::A,
+            1 => Self::F,
+            2 => Self::B,
+            3 => Self::C,
+            4 => Self::D,
+            5 => Self::E,
+            6 => Self::H,
+            7 => Self::L,
+            8 => Self::AF,
+            9 => Self::BC,
+            10 => Self::DE,
+            11 => Self::HL,
+            12 => Self::SP,
+            13 => Self::PC,
+            _ => panic!("invalid 8-bit register id"),
         }
     }
 
-    pub fn get_z(&self) -> bool {
-        get_bit_flag(self.byte, ZERO_FLAG_BYTE_POSITION)
+    pub const fn is_16bit(&self) -> bool {
+        match self {
+            RegisterType::A
+            | RegisterType::F
+            | RegisterType::B
+            | RegisterType::C
+            | RegisterType::D
+            | RegisterType::E
+            | RegisterType::H
+            | RegisterType::L => false,
+            RegisterType::AF
+            | RegisterType::BC
+            | RegisterType::DE
+            | RegisterType::HL
+            | RegisterType::SP
+            | RegisterType::PC => true,
+        }
     }
 
-    pub fn get_n(&self) -> bool {
-        get_bit_flag(self.byte, SUBTRACT_FLAG_BYTE_POSITION)
-    }
-
-    pub fn get_h(&self) -> bool {
-        get_bit_flag(self.byte, HALF_CARRY_FLAG_BYTE_POSITION)
-    }
-
-    pub fn get_c(&self) -> bool {
-        get_bit_flag(self.byte, CARRY_FLAG_BYTE_POSITION)
-    }
-}
-
-impl Display for Flags {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let str: String = [
-            (self.get_z(), 'Z'),
-            (self.get_n(), 'N'),
-            (self.get_h(), 'H'),
-            (self.get_c(), 'C'),
+    pub const fn get_all() -> &'static [RegisterType] {
+        &[
+            RegisterType::A,
+            RegisterType::F,
+            RegisterType::B,
+            RegisterType::C,
+            RegisterType::D,
+            RegisterType::E,
+            RegisterType::H,
+            RegisterType::L,
+            RegisterType::AF,
+            RegisterType::BC,
+            RegisterType::DE,
+            RegisterType::HL,
+            RegisterType::SP,
+            RegisterType::PC,
         ]
-        .iter()
-        .map(|&(flag, c)| if flag { c } else { '-' })
-        .collect();
-        write!(f, "{}", str)
     }
 }
 
@@ -86,7 +113,7 @@ impl Default for Registers {
     fn default() -> Self {
         Self {
             a: 0x01,
-            flags: Flags::boot(),
+            flags: Flags::default(),
             b: 0x00,
             c: 0x13,
             d: 0x00,
@@ -100,10 +127,13 @@ impl Default for Registers {
 }
 
 impl Registers {
-    pub fn read_register(&self, register_type: RegisterType) -> u16 {
-        match register_type {
+    #[inline(always)]
+    pub fn get_register<const R: u8>(&mut self) -> u16 {
+        let r = RegisterType::from_u8(R);
+
+        match r {
             RegisterType::A => self.a as u16,
-            RegisterType::F => self.flags.byte as u16,
+            RegisterType::F => self.flags.get_byte() as u16,
             RegisterType::B => self.b as u16,
             RegisterType::C => self.c as u16,
             RegisterType::D => self.d as u16,
@@ -119,26 +149,50 @@ impl Registers {
         }
     }
 
-    pub fn get_af(&self) -> u16 {
-        (self.a as u16) << 8 | self.flags.byte as u16
+    #[inline(always)]
+    pub fn get_register8<const R: u8>(&mut self) -> u8 {
+        let r = RegisterType::from_u8(R);
+
+        match r {
+            RegisterType::A => self.a,
+            RegisterType::F => self.flags.get_byte(),
+            RegisterType::B => self.b,
+            RegisterType::C => self.c,
+            RegisterType::D => self.d,
+            RegisterType::E => self.e,
+            RegisterType::H => self.h,
+            RegisterType::L => self.l,
+            _ => panic!("not 8-bit register"),
+        }
     }
 
+    #[inline(always)]
+    pub fn get_af(&mut self) -> u16 {
+        (self.a as u16) << 8 | self.flags.get_byte() as u16
+    }
+
+    #[inline(always)]
     pub fn get_bc(&self) -> u16 {
         (self.b as u16) << 8 | self.c as u16
     }
 
+    #[inline(always)]
     pub fn get_de(&self) -> u16 {
         (self.d as u16) << 8 | self.e as u16
     }
 
+    #[inline(always)]
     pub fn get_hl(&self) -> u16 {
         (self.h as u16) << 8 | self.l as u16
     }
 
-    pub fn set_register(&mut self, register_type: RegisterType, value: u16) {
-        match register_type {
+    #[inline(always)]
+    pub const fn set_register<const R: u8>(&mut self, value: u16) {
+        let r = RegisterType::from_u8(R);
+
+        match r {
             RegisterType::A => self.a = (value & 0xFF) as u8,
-            RegisterType::F => self.flags.byte = (value & 0xFF) as u8,
+            RegisterType::F => self.flags.set_byte((value & 0xFF) as u8),
             RegisterType::B => self.b = (value & 0xFF) as u8,
             RegisterType::C => self.c = (value & 0xFF) as u8,
             RegisterType::D => self.d = (value & 0xFF) as u8,
@@ -154,22 +208,43 @@ impl Registers {
         }
     }
 
-    pub fn set_af(&mut self, value: u16) {
-        self.a = ((value & 0xFF00) >> 8) as u8;
-        self.flags.byte = (value & 0xFF) as u8;
+    #[inline(always)]
+    pub const fn set_register8<const R: u8>(&mut self, value: u8) {
+        let r = RegisterType::from_u8(R);
+
+        match r {
+            RegisterType::A => self.a = value,
+            RegisterType::F => self.flags.set_byte(value),
+            RegisterType::B => self.b = value,
+            RegisterType::C => self.c = value,
+            RegisterType::D => self.d = value,
+            RegisterType::E => self.e = value,
+            RegisterType::H => self.h = value,
+            RegisterType::L => self.l = value,
+            _ => panic!("not 8-bit register"),
+        }
     }
 
-    pub fn set_bc(&mut self, value: u16) {
+    #[inline(always)]
+    pub const fn set_af(&mut self, value: u16) {
+        self.a = ((value & 0xFF00) >> 8) as u8;
+        self.flags.set_byte((value & 0xFF) as u8);
+    }
+
+    #[inline(always)]
+    pub const fn set_bc(&mut self, value: u16) {
         self.b = ((value & 0xFF00) >> 8) as u8;
         self.c = (value & 0xFF) as u8;
     }
 
-    pub fn set_de(&mut self, value: u16) {
+    #[inline(always)]
+    pub const fn set_de(&mut self, value: u16) {
         self.d = ((value & 0xFF00) >> 8) as u8;
         self.e = (value & 0xFF) as u8;
     }
 
-    pub fn set_hl(&mut self, value: u16) {
+    #[inline(always)]
+    pub const fn set_hl(&mut self, value: u16) {
         self.h = ((value & 0xFF00) >> 8) as u8;
         self.l = (value & 0xFF) as u8;
     }
@@ -182,31 +257,30 @@ mod tests {
     #[test]
     fn test_get_flag_z() {
         let mut regs = Registers::default();
-        regs.flags.byte = 0b10000000;
+        regs.flags.set_byte(0b10000000);
         assert!(regs.flags.get_z());
 
-        regs.flags.byte = 0b00000000;
+        regs.flags.set_byte(0b00000000);
         assert!(!regs.flags.get_z());
     }
 
     #[test]
     fn test_get_flag_c() {
         let mut regs = Registers::default();
-        regs.flags.byte = 0b00010000;
+        regs.flags.set_byte(0b00010000);
         assert!(regs.flags.get_c());
 
-        regs.flags.byte = 0b00000000;
+        regs.flags.set_byte(0b00000000);
         assert!(!regs.flags.get_c());
     }
 
     #[test]
     fn test_set_flags() {
         let mut regs = Registers::default();
-        regs.flags.byte = 0b10000000;
+        regs.flags.set_byte(0b10000000);
 
-        regs.flags.set(None, None, None, Some(true));
+        regs.flags.set_c_raw(true);
 
         assert!(regs.flags.get_z());
-        println!("{:#b}", regs.flags.byte)
     }
 }

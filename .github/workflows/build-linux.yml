@@ -17,7 +17,7 @@ jobs:
 
       - run: sudo apt-get update && sudo apt-get install -y libsdl2-dev zip
 
-      - run: cargo build --release
+      - run: cargo build --release -p desktop
 
       - name: Prepare Linux release files
         run: |
@@ -25,11 +25,11 @@ jobs:
           cp target/release/gmboy dist/
 
       - name: Zip Linux release
-        run: cd dist && zip -r gmboy-linux.zip .
+        run: cd dist && zip -r gmboy-linux-x86_64.zip .
 
       - name: Upload Linux zip to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/gmboy-linux.zip
+          files: dist/gmboy-linux-x86_64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

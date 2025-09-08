@@ -16,6 +16,7 @@ pub const CH2_START_ADDRESS: u16 = NR20_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 pub const CH2_END_ADDRESS: u16 = NR24_CH2_PERIOD_HIGH_CONTROL_ADDRESS;
 
 pub const NR10_CH1_SWEEP_ADDRESS: u16 = 0xFF10;
+const NR10_CH1_UNUSED_MASK: u8 = 0b1000_0000;
 pub const NR11_CH1_LEN_TIMER_DUTY_CYCLE_ADDRESS: u16 = 0xFF11;
 pub const NR12_CH1_VOL_ENVELOPE_ADDRESS: u16 = 0xFF12;
 pub const NR13_CH1_PERIOD_LOW_ADDRESS: u16 = 0xFF13;
@@ -70,11 +71,11 @@ impl DigitalSampleProducer for SquareChannel {
 }
 
 impl SquareChannel {
-    pub fn ch1() -> SquareChannel {
+    pub fn new_ch1() -> SquareChannel {
         Self::new(ChannelType::CH1)
     }
 
-    pub fn ch2() -> SquareChannel {
+    pub fn new_ch2() -> SquareChannel {
         Self::new(ChannelType::CH2)
     }
 
@@ -96,10 +97,11 @@ impl SquareChannel {
         }
     }
 
+    #[inline]
     pub fn read(&self, address: u16) -> u8 {
         let offset = self.get_offset(address);
 
-        match offset {
+        let val = match offset {
             0 => {
                 if let Some(sweep_timer) = &self.sweep_timer {
                     sweep_timer.nr10.byte
@@ -111,10 +113,13 @@ impl SquareChannel {
             2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
             4 => self.nrx3x4_period_and_ctrl.nrx4.read(),
-            _ => panic!("Invalid Square address: {:#X}", address),
-        }
+            _ => panic!("Invalid Square address: {address:#X}"),
+        };
+
+        val | NR10_CH1_UNUSED_MASK
     }
 
+    #[inline]
     pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         let offset = self.get_offset(address);
 
@@ -143,31 +148,37 @@ impl SquareChannel {
         }
     }
 
+    #[inline]
     fn get_offset(&self, address: u16) -> u16 {
         address - self.ch_type.get_start_address()
     }
 
+    #[inline]
     pub fn tick_envelope(&mut self) {
         self.envelope_timer.tick(self.nrx2_volume_envelope_and_dac);
     }
 
+    #[inline]
     pub fn tick_sweep(&mut self, nr52: &mut NR52) {
         if let Some(sweep) = self.sweep_timer.as_mut() {
             sweep.tick(nr52, &mut self.nrx3x4_period_and_ctrl);
         }
     }
 
+    #[inline]
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
         self.length_timer
             .tick(master_ctrl, &mut self.nrx3x4_period_and_ctrl.nrx4);
     }
 
+    #[inline]
     pub fn tick(&mut self) {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.duty_sequence = (self.duty_sequence + 1) & 0x07;
         }
     }
 
+    #[inline]
     fn trigger(&mut self, nr52: &mut NR52) {
         nr52.activate_ch(self.ch_type);
 
@@ -198,15 +209,18 @@ impl NR10 {
     /// completes, or the channel is (re)triggered.
     /// However, if 0 is written to this field, then iterations are instantly disabled (but see below),
     /// and it will be reloaded as soon as it’s set to something else.
+    #[inline]
     pub fn pace(&self) -> u8 {
         self.byte & 0b0111_0000
     }
 
     /// 0 = Addition (period increases); 1 = Subtraction (period decreases)
+    #[inline]
     pub fn direction_down(&self) -> bool {
         get_bit_flag(self.byte, 3)
     }
 
+    #[inline]
     pub fn individual_step(&self) -> u8 {
         self.byte & 0b0000_0111
     }

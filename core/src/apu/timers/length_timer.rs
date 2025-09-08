@@ -39,18 +39,22 @@ impl LengthTimer {
         }
     }
 
+    #[inline(always)]
     pub fn is_expired(&self) -> bool {
         self.counter == 0
     }
 
+    #[inline(always)]
     pub fn reload(&mut self, nrx1: NRx1) {
         self.counter = self.get_initial_length() - nrx1.initial_length_timer() as u16;
     }
 
+    #[inline(always)]
     pub fn reset(&mut self) {
         self.counter = self.get_initial_length();
     }
 
+    #[inline(always)]
     pub fn get_initial_length(&self) -> u16 {
         match self.ch_type {
             ChannelType::CH1 | ChannelType::CH2 | ChannelType::CH4 => 64,

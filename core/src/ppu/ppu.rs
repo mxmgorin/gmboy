@@ -1,9 +1,10 @@
-use crate::auxiliary::clock::Tickable;
-use crate::auxiliary::io::Io;
-use crate::bus::Bus;
-use crate::cpu::interrupts::InterruptType;
+use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::fetcher::PixelFetcher;
-use crate::ppu::lcd::{LcdStatSrc, PpuMode};
+use crate::ppu::framebuffer::FrameBuffer;
+use crate::ppu::lcd::{Lcd, LcdStatSrc, PpuMode};
+use crate::ppu::oam::OamRam;
+use crate::ppu::vram::VideoRam;
+use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
 pub const LINES_PER_FRAME: usize = 154;
@@ -12,127 +13,171 @@ pub const LCD_Y_RES: u8 = 144;
 pub const LCD_X_RES: u8 = 160;
 pub const TARGET_FPS_F: f64 = 59.7;
 pub const TARGET_FRAME_TIME_MILLIS: u64 = FRAME_DURATION.as_millis() as u64;
-pub const LCD_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
+pub const PPU_PIXELS_COUNT: usize = LCD_Y_RES as usize * LCD_X_RES as usize;
+pub const PPU_BYTES_PER_PIXEL: usize = 2;
+pub const PPU_BUFFER_LEN: usize = PPU_PIXELS_COUNT * PPU_BYTES_PER_PIXEL;
+pub const PPU_PITCH: usize = PPU_BYTES_PER_PIXEL * LCD_X_RES as usize;
+
 pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 fps
 
-impl Tickable for Ppu {
-    fn tick(&mut self, bus: &mut Bus) {
-        self.tick(bus);
-    }
-}
-
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Ppu {
-    line_ticks: usize,
-
+    pub buffer: FrameBuffer,
+    pub video_ram: VideoRam,
+    pub oam_ram: OamRam,
+    pub lcd: Lcd,
     pub current_frame: usize,
-    pub pipeline: PixelFetcher,
+    line_ticks: usize,
     fps: Option<Fps>,
+    fetcher: PixelFetcher,
 }
 
 impl Ppu {
-    pub fn toggle_fps(&mut self) {
-        if self.fps.is_some() {
-            self.fps = None;
-        } else {
-            self.fps = Some(Fps::default());
+    pub fn new(lcd: Lcd) -> Self {
+        Self {
+            lcd,
+            ..Default::default()
         }
     }
 
-    pub fn get_fps(&self) -> Option<(&str, bool)> {
-        self.fps.as_ref().map(|x| x.get())
+    pub fn toggle_fps(&mut self, enable: bool) {
+        if enable {
+            self.fps = Some(Fps::default());
+        } else {
+            self.fps = None;
+        }
     }
 
-    pub fn tick(&mut self, bus: &mut Bus) {
+    #[inline(always)]
+    pub fn get_fps(&mut self) -> Option<f32> {
+        self.fps.as_mut().map(|x| x.get())
+    }
+
+    #[inline(always)]
+    pub fn tick(&mut self, interrupts: &mut Interrupts) {
         self.line_ticks += 1;
 
-        match bus.io.lcd.status.ppu_mode() {
-            PpuMode::Oam => self.mode_oam(bus),
-            PpuMode::Transfer => self.mode_transfer(bus),
-            PpuMode::HBlank => self.mode_hblank(&mut bus.io),
-            PpuMode::VBlank => self.mode_vblank(&mut bus.io),
+        match self.lcd.status.get_ppu_mode() {
+            PpuMode::HBlank => self.mode_hblank(interrupts),
+            PpuMode::VBlank => self.mode_vblank(interrupts),
+            PpuMode::Oam => self.mode_oam(),
+            PpuMode::Transfer => self.mode_transfer(interrupts),
         }
     }
 
-    pub fn mode_oam(&mut self, bus: &mut Bus) {
+    #[inline(always)]
+    pub fn reset(&mut self) {
+        self.line_ticks = 0;
+        self.current_frame = 0;
+        self.buffer.reset();
+        self.fetcher.reset();
+    }
+
+    #[inline(always)]
+    fn mode_oam(&mut self) {
         if self.line_ticks >= 80 {
-            bus.io.lcd.status.set_ppu_mode(PpuMode::Transfer);
-            self.pipeline.reset();
-        }
-
-        // todo:
-        // GB fetches sprites progressively during the first 80 ticks of the scanline, not instantly
-        //if self.line_ticks % 2 == 0 && self.line_ticks < 80 {
-        //    self.pipeline.sprite_fetcher.load_next_sprite(bus);
-        //}
-        if self.line_ticks == 1 {
-            // read oam on the first tick only
-            self.pipeline.sprite_fetcher.load_line_sprites(bus);
+            self.fetcher
+                .sprite_fetcher
+                .scan_oam(&self.lcd, &self.oam_ram);
+            self.set_mode_transfer();
         }
     }
 
-    fn mode_transfer(&mut self, bus: &mut Bus) {
-        self.pipeline.process(bus, self.line_ticks);
+    #[inline(always)]
+    fn mode_transfer(&mut self, interrupts: &mut Interrupts) {
+        let color = self
+            .fetcher
+            .fetch(&self.lcd, &self.video_ram, self.line_ticks);
 
-        if self.pipeline.is_full() {
-            self.pipeline.clear();
-            bus.io.lcd.status.set_ppu_mode(PpuMode::HBlank);
+        if let Some(color) = color {
+            self.buffer.push(self.lcd.ly as usize, color);
+        }
 
-            if bus.io.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
-                bus.io.interrupts.request_interrupt(InterruptType::LCDStat);
-            }
+        if self.buffer.count() >= LCD_X_RES as usize {
+            self.set_mode_hblank(interrupts);
         }
     }
 
-    fn mode_vblank(&mut self, io: &mut Io) {
+    #[inline(always)]
+    fn mode_vblank(&mut self, interrupts: &mut Interrupts) {
         if self.line_ticks >= TICKS_PER_LINE {
-            io.lcd.increment_ly(&mut io.interrupts);
+            self.lcd.increment_ly(interrupts);
 
-            if io.lcd.ly as usize >= LINES_PER_FRAME {
-                io.lcd.status.set_ppu_mode(PpuMode::Oam);
-                io.lcd.reset_ly(&mut io.interrupts);
+            if self.lcd.ly as usize >= LINES_PER_FRAME {
+                self.set_mode_oam(interrupts);
+                self.lcd.reset_ly(interrupts);
             }
 
             self.line_ticks = 0;
         }
     }
 
-    fn mode_hblank(&mut self, io: &mut Io) {
+    #[inline(always)]
+    fn mode_hblank(&mut self, interrupts: &mut Interrupts) {
         if self.line_ticks >= TICKS_PER_LINE {
-            io.lcd.increment_ly(&mut io.interrupts);
+            self.lcd.increment_ly(interrupts);
 
-            if io.lcd.ly >= LCD_Y_RES {
-                io.lcd.status.set_ppu_mode(PpuMode::VBlank);
-                io.interrupts.request_interrupt(InterruptType::VBlank);
-
-                if io.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
-                    io.interrupts.request_interrupt(InterruptType::LCDStat);
-                }
-
+            if self.lcd.ly >= LCD_Y_RES {
+                self.set_mode_vblank(interrupts);
                 self.current_frame += 1;
 
                 if let Some(fps) = self.fps.as_mut() {
                     fps.update()
                 }
             } else {
-                io.lcd.status.set_ppu_mode(PpuMode::Oam);
+                self.set_mode_oam(interrupts);
             }
 
             self.line_ticks = 0;
         }
     }
+
+    #[inline(always)]
+    const fn set_mode_oam(&mut self, interrupts: &mut Interrupts) {
+        self.lcd.status.set_ppu_mode(PpuMode::Oam);
+
+        if self.lcd.status.is_stat_interrupt(LcdStatSrc::Oam) {
+            interrupts.request_interrupt(InterruptType::LCDStat);
+        }
+    }
+
+    #[inline(always)]
+    const fn set_mode_transfer(&mut self) {
+        self.buffer.reset();
+        self.fetcher.reset();
+        self.lcd.status.set_ppu_mode(PpuMode::Transfer);
+    }
+
+    #[inline(always)]
+    const fn set_mode_hblank(&mut self, interrupts: &mut Interrupts) {
+        self.lcd.status.set_ppu_mode(PpuMode::HBlank);
+
+        // TODO: STAT mode=0 interrupt happens one cycle before the actual mode switch!
+        if self.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
+            interrupts.request_interrupt(InterruptType::LCDStat);
+        }
+    }
+
+    #[inline(always)]
+    const fn set_mode_vblank(&mut self, interrupts: &mut Interrupts) {
+        self.lcd.status.set_ppu_mode(PpuMode::VBlank);
+        interrupts.request_interrupt(InterruptType::VBlank);
+
+        if self.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
+            interrupts.request_interrupt(InterruptType::LCDStat);
+        }
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Fps {
+    #[serde(with = "crate::instant_serde")]
     timer: Instant,
     prev_frame_time: Duration,
     last_fps_update: Duration,
     frame_accum: f32,
     frame_count: u32,
     fps: f32,
-    fps_str: String,
-    updated: bool,
 }
 
 impl Default for Fps {
@@ -144,43 +189,34 @@ impl Default for Fps {
             frame_accum: 0.0,
             frame_count: 0,
             fps: 0.0,
-            fps_str: "0.0".to_string(),
-            updated: false,
         }
     }
 }
 
 impl Fps {
+    #[inline(always)]
     pub fn update(&mut self) {
-        self.updated = false; // reset at start of update
-
         let now = self.timer.elapsed();
         let frame_time = (now - self.prev_frame_time).as_secs_f32();
         self.prev_frame_time = now;
-
         self.frame_accum += frame_time;
         self.frame_count += 1;
 
         if (now - self.last_fps_update).as_secs_f32() >= 1.0 {
-            let new_fps = if self.frame_accum > 0.0 {
+            self.fps = if self.frame_accum > 0.0 {
                 self.frame_count as f32 / self.frame_accum
             } else {
                 0.0
             };
 
-            if (new_fps - self.fps).abs() > f32::EPSILON {
-                self.updated = true; // mark updated only when fps changes
-            }
-
-            self.fps = new_fps;
-            self.fps_str = format!("{:.2}", self.fps);
             self.last_fps_update = now;
             self.frame_count = 0;
             self.frame_accum = 0.0;
         }
     }
 
-    pub fn get(&self) -> (&str, bool) {
-        (&self.fps_str, self.updated)
+    #[inline(always)]
+    pub fn get(&mut self) -> f32 {
+        self.fps
     }
 }

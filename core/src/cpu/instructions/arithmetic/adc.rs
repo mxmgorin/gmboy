@@ -1,34 +1,31 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu, RegisterType};
 
-use crate::cpu::instructions::{DataDestination, FetchedData};
-
-#[derive(Debug, Clone, Copy)]
-pub struct AdcInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for AdcInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        let DataDestination::Register(_) = fetched_data.dest else {
-            unreachable!();
-        };
-
-        let u: u16 = fetched_data.value;
-        let a: u16 = cpu.registers.a as u16;
-        let c: u16 = cpu.registers.flags.get_c() as u16;
-
-        cpu.registers.a = ((a + u + c) & 0xFF) as u8;
-
-        cpu.registers.flags.set(
-            (cpu.registers.a == 0).into(),
-            false.into(),
-            ((a & 0xF) + (u & 0xF) + c > 0xF).into(),
-            (a + u + c > 0xFF).into(),
-        );
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_adc_r_d8(&mut self) {
+        let value = self.read_pc();
+        self.execute_adc(value);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_adc_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let value = self.registers.get_register8::<R2>();
+        self.execute_adc(value);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_adc_r_mr(&mut self) {
+        let value = self.read_mr::<{ RegisterType::HL as u8 }>();
+        self.execute_adc(value);
+    }
+
+    #[inline(always)]
+    pub fn execute_adc(&mut self, value: u8) {
+        let lhs = self.registers.a;
+        let carry_in = self.registers.flags.get_c() as u8;
+
+        let result = lhs.wrapping_add(value).wrapping_add(carry_in);
+        self.registers.a = result;
+        self.registers.flags.op_add8(lhs, value, carry_in, result);
     }
 }

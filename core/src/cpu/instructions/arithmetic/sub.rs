@@ -1,34 +1,28 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-#[derive(Debug, Clone, Copy)]
-pub struct SubInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for SubInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
-            unreachable!();
-        };
-
-        let reg_val = cpu.registers.read_register(r);
-        let result = reg_val.wrapping_sub(fetched_data.value);
-
-        let reg_val_i32 = reg_val as i32;
-        let fetched_val_i32 = result as i32;
-
-        let h = ((reg_val_i32 & 0xF).wrapping_sub(fetched_val_i32 & 0xF)) < 0;
-        let c = reg_val_i32.wrapping_sub(fetched_val_i32) < 0;
-
-        cpu.registers.set_register(r, result);
-        cpu.registers
-            .flags
-            .set((result == 0).into(), true.into(), h.into(), c.into());
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_sub_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.registers.get_register8::<R2>();
+        self.execute_sub::<R1>(val);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_sub_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.read_mr::<R2>();
+        self.execute_sub::<R1>(val);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_sub_r_d8<const R1: u8>(&mut self) {
+        let val = self.read_pc();
+        self.execute_sub::<R1>(val);
+    }
+
+    pub fn execute_sub<const R1: u8>(&mut self, rhs: u8) {
+        let lhs = self.registers.get_register8::<R1>();
+        let result = lhs.wrapping_sub(rhs);
+        self.registers.set_register8::<R1>(result);
+        self.registers.flags.op_sub8(lhs, rhs, 0, result);
     }
 }

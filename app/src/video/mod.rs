@@ -1,16 +1,17 @@
 use crate::config::VideoConfig;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
+use core::ppu::framebuffer::FrameBuffer;
 use core::ppu::tile::PixelColor;
 use core::ppu::tile::TileData;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
 use sdl2::rect::Rect;
 
-mod char;
-pub mod draw_text;
-mod filter;
+mod font;
 pub mod frame_blend;
+mod sdl2_filters;
+pub mod text;
 mod video;
 pub use video::*;
 
@@ -19,8 +20,6 @@ mod overlay;
 mod sdl2_backend;
 pub mod sdl2_tiles;
 pub mod shader;
-
-const BYTES_PER_PIXEL: usize = 4;
 
 pub fn calc_win_height(scale: u32) -> u32 {
     LCD_Y_RES as u32 * scale
@@ -57,6 +56,7 @@ pub struct VideoTexture {
     pub pitch: usize,
     pub buffer: Box<[u8]>,
     pub rect: Rect,
+    pub bytes_per_pixel: usize,
 }
 
 impl VideoTexture {
@@ -67,27 +67,80 @@ impl VideoTexture {
             pitch,
             buffer: vec![0; pitch * rect.h as usize].into_boxed_slice(),
             rect,
+            bytes_per_pixel,
         }
     }
 
-    pub fn fill(&mut self, color: PixelColor) {
-        let (r, g, b, a) = color.as_rgba();
+    pub fn clear(&mut self) {
+        for i in (0..self.buffer.len()).step_by(self.bytes_per_pixel) {
+            self.buffer[i] = 0;
+            self.buffer[i + 1] = 0;
+            self.buffer[i + 2] = 0;
 
-        for i in (0..self.buffer.len()).step_by(BYTES_PER_PIXEL) {
-            self.buffer[i] = r;
-            self.buffer[i + 1] = g;
-            self.buffer[i + 2] = b;
-            self.buffer[i + 3] = a;
+            if self.bytes_per_pixel == 4 {
+                self.buffer[i + 3] = 0;
+            }
         }
     }
 }
 
+#[inline]
+pub fn fill_buffer(fb: &mut FrameBuffer, color: PixelColor) {
+    for i in (0..fb.len()).step_by(FrameBuffer::BYTES_PER_PIXEL) {
+        draw_color(fb, i, color);
+    }
+}
+
+#[inline]
+pub fn draw_color(fb: &mut FrameBuffer, index: usize, color: PixelColor) {
+    // Use const generic indirectly via const
+    const BPP: usize = FrameBuffer::BYTES_PER_PIXEL;
+
+    let bytes: &[u8] = match BPP {
+        2 => &color.as_rgb565_bytes(),
+        3 => &color.as_rgb_bytes(),
+        4 => &color.as_rgba_bytes(),
+        _ => panic!("Unsupported pixel size"),
+    };
+
+    unsafe {
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), fb.as_mut_ptr().add(index), BPP);
+    }
+}
+
+pub fn truncate_text(s: &str, max_chars: usize) -> String {
+    let max_len = s.len().min(max_chars + 2);
+    let mut truncated = String::with_capacity(max_len);
+
+    for (i, ch) in s.chars().enumerate() {
+        if i == max_chars {
+            let ends_with_paren = s.ends_with(')');
+            let total_chars = s.chars().count();
+
+            if total_chars > max_chars + 1 || !ends_with_paren {
+                truncated.push('…');
+            }
+
+            if ends_with_paren {
+                truncated.push(')');
+            }
+
+            break;
+        }
+
+        truncated.push(ch);
+    }
+
+    truncated
+}
+
 pub enum VideoBackend {
-    Sdl2(Sdl2Backend),
+    Sdl2(Box<Sdl2Backend>),
     Gl(GlBackend),
 }
 
 impl VideoBackend {
+    #[inline]
     pub fn draw_buffer(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.draw_buffer(buffer, config),
@@ -95,27 +148,15 @@ impl VideoBackend {
         }
     }
 
-    pub fn draw_menu(&mut self, texture: &VideoTexture, config: &VideoConfig) {
+    #[inline]
+    pub fn draw_menu(&mut self, buffer: &[u8], config: &VideoConfig) {
         match self {
-            VideoBackend::Sdl2(x) => x.draw_menu(texture, config),
-            VideoBackend::Gl(x) => x.draw_menu(texture),
+            VideoBackend::Sdl2(x) => x.draw_menu(buffer, config),
+            VideoBackend::Gl(x) => x.draw_menu(buffer),
         }
     }
 
-    pub fn draw_fps(&mut self, texture: &VideoTexture) {
-        match self {
-            VideoBackend::Sdl2(x) => x.draw_fps(texture),
-            VideoBackend::Gl(x) => x.draw_fps(texture),
-        }
-    }
-
-    pub fn draw_notif(&mut self, texture: &VideoTexture) {
-        match self {
-            VideoBackend::Sdl2(x) => x.draw_notif(texture),
-            VideoBackend::Gl(x) => x.draw_notif(texture),
-        }
-    }
-
+    #[inline]
     pub fn show(&mut self) {
         match self {
             VideoBackend::Sdl2(x) => x.show(),

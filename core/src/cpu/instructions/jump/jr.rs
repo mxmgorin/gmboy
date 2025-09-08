@@ -1,20 +1,16 @@
-use crate::cpu::instructions::FetchedData;
-use crate::cpu::instructions::{AddressMode, ConditionType, ExecutableInstruction, Instruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-#[derive(Debug, Clone, Copy)]
-pub struct JrInstruction {
-    pub condition_type: Option<ConditionType>,
-}
-
-impl ExecutableInstruction for JrInstruction {
-    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        let rel = fetched_data.value as i8;
-        let addr = (cpu.registers.pc as i32).wrapping_add(rel as i32);
-        Instruction::goto_addr(cpu, self.condition_type, addr as u16, false, callback);
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_jr_d8<const C: u8>(&mut self) {
+        let val = self.read_d8();
+        self.execute_jr::<C>(val);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        AddressMode::D8
+    #[inline(always)]
+    pub fn execute_jr<const C: u8>(&mut self, val: u8) {
+        let rel = val as i8;
+        let addr = (self.registers.pc as i32).wrapping_add(rel as i32);
+        self.goto_addr_with_cond::<C>(addr as u16);
     }
 }

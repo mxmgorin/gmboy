@@ -1,9 +1,10 @@
+use crate::get_base_dir;
 use crate::input::config::InputConfig;
+use crate::palette::LcdPalette;
 use crate::video::frame_blend::FrameBlendMode;
-use crate::video::shader::ShaderFrameBlendMode;
+use crate::video::shader::{ShaderFrameBlendMode, ShaderPrecision};
 use core::apu::apu::ApuConfig;
 use core::emu::config::EmuConfig;
-use core::ppu::palette::LcdPalette;
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -11,7 +12,8 @@ use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::{env, fs, io};
+use std::time::Duration;
+use std::{fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -21,7 +23,6 @@ pub struct AppConfig {
     pub current_save_index: usize,
     pub current_load_index: usize,
     pub auto_continue: bool,
-    pub roms_dir: Option<String>,
     pub audio: AudioConfig,
     pub video: VideoConfig,
     pub input: InputConfig,
@@ -46,6 +47,7 @@ pub struct Sdl2Config {
 pub struct GlConfig {
     pub shader_name: String,
     pub shader_frame_blend_mode: ShaderFrameBlendMode,
+    pub shader_precision: ShaderPrecision,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -61,15 +63,29 @@ pub struct RenderConfig {
     pub backend: VideoBackendType,
     pub sdl2: Sdl2Config,
     pub gl: GlConfig,
+    pub frame_skip: usize,
 }
 
 impl RenderConfig {
+    pub fn calc_min_frame_interval(&self) -> Duration {
+        let frame_skip = self.frame_skip as f32;
+        let frame_skip = frame_skip.clamp(0.0, 59.0);
+
+        Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
+    }
+
     pub fn change_dim(&mut self, v: f32) {
         self.blend_dim = core::change_f32_rounded(self.blend_dim, v).clamp(0.0, 1.0)
     }
 
     pub const WIDTH: usize = LCD_X_RES as usize;
     pub const HEIGHT: usize = LCD_Y_RES as usize;
+}
+
+pub fn update_frame_skip(v: usize, delta: isize) -> usize {
+    let v = v as isize + delta;
+
+    v.clamp(0, 59) as usize
 }
 
 impl AppConfig {
@@ -155,13 +171,7 @@ impl AppConfig {
     }
 
     pub fn default_path() -> PathBuf {
-        // Get the directory where the binary is running from
-        let exe_path = env::current_exe().expect("Failed to get executable path");
-        let exe_dir = exe_path
-            .parent()
-            .expect("Failed to get executable directory");
-
-        exe_dir.join("config.json")
+        get_base_dir().join("config.json")
     }
 }
 
@@ -186,18 +196,19 @@ impl Default for AppConfig {
                 interface: InterfaceConfig {
                     selected_palette_idx: 0,
                     scale: 5.0,
-                    is_fullscreen: false,
+                    is_fullscreen: true,
                     show_fps: false,
                     show_tiles: false,
                     is_palette_inverted: false,
                 },
                 render: RenderConfig {
+                    frame_skip: 30,
                     frame_blend_mode: FrameBlendMode::None,
                     blend_dim: 1.0,
                     backend: VideoBackendType::Gl,
                     sdl2: Sdl2Config {
-                        grid_enabled: true,
-                        subpixel_enabled: true,
+                        grid_enabled: false,
+                        subpixel_enabled: false,
                         dot_matrix_enabled: false,
                         scanline_enabled: false,
                         vignette_enabled: false,
@@ -205,10 +216,10 @@ impl Default for AppConfig {
                     gl: GlConfig {
                         shader_name: "passthrough".to_string(),
                         shader_frame_blend_mode: ShaderFrameBlendMode::Simple,
+                        shader_precision: ShaderPrecision::Auto,
                     },
                 },
             },
-            roms_dir: None,
             auto_continue: false,
         }
     }

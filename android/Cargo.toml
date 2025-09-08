@@ -1,0 +1,15 @@
+[package]
+name = "android"
+version = "0.1.0"
+edition = "2021"
+authors = ["troidem <mxmgorin@gmail.com>"]
+
+[lib]
+name = "main"
+crate-type = ["cdylib"]
+
+[dependencies]
+app = { path = "../app", default-features = false, features = ["file-dialog"] }
+jni = "0.21"
+log = "0.4.27"
+android_logger = "0.15.1"

@@ -16,7 +16,7 @@ pub const RAM_EXTERNAL_END_ADDR: u16 = 0xBFFF;
 
 pub trait Mbc {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8;
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8);
+    fn write_rom(&mut self, address: u16, value: u8);
     fn read_ram(&self, address: u16) -> u8;
     fn write_ram(&mut self, address: u16, value: u8);
     fn load_ram(&mut self, bytes: Box<[u8]>);
@@ -38,8 +38,8 @@ pub enum MbcVariant {
 impl Mbc for MbcVariant {
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match self {
-            MbcVariant::NoMbc => cart_data.bytes[address as usize],
-            MbcVariant::NoMbcRam(_c) => cart_data.bytes[address as usize],
+            MbcVariant::NoMbc => cart_data.read(address as usize),
+            MbcVariant::NoMbcRam(_c) => cart_data.read(address as usize),
             MbcVariant::Mbc1(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc2(c) => c.read_rom(cart_data, address),
             MbcVariant::Mbc3(c) => c.read_rom(cart_data, address),
@@ -47,13 +47,13 @@ impl Mbc for MbcVariant {
         }
     }
 
-    fn write_rom(&mut self, cart_data: &CartData, address: u16, value: u8) {
+    fn write_rom(&mut self, address: u16, value: u8) {
         match self {
             MbcVariant::NoMbc | MbcVariant::NoMbcRam(_) => {}
-            MbcVariant::Mbc1(c) => c.write_rom(&cart_data, address, value),
-            MbcVariant::Mbc2(c) => c.write_rom(&cart_data, address, value),
-            MbcVariant::Mbc3(c) => c.write_rom(&cart_data, address, value),
-            MbcVariant::Mbc5(c) => c.write_rom(&cart_data, address, value),
+            MbcVariant::Mbc1(c) => c.write_rom(address, value),
+            MbcVariant::Mbc2(c) => c.write_rom(address, value),
+            MbcVariant::Mbc3(c) => c.write_rom(address, value),
+            MbcVariant::Mbc5(c) => c.write_rom(address, value),
         }
     }
 
@@ -74,7 +74,10 @@ impl Mbc for MbcVariant {
     fn write_ram(&mut self, address: u16, value: u8) {
         match self {
             MbcVariant::NoMbc => {}
-            MbcVariant::NoMbcRam(c) => c[address as usize - RAM_ADDRESS_START] = value,
+            MbcVariant::NoMbcRam(c) => unsafe {
+                // SAFETY: address is matched at the bus
+                *c.get_unchecked_mut(address as usize - RAM_ADDRESS_START) = value;
+            },
             MbcVariant::Mbc1(c) => c.write_ram(address, value),
             MbcVariant::Mbc2(c) => c.write_ram(address, value),
             MbcVariant::Mbc3(c) => c.write_ram(address, value),
@@ -107,7 +110,7 @@ impl Mbc for MbcVariant {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MbcData {
-    pub ram_bytes: Box<[u8]>,
+    ram_bytes: Box<[u8]>,
     pub rom_bank_number: u16,
     pub ram_bank_number: u8,
     pub ram_enabled: bool,
@@ -125,21 +128,29 @@ impl MbcData {
         }
     }
 
+    #[inline(always)]
+    pub fn read_ram_byte(&self, index: usize) -> u8 {
+        unsafe { *self.ram_bytes.get_unchecked(index) }
+    }
+
     pub fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         match address {
-            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.bytes[address as usize],
+            ROM_BANK_ZERO_START_ADDR..=ROM_BANK_ZERO_END_ADDR => cart_data.read(address as usize),
             ROM_BANK_NON_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
                 let offset = ROM_BANK_SIZE * self.rom_bank_number as usize;
-                cart_data.bytes[(address as usize - ROM_BANK_SIZE) + offset]
+                let addr = (address as usize - ROM_BANK_SIZE) + offset;
+                cart_data.read(addr)
             }
             _ => 0xFF,
         }
     }
 
+    #[inline(always)]
     pub fn write_ram_enabled(&mut self, value: u8) {
         self.ram_enabled = value & 0xF == 0xA;
     }
 
+    #[inline(always)]
     fn effective_ram_bank(&self, banking_mode: BankingMode) -> usize {
         if self.ram_bytes.len() <= RAM_BANK_SIZE {
             0
@@ -152,6 +163,7 @@ impl MbcData {
         }
     }
 
+    #[inline]
     pub fn read_ram(&self, address: u16, banking_mode: BankingMode) -> u8 {
         if !self.ram_enabled || self.ram_bytes.is_empty() {
             return 0xFF;
@@ -161,12 +173,13 @@ impl MbcData {
         let index = (address as usize - RAM_ADDRESS_START) + offset;
 
         if index < self.ram_bytes.len() {
-            self.ram_bytes[index]
+            self.read_ram_byte(index)
         } else {
             0xFF
         }
     }
 
+    #[inline]
     pub fn write_ram(&mut self, address: u16, value: u8, banking_mode: BankingMode) {
         if !self.ram_enabled || self.ram_bytes.is_empty() {
             return;
@@ -176,7 +189,9 @@ impl MbcData {
         let index = (address as usize - RAM_ADDRESS_START) + offset;
 
         if index < self.ram_bytes.len() {
-            self.ram_bytes[index] = value;
+            unsafe {
+                *self.ram_bytes.get_unchecked_mut(index) = value;
+            }
         }
     }
 
@@ -189,6 +204,6 @@ impl MbcData {
     }
 
     pub fn clamp_rom_bank_number(&mut self) {
-        self.rom_bank_number = self.rom_bank_number % self.rom_banks_count as u16;
+        self.rom_bank_number %= self.rom_banks_count as u16;
     }
 }

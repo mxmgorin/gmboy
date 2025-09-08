@@ -15,6 +15,7 @@ pub const NR41_CH4_LENGTH_TIMER_ADDRESS: u16 = 0xFF20;
 pub const NR42_CH4_VOLUME_ENVELOPE_ADDRESS: u16 = 0xFF21;
 pub const NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS: u16 = 0xFF22;
 pub const NR44_CH4_CONTROL_ADDRESS: u16 = 0xFF23;
+pub const NR44_CH4_UNUSED_MASK: u8 = 0b0011_1111;
 
 const DIVISORS: [u16; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
 
@@ -68,16 +69,20 @@ impl DigitalSampleProducer for NoiseChannel {
 }
 
 impl NoiseChannel {
+    #[inline]
     pub fn read(&self, addr: u16) -> u8 {
-        match addr {
+        let val = match addr {
             NR41_CH4_LENGTH_TIMER_ADDRESS => 0xFF,
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => self.nrx2_envelope_and_dac.byte,
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte,
             NR44_CH4_CONTROL_ADDRESS => self.nrx4_ctrl.read(),
-            _ => panic!("Invalid NoiseChannel address: {:#X}", addr),
-        }
+            _ => panic!("Invalid NoiseChannel address: {addr:#X}"),
+        };
+
+        val | NR44_CH4_UNUSED_MASK
     }
 
+    #[inline]
     pub fn write(&mut self, addr: u16, value: u8, master_ctrl: &mut NR52) {
         match addr {
             NR41_CH4_LENGTH_TIMER_ADDRESS => {
@@ -97,6 +102,7 @@ impl NoiseChannel {
         }
     }
 
+    #[inline]
     pub fn tick(&mut self) {
         if self.freq_timer > 0 {
             self.freq_timer -= 1;
@@ -119,14 +125,17 @@ impl NoiseChannel {
         }
     }
 
+    #[inline]
     pub fn tick_length(&mut self, master_ctrl: &mut NR52) {
         self.length_timer.tick(master_ctrl, &mut self.nrx4_ctrl);
     }
 
+    #[inline]
     pub fn tick_envelope(&mut self) {
         self.envelope_timer.tick(self.nrx2_envelope_and_dac);
     }
 
+    #[inline]
     fn trigger(&mut self, nr52: &mut NR52) {
         nr52.activate_ch4();
 
@@ -138,6 +147,7 @@ impl NoiseChannel {
         self.lfsr = 0x7FFF;
     }
 
+    #[inline]
     fn reload_freq_timer(&mut self) {
         // Reload the frequency timer with the correct divisor
         let divisor = DIVISORS[self.nr43_freq_and_rnd.clock_divider() as usize];
@@ -153,10 +163,12 @@ pub struct NR43 {
 }
 
 impl NR43 {
+    #[inline]
     pub fn clock_shift(&self) -> u8 {
         self.byte >> 4
     }
 
+    #[inline]
     pub fn get_lfsr_width(&self) -> LfsrWidth {
         if self.lfsr_width() {
             LfsrWidth::Bit7
@@ -165,10 +177,12 @@ impl NR43 {
         }
     }
 
+    #[inline]
     pub fn lfsr_width(&self) -> bool {
         get_bit_flag(self.byte, 3)
     }
 
+    #[inline]
     pub fn clock_divider(&self) -> u8 {
         self.byte & 0b0000_0111
     }

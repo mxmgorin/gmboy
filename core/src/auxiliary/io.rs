@@ -4,31 +4,11 @@ use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cpu::interrupts::Interrupts;
-use crate::ppu::lcd::{Lcd, LCD_ADDRESS_END, LCD_ADDRESS_START};
+use crate::ppu::lcd::{LCD_ADDRESS_END, LCD_ADDRESS_START};
+use crate::ppu::Ppu;
 use serde::{Deserialize, Serialize};
 
 const IO_IF_UNUSED_MASK: u8 = 0b1110_0000;
-
-impl From<u16> for IoAddress {
-    fn from(address: u16) -> Self {
-        match address {
-            0xFF00 => Self::Joypad,
-            0xFF01 => Self::SerialSb,
-            0xFF02 => Self::SerialSc,
-            TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => Self::Timer,
-            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS => Self::Audio,
-            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => Self::WavePattern,
-            LCD_ADDRESS_START..=LCD_ADDRESS_END => Self::Display,
-            0xFF4F => Self::VRAMBankSelect,
-            0xFF50 => Self::DisableBootROM,
-            0xFF51..=0xFF55 => Self::VRAMdma,
-            0xFF68..=0xFF6B => Self::Background,
-            0xFF70 => Self::WRAMBankSelect,
-            0xFF0F => Self::InterruptFlags,
-            _ => Self::Unused,
-        }
-    }
-}
 
 // All unreadable bits of I/O registers return 1. In general, all unused bits in I/O registers are
 // unreadable so they return 1. Some exceptions are:
@@ -39,60 +19,54 @@ pub struct Io {
     pub serial: Serial,
     pub timer: Timer,
     pub interrupts: Interrupts,
-    pub lcd: Lcd,
     pub joypad: Joypad,
     pub apu: Apu,
+    pub ppu: Ppu,
 }
 
 impl Io {
-    pub fn new(lcd: Lcd, apu: Apu) -> Self {
+    pub fn new(ppu: Ppu, apu: Apu) -> Self {
         Io {
             serial: Serial::default(),
             timer: Timer::default(),
             interrupts: Interrupts::default(),
-            lcd,
             joypad: Default::default(),
+            ppu,
             apu,
         }
     }
 
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
-        let location = IoAddress::from(address);
-
-        match location {
-            IoAddress::SerialSb => self.serial.sb,
-            IoAddress::SerialSc => self.serial.sc | SERIAL_SC_UNUSED_MASK,
-            IoAddress::Timer => self.timer.read(address),
-            IoAddress::InterruptFlags => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
-            IoAddress::Display => self.lcd.read(address),
-            IoAddress::Joypad => self.joypad.get_byte(),
-            IoAddress::Audio | IoAddress::WavePattern => self.apu.read(address),
-            IoAddress::Unused
-            | IoAddress::VRAMBankSelect
-            | IoAddress::DisableBootROM
-            | IoAddress::VRAMdma
-            | IoAddress::Background
-            | IoAddress::WRAMBankSelect => 0xFF,
+        match address {
+            0xFF00 => self.joypad.get_byte(),
+            0xFF01 => self.serial.sb,
+            0xFF02 => self.serial.sc | SERIAL_SC_UNUSED_MASK,
+            TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.read(address),
+            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
+                self.apu.read(address)
+            }
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(address),
+            0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => 0xFF,
+            0xFF0F => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
+            _ => 0xFF,
         }
     }
 
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
-        let location = IoAddress::from(address);
-
-        match location {
-            IoAddress::SerialSb => self.serial.sb = value,
-            IoAddress::SerialSc => self.serial.sc = value,
-            IoAddress::Timer => self.timer.write(address, value),
-            IoAddress::InterruptFlags => self.interrupts.int_flags = value,
-            IoAddress::Display => self.lcd.write(address, value),
-            IoAddress::Joypad => self.joypad.set_byte(value),
-            IoAddress::Audio | IoAddress::WavePattern => self.apu.write(address, value),
-            IoAddress::Unused
-            | IoAddress::VRAMBankSelect
-            | IoAddress::DisableBootROM
-            | IoAddress::VRAMdma
-            | IoAddress::Background
-            | IoAddress::WRAMBankSelect => {}
+        match address {
+            0xFF00 => self.joypad.set_byte(value),
+            0xFF01 => self.serial.sb = value,
+            0xFF02 => self.serial.sc = value,
+            TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.write(address, value),
+            AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
+                self.apu.write(address, value)
+            }
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(address, value),
+            0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {}
+            0xFF0F => self.interrupts.int_flags = value,
+            _ => {}
         }
     }
 }
@@ -108,10 +82,12 @@ pub struct Serial {
 const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 
 impl Serial {
+    #[inline(always)]
     pub fn has_data(&self) -> bool {
         self.sc == 0x81
     }
 
+    #[inline(always)]
     pub fn take_data(&mut self) -> u8 {
         self.sc = 0;
 

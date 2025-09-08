@@ -1,32 +1,19 @@
-use crate::cpu::instructions::{AddressMode, ConditionType, ExecutableInstruction, Instruction};
-use crate::cpu::instructions::{FetchedData, RegisterType};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu, RegisterType};
 
-#[derive(Debug, Clone, Copy)]
-pub struct JpInstruction {
-    pub address_mode: AddressMode,
-    pub condition_type: Option<ConditionType>,
-}
-
-impl ExecutableInstruction for JpInstruction {
-    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        if self.condition_type.is_none()
-            && fetched_data.source.get_register() == Some(RegisterType::HL)
-        {
-            // HL uses and no Cycles
-            cpu.registers.pc = fetched_data.value;
-        } else {
-            Instruction::goto_addr(
-                cpu,
-                self.condition_type,
-                fetched_data.value,
-                false,
-                callback,
-            );
-        }
+impl Cpu {
+    #[inline(always)]
+    pub fn execute_jp_no_hl(&mut self) {
+        self.registers.pc = self.registers.get_register::<{ RegisterType::HL as u8 }>();
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_jp_d16<const C: u8>(&mut self) {
+        let addr = self.read_pc16();
+        self.execute_jp::<C>(addr);
+    }
+
+    #[inline(always)]
+    fn execute_jp<const C: u8>(&mut self, addr: u16) {
+        self.goto_addr_with_cond::<C>(addr);
     }
 }

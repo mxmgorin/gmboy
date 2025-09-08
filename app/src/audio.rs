@@ -41,7 +41,7 @@ impl AppAudio {
     pub fn queue(&mut self, output: &[f32]) {
         if self.device.size() < self.max_queue_size {
             if let Err(err) = self.device.queue_audio(output) {
-                eprintln!("Failed queue_audio: {err}");
+                log::error!("Failed queue_audio: {err}");
             };
         }
     }

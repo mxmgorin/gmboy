@@ -1,24 +1,28 @@
-use crate::cpu::instructions::FetchedData;
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-#[derive(Debug, Clone, Copy)]
-pub struct XorInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for XorInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        cpu.registers.a ^= (fetched_data.value & 0xFF) as u8;
-        cpu.registers.flags.set(
-            (cpu.registers.a == 0).into(),
-            false.into(),
-            false.into(),
-            false.into(),
-        );
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_xor_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let rhs = self.registers.get_register8::<R2>();
+        self.execute_xor(rhs);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_xor_r_d8<const R1: u8>(&mut self) {
+        let rhs = self.read_pc();
+        self.execute_xor(rhs);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_xor_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        let rhs = self.read_mr::<R2>();
+        self.execute_xor(rhs);
+    }
+
+    #[inline(always)]
+    pub fn execute_xor(&mut self, rhs: u8) {
+        self.registers.a ^= rhs & 0xFF;
+        // todo: for some reason fails test when lazy is used
+        self.registers.flags.force_op_or(self.registers.a);
     }
 }

@@ -1,5 +1,3 @@
-#version 150
-
 in vec2 pos;
 in vec2 tex;
 

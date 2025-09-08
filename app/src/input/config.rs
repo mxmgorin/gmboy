@@ -20,6 +20,7 @@ impl Default for InputConfig {
 
 mod bindings_file {
     use super::*;
+    use crate::get_base_dir;
     use serde::{Deserializer, Serializer};
 
     const FILE: &str = "bindings.json";
@@ -28,7 +29,7 @@ mod bindings_file {
     where
         S: Serializer,
     {
-        let path = core::get_exe_dir().join(FILE);
+        let path = get_base_dir().join(FILE);
         core::save_json_file(&path, bindings)
             .map_err(|_| serde::ser::Error::custom("Failed to save bindings.json"))?;
         serializer.serialize_str(FILE)
@@ -38,7 +39,7 @@ mod bindings_file {
     where
         D: Deserializer<'de>,
     {
-        let path = core::get_exe_dir().join(FILE);
+        let path = get_base_dir().join(FILE);
         let _path: String = String::deserialize(deserializer)?;
         core::read_json_file(path)
             .map_err(|_| serde::de::Error::custom("Failed to read bindings.json"))

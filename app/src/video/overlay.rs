@@ -1,104 +1,87 @@
-use crate::video::draw_text::{
-    calc_text_height, calc_text_width_str, draw_text_lines, CenterAlignedText, FontSize,
+use crate::video::fill_buffer;
+use crate::video::text::{
+    fill_line_outlined, fill_lines, CenterAlignedText, FontSize, TextLinesStyle, TextStyle,
 };
-use crate::video::VideoTexture;
-use crate::video::BYTES_PER_PIXEL;
+use core::ppu::framebuffer::FrameBuffer;
 use core::ppu::tile::PixelColor;
-use sdl2::rect::Rect;
+use core::ppu::LCD_X_RES;
+use core::ppu::LCD_Y_RES;
 
 pub struct Overlay {
-    pub notif_texture: VideoTexture,
-    pub fps_texture: VideoTexture,
-    pub menu_texture: VideoTexture,
     pub text_color: PixelColor,
     pub bg_color: PixelColor,
-    font_size: FontSize,
-    scale: usize,
 }
 
 impl Overlay {
-    pub fn new(
-        menu_rect: Rect,
-        fps_rect: Rect,
-        notif_rect: Rect,
-        text_color: PixelColor,
-        bg_color: PixelColor,
-        overlay_scale: usize,
-    ) -> Self {
+    pub fn new(text_color: PixelColor, bg_color: PixelColor) -> Self {
         Self {
-            font_size: FontSize::Small,
-            menu_texture: VideoTexture::new(menu_rect, BYTES_PER_PIXEL),
-            fps_texture: VideoTexture::new(fps_rect, BYTES_PER_PIXEL),
-            notif_texture: VideoTexture::new(notif_rect, BYTES_PER_PIXEL),
             bg_color,
             text_color,
-            scale: overlay_scale,
         }
     }
 
-    pub fn update_menu(&mut self, lines: &[&str], center: bool, align_center: bool) {
-        let (align_center_opt, text_width) = if align_center {
-            let center = CenterAlignedText::new(lines, self.font_size);
-            (Some(center), center.longest_text_width)
+    pub fn fill_menu(
+        &self,
+        fb: &mut FrameBuffer,
+        lines: &[&str],
+        center: bool,
+        align_center: bool,
+    ) {
+        let menu_width = LCD_X_RES as usize;
+        let size = FontSize::Font5x6;
+
+        let (align_center, text_width) = if align_center {
+            let center = CenterAlignedText::new(lines, size, menu_width);
+            (Some(center), center.max_text_width)
         } else {
-            (None, calc_text_width_str(lines[0], self.font_size))
+            (None, size.calc_text_width(lines[0]))
         };
 
-        let text_height = calc_text_height(self.font_size) * lines.len();
-        let mut x = self.menu_texture.rect.w as usize - text_width;
-        let mut y = self.menu_texture.rect.h as usize - text_height;
+        let text_height = size.height() * lines.len();
+        let lines_height = size.line_spacing() * (lines.len().saturating_sub(1));
+        let text_height = text_height + lines_height;
+        let mut x = menu_width.saturating_sub(text_width);
+        let mut y = LCD_Y_RES as usize - text_height;
 
         if center {
             x /= 2;
             y /= 2;
         }
+        let style = TextLinesStyle {
+            text_color: self.text_color,
+            bg_color: None,
+            size,
+            align_center,
+        };
 
-        self.menu_texture.fill(self.bg_color);
-        draw_text_lines(
-            &mut self.menu_texture.buffer,
-            self.menu_texture.pitch,
-            lines,
-            self.text_color,
-            None,
-            x,
-            y,
-            self.font_size,
-            1,
-            align_center_opt,
-        );
+        fill_buffer(fb, self.bg_color);
+        fill_lines(fb, lines, style, x, y);
     }
 
-    pub fn update_fps(&mut self, fps: &str) {
-        self.fps_texture.fill(PixelColor::from_u32(0));
+    #[inline(always)]
+    pub fn fill_fps(&mut self, fb: &mut FrameBuffer, text: &str) {
+        let style = TextStyle {
+            text_color: self.text_color,
+            bg_color: self.bg_color,
+            size: FontSize::Font3x4,
+        };
+        let padding = style.size.padding();
+        let x = LCD_X_RES as usize - padding - style.size.calc_text_width(text);
+        let y = LCD_Y_RES as usize - padding - style.size.height();
 
-        draw_text_lines(
-            &mut self.fps_texture.buffer,
-            self.fps_texture.pitch,
-            &[fps],
-            self.text_color,
-            Some(self.bg_color),
-            self.fps_texture.rect.x as usize,
-            self.fps_texture.rect.y as usize,
-            self.font_size,
-            self.scale,
-            None,
-        );
+        fill_line_outlined(fb, text, style, x, y);
     }
 
-    pub fn update_notif(&mut self, lines: &[&str]) {
-        self.notif_texture.fill(PixelColor::from_u32(0));
+    #[inline(always)]
+    pub fn fill_notif(&mut self, fb: &mut FrameBuffer, lines: &[&str]) {
+        let style = TextLinesStyle {
+            text_color: self.text_color,
+            bg_color: Some(self.bg_color),
+            size: FontSize::Font3x4,
+            align_center: None,
+        };
+        let padding = style.size.padding();
 
-        draw_text_lines(
-            &mut self.notif_texture.buffer,
-            self.notif_texture.pitch,
-            lines,
-            self.text_color,
-            Some(self.bg_color),
-            self.notif_texture.rect.x as usize,
-            self.notif_texture.rect.y as usize,
-            self.font_size,
-            self.scale,
-            None,
-        );
+        fill_lines(fb, lines, style, padding, padding);
     }
 }

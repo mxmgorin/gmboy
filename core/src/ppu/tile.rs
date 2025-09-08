@@ -1,4 +1,3 @@
-use crate::hex_to_rgba;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
 
@@ -28,10 +27,27 @@ pub struct TileData {
     pub lines: [TileLineData; TILE_HEIGHT as usize],
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[repr(C, packed)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct TileLineData {
     pub byte1: u8,
     pub byte2: u8,
+}
+
+impl TileLineData {
+    /// Mutable view as 2-byte array slice
+    #[inline(always)]
+    pub fn as_bytes_mut(&mut self) -> &mut [u8; 2] {
+        // SAFETY: TileLineData is #[repr(C)] with exactly 2 u8 fields, no padding
+        unsafe { &mut *(self as *mut TileLineData as *mut [u8; 2]) }
+    }
+
+    /// View entry as 4-byte array slice
+    #[inline(always)]
+    pub fn as_bytes(&self) -> &[u8; 2] {
+        // SAFETY: TileLineData is #[repr(C)] with exactly 2 u8 fields, no padding
+        unsafe { &*(self as *const TileLineData as *const [u8; 2]) }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -48,18 +64,21 @@ pub struct Pixel {
 }
 
 impl Pixel {
+    #[inline(always)]
     pub fn new(color: PixelColor, color_id: ColorId) -> Pixel {
         Pixel { color, color_id }
     }
 }
 
 impl PixelData {
+    #[inline(always)]
     pub fn new(byte1: u8, byte2: u8, bit: u8) -> PixelData {
         Self { byte1, byte2, bit }
     }
 
+    #[inline(always)]
     pub fn into_color_index(self) -> usize {
-        get_color_index(self.byte1, self.byte2, self.bit)
+        get_color_idx(self.byte1, self.byte2, self.bit)
     }
 }
 
@@ -79,18 +98,20 @@ impl From<usize> for ColorId {
             1 => ColorId::Light,
             2 => ColorId::Dark,
             3 => ColorId::Darkest,
-            _ => panic!("Invalid value for ColorId {}", value),
+            _ => panic!("Invalid value for ColorId {value}"),
         }
     }
 }
 
 impl ColorId {
+    #[inline(always)]
     pub fn new(byte1: u8, byte2: u8, bit: u8) -> ColorId {
-        get_color_index(byte1, byte2, bit).into()
+        get_color_idx(byte1, byte2, bit).into()
     }
 }
 
-pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
+#[inline(always)]
+pub fn get_color_idx(byte1: u8, byte2: u8, bit: u8) -> usize {
     let bit1 = (byte1 >> (7 - bit)) & 0x01;
     let bit2 = (byte2 >> (7 - bit)) & 0x01;
 
@@ -98,6 +119,7 @@ pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
 }
 
 impl TileLineData {
+    #[inline(always)]
     pub fn new(byte_one: u8, byte_two: u8) -> TileLineData {
         Self {
             byte1: byte_one,
@@ -105,10 +127,12 @@ impl TileLineData {
         }
     }
 
+    #[inline(always)]
     pub fn get_color_id(&self, bit: u8) -> ColorId {
         ColorId::new(self.byte1, self.byte2, bit)
     }
 
+    #[inline(always)]
     pub fn iter_color_ids(&self) -> impl Iterator<Item = ColorId> {
         TileLineIterator {
             bit: 0,
@@ -139,26 +163,61 @@ impl Iterator for TileLineIterator {
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelColor {
-    argb: u32,
+    rgb565: u16,
 }
 
 impl PixelColor {
-    pub const fn from_u32(argb: u32) -> PixelColor {
-        PixelColor { argb }
+    pub fn new(r: u8, g: u8, b: u8) -> PixelColor {
+        // Convert from 8-bit per channel to RGB565
+        let r5 = (r as u16 >> 3) & 0x1F; // 5 bits
+        let g6 = (g as u16 >> 2) & 0x3F; // 6 bits
+        let b5 = (b as u16 >> 3) & 0x1F; // 5 bits
+        let rgb565 = (r5 << 11) | (g6 << 5) | b5;
+
+        PixelColor { rgb565 }
     }
 
-    pub fn from_hex(hex: &str) -> PixelColor {
-        let u32 = u32::from_str_radix(hex, 16).unwrap();
+    pub fn from_hex_rgba(hex: &str) -> PixelColor {
+        assert!(hex.len() >= 6);
 
-        Self::from_u32(u32)
+        let r = u8::from_str_radix(&hex[0..2], 16).unwrap();
+        let g = u8::from_str_radix(&hex[2..4], 16).unwrap();
+        let b = u8::from_str_radix(&hex[4..6], 16).unwrap();
+        //let a = u8::from_str_radix(&hex[6..8], 16).unwrap();
+
+        Self::new(r, g, b)
     }
 
-    pub fn as_argb_u32(&self) -> u32 {
-        self.argb
+    /// Convert to RGB888 (full 8-bit channels)
+    #[inline]
+    pub fn as_rgb_bytes(&self) -> [u8; 3] {
+        let r = ((self.rgb565 >> 11) & 0x1F) as u8;
+        let g = ((self.rgb565 >> 5) & 0x3F) as u8;
+        let b = (self.rgb565 & 0x1F) as u8;
+
+        [
+            r << 3 | (r >> 2), // 5-bit → 8-bit
+            g << 2 | (g >> 4), // 6-bit → 8-bit
+            b << 3 | (b >> 2), // 5-bit → 8-bit
+        ]
     }
 
-    pub fn as_rgba(&self) -> (u8, u8, u8, u8) {
-        hex_to_rgba(self.argb)
+    #[inline]
+    pub fn as_rgba_bytes(&self) -> [u8; 4] {
+        let rgb = self.as_rgb_bytes();
+
+        [rgb[0], rgb[1], rgb[2], 255]
+    }
+
+    /// Return raw RGB565 bytes in **little-endian** order
+    #[inline]
+    pub fn as_rgb565_bytes(&self) -> [u8; 2] {
+        self.rgb565.to_le_bytes()
+    }
+
+    #[inline]
+    pub fn zero() -> PixelColor {
+        PixelColor::new(0, 0, 0)
     }
 }
 

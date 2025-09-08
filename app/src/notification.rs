@@ -1,7 +1,8 @@
+use crate::video::truncate_text;
 use std::time::{Duration, Instant};
 
 const MAX_CHARS: usize = 34;
-const MAX_COUNT: usize = 16;
+const MAX_COUNT: usize = 4;
 
 struct Notification {
     pub text: String,
@@ -27,21 +28,7 @@ impl Notifications {
 
     pub fn add(&mut self, text: impl Into<String>) {
         let text = text.into();
-        let mut truncated = String::with_capacity(MAX_CHARS + 2);
-        let mut chars = text.chars();
-
-        for _ in 0..MAX_CHARS {
-            if let Some(c) = chars.next() {
-                truncated.push(c);
-            } else {
-                break;
-            }
-        }
-
-        // If there are still more characters, append ".."
-        if chars.next().is_some() {
-            truncated.push_str("..");
-        }
+        let truncated = truncate_text(&text, MAX_CHARS);
 
         let item = Notification {
             text: truncated,
@@ -57,6 +44,7 @@ impl Notifications {
         self.updated = true;
     }
 
+    #[inline(always)]
     pub fn update_and_get(&mut self) -> (&[&str], bool) {
         let now = Instant::now();
         self.buffer.clear();

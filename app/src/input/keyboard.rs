@@ -3,17 +3,24 @@ use crate::input::button::{
     handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
     handle_up,
 };
+use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use sdl2::keyboard::Keycode;
 
-pub fn handle_keyboard(
-    app: &mut App,
+pub fn handle_keyboard<FS, FD>(
+    app: &mut App<FS, FD>,
     emu: &mut Emu,
     keycode: Keycode,
     is_pressed: bool,
-) -> Option<AppCmd> {
+) -> Option<AppCmd>
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
+    log::trace!("handle_keyboard: {keycode:?}");
+
     match keycode {
         Keycode::UP => handle_up(is_pressed, app, emu),
         Keycode::DOWN => handle_down(is_pressed, app, emu),
@@ -23,7 +30,7 @@ pub fn handle_keyboard(
         Keycode::X => return handle_a(is_pressed, app, emu),
         Keycode::Return | Keycode::S => {
             return if app.state == AppState::Paused && !is_pressed {
-                app.menu.select(&app.config) // update menu for better ux
+                app.menu.select(&app.config, &app.platform.fs, &app.roms) // update menu for better ux
             } else {
                 handle_start(is_pressed, app, emu)
             };
@@ -50,7 +57,7 @@ pub fn handle_keyboard(
                 Some(AppCmd::ChangeMode(RunMode::Normal))
             }
         }
-        Keycode::ESCAPE | Keycode::Q => {
+        Keycode::ESCAPE | Keycode::Q | Keycode::AC_BACK => {
             if is_pressed {
                 return Some(AppCmd::ToggleMenu);
             }

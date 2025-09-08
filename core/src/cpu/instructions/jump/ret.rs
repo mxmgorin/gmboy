@@ -1,30 +1,20 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::instructions::{ConditionType, FetchedData};
-use crate::cpu::stack::Stack;
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::instructions::JumpCondition;
+use crate::cpu::Cpu;
 
-#[derive(Debug, Clone, Copy)]
-pub struct RetInstruction {
-    pub condition_type: Option<ConditionType>,
-}
-
-impl ExecutableInstruction for RetInstruction {
-    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, _fetched_data: FetchedData) {
-        if self.condition_type.is_some() {
-            callback.m_cycles(1); // internal: branch decision?
+impl Cpu {
+    #[inline(always)]
+    pub fn execute_ret<const C: u8>(&mut self) {
+        if JumpCondition::from_u8(C) != JumpCondition::None {
+            self.clock.tick_m_cycles(1);
         }
 
-        if ConditionType::check_cond(&cpu.registers, self.condition_type) {
-            let lo = Stack::pop(cpu, callback) as u16;
-            let hi = Stack::pop(cpu, callback) as u16;
+        if self.check_cond::<C>() {
+            let lo = self.pop() as u16;
+            let hi = self.pop() as u16;
 
             let addr = (hi << 8) | lo;
-            cpu.registers.pc = addr;
-            callback.m_cycles(1); // internal: set PC?
+            self.registers.pc = addr;
+            self.clock.tick_m_cycles(1); // internal: set PC?
         }
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        AddressMode::IMP
     }
 }

@@ -34,7 +34,7 @@ jobs:
         override: true
 
     - name: Build release
-      run: cargo build --release
+      run: cargo build --release -p desktop
 
     - name: Prepare release folder
       run: |
@@ -44,11 +44,11 @@ jobs:
 
     - name: Zip release folder
       run: |
-        powershell Compress-Archive -Path dist\* -DestinationPath gmboy-windows.zip
+        powershell Compress-Archive -Path dist\* -DestinationPath gmboy-windows-x86_64.zip
 
     - name: Upload zip to GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: gmboy-windows.zip
+        files: gmboy-windows-x86_64.zip
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}

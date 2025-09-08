@@ -1,21 +1,8 @@
-use crate::cpu::instructions::FetchedData;
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-#[derive(Debug, Clone, Copy)]
-pub struct NopInstruction;
-
-impl ExecutableInstruction for NopInstruction {
-    fn execute(
-        &self,
-        _cpu: &mut Cpu,
-        _callback: &mut impl CpuCallback,
-        _fetched_data: FetchedData,
-    ) {
+impl Cpu {
+    #[inline(always)]
+    pub fn execute_nop(&mut self) {
         // does nothing
-    }
-
-    fn get_address_mode(&self) -> AddressMode {
-        AddressMode::IMP
     }
 }

@@ -12,6 +12,7 @@ pub struct Dma {
 }
 
 impl Dma {
+    #[inline]
     pub fn start(&mut self, address: u8) {
         if self.is_active {
             self.queue_addr = Some((address as u16) << 8);
@@ -24,11 +25,13 @@ impl Dma {
         self.is_active = true;
     }
 
+    #[inline]
     pub fn is_transferring(&self) -> bool {
         self.is_active && (self.start_delay == 0 || self.queue_addr.is_some())
     }
 
     /// Executes a single OAM DMA write and auto-increments the internal index cursor.
+    #[inline]
     pub fn tick(bus: &mut Bus) {
         if !bus.dma.is_active {
             return;
@@ -54,7 +57,7 @@ impl Dma {
         };
         let byte = bus.read(addr);
         let dest_addr = OAM_ADDR_START + bus.dma.current_index;
-        bus.oam_ram.write(dest_addr, byte);
+        bus.io.ppu.oam_ram.write(dest_addr, byte);
         bus.dma.current_index = bus.dma.current_index.wrapping_add(1);
         bus.dma.is_active = bus.dma.current_index < 160;
     }

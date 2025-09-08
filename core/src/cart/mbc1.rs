@@ -3,6 +3,7 @@ use crate::cart::mbc::{Mbc, MbcData};
 use crate::cart::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum BankingMode {
     RomBanking,
@@ -25,6 +26,7 @@ impl Mbc1 {
         }
     }
 
+    #[inline(always)]
     fn is_multicart(rom_bytes: &[u8]) -> bool {
         // Only 8 Mbit MBC1 multicarts exist
         if rom_bytes.len() != 1_048_576 {
@@ -45,8 +47,9 @@ impl Mbc1 {
         nintendo_logo_count >= 3
     }
 
+    #[inline(always)]
     pub fn get_effective_rom_bank_number(&self, address: u16) -> u8 {
-        let bank = if address < 0x4000 {
+        if address < 0x4000 {
             match self.banking_mode {
                 BankingMode::RomBanking => 0,
                 BankingMode::RamBanking => {
@@ -57,17 +60,14 @@ impl Mbc1 {
                     }
                 }
             }
+        } else if self.is_multicart {
+            (self.data.rom_bank_number as u8 & 0b1111) | self.data.ram_bank_number << 4
         } else {
-            if self.is_multicart {
-                (self.data.rom_bank_number as u8 & 0b1111) | self.data.ram_bank_number << 4
-            } else {
-                self.data.rom_bank_number as u8 | self.data.ram_bank_number << 5
-            }
-        };
-
-        bank
+            self.data.rom_bank_number as u8 | self.data.ram_bank_number << 5
+        }
     }
 
+    #[inline(always)]
     pub fn get_rom_bank_mask(&self) -> u8 {
         let required_bits = (usize::BITS - (self.data.rom_banks_count - 1).leading_zeros()) as u8;
         let mask = (1 << required_bits) - 1;
@@ -75,20 +75,23 @@ impl Mbc1 {
         mask as u8
     }
 
+    #[inline(always)]
     pub fn get_rom_address(address: u16, bank_number: u8) -> usize {
         (address as usize & 0x3FFF) | (bank_number as usize * ROM_BANK_SIZE)
     }
 }
 
 impl Mbc for Mbc1 {
+    #[inline]
     fn read_rom(&self, cart_data: &CartData, address: u16) -> u8 {
         let bank = self.get_effective_rom_bank_number(address);
-        let address = Mbc1::get_rom_address(address, bank) & (cart_data.bytes.len() - 1);
+        let address = Mbc1::get_rom_address(address, bank) & (cart_data.len() - 1);
 
-        cart_data.bytes[address]
+        cart_data.read(address)
     }
 
-    fn write_rom(&mut self, _cart_data: &CartData, address: u16, value: u8) {
+    #[inline]
+    fn write_rom(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => self.data.write_ram_enabled(value),
             0x2000..=0x3FFF => {
@@ -106,10 +109,12 @@ impl Mbc for Mbc1 {
         }
     }
 
+    #[inline]
     fn read_ram(&self, address: u16) -> u8 {
         self.data.read_ram(address, self.banking_mode)
     }
 
+    #[inline]
     fn write_ram(&mut self, address: u16, value: u8) {
         self.data.write_ram(address, value, self.banking_mode);
     }

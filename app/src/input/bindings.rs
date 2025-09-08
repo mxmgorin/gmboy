@@ -127,6 +127,12 @@ pub struct ButtonBindings {
     map: [Option<AppCmd>; ButtonBindings::BUTTON_COUNT * 2],
 }
 
+impl Default for ButtonBindings {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ButtonBindings {
     pub const BUTTON_COUNT: usize = 15;
 
@@ -251,15 +257,13 @@ impl<'de> Deserialize<'de> for ButtonBindings {
                     let pressed = match state_str {
                         "pressed" => true,
                         "released" => false,
-                        _ => {
-                            return Err(M::Error::custom(format!("Invalid state in key: {}", key)))
-                        }
+                        _ => return Err(M::Error::custom(format!("Invalid state in key: {key}"))),
                     };
 
                     if let Some(btn) = str_to_button(btn_str) {
                         bindings.set(btn, pressed, cmd);
                     } else {
-                        return Err(M::Error::custom(format!("Unknown button: {}", btn_str)));
+                        return Err(M::Error::custom(format!("Unknown button: {btn_str}")));
                     }
                 }
 

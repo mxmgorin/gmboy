@@ -1,11 +1,12 @@
+use crate::cart::Cart;
 use crate::ppu::tile::PixelColor;
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
-use std::path::{Path, PathBuf};
-use std::time::Duration;
-use std::{env, fs, io};
+use std::path::Path;
+use std::time::{Duration, Instant, SystemTime};
+use std::{fs, io};
 
 pub mod apu;
 pub mod auxiliary;
@@ -16,42 +17,31 @@ pub mod debugger;
 pub mod emu;
 pub mod ppu;
 
-pub struct LittleEndianBytes {
-    pub low_byte: u8,
-    pub high_byte: u8,
-}
-
-impl Into<u16> for LittleEndianBytes {
-    fn into(self) -> u16 {
-        let low_byte = self.low_byte as u16;
-        let high_byte = self.high_byte as u16;
-
-        low_byte | (high_byte << 8)
-    }
-}
-
 /// Returns true if the n-th bit of byte is set, false otherwise.
-pub fn get_bit_flag(byte: u8, pos: u8) -> bool {
+#[inline(always)]
+pub const fn get_bit_flag(byte: u8, pos: u8) -> bool {
     byte & (1 << pos) != 0
 }
 
-pub fn get_bit_flag16(val: u16, pos: u8) -> bool {
+#[inline(always)]
+pub const fn get_bit_flag16(val: u16, pos: u8) -> bool {
     get_bit16(val, pos) != 0
 }
 
-pub fn get_bit16(val: u16, pos: u8) -> u16 {
+#[inline(always)]
+pub const fn get_bit16(val: u16, pos: u8) -> u16 {
     val & (1 << pos)
 }
 
 /// Sets or clears the n-th bit of `a` based on the value of `on`.
-pub fn set_bit(a: &mut u8, n: u8, on: bool) {
-    if on {
-        *a |= 1 << n; // Set the n-th bit to 1
-    } else {
-        *a &= !(1 << n); // Set the n-th bit to 0
-    }
+#[inline(always)]
+pub const fn set_bit(a: &mut u8, n: u8, on: bool) {
+    let mask = 1 << n;
+    let v = (-(on as i8) as u8) & mask; // either 0 or mask
+    *a = (*a & !mask) | v;
 }
 
+#[inline(always)]
 pub fn struct_to_bytes_mut<T>(s: &mut T) -> &mut [u8] {
     // Convert the mutable reference to a mutable raw pointer
     let ptr = s as *mut T as *mut u8;
@@ -73,7 +63,7 @@ pub fn hex_to_rgba(argb: u32) -> (u8, u8, u8, u8) {
 pub fn into_pixel_colors(hex_colors: &[String]) -> [PixelColor; 4] {
     let colors: Vec<PixelColor> = hex_colors
         .iter()
-        .map(|hex| PixelColor::from_u32(u32::from_str_radix(hex, 16).unwrap()))
+        .map(|hex| PixelColor::from_hex_rgba(hex))
         .collect();
 
     colors[..4].try_into().unwrap()
@@ -109,15 +99,6 @@ where
     let file = File::create(path.as_ref())?;
     let writer = BufWriter::new(file);
     serde_json::to_writer_pretty(writer, data).map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-}
-
-pub fn get_exe_dir() -> PathBuf {
-    let exe_path = env::current_exe().expect("Failed to get executable path");
-
-    exe_path
-        .parent()
-        .expect("Failed to get executable directory")
-        .to_path_buf()
 }
 
 pub fn read_bytes(file_path: &Path) -> Result<Box<[u8]>, String> {
@@ -168,6 +149,74 @@ pub fn change_usize(value: usize, delta: i32) -> usize {
     } else {
         value + delta as usize
     }
+}
+
+pub fn print_cart(cart: &Cart) -> Result<(), String> {
+    log::info!(
+        "Cart Loaded:\n\
+     \t\t\t\t  Title          : {}\n\
+     \t\t\t\t  Type           : {:?}\n\
+     \t\t\t\t  ROM Size       : {:?}\n\
+     \t\t\t\t  ROM bytes      : {}\n\
+     \t\t\t\t  RAM Size       : {:?}\n\
+     \t\t\t\t  ROM Version    : {:02X}\n\
+     \t\t\t\t  Checksum Valid : {}",
+        cart.data.get_title(),
+        cart.data.get_cart_type()?,
+        cart.data.get_rom_size()?,
+        cart.data.len(),
+        cart.data.get_ram_size()?,
+        cart.data.get_rom_version(),
+        cart.data.checksum_valid()
+    );
+
+    Ok(())
+}
+
+pub fn serialize<S>(instant: &Instant, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let now_system = SystemTime::now();
+    let now_instant = Instant::now();
+    let delta = if *instant <= now_instant {
+        now_instant.duration_since(*instant)
+    } else {
+        (*instant).duration_since(now_instant)
+    };
+
+    let system_time = if *instant <= now_instant {
+        now_system - delta
+    } else {
+        now_system + delta
+    };
+
+    let timestamp = system_time
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos() as i128;
+
+    serializer.serialize_i128(timestamp)
+}
+
+pub fn deserialize<'de, D>(deserializer: D) -> Result<Instant, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let timestamp = i128::deserialize(deserializer)?;
+    let system_time = SystemTime::UNIX_EPOCH + Duration::from_nanos(timestamp as u64); // careful with overflow
+    let now_system = SystemTime::now();
+    let now_instant = Instant::now();
+
+    let delta = now_system
+        .duration_since(system_time)
+        .unwrap_or(Duration::ZERO);
+
+    Ok(now_instant - delta)
+}
+
+mod instant_serde {
+    pub use super::{deserialize, serialize};
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-use crate::config::{RenderConfig, VideoBackendType, VideoConfig};
+use crate::config::{VideoBackendType, VideoConfig};
 use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
 use crate::video::overlay::Overlay;
@@ -6,13 +6,15 @@ use crate::video::sdl2_backend::Sdl2Backend;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, VideoBackend};
 use core::ppu::tile::PixelColor;
 use core::ppu::tile::TileData;
-use sdl2::rect::Rect;
 use sdl2::Sdl;
+use std::time::{Duration, Instant};
 
 pub struct AppVideo {
     frame_blend: Option<FrameBlend>,
     backend: VideoBackend,
     config: VideoConfig,
+    last_render_time: Instant,
+    pub min_render_interval: Duration,
     pub ui: Overlay,
 }
 
@@ -27,35 +29,17 @@ impl AppVideo {
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
-        let menu_rect = Rect::new(
-            0,
-            0,
-            RenderConfig::WIDTH as u32,
-            RenderConfig::HEIGHT as u32,
-        );
-        let notif_rect = Rect::new(
-            6,
-            6,
-            RenderConfig::WIDTH as u32 * 3,
-            RenderConfig::HEIGHT as u32 * 3,
-        );
+
         let (mut backend, ui) = match config.render.backend {
             VideoBackendType::Sdl2 => {
-                let fps_rect = Rect::new(6, 6, 76, 76);
-                let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 2);
-                let backend = Sdl2Backend::new(sdl, config, game_rect, fps_rect, notif_rect);
+                let ui = Overlay::new(text_color, bg_color);
+                let backend = Sdl2Backend::new(sdl, config, game_rect);
 
-                (VideoBackend::Sdl2(backend), ui)
+                (VideoBackend::Sdl2(Box::new(backend)), ui)
             }
             VideoBackendType::Gl => {
-                let fps_rect = Rect::new(
-                    6,
-                    6,
-                    RenderConfig::WIDTH as u32 * 3,
-                    RenderConfig::WIDTH as u32 * 3,
-                );
-                let ui = Overlay::new(menu_rect, fps_rect, notif_rect, text_color, bg_color, 1);
-                let backend = GlBackend::new(sdl, game_rect, fps_rect, notif_rect, &config.render)?;
+                let ui = Overlay::new(text_color, bg_color);
+                let backend = GlBackend::new(sdl, game_rect, &config.render)?;
 
                 (VideoBackend::Gl(backend), ui)
             }
@@ -65,6 +49,8 @@ impl AppVideo {
         Ok(Self {
             frame_blend: FrameBlend::new(&config.render.frame_blend_mode),
             config: config.clone(),
+            last_render_time: Instant::now(),
+            min_render_interval: config.render.calc_min_frame_interval(),
             backend,
             ui,
         })
@@ -76,41 +62,42 @@ impl AppVideo {
     }
 
     pub fn update_config(&mut self, config: &VideoConfig) {
+        self.min_render_interval = config.render.calc_min_frame_interval();
         self.frame_blend = FrameBlend::new(&config.render.frame_blend_mode);
         self.backend.set_fullscreen(config.interface.is_fullscreen);
         self.backend.update_config(config);
         self.config = config.clone();
     }
 
-    pub fn draw_buffer(&mut self, buffer: &[u32]) {
+    #[inline]
+    pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let buffer = if let Some(blend) = &mut self.frame_blend {
             blend.process_buffer(buffer, &self.config)
         } else {
             buffer
         };
 
-        let buffer: &[u8] = bytemuck::cast_slice(buffer);
         self.backend.draw_buffer(buffer, &self.config);
     }
 
-    pub fn draw_menu(&mut self) {
-        self.backend.draw_menu(&self.ui.menu_texture, &self.config)
+    #[inline(always)]
+    pub fn draw_menu(&mut self, buffer: &[u8]) {
+        self.backend.draw_menu(buffer, &self.config)
     }
 
-    pub fn draw_fps(&mut self) {
-        self.backend.draw_fps(&self.ui.fps_texture);
-    }
-
-    pub fn draw_notif(&mut self) {
-        self.backend.draw_notif(&self.ui.notif_texture);
-    }
-
+    #[inline(always)]
     pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
         self.backend.draw_tiles(tiles);
     }
 
-    pub fn show(&mut self) {
-        self.backend.show();
+    #[inline(always)]
+    pub fn try_render(&mut self, on_time: bool) {
+        let min_elapsed = self.last_render_time.elapsed() >= self.min_render_interval;
+
+        if on_time || min_elapsed {
+            self.backend.show();
+            self.last_render_time = Instant::now();
+        }
     }
 
     pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {

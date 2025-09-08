@@ -3,9 +3,12 @@ members = [
     "core",
     "app",
     "desktop",
+    "android"
 ]
 
 resolver = "2"
 
-#[profile.release]
+[profile.release]
+codegen-units = 1
+lto = "fat"
 #debug = 1

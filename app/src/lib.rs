@@ -1,43 +1,53 @@
 use crate::app::App;
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
-use crate::roms::RomsList;
 use core::apu::Apu;
 use core::auxiliary::io::Io;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::emu::runtime::EmuRuntime;
+use core::emu::state::EmuSaveState;
 use core::emu::Emu;
 use core::ppu::lcd::Lcd;
-use core::ppu::palette::LcdPalette;
 use core::ppu::Ppu;
-use std::path::PathBuf;
+use palette::LcdPalette;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
 use std::{env, fs};
 
 pub mod app;
 pub mod audio;
+pub mod battery;
 pub mod config;
+pub mod file_browser;
 pub mod input;
 pub mod menu;
 pub mod notification;
+pub mod palette;
 pub mod roms;
 pub mod video;
 
-pub fn run(args: Vec<String>) {
+pub fn run<FS, FD>(args: Vec<String>, platform: AppPlatform<FS, FD>)
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
+    let base_dir = get_base_dir();
+    log::info!("Using base_dir: {base_dir:?}");
+
     let config = get_config();
     let palettes = get_palettes();
     let mut emu = new_emu(&config, &palettes);
     let mut sdl = sdl2::init().unwrap();
     let mut input = InputHandler::new(&sdl).unwrap();
-    let mut app = App::new(&mut sdl, config, palettes).unwrap();
+    let mut app = App::new(&mut sdl, config, palettes, platform).unwrap();
     load_cart(&mut app, &mut emu, args);
 
-    if let Err(err) = app.run(&mut emu, &mut input) {
-        eprintln!("Failed app run: {err}");
-    }
+    app.run(&mut emu, &mut input);
 
     if let Err(err) = app.save_files(&mut emu) {
-        eprintln!("Failed app.save_files: {err}");
+        log::error!("Failed app.save_files: {err}");
     }
 }
 
@@ -47,21 +57,29 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let colors = config.video.interface.get_palette_colors(palettes);
 
     let lcd = Lcd::new(colors);
-    let apu = Apu::new(apu_config);
-    let bus = Bus::new(Cart::empty(), Io::new(lcd, apu));
-    let mut ppu = Ppu::default();
+    let mut ppu = Ppu::new(lcd);
+    ppu.toggle_fps(config.video.interface.show_fps);
+    let apu = Apu::new(apu_config);    
+    let bus = Bus::new(Cart::empty(), Io::new(ppu, apu));
 
-    if config.video.interface.show_fps {
-        ppu.toggle_fps();
+    #[cfg(feature = "debug")]
+    {
+        let debugger = core::debugger::Debugger::new(
+            core::debugger::CpuLogType::Asm,
+            false,
+        );
+        return Emu::new(emu_config.clone(), EmuRuntime::new(bus)).unwrap();
     }
 
-    let debugger = None;
-    let runtime = EmuRuntime::new(ppu, bus, debugger);
-
-    Emu::new(emu_config.clone(), runtime).unwrap()
+    #[cfg(not(feature = "debug"))]
+    Emu::new(emu_config.clone(), EmuRuntime::new(bus)).unwrap()
 }
 
-pub fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
+pub fn load_cart<FS, FD>(app: &mut App<FS, FD>, emu: &mut Emu, mut args: Vec<String>)
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
     let cart_path = if args.len() < 2 {
         env::var("CART_PATH").ok()
     } else {
@@ -70,19 +88,11 @@ pub fn load_cart(app: &mut App, emu: &mut Emu, mut args: Vec<String>) {
     .map(PathBuf::from);
 
     if let Some(cart_path) = cart_path {
-        if cart_path.exists() {
-            app.load_cart_file(emu, &cart_path);
+        if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
+            log::warn!("Failed to load cart file: {err}");
         }
     } else {
-        let library = RomsList::get_or_create();
-
-        if let Some(cart_path) = library.get_last_path() {
-            let cart_path = cart_path.clone();
-
-            if cart_path.exists() {
-                app.load_cart_file(emu, &cart_path);
-            }
-        }
+        app.restart_rom(emu);
     }
 }
 
@@ -93,16 +103,16 @@ pub fn get_config() -> AppConfig {
         let config = AppConfig::from_file(&config_path);
 
         let Ok(config) = config else {
-            eprintln!("Failed to parse config file: {}", config.unwrap_err());
+            log::error!("Failed to parse config file: {}", config.unwrap_err());
 
             let backup_path = config_path.with_file_name(format!(
                 "{}.bak",
                 config_path.file_name().unwrap().to_string_lossy()
             ));
             if let Err(rename_err) = fs::rename(config_path, &backup_path) {
-                eprintln!("Failed to rename invalid config file: {rename_err}");
+                log::error!("Failed to rename invalid config file: {rename_err}");
             } else {
-                eprintln!("Renamed invalid config to {backup_path:?}");
+                log::error!("Renamed invalid config to {backup_path:?}");
             }
 
             let default_config = AppConfig::default();
@@ -125,16 +135,6 @@ pub fn get_config() -> AppConfig {
         default_config
     };
 
-    if let Some(path) = &config.roms_dir {
-        let mut lib = RomsList::get_or_create();
-
-        if let Err(err) = lib.load_from_dir(path) {
-            eprintln!("Failed load library from path: {err}");
-        }
-
-        _ = core::save_json_file(RomsList::get_path(), &lib);
-    }
-
     config
 }
 
@@ -148,5 +148,88 @@ pub fn get_palettes() -> Box<[LcdPalette]> {
         LcdPalette::save_palettes_file(&palettes).unwrap();
 
         palettes
+    }
+}
+
+pub fn get_base_dir() -> PathBuf {
+    let path = sdl2::filesystem::pref_path("mxmgorin", "GMBoy").unwrap();
+
+    PathBuf::from(path)
+}
+
+pub struct AppConfigFile;
+
+impl AppConfigFile {
+    pub fn write_save_state_file(v: &EmuSaveState, name: &str, suffix: &str) -> Result<(), String> {
+        let path = AppConfigFile::get_save_state_path(name, suffix);
+
+        if let Some(parent) = Path::new(&path).parent() {
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        }
+
+        let encoded: Vec<u8> = bincode::serialize(v).map_err(|e| e.to_string())?;
+        let mut file = File::create(path).map_err(|e| e.to_string())?;
+        file.write_all(&encoded).map_err(|e| e.to_string())?;
+
+        Ok(())
+    }
+
+    pub fn read_save_state_file(name: &str, suffix: &str) -> Result<EmuSaveState, String> {
+        let path = Self::get_save_state_path(name, suffix);
+        let mut file = File::open(path).map_err(|e| e.to_string())?;
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
+        let decoded = bincode::deserialize(&buffer).map_err(|e| e.to_string())?;
+
+        Ok(decoded)
+    }
+
+    pub fn get_save_state_path(game_name: &str, suffix: &str) -> PathBuf {
+        get_base_dir()
+            .join("save_states")
+            .join(format!("{game_name}_{suffix}.state"))
+    }
+}
+
+pub trait PlatformFileDialog {
+    fn select_file(&mut self, title: &str, filter: (&[&str], &str)) -> Option<String>;
+    fn select_dir(&mut self, title: &str) -> Option<String>;
+}
+
+pub struct AppPlatform<FS, FD>
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
+    pub fs: FS,
+    pub fd: FD,
+}
+
+impl<FS, FD> AppPlatform<FS, FD>
+where
+    FS: PlatformFileSystem,
+    FD: PlatformFileDialog,
+{
+    pub fn new(fs: FS, fd: FD) -> Self {
+        Self { fs, fd }
+    }
+}
+
+pub trait PlatformFileSystem {
+    fn get_file_name(&self, path: &Path) -> Option<String>;
+    fn read_file_bytes(&self, path: &Path) -> Option<Box<[u8]>>;
+    fn read_dir(&self, path: &Path) -> Result<Vec<String>, String>;
+    fn can_split_paths(&self) -> bool;
+}
+
+pub struct EmptyFileDialog;
+
+impl PlatformFileDialog for EmptyFileDialog {
+    fn select_file(&mut self, _title: &str, _filter: (&[&str], &str)) -> Option<String> {
+        None
+    }
+
+    fn select_dir(&mut self, _title: &str) -> Option<String> {
+        None
     }
 }

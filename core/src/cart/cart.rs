@@ -107,6 +107,7 @@ impl Cart {
         format!("{title}-{global_checksum}")
     }
 
+    #[inline]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
@@ -117,10 +118,11 @@ impl Cart {
         }
     }
 
+    #[inline]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             ROM_BANK_ZERO_START_ADDR..=ROM_BANK_NON_ZERO_END_ADDR => {
-                self.mbc.write_rom(&self.data, address, value)
+                self.mbc.write_rom(address, value)
             }
             RAM_EXTERNAL_START_ADDR..=RAM_EXTERNAL_END_ADDR => self.mbc.write_ram(address, value),
             _ => (),
@@ -144,12 +146,29 @@ impl Cart {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CartData {
-    pub bytes: Box<[u8]>,
+    bytes: Box<[u8]>,
 }
 
 impl CartData {
     pub fn new(bytes: Box<[u8]>) -> Self {
         Self { bytes }
+    }
+
+    #[inline(always)]
+    pub fn len(&self) -> usize {
+        self.bytes.len()
+    }
+
+    #[inline(always)]
+    pub fn read(&self, addr: usize) -> u8 {
+        unsafe { *self.bytes.get_unchecked(addr) }
+    }
+
+    #[inline(always)]
+    pub fn write(&mut self, addr: u16, value: u8) {
+        unsafe {
+            *self.bytes.get_unchecked_mut(addr as usize) = value;
+        }
     }
 
     pub fn get_title(&self) -> String {
@@ -160,10 +179,12 @@ impl CartData {
         CartHeader::parse_cart_type(&self.bytes)
     }
 
+    #[inline(always)]
     pub fn get_rom_size(&self) -> Result<RomSize, String> {
         CartHeader::parse_rom_size(&self.bytes)
     }
 
+    #[inline(always)]
     pub fn get_ram_size(&self) -> Result<RamSize, String> {
         CartHeader::parse_ram_size(&self.bytes)
     }

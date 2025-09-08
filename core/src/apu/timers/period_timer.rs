@@ -30,14 +30,17 @@ impl PeriodTimer {
         false
     }
 
+    #[inline(always)]
     pub fn reload(&mut self, nrx3x4: &NRx3x4) {
         self.counter = (2048 - nrx3x4.get_period()) * self.get_multiplier();
     }
 
+    #[inline(always)]
     fn is_expired(&self) -> bool {
         self.counter == 0
     }
 
+    #[inline(always)]
     fn get_multiplier(&self) -> u16 {
         match self.ch_type {
             ChannelType::CH1 | ChannelType::CH2 => 4,

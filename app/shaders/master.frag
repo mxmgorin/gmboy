@@ -1,5 +1,3 @@
-#version 150
-
 uniform sampler2D image;
 uniform sampler2D previous_image;
 uniform int frame_blending_mode;
@@ -21,7 +19,7 @@ vec4 _texture(sampler2D t, vec2 pos)
 
 vec4 texture_relative(sampler2D t, vec2 pos, vec2 offset)
 {
-    vec2 input_resolution = textureSize(t, 0);
+    vec2 input_resolution = vec2(textureSize(t, 0));
     return _texture(t, (floor(pos * input_resolution) + offset + vec2(0.5, 0.5)) / input_resolution);
 }
 
@@ -42,8 +40,8 @@ void main()
 {
     vec2 position = gl_FragCoord.xy - origin;
     position /= output_resolution;
-    position.y = 1 - position.y;
-    vec2 input_resolution = textureSize(image, 0);
+    position.y = 1.0 - position.y;
+    vec2 input_resolution = vec2(textureSize(image, 0));
 
     float ratio;
     switch (frame_blending_mode) {
@@ -59,12 +57,12 @@ void main()
                 ratio = BLEND_BIAS;
             }
             else {
-                ratio = 1 - BLEND_BIAS;
+                ratio = 1.0 - BLEND_BIAS;
             }
             break;
         case ACCURATE_ODD:
             if ((int(position.y * input_resolution.y) & 1) == 0) {
-                ratio = 1 - BLEND_BIAS;
+                ratio = 1.0 - BLEND_BIAS;
             }
             else {
                 ratio = BLEND_BIAS;

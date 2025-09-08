@@ -1,38 +1,28 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-use crate::cpu::instructions::FetchedData;
-
-/// ComPare the value in A with the value in r8.
-/// This subtracts the value in r8 from A and sets flags accordingly, but discards the result.
-/// Cycles: 1
-/// Bytes: 1
-/// Flags:
-/// Z Set if result is 0.
-/// N 1
-/// H Set if borrow from bit 4.
-/// C Set if borrow (i.e. if r8 > A).
-#[derive(Debug, Clone, Copy)]
-pub struct CpInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for CpInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        let fetched_value_i32 = fetched_data.value as i32;
-        let reg_i32 = cpu.registers.a as i32;
-        let result: i32 = reg_i32.wrapping_sub(fetched_value_i32);
-        let reg_value_diff = (reg_i32 & 0x0F) - (fetched_value_i32 & 0x0F);
-
-        cpu.registers.flags.set(
-            (result == 0).into(),
-            true.into(),
-            (reg_value_diff < 0).into(),
-            (result < 0).into(),
-        )
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_cp_r_d8<const R1: u8>(&mut self) {
+        let val = self.read_pc();
+        self.execute_cp(val);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_cp_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.read_mr::<R2>();
+        self.execute_cp(val);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_cp_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.registers.get_register8::<R2>();
+        self.execute_cp(val);
+    }
+
+    #[inline(always)]
+    pub fn execute_cp(&mut self, rhs: u8) {
+        let lhs = self.registers.a;
+        let result = lhs.wrapping_sub(rhs);
+        self.registers.flags.op_sub8(lhs, rhs, 0, result);
     }
 }

@@ -35,6 +35,7 @@ impl SweepTimer {
         }
     }
 
+    #[inline]
     pub fn reload(&mut self, nr52: &mut NR52, nrx3x4: NRx3x4) {
         let pace = self.reload_counter();
         let individual_step_non_zero = self.nr10.individual_step() != 0;
@@ -48,6 +49,7 @@ impl SweepTimer {
         }
     }
 
+    #[inline(always)]
     fn reload_counter(&mut self) -> u8 {
         let pace = self.nr10.pace();
 
@@ -60,6 +62,7 @@ impl SweepTimer {
         pace
     }
 
+    #[inline(always)]
     fn calc_frequency(&mut self, nr52: &mut NR52) -> u16 {
         let mut new_frequency = self.shadow_frequency >> self.nr10.individual_step();
 

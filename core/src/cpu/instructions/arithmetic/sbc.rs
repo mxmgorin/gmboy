@@ -1,52 +1,31 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::instructions::{DataDestination, FetchedData};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::Cpu;
 
-/// Subtract the value in r8 and the carry flag from A.
-/// Cycles: 1
-/// Bytes: 1
-/// Flags:
-/// Z Set if result is 0.
-/// N 1
-/// H Set if borrow from bit 4.
-/// C Set if borrow (i.e. if (r8 + carry) > A).
-#[derive(Debug, Clone, Copy)]
-pub struct SbcInstruction {
-    pub address_mode: AddressMode,
-}
-
-impl ExecutableInstruction for SbcInstruction {
-    fn execute(&self, cpu: &mut Cpu, _callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
-            unreachable!();
-        };
-
-        let c_val = cpu.registers.flags.get_c();
-        let val_plus_c = fetched_data.value.wrapping_add(c_val as u16) as u8;
-        let r_val = cpu.registers.read_register(r);
-
-        let c_val_i32 = c_val as i32;
-        let r_val_i32 = r_val as i32;
-        let fetched_val_i32 = fetched_data.value as i32;
-
-        let h = (r_val_i32 & 0xF)
-            .wrapping_sub(fetched_val_i32 & 0xF)
-            .wrapping_sub(c_val_i32)
-            < 0;
-        let c = r_val_i32
-            .wrapping_sub(fetched_val_i32)
-            .wrapping_sub(c_val_i32)
-            < 0;
-
-        let result = r_val.wrapping_sub(val_plus_c as u16);
-
-        cpu.registers.set_register(r, result);
-        cpu.registers
-            .flags
-            .set((result == 0).into(), true.into(), h.into(), c.into());
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_sbc_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.registers.get_register8::<R2>();
+        self.execute_sbc::<R1>(val);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_sbc_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.read_mr::<R2>();
+        self.execute_sbc::<R1>(val);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_sbc_r_d8<const R1: u8>(&mut self) {
+        let val = self.read_pc();
+        self.execute_sbc::<R1>(val);
+    }
+
+    #[inline(always)]
+    pub fn execute_sbc<const R1: u8>(&mut self, rhs: u8) {
+        let carry_in = self.registers.flags.get_c() as u8;
+        let lhs = self.registers.get_register8::<R1>();
+
+        let result = lhs.wrapping_sub(rhs).wrapping_sub(carry_in);
+        self.registers.set_register8::<R1>(result);
+        self.registers.flags.op_sub8(lhs, rhs, carry_in, result);
     }
 }

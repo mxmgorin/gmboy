@@ -1,56 +1,50 @@
-use crate::cpu::instructions::{AddressMode, ExecutableInstruction};
-use crate::cpu::instructions::{DataDestination, FetchedData, RegisterType};
-use crate::cpu::{Cpu, CpuCallback};
+use crate::cpu::{Cpu, RegisterType};
 
-#[derive(Debug, Clone, Copy)]
-pub struct AddInstruction {
-    pub address_mode: AddressMode,
-}
+impl Cpu {
+    #[inline(always)]
+    pub fn fetch_execute_add_sp_e8(&mut self) {
+        let lhs = self.registers.sp;
+        let rhs = self.read_pc();
 
-impl ExecutableInstruction for AddInstruction {
-    fn execute(&self, cpu: &mut Cpu, callback: &mut impl CpuCallback, fetched_data: FetchedData) {
-        let DataDestination::Register(r) = fetched_data.dest else {
-            unreachable!();
-        };
-
-        let reg_val = cpu.registers.read_register(r);
-        let mut reg_val_u32: u32 = reg_val as u32 + fetched_data.value as u32;
-
-        if r == RegisterType::SP {
-            callback.m_cycles(1);
-            reg_val_u32 = cpu
-                .registers
-                .read_register(r)
-                .wrapping_add(fetched_data.value as i8 as u16) as u32;
-        }
-
-        let mut z = if (reg_val_u32 & 0xFF) == 0 {
-            Some(true)
-        } else {
-            Some(false)
-        };
-        let mut h = (reg_val & 0xF) + (fetched_data.value & 0xF) >= 0x10;
-        let mut c = ((reg_val as i32) & 0xFF) + ((fetched_data.value as i32) & 0xFF) >= 0x100;
-
-        if r.is_16bit() {
-            callback.m_cycles(1);
-            z = None;
-            h = (reg_val & 0xFFF) + (fetched_data.value & 0xFFF) >= 0x1000;
-            let n = (reg_val as u32) + (fetched_data.value as u32);
-            c = n >= 0x10000;
-        }
-
-        if r == RegisterType::SP {
-            z = Some(false);
-            h = (reg_val & 0xF) + (fetched_data.value & 0xF) >= 0x10;
-            c = (reg_val & 0xFF) + (fetched_data.value & 0xFF) >= 0x100;
-        }
-
-        cpu.registers.set_register(r, (reg_val_u32 & 0xFFFF) as u16);
-        cpu.registers.flags.set(z, false.into(), h.into(), c.into());
+        self.clock.tick_m_cycles(2);
+        self.registers.sp = self.registers.sp.wrapping_add(rhs as i8 as u16);
+        self.registers.flags.op_add_sp_e8(lhs, rhs as u16);
     }
 
-    fn get_address_mode(&self) -> AddressMode {
-        self.address_mode
+    #[inline(always)]
+    pub fn fetch_execute_add_r_r<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.registers.get_register::<R2>();
+        self.execute_add::<R1>(val);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_add_r_mr<const R1: u8, const R2: u8>(&mut self) {
+        let val = self.read_mr::<R2>();
+        self.execute_add::<R1>(val as u16);
+    }
+
+    #[inline(always)]
+    pub fn fetch_execute_add_r_d8<const R1: u8>(&mut self) {
+        let val = self.read_pc();
+        self.execute_add::<R1>(val as u16);
+    }
+
+    #[inline(always)]
+    pub fn execute_add<const R1: u8>(&mut self, value: u16) {
+        if RegisterType::from_u8(R1).is_16bit() {
+            // but not for SP
+            let lhs = self.registers.get_register::<R1>();
+            let rhs = value;
+            let result = lhs.wrapping_add(rhs);
+            self.registers.set_register::<R1>(result);
+            self.clock.tick_m_cycles(1);
+            self.registers.flags.op_add16(lhs, rhs);
+        } else {
+            let lhs = self.registers.get_register8::<R1>();
+            let rhs = value as u8;
+            let result = lhs.wrapping_add(rhs);
+            self.registers.set_register8::<R1>(result);
+            self.registers.flags.op_add8(lhs, rhs, 0, result);
+        }
     }
 }

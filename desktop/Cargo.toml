@@ -5,11 +5,18 @@ edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
 
 [features]
-default = ["filepicker"]
-filepicker = []
+default = ["file-dialog", "file-browser"]
+file-dialog = ["tinyfiledialogs", "app/file-dialog"]
+file-browser = ["app/file-browser"]
+sdl2-bundled = ["app/sdl2-bundled"]
+debug = ["app/debug"]
 
 [dependencies]
-app = { path = "../app" }
+core = { path = "../core" }
+app = { path = "../app", default-features = false }
+tinyfiledialogs = { version = "3.9", optional = true }
+log = "0.4.27"
+env_logger = "0.11.8"
 
 [[bin]]
 name = "gmboy"

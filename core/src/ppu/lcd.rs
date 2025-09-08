@@ -1,11 +1,10 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::ppu::palette::LcdPalette;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
     TILE_SET_DATA_2_START,
 };
 use crate::ppu::window::LcdWindow;
-use crate::{get_bit_flag, into_pixel_colors, set_bit};
+use crate::{get_bit_flag, set_bit};
 use serde::{Deserialize, Serialize};
 
 pub const LCD_ADDRESS_START: u16 = 0xFF40;
@@ -50,9 +49,12 @@ pub struct Lcd {
 
 impl Default for Lcd {
     fn default() -> Self {
-        let palette = into_pixel_colors(&LcdPalette::nostalgia().hex_colors);
-
-        Self::new(palette)
+        Self::new([
+            PixelColor::from_hex_rgba("FFFFFFFF"),
+            PixelColor::from_hex_rgba("AAAAAAFF"),
+            PixelColor::from_hex_rgba("555555FF"),
+            PixelColor::from_hex_rgba("000000FF"),
+        ])
     }
 }
 
@@ -76,13 +78,7 @@ impl Lcd {
         }
     }
 
-    pub fn apply_colors(&mut self, colors: [PixelColor; 4]) {
-        self.current_colors = colors;
-        self.bg_colors = colors;
-        self.sp1_colors = colors;
-        self.sp2_colors = colors;
-    }
-
+    #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,
@@ -101,16 +97,7 @@ impl Lcd {
         }
     }
 
-    pub fn set_pallet(&mut self, colors: [PixelColor; 4]) {
-        self.current_colors = colors;
-
-        for (i, color) in self.current_colors.iter().enumerate() {
-            self.sp1_colors[i] = *color;
-            self.sp2_colors[i] = *color;
-            self.bg_colors[i] = *color;
-        }
-    }
-
+    #[inline(always)]
     fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
         let colors: &mut [PixelColor; 4] = match pallet_type {
             1 => &mut self.sp1_colors,
@@ -124,6 +111,16 @@ impl Lcd {
         colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
     }
 
+    #[inline(always)]
+    pub fn set_colors(&mut self, colors: [PixelColor; 4]) {
+        self.current_colors = colors;
+        // re-apply existing palette mappings
+        self.update_palette(self.bg_palette, 0);
+        self.update_palette(self.obj_palette[0], 1);
+        self.update_palette(self.obj_palette[1], 2);
+    }
+
+    #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte = value,
@@ -151,6 +148,7 @@ impl Lcd {
         }
     }
 
+    #[inline(always)]
     pub fn increment_ly(&mut self, interrupts: &mut Interrupts) {
         if self.window.is_visible(self) && self.window.on(self) {
             self.window.line_number += 1;
@@ -160,20 +158,21 @@ impl Lcd {
         self.compare_ly(interrupts);
     }
 
+    #[inline(always)]
     pub fn reset_ly(&mut self, interrupts: &mut Interrupts) {
         self.ly = 0;
         self.window.line_number = 0;
         self.compare_ly(interrupts);
     }
 
+    #[inline(always)]
     fn compare_ly(&mut self, interrupts: &mut Interrupts) {
         if self.ly == self.ly_compare {
-            self.status.lyc_set(true);
-
             if self.status.is_stat_interrupt(LcdStatSrc::Lyc) {
+                self.status.set_lyc(true);
                 interrupts.request_interrupt(InterruptType::LCDStat);
             } else {
-                self.status.lyc_set(false);
+                self.status.set_lyc(false);
             }
         }
     }
@@ -192,14 +191,17 @@ impl Default for LcdControl {
 }
 
 impl LcdControl {
-    pub fn bgw_enabled(&self) -> bool {
+    #[inline(always)]
+    pub fn is_bgw_enabled(&self) -> bool {
         get_bit_flag(self.byte, 0)
     }
-    pub fn obj_enabled(&self) -> bool {
+    #[inline(always)]
+    pub fn is_obj_enabled(&self) -> bool {
         get_bit_flag(self.byte, 1)
     }
 
-    pub fn obj_height(&self) -> u8 {
+    #[inline(always)]
+    pub fn get_obj_height(&self) -> u8 {
         if get_bit_flag(self.byte, 2) {
             16
         } else {
@@ -207,7 +209,8 @@ impl LcdControl {
         }
     }
 
-    pub fn bg_map_area(&self) -> u16 {
+    #[inline(always)]
+    pub fn get_bg_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 3) {
             BG_TILE_MAP_2_ADDR_START
         } else {
@@ -215,7 +218,8 @@ impl LcdControl {
         }
     }
 
-    pub fn bgw_data_area(&self) -> u16 {
+    #[inline(always)]
+    pub fn get_bgw_data_area(&self) -> u16 {
         if get_bit_flag(self.byte, 4) {
             TILE_SET_DATA_1_START
         } else {
@@ -223,11 +227,13 @@ impl LcdControl {
         }
     }
 
-    pub fn win_enable(&self) -> bool {
+    #[inline(always)]
+    pub fn is_win_enabled(&self) -> bool {
         get_bit_flag(self.byte, 5)
     }
 
-    pub fn win_map_area(&self) -> u16 {
+    #[inline(always)]
+    pub fn get_win_map_area(&self) -> u16 {
         if get_bit_flag(self.byte, 6) {
             BG_TILE_MAP_2_ADDR_START
         } else {
@@ -235,10 +241,13 @@ impl LcdControl {
         }
     }
 
-    pub fn lcd_enable(&self) -> bool {
+    #[inline(always)]
+    pub fn is_lcd_enabled(&self) -> bool {
         get_bit_flag(self.byte, 7)
     }
 }
+
+pub const PPU_MODE_MASK: u8 = 0b11;
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 #[repr(C)]
@@ -247,37 +256,44 @@ pub struct LcdStatus {
 }
 
 impl LcdStatus {
-    pub fn ppu_mode(&self) -> PpuMode {
-        PpuMode::from(self.byte)
+    #[inline(always)]
+    pub const fn get_ppu_mode(&self) -> PpuMode {
+        PpuMode::from_u8(self.byte)
     }
 
-    pub fn set_ppu_mode(&mut self, mode: PpuMode) {
-        self.byte &= !0b11;
+    #[inline(always)]
+    pub const fn set_ppu_mode(&mut self, mode: PpuMode) {
+        self.byte &= !PPU_MODE_MASK;
         self.byte |= mode as u8;
     }
 
-    pub fn lyc(&self) -> bool {
+    #[inline(always)]
+    pub const fn get_lyc(&self) -> bool {
         get_bit_flag(self.byte, 2)
     }
 
-    pub fn lyc_set(&mut self, b: bool) {
+    #[inline(always)]
+    pub const fn set_lyc(&mut self, b: bool) {
         set_bit(&mut self.byte, 2, b);
     }
 
-    pub fn is_stat_interrupt(&self, src: LcdStatSrc) -> bool {
+    #[inline(always)]
+    pub const fn is_stat_interrupt(&self, src: LcdStatSrc) -> bool {
         self.byte & (src as u8) != 0
     }
 }
 
 #[derive(Copy, Clone, PartialEq)]
+#[repr(u8)]
 pub enum PpuMode {
-    HBlank,
-    VBlank,
-    Oam,
-    Transfer,
+    HBlank = 0,
+    VBlank = 1,
+    Oam = 2,
+    Transfer = 3,
 }
 
 #[derive(Copy, Clone)]
+#[repr(u8)]
 pub enum LcdStatSrc {
     HBlank = 1 << 3,
     VBlank = 1 << 4,
@@ -285,9 +301,10 @@ pub enum LcdStatSrc {
     Lyc = 1 << 6,
 }
 
-impl From<u8> for PpuMode {
-    fn from(value: u8) -> Self {
-        match value & 0b11 {
+impl PpuMode {
+    #[inline(always)]
+    pub const fn from_u8(value: u8) -> Self {
+        match value & PPU_MODE_MASK {
             0 => PpuMode::HBlank,
             1 => PpuMode::VBlank,
             2 => PpuMode::Oam,
