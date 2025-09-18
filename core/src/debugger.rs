@@ -44,7 +44,7 @@ impl Debugger {
         }
     }
 
-    pub fn get_serial_msg(&self) -> Cow<str> {
+    pub fn get_serial_msg<'a>(&'a self) -> Cow<'a, str> {
         String::from_utf8_lossy(&self.msg[..self.size])
     }
 
