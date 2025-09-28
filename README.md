@@ -13,7 +13,7 @@ ___
 ![Windows](https://img.shields.io/badge/Windows-blue?logo=windows)
 ![Mac](https://img.shields.io/badge/Mac-blue?logo=apple)
 ![Android](https://img.shields.io/badge/Android-blue?logo=android)
-[![Dependencies](https://deps.rs/repo/github/mxmgorin/retsurf/status.svg)](https://deps.rs/repo/github/mxmgorin/retsurf)
+[![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy)
 <!-- [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
