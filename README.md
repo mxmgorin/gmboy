@@ -35,7 +35,7 @@ Here are some highlights:
 
 - High accuracy: passes most Blargg’s & Mooneye test suites  
 - Good performance: optimized CPU and graphics  
-- Modern features: save states, visual filters, re-bindable combos, and more  
+- Modern features: save states, visual filters, re-bindable button combos, and more  
 - Cross-platform: Windows, macOS, Linux, Android; SDL2 + optional OpenGL  
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
