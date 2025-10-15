@@ -29,7 +29,7 @@ ___
   </a>
 </p>
 
-`GMBoy` is a Game Boy emulator written in Rust. It started for fun and learning but has since evolved into a more ambitious project. The goal is to create a fully functional emulator that balances accuracy and performance, with modern features.
+`GMBoy` is a Game Boy emulator written in Rust. It started for fun and learning but has since evolved into a more ambitious project. The goal is to create a fully functional emulator that balances accuracy and performance, incorporating modern features.
 
 Here are some highlights:
 
