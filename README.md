@@ -14,8 +14,8 @@ ___
 ![Mac](https://img.shields.io/badge/Mac-blue?logo=apple)
 ![Android](https://img.shields.io/badge/Android-blue?logo=android)
 [![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
-[![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy)
-<!-- [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
+<!--
+[![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
@@ -42,7 +42,7 @@ Here are some highlights:
 
 📥 [Download the latest release here](https://github.com/mxmgorin/gmboy/releases/latest)
 
-## Emulation Core
+## Emulation
 
 - **CPU**: Complete Sharp LR35902 instruction set with accurate timing
 - **PPU (Graphics)**: Background, window, and sprite rendering
@@ -51,7 +51,7 @@ Here are some highlights:
 - **Battery-backed SRAM**: Persistent save data
 - **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
 
-## User Features
+## Features
 
 - **Save States**  – Save and resume progress, with multiple slots and optional auto-save on exit/start.
 - **Rewind**  – Undo actions and retry sections; fully configurable.
