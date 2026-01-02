@@ -1,5 +1,5 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
-use crate::input::button::{
+use crate::input::emu::{
     handle_a, handle_b, handle_down, handle_left, handle_right, handle_select, handle_start,
     handle_up,
 };

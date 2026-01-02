@@ -1,6 +1,6 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::AppConfig;
-use crate::input::combos::ComboTracker;
+use crate::input::gamepad::GamepadState;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
 use crate::{PlatformFileDialog, PlatformFileSystem};
@@ -15,7 +15,7 @@ pub struct InputHandler {
     event_pump: EventPump,
     game_controllers: Vec<GameController>,
     game_controller_subsystem: GameControllerSubsystem,
-    combo_tracker: ComboTracker,
+    combo_tracker: GamepadState,
 }
 
 impl InputHandler {
@@ -34,7 +34,7 @@ impl InputHandler {
             event_pump: sdl.event_pump()?,
             game_controllers,
             game_controller_subsystem,
-            combo_tracker: ComboTracker::new(),
+            combo_tracker: GamepadState::new(),
         })
     }
 

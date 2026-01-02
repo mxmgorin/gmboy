@@ -219,9 +219,6 @@ pub struct CpuState {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RamState(pub u16, pub u8);
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Cycle(pub u16, pub u8, pub String);
-
 pub fn setup_cpu(test_case: &Sm83TestCase) -> Cpu {
     let bus = setup_bus(test_case);
     let clock = Clock::new(bus);
