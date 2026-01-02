@@ -39,7 +39,8 @@ pub enum AppCmd {
     Quit,
     ChangeConfig(ChangeAppConfigCmd),
     SelectRomsDir,
-    EmuButton(JoypadButton),
+    ReleaseButton(JoypadButton),
+    PressButton(JoypadButton),
     SetFileBrowsePath(PathBuf),
 }
 

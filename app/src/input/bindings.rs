@@ -141,16 +141,19 @@ impl ButtonBindings {
         let mut bindings = ButtonBindings {
             cmds: std::array::from_fn(|_| None),
         };
-        bindings.set_both(Button::Start, AppCmd::EmuButton(JoypadButton::Start));
-        bindings.set_both(Button::Guide, AppCmd::EmuButton(JoypadButton::Select));
-        bindings.set_both(Button::Back, AppCmd::EmuButton(JoypadButton::Select));
-        bindings.set_both(Button::DPadUp, AppCmd::EmuButton(JoypadButton::Up));
-        bindings.set_both(Button::DPadDown, AppCmd::EmuButton(JoypadButton::Down));
-        bindings.set_both(Button::DPadLeft, AppCmd::EmuButton(JoypadButton::Left));
-        bindings.set_both(Button::DPadRight, AppCmd::EmuButton(JoypadButton::Right));
-        bindings.set_both(Button::A, AppCmd::EmuButton(JoypadButton::A));
-        bindings.set_both(Button::B, AppCmd::EmuButton(JoypadButton::B));
-        bindings.set_both(Button::Y, AppCmd::ToggleRewind);
+
+        bindings.set_btn(Button::Start, JoypadButton::Start);
+        bindings.set_btn(Button::Guide, JoypadButton::Select);
+        bindings.set_btn(Button::Back, JoypadButton::Select);
+        bindings.set_btn(Button::DPadUp, JoypadButton::Up);
+        bindings.set_btn(Button::DPadDown, JoypadButton::Down);
+        bindings.set_btn(Button::DPadLeft, JoypadButton::Left);
+        bindings.set_btn(Button::DPadRight, JoypadButton::Right);
+        bindings.set_btn(Button::A, JoypadButton::A);
+        bindings.set_btn(Button::B, JoypadButton::B);
+        bindings.set(Button::Y, true, AppCmd::ToggleRewind);
+        bindings.set(Button::Y, false, AppCmd::ToggleRewind);
+
         bindings.set(
             Button::X,
             true,
@@ -185,11 +188,6 @@ impl ButtonBindings {
         (btn as usize) * 2 + if pressed { 0 } else { 1 }
     }
 
-    fn set_both(&mut self, btn: Button, cmd: AppCmd) {
-        self.set(btn, true, cmd.clone());
-        self.set(btn, false, cmd);
-    }
-
     #[inline(always)]
     pub fn get(&self, btn: Button, pressed: bool) -> Option<&AppCmd> {
         self.cmds
@@ -200,6 +198,11 @@ impl ButtonBindings {
     #[inline(always)]
     pub fn set(&mut self, btn: Button, pressed: bool, action: AppCmd) {
         self.cmds[Self::idx(btn, pressed)] = Some(action);
+    }
+
+    fn set_btn(&mut self, btn: Button, joypad_btn: JoypadButton) {
+        self.set(btn, true, AppCmd::PressButton(joypad_btn));
+        self.set(btn, false, AppCmd::ReleaseButton(joypad_btn));
     }
 }
 

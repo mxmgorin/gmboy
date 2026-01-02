@@ -1,5 +1,6 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::AppConfig;
+use crate::input::emu::handle_emu_btn;
 use crate::input::gamepad::GamepadState;
 use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
 use crate::input::keyboard::handle_keyboard;
@@ -76,16 +77,12 @@ impl InputHandler {
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
-                    if let Some(evt) =
-                        handle_gamepad(&mut self.combo_tracker, app, emu, button, true)
-                    {
+                    if let Some(evt) = handle_gamepad(&mut self.combo_tracker, app, button, true) {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
-                    if let Some(evt) =
-                        handle_gamepad(&mut self.combo_tracker, app, emu, button, false)
-                    {
+                    if let Some(evt) = handle_gamepad(&mut self.combo_tracker, app, button, false) {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
@@ -111,12 +108,12 @@ impl InputHandler {
         }
     }
 
-    pub fn handle_cmd<FS, FD>(&mut self, app: &mut App<FS, FD>, emu: &mut Emu, event: AppCmd)
+    pub fn handle_cmd<FS, FD>(&mut self, app: &mut App<FS, FD>, emu: &mut Emu, cmd: AppCmd)
     where
         FS: PlatformFileSystem,
         FD: PlatformFileDialog,
     {
-        match event {
+        match cmd {
             AppCmd::LoadFile(path) => {
                 if let Err(err) = app.load_cart_file(emu, Path::new(&path)) {
                     log::warn!("Failed to load cart file: {err}");
@@ -287,7 +284,16 @@ impl InputHandler {
                     app.video.update_config(&app.config.video);
                 }
             },
-            AppCmd::EmuButton(_x) => {} // handled in handle_emu_btn
+            AppCmd::ReleaseButton(btn) => {
+                if let Some(cmd) = handle_emu_btn(btn, false, app, emu) {
+                    self.handle_cmd(app, emu, cmd);
+                }
+            }
+            AppCmd::PressButton(btn) => {
+                if let Some(cmd) = handle_emu_btn(btn, true, app, emu) {
+                    self.handle_cmd(app, emu, cmd);
+                }
+            }
             AppCmd::SetFileBrowsePath(path) => app.roms.last_browse_dir_path = Some(path),
         }
     }

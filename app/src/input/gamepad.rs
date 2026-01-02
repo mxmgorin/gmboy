@@ -1,16 +1,13 @@
 use crate::app::{App, AppCmd};
 use crate::input::all_buttons;
 use crate::input::config::InputConfig;
-use crate::input::emu::handle_emu_btn;
 use crate::{PlatformFileDialog, PlatformFileSystem};
-use core::emu::Emu;
 use sdl2::controller::Button;
 use std::time::{Duration, Instant};
 
 pub fn handle_gamepad<FS, FD>(
     state: &mut GamepadState,
     app: &mut App<FS, FD>,
-    emu: &mut Emu,
     button: Button,
     is_pressed: bool,
 ) -> Option<AppCmd>
@@ -24,13 +21,7 @@ where
         return combo_cmd;
     }
 
-    let cmd = app.config.input.bindings.buttons.get(button, is_pressed)?;
-
-    if let AppCmd::EmuButton(x) = cmd {
-        return handle_emu_btn(*x, is_pressed, app, emu);
-    }
-
-    Some(cmd.to_owned())
+    app.config.input.bindings.buttons.get(button, is_pressed).map(|x| x.to_owned())
 }
 
 pub fn handle_gamepad_axis<FS, FD>(app: &App<FS, FD>, axis_idx: u8, value: i16) -> Option<AppCmd>
