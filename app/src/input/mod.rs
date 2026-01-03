@@ -1,5 +1,6 @@
 use sdl2::controller::Button;
 
+pub mod bindings;
 pub mod combo;
 pub mod config;
 pub mod emu;

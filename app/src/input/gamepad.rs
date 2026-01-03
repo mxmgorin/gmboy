@@ -1,9 +1,55 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
+use crate::input::bindings::{BindableInput, InputBindings};
 use crate::input::combo::ComboHandler;
 use crate::input::config::InputConfig;
+use crate::input::{button_to_str, str_to_button};
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::runtime::RunMode;
 use sdl2::controller::Button;
+
+impl BindableInput for Button {
+    const COUNT: usize = 15;
+
+    #[inline(always)]
+    fn to_index(self) -> usize {
+        self as usize
+    }
+
+    fn from_index(index: usize) -> Option<Self> {
+        match index {
+            0 => Some(Button::A),
+            1 => Some(Button::B),
+            2 => Some(Button::X),
+            3 => Some(Button::Y),
+            4 => Some(Button::Back),
+            5 => Some(Button::Guide),
+            6 => Some(Button::Start),
+            7 => Some(Button::LeftStick),
+            8 => Some(Button::RightStick),
+            9 => Some(Button::LeftShoulder),
+            10 => Some(Button::RightShoulder),
+            11 => Some(Button::DPadUp),
+            12 => Some(Button::DPadDown),
+            13 => Some(Button::DPadLeft),
+            14 => Some(Button::DPadRight),
+            15 => Some(Button::Misc1),
+            16 => Some(Button::Paddle1),
+            17 => Some(Button::Paddle2),
+            18 => Some(Button::Paddle3),
+            19 => Some(Button::Paddle4),
+            20 => Some(Button::Touchpad),
+            _ => None,
+        }
+    }
+
+    fn name(self) -> &'static str {
+        button_to_str(self)
+    }
+
+    fn from_name(name: &str) -> Option<Self> {
+        str_to_button(name)
+    }
+}
 
 pub struct GamepadHandler {
     combo_handler: ComboHandler,
@@ -50,81 +96,46 @@ impl GamepadHandler {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ButtonBindings {
-    cmds: [Option<AppCmd>; ButtonBindings::COUNT * 2],
-}
+pub fn default_buttons() -> InputBindings<Button> {
+    let mut bindings = InputBindings::<Button>::default();
 
-impl ButtonBindings {
-    const COUNT: usize = 15;
+    bindings.bind_btn(Button::Start, JoypadButton::Start);
+    bindings.bind_btn(Button::Guide, JoypadButton::Select);
+    bindings.bind_btn(Button::Back, JoypadButton::Select);
+    bindings.bind_btn(Button::DPadUp, JoypadButton::Up);
+    bindings.bind_btn(Button::DPadDown, JoypadButton::Down);
+    bindings.bind_btn(Button::DPadLeft, JoypadButton::Left);
+    bindings.bind_btn(Button::DPadRight, JoypadButton::Right);
+    bindings.bind_btn(Button::A, JoypadButton::A);
+    bindings.bind_btn(Button::B, JoypadButton::B);
+    bindings.bind_cmd(Button::Y, true, AppCmd::ToggleRewind);
+    bindings.bind_cmd(Button::Y, false, AppCmd::ToggleRewind);
 
-    #[inline(always)]
-    fn idx(btn: Button, pressed: bool) -> usize {
-        (btn as usize) * 2 + if pressed { 0 } else { 1 }
-    }
+    bindings.bind_cmd(
+        Button::X,
+        true,
+        AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette),
+    );
+    bindings.bind_cmd(
+        Button::LeftShoulder,
+        true,
+        AppCmd::ChangeMode(RunMode::Slow),
+    );
+    bindings.bind_cmd(
+        Button::LeftShoulder,
+        false,
+        AppCmd::ChangeMode(RunMode::Normal),
+    );
+    bindings.bind_cmd(
+        Button::RightShoulder,
+        true,
+        AppCmd::ChangeMode(RunMode::Turbo),
+    );
+    bindings.bind_cmd(
+        Button::RightShoulder,
+        false,
+        AppCmd::ChangeMode(RunMode::Normal),
+    );
 
-    #[inline(always)]
-    pub fn get(&self, btn: Button, pressed: bool) -> Option<&AppCmd> {
-        self.cmds
-            .get(Self::idx(btn, pressed))
-            .and_then(|x| x.as_ref())
-    }
-
-    #[inline(always)]
-    pub fn set(&mut self, btn: Button, pressed: bool, cmd: AppCmd) {
-        self.cmds[Self::idx(btn, pressed)] = Some(cmd);
-    }
-
-    fn bind_btn(&mut self, btn: Button, joypad_btn: JoypadButton) {
-        self.set(btn, true, AppCmd::PressButton(joypad_btn));
-        self.set(btn, false, AppCmd::ReleaseButton(joypad_btn));
-    }
-}
-
-impl Default for ButtonBindings {
-    fn default() -> Self {
-        let mut bindings = ButtonBindings {
-            cmds: std::array::from_fn(|_| None),
-        };
-
-        bindings.bind_btn(Button::Start, JoypadButton::Start);
-        bindings.bind_btn(Button::Guide, JoypadButton::Select);
-        bindings.bind_btn(Button::Back, JoypadButton::Select);
-        bindings.bind_btn(Button::DPadUp, JoypadButton::Up);
-        bindings.bind_btn(Button::DPadDown, JoypadButton::Down);
-        bindings.bind_btn(Button::DPadLeft, JoypadButton::Left);
-        bindings.bind_btn(Button::DPadRight, JoypadButton::Right);
-        bindings.bind_btn(Button::A, JoypadButton::A);
-        bindings.bind_btn(Button::B, JoypadButton::B);
-        bindings.set(Button::Y, true, AppCmd::ToggleRewind);
-        bindings.set(Button::Y, false, AppCmd::ToggleRewind);
-
-        bindings.set(
-            Button::X,
-            true,
-            AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette),
-        );
-        bindings.set(
-            Button::LeftShoulder,
-            true,
-            AppCmd::ChangeMode(RunMode::Slow),
-        );
-        bindings.set(
-            Button::LeftShoulder,
-            false,
-            AppCmd::ChangeMode(RunMode::Normal),
-        );
-        bindings.set(
-            Button::RightShoulder,
-            true,
-            AppCmd::ChangeMode(RunMode::Turbo),
-        );
-        bindings.set(
-            Button::RightShoulder,
-            false,
-            AppCmd::ChangeMode(RunMode::Normal),
-        );
-
-        bindings
-    }
+    bindings
 }
