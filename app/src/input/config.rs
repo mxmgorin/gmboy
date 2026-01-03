@@ -1,5 +1,6 @@
 use crate::app::AppCmd;
-use crate::input::gamepad::{default_combo_buttons, ButtonBindings, ComboButton};
+use crate::input::combo::{ComboButton, ComboButtonBindings};
+use crate::input::gamepad::ButtonBindings;
 use crate::input::keyboard::KeyBindings;
 use crate::input::{all_buttons, button_to_str, str_to_button};
 use sdl2::keyboard::Scancode;
@@ -14,7 +15,7 @@ pub struct Bindings {
     pub buttons: ButtonBindings,
     pub left_trigger: TriggerButtonBinding,
     pub right_trigger: TriggerButtonBinding,
-    pub combo_buttons: Vec<ComboButton>,
+    pub combo_buttons: ComboButtonBindings,
     pub keys: KeyBindings,
 }
 
@@ -46,7 +47,7 @@ impl Default for Bindings {
             keys: KeyBindings::default(),
             left_trigger: TriggerButtonBinding::new(None, 2),
             right_trigger: TriggerButtonBinding::new(None, 5),
-            combo_buttons: default_combo_buttons(),
+            combo_buttons: ComboButtonBindings::default(),
         }
     }
 }
