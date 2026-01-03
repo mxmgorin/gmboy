@@ -2,7 +2,7 @@ use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::AppConfig;
 use crate::input::emu::handle_emu_btn;
 use crate::input::gamepad::GamepadHandler;
-use crate::input::keyboard::handle_keyboard;
+use crate::input::keyboard::handle_key;
 use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::emu::state::EmuState;
 use core::emu::Emu;
@@ -60,18 +60,16 @@ impl InputHandler {
                     self.handle_cmd(app, emu, AppCmd::LoadFile(filename.into()))
                 }
                 Event::KeyDown {
-                    keycode: Some(keycode),
-                    ..
+                    scancode: Some(sc), ..
                 } => {
-                    if let Some(evt) = handle_keyboard(app, emu, keycode, true) {
+                    if let Some(evt) = handle_key(&app.config.input, sc, true) {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::KeyUp {
-                    keycode: Some(keycode),
-                    ..
+                    scancode: Some(sc), ..
                 } => {
-                    if let Some(evt) = handle_keyboard(app, emu, keycode, false) {
+                    if let Some(evt) = handle_key(&app.config.input, sc, false) {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
@@ -303,6 +301,7 @@ impl InputHandler {
                 }
             }
             AppCmd::SetFileBrowsePath(path) => app.roms.last_browse_dir_path = Some(path),
+            AppCmd::ToggleFullscreen => app.toggle_fullscreen(),
         }
     }
 }

@@ -1,8 +1,7 @@
 use sdl2::controller::Button;
 
-pub mod bindings;
-pub mod emu;
 pub mod config;
+pub mod emu;
 pub mod gamepad;
 pub mod handler;
 pub mod keyboard;

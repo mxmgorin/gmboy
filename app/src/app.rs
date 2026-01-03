@@ -42,6 +42,7 @@ pub enum AppCmd {
     ReleaseButton(JoypadButton),
     PressButton(JoypadButton),
     SetFileBrowsePath(PathBuf),
+    ToggleFullscreen,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

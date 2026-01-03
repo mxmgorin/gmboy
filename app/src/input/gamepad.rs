@@ -1,6 +1,9 @@
-use crate::app::AppCmd;
+use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::input::all_buttons;
 use crate::input::config::InputConfig;
+use core::auxiliary::joypad::JoypadButton;
+use core::emu::runtime::RunMode;
+use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
 use std::time::{Duration, Instant};
 
@@ -139,4 +142,173 @@ impl GamepadHandler {
 
         false
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct ButtonBindings {
+    cmds: [Option<AppCmd>; ButtonBindings::COUNT * 2],
+}
+
+impl ButtonBindings {
+    const COUNT: usize = 15;
+
+    #[inline(always)]
+    fn idx(btn: Button, pressed: bool) -> usize {
+        (btn as usize) * 2 + if pressed { 0 } else { 1 }
+    }
+
+    #[inline(always)]
+    pub fn get(&self, btn: Button, pressed: bool) -> Option<&AppCmd> {
+        self.cmds
+            .get(Self::idx(btn, pressed))
+            .and_then(|x| x.as_ref())
+    }
+
+    #[inline(always)]
+    pub fn set(&mut self, btn: Button, pressed: bool, cmd: AppCmd) {
+        self.cmds[Self::idx(btn, pressed)] = Some(cmd);
+    }
+
+    fn bind_btn(&mut self, btn: Button, joypad_btn: JoypadButton) {
+        self.set(btn, true, AppCmd::PressButton(joypad_btn));
+        self.set(btn, false, AppCmd::ReleaseButton(joypad_btn));
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ComboButton {
+    pub btn_1: Button,
+    pub btn_2: Button,
+    pub cmd: AppCmd,
+}
+
+impl ComboButton {
+    pub fn new(btn_1: Button, btn_2: Button, cmd: AppCmd) -> Self {
+        Self { btn_1, btn_2, cmd }
+    }
+}
+
+impl Default for ButtonBindings {
+    fn default() -> Self {
+        let mut bindings = ButtonBindings {
+            cmds: std::array::from_fn(|_| None),
+        };
+
+        bindings.bind_btn(Button::Start, JoypadButton::Start);
+        bindings.bind_btn(Button::Guide, JoypadButton::Select);
+        bindings.bind_btn(Button::Back, JoypadButton::Select);
+        bindings.bind_btn(Button::DPadUp, JoypadButton::Up);
+        bindings.bind_btn(Button::DPadDown, JoypadButton::Down);
+        bindings.bind_btn(Button::DPadLeft, JoypadButton::Left);
+        bindings.bind_btn(Button::DPadRight, JoypadButton::Right);
+        bindings.bind_btn(Button::A, JoypadButton::A);
+        bindings.bind_btn(Button::B, JoypadButton::B);
+        bindings.set(Button::Y, true, AppCmd::ToggleRewind);
+        bindings.set(Button::Y, false, AppCmd::ToggleRewind);
+
+        bindings.set(
+            Button::X,
+            true,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette),
+        );
+        bindings.set(
+            Button::LeftShoulder,
+            true,
+            AppCmd::ChangeMode(RunMode::Slow),
+        );
+        bindings.set(
+            Button::LeftShoulder,
+            false,
+            AppCmd::ChangeMode(RunMode::Normal),
+        );
+        bindings.set(
+            Button::RightShoulder,
+            true,
+            AppCmd::ChangeMode(RunMode::Turbo),
+        );
+        bindings.set(
+            Button::RightShoulder,
+            false,
+            AppCmd::ChangeMode(RunMode::Normal),
+        );
+
+        bindings
+    }
+}
+
+pub fn default_combo_buttons() -> Vec<ComboButton> {
+    vec![
+        ComboButton::new(
+            Button::Back,
+            Button::B,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+        ),
+        ComboButton::new(
+            Button::Guide,
+            Button::B,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+        ),
+        ComboButton::new(
+            Button::Back,
+            Button::A,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+        ),
+        ComboButton::new(
+            Button::Guide,
+            Button::A,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+        ),
+        ComboButton::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
+        ComboButton::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
+        ComboButton::new(
+            Button::Guide,
+            Button::X,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+        ),
+        ComboButton::new(
+            Button::Back,
+            Button::X,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+        ),
+        ComboButton::new(
+            Button::LeftShoulder,
+            Button::Back,
+            AppCmd::SaveState(SaveStateCmd::Load, None),
+        ),
+        ComboButton::new(
+            Button::RightShoulder,
+            Button::Back,
+            AppCmd::SaveState(SaveStateCmd::Create, None),
+        ),
+        ComboButton::new(
+            Button::LeftShoulder,
+            Button::Guide,
+            AppCmd::SaveState(SaveStateCmd::Load, None),
+        ),
+        ComboButton::new(
+            Button::RightShoulder,
+            Button::Guide,
+            AppCmd::SaveState(SaveStateCmd::Create, None),
+        ),
+        ComboButton::new(
+            Button::DPadUp,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.1)),
+        ),
+        ComboButton::new(
+            Button::DPadDown,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.1)),
+        ),
+        ComboButton::new(
+            Button::DPadLeft,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::DecSaveAndLoadIndexes),
+        ),
+        ComboButton::new(
+            Button::DPadRight,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeAppConfigCmd::IncSaveAndLoadIndexes),
+        ),
+    ]
 }
