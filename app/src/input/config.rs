@@ -26,6 +26,14 @@ pub struct TriggerButtonBinding {
 }
 
 impl TriggerButtonBinding {
+    pub fn new(cmd: Option<AppCmd>, code: u8) -> Self {
+        Self {
+            cmd,
+            code,
+            threshold: 30_000,
+        }
+    }
+
     pub fn is_pressed(&self, v: i16) -> bool {
         v > self.threshold
     }
@@ -36,16 +44,8 @@ impl Default for Bindings {
         Self {
             buttons: ButtonBindings::default(),
             keys: KeyBindings::default(),
-            left_trigger: TriggerButtonBinding {
-                cmd: None,
-                code: 2,
-                threshold: 30_000,
-            },
-            right_trigger: TriggerButtonBinding {
-                cmd: None,
-                code: 5,
-                threshold: 30_000,
-            },
+            left_trigger: TriggerButtonBinding::new(None, 2),
+            right_trigger: TriggerButtonBinding::new(None, 5),
             combo_buttons: default_combo_buttons(),
         }
     }

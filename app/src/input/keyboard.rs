@@ -1,6 +1,5 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::input::config::InputConfig;
-
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
