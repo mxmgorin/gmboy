@@ -33,7 +33,12 @@ pub fn handle_key(config: &InputConfig, sc: Scancode, pressed: bool) -> Option<A
 
 pub fn default_keys() -> InputBindings<Scancode> {
     let mut bindings = InputBindings::<Scancode>::default();
-
+    
+    bindings.bind_btn(Scancode::K, JoypadButton::Up);
+    bindings.bind_btn(Scancode::J, JoypadButton::Down);
+    bindings.bind_btn(Scancode::H, JoypadButton::Left);
+    bindings.bind_btn(Scancode::L, JoypadButton::Right);
+    
     bindings.bind_btn(Scancode::Up, JoypadButton::Up);
     bindings.bind_btn(Scancode::Down, JoypadButton::Down);
     bindings.bind_btn(Scancode::Left, JoypadButton::Left);
