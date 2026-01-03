@@ -1,46 +1,8 @@
-use crate::app::{App, AppCmd};
+use crate::app::AppCmd;
 use crate::input::all_buttons;
 use crate::input::config::InputConfig;
-use crate::{PlatformFileDialog, PlatformFileSystem};
 use sdl2::controller::Button;
 use std::time::{Duration, Instant};
-
-pub fn handle_gamepad<FS, FD>(
-    state: &mut GamepadState,
-    app: &mut App<FS, FD>,
-    button: Button,
-    is_pressed: bool,
-) -> Option<AppCmd>
-where
-    FS: PlatformFileSystem,
-    FD: PlatformFileDialog,
-{
-    let combo_cmd = state.update(button, is_pressed, &app.config.input);
-
-    if combo_cmd.is_some() {
-        return combo_cmd;
-    }
-
-    app.config.input.bindings.buttons.get(button, is_pressed).map(|x| x.to_owned())
-}
-
-pub fn handle_gamepad_axis<FS, FD>(app: &App<FS, FD>, axis_idx: u8, value: i16) -> Option<AppCmd>
-where
-    FS: PlatformFileSystem,
-    FD: PlatformFileDialog,
-{
-    if axis_idx == app.config.input.bindings.left_trigger.code
-        && !app.config.input.bindings.left_trigger.is_pressed(value)
-    {
-        return app.config.input.bindings.left_trigger.cmd.clone();
-    } else if axis_idx == app.config.input.bindings.right_trigger.code
-        && !app.config.input.bindings.right_trigger.is_pressed(value)
-    {
-        return app.config.input.bindings.right_trigger.cmd.clone();
-    }
-
-    None
-}
 
 pub struct ButtonState {
     pub pressed: bool,
@@ -66,11 +28,11 @@ impl ButtonState {
     }
 }
 
-pub struct GamepadState {
+pub struct GamepadHandler {
     states: [ButtonState; all_buttons().len()],
 }
 
-impl GamepadState {
+impl GamepadHandler {
     pub fn new() -> Self {
         Self {
             states: [
@@ -93,23 +55,51 @@ impl GamepadState {
         }
     }
 
-    pub fn update(
+    pub fn handle_button(
         &mut self,
-        button: Button,
-        pressed: bool,
         config: &InputConfig,
+        button: Button,
+        is_pressed: bool,
     ) -> Option<AppCmd> {
+        let cmd = self.update(button, is_pressed, config);
+
+        if cmd.is_some() {
+            return cmd;
+        }
+
+        config
+            .bindings
+            .buttons
+            .get(button, is_pressed)
+            .map(|x| x.to_owned())
+    }
+
+    pub fn handle_axis(&self, config: &InputConfig, axis_idx: u8, value: i16) -> Option<AppCmd> {
+        if axis_idx == config.bindings.left_trigger.code
+            && !config.bindings.left_trigger.is_pressed(value)
+        {
+            return config.bindings.left_trigger.cmd.clone();
+        } else if axis_idx == config.bindings.right_trigger.code
+            && !config.bindings.right_trigger.is_pressed(value)
+        {
+            return config.bindings.right_trigger.cmd.clone();
+        }
+
+        None
+    }
+
+    fn update(&mut self, button: Button, pressed: bool, config: &InputConfig) -> Option<AppCmd> {
         for state in self.states.iter_mut() {
             if state.button == button {
                 state.update(pressed);
-                return self.find(config);
+                return self.find_combo(config);
             }
         }
 
         None
     }
 
-    fn find(&self, config: &InputConfig) -> Option<AppCmd> {
+    fn find_combo(&self, config: &InputConfig) -> Option<AppCmd> {
         for combo in config.bindings.combo_buttons.iter() {
             if self.combo_2(combo.btn_1, combo.btn_2, config.combo_interval) {
                 return Some(combo.cmd.to_owned());

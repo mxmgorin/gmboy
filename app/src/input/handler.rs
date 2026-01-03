@@ -1,8 +1,7 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::AppConfig;
 use crate::input::emu::handle_emu_btn;
-use crate::input::gamepad::GamepadState;
-use crate::input::gamepad::{handle_gamepad, handle_gamepad_axis};
+use crate::input::gamepad::GamepadHandler;
 use crate::input::keyboard::handle_keyboard;
 use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::emu::state::EmuState;
@@ -16,7 +15,7 @@ pub struct InputHandler {
     event_pump: EventPump,
     game_controllers: Vec<GameController>,
     game_controller_subsystem: GameControllerSubsystem,
-    combo_tracker: GamepadState,
+    gamepad_handler: GamepadHandler,
 }
 
 impl InputHandler {
@@ -35,7 +34,7 @@ impl InputHandler {
             event_pump: sdl.event_pump()?,
             game_controllers,
             game_controller_subsystem,
-            combo_tracker: GamepadState::new(),
+            gamepad_handler: GamepadHandler::new(),
         })
     }
 
@@ -77,19 +76,28 @@ impl InputHandler {
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {
-                    if let Some(evt) = handle_gamepad(&mut self.combo_tracker, app, button, true) {
+                    if let Some(evt) =
+                        self.gamepad_handler
+                            .handle_button(&app.config.input, button, true)
+                    {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::ControllerButtonUp { button, .. } => {
-                    if let Some(evt) = handle_gamepad(&mut self.combo_tracker, app, button, false) {
+                    if let Some(evt) =
+                        self.gamepad_handler
+                            .handle_button(&app.config.input, button, false)
+                    {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
-                    if let Some(evt) = handle_gamepad_axis(app, axis_idx, value) {
+                    if let Some(evt) =
+                        self.gamepad_handler
+                            .handle_axis(&app.config.input, axis_idx, value)
+                    {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
