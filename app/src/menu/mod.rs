@@ -2,7 +2,7 @@ pub mod buffer;
 pub mod factory;
 pub mod files;
 pub mod item;
-pub mod navigation;
+pub mod handler;
 pub mod roms;
 
 use crate::app::AppCmd;
@@ -34,6 +34,21 @@ impl AppMenu {
             updated: true,
             sub_buffer: Default::default(),
         }
+    }
+
+    pub fn handle_key(&mut self, name: &str) -> Option<AppCmd> {
+        let item = self.items.get(self.selected_index).unwrap();
+
+        let cmd = match item {
+            AppMenuItem::WaitInput(btn) => {
+                let btn = btn.to_owned();
+                self.back();
+                Some(AppCmd::BindKeyboard(name.to_string(), btn))
+            }
+            _ => None,
+        };
+
+        cmd
     }
 
     #[inline(always)]

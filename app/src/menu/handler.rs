@@ -2,7 +2,7 @@ use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,
-    loaded_roms_menu, opened_roms_menu, settings_menu, system_menu, video_menu,
+    loaded_roms_menu, opened_roms_menu, settings_menu, system_menu, video_menu, wait_input_menu,
 };
 use crate::menu::item::AppMenuItem;
 use crate::roms::RomsState;
@@ -79,8 +79,9 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::InputBinding(_) => None,
-            AppMenuItem::SystemMenu => None,
+            | AppMenuItem::InputBinding(_)
+            | AppMenuItem::WaitInput(_)
+            | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
             }
@@ -290,8 +291,9 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::InputBinding(_) => None,
-            AppMenuItem::SystemMenu => None,
+            | AppMenuItem::InputBinding(_)
+            | AppMenuItem::WaitInput(_)
+            | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
             }
@@ -495,17 +497,14 @@ impl super::AppMenu {
             )),
             AppMenuItem::SettingsMenu => {
                 self.next_items(settings_menu());
-
                 None
             }
             AppMenuItem::InterfaceMenu => {
                 self.next_items(interface_menu());
-
                 None
             }
             AppMenuItem::Back => {
                 self.back();
-
                 None
             }
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
@@ -515,20 +514,17 @@ impl super::AppMenu {
             }
             AppMenuItem::AudioMenu => {
                 self.next_items(audio_menu());
-
                 None
             }
             AppMenuItem::Volume | AppMenuItem::Scale => None,
             AppMenuItem::AdvancedMenu => {
                 self.next_items(advanced_menu());
-
                 None
             }
             AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
             AppMenuItem::SpinDuration => None,
             AppMenuItem::SystemMenu => {
                 self.next_items(system_menu());
-
                 None
             }
             AppMenuItem::AutoSaveState => {
@@ -546,13 +542,11 @@ impl super::AppMenu {
                 self.next_items(confirm_menu(AppCmd::ChangeConfig(
                     ChangeAppConfigCmd::Reset,
                 )));
-
                 None
             }
             AppMenuItem::RestartGame => Some(AppCmd::RestartRom),
             AppMenuItem::InputMenu => {
                 self.next_items(input_menu());
-
                 None
             }
             AppMenuItem::ComboInterval => None,
@@ -565,7 +559,6 @@ impl super::AppMenu {
             AppMenuItem::FrameBlendDim => None,
             AppMenuItem::VideoMenu => {
                 self.next_items(video_menu(&config.video));
-
                 None
             }
             AppMenuItem::FrameBlendProfile => None,
@@ -584,7 +577,6 @@ impl super::AppMenu {
             }
             AppMenuItem::BrowseRoms => {
                 self.next_items(files_menu(filesystem, roms.last_browse_dir_path.as_ref()));
-
                 None
             }
             AppMenuItem::LoadedRoms => {
@@ -597,7 +589,6 @@ impl super::AppMenu {
             }
             AppMenuItem::OpenedRoms => {
                 self.next_items(opened_roms_menu(filesystem, roms));
-
                 None
             }
             AppMenuItem::BrowseRomsSubMenu(x)
@@ -642,7 +633,12 @@ impl super::AppMenu {
                 self.next_items(keyboard_menu());
                 None
             }
-            AppMenuItem::InputBinding(_) => None,
+            AppMenuItem::InputBinding(btn) => {
+                let btn = btn.to_owned();
+                self.next_items(wait_input_menu(btn));
+                None
+            }
+            AppMenuItem::WaitInput(_btn) => None,
         }
     }
 }

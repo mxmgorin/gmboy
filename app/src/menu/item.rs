@@ -41,6 +41,7 @@ pub enum AppMenuItem {
     ComboInterval,
     KeyboardInput,
     InputBinding(JoypadButton),
+    WaitInput(JoypadButton),
 
     PaletteInverted,
     CpuFrameBlendMode,
@@ -130,6 +131,7 @@ impl AppMenuItem {
             | AppMenuItem::OpenedRoms
             | AppMenuItem::KeyboardInput
             | AppMenuItem::LoadedRoms
+            | AppMenuItem::WaitInput(_)
             | AppMenuItem::InputBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -195,6 +197,7 @@ impl AppMenuItem {
             | AppMenuItem::OpenedRoms
             | AppMenuItem::KeyboardInput
             | AppMenuItem::LoadedRoms
+            | AppMenuItem::WaitInput(_)
             | AppMenuItem::InputBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -414,6 +417,7 @@ impl AppMenuItem {
                         .get_label(&AppCmd::PressButton(*btn))
                 )
             }
+            AppMenuItem::WaitInput(_) => "Press a key".to_string(),
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

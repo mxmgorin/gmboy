@@ -62,15 +62,19 @@ impl InputHandler {
                 Event::KeyDown {
                     scancode: Some(sc), ..
                 } => {
-                    if let Some(evt) = handle_key(&app.config.input, sc, true) {
-                        self.handle_cmd(app, emu, evt);
+                    if let Some(cmd) = app.menu.handle_key(sc.name()) {
+                        self.handle_cmd(app, emu, cmd);
+                    } else {
+                        if let Some(cmd) = handle_key(&app.config.input, sc, true) {
+                            self.handle_cmd(app, emu, cmd);
+                        }
                     }
                 }
                 Event::KeyUp {
                     scancode: Some(sc), ..
                 } => {
-                    if let Some(evt) = handle_key(&app.config.input, sc, false) {
-                        self.handle_cmd(app, emu, evt);
+                    if let Some(cmd) = handle_key(&app.config.input, sc, false) {
+                        self.handle_cmd(app, emu, cmd);
                     }
                 }
                 Event::ControllerButtonDown { button, .. } => {

@@ -206,3 +206,7 @@ pub fn keyboard_menu() -> Box<[AppMenuItem]> {
     ]
     .into_boxed_slice()
 }
+
+pub fn wait_input_menu(btn: JoypadButton) -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::WaitInput(btn)].into_boxed_slice()
+}
