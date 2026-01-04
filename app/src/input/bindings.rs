@@ -116,9 +116,9 @@ impl<I: BindableInput> InputBindings<I> {
         self.bind_cmd(input, false, AppCmd::ReleaseButton(btn));
     }
 
-    pub fn bind_macro<B: Into<Box<[JoypadButton]>> + Clone>(&mut self, input: I, btns: B) {
-        self.bind_cmd(input, true, AppCmd::new_buttons_macro(btns.clone(), true));
-        self.bind_cmd(input, false, AppCmd::new_buttons_macro(btns, false));
+    pub fn bind_macro<B: Into<Box<[JoypadButton]>> + Clone>(&mut self, i: I, b: B) {
+        self.bind_cmd(i, true, AppCmd::new_buttons_macro(b.clone(), true));
+        self.bind_cmd(i, false, AppCmd::new_buttons_macro(b, false));
     }
 }
 

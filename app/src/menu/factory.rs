@@ -85,8 +85,8 @@ pub fn files_menu(
 
 pub fn input_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::ComboInterval,
         AppMenuItem::KeyboardInput,
+        AppMenuItem::ComboInterval,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
