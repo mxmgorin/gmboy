@@ -1,6 +1,5 @@
 use crate::app::AppCmd;
 use crate::config::{VideoBackendType, VideoConfig};
-use crate::input::bindings::InputBindings;
 use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;
 use crate::menu::roms::RomsMenu;
@@ -193,30 +192,16 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-pub fn keyboard_menu(bindings: &InputBindings<sdl2::keyboard::Scancode>) -> Box<[AppMenuItem]> {
-    let up = AppMenuItem::UpButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Up)));
-    let down =
-        AppMenuItem::DownButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Down)));
-    let left =
-        AppMenuItem::LeftButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Left)));
-    let right =
-        AppMenuItem::RightButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Right)));
-    let a = AppMenuItem::AButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::A)));
-    let b = AppMenuItem::BButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::B)));
-    let start =
-        AppMenuItem::StartButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Start)));
-    let select =
-        AppMenuItem::SelectButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Select)));
-
+pub fn keyboard_menu() -> Box<[AppMenuItem]> {
     vec![
-        up,
-        down,
-        left,
-        right,
-        a,
-        b,
-        start,
-        select,
+        AppMenuItem::InputBinding(JoypadButton::Up),
+        AppMenuItem::InputBinding(JoypadButton::Down),
+        AppMenuItem::InputBinding(JoypadButton::Left),
+        AppMenuItem::InputBinding(JoypadButton::Right),
+        AppMenuItem::InputBinding(JoypadButton::A),
+        AppMenuItem::InputBinding(JoypadButton::B),
+        AppMenuItem::InputBinding(JoypadButton::Start),
+        AppMenuItem::InputBinding(JoypadButton::Select),
         AppMenuItem::Back,
     ]
     .into_boxed_slice()

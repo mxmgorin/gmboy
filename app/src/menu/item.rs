@@ -1,3 +1,5 @@
+use core::auxiliary::joypad::JoypadButton;
+
 use crate::app::AppCmd;
 use crate::config::AppConfig;
 use crate::menu::{get_menu_item_suffix, SubMenu, MAX_MENU_ITEM_CHARS};
@@ -38,14 +40,7 @@ pub enum AppMenuItem {
     InputMenu,
     ComboInterval,
     KeyboardInput,
-    UpButton(String),
-    DownButton(String),
-    LeftButton(String),
-    RightButton(String),
-    AButton(String),
-    BButton(String),
-    StartButton(String),
-    SelectButton(String),
+    InputBinding(JoypadButton),
 
     PaletteInverted,
     CpuFrameBlendMode,
@@ -135,14 +130,7 @@ impl AppMenuItem {
             | AppMenuItem::OpenedRoms
             | AppMenuItem::KeyboardInput
             | AppMenuItem::LoadedRoms
-            | AppMenuItem::UpButton(_)
-            | AppMenuItem::DownButton(_)
-            | AppMenuItem::LeftButton(_)
-            | AppMenuItem::RightButton(_)
-            | AppMenuItem::AButton(_)
-            | AppMenuItem::BButton(_)
-            | AppMenuItem::StartButton(_)
-            | AppMenuItem::SelectButton(_) => None,
+            | AppMenuItem::InputBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
             | AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
@@ -207,14 +195,7 @@ impl AppMenuItem {
             | AppMenuItem::OpenedRoms
             | AppMenuItem::KeyboardInput
             | AppMenuItem::LoadedRoms
-            | AppMenuItem::UpButton(_)
-            | AppMenuItem::DownButton(_)
-            | AppMenuItem::LeftButton(_)
-            | AppMenuItem::RightButton(_)
-            | AppMenuItem::AButton(_)
-            | AppMenuItem::BButton(_)
-            | AppMenuItem::StartButton(_)
-            | AppMenuItem::SelectButton(_) => None,
+            | AppMenuItem::InputBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
             | AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
@@ -422,14 +403,17 @@ impl AppMenuItem {
             AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
             AppMenuItem::KeyboardInput => "Keyboard".to_string(),
-            AppMenuItem::UpButton(label) => format!("UP: {label}"),
-            AppMenuItem::DownButton(label) => format!("DOWN: {label}"),
-            AppMenuItem::LeftButton(label) => format!("LEFT: {label}"),
-            AppMenuItem::RightButton(label) => format!("RIGHT: {label}"),
-            AppMenuItem::AButton(label) => format!("A: {label}"),
-            AppMenuItem::BButton(label) => format!("B: {label}"),
-            AppMenuItem::StartButton(label) => format!("START: {label}"),
-            AppMenuItem::SelectButton(label) => format!("SELECT: {label}"),
+            AppMenuItem::InputBinding(btn) => {
+                format!(
+                    "{:?}: {}",
+                    btn,
+                    config
+                        .input
+                        .bindings
+                        .keys
+                        .get_label(&AppCmd::PressButton(*btn))
+                )
+            }
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

@@ -79,14 +79,7 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::UpButton(_)
-            | AppMenuItem::DownButton(_)
-            | AppMenuItem::LeftButton(_)
-            | AppMenuItem::RightButton(_)
-            | AppMenuItem::AButton(_)
-            | AppMenuItem::BButton(_)
-            | AppMenuItem::StartButton(_)
-            | AppMenuItem::SelectButton(_) => None,
+            | AppMenuItem::InputBinding(_) => None,
             AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
@@ -297,14 +290,7 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::UpButton(_)
-            | AppMenuItem::DownButton(_)
-            | AppMenuItem::LeftButton(_)
-            | AppMenuItem::RightButton(_)
-            | AppMenuItem::AButton(_)
-            | AppMenuItem::BButton(_)
-            | AppMenuItem::StartButton(_)
-            | AppMenuItem::SelectButton(_) => None,
+            | AppMenuItem::InputBinding(_) => None,
             AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
@@ -653,17 +639,10 @@ impl super::AppMenu {
             AppMenuItem::ShaderFrameBlend => None,
             AppMenuItem::FrameSkip => None,
             AppMenuItem::KeyboardInput => {
-                self.next_items(keyboard_menu(&config.input.bindings.keys));
+                self.next_items(keyboard_menu());
                 None
             }
-            AppMenuItem::UpButton(_)
-            | AppMenuItem::DownButton(_)
-            | AppMenuItem::LeftButton(_)
-            | AppMenuItem::RightButton(_)
-            | AppMenuItem::AButton(_)
-            | AppMenuItem::BButton(_)
-            | AppMenuItem::StartButton(_)
-            | AppMenuItem::SelectButton(_) => None,
+            AppMenuItem::InputBinding(_) => None,
         }
     }
 }
