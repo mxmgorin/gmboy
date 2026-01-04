@@ -302,6 +302,11 @@ impl InputHandler {
             }
             AppCmd::SetFileBrowsePath(path) => app.roms.last_browse_dir_path = Some(path),
             AppCmd::ToggleFullscreen => app.toggle_fullscreen(),
+            AppCmd::Macro(cmds) => {
+                for cmd in cmds {
+                    self.handle_cmd(app, emu, cmd);
+                }
+            }
         }
     }
 }

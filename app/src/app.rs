@@ -43,6 +43,7 @@ pub enum AppCmd {
     PressButton(JoypadButton),
     SetFileBrowsePath(PathBuf),
     ToggleFullscreen,
+    Macro(Vec<AppCmd>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

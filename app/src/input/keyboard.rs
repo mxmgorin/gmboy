@@ -33,12 +33,78 @@ pub fn handle_key(config: &InputConfig, sc: Scancode, pressed: bool) -> Option<A
 
 pub fn default_keys() -> InputBindings<Scancode> {
     let mut bindings = InputBindings::<Scancode>::default();
-    
+
+    // vi-keys
     bindings.bind_btn(Scancode::K, JoypadButton::Up);
     bindings.bind_btn(Scancode::J, JoypadButton::Down);
     bindings.bind_btn(Scancode::H, JoypadButton::Left);
     bindings.bind_btn(Scancode::L, JoypadButton::Right);
-    
+    //diagonals
+    bindings.bind_cmd(
+        Scancode::Y,
+        true,
+        AppCmd::Macro(vec![
+            AppCmd::PressButton(JoypadButton::Up),
+            AppCmd::PressButton(JoypadButton::Left),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::Y,
+        false,
+        AppCmd::Macro(vec![
+            AppCmd::ReleaseButton(JoypadButton::Up),
+            AppCmd::ReleaseButton(JoypadButton::Left),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::U,
+        true,
+        AppCmd::Macro(vec![
+            AppCmd::PressButton(JoypadButton::Up),
+            AppCmd::PressButton(JoypadButton::Right),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::U,
+        false,
+        AppCmd::Macro(vec![
+            AppCmd::ReleaseButton(JoypadButton::Up),
+            AppCmd::ReleaseButton(JoypadButton::Right),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::B,
+        true,
+        AppCmd::Macro(vec![
+            AppCmd::PressButton(JoypadButton::Down),
+            AppCmd::PressButton(JoypadButton::Left),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::B,
+        false,
+        AppCmd::Macro(vec![
+            AppCmd::ReleaseButton(JoypadButton::Down),
+            AppCmd::ReleaseButton(JoypadButton::Left),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::N,
+        true,
+        AppCmd::Macro(vec![
+            AppCmd::PressButton(JoypadButton::Down),
+            AppCmd::PressButton(JoypadButton::Right),
+        ]),
+    );
+    bindings.bind_cmd(
+        Scancode::N,
+        false,
+        AppCmd::Macro(vec![
+            AppCmd::ReleaseButton(JoypadButton::Down),
+            AppCmd::ReleaseButton(JoypadButton::Right),
+        ]),
+    );
+
     bindings.bind_btn(Scancode::Up, JoypadButton::Up);
     bindings.bind_btn(Scancode::Down, JoypadButton::Down);
     bindings.bind_btn(Scancode::Left, JoypadButton::Left);
