@@ -20,39 +20,69 @@ pub struct InputBindings<K: BindableInput> {
     _marker: std::marker::PhantomData<K>,
 }
 
-impl<K: BindableInput> InputBindings<K> {
+impl<I: BindableInput> InputBindings<I> {
     #[inline(always)]
-    fn idx(sc: K, pressed: bool) -> usize {
-        sc.to_index() * 2 + if pressed { 0 } else { 1 }
+    fn into_packed_index(input: I, pressed: bool) -> usize {
+        input.to_index() * 2 + if pressed { 0 } else { 1 }
     }
 
     #[inline(always)]
-    pub fn get(&self, sc: K, pressed: bool) -> Option<&AppCmd> {
+    pub fn get_cmd(&self, input: I, pressed: bool) -> Option<&AppCmd> {
         self.cmds
-            .get(Self::idx(sc, pressed))
+            .get(Self::into_packed_index(input, pressed))
             .and_then(|x| x.as_ref())
     }
 
+    pub fn get_label(&self, cmd: &AppCmd) -> String {
+        self.get_inputs(cmd)
+            .into_iter()
+            .map(|(b, _)| b.name())
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    pub fn get_inputs(&self, cmd: &AppCmd) -> Vec<(I, bool)> {
+        let mut inputs = Vec::with_capacity(2);
+
+        for (i, item) in self.cmds.iter().enumerate() {
+            if let Some(item) = item {
+                if item == cmd {
+                    if let Some((input, pressed)) = Self::from_packed_index(i) {
+                        inputs.push((input, pressed));
+                    }
+                }
+            }
+        }
+
+        inputs
+    }
+
     #[inline(always)]
-    pub fn bind_cmd(&mut self, sc: K, pressed: bool, cmd: AppCmd) {
-        let idx = Self::idx(sc, pressed);
+    pub fn bind_cmd(&mut self, input: I, pressed: bool, cmd: AppCmd) {
+        let idx = Self::into_packed_index(input, pressed);
         self.cmds[idx] = Some(cmd);
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (K, bool, &AppCmd)> {
+    pub fn iter(&self) -> impl Iterator<Item = (I, bool, &AppCmd)> {
         self.cmds.iter().enumerate().filter_map(|(i, entry)| {
             let cmd = entry.as_ref()?;
-            let sc_index = i / 2;
-            let pressed = (i % 2) == 0;
-            let sc = K::from_index(sc_index)?;
+            let (input, pressed) = Self::from_packed_index(i)?;
 
-            Some((sc, pressed, cmd))
+            Some((input, pressed, cmd))
         })
     }
 
-    pub fn bind_btn(&mut self, sc: K, btn: JoypadButton) {
+    pub fn bind_btn(&mut self, sc: I, btn: JoypadButton) {
         self.bind_cmd(sc, true, AppCmd::PressButton(btn));
         self.bind_cmd(sc, false, AppCmd::ReleaseButton(btn));
+    }
+
+    fn from_packed_index(i: usize) -> Option<(I, bool)> {
+        let input_index = i / 2;
+        let pressed = (i % 2) == 0;
+        let input = I::from_index(input_index)?;
+
+        Some((input, pressed))
     }
 }
 

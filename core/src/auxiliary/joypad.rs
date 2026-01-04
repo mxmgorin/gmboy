@@ -10,7 +10,7 @@ pub const START_OR_DOWN_BIT: u8 = 0x03;
 pub const SELECT_DIRECTIONS_BIT: u8 = 0x04;
 pub const SELECT_ACTIONS_BIT: u8 = 0x05;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum JoypadButton {
     Start,
     Select,

@@ -56,6 +56,12 @@ pub struct VideoConfig {
     pub render: RenderConfig,
 }
 
+impl PartialEq for VideoConfig {
+    fn eq(&self, _other: &Self) -> bool {
+        false
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RenderConfig {
     pub frame_blend_mode: FrameBlendMode,

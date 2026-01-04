@@ -77,7 +77,7 @@ impl GamepadHandler {
         config
             .bindings
             .buttons
-            .get(button, is_pressed)
+            .get_cmd(button, is_pressed)
             .map(|x| x.to_owned())
     }
 

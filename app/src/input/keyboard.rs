@@ -28,7 +28,11 @@ impl BindableInput for Scancode {
 }
 
 pub fn handle_key(config: &InputConfig, sc: Scancode, pressed: bool) -> Option<AppCmd> {
-    config.bindings.keys.get(sc, pressed).map(|x| x.to_owned())
+    config
+        .bindings
+        .keys
+        .get_cmd(sc, pressed)
+        .map(|x| x.to_owned())
 }
 
 pub fn default_keys() -> InputBindings<Scancode> {

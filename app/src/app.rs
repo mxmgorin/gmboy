@@ -27,7 +27,7 @@ use std::time::Duration;
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum AppCmd {
     ToggleMenu,
     ToggleRewind,
@@ -47,7 +47,7 @@ pub enum AppCmd {
     BindKeyboard(String, JoypadButton),
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum ChangeAppConfigCmd {
     Reset,
     Volume(f32),

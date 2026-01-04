@@ -1,7 +1,7 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::factory::{
-    advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu,
+    advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,
     loaded_roms_menu, opened_roms_menu, settings_menu, system_menu, video_menu,
 };
 use crate::menu::item::AppMenuItem;
@@ -79,8 +79,15 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::UpInput
-            | AppMenuItem::SystemMenu => None,
+            | AppMenuItem::UpButton(_)
+            | AppMenuItem::DownButton(_)
+            | AppMenuItem::LeftButton(_)
+            | AppMenuItem::RightButton(_)
+            | AppMenuItem::AButton(_)
+            | AppMenuItem::BButton(_)
+            | AppMenuItem::StartButton(_)
+            | AppMenuItem::SelectButton(_) => None,
+            AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
             }
@@ -290,8 +297,15 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::UpInput
-            | AppMenuItem::SystemMenu => None,
+            | AppMenuItem::UpButton(_)
+            | AppMenuItem::DownButton(_)
+            | AppMenuItem::LeftButton(_)
+            | AppMenuItem::RightButton(_)
+            | AppMenuItem::AButton(_)
+            | AppMenuItem::BButton(_)
+            | AppMenuItem::StartButton(_)
+            | AppMenuItem::SelectButton(_) => None,
+            AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
             }
@@ -638,7 +652,18 @@ impl super::AppMenu {
             AppMenuItem::VideoShader => None,
             AppMenuItem::ShaderFrameBlend => None,
             AppMenuItem::FrameSkip => None,
-            AppMenuItem::KeyboardInput | AppMenuItem::UpInput => None,
+            AppMenuItem::KeyboardInput => {
+                self.next_items(keyboard_menu(&config.input.bindings.keys));
+                None
+            }
+            AppMenuItem::UpButton(_)
+            | AppMenuItem::DownButton(_)
+            | AppMenuItem::LeftButton(_)
+            | AppMenuItem::RightButton(_)
+            | AppMenuItem::AButton(_)
+            | AppMenuItem::BButton(_)
+            | AppMenuItem::StartButton(_)
+            | AppMenuItem::SelectButton(_) => None,
         }
     }
 }

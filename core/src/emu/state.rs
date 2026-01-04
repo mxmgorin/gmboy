@@ -8,7 +8,7 @@ pub enum EmuState {
     Rewind,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum SaveStateCmd {
     Create,
     Load,

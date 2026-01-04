@@ -1,5 +1,6 @@
 use crate::app::AppCmd;
 use crate::config::{VideoBackendType, VideoConfig};
+use crate::input::bindings::InputBindings;
 use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;
 use crate::menu::roms::RomsMenu;
@@ -7,6 +8,7 @@ use crate::menu::SubMenu;
 use crate::roms::RomsState;
 use crate::video::frame_blend::FrameBlendMode;
 use crate::PlatformFileSystem;
+use core::auxiliary::joypad::JoypadButton;
 use std::path::Path;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
@@ -83,7 +85,12 @@ pub fn files_menu(
 }
 
 pub fn input_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::ComboInterval, AppMenuItem::Back].into_boxed_slice()
+    vec![
+        AppMenuItem::ComboInterval,
+        AppMenuItem::KeyboardInput,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
 
 pub fn confirm_menu(cmd: AppCmd) -> Box<[AppMenuItem]> {
@@ -186,6 +193,31 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-pub fn keyboard_menu() -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::UpInput, AppMenuItem::Back].into_boxed_slice()
+pub fn keyboard_menu(bindings: &InputBindings<sdl2::keyboard::Scancode>) -> Box<[AppMenuItem]> {
+    let up = AppMenuItem::UpButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Up)));
+    let down =
+        AppMenuItem::DownButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Down)));
+    let left =
+        AppMenuItem::LeftButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Left)));
+    let right =
+        AppMenuItem::RightButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Right)));
+    let a = AppMenuItem::AButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::A)));
+    let b = AppMenuItem::BButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::B)));
+    let start =
+        AppMenuItem::StartButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Start)));
+    let select =
+        AppMenuItem::SelectButton(bindings.get_label(&AppCmd::PressButton(JoypadButton::Select)));
+
+    vec![
+        up,
+        down,
+        left,
+        right,
+        a,
+        b,
+        start,
+        select,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
 }
