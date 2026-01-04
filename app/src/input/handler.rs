@@ -1,5 +1,6 @@
 use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
 use crate::config::AppConfig;
+use crate::input::bindings::InputKind;
 use crate::input::emu::handle_emu_btn;
 use crate::input::gamepad::GamepadHandler;
 use crate::input::keyboard::handle_key;
@@ -62,7 +63,7 @@ impl InputHandler {
                 Event::KeyDown {
                     scancode: Some(sc), ..
                 } => {
-                    if let Some(cmd) = app.menu.handle_key(sc.name()) {
+                    if let Some(cmd) = app.menu.handle_input(sc, true) {
                         self.handle_cmd(app, emu, cmd);
                     } else {
                         if let Some(cmd) = handle_key(&app.config.input, sc, true) {
@@ -311,13 +312,16 @@ impl InputHandler {
                     self.handle_cmd(app, emu, cmd);
                 }
             }
-            AppCmd::BindKeyboard(key_name, btn) => {
-                if let Some(sc) = sdl2::keyboard::Scancode::from_name(&key_name) {
-                    app.config.input.bindings.keys.bind_btn(sc, btn);
-                } else {
-                    log::warn!("Failed to bind key: invalid name {key_name}");
+            AppCmd::BindInput(cmd) => match cmd.input_kind {
+                InputKind::Keyboard => {
+                    if let Some(sc) = cmd.input_index.into_input() {
+                        app.config.input.bindings.keys.bind_btn(sc, cmd.button);
+                    } else {
+                        log::warn!("Failed to bind key: invalid index {:?}", cmd.input_index);
+                    }
                 }
-            }
+                InputKind::Gamepad => {}
+            },
         }
     }
 }

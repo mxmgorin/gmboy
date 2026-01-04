@@ -8,10 +8,51 @@ use std::fmt;
 pub trait BindableInput: Copy {
     const COUNT: usize;
 
-    fn to_index(self) -> usize;
-    fn from_index(index: usize) -> Option<Self>;
+    fn code(self) -> usize;
+    fn from_code(index: usize) -> Option<Self>;
     fn name(self) -> &'static str;
     fn from_name(name: &str) -> Option<Self>;
+    fn kind(self) -> InputKind;
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+pub enum InputKind {
+    Keyboard,
+    Gamepad,
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+pub struct PackedInputIndex(usize);
+
+impl From<usize> for PackedInputIndex {
+    fn from(value: usize) -> Self {
+        Self(value)
+    }
+}
+
+impl PackedInputIndex {
+    #[inline(always)]
+    pub fn new<I: BindableInput>(input: I, pressed: bool) -> Self {
+        Self(input.code() * 2 + if pressed { 0 } else { 1 })
+    }
+
+    #[inline(always)]
+    pub fn index(self) -> usize {
+        self.0
+    }
+
+    #[inline(always)]
+    pub fn pressed(self) -> bool {
+        (self.0 % 2) == 0
+    }
+
+    #[inline(always)]
+    pub fn into_input<I: BindableInput>(self) -> Option<I> {
+        let input_index = self.0 / 2;
+        let input = I::from_code(input_index)?;
+
+        Some(input)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -22,14 +63,9 @@ pub struct InputBindings<K: BindableInput> {
 
 impl<I: BindableInput> InputBindings<I> {
     #[inline(always)]
-    fn into_packed_index(input: I, pressed: bool) -> usize {
-        input.to_index() * 2 + if pressed { 0 } else { 1 }
-    }
-
-    #[inline(always)]
     pub fn get_cmd(&self, input: I, pressed: bool) -> Option<&AppCmd> {
         self.cmds
-            .get(Self::into_packed_index(input, pressed))
+            .get(PackedInputIndex::new(input, pressed).index())
             .and_then(|x| x.as_ref())
     }
 
@@ -47,8 +83,10 @@ impl<I: BindableInput> InputBindings<I> {
         for (i, item) in self.cmds.iter().enumerate() {
             if let Some(item) = item {
                 if item == cmd {
-                    if let Some((input, pressed)) = Self::from_packed_index(i) {
-                        inputs.push((input, pressed));
+                    let index: PackedInputIndex = i.into();
+
+                    if let Some(input) = index.into_input() {
+                        inputs.push((input, index.pressed()));
                     }
                 }
             }
@@ -59,30 +97,23 @@ impl<I: BindableInput> InputBindings<I> {
 
     #[inline(always)]
     pub fn bind_cmd(&mut self, input: I, pressed: bool, cmd: AppCmd) {
-        let idx = Self::into_packed_index(input, pressed);
-        self.cmds[idx] = Some(cmd);
+        let i = PackedInputIndex::new(input, pressed).index();
+        self.cmds[i] = Some(cmd);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (I, bool, &AppCmd)> {
         self.cmds.iter().enumerate().filter_map(|(i, entry)| {
             let cmd = entry.as_ref()?;
-            let (input, pressed) = Self::from_packed_index(i)?;
+            let index: PackedInputIndex = i.into();
+            let input = index.into_input()?;
 
-            Some((input, pressed, cmd))
+            Some((input, index.pressed(), cmd))
         })
     }
 
-    pub fn bind_btn(&mut self, sc: I, btn: JoypadButton) {
-        self.bind_cmd(sc, true, AppCmd::PressButton(btn));
-        self.bind_cmd(sc, false, AppCmd::ReleaseButton(btn));
-    }
-
-    fn from_packed_index(i: usize) -> Option<(I, bool)> {
-        let input_index = i / 2;
-        let pressed = (i % 2) == 0;
-        let input = I::from_index(input_index)?;
-
-        Some((input, pressed))
+    pub fn bind_btn(&mut self, input: I, btn: JoypadButton) {
+        self.bind_cmd(input, true, AppCmd::PressButton(btn));
+        self.bind_cmd(input, false, AppCmd::ReleaseButton(btn));
     }
 }
 

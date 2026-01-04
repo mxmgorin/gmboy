@@ -1,5 +1,5 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
-use crate::input::bindings::{BindableInput, InputBindings};
+use crate::input::bindings::{BindableInput, InputBindings, InputKind};
 use crate::input::config::InputConfig;
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::runtime::RunMode;
@@ -10,20 +10,28 @@ impl BindableInput for Scancode {
     const COUNT: usize = Scancode::Num as usize;
 
     #[inline(always)]
-    fn to_index(self) -> usize {
+    fn code(self) -> usize {
         self as usize
     }
 
-    fn from_index(index: usize) -> Option<Self> {
+    #[inline(always)]
+    fn from_code(index: usize) -> Option<Self> {
         Scancode::from_i32(index as i32)
     }
 
+    #[inline(always)]
     fn name(self) -> &'static str {
         self.name()
     }
 
+    #[inline(always)]
     fn from_name(name: &str) -> Option<Self> {
         Scancode::from_name(name)
+    }
+
+    #[inline(always)]
+    fn kind(self) -> InputKind {
+        InputKind::Keyboard
     }
 }
 

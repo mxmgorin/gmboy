@@ -1,5 +1,3 @@
-use sdl2::controller::Button;
-
 pub mod bindings;
 pub mod combo;
 pub mod config;
@@ -7,6 +5,8 @@ pub mod emu;
 pub mod gamepad;
 pub mod handler;
 pub mod keyboard;
+
+use sdl2::controller::Button;
 
 pub fn button_to_str(btn: Button) -> &'static str {
     match btn {

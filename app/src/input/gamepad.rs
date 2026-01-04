@@ -1,5 +1,5 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
-use crate::input::bindings::{BindableInput, InputBindings};
+use crate::input::bindings::{BindableInput, InputBindings, InputKind};
 use crate::input::combo::ComboHandler;
 use crate::input::config::InputConfig;
 use crate::input::{button_to_str, str_to_button};
@@ -11,11 +11,11 @@ impl BindableInput for Button {
     const COUNT: usize = 15;
 
     #[inline(always)]
-    fn to_index(self) -> usize {
+    fn code(self) -> usize {
         self as usize
     }
 
-    fn from_index(index: usize) -> Option<Self> {
+    fn from_code(index: usize) -> Option<Self> {
         match index {
             0 => Some(Button::A),
             1 => Some(Button::B),
@@ -48,6 +48,10 @@ impl BindableInput for Button {
 
     fn from_name(name: &str) -> Option<Self> {
         str_to_button(name)
+    }
+
+    fn kind(self) -> InputKind {
+        InputKind::Gamepad
     }
 }
 

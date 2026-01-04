@@ -1,6 +1,7 @@
 use crate::audio::AppAudio;
 use crate::battery::BatterySave;
 use crate::config::{AppConfig, VideoBackendType, VideoConfig};
+use crate::input::bindings::{BindableInput, InputKind, PackedInputIndex};
 use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
@@ -44,7 +45,24 @@ pub enum AppCmd {
     SetFileBrowsePath(PathBuf),
     ToggleFullscreen,
     Macro(Vec<AppCmd>),
-    BindKeyboard(String, JoypadButton),
+    BindInput(BindInputCmd),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct BindInputCmd {
+    pub input_index: PackedInputIndex,
+    pub input_kind: InputKind,
+    pub button: JoypadButton,
+}
+
+impl BindInputCmd {
+    pub fn new<I: BindableInput>(input: I, pressed: bool, btn: JoypadButton) -> Self {
+        Self {
+            input_index: PackedInputIndex::new(input, pressed),
+            input_kind: input.kind(),
+            button: btn,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

@@ -1,12 +1,13 @@
 pub mod buffer;
 pub mod factory;
 pub mod files;
-pub mod item;
 pub mod handler;
+pub mod item;
 pub mod roms;
 
-use crate::app::AppCmd;
+use crate::app::{AppCmd, BindInputCmd};
 use crate::config::AppConfig;
+use crate::input::bindings::BindableInput;
 use crate::menu::buffer::MenuBuffer;
 use crate::menu::item::AppMenuItem;
 use crate::roms::RomsState;
@@ -36,14 +37,15 @@ impl AppMenu {
         }
     }
 
-    pub fn handle_key(&mut self, name: &str) -> Option<AppCmd> {
+    pub fn handle_input<I: BindableInput>(&mut self, input: I, pressed: bool) -> Option<AppCmd> {
         let item = self.items.get(self.selected_index).unwrap();
 
         let cmd = match item {
             AppMenuItem::WaitInput(btn) => {
                 let btn = btn.to_owned();
                 self.back();
-                Some(AppCmd::BindKeyboard(name.to_string(), btn))
+
+                Some(AppCmd::BindInput(BindInputCmd::new(input, pressed, btn)))
             }
             _ => None,
         };
