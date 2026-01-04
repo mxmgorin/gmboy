@@ -40,8 +40,8 @@ pub enum AppMenuItem {
     InputMenu,
     ComboInterval,
     KeyboardInput,
-    InputBinding(JoypadButton),
-    WaitInput(JoypadButton),
+    InputBinding(Box<[JoypadButton]>),
+    WaitInput(Box<[JoypadButton]>),
 
     PaletteInverted,
     CpuFrameBlendMode,
@@ -406,16 +406,20 @@ impl AppMenuItem {
             AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
             AppMenuItem::KeyboardInput => "Keyboard".to_string(),
-            AppMenuItem::InputBinding(btn) => {
-                format!(
-                    "{:?}: {}",
-                    btn,
-                    config
-                        .input
-                        .bindings
-                        .keys
-                        .get_label(&AppCmd::PressButton(*btn))
-                )
+            AppMenuItem::InputBinding(btns) => {
+                let cmd = if btns.len() == 1 && !btns.is_empty() {
+                    AppCmd::PressButton(btns[0])
+                } else {
+                    AppCmd::Macro(vec![].into_boxed_slice()) // todo
+                };
+
+                let btn = btns
+                    .iter()
+                    .map(|b| format!("{:?}", b))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                format!("{btn}: {}", config.input.bindings.keys.get_label(&cmd))
             }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
         };

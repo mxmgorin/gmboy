@@ -44,7 +44,7 @@ pub enum AppCmd {
     PressButton(JoypadButton),
     SetFileBrowsePath(PathBuf),
     ToggleFullscreen,
-    Macro(Vec<AppCmd>),
+    Macro(Box<[AppCmd]>),
     BindInput(BindInputCmd),
 }
 
@@ -52,15 +52,15 @@ pub enum AppCmd {
 pub struct BindInputCmd {
     pub input_index: PackedInputIndex,
     pub input_kind: InputKind,
-    pub button: JoypadButton,
+    pub buttons: Box<[JoypadButton]>,
 }
 
 impl BindInputCmd {
-    pub fn new<I: BindableInput>(input: I, pressed: bool, btn: JoypadButton) -> Self {
+    pub fn new<I: BindableInput>(input: I, pressed: bool, btns: Box<[JoypadButton]>) -> Self {
         Self {
             input_index: PackedInputIndex::new(input, pressed),
             input_kind: input.kind(),
-            button: btn,
+            buttons: btns,
         }
     }
 }

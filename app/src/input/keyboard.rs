@@ -55,66 +55,90 @@ pub fn default_keys() -> InputBindings<Scancode> {
     bindings.bind_cmd(
         Scancode::Y,
         true,
-        AppCmd::Macro(vec![
-            AppCmd::PressButton(JoypadButton::Up),
-            AppCmd::PressButton(JoypadButton::Left),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::PressButton(JoypadButton::Up),
+                AppCmd::PressButton(JoypadButton::Left),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::Y,
         false,
-        AppCmd::Macro(vec![
-            AppCmd::ReleaseButton(JoypadButton::Up),
-            AppCmd::ReleaseButton(JoypadButton::Left),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::ReleaseButton(JoypadButton::Up),
+                AppCmd::ReleaseButton(JoypadButton::Left),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::U,
         true,
-        AppCmd::Macro(vec![
-            AppCmd::PressButton(JoypadButton::Up),
-            AppCmd::PressButton(JoypadButton::Right),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::PressButton(JoypadButton::Up),
+                AppCmd::PressButton(JoypadButton::Right),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::U,
         false,
-        AppCmd::Macro(vec![
-            AppCmd::ReleaseButton(JoypadButton::Up),
-            AppCmd::ReleaseButton(JoypadButton::Right),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::ReleaseButton(JoypadButton::Up),
+                AppCmd::ReleaseButton(JoypadButton::Right),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::B,
         true,
-        AppCmd::Macro(vec![
-            AppCmd::PressButton(JoypadButton::Down),
-            AppCmd::PressButton(JoypadButton::Left),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::PressButton(JoypadButton::Down),
+                AppCmd::PressButton(JoypadButton::Left),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::B,
         false,
-        AppCmd::Macro(vec![
-            AppCmd::ReleaseButton(JoypadButton::Down),
-            AppCmd::ReleaseButton(JoypadButton::Left),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::ReleaseButton(JoypadButton::Down),
+                AppCmd::ReleaseButton(JoypadButton::Left),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::N,
         true,
-        AppCmd::Macro(vec![
-            AppCmd::PressButton(JoypadButton::Down),
-            AppCmd::PressButton(JoypadButton::Right),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::PressButton(JoypadButton::Down),
+                AppCmd::PressButton(JoypadButton::Right),
+            ]
+            .into_boxed_slice(),
+        ),
     );
     bindings.bind_cmd(
         Scancode::N,
         false,
-        AppCmd::Macro(vec![
-            AppCmd::ReleaseButton(JoypadButton::Down),
-            AppCmd::ReleaseButton(JoypadButton::Right),
-        ]),
+        AppCmd::Macro(
+            vec![
+                AppCmd::ReleaseButton(JoypadButton::Down),
+                AppCmd::ReleaseButton(JoypadButton::Right),
+            ]
+            .into_boxed_slice(),
+        ),
     );
 
     bindings.bind_btn(Scancode::Up, JoypadButton::Up);

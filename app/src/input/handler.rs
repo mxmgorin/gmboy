@@ -315,7 +315,11 @@ impl InputHandler {
             AppCmd::BindInput(cmd) => match cmd.input_kind {
                 InputKind::Keyboard => {
                     if let Some(sc) = cmd.input_index.into_input() {
-                        app.config.input.bindings.keys.bind_btn(sc, cmd.button);
+                        if cmd.buttons.len() == 1 {
+                            app.config.input.bindings.keys.bind_btn(sc, cmd.buttons[0]);
+                        } else {
+                            app.config.input.bindings.keys.bind_macro(sc, cmd.buttons);
+                        }
                     } else {
                         log::warn!("Failed to bind key: invalid index {:?}", cmd.input_index);
                     }
