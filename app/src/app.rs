@@ -48,6 +48,18 @@ pub enum AppCmd {
     BindInput(BindInputCmd),
 }
 
+impl AppCmd {
+    pub fn new_buttons_macro<B: Into<Box<[JoypadButton]>>>(buttons: B, pressed: bool) -> AppCmd {
+        let buttons: Box<[JoypadButton]> = buttons.into();
+
+        if pressed {
+            AppCmd::Macro(buttons.iter().map(|&b| AppCmd::PressButton(b)).collect())
+        } else {
+            AppCmd::Macro(buttons.iter().map(|b| AppCmd::ReleaseButton(*b)).collect())
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BindInputCmd {
     pub input_index: PackedInputIndex,

@@ -202,6 +202,10 @@ pub fn keyboard_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::InputBinding(vec![JoypadButton::B].into_boxed_slice()),
         AppMenuItem::InputBinding(vec![JoypadButton::Start].into_boxed_slice()),
         AppMenuItem::InputBinding(vec![JoypadButton::Select].into_boxed_slice()),
+        AppMenuItem::InputBinding(vec![JoypadButton::Up, JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::InputBinding(vec![JoypadButton::Up, JoypadButton::Right].into_boxed_slice()),
+        AppMenuItem::InputBinding(vec![JoypadButton::Down, JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::InputBinding(vec![JoypadButton::Down, JoypadButton::Right].into_boxed_slice()),
         AppMenuItem::Back,
     ]
     .into_boxed_slice()

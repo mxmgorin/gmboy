@@ -410,16 +410,16 @@ impl AppMenuItem {
                 let cmd = if btns.len() == 1 && !btns.is_empty() {
                     AppCmd::PressButton(btns[0])
                 } else {
-                    AppCmd::Macro(vec![].into_boxed_slice()) // todo
+                    AppCmd::new_buttons_macro(btns.to_owned(), true)
                 };
 
-                let btn = btns
+                let name = btns
                     .iter()
                     .map(|b| format!("{:?}", b))
                     .collect::<Vec<_>>()
-                    .join(", ");
+                    .join("+");
 
-                format!("{btn}: {}", config.input.bindings.keys.get_label(&cmd))
+                format!("{name}: {}", config.input.bindings.keys.get_label(&cmd))
             }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
         };
