@@ -185,3 +185,7 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
     ]
     .into_boxed_slice()
 }
+
+pub fn keyboard_menu() -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::UpInput, AppMenuItem::Back].into_boxed_slice()
+}

@@ -44,6 +44,7 @@ pub enum AppCmd {
     SetFileBrowsePath(PathBuf),
     ToggleFullscreen,
     Macro(Vec<AppCmd>),
+    BindKeyboard(String, JoypadButton),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

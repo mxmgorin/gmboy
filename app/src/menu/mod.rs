@@ -1,18 +1,84 @@
-use crate::app::AppCmd;
-use crate::config::AppConfig;
-
 pub mod buffer;
 pub mod factory;
 pub mod files;
 pub mod item;
-pub mod menu;
+pub mod navigation;
 pub mod roms;
 
-pub use factory::*;
-pub use menu::*;
+use crate::app::AppCmd;
+use crate::config::AppConfig;
+use crate::menu::buffer::MenuBuffer;
+use crate::menu::item::AppMenuItem;
+use crate::roms::RomsState;
+use std::mem;
 
 pub const MAX_MENU_ITEMS_PER_PAGE: usize = 12;
 pub const MAX_MENU_ITEM_CHARS: usize = 22;
+
+pub struct AppMenu {
+    prev_items: Vec<Box<[AppMenuItem]>>,
+    items: Box<[AppMenuItem]>,
+    selected_index: usize,
+    buffer: MenuBuffer,
+    updated: bool,
+    sub_buffer: MenuBuffer,
+}
+
+impl AppMenu {
+    pub fn new(roms: &RomsState) -> Self {
+        Self {
+            prev_items: Vec::with_capacity(4),
+            items: factory::start_menu(roms),
+            selected_index: 0,
+            buffer: MenuBuffer::default(),
+            updated: true,
+            sub_buffer: Default::default(),
+        }
+    }
+
+    #[inline(always)]
+    pub fn request_update(&mut self) {
+        self.updated = true;
+    }
+
+    pub fn get_items(&mut self, config: &AppConfig, roms: &RomsState) -> (&[&str], bool) {
+        let updated = self.updated;
+        self.updated = false;
+
+        if updated {
+            self.buffer.clear();
+            self.sub_buffer.clear();
+
+            for (i, item) in self.items.iter_mut().enumerate() {
+                if let Some(sub_items) = item.get_items() {
+                    for sub_item in sub_items.get_iterator() {
+                        self.sub_buffer.add(sub_item);
+                    }
+
+                    return (self.sub_buffer.get(), updated);
+                } else {
+                    let line = item.to_string(config, roms);
+                    if i == self.selected_index {
+                        self.buffer.add(format!("◀{line}▶"));
+                    } else {
+                        self.buffer.add(line.to_string());
+                    }
+                }
+            }
+        } else if !self.sub_buffer.is_empty() {
+            return (self.sub_buffer.get(), updated);
+        }
+
+        (self.buffer.get(), updated)
+    }
+
+    fn next_items(&mut self, items: Box<[AppMenuItem]>) {
+        self.updated = true;
+        let prev = mem::replace(&mut self.items, items);
+        self.selected_index = 0;
+        self.prev_items.push(prev);
+    }
+}
 
 pub fn get_menu_item_suffix(enabled: bool) -> &'static str {
     if enabled {

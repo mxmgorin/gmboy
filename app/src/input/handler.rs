@@ -307,6 +307,13 @@ impl InputHandler {
                     self.handle_cmd(app, emu, cmd);
                 }
             }
+            AppCmd::BindKeyboard(key_name, btn) => {
+                if let Some(sc) = sdl2::keyboard::Scancode::from_name(&key_name) {
+                    app.config.input.bindings.keys.bind_btn(sc, btn);
+                } else {
+                    log::warn!("Failed to bind key: invalid name {key_name}");
+                }
+            }
         }
     }
 }

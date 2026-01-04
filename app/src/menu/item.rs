@@ -36,6 +36,8 @@ pub enum AppMenuItem {
     RestartGame,
     InputMenu,
     ComboInterval,
+    KeyboardInput,
+    UpInput,
     PaletteInverted,
     CpuFrameBlendMode,
     FrameBlendAlpha,
@@ -122,6 +124,8 @@ impl AppMenuItem {
             | AppMenuItem::DotMatrixFilter
             | AppMenuItem::BrowseRoms
             | AppMenuItem::OpenedRoms
+            | AppMenuItem::KeyboardInput
+            | AppMenuItem::UpInput
             | AppMenuItem::LoadedRoms => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -185,6 +189,8 @@ impl AppMenuItem {
             | AppMenuItem::DotMatrixFilter
             | AppMenuItem::BrowseRoms
             | AppMenuItem::OpenedRoms
+            | AppMenuItem::KeyboardInput
+            | AppMenuItem::UpInput
             | AppMenuItem::LoadedRoms => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -392,6 +398,8 @@ impl AppMenuItem {
             AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.video.render.frame_skip),
             AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
+            AppMenuItem::KeyboardInput => "Keyboard".to_string(),
+            AppMenuItem::UpInput => "Up".to_string(),
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

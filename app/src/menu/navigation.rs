@@ -1,78 +1,19 @@
 use crate::app::{AppCmd, ChangeAppConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
-use crate::menu::buffer::MenuBuffer;
-use crate::menu::item::AppMenuItem;
-use crate::menu::{
+use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu,
-    loaded_roms_menu, opened_roms_menu, settings_menu, start_menu, system_menu, video_menu,
+    loaded_roms_menu, opened_roms_menu, settings_menu, system_menu, video_menu,
 };
+use crate::menu::item::AppMenuItem;
 use crate::roms::RomsState;
 use crate::video::frame_blend::{
     AdditiveFrameBlend, ExponentialFrameBlend, FrameBlendMode, GammaCorrectedFrameBlend,
-    LinearFrameBlend,
+    LinearFrameBlend, DMG_PROFILE, POCKET_PROFILE,
 };
-use crate::video::frame_blend::{DMG_PROFILE, POCKET_PROFILE};
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::PlatformFileSystem;
-use std::mem;
 
-pub struct AppMenu {
-    prev_items: Vec<Box<[AppMenuItem]>>,
-    items: Box<[AppMenuItem]>,
-    selected_index: usize,
-    buffer: MenuBuffer,
-    updated: bool,
-    sub_buffer: MenuBuffer,
-}
-
-impl AppMenu {
-    pub fn new(roms: &RomsState) -> Self {
-        Self {
-            prev_items: Vec::with_capacity(4),
-            items: start_menu(roms),
-            selected_index: 0,
-            buffer: MenuBuffer::default(),
-            updated: true,
-            sub_buffer: Default::default(),
-        }
-    }
-
-    #[inline(always)]
-    pub fn request_update(&mut self) {
-        self.updated = true;
-    }
-
-    pub fn get_items(&mut self, config: &AppConfig, roms: &RomsState) -> (&[&str], bool) {
-        let updated = self.updated;
-        self.updated = false;
-
-        if updated {
-            self.buffer.clear();
-            self.sub_buffer.clear();
-
-            for (i, item) in self.items.iter_mut().enumerate() {
-                if let Some(sub_items) = item.get_items() {
-                    for sub_item in sub_items.get_iterator() {
-                        self.sub_buffer.add(sub_item);
-                    }
-
-                    return (self.sub_buffer.get(), updated);
-                } else {
-                    let line = item.to_string(config, roms);
-                    if i == self.selected_index {
-                        self.buffer.add(format!("◀{line}▶"));
-                    } else {
-                        self.buffer.add(line.to_string());
-                    }
-                }
-            }
-        } else if !self.sub_buffer.is_empty() {
-            return (self.sub_buffer.get(), updated);
-        }
-
-        (self.buffer.get(), updated)
-    }
-
+impl super::AppMenu {
     #[inline]
     pub fn move_up(&mut self) {
         self.updated = true;
@@ -137,6 +78,8 @@ impl AppMenu {
             | AppMenuItem::Quit
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
+            | AppMenuItem::KeyboardInput
+            | AppMenuItem::UpInput
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
@@ -346,6 +289,8 @@ impl AppMenu {
             | AppMenuItem::Quit
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
+            | AppMenuItem::KeyboardInput
+            | AppMenuItem::UpInput
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
@@ -693,13 +638,7 @@ impl AppMenu {
             AppMenuItem::VideoShader => None,
             AppMenuItem::ShaderFrameBlend => None,
             AppMenuItem::FrameSkip => None,
+            AppMenuItem::KeyboardInput | AppMenuItem::UpInput => None,
         }
-    }
-
-    fn next_items(&mut self, items: Box<[AppMenuItem]>) {
-        self.updated = true;
-        let prev = mem::replace(&mut self.items, items);
-        self.selected_index = 0;
-        self.prev_items.push(prev);
     }
 }
