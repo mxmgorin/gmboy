@@ -53,14 +53,9 @@ impl ComboHandler {
         pressed: bool,
         config: &InputConfig,
     ) -> Option<AppCmd> {
-        for state in self.states.iter_mut() {
-            if state.button == button {
-                state.update(pressed);
-                return self.find_combo(&config.bindings.gamepad, config.combo_interval);
-            }
-        }
-
-        None
+        let state = &mut self.states[button.code()];
+        state.update(pressed);
+        self.find_combo(&config.bindings.gamepad, config.combo_interval)
     }
 
     fn find_combo(&self, bindings: &GamepadBindings, interval: Duration) -> Option<AppCmd> {
