@@ -80,8 +80,8 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::ButtonBinding(_)
-            | AppMenuItem::CmdBinding(_)
+            | AppMenuItem::ButtonsBinding(_)
+            | AppMenuItem::CmdsBinding(_)
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
@@ -290,8 +290,8 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::ButtonBinding(_)
-            | AppMenuItem::CmdBinding(_)
+            | AppMenuItem::ButtonsBinding(_)
+            | AppMenuItem::CmdsBinding(_)
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
@@ -630,14 +630,14 @@ impl super::AppMenu {
                 self.next_items(keyboard_menu());
                 None
             }
-            AppMenuItem::ButtonBinding(btns) => {
+            AppMenuItem::ButtonsBinding(btns) => {
                 let btns = btns.to_owned();
                 self.next_items(wait_input_menu(BindTarget::Buttons(btns)));
                 None
             }
-            AppMenuItem::CmdBinding(cmd) => {
-                let cmd = cmd.to_owned();
-                self.next_items(wait_input_menu(BindTarget::Cmd(Box::new(cmd))));
+            AppMenuItem::CmdsBinding(cmds) => {
+                let cmds = cmds.to_owned();
+                self.next_items(wait_input_menu(BindTarget::Cmds(cmds)));
                 None
             }
             AppMenuItem::WaitInput(_btn) => None,

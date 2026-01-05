@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, BindTarget};
+use crate::app::{AppCmd, BindCmds, BindTarget, ChangeConfigCmd};
 use crate::config::{VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;
@@ -8,6 +8,8 @@ use crate::roms::RomsState;
 use crate::video::frame_blend::FrameBlendMode;
 use crate::PlatformFileSystem;
 use core::auxiliary::joypad::JoypadButton;
+use core::emu::runtime::RunMode;
+use core::emu::state::SaveStateCmd;
 use std::path::Path;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
@@ -194,18 +196,20 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
 
 pub fn keyboard_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Up].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Down].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Left].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Right].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::A].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::B].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Start].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Select].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Up, JoypadButton::Left].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Up, JoypadButton::Right].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(vec![JoypadButton::Down, JoypadButton::Left].into_boxed_slice()),
-        AppMenuItem::ButtonBinding(
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Up].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Down].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Right].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::A].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::B].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Start].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Select].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Up, JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(vec![JoypadButton::Up, JoypadButton::Right].into_boxed_slice()),
+        AppMenuItem::ButtonsBinding(
+            vec![JoypadButton::Down, JoypadButton::Left].into_boxed_slice(),
+        ),
+        AppMenuItem::ButtonsBinding(
             vec![JoypadButton::Down, JoypadButton::Right].into_boxed_slice(),
         ),
         AppMenuItem::KeyboardInputPage2,
@@ -213,10 +217,45 @@ pub fn keyboard_menu() -> Box<[AppMenuItem]> {
     ]
     .into_boxed_slice()
 }
-
 pub fn keyboard_page2_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::CmdBinding(AppCmd::ToggleMenu),
+        AppMenuItem::CmdsBinding(BindCmds::new(AppCmd::ToggleMenu, None)),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::SaveState(SaveStateCmd::Create, None),
+            None,
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::SaveState(SaveStateCmd::Load, None),
+            None,
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
+            None,
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ToggleRewind,
+            AppCmd::ChangeMode(RunMode::Normal).into(),
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ChangeMode(RunMode::Turbo),
+            AppCmd::ChangeMode(RunMode::Normal).into(),
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ChangeMode(RunMode::Slow),
+            AppCmd::ChangeMode(RunMode::Normal).into(),
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette),
+            None,
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
+            None,
+        )),
+        AppMenuItem::CmdsBinding(BindCmds::new(
+            AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
+            None,
+        )),
         AppMenuItem::KeyboardInputPage1,
         AppMenuItem::Back,
     ]

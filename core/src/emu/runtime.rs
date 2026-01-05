@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::auxiliary::clock::Clock;
 use crate::bus::Bus;
 use crate::cpu::Cpu;
@@ -12,6 +14,22 @@ pub enum RunMode {
     Normal,
     Slow,
     Turbo,
+}
+
+impl RunMode {
+    pub const fn name(&self) -> &'static str {
+        match self {
+            RunMode::Normal => "Normal",
+            RunMode::Slow => "Slow",
+            RunMode::Turbo => "Turbo",
+        }
+    }
+}
+
+impl fmt::Display for RunMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
 }
 
 /// Contains all runnable components.

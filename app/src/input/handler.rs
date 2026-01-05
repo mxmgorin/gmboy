@@ -324,12 +324,21 @@ impl InputHandler {
                                     app.config.input.bindings.keyboard.bind_macro(sc, buttons);
                                 }
                             }
-                            crate::app::BindTarget::Cmd(app_cmd) => app
-                                .config
-                                .input
-                                .bindings
-                                .keyboard
-                                .bind_cmd(sc, bind_cmd.input_index.pressed(), *app_cmd),
+                            crate::app::BindTarget::Cmds(cmds) => {
+                                app.config.input.bindings.keyboard.bind_cmd(
+                                    sc,
+                                    true,
+                                    *cmds.pressed,
+                                );
+
+                                if let Some(released) = cmds.released {
+                                    app.config.input.bindings.keyboard.bind_cmd(
+                                        sc,
+                                        false,
+                                        *released,
+                                    );
+                                }
+                            }
                         }
                     } else {
                         log::warn!(

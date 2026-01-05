@@ -21,7 +21,7 @@ use core::emu::EmuAudioCallback;
 use core::ppu::framebuffer::FrameBuffer;
 use sdl2::Sdl;
 use serde::{Deserialize, Serialize};
-use std::fmt::Write;
+use std::fmt::{self, Write};
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
@@ -49,6 +49,35 @@ pub enum AppCmd {
 }
 
 impl AppCmd {
+    pub const fn name(&self) -> &'static str {
+        match self {
+            AppCmd::ToggleMenu => "ToggleMenu",
+            AppCmd::ToggleRewind => "ToggleRewind",
+            AppCmd::LoadFile(_) => "LoadFile",
+            AppCmd::RestartRom => "RestartRom",
+            AppCmd::ChangeMode(m) => m.name(),
+            AppCmd::SaveState(m, _) => m.name(),
+            AppCmd::SelectRom => "SelectRom",
+            AppCmd::Quit => "Quit",
+            AppCmd::ChangeConfig(conf) => conf.name(),
+            AppCmd::SelectRomsDir => "SelectRomsDir",
+            AppCmd::ReleaseButton(_) => "ReleaseButton",
+            AppCmd::PressButton(_) => "PressButton",
+            AppCmd::SetFileBrowsePath(_) => "SetFileBrowsePath",
+            AppCmd::ToggleFullscreen => "ToggleFullscreen",
+            AppCmd::Macro(_) => "Macro",
+            AppCmd::BindInput(_) => "BindInput",
+        }
+    }
+}
+
+impl fmt::Display for AppCmd {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl AppCmd {
     pub fn new_macro_buttons<B: Into<Box<[JoypadButton]>>>(buttons: B, pressed: bool) -> AppCmd {
         let buttons: Box<[JoypadButton]> = buttons.into();
 
@@ -70,7 +99,22 @@ pub struct BindInputCmd {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum BindTarget {
     Buttons(Box<[JoypadButton]>),
-    Cmd(Box<AppCmd>),
+    Cmds(BindCmds),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct BindCmds {
+    pub pressed: Box<AppCmd>,
+    pub released: Option<Box<AppCmd>>,
+}
+
+impl BindCmds {
+    pub fn new(pressed: AppCmd, released: Option<AppCmd>) -> Self {
+        Self {
+            pressed: Box::new(pressed),
+            released: released.map(|c| Box::new(c)),
+        }
+    }
 }
 
 impl BindInputCmd {
@@ -116,6 +160,47 @@ pub enum ChangeConfigCmd {
     FrameSkip(usize),
 }
 
+impl ChangeConfigCmd {
+    pub const fn name(&self) -> &'static str {
+        match self {
+            ChangeConfigCmd::Reset => "Reset",
+            ChangeConfigCmd::Volume(_) => "Volume",
+            ChangeConfigCmd::Scale(_) => "Scale",
+            ChangeConfigCmd::TileWindow => "TileWindow",
+            ChangeConfigCmd::Fullscreen => "Fullscreen",
+            ChangeConfigCmd::Fps => "Fps",
+            ChangeConfigCmd::SpinDuration(_) => "SpinDuration",
+            ChangeConfigCmd::NextPalette => "NextPalette",
+            ChangeConfigCmd::PrevPalette => "PrevPalette",
+            ChangeConfigCmd::ToggleMute => "ToggleMute",
+            ChangeConfigCmd::NormalSpeed(_) => "NormalSpeed",
+            ChangeConfigCmd::TurboSpeed(_) => "TurboSpeed",
+            ChangeConfigCmd::SlowSpeed(_) => "SlowSpeed",
+            ChangeConfigCmd::RewindSize(_) => "RewindSize",
+            ChangeConfigCmd::RewindInterval(_) => "RewindInterval",
+            ChangeConfigCmd::AutoSaveState => "AutoSaveState",
+            ChangeConfigCmd::AudioBufferSize(_) => "AudioBufferSize",
+            ChangeConfigCmd::MuteTurbo => "MuteTurbo",
+            ChangeConfigCmd::MuteSlow => "MuteSlow",
+            ChangeConfigCmd::ComboInterval(_) => "ComboInterval",
+            ChangeConfigCmd::SetSaveIndex(_) => "SetSaveIndex",
+            ChangeConfigCmd::SetLoadIndex(_) => "SetLoadIndex",
+            ChangeConfigCmd::IncSaveAndLoadIndexes => "NextSaveIndex",
+            ChangeConfigCmd::DecSaveAndLoadIndexes => "PrevSaveIndex",
+            ChangeConfigCmd::InvertPalette => "InvertPalette",
+            ChangeConfigCmd::Video(_) => "Video",
+            ChangeConfigCmd::NextShader => "NextShader",
+            ChangeConfigCmd::PrevShader => "PrevShader",
+            ChangeConfigCmd::FrameSkip(_) => "FrameSkip",
+        }
+    }
+}
+
+impl fmt::Display for ChangeConfigCmd {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum AppState {
     Paused,
