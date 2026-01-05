@@ -1,7 +1,7 @@
 use crate::app::{AppCmd, ChangeConfigCmd};
-use crate::input::all_buttons;
 use crate::input::bindings::BindableInput;
 use crate::input::config::{GamepadBindings, InputConfig};
+use crate::input::gamepad_buttons;
 use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
 use serde::{Deserialize, Serialize};
@@ -40,7 +40,7 @@ impl ComboHandler {
     pub fn new() -> Self {
         let mut states = [ButtonState::new(Button::A); Button::COUNT];
 
-        for button in all_buttons() {
+        for button in gamepad_buttons() {
             states[button.code()] = ButtonState::new(*button);
         }
 

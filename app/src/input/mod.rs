@@ -61,7 +61,7 @@ pub fn str_to_button(s: &str) -> Option<Button> {
     }
 }
 
-pub const fn all_buttons() -> &'static [Button] {
+pub const fn gamepad_buttons() -> &'static [Button] {
     &[
         Button::A,
         Button::B,
