@@ -41,11 +41,11 @@ impl AppMenu {
         let item = self.items.get(self.selected_index).unwrap();
 
         let cmd = match item {
-            AppMenuItem::WaitInput(btn) => {
-                let btn = btn.to_owned();
+            AppMenuItem::WaitInput(btns) => {
+                let btns = btns.to_owned();
                 self.back();
 
-                Some(AppCmd::BindInput(BindInputCmd::new(input, pressed, btn)))
+                Some(AppCmd::BindInput(BindInputCmd::new(input, pressed, btns)))
             }
             _ => None,
         };

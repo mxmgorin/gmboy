@@ -1,8 +1,9 @@
-use crate::app::{AppCmd, ChangeConfigCmd};
+use crate::app::{AppCmd, BindTarget, ChangeConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,
-    loaded_roms_menu, opened_roms_menu, settings_menu, system_menu, video_menu, wait_input_menu,
+    keyboard_page2_menu, loaded_roms_menu, opened_roms_menu, settings_menu, system_menu,
+    video_menu, wait_input_menu,
 };
 use crate::menu::item::AppMenuItem;
 use crate::roms::RomsState;
@@ -79,21 +80,16 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::InputBinding(_)
+            | AppMenuItem::ButtonBinding(_)
+            | AppMenuItem::CmdBinding(_)
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::NormalSpeed(0.1)))
             }
-            AppMenuItem::TurboSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::TurboSpeed(0.1)))
-            }
-            AppMenuItem::SlowSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(0.1)))
-            }
-            AppMenuItem::RewindSize => {
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(25)))
-            }
+            AppMenuItem::TurboSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TurboSpeed(0.1))),
+            AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(0.1))),
+            AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(25))),
             AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
                 ChangeConfigCmd::RewindInterval(1_000_000),
             )),
@@ -105,9 +101,9 @@ impl super::AppMenu {
             AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
-            AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
-                ChangeConfigCmd::ComboInterval(5_000),
-            )),
+            AppMenuItem::ComboInterval => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::ComboInterval(5_000)))
+            }
             AppMenuItem::PaletteInverted => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette))
             }
@@ -244,9 +240,12 @@ impl super::AppMenu {
             }
             AppMenuItem::FrameSkip => {
                 let frame_skip = update_frame_skip(config.video.render.frame_skip, 1);
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(
-                    frame_skip,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(frame_skip)))
+            }
+            AppMenuItem::KeyboardInputPage1 => None,
+            AppMenuItem::KeyboardInputPage2 => {
+                self.next_items(keyboard_page2_menu());
+                None
             }
         }
     }
@@ -291,7 +290,8 @@ impl super::AppMenu {
             | AppMenuItem::AudioMenu
             | AppMenuItem::AdvancedMenu
             | AppMenuItem::KeyboardInput
-            | AppMenuItem::InputBinding(_)
+            | AppMenuItem::ButtonBinding(_)
+            | AppMenuItem::CmdBinding(_)
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
@@ -300,26 +300,22 @@ impl super::AppMenu {
             AppMenuItem::TurboSpeed => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::TurboSpeed(-0.1)))
             }
-            AppMenuItem::SlowSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(-0.1)))
-            }
-            AppMenuItem::RewindSize => {
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(-25)))
-            }
+            AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(-0.1))),
+            AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(-25))),
             AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
                 ChangeConfigCmd::RewindInterval(-1_000_000),
             )),
-            AppMenuItem::AudioBufferSize => Some(AppCmd::ChangeConfig(
-                ChangeConfigCmd::AudioBufferSize(-2),
-            )),
+            AppMenuItem::AudioBufferSize => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::AudioBufferSize(-2)))
+            }
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
             AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
-            AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
-                ChangeConfigCmd::ComboInterval(-5_000),
-            )),
+            AppMenuItem::ComboInterval => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::ComboInterval(-5_000)))
+            }
             AppMenuItem::PaletteInverted => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette))
             }
@@ -457,10 +453,13 @@ impl super::AppMenu {
             }
             AppMenuItem::FrameSkip => {
                 let frame_skip = update_frame_skip(config.video.render.frame_skip, -1);
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(
-                    frame_skip,
-                )))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(frame_skip)))
             }
+            AppMenuItem::KeyboardInputPage1 => {
+                self.next_items(keyboard_menu());
+                None
+            }
+            AppMenuItem::KeyboardInputPage2 => None,
         }
     }
 
@@ -539,9 +538,7 @@ impl super::AppMenu {
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
             AppMenuItem::ResetConfig => {
-                self.next_items(confirm_menu(AppCmd::ChangeConfig(
-                    ChangeConfigCmd::Reset,
-                )));
+                self.next_items(confirm_menu(AppCmd::ChangeConfig(ChangeConfigCmd::Reset)));
                 None
             }
             AppMenuItem::RestartGame => Some(AppCmd::RestartRom),
@@ -633,12 +630,25 @@ impl super::AppMenu {
                 self.next_items(keyboard_menu());
                 None
             }
-            AppMenuItem::InputBinding(btn) => {
-                let btn = btn.to_owned();
-                self.next_items(wait_input_menu(btn));
+            AppMenuItem::ButtonBinding(btns) => {
+                let btns = btns.to_owned();
+                self.next_items(wait_input_menu(BindTarget::Buttons(btns)));
+                None
+            }
+            AppMenuItem::CmdBinding(cmd) => {
+                let cmd = cmd.to_owned();
+                self.next_items(wait_input_menu(BindTarget::Cmd(Box::new(cmd))));
                 None
             }
             AppMenuItem::WaitInput(_btn) => None,
+            AppMenuItem::KeyboardInputPage1 => {
+                self.next_items(keyboard_menu());
+                None
+            }
+            AppMenuItem::KeyboardInputPage2 => {
+                self.next_items(keyboard_page2_menu());
+                None
+            }
         }
     }
 }

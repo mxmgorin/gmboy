@@ -64,15 +64,21 @@ impl AppCmd {
 pub struct BindInputCmd {
     pub input_index: InputIndex,
     pub input_kind: InputKind,
-    pub buttons: Box<[JoypadButton]>,
+    pub target: BindTarget,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub enum BindTarget {
+    Buttons(Box<[JoypadButton]>),
+    Cmd(Box<AppCmd>),
 }
 
 impl BindInputCmd {
-    pub fn new<I: BindableInput>(input: I, pressed: bool, btns: Box<[JoypadButton]>) -> Self {
+    pub fn new<I: BindableInput>(input: I, pressed: bool, target: BindTarget) -> Self {
         Self {
             input_index: InputIndex::new(input, pressed),
             input_kind: input.kind(),
-            buttons: btns,
+            target,
         }
     }
 }

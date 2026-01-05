@@ -1,6 +1,6 @@
 use core::auxiliary::joypad::JoypadButton;
 
-use crate::app::AppCmd;
+use crate::app::{AppCmd, BindTarget};
 use crate::config::AppConfig;
 use crate::menu::{get_menu_item_suffix, SubMenu, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;
@@ -40,8 +40,11 @@ pub enum AppMenuItem {
     InputMenu,
     ComboInterval,
     KeyboardInput,
-    InputBinding(Box<[JoypadButton]>),
-    WaitInput(Box<[JoypadButton]>),
+    ButtonBinding(Box<[JoypadButton]>),
+    CmdBinding(AppCmd),
+    KeyboardInputPage2,
+    KeyboardInputPage1,
+    WaitInput(BindTarget),
 
     PaletteInverted,
     CpuFrameBlendMode,
@@ -132,7 +135,10 @@ impl AppMenuItem {
             | AppMenuItem::KeyboardInput
             | AppMenuItem::LoadedRoms
             | AppMenuItem::WaitInput(_)
-            | AppMenuItem::InputBinding(_) => None,
+            | AppMenuItem::CmdBinding(_)
+            | AppMenuItem::KeyboardInputPage1
+            | AppMenuItem::KeyboardInputPage2
+            | AppMenuItem::ButtonBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
             | AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
@@ -198,7 +204,10 @@ impl AppMenuItem {
             | AppMenuItem::KeyboardInput
             | AppMenuItem::LoadedRoms
             | AppMenuItem::WaitInput(_)
-            | AppMenuItem::InputBinding(_) => None,
+            | AppMenuItem::CmdBinding(_)
+            | AppMenuItem::KeyboardInputPage1
+            | AppMenuItem::KeyboardInputPage2
+            | AppMenuItem::ButtonBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
             | AppMenuItem::BrowseRomsSubMenu(x) => Some(x),
@@ -406,7 +415,7 @@ impl AppMenuItem {
             AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
             AppMenuItem::KeyboardInput => "Keyboard".to_string(),
-            AppMenuItem::InputBinding(btns) => {
+            AppMenuItem::ButtonBinding(btns) => {
                 let cmd = if btns.len() == 1 && !btns.is_empty() {
                     AppCmd::PressButton(btns[0])
                 } else {
@@ -421,7 +430,16 @@ impl AppMenuItem {
 
                 format!("{name}: {}", config.input.bindings.keyboard.get_label(&cmd))
             }
+            AppMenuItem::CmdBinding(cmd) => {
+                format!(
+                    "{:?}: {}",
+                    cmd,
+                    config.input.bindings.keyboard.get_label(&cmd)
+                )
+            }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
+            AppMenuItem::KeyboardInputPage1 => "Page (2/2)".to_string(),
+            AppMenuItem::KeyboardInputPage2 => "Page (1/2)".to_string(),
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

@@ -1,4 +1,4 @@
-use crate::app::AppCmd;
+use crate::app::{AppCmd, BindTarget};
 use crate::config::{VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;
@@ -194,23 +194,35 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
 
 pub fn keyboard_menu() -> Box<[AppMenuItem]> {
     vec![
-        AppMenuItem::InputBinding(vec![JoypadButton::Up].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Down].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Left].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Right].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::A].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::B].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Start].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Select].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Up, JoypadButton::Left].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Up, JoypadButton::Right].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Down, JoypadButton::Left].into_boxed_slice()),
-        AppMenuItem::InputBinding(vec![JoypadButton::Down, JoypadButton::Right].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Up].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Down].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Right].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::A].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::B].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Start].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Select].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Up, JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Up, JoypadButton::Right].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(vec![JoypadButton::Down, JoypadButton::Left].into_boxed_slice()),
+        AppMenuItem::ButtonBinding(
+            vec![JoypadButton::Down, JoypadButton::Right].into_boxed_slice(),
+        ),
+        AppMenuItem::KeyboardInputPage2,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
 }
 
-pub fn wait_input_menu(btns: Box<[JoypadButton]>) -> Box<[AppMenuItem]> {
-    vec![AppMenuItem::WaitInput(btns)].into_boxed_slice()
+pub fn keyboard_page2_menu() -> Box<[AppMenuItem]> {
+    vec![
+        AppMenuItem::CmdBinding(AppCmd::ToggleMenu),
+        AppMenuItem::KeyboardInputPage1,
+        AppMenuItem::Back,
+    ]
+    .into_boxed_slice()
+}
+
+pub fn wait_input_menu(target: BindTarget) -> Box<[AppMenuItem]> {
+    vec![AppMenuItem::WaitInput(target)].into_boxed_slice()
 }

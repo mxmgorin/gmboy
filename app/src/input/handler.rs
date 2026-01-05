@@ -313,24 +313,29 @@ impl InputHandler {
                     self.handle_cmd(app, emu, cmd);
                 }
             }
-            AppCmd::BindInput(cmd) => match cmd.input_kind {
+            AppCmd::BindInput(bind_cmd) => match bind_cmd.input_kind {
                 InputKind::Keyboard => {
-                    if let Some(sc) = cmd.input_index.into_input() {
-                        if cmd.buttons.len() == 1 {
-                            app.config
+                    if let Some(sc) = bind_cmd.input_index.into_input() {
+                        match bind_cmd.target {
+                            crate::app::BindTarget::Buttons(buttons) => {
+                                if buttons.len() == 1 {
+                                    app.config.input.bindings.keyboard.bind_btn(sc, buttons[0]);
+                                } else {
+                                    app.config.input.bindings.keyboard.bind_macro(sc, buttons);
+                                }
+                            }
+                            crate::app::BindTarget::Cmd(app_cmd) => app
+                                .config
                                 .input
                                 .bindings
                                 .keyboard
-                                .bind_btn(sc, cmd.buttons[0]);
-                        } else {
-                            app.config
-                                .input
-                                .bindings
-                                .keyboard
-                                .bind_macro(sc, cmd.buttons);
+                                .bind_cmd(sc, bind_cmd.input_index.pressed(), *app_cmd),
                         }
                     } else {
-                        log::warn!("Failed to bind key: invalid index {:?}", cmd.input_index);
+                        log::warn!(
+                            "Failed to bind key: invalid index {:?}",
+                            bind_cmd.input_index
+                        );
                     }
                 }
                 InputKind::Gamepad => {}
