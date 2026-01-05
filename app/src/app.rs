@@ -1,7 +1,7 @@
 use crate::audio::AppAudio;
 use crate::battery::BatterySave;
 use crate::config::{AppConfig, VideoBackendType, VideoConfig};
-use crate::input::bindings::{BindableInput, InputKind, PackedInputIndex};
+use crate::input::bindings::{BindableInput, InputIndex, InputKind};
 use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
@@ -38,7 +38,7 @@ pub enum AppCmd {
     SaveState(SaveStateCmd, Option<usize>),
     SelectRom,
     Quit,
-    ChangeConfig(ChangeAppConfigCmd),
+    ChangeConfig(ChangeConfigCmd),
     SelectRomsDir,
     ReleaseButton(JoypadButton),
     PressButton(JoypadButton),
@@ -49,11 +49,11 @@ pub enum AppCmd {
 }
 
 impl AppCmd {
-    pub fn new_buttons_macro<B: Into<Box<[JoypadButton]>>>(buttons: B, pressed: bool) -> AppCmd {
+    pub fn new_macro_buttons<B: Into<Box<[JoypadButton]>>>(buttons: B, pressed: bool) -> AppCmd {
         let buttons: Box<[JoypadButton]> = buttons.into();
 
         if pressed {
-            AppCmd::Macro(buttons.iter().map(|&b| AppCmd::PressButton(b)).collect())
+            AppCmd::Macro(buttons.iter().map(|b| AppCmd::PressButton(*b)).collect())
         } else {
             AppCmd::Macro(buttons.iter().map(|b| AppCmd::ReleaseButton(*b)).collect())
         }
@@ -62,7 +62,7 @@ impl AppCmd {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct BindInputCmd {
-    pub input_index: PackedInputIndex,
+    pub input_index: InputIndex,
     pub input_kind: InputKind,
     pub buttons: Box<[JoypadButton]>,
 }
@@ -70,7 +70,7 @@ pub struct BindInputCmd {
 impl BindInputCmd {
     pub fn new<I: BindableInput>(input: I, pressed: bool, btns: Box<[JoypadButton]>) -> Self {
         Self {
-            input_index: PackedInputIndex::new(input, pressed),
+            input_index: InputIndex::new(input, pressed),
             input_kind: input.kind(),
             buttons: btns,
         }
@@ -78,7 +78,7 @@ impl BindInputCmd {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum ChangeAppConfigCmd {
+pub enum ChangeConfigCmd {
     Reset,
     Volume(f32),
     Scale(f32),
@@ -104,7 +104,7 @@ pub enum ChangeAppConfigCmd {
     IncSaveAndLoadIndexes,
     DecSaveAndLoadIndexes,
     InvertPalette,
-    Video(VideoConfig),
+    Video(Box<VideoConfig>),
     NextShader,
     PrevShader,
     FrameSkip(usize),

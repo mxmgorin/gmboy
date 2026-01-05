@@ -410,7 +410,7 @@ impl AppMenuItem {
                 let cmd = if btns.len() == 1 && !btns.is_empty() {
                     AppCmd::PressButton(btns[0])
                 } else {
-                    AppCmd::new_buttons_macro(btns.to_owned(), true)
+                    AppCmd::new_macro_buttons(btns.to_owned(), true)
                 };
 
                 let name = btns

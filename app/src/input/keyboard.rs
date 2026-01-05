@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, ChangeAppConfigCmd};
+use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::bindings::{BindableInput, InputBindings, InputKind};
 use crate::input::config::InputConfig;
 use core::auxiliary::joypad::JoypadButton;
@@ -89,24 +89,24 @@ pub fn default_keys() -> InputBindings<Scancode> {
     bindings.bind_cmd(
         Scancode::Equals,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0)),
+        AppCmd::ChangeConfig(ChangeConfigCmd::Scale(1.0)),
     );
     bindings.bind_cmd(
         Scancode::Minus,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0)),
+        AppCmd::ChangeConfig(ChangeConfigCmd::Scale(-1.0)),
     );
 
     // Audio / video toggles
     bindings.bind_cmd(
         Scancode::M,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::ToggleMute),
+        AppCmd::ChangeConfig(ChangeConfigCmd::ToggleMute),
     );
     bindings.bind_cmd(
         Scancode::I,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+        AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
     );
 
     // Fullscreen (side-effect only)
@@ -116,29 +116,29 @@ pub fn default_keys() -> InputBindings<Scancode> {
     bindings.bind_cmd(
         Scancode::F11,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05)),
+        AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.05)),
     );
     bindings.bind_cmd(
         Scancode::F12,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05)),
+        AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.05)),
     );
 
     // Shaders / palettes
     bindings.bind_cmd(
         Scancode::LeftBracket,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+        AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
     );
     bindings.bind_cmd(
         Scancode::RightBracket,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+        AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
     );
     bindings.bind_cmd(
         Scancode::P,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette),
+        AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette),
     );
 
     // Save state – create

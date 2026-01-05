@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, ChangeAppConfigCmd};
+use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,
@@ -49,27 +49,27 @@ impl super::AppMenu {
             AppMenuItem::SaveState => {
                 let i = core::move_next_wrapped(config.current_save_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetSaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetSaveIndex(i)))
             }
             AppMenuItem::LoadState => {
                 let i = core::move_next_wrapped(config.current_load_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetLoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetLoadIndex(i)))
             }
-            AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(1.0))),
+            AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(100)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SpinDuration(100)))
             }
-            AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.05))),
-            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.05))),
+            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fullscreen))
             }
-            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
+            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TileWindow)),
             AppMenuItem::AutoSaveState => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AutoSaveState))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::AutoSaveState))
             }
-            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
+            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::SettingsMenu
@@ -83,33 +83,33 @@ impl super::AppMenu {
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(0.1)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::NormalSpeed(0.1)))
             }
             AppMenuItem::TurboSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TurboSpeed(0.1)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::TurboSpeed(0.1)))
             }
             AppMenuItem::SlowSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SlowSpeed(0.1)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(0.1)))
             }
             AppMenuItem::RewindSize => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::RewindSize(25)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(25)))
             }
             AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::RewindInterval(1_000_000),
+                ChangeConfigCmd::RewindInterval(1_000_000),
             )),
             AppMenuItem::AudioBufferSize => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AudioBufferSize(2)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::AudioBufferSize(2)))
             }
-            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
-            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
             AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
             AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::ComboInterval(5_000),
+                ChangeConfigCmd::ComboInterval(5_000),
             )),
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette))
             }
             AppMenuItem::CpuFrameBlendMode => {
                 let mut conf = config.video.clone();
@@ -129,25 +129,25 @@ impl super::AppMenu {
                 };
                 self.items = video_menu(&conf);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendAlpha => {
                 let mut conf = config.video.clone();
                 conf.render.frame_blend_mode.change_alpha(0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendFade => {
                 let mut conf = config.video.clone();
                 conf.render.frame_blend_mode.change_fade(0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendDim => {
                 let mut conf = config.video.clone();
                 conf.render.change_dim(0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::VideoMenu => None,
             AppMenuItem::FrameBlendProfile => {
@@ -161,7 +161,7 @@ impl super::AppMenu {
                     }
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendRise => {
                 let mut conf = config.video.clone();
@@ -173,7 +173,7 @@ impl super::AppMenu {
                     conf.render.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendFall => {
                 let mut conf = config.video.clone();
@@ -185,7 +185,7 @@ impl super::AppMenu {
                     conf.render.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendBleed => {
                 let mut conf = config.video.clone();
@@ -197,17 +197,17 @@ impl super::AppMenu {
                     conf.render.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::GridFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.grid_enabled = !conf.render.sdl2.grid_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::SubpixelFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::BrowseRoms | AppMenuItem::LoadedRoms | AppMenuItem::OpenedRoms => None,
             AppMenuItem::BrowseRomsSubMenu(x)
@@ -226,9 +226,9 @@ impl super::AppMenu {
                 };
                 self.items = video_menu(&conf);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
-            AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader)),
+            AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeConfigCmd::NextShader)),
             AppMenuItem::ShaderFrameBlend => {
                 let mut conf = config.video.clone();
                 conf.render.gl.shader_frame_blend_mode =
@@ -240,11 +240,11 @@ impl super::AppMenu {
                     };
                 self.items = video_menu(&conf);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameSkip => {
                 let frame_skip = update_frame_skip(config.video.render.frame_skip, 1);
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(
                     frame_skip,
                 )))
             }
@@ -261,27 +261,27 @@ impl super::AppMenu {
             AppMenuItem::SaveState => {
                 let i = core::move_prev_wrapped(config.current_save_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetSaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetSaveIndex(i)))
             }
             AppMenuItem::LoadState => {
                 let i = core::move_prev_wrapped(config.current_load_index, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SetLoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetLoadIndex(i)))
             }
-            AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Scale(-1.0))),
+            AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SpinDuration(-100)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SpinDuration(-100)))
             }
-            AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.05))),
-            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.05))),
+            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fullscreen))
             }
-            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
+            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TileWindow)),
             AppMenuItem::AutoSaveState => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AutoSaveState))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::AutoSaveState))
             }
-            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevPalette)),
+            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeConfigCmd::PrevPalette)),
             AppMenuItem::Resume
             | AppMenuItem::OpenRom
             | AppMenuItem::SettingsMenu
@@ -295,39 +295,39 @@ impl super::AppMenu {
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::SystemMenu => None,
             AppMenuItem::NormalSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NormalSpeed(-0.1)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::NormalSpeed(-0.1)))
             }
             AppMenuItem::TurboSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TurboSpeed(-0.1)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::TurboSpeed(-0.1)))
             }
             AppMenuItem::SlowSpeed => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::SlowSpeed(-0.1)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(-0.1)))
             }
             AppMenuItem::RewindSize => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::RewindSize(-25)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(-25)))
             }
             AppMenuItem::RewindInterval => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::RewindInterval(-1_000_000),
+                ChangeConfigCmd::RewindInterval(-1_000_000),
             )),
             AppMenuItem::AudioBufferSize => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::AudioBufferSize(-2),
+                ChangeConfigCmd::AudioBufferSize(-2),
             )),
-            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
-            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
             AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
             AppMenuItem::ComboInterval => Some(AppCmd::ChangeConfig(
-                ChangeAppConfigCmd::ComboInterval(-5_000),
+                ChangeConfigCmd::ComboInterval(-5_000),
             )),
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendAlpha => {
                 let mut conf = config.video.clone();
                 conf.render.frame_blend_mode.change_alpha(-0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::CpuFrameBlendMode => {
                 let mut conf = config.video.clone();
@@ -350,19 +350,19 @@ impl super::AppMenu {
 
                 self.items = video_menu(&conf);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendFade => {
                 let mut conf = config.video.clone();
                 conf.render.frame_blend_mode.change_fade(-0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendDim => {
                 let mut conf = config.video.clone();
                 conf.render.change_dim(-0.05);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::VideoMenu => None,
             AppMenuItem::FrameBlendProfile => {
@@ -376,7 +376,7 @@ impl super::AppMenu {
                     }
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendRise => {
                 let mut conf = config.video.clone();
@@ -388,7 +388,7 @@ impl super::AppMenu {
                     conf.render.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendFall => {
                 let mut conf = config.video.clone();
@@ -400,7 +400,7 @@ impl super::AppMenu {
                     conf.render.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameBlendBleed => {
                 let mut conf = config.video.clone();
@@ -412,17 +412,17 @@ impl super::AppMenu {
                     conf.render.frame_blend_mode = FrameBlendMode::Accurate(profile);
                 }
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::GridFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.grid_enabled = !conf.render.sdl2.grid_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::SubpixelFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::BrowseRoms | AppMenuItem::LoadedRoms | AppMenuItem::OpenedRoms => None,
             AppMenuItem::BrowseRomsSubMenu(x)
@@ -439,9 +439,9 @@ impl super::AppMenu {
                 };
                 self.items = video_menu(&conf);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
-            AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader)),
+            AppMenuItem::VideoShader => Some(AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader)),
             AppMenuItem::ShaderFrameBlend => {
                 let mut conf = config.video.clone();
                 conf.render.gl.shader_frame_blend_mode =
@@ -453,11 +453,11 @@ impl super::AppMenu {
                     };
                 self.items = video_menu(&conf);
 
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::FrameSkip => {
                 let frame_skip = update_frame_skip(config.video.render.frame_skip, -1);
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::FrameSkip(
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(
                     frame_skip,
                 )))
             }
@@ -507,10 +507,10 @@ impl super::AppMenu {
                 self.back();
                 None
             }
-            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette)),
-            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fps)),
+            AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette)),
+            AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Fullscreen))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fullscreen))
             }
             AppMenuItem::AudioMenu => {
                 self.next_items(audio_menu());
@@ -521,14 +521,14 @@ impl super::AppMenu {
                 self.next_items(advanced_menu());
                 None
             }
-            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::TileWindow)),
+            AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TileWindow)),
             AppMenuItem::SpinDuration => None,
             AppMenuItem::SystemMenu => {
                 self.next_items(system_menu());
                 None
             }
             AppMenuItem::AutoSaveState => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::AutoSaveState))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::AutoSaveState))
             }
             AppMenuItem::NormalSpeed => None,
             AppMenuItem::TurboSpeed => None,
@@ -536,11 +536,11 @@ impl super::AppMenu {
             AppMenuItem::RewindSize => None,
             AppMenuItem::RewindInterval => None,
             AppMenuItem::AudioBufferSize => None,
-            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteTurbo)),
-            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::MuteSlow)),
+            AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
+            AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
             AppMenuItem::ResetConfig => {
                 self.next_items(confirm_menu(AppCmd::ChangeConfig(
-                    ChangeAppConfigCmd::Reset,
+                    ChangeConfigCmd::Reset,
                 )));
                 None
             }
@@ -551,7 +551,7 @@ impl super::AppMenu {
             }
             AppMenuItem::ComboInterval => None,
             AppMenuItem::PaletteInverted => {
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette))
             }
             AppMenuItem::FrameBlendAlpha => None,
             AppMenuItem::CpuFrameBlendMode => None,
@@ -568,12 +568,12 @@ impl super::AppMenu {
             AppMenuItem::GridFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.grid_enabled = !conf.render.sdl2.grid_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::SubpixelFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.subpixel_enabled = !conf.render.sdl2.subpixel_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::BrowseRoms => {
                 self.next_items(files_menu(filesystem, roms.last_browse_dir_path.as_ref()));
@@ -613,17 +613,17 @@ impl super::AppMenu {
             AppMenuItem::ScanlineFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.scanline_enabled = !conf.render.sdl2.scanline_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::DotMatrixFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.dot_matrix_enabled = !conf.render.sdl2.dot_matrix_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::VignetteFilter => {
                 let mut conf = config.video.clone();
                 conf.render.sdl2.vignette_enabled = !conf.render.sdl2.vignette_enabled;
-                Some(AppCmd::ChangeConfig(ChangeAppConfigCmd::Video(conf)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
             AppMenuItem::VideoBackend => None,
             AppMenuItem::VideoShader => None,

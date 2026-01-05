@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, ChangeAppConfigCmd};
+use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::all_buttons;
 use crate::input::config::InputConfig;
 use core::emu::state::SaveStateCmd;
@@ -140,34 +140,34 @@ impl Default for ComboButtonBindings {
                 ComboButton::new(
                     Button::Back,
                     Button::B,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
                 ),
                 ComboButton::new(
                     Button::Guide,
                     Button::B,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::PrevShader),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
                 ),
                 ComboButton::new(
                     Button::Back,
                     Button::A,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
                 ),
                 ComboButton::new(
                     Button::Guide,
                     Button::A,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::NextShader),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
                 ),
                 ComboButton::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
                 ComboButton::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
                 ComboButton::new(
                     Button::Guide,
                     Button::X,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
                 ),
                 ComboButton::new(
                     Button::Back,
                     Button::X,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::InvertPalette),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
                 ),
                 ComboButton::new(
                     Button::LeftShoulder,
@@ -192,22 +192,22 @@ impl Default for ComboButtonBindings {
                 ComboButton::new(
                     Button::DPadUp,
                     Button::Start,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(0.1)),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.1)),
                 ),
                 ComboButton::new(
                     Button::DPadDown,
                     Button::Start,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::Volume(-0.1)),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.1)),
                 ),
                 ComboButton::new(
                     Button::DPadLeft,
                     Button::Start,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::DecSaveAndLoadIndexes),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadIndexes),
                 ),
                 ComboButton::new(
                     Button::DPadRight,
                     Button::Start,
-                    AppCmd::ChangeConfig(ChangeAppConfigCmd::IncSaveAndLoadIndexes),
+                    AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
                 ),
             ],
         }

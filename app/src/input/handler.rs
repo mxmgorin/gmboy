@@ -1,4 +1,4 @@
-use crate::app::{App, AppCmd, AppState, ChangeAppConfigCmd};
+use crate::app::{App, AppCmd, AppState, ChangeConfigCmd};
 use crate::config::AppConfig;
 use crate::input::bindings::InputKind;
 use crate::input::emu::handle_emu_btn;
@@ -180,14 +180,14 @@ impl InputHandler {
                 }
             }
             AppCmd::ChangeConfig(cmd) => match cmd {
-                ChangeAppConfigCmd::Volume(x) => app.change_volume(emu, x),
-                ChangeAppConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
-                ChangeAppConfigCmd::TileWindow => {
+                ChangeConfigCmd::Volume(x) => app.change_volume(emu, x),
+                ChangeConfigCmd::Scale(x) => app.change_scale(x).unwrap(),
+                ChangeConfigCmd::TileWindow => {
                     app.config.video.interface.show_tiles = !app.config.video.interface.show_tiles;
                     app.video.update_config(&app.config.video);
                 }
-                ChangeAppConfigCmd::Fullscreen => app.toggle_fullscreen(),
-                ChangeAppConfigCmd::Fps => {
+                ChangeConfigCmd::Fullscreen => app.toggle_fullscreen(),
+                ChangeConfigCmd::Fps => {
                     app.config.video.interface.show_fps = !app.config.video.interface.show_fps;
                     emu.runtime
                         .cpu
@@ -197,42 +197,42 @@ impl InputHandler {
                         .ppu
                         .toggle_fps(app.config.video.interface.show_fps);
                 }
-                ChangeAppConfigCmd::SpinDuration(x) => {
+                ChangeConfigCmd::SpinDuration(x) => {
                     emu.config.spin_duration = core::change_duration(emu.config.spin_duration, x);
                     app.config.emulation.spin_duration = emu.config.spin_duration;
                 }
-                ChangeAppConfigCmd::NextPalette => app.next_palette(emu),
-                ChangeAppConfigCmd::PrevPalette => app.prev_palette(emu),
-                ChangeAppConfigCmd::ToggleMute => app.config.audio.mute = !app.config.audio.mute,
-                ChangeAppConfigCmd::NormalSpeed(x) => {
+                ChangeConfigCmd::NextPalette => app.next_palette(emu),
+                ChangeConfigCmd::PrevPalette => app.prev_palette(emu),
+                ChangeConfigCmd::ToggleMute => app.config.audio.mute = !app.config.audio.mute,
+                ChangeConfigCmd::NormalSpeed(x) => {
                     emu.config.normal_speed =
                         core::change_f64_rounded(emu.config.normal_speed, x as f64).max(0.05);
                     app.config.emulation.normal_speed = emu.config.normal_speed;
                 }
-                ChangeAppConfigCmd::TurboSpeed(x) => {
+                ChangeConfigCmd::TurboSpeed(x) => {
                     emu.config.turbo_speed =
                         core::change_f64_rounded(emu.config.turbo_speed, x as f64).max(0.05);
                     app.config.emulation.turbo_speed = emu.config.turbo_speed;
                 }
-                ChangeAppConfigCmd::SlowSpeed(x) => {
+                ChangeConfigCmd::SlowSpeed(x) => {
                     emu.config.slow_speed =
                         core::change_f64_rounded(emu.config.slow_speed, x as f64).max(0.05);
                     app.config.emulation.slow_speed = emu.config.slow_speed;
                 }
-                ChangeAppConfigCmd::RewindSize(x) => {
+                ChangeConfigCmd::RewindSize(x) => {
                     emu.config.rewind_size =
                         core::change_usize(emu.config.rewind_size, x).clamp(0, 500);
                     app.config.emulation.rewind_size = emu.config.rewind_size;
                 }
-                ChangeAppConfigCmd::RewindInterval(x) => {
+                ChangeConfigCmd::RewindInterval(x) => {
                     emu.config.rewind_interval =
                         core::change_duration(emu.config.rewind_interval, x);
                     app.config.emulation.rewind_interval = emu.config.rewind_interval;
                 }
-                ChangeAppConfigCmd::AutoSaveState => {
+                ChangeConfigCmd::AutoSaveState => {
                     app.config.auto_save_state = !app.config.auto_save_state
                 }
-                ChangeAppConfigCmd::AudioBufferSize(x) => {
+                ChangeConfigCmd::AudioBufferSize(x) => {
                     emu.runtime.cpu.clock.bus.io.apu.config.buffer_size =
                         core::change_usize(emu.runtime.cpu.clock.bus.io.apu.config.buffer_size, x)
                             .clamp(0, 2560);
@@ -240,37 +240,37 @@ impl InputHandler {
                     app.config.audio.buffer_size =
                         emu.runtime.cpu.clock.bus.io.apu.config.buffer_size;
                 }
-                ChangeAppConfigCmd::MuteTurbo => {
+                ChangeConfigCmd::MuteTurbo => {
                     app.config.audio.mute_turbo = !app.config.audio.mute_turbo
                 }
-                ChangeAppConfigCmd::MuteSlow => {
+                ChangeConfigCmd::MuteSlow => {
                     app.config.audio.mute_slow = !app.config.audio.mute_slow
                 }
-                ChangeAppConfigCmd::Reset => {
+                ChangeConfigCmd::Reset => {
                     app.config = AppConfig::default();
                     emu.config = app.config.emulation.clone();
                     app.notifications.add("Defaults restored");
                 }
-                ChangeAppConfigCmd::ComboInterval(x) => {
+                ChangeConfigCmd::ComboInterval(x) => {
                     app.config.input.combo_interval =
                         core::change_duration(app.config.input.combo_interval, x);
                 }
-                ChangeAppConfigCmd::SetSaveIndex(x) => app.config.current_save_index = x,
-                ChangeAppConfigCmd::SetLoadIndex(x) => app.config.current_load_index = x,
-                ChangeAppConfigCmd::InvertPalette => {
+                ChangeConfigCmd::SetSaveIndex(x) => app.config.current_save_index = x,
+                ChangeConfigCmd::SetLoadIndex(x) => app.config.current_load_index = x,
+                ChangeConfigCmd::InvertPalette => {
                     app.config.video.interface.is_palette_inverted =
                         !app.config.video.interface.is_palette_inverted;
                     app.update_palette(emu);
                 }
-                ChangeAppConfigCmd::Video(x) => {
+                ChangeConfigCmd::Video(x) => {
                     if app.config.video.render.backend != x.render.backend {
                         app.notifications.add("Restart is required to apply");
                     }
 
-                    app.config.video = x;
+                    app.config.video = *x;
                     app.video.update_config(&app.config.video);
                 }
-                ChangeAppConfigCmd::IncSaveAndLoadIndexes => {
+                ChangeConfigCmd::IncSaveAndLoadIndexes => {
                     app.config.inc_save_index();
                     app.config.inc_load_index();
                     app.notifications
@@ -279,7 +279,7 @@ impl InputHandler {
                         .add(format!("Load Index: {}", app.config.current_load_index));
                     app.menu.request_update();
                 }
-                ChangeAppConfigCmd::DecSaveAndLoadIndexes => {
+                ChangeConfigCmd::DecSaveAndLoadIndexes => {
                     app.config.dec_load_index();
                     app.config.dec_save_index();
                     app.notifications
@@ -288,9 +288,9 @@ impl InputHandler {
                         .add(format!("Load Index: {}", app.config.current_load_index));
                     app.menu.request_update();
                 }
-                ChangeAppConfigCmd::NextShader => app.next_shader(),
-                ChangeAppConfigCmd::PrevShader => app.prev_shader(),
-                ChangeAppConfigCmd::FrameSkip(x) => {
+                ChangeConfigCmd::NextShader => app.next_shader(),
+                ChangeConfigCmd::PrevShader => app.prev_shader(),
+                ChangeConfigCmd::FrameSkip(x) => {
                     app.config.video.render.frame_skip = x;
                     app.video.update_config(&app.config.video);
                 }

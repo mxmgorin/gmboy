@@ -22,15 +22,15 @@ pub enum InputKind {
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize, PartialEq)]
-pub struct PackedInputIndex(usize);
+pub struct InputIndex(usize);
 
-impl From<usize> for PackedInputIndex {
+impl From<usize> for InputIndex {
     fn from(value: usize) -> Self {
         Self(value)
     }
 }
 
-impl PackedInputIndex {
+impl InputIndex {
     #[inline(always)]
     pub fn new<I: BindableInput>(input: I, pressed: bool) -> Self {
         Self(input.code() * 2 + if pressed { 0 } else { 1 })
@@ -65,7 +65,7 @@ impl<I: BindableInput> InputBindings<I> {
     #[inline(always)]
     pub fn get_cmd(&self, input: I, pressed: bool) -> Option<&AppCmd> {
         self.cmds
-            .get(PackedInputIndex::new(input, pressed).index())
+            .get(InputIndex::new(input, pressed).index())
             .and_then(|x| x.as_ref())
     }
 
@@ -83,7 +83,7 @@ impl<I: BindableInput> InputBindings<I> {
         for (i, item) in self.cmds.iter().enumerate() {
             if let Some(item) = item {
                 if item == cmd {
-                    let index: PackedInputIndex = i.into();
+                    let index: InputIndex = i.into();
 
                     if let Some(input) = index.into_input() {
                         inputs.push((input, index.pressed()));
@@ -97,14 +97,14 @@ impl<I: BindableInput> InputBindings<I> {
 
     #[inline(always)]
     pub fn bind_cmd(&mut self, input: I, pressed: bool, cmd: AppCmd) {
-        let i = PackedInputIndex::new(input, pressed).index();
+        let i = InputIndex::new(input, pressed).index();
         self.cmds[i] = Some(cmd);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (I, bool, &AppCmd)> {
         self.cmds.iter().enumerate().filter_map(|(i, entry)| {
             let cmd = entry.as_ref()?;
-            let index: PackedInputIndex = i.into();
+            let index: InputIndex = i.into();
             let input = index.into_input()?;
 
             Some((input, index.pressed(), cmd))
@@ -117,8 +117,8 @@ impl<I: BindableInput> InputBindings<I> {
     }
 
     pub fn bind_macro<B: Into<Box<[JoypadButton]>> + Clone>(&mut self, i: I, b: B) {
-        self.bind_cmd(i, true, AppCmd::new_buttons_macro(b.clone(), true));
-        self.bind_cmd(i, false, AppCmd::new_buttons_macro(b, false));
+        self.bind_cmd(i, true, AppCmd::new_macro_buttons(b.clone(), true));
+        self.bind_cmd(i, false, AppCmd::new_macro_buttons(b, false));
     }
 }
 

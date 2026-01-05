@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, ChangeAppConfigCmd};
+use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::bindings::{BindableInput, InputBindings, InputKind};
 use crate::input::combo::ComboHandler;
 use crate::input::config::InputConfig;
@@ -118,7 +118,7 @@ pub fn default_buttons() -> InputBindings<Button> {
     bindings.bind_cmd(
         Button::X,
         true,
-        AppCmd::ChangeConfig(ChangeAppConfigCmd::NextPalette),
+        AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette),
     );
     bindings.bind_cmd(
         Button::LeftShoulder,
