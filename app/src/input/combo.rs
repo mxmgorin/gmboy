@@ -61,17 +61,16 @@ impl ComboHandler {
         self.find_combo(&config.bindings.gamepad, button, config.combo_interval)
     }
 
-    fn find_combo(
-        &self,
-        bindings: &GamepadBindings,
-        button: Button,
-        dur: Duration,
-    ) -> Option<AppCmd> {
-        let code_1 = button.code();
+    fn find_combo(&self, bindings: &GamepadBindings, b1: Button, dur: Duration) -> Option<AppCmd> {
+        let c1 = b1.code();
 
-        for code_2 in 0..Button::COUNT {
-            if let Some(cmd) = &bindings.combo.combos[code_1][code_2] {
-                if self.combo_2(button, Button::from_code(code_2)?, dur) {
+        for c2 in 0..Button::COUNT {
+            let idx = ButtonComboBindings::index(c1, c2);
+
+            if let Some(cmd) = bindings.combo.cmds[idx].as_ref() {
+                let b2 = Button::from_code(c2)?;
+
+                if self.combo_2(b1, b2, dur) {
                     return Some(cmd.clone());
                 }
             }
@@ -114,24 +113,32 @@ impl ButtonCombo {
 
 #[derive(Debug, Clone)]
 pub struct ButtonComboBindings {
-    combos: Box<[Box<[Option<AppCmd>]>]>,
+    cmds: Box<[Option<AppCmd>]>,
 }
 
 impl ButtonComboBindings {
     pub fn new() -> Self {
+        let n = Button::COUNT;
+
         Self {
-            combos: (0..Button::COUNT)
-                .map(|_| (0..Button::COUNT).map(|_| None).collect())
-                .collect(),
+            cmds: vec![None; n * n].into_boxed_slice(),
         }
     }
 
-    pub fn add_combo(&mut self, b1: Button, b2: Button, cmd: AppCmd) {
-        let code_1 = b1.code();
-        let code_2 = b2.code();
+    #[inline(always)]
+    pub fn index(b1: usize, b2: usize) -> usize {
+        b1 * Button::COUNT + b2
+    }
 
-        self.combos[code_1][code_2] = Some(cmd.clone());
-        self.combos[code_2][code_1] = Some(cmd);
+    pub fn add_cmd(&mut self, b1: Button, b2: Button, cmd: AppCmd) {
+        let c1 = b1.code();
+        let c2 = b2.code();
+
+        let i1 = Self::index(c1, c2);
+        let i2 = Self::index(c2, c1);
+
+        self.cmds[i1] = Some(cmd.clone());
+        self.cmds[i2] = Some(cmd);
     }
 }
 
@@ -139,79 +146,79 @@ impl Default for ButtonComboBindings {
     fn default() -> Self {
         let mut bindings = Self::new();
 
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::Back,
             Button::B,
             AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::Guide,
             Button::B,
             AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
         );
 
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::Back,
             Button::A,
             AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::Guide,
             Button::A,
             AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
         );
 
-        bindings.add_combo(Button::Start, Button::Back, AppCmd::ToggleMenu);
-        bindings.add_combo(Button::Start, Button::Guide, AppCmd::ToggleMenu);
+        bindings.add_cmd(Button::Start, Button::Back, AppCmd::ToggleMenu);
+        bindings.add_cmd(Button::Start, Button::Guide, AppCmd::ToggleMenu);
 
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::Guide,
             Button::X,
             AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::Back,
             Button::X,
             AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
         );
 
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::LeftShoulder,
             Button::Back,
             AppCmd::SaveState(SaveStateCmd::Load, None),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::RightShoulder,
             Button::Back,
             AppCmd::SaveState(SaveStateCmd::Create, None),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::LeftShoulder,
             Button::Guide,
             AppCmd::SaveState(SaveStateCmd::Load, None),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::RightShoulder,
             Button::Guide,
             AppCmd::SaveState(SaveStateCmd::Create, None),
         );
 
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::DPadUp,
             Button::Start,
             AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.1)),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::DPadDown,
             Button::Start,
             AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.1)),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::DPadLeft,
             Button::Start,
             AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadIndexes),
         );
-        bindings.add_combo(
+        bindings.add_cmd(
             Button::DPadRight,
             Button::Start,
             AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
@@ -267,16 +274,20 @@ impl Serialize for ButtonComboBindings {
         S: Serializer,
     {
         let mut combos = Vec::new();
+        let n = Button::COUNT;
 
-        for code_1 in 0..Button::COUNT {
-            for code_2 in (code_1 + 1)..Button::COUNT {
-                if let Some(cmd) = &self.combos[code_1][code_2] {
+        for code_1 in 0..n {
+            for code_2 in (code_1 + 1)..n {
+                let idx = code_1 * n + code_2;
+
+                if let Some(cmd) = self.cmds[idx].as_ref() {
                     let btn_1 = Button::from_code(code_1).ok_or_else(|| {
                         S::Error::custom(format!("Invalid button code: {}", code_1))
                     })?;
                     let btn_2 = Button::from_code(code_2).ok_or_else(|| {
                         S::Error::custom(format!("Invalid button code: {}", code_2))
                     })?;
+
                     combos.push(ButtonCombo {
                         btn_1,
                         btn_2,
@@ -299,7 +310,7 @@ impl<'de> Deserialize<'de> for ButtonComboBindings {
         let mut bindings = ButtonComboBindings::new();
 
         for combo in combos {
-            bindings.add_combo(combo.btn_1, combo.btn_2, combo.cmd);
+            bindings.add_cmd(combo.btn_1, combo.btn_2, combo.cmd);
         }
 
         Ok(bindings)
