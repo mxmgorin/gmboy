@@ -2,13 +2,13 @@ use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::bindings::{BindableInput, InputBindings, InputKind};
 use crate::input::combo::ComboHandler;
 use crate::input::config::{GamepadBindings, InputConfig};
-use crate::input::{button_to_str, str_to_button};
+use crate::input::{button_to_str, gamepad_buttons, str_to_button};
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::runtime::RunMode;
 use sdl2::controller::Button;
 
 impl BindableInput for Button {
-    const COUNT: usize = 15;
+    const COUNT: usize = gamepad_buttons().len();
 
 
     #[inline(always)]

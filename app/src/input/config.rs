@@ -1,12 +1,9 @@
 use crate::app::AppCmd;
 use crate::input::bindings::InputBindings;
-use crate::input::combo::{ButtonComboBindings, ButtonCombo};
+use crate::input::combo::ButtonComboBindings;
 use crate::input::gamepad::default_buttons;
 use crate::input::keyboard::default_keys;
-use crate::input::{button_to_str, str_to_button};
-use serde::de::Error;
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -104,44 +101,5 @@ mod bindings_file {
         let _path: String = String::deserialize(deserializer)?;
         core::read_json_file(path)
             .map_err(|_| serde::de::Error::custom("Failed to read bindings.json"))
-    }
-}
-
-impl Serialize for ButtonCombo {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("ButtonCombo", 3)?;
-        state.serialize_field("btn_1", &button_to_str(self.btn_1))?;
-        state.serialize_field("btn_2", &button_to_str(self.btn_2))?;
-        state.serialize_field("cmd", &self.cmd)?;
-        state.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for ButtonCombo {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct ComboHelper {
-            btn_1: String,
-            btn_2: String,
-            cmd: AppCmd,
-        }
-
-        let helper = ComboHelper::deserialize(deserializer)?;
-        let b1 = str_to_button(&helper.btn_1)
-            .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", helper.btn_1)))?;
-        let b2 = str_to_button(&helper.btn_2)
-            .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", helper.btn_2)))?;
-
-        Ok(ButtonCombo {
-            btn_1: b1,
-            btn_2: b2,
-            cmd: helper.cmd,
-        })
     }
 }

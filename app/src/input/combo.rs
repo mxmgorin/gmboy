@@ -2,11 +2,14 @@ use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::bindings::BindableInput;
 use crate::input::config::{GamepadBindings, InputConfig};
 use crate::input::gamepad_buttons;
+use crate::input::{button_to_str, str_to_button};
 use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
-use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
+use serde::de::Error;
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+use std::time::{Duration, Instant};
 #[derive(Debug, Clone, Copy)]
 pub struct ButtonState {
     pub pressed: bool,
@@ -55,13 +58,22 @@ impl ComboHandler {
     ) -> Option<AppCmd> {
         let state = &mut self.states[button.code()];
         state.update(pressed);
-        self.find_combo(&config.bindings.gamepad, config.combo_interval)
+        self.find_combo(&config.bindings.gamepad, button, config.combo_interval)
     }
 
-    fn find_combo(&self, bindings: &GamepadBindings, interval: Duration) -> Option<AppCmd> {
-        for combo in bindings.combo.combos.iter() {
-            if self.combo_2(combo.btn_1, combo.btn_2, interval) {
-                return Some(combo.cmd.to_owned());
+    fn find_combo(
+        &self,
+        bindings: &GamepadBindings,
+        button: Button,
+        dur: Duration,
+    ) -> Option<AppCmd> {
+        let code_1 = button.code();
+
+        for code_2 in 0..Button::COUNT {
+            if let Some(cmd) = &bindings.combo.combos[code_1][code_2] {
+                if self.combo_2(button, Button::from_code(code_2)?, dur) {
+                    return Some(cmd.clone());
+                }
             }
         }
 
@@ -70,14 +82,14 @@ impl ComboHandler {
 
     /// Generic function to check any 2-button combo
     fn combo_2(&self, b1: Button, b2: Button, dur: Duration) -> bool {
-        let s1 = self.states[b1.code()];
-        let s2 = self.states[b2.code()];
+        let state_1 = self.states[b1.code()];
+        let state_2 = self.states[b2.code()];
 
-        if s1.pressed && s2.pressed {
-            let diff = if s1.last_pressed > s2.last_pressed {
-                s1.last_pressed.duration_since(s2.last_pressed)
+        if state_1.pressed && state_2.pressed {
+            let diff = if state_1.last_pressed > state_2.last_pressed {
+                state_1.last_pressed.duration_since(state_2.last_pressed)
             } else {
-                s2.last_pressed.duration_since(s1.last_pressed)
+                state_2.last_pressed.duration_since(state_1.last_pressed)
             };
 
             return diff <= dur;
@@ -100,88 +112,196 @@ impl ButtonCombo {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ButtonComboBindings {
-    combos: Vec<ButtonCombo>,
+    combos: Box<[Box<[Option<AppCmd>]>]>,
+}
+
+impl ButtonComboBindings {
+    pub fn new() -> Self {
+        Self {
+            combos: (0..Button::COUNT)
+                .map(|_| (0..Button::COUNT).map(|_| None).collect())
+                .collect(),
+        }
+    }
+
+    pub fn add_combo(&mut self, b1: Button, b2: Button, cmd: AppCmd) {
+        let code_1 = b1.code();
+        let code_2 = b2.code();
+
+        self.combos[code_1][code_2] = Some(cmd.clone());
+        self.combos[code_2][code_1] = Some(cmd);
+    }
 }
 
 impl Default for ButtonComboBindings {
     fn default() -> Self {
-        Self {
-            combos: vec![
-                ButtonCombo::new(
-                    Button::Back,
-                    Button::B,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
-                ),
-                ButtonCombo::new(
-                    Button::Guide,
-                    Button::B,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
-                ),
-                ButtonCombo::new(
-                    Button::Back,
-                    Button::A,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
-                ),
-                ButtonCombo::new(
-                    Button::Guide,
-                    Button::A,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
-                ),
-                ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
-                ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
-                ButtonCombo::new(
-                    Button::Guide,
-                    Button::X,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
-                ),
-                ButtonCombo::new(
-                    Button::Back,
-                    Button::X,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
-                ),
-                ButtonCombo::new(
-                    Button::LeftShoulder,
-                    Button::Back,
-                    AppCmd::SaveState(SaveStateCmd::Load, None),
-                ),
-                ButtonCombo::new(
-                    Button::RightShoulder,
-                    Button::Back,
-                    AppCmd::SaveState(SaveStateCmd::Create, None),
-                ),
-                ButtonCombo::new(
-                    Button::LeftShoulder,
-                    Button::Guide,
-                    AppCmd::SaveState(SaveStateCmd::Load, None),
-                ),
-                ButtonCombo::new(
-                    Button::RightShoulder,
-                    Button::Guide,
-                    AppCmd::SaveState(SaveStateCmd::Create, None),
-                ),
-                ButtonCombo::new(
-                    Button::DPadUp,
-                    Button::Start,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.1)),
-                ),
-                ButtonCombo::new(
-                    Button::DPadDown,
-                    Button::Start,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.1)),
-                ),
-                ButtonCombo::new(
-                    Button::DPadLeft,
-                    Button::Start,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadIndexes),
-                ),
-                ButtonCombo::new(
-                    Button::DPadRight,
-                    Button::Start,
-                    AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
-                ),
-            ],
+        let mut bindings = Self::new();
+
+        bindings.add_combo(
+            Button::Back,
+            Button::B,
+            AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
+        );
+        bindings.add_combo(
+            Button::Guide,
+            Button::B,
+            AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
+        );
+
+        bindings.add_combo(
+            Button::Back,
+            Button::A,
+            AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
+        );
+        bindings.add_combo(
+            Button::Guide,
+            Button::A,
+            AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
+        );
+
+        bindings.add_combo(Button::Start, Button::Back, AppCmd::ToggleMenu);
+        bindings.add_combo(Button::Start, Button::Guide, AppCmd::ToggleMenu);
+
+        bindings.add_combo(
+            Button::Guide,
+            Button::X,
+            AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
+        );
+        bindings.add_combo(
+            Button::Back,
+            Button::X,
+            AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
+        );
+
+        bindings.add_combo(
+            Button::LeftShoulder,
+            Button::Back,
+            AppCmd::SaveState(SaveStateCmd::Load, None),
+        );
+        bindings.add_combo(
+            Button::RightShoulder,
+            Button::Back,
+            AppCmd::SaveState(SaveStateCmd::Create, None),
+        );
+        bindings.add_combo(
+            Button::LeftShoulder,
+            Button::Guide,
+            AppCmd::SaveState(SaveStateCmd::Load, None),
+        );
+        bindings.add_combo(
+            Button::RightShoulder,
+            Button::Guide,
+            AppCmd::SaveState(SaveStateCmd::Create, None),
+        );
+
+        bindings.add_combo(
+            Button::DPadUp,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.1)),
+        );
+        bindings.add_combo(
+            Button::DPadDown,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.1)),
+        );
+        bindings.add_combo(
+            Button::DPadLeft,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadIndexes),
+        );
+        bindings.add_combo(
+            Button::DPadRight,
+            Button::Start,
+            AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
+        );
+
+        bindings
+    }
+}
+
+impl Serialize for ButtonCombo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("ButtonCombo", 3)?;
+        state.serialize_field("btn_1", &button_to_str(self.btn_1))?;
+        state.serialize_field("btn_2", &button_to_str(self.btn_2))?;
+        state.serialize_field("cmd", &self.cmd)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for ButtonCombo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct StrButtonCombo {
+            btn_1: String,
+            btn_2: String,
+            cmd: AppCmd,
         }
+
+        let combo = StrButtonCombo::deserialize(deserializer)?;
+        let b1 = str_to_button(&combo.btn_1)
+            .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", combo.btn_1)))?;
+        let b2 = str_to_button(&combo.btn_2)
+            .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", combo.btn_2)))?;
+
+        Ok(ButtonCombo {
+            btn_1: b1,
+            btn_2: b2,
+            cmd: combo.cmd,
+        })
+    }
+}
+
+use serde::ser::Error as _;
+impl Serialize for ButtonComboBindings {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut combos = Vec::new();
+
+        for code_1 in 0..Button::COUNT {
+            for code_2 in (code_1 + 1)..Button::COUNT {
+                if let Some(cmd) = &self.combos[code_1][code_2] {
+                    let btn_1 = Button::from_code(code_1).ok_or_else(|| {
+                        S::Error::custom(format!("Invalid button code: {}", code_1))
+                    })?;
+                    let btn_2 = Button::from_code(code_2).ok_or_else(|| {
+                        S::Error::custom(format!("Invalid button code: {}", code_2))
+                    })?;
+                    combos.push(ButtonCombo {
+                        btn_1,
+                        btn_2,
+                        cmd: cmd.clone(),
+                    });
+                }
+            }
+        }
+
+        combos.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for ButtonComboBindings {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let combos = Vec::<ButtonCombo>::deserialize(deserializer)?;
+        let mut bindings = ButtonComboBindings::new();
+
+        for combo in combos {
+            bindings.add_combo(combo.btn_1, combo.btn_2, combo.cmd);
+        }
+
+        Ok(bindings)
     }
 }
