@@ -10,6 +10,7 @@ use sdl2::controller::Button;
 impl BindableInput for Button {
     const COUNT: usize = 15;
 
+
     #[inline(always)]
     fn code(self) -> usize {
         self as usize

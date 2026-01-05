@@ -1,11 +1,13 @@
 use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::all_buttons;
+use crate::input::bindings::BindableInput;
 use crate::input::config::{GamepadBindings, InputConfig};
 use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
+#[derive(Debug, Clone, Copy)]
 pub struct ButtonState {
     pub pressed: bool,
     pub last_pressed: Instant,
@@ -31,30 +33,18 @@ impl ButtonState {
 }
 
 pub struct ComboHandler {
-    states: [ButtonState; all_buttons().len()],
+    states: [ButtonState; Button::COUNT],
 }
 
 impl ComboHandler {
     pub fn new() -> Self {
-        Self {
-            states: [
-                ButtonState::new(Button::Start),
-                ButtonState::new(Button::Back),
-                ButtonState::new(Button::Guide),
-                ButtonState::new(Button::A),
-                ButtonState::new(Button::B),
-                ButtonState::new(Button::X),
-                ButtonState::new(Button::Y),
-                ButtonState::new(Button::LeftShoulder),
-                ButtonState::new(Button::RightShoulder),
-                ButtonState::new(Button::DPadUp),
-                ButtonState::new(Button::DPadDown),
-                ButtonState::new(Button::DPadLeft),
-                ButtonState::new(Button::DPadRight),
-                ButtonState::new(Button::LeftStick),
-                ButtonState::new(Button::RightStick),
-            ],
+        let mut states = [ButtonState::new(Button::A); Button::COUNT];
+
+        for button in all_buttons() {
+            states[button.code()] = ButtonState::new(*button);
         }
+
+        Self { states }
     }
 
     pub fn handle(
@@ -84,22 +74,9 @@ impl ComboHandler {
     }
 
     /// Generic function to check any 2-button combo
-    fn combo_2(&self, b1: Button, b2: Button, duration: Duration) -> bool {
-        let mut state_1: Option<&ButtonState> = None;
-        let mut state_2: Option<&ButtonState> = None;
-
-        for state in &self.states {
-            if state.button == b1 {
-                state_1 = Some(state);
-            } else if state.button == b2 {
-                state_2 = Some(state);
-            }
-        }
-
-        let (s1, s2) = match (state_1, state_2) {
-            (Some(a), Some(b)) => (a, b),
-            _ => return false,
-        };
+    fn combo_2(&self, b1: Button, b2: Button, dur: Duration) -> bool {
+        let s1 = self.states[b1.code()];
+        let s2 = self.states[b2.code()];
 
         if s1.pressed && s2.pressed {
             let diff = if s1.last_pressed > s2.last_pressed {
@@ -108,7 +85,7 @@ impl ComboHandler {
                 s2.last_pressed.duration_since(s1.last_pressed)
             };
 
-            return diff <= duration;
+            return diff <= dur;
         }
 
         false
