@@ -1,8 +1,7 @@
-use core::fmt;
-
 use crate::cart::CartSaveState;
 use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum EmuState {
