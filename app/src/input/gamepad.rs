@@ -1,7 +1,7 @@
 use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::bindings::{BindableInput, InputBindings, InputKind};
 use crate::input::combo::ComboHandler;
-use crate::input::config::InputConfig;
+use crate::input::config::{GamepadBindings, InputConfig};
 use crate::input::{button_to_str, str_to_button};
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::runtime::RunMode;
@@ -80,20 +80,24 @@ impl GamepadHandler {
 
         config
             .bindings
+            .gamepad
             .buttons
             .get_cmd(button, is_pressed)
             .map(|x| x.to_owned())
     }
 
-    pub fn handle_axis(&self, config: &InputConfig, axis_idx: u8, value: i16) -> Option<AppCmd> {
-        if axis_idx == config.bindings.left_trigger.code
-            && !config.bindings.left_trigger.is_pressed(value)
+    pub fn handle_axis(
+        &self,
+        bindings: &GamepadBindings,
+        axis_idx: u8,
+        value: i16,
+    ) -> Option<AppCmd> {
+        if axis_idx == bindings.left_trigger.code && !bindings.left_trigger.is_pressed(value) {
+            return bindings.left_trigger.cmd.clone();
+        } else if axis_idx == bindings.right_trigger.code
+            && !bindings.right_trigger.is_pressed(value)
         {
-            return config.bindings.left_trigger.cmd.clone();
-        } else if axis_idx == config.bindings.right_trigger.code
-            && !config.bindings.right_trigger.is_pressed(value)
-        {
-            return config.bindings.right_trigger.cmd.clone();
+            return bindings.right_trigger.cmd.clone();
         }
 
         None

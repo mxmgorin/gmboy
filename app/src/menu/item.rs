@@ -419,7 +419,7 @@ impl AppMenuItem {
                     .collect::<Vec<_>>()
                     .join("+");
 
-                format!("{name}: {}", config.input.bindings.keys.get_label(&cmd))
+                format!("{name}: {}", config.input.bindings.keyboard.get_label(&cmd))
             }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
         };

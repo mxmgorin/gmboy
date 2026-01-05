@@ -1,6 +1,6 @@
 use crate::app::AppCmd;
 use crate::input::bindings::InputBindings;
-use crate::input::combo::{ComboButton, ComboButtonBindings};
+use crate::input::combo::{ButtonComboBindings, ComboButton};
 use crate::input::gamepad::default_buttons;
 use crate::input::keyboard::default_keys;
 use crate::input::{button_to_str, str_to_button};
@@ -11,11 +11,27 @@ use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Bindings {
-    pub buttons: InputBindings<sdl2::controller::Button>,
+    pub gamepad: GamepadBindings,
+    pub keyboard: InputBindings<sdl2::keyboard::Scancode>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GamepadBindings {
     pub left_trigger: TriggerButtonBinding,
     pub right_trigger: TriggerButtonBinding,
-    pub combo_buttons: ComboButtonBindings,
-    pub keys: InputBindings<sdl2::keyboard::Scancode>,
+    pub buttons: InputBindings<sdl2::controller::Button>,
+    pub combo: ButtonComboBindings,
+}
+
+impl Default for GamepadBindings {
+    fn default() -> Self {
+        Self {
+            buttons: default_buttons(),
+            left_trigger: TriggerButtonBinding::new(None, 2),
+            right_trigger: TriggerButtonBinding::new(None, 5),
+            combo: ButtonComboBindings::default(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -42,11 +58,8 @@ impl TriggerButtonBinding {
 impl Default for Bindings {
     fn default() -> Self {
         Self {
-            buttons: default_buttons(),
-            keys: default_keys(),
-            left_trigger: TriggerButtonBinding::new(None, 2),
-            right_trigger: TriggerButtonBinding::new(None, 5),
-            combo_buttons: ComboButtonBindings::default(),
+            keyboard: default_keys(),
+            gamepad: GamepadBindings::default(),
         }
     }
 }

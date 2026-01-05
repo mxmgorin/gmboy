@@ -1,6 +1,6 @@
 use crate::app::{AppCmd, ChangeConfigCmd};
 use crate::input::all_buttons;
-use crate::input::config::InputConfig;
+use crate::input::config::{GamepadBindings, InputConfig};
 use core::emu::state::SaveStateCmd;
 use sdl2::controller::Button;
 use serde::{Deserialize, Serialize};
@@ -66,16 +66,16 @@ impl ComboHandler {
         for state in self.states.iter_mut() {
             if state.button == button {
                 state.update(pressed);
-                return self.find_combo(config);
+                return self.find_combo(&config.bindings.gamepad, config.combo_interval);
             }
         }
 
         None
     }
 
-    fn find_combo(&self, config: &InputConfig) -> Option<AppCmd> {
-        for combo in config.bindings.combo_buttons.buttons.iter() {
-            if self.combo_2(combo.btn_1, combo.btn_2, config.combo_interval) {
+    fn find_combo(&self, bindings: &GamepadBindings, interval: Duration) -> Option<AppCmd> {
+        for combo in bindings.combo.buttons.iter() {
+            if self.combo_2(combo.btn_1, combo.btn_2, interval) {
                 return Some(combo.cmd.to_owned());
             }
         }
@@ -129,11 +129,11 @@ impl ComboButton {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ComboButtonBindings {
+pub struct ButtonComboBindings {
     buttons: Vec<ComboButton>,
 }
 
-impl Default for ComboButtonBindings {
+impl Default for ButtonComboBindings {
     fn default() -> Self {
         Self {
             buttons: vec![

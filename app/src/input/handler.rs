@@ -97,10 +97,11 @@ impl InputHandler {
                 Event::JoyAxisMotion {
                     axis_idx, value, ..
                 } => {
-                    if let Some(evt) =
-                        self.gamepad_handler
-                            .handle_axis(&app.config.input, axis_idx, value)
-                    {
+                    if let Some(evt) = self.gamepad_handler.handle_axis(
+                        &app.config.input.bindings.gamepad,
+                        axis_idx,
+                        value,
+                    ) {
                         self.handle_cmd(app, emu, evt);
                     }
                 }
@@ -316,9 +317,17 @@ impl InputHandler {
                 InputKind::Keyboard => {
                     if let Some(sc) = cmd.input_index.into_input() {
                         if cmd.buttons.len() == 1 {
-                            app.config.input.bindings.keys.bind_btn(sc, cmd.buttons[0]);
+                            app.config
+                                .input
+                                .bindings
+                                .keyboard
+                                .bind_btn(sc, cmd.buttons[0]);
                         } else {
-                            app.config.input.bindings.keys.bind_macro(sc, cmd.buttons);
+                            app.config
+                                .input
+                                .bindings
+                                .keyboard
+                                .bind_macro(sc, cmd.buttons);
                         }
                     } else {
                         log::warn!("Failed to bind key: invalid index {:?}", cmd.input_index);
