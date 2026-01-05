@@ -1,6 +1,6 @@
 use crate::app::AppCmd;
 use crate::input::bindings::InputBindings;
-use crate::input::combo::{ButtonComboBindings, ComboButton};
+use crate::input::combo::{ButtonComboBindings, ButtonCombo};
 use crate::input::gamepad::default_buttons;
 use crate::input::keyboard::default_keys;
 use crate::input::{button_to_str, str_to_button};
@@ -107,7 +107,7 @@ mod bindings_file {
     }
 }
 
-impl Serialize for ComboButton {
+impl Serialize for ButtonCombo {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -120,7 +120,7 @@ impl Serialize for ComboButton {
     }
 }
 
-impl<'de> Deserialize<'de> for ComboButton {
+impl<'de> Deserialize<'de> for ButtonCombo {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -138,7 +138,7 @@ impl<'de> Deserialize<'de> for ComboButton {
         let b2 = str_to_button(&helper.btn_2)
             .ok_or_else(|| D::Error::custom(format!("Unknown button: {}", helper.btn_2)))?;
 
-        Ok(ComboButton {
+        Ok(ButtonCombo {
             btn_1: b1,
             btn_2: b2,
             cmd: helper.cmd,

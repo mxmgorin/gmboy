@@ -64,7 +64,7 @@ impl ComboHandler {
     }
 
     fn find_combo(&self, bindings: &GamepadBindings, interval: Duration) -> Option<AppCmd> {
-        for combo in bindings.combo.buttons.iter() {
+        for combo in bindings.combo.combos.iter() {
             if self.combo_2(combo.btn_1, combo.btn_2, interval) {
                 return Some(combo.cmd.to_owned());
             }
@@ -93,13 +93,13 @@ impl ComboHandler {
 }
 
 #[derive(Clone, Debug)]
-pub struct ComboButton {
+pub struct ButtonCombo {
     pub btn_1: Button,
     pub btn_2: Button,
     pub cmd: AppCmd,
 }
 
-impl ComboButton {
+impl ButtonCombo {
     pub fn new(btn_1: Button, btn_2: Button, cmd: AppCmd) -> Self {
         Self { btn_1, btn_2, cmd }
     }
@@ -107,81 +107,81 @@ impl ComboButton {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ButtonComboBindings {
-    buttons: Vec<ComboButton>,
+    combos: Vec<ButtonCombo>,
 }
 
 impl Default for ButtonComboBindings {
     fn default() -> Self {
         Self {
-            buttons: vec![
-                ComboButton::new(
+            combos: vec![
+                ButtonCombo::new(
                     Button::Back,
                     Button::B,
                     AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::Guide,
                     Button::B,
                     AppCmd::ChangeConfig(ChangeConfigCmd::PrevShader),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::Back,
                     Button::A,
                     AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::Guide,
                     Button::A,
                     AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
                 ),
-                ComboButton::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
-                ComboButton::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
-                ComboButton::new(
+                ButtonCombo::new(Button::Start, Button::Back, AppCmd::ToggleMenu),
+                ButtonCombo::new(Button::Start, Button::Guide, AppCmd::ToggleMenu),
+                ButtonCombo::new(
                     Button::Guide,
                     Button::X,
                     AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::Back,
                     Button::X,
                     AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::LeftShoulder,
                     Button::Back,
                     AppCmd::SaveState(SaveStateCmd::Load, None),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::RightShoulder,
                     Button::Back,
                     AppCmd::SaveState(SaveStateCmd::Create, None),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::LeftShoulder,
                     Button::Guide,
                     AppCmd::SaveState(SaveStateCmd::Load, None),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::RightShoulder,
                     Button::Guide,
                     AppCmd::SaveState(SaveStateCmd::Create, None),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::DPadUp,
                     Button::Start,
                     AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.1)),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::DPadDown,
                     Button::Start,
                     AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.1)),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::DPadLeft,
                     Button::Start,
                     AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadIndexes),
                 ),
-                ComboButton::new(
+                ButtonCombo::new(
                     Button::DPadRight,
                     Button::Start,
                     AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
