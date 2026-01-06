@@ -22,20 +22,20 @@ import java.util.List;
 
 public class MainActivity extends SDLActivity {
     private static final int FILE_PICKER_REQUEST = 1001;
-    private static final int OPEN_DIRECTORY_REQUEST = 42;
+    private static final int DIRECTORY_PICKER_REQUEST = 42;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        enableImmersiveMode();
-        nativeInit(); // <-- this initializes the JVM for Rust
+        applyImmersiveMode();
+        nativeInit(); // initialize the JVM for Rust
     }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            enableImmersiveMode();
+            applyImmersiveMode();
         }
     }
 
@@ -55,7 +55,7 @@ public class MainActivity extends SDLActivity {
         intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        startActivityForResult(intent, OPEN_DIRECTORY_REQUEST);
+        startActivityForResult(intent, DIRECTORY_PICKER_REQUEST);
     }
 
     public static List<String> getFilesInDirectory(String uriStr) {
@@ -119,7 +119,7 @@ public class MainActivity extends SDLActivity {
             nativeOnFilePicked(uriStr);
         }
 
-        if (requestCode == OPEN_DIRECTORY_REQUEST) {
+        if (requestCode == DIRECTORY_PICKER_REQUEST) {
             nativeOnDirectoryPicked(uriStr);
         }
     }
@@ -130,7 +130,7 @@ public class MainActivity extends SDLActivity {
     // Declare native callback implemented in Rust
     private static native void nativeOnDirectoryPicked(@Nullable String uri);
 
-    private void enableImmersiveMode() {
+    private void applyImmersiveMode() {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
