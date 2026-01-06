@@ -27,15 +27,21 @@ public class MainActivity extends SDLActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        applyImmersiveMode();
+        hideSystemBars();
         nativeInit(); // initialize the JVM for Rust
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        hideSystemBars();
     }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            applyImmersiveMode();
+            hideSystemBars();
         }
     }
 
@@ -130,7 +136,7 @@ public class MainActivity extends SDLActivity {
     // Declare native callback implemented in Rust
     private static native void nativeOnDirectoryPicked(@Nullable String uri);
 
-    private void applyImmersiveMode() {
+    private void hideSystemBars() {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
