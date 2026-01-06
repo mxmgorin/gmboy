@@ -9,8 +9,12 @@ on:
 
 jobs:
   build-android:
-    if: github.event_name == 'release'
     runs-on: ubuntu-latest
+
+    env:
+      APK_PATH: android/app/build/outputs/apk/debug/gmboy-android-universal.apk
+      APK_BUILD_PATH: android/app/build/outputs/apk/debug/app-debug.apk
+      APK_NAME: gmboy-android-universal.apk
 
     steps:
       - name: Checkout source
@@ -40,12 +44,20 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Rename APK
-        run: mv android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/gmboy-universal.apk
+        run: mv "$APK_BUILD_PATH" "$APK_PATH"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: ${{ env.APK_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/debug/gmboy-universal.apk
+          files: ${{ env.APK_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
