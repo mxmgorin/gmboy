@@ -5,12 +5,14 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.view.View;
 
 import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 
 import org.libsdl.app.SDLActivity;
 
@@ -48,48 +50,49 @@ public class MainActivity extends SDLActivity {
     // Called from Rust via JNI
     public void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("*/*"); // You can set e.g. "application/json"
+        intent.addFlags(
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION |
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+        );
+        intent.setType("*/*");
         startActivityForResult(intent, FILE_PICKER_REQUEST);
     }
 
     // Called from Rust via JNI
     public void openDirectoryPicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        intent.addFlags(
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION |
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+        );
         startActivityForResult(intent, DIRECTORY_PICKER_REQUEST);
     }
 
     public static List<String> getFilesInDirectory(String uriStr) {
         List<String> files = new ArrayList<>();
+        Uri treeUri = Uri.parse(uriStr);
 
-        try {
-            Uri treeUri = Uri.parse(uriStr);
-            ContentResolver cr = getContext().getContentResolver();
-            Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-                    treeUri, DocumentsContract.getTreeDocumentId(treeUri));
-
-            Cursor cursor = cr.query(childrenUri,
-                    new String[]{
-                            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                            DocumentsContract.Document.COLUMN_DISPLAY_NAME
-                    },
-                    null, null, null);
-
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    String docId = cursor.getString(0);
-                    Uri fileUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId);
-                    files.add(fileUri.toString());
-                }
-                cursor.close();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (!DocumentsContract.isTreeUri(treeUri)) {
+                return files;
             }
-        } catch (Exception e) {
-            files.add("error:" + e.toString());
+        }
+
+        DocumentFile dir = DocumentFile.fromTreeUri(getContext(), treeUri);
+
+        if (dir == null || !dir.isDirectory()) {
+            return files;
+        }
+
+        for (DocumentFile file : dir.listFiles()) {
+            if (!file.isFile()) continue;
+
+            // Optional: filter extensions
+            String name = file.getName();
+            if (name == null) continue;
+
+            files.add(file.getUri().toString());
         }
 
         return files;
@@ -105,18 +108,23 @@ public class MainActivity extends SDLActivity {
         }
 
         Uri uri = data.getData();
-
         if (uri == null) {
             handlePickedResult(requestCode, null);
             return;
         }
 
-        final int takeFlags = data.getFlags()
-                & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        final int takeFlags =
+                data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION;
 
-        getContentResolver().takePersistableUriPermission(uri, takeFlags);
-        String uriStr = uri.toString();
-        handlePickedResult(requestCode, uriStr);
+        if (takeFlags != 0) {
+            try {
+                getContentResolver().takePersistableUriPermission(uri, takeFlags);
+            } catch (SecurityException ignored) {
+                // Some providers don't support persistence; that's OK
+            }
+        }
+
+        handlePickedResult(requestCode, uri.toString());
     }
 
     // Pass the result back to Rust
