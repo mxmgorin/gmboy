@@ -272,8 +272,8 @@ impl InputHandler {
                     app.video.update_config(&app.config.video);
                 }
                 ChangeConfigCmd::IncSaveAndLoadSlots => {
-                    app.config.inc_save_index();
-                    app.config.inc_load_index();
+                    app.config.inc_save_slot();
+                    app.config.inc_load_slot();
                     app.notifications.add(format!(
                         "Save Slot: {}, Load Slot: {}",
                         app.config.current_save_slot, app.config.current_load_slot
@@ -281,12 +281,12 @@ impl InputHandler {
                     app.menu.request_update();
                 }
                 ChangeConfigCmd::DecSaveAndLoadSlots => {
-                    app.config.dec_load_index();
-                    app.config.dec_save_index();
-                    app.notifications
-                        .add(format!("Save Slot: {}", app.config.current_save_slot));
-                    app.notifications
-                        .add(format!("Load Slot: {}", app.config.current_load_slot));
+                    app.config.dec_load_slot();
+                    app.config.dec_save_slot();
+                    app.notifications.add(format!(
+                        "Save Slot: {}, Load Slot: {}",
+                        app.config.current_save_slot, app.config.current_load_slot
+                    ));
                     app.menu.request_update();
                 }
                 ChangeConfigCmd::NextShader => app.next_shader(),

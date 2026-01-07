@@ -103,19 +103,19 @@ impl AppConfig {
         self.emulation = config;
     }
 
-    pub fn inc_save_index(&mut self) {
+    pub fn inc_save_slot(&mut self) {
         self.current_save_slot = core::move_next_wrapped(self.current_save_slot, 99);
     }
 
-    pub fn dec_save_index(&mut self) {
+    pub fn dec_save_slot(&mut self) {
         self.current_save_slot = core::move_prev_wrapped(self.current_save_slot, 99);
     }
 
-    pub fn inc_load_index(&mut self) {
+    pub fn inc_load_slot(&mut self) {
         self.current_load_slot = core::move_next_wrapped(self.current_load_slot, 99);
     }
 
-    pub fn dec_load_index(&mut self) {
+    pub fn dec_load_slot(&mut self) {
         self.current_load_slot = core::move_prev_wrapped(self.current_load_slot, 99);
     }
 }
