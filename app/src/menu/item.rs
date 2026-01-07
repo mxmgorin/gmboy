@@ -21,6 +21,7 @@ pub enum AppMenuItem {
     AudioMenu,
     Volume,
     Scale,
+    ScaleMode,
     AdvancedMenu,
     TileWindow,
     SpinDuration,
@@ -136,6 +137,7 @@ impl AppMenuItem {
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::CmdsBinding(_)
             | AppMenuItem::KeyboardShortcuts
+            | AppMenuItem::ScaleMode
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -204,6 +206,7 @@ impl AppMenuItem {
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::CmdsBinding(_)
             | AppMenuItem::KeyboardShortcuts
+            | AppMenuItem::ScaleMode
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -381,6 +384,7 @@ impl AppMenuItem {
             }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
             AppMenuItem::KeyboardShortcuts => "Shortcuts".to_string(),
+            AppMenuItem::ScaleMode => with_value("Scale Mode", config.video.interface.scale_mode),
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

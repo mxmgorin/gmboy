@@ -178,6 +178,7 @@ pub fn interface_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::ToggleFullscreen,
         AppMenuItem::ToggleFps,
         AppMenuItem::Scale,
+        AppMenuItem::ScaleMode,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()

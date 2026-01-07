@@ -1,5 +1,5 @@
 use crate::app::{AppCmd, BindTarget, ChangeConfigCmd};
-use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
+use crate::config::{update_frame_skip, AppConfig, ScaleMode, VideoBackendType};
 use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,
     keyboard_shortcuts_menu, loaded_roms_menu, opened_roms_menu, settings_menu, system_menu,
@@ -246,6 +246,16 @@ impl super::AppMenu {
                 self.next_items(keyboard_shortcuts_menu());
                 None
             }
+            AppMenuItem::ScaleMode => {
+                let mut conf = config.video.clone();
+                conf.interface.scale_mode = match conf.interface.scale_mode {
+                    ScaleMode::Integer => ScaleMode::Fit,
+                    ScaleMode::Fit => ScaleMode::Integer,
+                };
+                self.items = interface_menu();
+
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
+            }
         }
     }
 
@@ -455,6 +465,16 @@ impl super::AppMenu {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(frame_skip)))
             }
             AppMenuItem::KeyboardShortcuts => None,
+            AppMenuItem::ScaleMode => {
+                let mut conf = config.video.clone();
+                conf.interface.scale_mode = match conf.interface.scale_mode {
+                    ScaleMode::Integer => ScaleMode::Fit,
+                    ScaleMode::Fit => ScaleMode::Integer,
+                };
+                self.items = interface_menu();
+
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
+            }
         }
     }
 
@@ -639,6 +659,16 @@ impl super::AppMenu {
             AppMenuItem::KeyboardShortcuts => {
                 self.next_items(keyboard_shortcuts_menu());
                 None
+            }
+            AppMenuItem::ScaleMode => {
+                let mut conf = config.video.clone();
+                conf.interface.scale_mode = match conf.interface.scale_mode {
+                    ScaleMode::Integer => ScaleMode::Fit,
+                    ScaleMode::Fit => ScaleMode::Integer,
+                };
+                self.items = interface_menu();
+
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
         }
     }

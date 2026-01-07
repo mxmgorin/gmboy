@@ -33,7 +33,7 @@ pub fn calc_win_width(scale: u32) -> u32 {
 pub fn new_scaled_rect(mode: ScaleMode, window_width: u32, window_height: u32) -> Rect {
     let (new_width, new_height) = match mode {
         ScaleMode::Integer => scale_integer(window_width, window_height),
-        ScaleMode::AspectFit => scale_aspect_fit(window_width, window_height),
+        ScaleMode::Fit => scale_fit(window_width, window_height),
     };
 
     // Center the image in the screen
@@ -43,7 +43,7 @@ pub fn new_scaled_rect(mode: ScaleMode, window_width: u32, window_height: u32) -
     Rect::new(x, y, new_width, new_height)
 }
 
-pub fn scale_aspect_fit(window_width: u32, window_height: u32) -> (u32, u32) {
+pub fn scale_fit(window_width: u32, window_height: u32) -> (u32, u32) {
     let screen_aspect = window_width as f32 / window_height as f32;
     let game_aspect = LCD_X_RES as f32 / LCD_Y_RES as f32;
 
