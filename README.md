@@ -33,23 +33,14 @@ ___
 
 Here are some highlights:
 
-- High accuracy: passes most Blargg’s & Mooneye test suites  
-- Good performance: optimized CPU and graphics  
-- Modern features: save states, visual filters, re-bindable button combos, and more  
-- Cross-platform: Windows, macOS, Linux, Android; SDL2 + optional OpenGL  
+- Cross-platform: Windows, macOS, Linux, Android; SDL2 + optional OpenGL
+- Modern features: save states, visual filters, re-bindable button combos, and more
+- High accuracy: passes most Blargg’s & Mooneye test suites
+- Good performance: optimized CPU and PPU
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
-📥 [Download the latest release here](https://github.com/mxmgorin/gmboy/releases/latest)
-
-## Emulation
-
-- **CPU**: Complete Sharp LR35902 instruction set with accurate timing
-- **PPU (Graphics)**: Background, window, and sprite rendering
-- **APU (Audio)**: All 4 audio channels (Square 1 & 2, Wave, Noise)
-- **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
-- **Battery-backed SRAM**: Persistent save data
-- **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
+📥 [Download the latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 
 ## Features
 
@@ -61,11 +52,20 @@ Here are some highlights:
 - **OpenGL** – Hardware-accelerated graphics with support for shaders and improved performance.
 - **ROM Scanning**  – Set a ROM directory and launch games directly from the menu.
 - **File Browser** – Load ROMs and save files easily from a built-in browser interface.
-- **Custom Controls**  – Rebind gamepad inputs and combos via `bindings.json`.
+- **Custom Controls**  – Rebind inputs and combos.
 - **Palettes**  – Switch between multiple color palettes or add your own in `palettes.json`.
-- **Settings**  – Adjust different aspects through the built-in menu or edit `config.json` manually.
+- **GUI**  – Adjust different aspects through the GUI or edit `config.json` manually.
 - **Testing**  – Integrated SM83 JSON tests, blargg, and mooneye test suites (via `cargo test`).
 - **Tile Viewer**  – Inspect background and sprite tiles in real time; toggle via settings.
+
+## Emulation
+
+- **CPU**: Complete Sharp LR35902 instruction set with accurate timing
+- **PPU (Graphics)**: Background, window, and sprite rendering
+- **APU (Audio)**: All 4 audio channels (Square 1 & 2, Wave, Noise)
+- **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
+- **Battery-backed SRAM**: Persistent save data
+- **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
 
 **Planned Features**
 
