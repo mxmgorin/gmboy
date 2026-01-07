@@ -9,6 +9,7 @@ on:
 
 jobs:
   build-android:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     env:
@@ -47,6 +48,7 @@ jobs:
         run: mv "$APK_BUILD_PATH" "$APK_PATH"
 
       - name: Upload artifact
+        if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APK_NAME }}
