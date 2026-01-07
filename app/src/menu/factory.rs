@@ -1,7 +1,7 @@
 use crate::app::{AppCmd, BindCmds, BindTarget, ChangeConfigCmd};
-use crate::config::{VideoBackendType, VideoConfig};
+use crate::config::{InterfaceConfig, VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
-use crate::menu::item::AppMenuItem;
+use crate::menu::item::{AppMenuItem};
 use crate::menu::roms::RomsMenu;
 use crate::menu::SubMenu;
 use crate::roms::RomsState;
@@ -171,17 +171,22 @@ pub fn settings_menu() -> Box<[AppMenuItem]> {
     .into_boxed_slice()
 }
 
-pub fn interface_menu() -> Box<[AppMenuItem]> {
-    vec![
-        AppMenuItem::Palette,
-        AppMenuItem::PaletteInverted,
-        AppMenuItem::ToggleFullscreen,
-        AppMenuItem::ToggleFps,
-        AppMenuItem::Scale,
-        AppMenuItem::ScaleMode,
-        AppMenuItem::Back,
-    ]
-    .into_boxed_slice()
+pub fn interface_menu(conf: &InterfaceConfig) -> Box<[AppMenuItem]> {
+    let mut items = Vec::with_capacity(6);
+    items.push(AppMenuItem::Palette);
+    items.push(AppMenuItem::PaletteInverted);
+    items.push(AppMenuItem::ToggleFullscreen);
+    items.push(AppMenuItem::ToggleFps);
+
+    if conf.is_fullscreen {
+        items.push(AppMenuItem::ScaleMode);
+    } else {
+        items.push(AppMenuItem::Scale);
+    }
+
+    items.push(AppMenuItem::Back);
+
+    items.into_boxed_slice()
 }
 
 pub fn audio_menu() -> Box<[AppMenuItem]> {

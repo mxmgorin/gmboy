@@ -64,6 +64,9 @@ impl super::AppMenu {
             AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.05))),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
+                let mut conf = config.video.interface.clone();
+                conf.is_fullscreen = !conf.is_fullscreen;
+                self.items = interface_menu(&conf);
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fullscreen))
             }
             AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TileWindow)),
@@ -253,7 +256,7 @@ impl super::AppMenu {
                     ScaleMode::Fit => ScaleMode::Stretch,
                     ScaleMode::Stretch => ScaleMode::Integer
                 };
-                self.items = interface_menu();
+                self.items = interface_menu(&conf.interface);
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
@@ -284,6 +287,9 @@ impl super::AppMenu {
             AppMenuItem::Volume => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.05))),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
+                let mut conf = config.video.interface.clone();
+                conf.is_fullscreen = !conf.is_fullscreen;
+                self.items = interface_menu(&conf);
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fullscreen))
             }
             AppMenuItem::TileWindow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TileWindow)),
@@ -473,7 +479,7 @@ impl super::AppMenu {
                     ScaleMode::Fit => ScaleMode::Integer,
                     ScaleMode::Stretch => ScaleMode::Fit
                 };
-                self.items = interface_menu();
+                self.items = interface_menu(&conf.interface);
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
@@ -516,7 +522,7 @@ impl super::AppMenu {
                 None
             }
             AppMenuItem::InterfaceMenu => {
-                self.next_items(interface_menu());
+                self.next_items(interface_menu(&config.video.interface));
                 None
             }
             AppMenuItem::Back => {
@@ -526,6 +532,9 @@ impl super::AppMenu {
             AppMenuItem::Palette => Some(AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette)),
             AppMenuItem::ToggleFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fps)),
             AppMenuItem::ToggleFullscreen => {
+                let mut conf = config.video.interface.clone();
+                conf.is_fullscreen = !conf.is_fullscreen;
+                self.items = interface_menu(&conf);
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Fullscreen))
             }
             AppMenuItem::AudioMenu => {
@@ -669,7 +678,7 @@ impl super::AppMenu {
                     ScaleMode::Fit => ScaleMode::Stretch,
                     ScaleMode::Stretch => ScaleMode::Integer
                 };
-                self.items = interface_menu();
+                self.items = interface_menu(&conf.interface);
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
