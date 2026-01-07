@@ -29,10 +29,6 @@ impl Sdl2Backend {
             .build()
             .unwrap();
         let mut canvas = window.into_canvas().build().unwrap();
-        if let Err(err) = canvas.set_integer_scale(true) {
-            log::error!("Failed to set_integer_scale: {err}");
-        }
-
         let texture_creator = canvas.texture_creator();
         let mut game_texture = texture_creator
             .create_texture_streaming(
