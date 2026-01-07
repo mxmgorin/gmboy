@@ -42,8 +42,7 @@ pub enum AppMenuItem {
     KeyboardInput,
     ButtonsBinding(Box<[JoypadButton]>),
     CmdsBinding(BindCmds),
-    KeyboardInputPage2,
-    KeyboardInputPage1,
+    KeyboardShortcuts,
     WaitInput(BindTarget),
 
     PaletteInverted,
@@ -136,8 +135,7 @@ impl AppMenuItem {
             | AppMenuItem::LoadedRoms
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::CmdsBinding(_)
-            | AppMenuItem::KeyboardInputPage1
-            | AppMenuItem::KeyboardInputPage2
+            | AppMenuItem::KeyboardShortcuts
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -205,8 +203,7 @@ impl AppMenuItem {
             | AppMenuItem::LoadedRoms
             | AppMenuItem::WaitInput(_)
             | AppMenuItem::CmdsBinding(_)
-            | AppMenuItem::KeyboardInputPage1
-            | AppMenuItem::KeyboardInputPage2
+            | AppMenuItem::KeyboardShortcuts
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -438,8 +435,7 @@ impl AppMenuItem {
                 )
             }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
-            AppMenuItem::KeyboardInputPage1 => "Page (2/2)".to_string(),
-            AppMenuItem::KeyboardInputPage2 => "Page (1/2)".to_string(),
+            AppMenuItem::KeyboardShortcuts => "Shortcuts".to_string(),
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

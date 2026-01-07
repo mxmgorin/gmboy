@@ -2,7 +2,7 @@ use crate::app::{AppCmd, BindTarget, ChangeConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, VideoBackendType};
 use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,
-    keyboard_page2_menu, loaded_roms_menu, opened_roms_menu, settings_menu, system_menu,
+    keyboard_shortcuts_menu, loaded_roms_menu, opened_roms_menu, settings_menu, system_menu,
     video_menu, wait_input_menu,
 };
 use crate::menu::item::AppMenuItem;
@@ -242,9 +242,8 @@ impl super::AppMenu {
                 let frame_skip = update_frame_skip(config.video.render.frame_skip, 1);
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(frame_skip)))
             }
-            AppMenuItem::KeyboardInputPage1 => None,
-            AppMenuItem::KeyboardInputPage2 => {
-                self.next_items(keyboard_page2_menu());
+            AppMenuItem::KeyboardShortcuts => {
+                self.next_items(keyboard_shortcuts_menu());
                 None
             }
         }
@@ -455,11 +454,7 @@ impl super::AppMenu {
                 let frame_skip = update_frame_skip(config.video.render.frame_skip, -1);
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::FrameSkip(frame_skip)))
             }
-            AppMenuItem::KeyboardInputPage1 => {
-                self.next_items(keyboard_menu());
-                None
-            }
-            AppMenuItem::KeyboardInputPage2 => None,
+            AppMenuItem::KeyboardShortcuts => None,
         }
     }
 
@@ -641,12 +636,8 @@ impl super::AppMenu {
                 None
             }
             AppMenuItem::WaitInput(_btn) => None,
-            AppMenuItem::KeyboardInputPage1 => {
-                self.next_items(keyboard_menu());
-                None
-            }
-            AppMenuItem::KeyboardInputPage2 => {
-                self.next_items(keyboard_page2_menu());
+            AppMenuItem::KeyboardShortcuts => {
+                self.next_items(keyboard_shortcuts_menu());
                 None
             }
         }

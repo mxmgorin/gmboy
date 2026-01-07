@@ -212,12 +212,12 @@ pub fn keyboard_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::ButtonsBinding(
             vec![JoypadButton::Down, JoypadButton::Right].into_boxed_slice(),
         ),
-        AppMenuItem::KeyboardInputPage2,
+        AppMenuItem::KeyboardShortcuts,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
 }
-pub fn keyboard_page2_menu() -> Box<[AppMenuItem]> {
+pub fn keyboard_shortcuts_menu() -> Box<[AppMenuItem]> {
     vec![
         AppMenuItem::CmdsBinding(BindCmds::new(AppCmd::ToggleMenu, None)),
         AppMenuItem::CmdsBinding(BindCmds::new(
@@ -256,7 +256,6 @@ pub fn keyboard_page2_menu() -> Box<[AppMenuItem]> {
             AppCmd::ChangeConfig(ChangeConfigCmd::NextShader),
             None,
         )),
-        AppMenuItem::KeyboardInputPage1,
         AppMenuItem::Back,
     ]
     .into_boxed_slice()
