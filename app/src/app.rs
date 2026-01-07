@@ -51,22 +51,22 @@ pub enum AppCmd {
 impl AppCmd {
     pub const fn name(&self) -> &'static str {
         match self {
-            AppCmd::ToggleMenu => "ToggleMenu",
-            AppCmd::ToggleRewind => "ToggleRewind",
-            AppCmd::LoadFile(_) => "LoadFile",
-            AppCmd::RestartRom => "RestartRom",
+            AppCmd::ToggleMenu => "Toggle Menu",
+            AppCmd::ToggleRewind => "Rewind",
+            AppCmd::LoadFile(_) => "Load File",
+            AppCmd::RestartRom => "Restart ROM",
             AppCmd::ChangeMode(m) => m.name(),
             AppCmd::SaveState(m, _) => m.name(),
-            AppCmd::SelectRom => "SelectRom",
+            AppCmd::SelectRom => "Select ROM",
             AppCmd::Quit => "Quit",
             AppCmd::ChangeConfig(conf) => conf.name(),
-            AppCmd::SelectRomsDir => "SelectRomsDir",
-            AppCmd::ReleaseButton(_) => "ReleaseButton",
-            AppCmd::PressButton(_) => "PressButton",
-            AppCmd::SetFileBrowsePath(_) => "SetFileBrowsePath",
-            AppCmd::ToggleFullscreen => "ToggleFullscreen",
+            AppCmd::SelectRomsDir => "Select ROMs Dir",
+            AppCmd::ReleaseButton(_) => "Release Button",
+            AppCmd::PressButton(_) => "Press Button",
+            AppCmd::SetFileBrowsePath(_) => "Set File Browse Path",
+            AppCmd::ToggleFullscreen => "Fullscreen",
             AppCmd::Macro(_) => "Macro",
-            AppCmd::BindInput(_) => "BindInput",
+            AppCmd::BindInput(_) => "Bind Input",
         }
     }
 }
@@ -149,10 +149,10 @@ pub enum ChangeConfigCmd {
     MuteTurbo,
     MuteSlow,
     ComboInterval(i32),
-    SetSaveIndex(usize),
-    SetLoadIndex(usize),
-    IncSaveAndLoadIndexes,
-    DecSaveAndLoadIndexes,
+    SetSaveSlot(usize),
+    SetLoadSlot(usize),
+    IncSaveAndLoadSlots,
+    DecSaveAndLoadSlots,
     InvertPalette,
     Video(Box<VideoConfig>),
     NextShader,
@@ -166,32 +166,32 @@ impl ChangeConfigCmd {
             ChangeConfigCmd::Reset => "Reset",
             ChangeConfigCmd::Volume(_) => "Volume",
             ChangeConfigCmd::Scale(_) => "Scale",
-            ChangeConfigCmd::TileWindow => "TileWindow",
+            ChangeConfigCmd::TileWindow => "Tile Window",
             ChangeConfigCmd::Fullscreen => "Fullscreen",
             ChangeConfigCmd::Fps => "Fps",
-            ChangeConfigCmd::SpinDuration(_) => "SpinDuration",
-            ChangeConfigCmd::NextPalette => "NextPalette",
-            ChangeConfigCmd::PrevPalette => "PrevPalette",
-            ChangeConfigCmd::ToggleMute => "ToggleMute",
-            ChangeConfigCmd::NormalSpeed(_) => "NormalSpeed",
-            ChangeConfigCmd::TurboSpeed(_) => "TurboSpeed",
-            ChangeConfigCmd::SlowSpeed(_) => "SlowSpeed",
-            ChangeConfigCmd::RewindSize(_) => "RewindSize",
-            ChangeConfigCmd::RewindInterval(_) => "RewindInterval",
-            ChangeConfigCmd::AutoSaveState => "AutoSaveState",
-            ChangeConfigCmd::AudioBufferSize(_) => "AudioBufferSize",
-            ChangeConfigCmd::MuteTurbo => "MuteTurbo",
-            ChangeConfigCmd::MuteSlow => "MuteSlow",
-            ChangeConfigCmd::ComboInterval(_) => "ComboInterval",
-            ChangeConfigCmd::SetSaveIndex(_) => "SetSaveIndex",
-            ChangeConfigCmd::SetLoadIndex(_) => "SetLoadIndex",
-            ChangeConfigCmd::IncSaveAndLoadIndexes => "NextSaveIndex",
-            ChangeConfigCmd::DecSaveAndLoadIndexes => "PrevSaveIndex",
-            ChangeConfigCmd::InvertPalette => "InvertPalette",
+            ChangeConfigCmd::SpinDuration(_) => "Spin Duration",
+            ChangeConfigCmd::NextPalette => "Next Palette",
+            ChangeConfigCmd::PrevPalette => "Prev Palette",
+            ChangeConfigCmd::ToggleMute => "Mute",
+            ChangeConfigCmd::NormalSpeed(_) => "Normal Speed",
+            ChangeConfigCmd::TurboSpeed(_) => "Turbo Speed",
+            ChangeConfigCmd::SlowSpeed(_) => "Slow Speed",
+            ChangeConfigCmd::RewindSize(_) => "Rewind Size",
+            ChangeConfigCmd::RewindInterval(_) => "Rewind Interval",
+            ChangeConfigCmd::AutoSaveState => "Auto Save State",
+            ChangeConfigCmd::AudioBufferSize(_) => "Audio Buffer Size",
+            ChangeConfigCmd::MuteTurbo => "Mute Turbo",
+            ChangeConfigCmd::MuteSlow => "Mute Slow",
+            ChangeConfigCmd::ComboInterval(_) => "Combo Interval",
+            ChangeConfigCmd::SetSaveSlot(_) => "Set Save Slot",
+            ChangeConfigCmd::SetLoadSlot(_) => "Set Load Slot",
+            ChangeConfigCmd::IncSaveAndLoadSlots => "Next Save Slot",
+            ChangeConfigCmd::DecSaveAndLoadSlots => "Prev Save Slot",
+            ChangeConfigCmd::InvertPalette => "Invert Palette",
             ChangeConfigCmd::Video(_) => "Video",
-            ChangeConfigCmd::NextShader => "NextShader",
-            ChangeConfigCmd::PrevShader => "PrevShader",
-            ChangeConfigCmd::FrameSkip(_) => "FrameSkip",
+            ChangeConfigCmd::NextShader => "Next Shader",
+            ChangeConfigCmd::PrevShader => "Prev Shader",
+            ChangeConfigCmd::FrameSkip(_) => "Frame Skip",
         }
     }
 }
@@ -452,7 +452,7 @@ where
         match event {
             SaveStateCmd::Create => {
                 let save_state = emu.create_save_state();
-                let index = index.unwrap_or(self.config.current_save_index).to_string();
+                let index = index.unwrap_or(self.config.current_save_slot).to_string();
 
                 if let Err(err) = AppConfigFile::write_save_state_file(&save_state, &name, &index) {
                     log::error!("Failed save_state: {err}");
@@ -463,7 +463,7 @@ where
                 self.notifications.add(msg);
             }
             SaveStateCmd::Load => {
-                let index = index.unwrap_or(self.config.current_load_index).to_string();
+                let index = index.unwrap_or(self.config.current_load_slot).to_string();
                 let save_state = AppConfigFile::read_save_state_file(&name, &index);
 
                 let Ok(save_state) = save_state else {

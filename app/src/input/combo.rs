@@ -216,12 +216,12 @@ impl Default for ButtonComboBindings {
         bindings.add_cmd(
             Button::DPadLeft,
             Button::Start,
-            AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadIndexes),
+            AppCmd::ChangeConfig(ChangeConfigCmd::DecSaveAndLoadSlots),
         );
         bindings.add_cmd(
             Button::DPadRight,
             Button::Start,
-            AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
+            AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadSlots),
         );
 
         bindings

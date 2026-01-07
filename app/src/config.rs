@@ -20,8 +20,8 @@ pub struct AppConfig {
     pub emulation: EmuConfig, // only for deserialization
 
     pub auto_save_state: bool,
-    pub current_save_index: usize,
-    pub current_load_index: usize,
+    pub current_save_slot: usize,
+    pub current_load_slot: usize,
     pub auto_continue: bool,
     pub audio: AudioConfig,
     pub video: VideoConfig,
@@ -104,19 +104,19 @@ impl AppConfig {
     }
 
     pub fn inc_save_index(&mut self) {
-        self.current_save_index = core::move_next_wrapped(self.current_save_index, 99);
+        self.current_save_slot = core::move_next_wrapped(self.current_save_slot, 99);
     }
 
     pub fn dec_save_index(&mut self) {
-        self.current_save_index = core::move_prev_wrapped(self.current_save_index, 99);
+        self.current_save_slot = core::move_prev_wrapped(self.current_save_slot, 99);
     }
 
     pub fn inc_load_index(&mut self) {
-        self.current_load_index = core::move_next_wrapped(self.current_load_index, 99);
+        self.current_load_slot = core::move_next_wrapped(self.current_load_slot, 99);
     }
 
     pub fn dec_load_index(&mut self) {
-        self.current_load_index = core::move_prev_wrapped(self.current_load_index, 99);
+        self.current_load_slot = core::move_prev_wrapped(self.current_load_slot, 99);
     }
 }
 
@@ -187,8 +187,8 @@ impl Default for AppConfig {
 
         Self {
             auto_save_state: false,
-            current_save_index: 0,
-            current_load_index: 0,
+            current_save_slot: 0,
+            current_load_slot: 0,
             emulation: Default::default(),
             audio: AudioConfig {
                 mute: false,

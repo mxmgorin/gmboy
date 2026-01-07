@@ -221,8 +221,8 @@ impl AppMenuItem {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open ROM".to_string(),
             AppMenuItem::Quit => "Quit".to_string(),
-            AppMenuItem::SaveState => format!("Save({})", config.current_save_index),
-            AppMenuItem::LoadState => format!("Load({})", config.current_load_index),
+            AppMenuItem::SaveState => format!("Save({})", config.current_save_slot),
+            AppMenuItem::LoadState => format!("Load({})", config.current_load_slot),
             AppMenuItem::SettingsMenu => "Settings".to_string(),
             AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
@@ -428,10 +428,14 @@ impl AppMenuItem {
                     .collect::<Vec<_>>()
                     .join("+");
 
-                format!("{name}: {}", config.input.bindings.keyboard.get_label(&cmd))
+                format!("{name}: {}", config.input.bindings.keyboard.get_desc(&cmd))
             }
             AppMenuItem::CmdsBinding(cmd) => {
-                format!("{}: {}", cmd.pressed, config.input.bindings.keyboard.get_label(&cmd.pressed))
+                format!(
+                    "{}: {}",
+                    cmd.pressed,
+                    config.input.bindings.keyboard.get_desc(&cmd.pressed)
+                )
             }
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
             AppMenuItem::KeyboardInputPage1 => "Page (2/2)".to_string(),

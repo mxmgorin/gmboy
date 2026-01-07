@@ -229,7 +229,7 @@ pub fn keyboard_page2_menu() -> Box<[AppMenuItem]> {
             None,
         )),
         AppMenuItem::CmdsBinding(BindCmds::new(
-            AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadIndexes),
+            AppCmd::ChangeConfig(ChangeConfigCmd::IncSaveAndLoadSlots),
             None,
         )),
         AppMenuItem::CmdsBinding(BindCmds::new(

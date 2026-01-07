@@ -69,12 +69,18 @@ impl<I: BindableInput> InputBindings<I> {
             .and_then(|x| x.as_ref())
     }
 
-    pub fn get_label(&self, cmd: &AppCmd) -> String {
-        self.get_inputs(cmd)
+    pub fn get_desc(&self, cmd: &AppCmd) -> String {
+        let desc = self.get_inputs(cmd)
             .into_iter()
-            .map(|(b, _)| b.name())
+            .map(|(i, _)| i.name())
             .collect::<Vec<_>>()
-            .join(", ")
+            .join(", ");
+
+        if desc.is_empty() {
+            "None".to_string()
+        } else {
+            desc
+        }
     }
 
     pub fn get_inputs(&self, cmd: &AppCmd) -> Vec<(I, bool)> {

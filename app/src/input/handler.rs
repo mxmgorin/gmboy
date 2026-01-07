@@ -256,8 +256,8 @@ impl InputHandler {
                     app.config.input.combo_interval =
                         core::change_duration(app.config.input.combo_interval, x);
                 }
-                ChangeConfigCmd::SetSaveIndex(x) => app.config.current_save_index = x,
-                ChangeConfigCmd::SetLoadIndex(x) => app.config.current_load_index = x,
+                ChangeConfigCmd::SetSaveSlot(x) => app.config.current_save_slot = x,
+                ChangeConfigCmd::SetLoadSlot(x) => app.config.current_load_slot = x,
                 ChangeConfigCmd::InvertPalette => {
                     app.config.video.interface.is_palette_inverted =
                         !app.config.video.interface.is_palette_inverted;
@@ -271,22 +271,22 @@ impl InputHandler {
                     app.config.video = *x;
                     app.video.update_config(&app.config.video);
                 }
-                ChangeConfigCmd::IncSaveAndLoadIndexes => {
+                ChangeConfigCmd::IncSaveAndLoadSlots => {
                     app.config.inc_save_index();
                     app.config.inc_load_index();
                     app.notifications
-                        .add(format!("Save Index: {}", app.config.current_save_index));
+                        .add(format!("Save Slot: {}", app.config.current_save_slot));
                     app.notifications
-                        .add(format!("Load Index: {}", app.config.current_load_index));
+                        .add(format!("Load Slot: {}", app.config.current_load_slot));
                     app.menu.request_update();
                 }
-                ChangeConfigCmd::DecSaveAndLoadIndexes => {
+                ChangeConfigCmd::DecSaveAndLoadSlots => {
                     app.config.dec_load_index();
                     app.config.dec_save_index();
                     app.notifications
-                        .add(format!("Save Index: {}", app.config.current_save_index));
+                        .add(format!("Save Slot: {}", app.config.current_save_slot));
                     app.notifications
-                        .add(format!("Load Index: {}", app.config.current_load_index));
+                        .add(format!("Load Slot: {}", app.config.current_load_slot));
                     app.menu.request_update();
                 }
                 ChangeConfigCmd::NextShader => app.next_shader(),
@@ -332,11 +332,11 @@ impl InputHandler {
                                 );
 
                                 if let Some(released) = cmds.released {
-                                    app.config.input.bindings.keyboard.bind_cmd(
-                                        sc,
-                                        false,
-                                        *released,
-                                    );
+                                    app.config
+                                        .input
+                                        .bindings
+                                        .keyboard
+                                        .bind_cmd(sc, false, *released);
                                 }
                             }
                         }

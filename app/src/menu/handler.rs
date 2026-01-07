@@ -48,14 +48,14 @@ impl super::AppMenu {
 
         match item {
             AppMenuItem::SaveState => {
-                let i = core::move_next_wrapped(config.current_save_index, 99);
+                let i = core::move_next_wrapped(config.current_save_slot, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetSaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetSaveSlot(i)))
             }
             AppMenuItem::LoadState => {
-                let i = core::move_next_wrapped(config.current_load_index, 99);
+                let i = core::move_next_wrapped(config.current_load_slot, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetLoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetLoadSlot(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Scale(1.0))),
             AppMenuItem::SpinDuration => {
@@ -258,14 +258,14 @@ impl super::AppMenu {
             AppMenuItem::ScanlineFilter => None,
             AppMenuItem::DotMatrixFilter => None,
             AppMenuItem::SaveState => {
-                let i = core::move_prev_wrapped(config.current_save_index, 99);
+                let i = core::move_prev_wrapped(config.current_save_slot, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetSaveIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetSaveSlot(i)))
             }
             AppMenuItem::LoadState => {
-                let i = core::move_prev_wrapped(config.current_load_index, 99);
+                let i = core::move_prev_wrapped(config.current_load_slot, 99);
 
-                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetLoadIndex(i)))
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetLoadSlot(i)))
             }
             AppMenuItem::Scale => Some(AppCmd::ChangeConfig(ChangeConfigCmd::Scale(-1.0))),
             AppMenuItem::SpinDuration => {
