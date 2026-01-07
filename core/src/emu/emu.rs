@@ -29,7 +29,7 @@ pub struct Emu {
     pub runtime: EmuRuntime,
     prev_speed_multiplier: f64,
     rewind_buffer: VecDeque<EmuSaveState>,
-    last_rewind_save_time: Instant,
+    last_rewind_frame: usize,
 }
 
 impl Emu {
@@ -39,7 +39,7 @@ impl Emu {
             prev_speed_multiplier: config.normal_speed,
             state: EmuState::Running,
             rewind_buffer: VecDeque::with_capacity(config.rewind_size),
-            last_rewind_save_time: Instant::now(),
+            last_rewind_frame: 0,
             config,
         })
     }
@@ -126,16 +126,16 @@ impl Emu {
     #[inline(always)]
     fn push_rewind(&mut self) {
         if self.config.rewind_size > 0 {
-            let now = Instant::now();
-            let duration = now.duration_since(self.last_rewind_save_time);
+            let curr_frame = self.runtime.cpu.clock.bus.io.ppu.current_frame;
+            let diff =  curr_frame.saturating_sub(self.last_rewind_frame);
 
-            if duration >= self.config.rewind_interval {
+            if diff >= self.config.rewind_frames {
                 if self.rewind_buffer.len() > self.config.rewind_size {
                     self.rewind_buffer.pop_front();
                 }
 
                 self.rewind_buffer.push_back(self.create_save_state());
-                self.last_rewind_save_time = now;
+                self.last_rewind_frame = curr_frame;
             }
         }
     }

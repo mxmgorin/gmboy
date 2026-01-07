@@ -30,7 +30,7 @@ pub enum AppMenuItem {
     TurboSpeed,
     SlowSpeed,
     RewindSize,
-    RewindInterval,
+    RewindFrames,
     AudioBufferSize,
     MuteTurbo,
     MuteSlow,
@@ -107,7 +107,7 @@ impl AppMenuItem {
             | AppMenuItem::TurboSpeed
             | AppMenuItem::SlowSpeed
             | AppMenuItem::RewindSize
-            | AppMenuItem::RewindInterval
+            | AppMenuItem::RewindFrames
             | AppMenuItem::AudioBufferSize
             | AppMenuItem::MuteTurbo
             | AppMenuItem::MuteSlow
@@ -175,7 +175,7 @@ impl AppMenuItem {
             | AppMenuItem::TurboSpeed
             | AppMenuItem::SlowSpeed
             | AppMenuItem::RewindSize
-            | AppMenuItem::RewindInterval
+            | AppMenuItem::RewindFrames
             | AppMenuItem::AudioBufferSize
             | AppMenuItem::MuteTurbo
             | AppMenuItem::MuteSlow
@@ -273,10 +273,9 @@ impl AppMenuItem {
                 format!("Slow Speed(x{})", config.emulation.slow_speed)
             }
             AppMenuItem::RewindSize => format!("Rewind Size({})", config.emulation.rewind_size),
-            AppMenuItem::RewindInterval => format!(
-                "Rewind Interval({}s)",
-                config.emulation.rewind_interval.as_secs()
-            ),
+            AppMenuItem::RewindFrames => {
+                format!("Rewind Frames({})", config.emulation.rewind_frames)
+            }
             AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
             AppMenuItem::MuteTurbo => format!(
                 "Mute Turbo{}",

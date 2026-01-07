@@ -4,7 +4,7 @@ use std::time::Duration;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EmuConfig {
     pub rewind_size: usize,
-    pub rewind_interval: Duration,
+    pub rewind_frames: usize,
     pub normal_speed: f64,
     pub slow_speed: f64,
     pub turbo_speed: f64,
@@ -15,7 +15,7 @@ impl Default for EmuConfig {
     fn default() -> Self {
         Self {
             rewind_size: 120,
-            rewind_interval: Duration::from_secs(2),
+            rewind_frames: 60,
             normal_speed: 1.0,
             slow_speed: 0.5,
             turbo_speed: 5.0,

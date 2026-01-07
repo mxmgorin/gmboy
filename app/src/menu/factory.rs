@@ -105,7 +105,7 @@ pub fn system_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::TurboSpeed,
         AppMenuItem::SlowSpeed,
         AppMenuItem::RewindSize,
-        AppMenuItem::RewindInterval,
+        AppMenuItem::RewindFrames,
         #[cfg(feature = "file-dialog")]
         AppMenuItem::RomsDir,
         AppMenuItem::Back,
