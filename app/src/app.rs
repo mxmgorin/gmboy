@@ -361,8 +361,10 @@ where
 
     pub fn change_scale(&mut self, delta: f32) -> Result<(), String> {
         self.config.video.interface.scale = (self.config.video.interface.scale + delta).max(0.0);
-        self.video
-            .set_scale(self.config.video.interface.scale as u32)?;
+        self.video.set_scale(
+            self.config.video.interface.scale as u32,
+            self.config.video.interface.scale_mode,
+        )?;
         let msg = format!("Scale: {}", self.config.video.interface.scale);
         self.notifications.add(msg);
 
@@ -441,8 +443,10 @@ where
 
     pub fn toggle_fullscreen(&mut self) {
         self.config.video.interface.is_fullscreen = !self.config.video.interface.is_fullscreen;
-        self.video
-            .set_fullscreen(self.config.video.interface.is_fullscreen);
+        self.video.set_fullscreen(
+            self.config.video.interface.is_fullscreen,
+            self.config.video.interface.scale_mode,
+        );
     }
 
     pub fn handle_save_state(&mut self, emu: &mut Emu, event: SaveStateCmd, index: Option<usize>) {

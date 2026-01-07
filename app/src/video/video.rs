@@ -1,4 +1,4 @@
-use crate::config::{VideoBackendType, VideoConfig};
+use crate::config::{ScaleMode, VideoBackendType, VideoConfig};
 use crate::video::frame_blend::FrameBlend;
 use crate::video::gl_backend::GlBackend;
 use crate::video::overlay::Overlay;
@@ -28,7 +28,7 @@ impl AppVideo {
         let scale = config.interface.scale as u32;
         let win_width = calc_win_width(scale);
         let win_height = calc_win_height(scale);
-        let game_rect = new_scaled_rect(win_width, win_height);
+        let game_rect = new_scaled_rect(config.interface.scale_mode, win_width, win_height);
 
         let mut backend = match config.render.backend {
             VideoBackendType::Sdl2 => {
@@ -40,7 +40,7 @@ impl AppVideo {
                 VideoBackend::Gl(backend)
             }
         };
-        backend.set_fullscreen(config.interface.is_fullscreen);
+        backend.set_fullscreen(config.interface.is_fullscreen, config.interface.scale_mode);
         let ui = Overlay::new(text_color, bg_color);
 
         Ok(Self {
@@ -61,7 +61,7 @@ impl AppVideo {
     pub fn update_config(&mut self, config: &VideoConfig) {
         self.min_render_interval = config.render.calc_min_frame_interval();
         self.frame_blend = FrameBlend::new(&config.render.frame_blend_mode);
-        self.backend.set_fullscreen(config.interface.is_fullscreen);
+        self.backend.set_fullscreen(config.interface.is_fullscreen, config.interface.scale_mode);
         self.backend.update_config(config);
         self.config = config.clone();
     }
@@ -97,11 +97,11 @@ impl AppVideo {
         }
     }
 
-    pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
-        self.backend.set_scale(scale)
+    pub fn set_scale(&mut self, scale: u32, mode: ScaleMode) -> Result<(), String> {
+        self.backend.set_scale(scale, mode)
     }
 
-    pub fn set_fullscreen(&mut self, fullscreen: bool) {
-        self.backend.set_fullscreen(fullscreen);
+    pub fn set_fullscreen(&mut self, fullscreen: bool, scale_mode: ScaleMode) {
+        self.backend.set_fullscreen(fullscreen, scale_mode);
     }
 }

@@ -1,4 +1,4 @@
-use crate::config::RenderConfig;
+use crate::config::{RenderConfig, ScaleMode};
 use crate::video::shader::{ShaderFrameBlendMode, ShaderPrecision};
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect, shader};
 use gl::types::{GLenum, GLint};
@@ -84,7 +84,7 @@ impl GlBackend {
             .send_frame_blend_mode(self.shader_frame_blend_mode);
     }
 
-    pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
+    pub fn set_scale(&mut self, scale: u32, mode: ScaleMode) -> Result<(), String> {
         self.gl
             .window
             .set_size(calc_win_width(scale), calc_win_height(scale))
@@ -93,12 +93,12 @@ impl GlBackend {
             sdl2::video::WindowPos::Centered,
             sdl2::video::WindowPos::Centered,
         );
-        self.update_game_rect();
+        self.update_game_rect(mode);
 
         Ok(())
     }
 
-    pub fn set_fullscreen(&mut self, fullscreen: bool) {
+    pub fn set_fullscreen(&mut self, fullscreen: bool, scale_mode: ScaleMode) {
         if fullscreen {
             self.gl
                 .window
@@ -110,7 +110,7 @@ impl GlBackend {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         };
-        self.update_game_rect();
+        self.update_game_rect(scale_mode);
     }
 
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
@@ -276,9 +276,9 @@ impl GlBackend {
         Ok(())
     }
 
-    fn update_game_rect(&mut self) {
+    fn update_game_rect(&mut self, scale_mode: ScaleMode) {
         let (win_width, win_height) = self.gl.window.size();
-        self.game_rect = new_scaled_rect(win_width, win_height);
+        self.game_rect = new_scaled_rect(scale_mode, win_width, win_height);
     }
 }
 

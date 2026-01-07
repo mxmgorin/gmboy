@@ -1,3 +1,4 @@
+use crate::config::ScaleMode;
 use crate::config::VideoConfig;
 use crate::video::gl_backend::GlBackend;
 use crate::video::sdl2_backend::Sdl2Backend;
@@ -29,7 +30,20 @@ pub fn calc_win_width(scale: u32) -> u32 {
     LCD_X_RES as u32 * scale
 }
 
-pub fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
+pub fn new_scaled_rect(mode: ScaleMode, window_width: u32, window_height: u32) -> Rect {
+    let (new_width, new_height) = match mode {
+        ScaleMode::Integer => scale_integer(window_width, window_height),
+        ScaleMode::AspectFit => scale_aspect_fit(window_width, window_height),
+    };
+
+    // Center the image in the screen
+    let x = ((window_width - new_width) / 2) as i32;
+    let y = ((window_height - new_height) / 2) as i32;
+
+    Rect::new(x, y, new_width, new_height)
+}
+
+pub fn scale_aspect_fit(window_width: u32, window_height: u32) -> (u32, u32) {
     let screen_aspect = window_width as f32 / window_height as f32;
     let game_aspect = LCD_X_RES as f32 / LCD_Y_RES as f32;
 
@@ -45,11 +59,20 @@ pub fn new_scaled_rect(window_width: u32, window_height: u32) -> Rect {
         (width, height)
     };
 
-    // Center the image in the screen
-    let x = ((window_width - new_width) / 2) as i32;
-    let y = ((window_height - new_height) / 2) as i32;
+    (new_width, new_height)
+}
 
-    Rect::new(x, y, new_width, new_height)
+pub fn scale_integer(window_width: u32, window_height: u32) -> (u32, u32) {
+    let scale_x = window_width / LCD_X_RES as u32;
+    let scale_y = window_height / LCD_Y_RES as u32;
+
+    // Largest integer scale that fits
+    let scale = scale_x.min(scale_y).max(1);
+
+    let new_width = LCD_X_RES as u32 * scale;
+    let new_height = LCD_Y_RES as u32 * scale;
+
+    (new_width, new_height)
 }
 
 pub struct VideoTexture {
@@ -164,17 +187,17 @@ impl VideoBackend {
         }
     }
 
-    pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
+    pub fn set_scale(&mut self, scale: u32, mode: ScaleMode) -> Result<(), String> {
         match self {
-            VideoBackend::Sdl2(x) => x.set_scale(scale),
-            VideoBackend::Gl(x) => x.set_scale(scale),
+            VideoBackend::Sdl2(x) => x.set_scale(scale, mode),
+            VideoBackend::Gl(x) => x.set_scale(scale, mode),
         }
     }
 
-    pub fn set_fullscreen(&mut self, fullscreen: bool) {
+    pub fn set_fullscreen(&mut self, fullscreen: bool, scale_mode: ScaleMode) {
         match self {
-            VideoBackend::Sdl2(x) => x.set_fullscreen(fullscreen),
-            VideoBackend::Gl(x) => x.set_fullscreen(fullscreen),
+            VideoBackend::Sdl2(x) => x.set_fullscreen(fullscreen, scale_mode),
+            VideoBackend::Gl(x) => x.set_fullscreen(fullscreen, scale_mode),
         }
     }
 

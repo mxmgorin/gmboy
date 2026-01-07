@@ -1,4 +1,4 @@
-use crate::config::{RenderConfig, VideoConfig};
+use crate::config::{RenderConfig, ScaleMode, VideoConfig};
 use crate::video::sdl2_filters::Sdl2Filters;
 use crate::video::sdl2_tiles::Sdl2TilesView;
 use crate::video::{calc_win_height, calc_win_width, new_scaled_rect};
@@ -29,6 +29,10 @@ impl Sdl2Backend {
             .build()
             .unwrap();
         let mut canvas = window.into_canvas().build().unwrap();
+        if let Err(err) = canvas.set_integer_scale(true) {
+            log::error!("Failed to set_integer_scale: {err}");
+        }
+
         let texture_creator = canvas.texture_creator();
         let mut game_texture = texture_creator
             .create_texture_streaming(
@@ -100,7 +104,7 @@ impl Sdl2Backend {
         self.canvas.present();
     }
 
-    pub fn set_scale(&mut self, scale: u32) -> Result<(), String> {
+    pub fn set_scale(&mut self, scale: u32, mode: ScaleMode) -> Result<(), String> {
         let window = self.canvas.window_mut();
         window
             .set_size(calc_win_width(scale), calc_win_height(scale))
@@ -109,12 +113,12 @@ impl Sdl2Backend {
             sdl2::video::WindowPos::Centered,
             sdl2::video::WindowPos::Centered,
         );
-        self.update_game_rect();
+        self.update_game_rect(mode);
 
         Ok(())
     }
 
-    pub fn set_fullscreen(&mut self, fullscreen: bool) {
+    pub fn set_fullscreen(&mut self, fullscreen: bool, scale_mode: ScaleMode) {
         if fullscreen {
             self.canvas
                 .window_mut()
@@ -126,7 +130,7 @@ impl Sdl2Backend {
                 .set_fullscreen(sdl2::video::FullscreenType::Off)
                 .unwrap();
         }
-        self.update_game_rect();
+        self.update_game_rect(scale_mode);
     }
 
     pub fn draw_tiles(&mut self, tiles: impl Iterator<Item = TileData>) {
@@ -140,9 +144,9 @@ impl Sdl2Backend {
         self.canvas.clear();
     }
 
-    fn update_game_rect(&mut self) {
+    fn update_game_rect(&mut self, scale_mode: ScaleMode) {
         let (win_width, win_height) = self.canvas.window().size();
-        self.game_rect = new_scaled_rect(win_width, win_height);
+        self.game_rect = new_scaled_rect(scale_mode, win_width, win_height);
         self.filters = Sdl2Filters::new(&mut self.canvas, &self.texture_creator, self.game_rect);
     }
 }

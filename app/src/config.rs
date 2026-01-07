@@ -144,10 +144,26 @@ impl AudioConfig {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum ScaleMode {
+    Integer,
+    AspectFit,
+}
+
+impl fmt::Display for ScaleMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ScaleMode::Integer => write!(f, "Integer"),
+            ScaleMode::AspectFit => write!(f, "AspectFit"),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InterfaceConfig {
     pub selected_palette_idx: usize,
     pub scale: f32,
+    pub scale_mode: ScaleMode,
     pub is_fullscreen: bool,
     pub show_fps: bool,
     pub show_tiles: bool,
@@ -211,6 +227,7 @@ impl Default for AppConfig {
                 interface: InterfaceConfig {
                     selected_palette_idx: 0,
                     scale: 5.0,
+                    scale_mode: ScaleMode::AspectFit,
                     is_fullscreen: true,
                     show_fps: false,
                     show_tiles: false,
