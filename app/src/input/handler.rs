@@ -274,10 +274,10 @@ impl InputHandler {
                 ChangeConfigCmd::IncSaveAndLoadSlots => {
                     app.config.inc_save_index();
                     app.config.inc_load_index();
-                    app.notifications
-                        .add(format!("Save Slot: {}", app.config.current_save_slot));
-                    app.notifications
-                        .add(format!("Load Slot: {}", app.config.current_load_slot));
+                    app.notifications.add(format!(
+                        "Save Slot: {}, Load Slot: {}",
+                        app.config.current_save_slot, app.config.current_load_slot
+                    ));
                     app.menu.request_update();
                 }
                 ChangeConfigCmd::DecSaveAndLoadSlots => {
