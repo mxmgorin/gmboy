@@ -13,7 +13,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use std::{fs, io};
+use std::{fmt, fs, io};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppConfig {
@@ -28,10 +28,19 @@ pub struct AppConfig {
     pub input: InputConfig,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
 pub enum VideoBackendType {
     Sdl2,
     Gl,
+}
+
+impl fmt::Display for VideoBackendType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            VideoBackendType::Sdl2 => write!(f, "SDL2"),
+            VideoBackendType::Gl => write!(f, "GL"),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

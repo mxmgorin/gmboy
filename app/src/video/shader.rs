@@ -1,7 +1,7 @@
 use crate::video::gl_backend::GLSetup;
 use gl::types::GLenum;
 use serde::{Deserialize, Serialize};
-use std::ffi::CString;
+use std::{ffi::CString, fmt};
 
 const MASTER_VERTEX: &str = include_str!("../../../app/shaders/master.vert");
 const PASSTHROUGH_FRAGMENT: &str = include_str!("../../../app/shaders/passthrough.frag");
@@ -27,6 +27,17 @@ pub enum ShaderFrameBlendMode {
     Simple = 1,
     AccEven = 2,
     AccOdd = 3,
+}
+
+impl fmt::Display for ShaderFrameBlendMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ShaderFrameBlendMode::None => write!(f, "None"),
+            ShaderFrameBlendMode::Simple => write!(f, "Simple"),
+            ShaderFrameBlendMode::AccEven => write!(f, "Acc Even"),
+            ShaderFrameBlendMode::AccOdd => write!(f, "Acc Odd")
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Eq, PartialEq)]

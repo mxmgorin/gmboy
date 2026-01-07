@@ -212,203 +212,149 @@ impl AppMenuItem {
     }
 }
 
+fn with_value(label: &str, value: impl std::fmt::Display) -> String {
+    format!("{label}: {value}")
+}
+
+fn with_toggle(label: &str, value: bool) -> String {
+    format!("{label}: {}", get_menu_toggle(value))
+}
+
+fn with_count(label: &str, value: usize) -> String {
+    format!("{label}({})", value)
+}
+
 impl AppMenuItem {
     pub fn to_string(&self, config: &AppConfig, roms: &RomsState) -> String {
         let item_str = match self {
             AppMenuItem::Resume => "Resume".to_string(),
             AppMenuItem::OpenRom => "Open ROM".to_string(),
             AppMenuItem::Quit => "Quit".to_string(),
-            AppMenuItem::SaveState => format!("Save({})", config.current_save_slot),
-            AppMenuItem::LoadState => format!("Load({})", config.current_load_slot),
+            AppMenuItem::SaveState => with_count("Save", config.current_save_slot),
+            AppMenuItem::LoadState => with_count("Load", config.current_load_slot),
             AppMenuItem::SettingsMenu => "Settings".to_string(),
             AppMenuItem::InterfaceMenu => "Interface".to_string(),
             AppMenuItem::Back => "Back".to_string(),
             AppMenuItem::Palette => {
-                format!("Palette({})", config.video.interface.selected_palette_idx)
+                with_value("Palette", config.video.interface.selected_palette_idx)
             }
-            AppMenuItem::ToggleFps => format!(
-                "FPS{}",
-                get_menu_toggle(config.video.interface.show_fps)
-            ),
+            AppMenuItem::ToggleFps => with_toggle("FPS", config.video.interface.show_fps),
             AppMenuItem::ToggleFullscreen => {
-                format!(
-                    "Fullscreen{}",
-                    get_menu_toggle(config.video.interface.is_fullscreen)
-                )
+                with_toggle("Fullscreen", config.video.interface.is_fullscreen)
             }
             AppMenuItem::AudioMenu => "Audio".to_string(),
-            AppMenuItem::Volume => {
-                format!("Volume({})", (config.audio.volume * 100.0) as i32)
-            }
-            AppMenuItem::Scale => {
-                format!("Scale(x{})", config.video.interface.scale)
-            }
+            AppMenuItem::Volume => with_value("Volume", (config.audio.volume * 100.0) as i32),
+            AppMenuItem::Scale => with_value("Scale", config.video.interface.scale),
             AppMenuItem::AdvancedMenu => "Advanced".to_string(),
-            AppMenuItem::TileWindow => {
-                format!(
-                    "Show Tiles{}",
-                    get_menu_toggle(config.video.interface.show_tiles)
-                )
-            }
-            AppMenuItem::SpinDuration => {
-                format!(
-                    "Spin Wait({}µs)",
-                    config.get_emu_config().spin_duration.as_micros()
-                )
-            }
-            AppMenuItem::SystemMenu => "System".to_string(),
-            AppMenuItem::AutoSaveState => {
-                format!(
-                    "Auto Save State{}",
-                    get_menu_toggle(config.auto_save_state)
-                )
-            }
-            AppMenuItem::NormalSpeed => {
-                format!("Normal Speed(x{})", config.emulation.normal_speed)
-            }
-            AppMenuItem::TurboSpeed => {
-                format!("Turbo Speed(x{})", config.emulation.turbo_speed)
-            }
-            AppMenuItem::SlowSpeed => {
-                format!("Slow Speed(x{})", config.emulation.slow_speed)
-            }
-            AppMenuItem::RewindSize => format!("Rewind Size({})", config.emulation.rewind_size),
-            AppMenuItem::RewindFrames => {
-                format!("Rewind Frames({})", config.emulation.rewind_frames)
-            }
-            AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
-            AppMenuItem::MuteTurbo => format!(
-                "Mute Turbo{}",
-                get_menu_toggle(config.audio.mute_turbo)
+            AppMenuItem::TileWindow => with_toggle("Show Tiles", config.video.interface.show_tiles),
+            AppMenuItem::SpinDuration => with_value(
+                "Spin Wait(µs)",
+                config.get_emu_config().spin_duration.as_micros(),
             ),
-            AppMenuItem::MuteSlow => {
-                format!("Mute Slow{}", get_menu_toggle(config.audio.mute_slow))
+            AppMenuItem::SystemMenu => "System".to_string(),
+            AppMenuItem::AutoSaveState => with_toggle("Auto Save State", config.auto_save_state),
+            AppMenuItem::NormalSpeed => with_value("Normal Speed", config.emulation.normal_speed),
+            AppMenuItem::TurboSpeed => with_value("Turbo Speed", config.emulation.turbo_speed),
+            AppMenuItem::SlowSpeed => with_value("Slow Speed", config.emulation.slow_speed),
+            AppMenuItem::RewindSize => with_value("Rewind Size", config.emulation.rewind_size),
+            AppMenuItem::RewindFrames => {
+                with_value("Rewind Frames", config.emulation.rewind_frames)
             }
+            AppMenuItem::AudioBufferSize => with_value("Buffer Size", config.audio.buffer_size),
+            AppMenuItem::MuteTurbo => with_toggle("Mute Turbo", config.audio.mute_turbo),
+            AppMenuItem::MuteSlow => with_toggle("Mute Slow", config.audio.mute_slow),
             AppMenuItem::ResetConfig => "Reset Settings".to_string(),
             AppMenuItem::RestartGame => "Restart".to_string(),
             AppMenuItem::InputMenu => "Input".to_string(),
-            AppMenuItem::ComboInterval => format!(
-                "Combo Interval({}ms)",
-                config.input.combo_interval.as_millis()
+            AppMenuItem::ComboInterval => with_value(
+                "Combo Dur(ms)",
+                config.input.combo_interval.as_millis(),
             ),
-            AppMenuItem::PaletteInverted => format!(
-                "Palette Inverted{}",
-                get_menu_toggle(config.video.interface.is_palette_inverted)
+            AppMenuItem::PaletteInverted => with_toggle(
+                "Palette Inverted",
+                config.video.interface.is_palette_inverted,
             ),
-            AppMenuItem::CpuFrameBlendMode => {
-                format!(
-                    "CPU Frame Blend({})",
-                    config.video.render.frame_blend_mode.get_name()
-                )
-            }
-            AppMenuItem::FrameBlendAlpha => {
-                format!(
-                    "Blend Alpha({})",
-                    config.video.render.frame_blend_mode.get_alpha()
-                )
-            }
-            AppMenuItem::FrameBlendFade => {
-                format!(
-                    "Blend Fade({})",
-                    config.video.render.frame_blend_mode.get_fade()
-                )
-            }
-            AppMenuItem::FrameBlendDim => {
-                format!("Blend Dim({})", config.video.render.blend_dim)
-            }
+            AppMenuItem::CpuFrameBlendMode => with_value(
+                "CPU Frame Blend",
+                config.video.render.frame_blend_mode.get_name(),
+            ),
+            AppMenuItem::FrameBlendAlpha => with_value(
+                "Blend Alpha",
+                config.video.render.frame_blend_mode.get_alpha(),
+            ),
+            AppMenuItem::FrameBlendFade => with_value(
+                "Blend Fade",
+                config.video.render.frame_blend_mode.get_fade(),
+            ),
+            AppMenuItem::FrameBlendDim => with_value("Blend Dim", config.video.render.blend_dim),
             AppMenuItem::VideoMenu => "Video".to_string(),
-            AppMenuItem::FrameBlendProfile => {
-                format!(
-                    "Blend Profile({})",
-                    config
-                        .video
-                        .render
-                        .frame_blend_mode
-                        .get_profile()
-                        .unwrap()
-                        .name()
-                )
-            }
-            AppMenuItem::FrameBlendRise => format!(
-                "Blend Rise({})",
+            AppMenuItem::FrameBlendProfile => with_value(
+                "Blend Profile",
                 config
                     .video
                     .render
                     .frame_blend_mode
                     .get_profile()
                     .unwrap()
-                    .rise
+                    .name(),
             ),
-            AppMenuItem::FrameBlendFall => format!(
-                "Blend Fall({})",
+            AppMenuItem::FrameBlendRise => with_value(
+                "Blend Rise",
                 config
                     .video
                     .render
                     .frame_blend_mode
                     .get_profile()
                     .unwrap()
-                    .fall
+                    .rise,
             ),
-            AppMenuItem::FrameBlendBleed => format!(
-                "Blend Bleed({})",
+            AppMenuItem::FrameBlendFall => with_value(
+                "Blend Fall",
                 config
                     .video
                     .render
                     .frame_blend_mode
                     .get_profile()
                     .unwrap()
-                    .bleed
+                    .fall,
             ),
-            AppMenuItem::GridFilter => {
-                format!(
-                    "Grid{}",
-                    get_menu_toggle(config.video.render.sdl2.grid_enabled)
-                )
-            }
+            AppMenuItem::FrameBlendBleed => with_value(
+                "Blend Bleed",
+                config
+                    .video
+                    .render
+                    .frame_blend_mode
+                    .get_profile()
+                    .unwrap()
+                    .bleed,
+            ),
+            AppMenuItem::GridFilter => with_toggle("Grid", config.video.render.sdl2.grid_enabled),
             AppMenuItem::SubpixelFilter => {
-                format!(
-                    "Mask{}",
-                    get_menu_toggle(config.video.render.sdl2.subpixel_enabled)
-                )
+                with_toggle("Mask", config.video.render.sdl2.subpixel_enabled)
             }
             AppMenuItem::LoadedRoms => format!("ROMs({})", roms.loaded_count()),
             AppMenuItem::LoadedRomsSubMenu(_) => "ROMs Sub".to_string(),
             AppMenuItem::RomsDir => "Select ROMs Dir".to_string(),
             AppMenuItem::Confirm(_) => "Confirm".to_string(),
             AppMenuItem::ScanlineFilter => {
-                format!(
-                    "Scanline{}",
-                    get_menu_toggle(config.video.render.sdl2.scanline_enabled)
-                )
+                with_toggle("Scanline", config.video.render.sdl2.scanline_enabled)
             }
             AppMenuItem::DotMatrixFilter => {
-                format!(
-                    "Dot-Matrix{}",
-                    get_menu_toggle(config.video.render.sdl2.dot_matrix_enabled)
-                )
+                with_toggle("Dot-Matrix", config.video.render.sdl2.dot_matrix_enabled)
             }
             AppMenuItem::VignetteFilter => {
-                format!(
-                    "Vignette{}",
-                    get_menu_toggle(config.video.render.sdl2.vignette_enabled)
-                )
+                with_toggle("Vignette", config.video.render.sdl2.vignette_enabled)
             }
-            AppMenuItem::VideoBackend => {
-                format!("Backend({:?})", config.video.render.backend)
-            }
-            AppMenuItem::VideoShader => {
-                format!("Shader({})", config.video.render.gl.shader_name)
-            }
-            AppMenuItem::ShaderFrameBlend => {
-                format!(
-                    "GPU Frame Blend({:?})",
-                    config.video.render.gl.shader_frame_blend_mode
-                )
-            }
+            AppMenuItem::VideoBackend => with_value("Backend", config.video.render.backend),
+            AppMenuItem::VideoShader => with_value("Shader", &config.video.render.gl.shader_name),
+            AppMenuItem::ShaderFrameBlend => with_value(
+                "GPU Frame Blend",
+                config.video.render.gl.shader_frame_blend_mode,
+            ),
             AppMenuItem::BrowseRoms => "Browse".to_string(),
             AppMenuItem::BrowseRomsSubMenu(_) => "Browse Sub".to_string(),
-            AppMenuItem::FrameSkip => format!("Frame Skip({:?})", config.video.render.frame_skip),
-            AppMenuItem::OpenedRoms => format!("Recent({})", roms.opened_count()),
+            AppMenuItem::FrameSkip => with_value("Frame Skip", config.video.render.frame_skip),
+            AppMenuItem::OpenedRoms => with_count("Recent", roms.opened_count()),
             AppMenuItem::OpenedRomsSubMenu(_) => "Recent Sub".to_string(),
             AppMenuItem::KeyboardInput => "Keyboard".to_string(),
             AppMenuItem::ButtonsBinding(btns) => {
@@ -424,7 +370,7 @@ impl AppMenuItem {
                     .collect::<Vec<_>>()
                     .join("+");
 
-                format!("{name}: {}", config.input.bindings.keyboard.get_desc(&cmd))
+                with_value(&name, config.input.bindings.keyboard.get_desc(&cmd))
             }
             AppMenuItem::CmdsBinding(cmd) => {
                 format!(
