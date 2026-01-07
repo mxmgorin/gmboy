@@ -30,21 +30,18 @@ impl AppVideo {
         let win_height = calc_win_height(scale);
         let game_rect = new_scaled_rect(win_width, win_height);
 
-        let (mut backend, ui) = match config.render.backend {
+        let mut backend = match config.render.backend {
             VideoBackendType::Sdl2 => {
-                let ui = Overlay::new(text_color, bg_color);
                 let backend = Sdl2Backend::new(sdl, config, game_rect);
-
-                (VideoBackend::Sdl2(Box::new(backend)), ui)
+                VideoBackend::Sdl2(Box::new(backend))
             }
             VideoBackendType::Gl => {
-                let ui = Overlay::new(text_color, bg_color);
                 let backend = GlBackend::new(sdl, game_rect, &config.render)?;
-
-                (VideoBackend::Gl(backend), ui)
+                VideoBackend::Gl(backend)
             }
         };
         backend.set_fullscreen(config.interface.is_fullscreen);
+        let ui = Overlay::new(text_color, bg_color);
 
         Ok(Self {
             frame_blend: FrameBlend::new(&config.render.frame_blend_mode),
