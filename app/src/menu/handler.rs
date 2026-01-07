@@ -250,7 +250,8 @@ impl super::AppMenu {
                 let mut conf = config.video.clone();
                 conf.interface.scale_mode = match conf.interface.scale_mode {
                     ScaleMode::Integer => ScaleMode::Fit,
-                    ScaleMode::Fit => ScaleMode::Integer,
+                    ScaleMode::Fit => ScaleMode::Stretch,
+                    ScaleMode::Stretch => ScaleMode::Integer
                 };
                 self.items = interface_menu();
 
@@ -468,8 +469,9 @@ impl super::AppMenu {
             AppMenuItem::ScaleMode => {
                 let mut conf = config.video.clone();
                 conf.interface.scale_mode = match conf.interface.scale_mode {
-                    ScaleMode::Integer => ScaleMode::Fit,
+                    ScaleMode::Integer => ScaleMode::Stretch,
                     ScaleMode::Fit => ScaleMode::Integer,
+                    ScaleMode::Stretch => ScaleMode::Fit
                 };
                 self.items = interface_menu();
 
@@ -664,7 +666,8 @@ impl super::AppMenu {
                 let mut conf = config.video.clone();
                 conf.interface.scale_mode = match conf.interface.scale_mode {
                     ScaleMode::Integer => ScaleMode::Fit,
-                    ScaleMode::Fit => ScaleMode::Integer,
+                    ScaleMode::Fit => ScaleMode::Stretch,
+                    ScaleMode::Stretch => ScaleMode::Integer
                 };
                 self.items = interface_menu();
 

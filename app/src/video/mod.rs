@@ -34,6 +34,7 @@ pub fn new_scaled_rect(mode: ScaleMode, window_width: u32, window_height: u32) -
     let (new_width, new_height) = match mode {
         ScaleMode::Integer => scale_integer(window_width, window_height),
         ScaleMode::Fit => scale_fit(window_width, window_height),
+        ScaleMode::Stretch => (window_width, window_height),
     };
 
     // Center the image in the screen

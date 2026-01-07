@@ -148,6 +148,7 @@ impl AudioConfig {
 pub enum ScaleMode {
     Integer,
     Fit,
+    Stretch,
 }
 
 impl fmt::Display for ScaleMode {
@@ -155,6 +156,7 @@ impl fmt::Display for ScaleMode {
         match self {
             ScaleMode::Integer => write!(f, "Integer"),
             ScaleMode::Fit => write!(f, "Fit"),
+            ScaleMode::Stretch => write!(f, "Stretch"),
         }
     }
 }
