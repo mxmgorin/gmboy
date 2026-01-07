@@ -2,7 +2,7 @@ use core::auxiliary::joypad::JoypadButton;
 
 use crate::app::{AppCmd, BindCmds, BindTarget};
 use crate::config::AppConfig;
-use crate::menu::{get_menu_item_suffix, SubMenu, MAX_MENU_ITEM_CHARS};
+use crate::menu::{get_menu_toggle, SubMenu, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;
 use crate::video::truncate_text;
 
@@ -228,12 +228,12 @@ impl AppMenuItem {
             }
             AppMenuItem::ToggleFps => format!(
                 "FPS{}",
-                get_menu_item_suffix(config.video.interface.show_fps)
+                get_menu_toggle(config.video.interface.show_fps)
             ),
             AppMenuItem::ToggleFullscreen => {
                 format!(
                     "Fullscreen{}",
-                    get_menu_item_suffix(config.video.interface.is_fullscreen)
+                    get_menu_toggle(config.video.interface.is_fullscreen)
                 )
             }
             AppMenuItem::AudioMenu => "Audio".to_string(),
@@ -247,7 +247,7 @@ impl AppMenuItem {
             AppMenuItem::TileWindow => {
                 format!(
                     "Show Tiles{}",
-                    get_menu_item_suffix(config.video.interface.show_tiles)
+                    get_menu_toggle(config.video.interface.show_tiles)
                 )
             }
             AppMenuItem::SpinDuration => {
@@ -260,7 +260,7 @@ impl AppMenuItem {
             AppMenuItem::AutoSaveState => {
                 format!(
                     "Auto Save State{}",
-                    get_menu_item_suffix(config.auto_save_state)
+                    get_menu_toggle(config.auto_save_state)
                 )
             }
             AppMenuItem::NormalSpeed => {
@@ -279,10 +279,10 @@ impl AppMenuItem {
             AppMenuItem::AudioBufferSize => format!("Buffer Size({})", config.audio.buffer_size),
             AppMenuItem::MuteTurbo => format!(
                 "Mute Turbo{}",
-                get_menu_item_suffix(config.audio.mute_turbo)
+                get_menu_toggle(config.audio.mute_turbo)
             ),
             AppMenuItem::MuteSlow => {
-                format!("Mute Slow{}", get_menu_item_suffix(config.audio.mute_slow))
+                format!("Mute Slow{}", get_menu_toggle(config.audio.mute_slow))
             }
             AppMenuItem::ResetConfig => "Reset Settings".to_string(),
             AppMenuItem::RestartGame => "Restart".to_string(),
@@ -293,7 +293,7 @@ impl AppMenuItem {
             ),
             AppMenuItem::PaletteInverted => format!(
                 "Palette Inverted{}",
-                get_menu_item_suffix(config.video.interface.is_palette_inverted)
+                get_menu_toggle(config.video.interface.is_palette_inverted)
             ),
             AppMenuItem::CpuFrameBlendMode => {
                 format!(
@@ -362,13 +362,13 @@ impl AppMenuItem {
             AppMenuItem::GridFilter => {
                 format!(
                     "Grid{}",
-                    get_menu_item_suffix(config.video.render.sdl2.grid_enabled)
+                    get_menu_toggle(config.video.render.sdl2.grid_enabled)
                 )
             }
             AppMenuItem::SubpixelFilter => {
                 format!(
                     "Mask{}",
-                    get_menu_item_suffix(config.video.render.sdl2.subpixel_enabled)
+                    get_menu_toggle(config.video.render.sdl2.subpixel_enabled)
                 )
             }
             AppMenuItem::LoadedRoms => format!("ROMs({})", roms.loaded_count()),
@@ -378,19 +378,19 @@ impl AppMenuItem {
             AppMenuItem::ScanlineFilter => {
                 format!(
                     "Scanline{}",
-                    get_menu_item_suffix(config.video.render.sdl2.scanline_enabled)
+                    get_menu_toggle(config.video.render.sdl2.scanline_enabled)
                 )
             }
             AppMenuItem::DotMatrixFilter => {
                 format!(
                     "Dot-Matrix{}",
-                    get_menu_item_suffix(config.video.render.sdl2.dot_matrix_enabled)
+                    get_menu_toggle(config.video.render.sdl2.dot_matrix_enabled)
                 )
             }
             AppMenuItem::VignetteFilter => {
                 format!(
                     "Vignette{}",
-                    get_menu_item_suffix(config.video.render.sdl2.vignette_enabled)
+                    get_menu_toggle(config.video.render.sdl2.vignette_enabled)
                 )
             }
             AppMenuItem::VideoBackend => {

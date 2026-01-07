@@ -97,7 +97,7 @@ impl AppMenu {
     }
 }
 
-pub fn get_menu_item_suffix(enabled: bool) -> &'static str {
+pub fn get_menu_toggle(enabled: bool) -> &'static str {
     if enabled {
         "(●)"
     } else {
