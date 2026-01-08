@@ -94,7 +94,7 @@ impl super::AppMenu {
             AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(0.1))),
             AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(25))),
             AppMenuItem::RewindFrames => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindFrames(
-                1_000_000,
+                5,
             ))),
             AppMenuItem::AudioBufferSize => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::AudioBufferSize(2)))
@@ -319,7 +319,7 @@ impl super::AppMenu {
             AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(-0.1))),
             AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(-25))),
             AppMenuItem::RewindFrames => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindFrames(
-                -1_000_000,
+                -5,
             ))),
             AppMenuItem::AudioBufferSize => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::AudioBufferSize(-2)))

@@ -226,7 +226,7 @@ impl InputHandler {
                     app.config.emulation.rewind_size = emu.config.rewind_size;
                 }
                 ChangeConfigCmd::RewindFrames(delta) => {
-                    emu.config.rewind_frames = core::change_usize(emu.config.rewind_frames, delta);
+                    emu.config.rewind_frames = core::change_usize(emu.config.rewind_frames, delta).clamp(0, 600);
                     app.config.emulation.rewind_frames = emu.config.rewind_frames;
                 }
                 ChangeConfigCmd::AutoSaveState => {

@@ -145,7 +145,7 @@ pub fn change_duration(value: Duration, micros: i32) -> Duration {
 
 pub fn change_usize(value: usize, delta: i32) -> usize {
     if delta < 0 {
-        value - delta.unsigned_abs() as usize
+        value.saturating_sub(delta.unsigned_abs() as usize)
     } else {
         value + delta as usize
     }
