@@ -46,19 +46,26 @@ Here are some highlights:
 
 ## Features
 
-- **Save States**  – Save and resume progress, with multiple slots and optional auto-save on exit/start.
-- **Rewind**  – Undo actions and retry sections; fully configurable.
-- **Slow & Turbo Modes**  – Adjust emulation speed via the settings or hotkeys.
-- **Frame Blending**  – Choose and tweak different blending modes to emulate ghosting (e.g., reduce flicker in [Gun ZAS](https://en.wikipedia.org/wiki/Chiky%C5%AB_Kaih%C5%8D_Gun_ZAS)).
-- **Visual Filters**  – Apply grid, subpixel, scanline, dot-matrix, or vignette effects for a retro look.
-- **OpenGL** – Hardware-accelerated graphics with support for shaders and improved performance.
-- **ROM Scanning**  – Set a ROM directory and launch games directly from the menu.
-- **File Browser** – Load ROMs and save files easily from a built-in browser interface.
-- **Custom Controls**  – Rebind inputs and combos.
-- **Palettes**  – Switch between multiple color palettes or add your own in `palettes.json`.
-- **GUI**  – Adjust different aspects through the GUI or edit `config.json` manually.
-- **Testing**  – Integrated SM83 JSON tests, blargg, and mooneye test suites (via `cargo test`).
-- **Tile Viewer**  – Inspect background and sprite tiles in real time; toggle via settings.
+### Gameplay
+- **Save States** – Save and resume progress with multiple slots; optional auto-save on exit and startup
+- **Rewind** – Configurable rewind system for undoing gameplay actions
+- **Slow & Turbo Modes** – Adjustable emulation speed via settings or hotkeys
+
+### Video & Rendering
+- **Frame Blending** – Configurable blending modes to emulate LCD ghosting (e.g., flicker reduction in *Gun ZAS*)
+- **Visual Filters** – Grid, subpixel, scanline, dot-matrix, and vignette
+- **Rendering Backends** - SDL2 software renderer and optional OpenGL backend with shader support
+
+### Interface & Controls
+- **ROM Scanning** – Automatic ROM directory scanning with menu-based launching
+- **Built-in File Browser** – Load ROMs and manage directly from the UI
+- **Custom Controls** – Fully rebindable inputs with support for button combinations
+- **Palettes** – Multiple built-in color palettes and user extendable by editing `palettes.json`
+- **GUI & Configuration** – Configuable through GUI with optional manual editing `config.json`
+
+### Debugging & Testing
+- **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`)
+- **Tile Viewer** – Real-time background and sprite tile inspection
 
 ## Emulation
 
