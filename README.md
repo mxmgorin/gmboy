@@ -37,7 +37,7 @@ Here are some highlights:
 
 - Cross-platform: Windows, macOS, Linux, Android; SDL2 with optional OpenGL
 - Modern features: save states, filters and shaders, re-bindable controls, and more
-Accuracy-focused: sub-instruction CPU timing, dot-based PPU, and synchronized components; validated against Blargg and Mooneye test suites
+- Accuracy-focused: sub-instruction CPU timing, dot-based PPU, and synchronized components; validated against Blargg and Mooneye test suites
 - Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on H700)
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
