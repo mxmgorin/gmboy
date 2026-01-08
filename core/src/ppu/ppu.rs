@@ -28,7 +28,7 @@ pub struct Ppu {
     pub lcd: Lcd,
     pub current_frame: usize,
     line_ticks: usize,
-    fps: Option<Fps>,
+    fps_counter: Option<FpsCounter>,
     fetcher: PixelFetcher,
 }
 
@@ -42,15 +42,15 @@ impl Ppu {
 
     pub fn toggle_fps(&mut self, enable: bool) {
         if enable {
-            self.fps = Some(Fps::default());
+            self.fps_counter = Some(FpsCounter::default());
         } else {
-            self.fps = None;
+            self.fps_counter = None;
         }
     }
 
     #[inline(always)]
-    pub fn get_fps(&mut self) -> Option<f32> {
-        self.fps.as_mut().map(|x| x.get())
+    pub fn get_fps(&self) -> Option<f32> {
+        self.fps_counter.as_ref().map(|x| x.get())
     }
 
     #[inline(always)]
@@ -121,7 +121,7 @@ impl Ppu {
                 self.set_mode_vblank(interrupts);
                 self.current_frame += 1;
 
-                if let Some(fps) = self.fps.as_mut() {
+                if let Some(fps) = self.fps_counter.as_mut() {
                     fps.update()
                 }
             } else {
@@ -170,7 +170,7 @@ impl Ppu {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Fps {
+pub struct FpsCounter {
     #[serde(with = "crate::instant_serde")]
     timer: Instant,
     prev_frame_time: Duration,
@@ -180,7 +180,7 @@ pub struct Fps {
     fps: f32,
 }
 
-impl Default for Fps {
+impl Default for FpsCounter {
     fn default() -> Self {
         Self {
             timer: Instant::now(),
@@ -193,7 +193,7 @@ impl Default for Fps {
     }
 }
 
-impl Fps {
+impl FpsCounter {
     #[inline(always)]
     pub fn update(&mut self) {
         let now = self.timer.elapsed();
@@ -216,7 +216,7 @@ impl Fps {
     }
 
     #[inline(always)]
-    pub fn get(&mut self) -> f32 {
+    pub fn get(&self) -> f32 {
         self.fps
     }
 }

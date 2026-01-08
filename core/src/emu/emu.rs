@@ -49,6 +49,11 @@ impl Emu {
         &mut self.runtime.cpu.clock.bus.io.ppu.buffer
     }
 
+    #[inline(always)]
+    pub fn get_fps(&self) -> Option<f32> {
+        self.runtime.cpu.clock.bus.io.ppu.get_fps()
+    }
+
     /// Runs emulation for one frame. Return whether the emulation is on time.
     #[inline(always)]
     pub fn run_frame(&mut self, callback: &mut impl EmuAudioCallback) -> bool {

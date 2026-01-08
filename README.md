@@ -48,7 +48,7 @@ Here are some highlights:
 
 ### Gameplay
 - **Save States** – Save and resume progress with multiple slots; optional auto-save on exit and startup
-- **Rewind** – Configurable rewind system for undoing gameplay actions
+- **Rewind** – Configurable rewind for undoing gameplay actions
 - **Slow & Turbo Modes** – Adjustable emulation speed via settings or hotkeys
 
 ### Video & Rendering
@@ -67,7 +67,7 @@ Here are some highlights:
 - **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`)
 - **Tile Viewer** – Real-time background and sprite tile inspection
 
-## Emulation
+### Emulation
 
 - **CPU**: Complete Sharp LR35902 instruction set with accurate timing
 - **PPU (Graphics)**: Background, window, and sprite rendering
@@ -85,7 +85,7 @@ Here are some highlights:
 - Custom palette loader and editor to tweak game colors
 - Ongoing improvements and ongoing bug fixes
 
-## Default bindings
+## Default controls
 
 | Action                        | ⌨️ Keyboard              | 🎮 Gamepad                                  |
 |-------------------------------|--------------------------|---------------------------------------------|
@@ -203,7 +203,7 @@ Passes all of 356 000 tests ✅
 
 ## License
 
-This project is licensed under the terms of the **GNU General Public License v3.0 (GPLv3)**.  
+This project is licensed under the terms of the **GNU General Public License v3.0 (GPLv3)**.
 See the [LICENSE](LICENSE) file for the full text.
 
 ## References
