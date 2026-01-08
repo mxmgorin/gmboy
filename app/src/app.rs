@@ -316,18 +316,21 @@ where
     #[inline(always)]
     pub fn run_game(&mut self, emu: &mut Emu) {
         let on_time = emu.run_frame(self);
-        let fps = emu.get_fps();
-        let fb = emu.get_framebuffer();
-        self.update_notif(fb);
 
-        if let Some(new_fps) = fps {
-            self.fps_str.clear();
-            write!(&mut self.fps_str, "{new_fps:.2}").unwrap();
-            self.video.ui.fill_fps(fb, &self.fps_str);
+        if on_time || self.video.must_render() {
+            let fps = emu.get_fps();
+            let fb = emu.get_framebuffer();
+            self.update_notif(fb);
+
+            if let Some(new_fps) = fps {
+                self.fps_str.clear();
+                write!(&mut self.fps_str, "{new_fps:.2}").unwrap();
+                self.video.ui.fill_fps(fb, &self.fps_str);
+            }
+
+            self.video.draw_buffer(fb);
+            self.video.render();
         }
-
-        self.video.draw_buffer(fb);
-        self.video.try_render(on_time);
     }
 
     #[inline(always)]
@@ -336,7 +339,7 @@ where
         let fb = emu.get_framebuffer();
         self.draw_menu(fb);
         self.update_notif(fb);
-        self.video.try_render(true);
+        self.video.render();
 
         thread::sleep(Duration::from_millis(30));
     }

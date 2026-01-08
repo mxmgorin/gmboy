@@ -61,7 +61,8 @@ impl AppVideo {
     pub fn update_config(&mut self, config: &VideoConfig) {
         self.min_render_interval = config.render.calc_min_frame_interval();
         self.frame_blend = FrameBlend::new(&config.render.frame_blend_mode);
-        self.backend.set_fullscreen(config.interface.is_fullscreen, config.interface.scale_mode);
+        self.backend
+            .set_fullscreen(config.interface.is_fullscreen, config.interface.scale_mode);
         self.backend.update_config(config);
         self.config = config.clone();
     }
@@ -88,13 +89,14 @@ impl AppVideo {
     }
 
     #[inline(always)]
-    pub fn try_render(&mut self, on_time: bool) {
-        let min_elapsed = self.last_render_time.elapsed() >= self.min_render_interval;
+    pub fn render(&mut self) {
+        self.backend.show();
+        self.last_render_time = Instant::now();
+    }
 
-        if on_time || min_elapsed {
-            self.backend.show();
-            self.last_render_time = Instant::now();
-        }
+    #[inline(always)]
+    pub fn must_render(&self) -> bool {
+        self.last_render_time.elapsed() >= self.min_render_interval
     }
 
     pub fn set_scale(&mut self, scale: u32, mode: ScaleMode) -> Result<(), String> {
