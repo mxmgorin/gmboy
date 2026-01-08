@@ -31,12 +31,16 @@ ___
 
 `GMBoy` is a Game Boy emulator written in Rust. It started for fun and learning but has since evolved into a more ambitious project. The goal is to create a fully functional emulator that balances accuracy and performance, incorporating modern features.
 
+`GMBoy` is a Game Boy emulator written in Rust. What began as an exploratory project has evolved into a more ambitious effort.
+
+The goal of the project is to provide a well-engineered emulator that balances accuracy and performance while incorporating modern features and long-term maintainability.
+
 Here are some highlights:
 
-- Cross-platform: Windows, macOS, Linux, Android; SDL2 + optional OpenGL
-- Modern features: save states, visual filters, re-bindable button combos, and more
-- High accuracy: passes most Blargg’s & Mooneye test suites
-- Good performance: optimized CPU and PPU
+- Cross-platform: Windows, macOS, Linux, Android; SDL2 with optional OpenGL
+- Modern features: save states, filters and shaders, re-bindable controls, and more
+Accuracy-focused: sub-instruction CPU timing, dot-based PPU, and synchronized components; validated against Blargg and Mooneye test suites
+- Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on H700)
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
