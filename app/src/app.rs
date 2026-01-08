@@ -307,14 +307,14 @@ where
 
             match self.state {
                 AppState::Quitting => break,
-                AppState::Paused => self.run_pause(emu),
-                AppState::Running => self.run_game(emu),
+                AppState::Paused => self.update_menu(emu),
+                AppState::Running => self.update_game(emu),
             }
         }
     }
 
     #[inline(always)]
-    pub fn run_game(&mut self, emu: &mut Emu) {
+    pub fn update_game(&mut self, emu: &mut Emu) {
         let on_time = emu.run_frame(self);
 
         if on_time || self.video.must_render() {
@@ -334,7 +334,7 @@ where
     }
 
     #[inline(always)]
-    pub fn run_pause(&mut self, emu: &mut Emu) {
+    pub fn update_menu(&mut self, emu: &mut Emu) {
         emu.runtime.cpu.clock.reset();
         let fb = emu.get_framebuffer();
         self.draw_menu(fb);
