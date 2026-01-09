@@ -8,7 +8,7 @@ ___
 
 [![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
-[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
+<!--[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)-->
 ![Linux](https://img.shields.io/badge/Linux-blue?logo=linux)
 ![Windows](https://img.shields.io/badge/Windows-blue?logo=windows)
 ![Mac](https://img.shields.io/badge/Mac-blue?logo=apple)
@@ -75,15 +75,6 @@ Here are some highlights:
 - **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
 - **Battery-backed SRAM**: Persistent save data
 - **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
-
-**Planned Features**
-
-- JIT recompilation
-- Game Boy Color (GBC) mode support
-- WebAssembly builds for wider platform support
-- Audio visualizer for debugging and fun audio feedback
-- Custom palette loader and editor to tweak game colors
-- Ongoing improvements and ongoing bug fixes
 
 ## Default controls
 

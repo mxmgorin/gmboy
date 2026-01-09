@@ -140,6 +140,22 @@ impl ButtonComboBindings {
         self.cmds[i1] = Some(cmd.clone());
         self.cmds[i2] = Some(cmd);
     }
+
+    pub fn iter_combos(&self) -> impl Iterator<Item = ButtonCombo> + '_ {
+        let n = Button::COUNT;
+
+        (0..n).flat_map(move |code_1| {
+            ((code_1 + 1)..n).filter_map(move |code_2| {
+                let idx = code_1 * n + code_2;
+                let cmd = self.cmds[idx].as_ref()?.clone();
+
+                let btn_1 = Button::from_code(code_1)?;
+                let btn_2 = Button::from_code(code_2)?;
+
+                Some(ButtonCombo { btn_1, btn_2, cmd })
+            })
+        })
+    }
 }
 
 impl Default for ButtonComboBindings {
@@ -267,36 +283,12 @@ impl<'de> Deserialize<'de> for ButtonCombo {
     }
 }
 
-use serde::ser::Error as _;
 impl Serialize for ButtonComboBindings {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut combos = Vec::new();
-        let n = Button::COUNT;
-
-        for code_1 in 0..n {
-            for code_2 in (code_1 + 1)..n {
-                let idx = code_1 * n + code_2;
-
-                if let Some(cmd) = self.cmds[idx].as_ref() {
-                    let btn_1 = Button::from_code(code_1).ok_or_else(|| {
-                        S::Error::custom(format!("Invalid button code: {}", code_1))
-                    })?;
-                    let btn_2 = Button::from_code(code_2).ok_or_else(|| {
-                        S::Error::custom(format!("Invalid button code: {}", code_2))
-                    })?;
-
-                    combos.push(ButtonCombo {
-                        btn_1,
-                        btn_2,
-                        cmd: cmd.clone(),
-                    });
-                }
-            }
-        }
-
+        let combos: Vec<_> = self.iter_combos().collect();
         combos.serialize(serializer)
     }
 }
