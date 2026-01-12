@@ -7,13 +7,13 @@
 ___
 
 [![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
 [![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
 <!--[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)-->
-![Linux](https://img.shields.io/badge/Linux-blue?logo=linux)
+![Android](https://img.shields.io/badge/Android-blue?logo=android)
 ![Windows](https://img.shields.io/badge/Windows-blue?logo=windows)
 ![Mac](https://img.shields.io/badge/Mac-blue?logo=apple)
-![Android](https://img.shields.io/badge/Android-blue?logo=android)
-[![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
+![Linux](https://img.shields.io/badge/Linux-blue?logo=linux)
 <!--
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
@@ -49,7 +49,7 @@ Here are some highlights:
 ### Gameplay
 - **Save States** – Save and resume progress with multiple slots; optional auto-save on exit and startup
 - **Rewind** – Configurable rewind for undoing gameplay actions
-- **Slow & Turbo Modes** – Adjustable emulation speed via settings or hotkeys
+- **Speed Control** – Configure the emulator’s base running speed and dynamically apply Slow or Turbo modes to temporarily decrease or increase it. All speed changes are available via settings and hotkeys.
 
 ### Video & Rendering
 - **Frame Blending** – Configurable blending modes to emulate LCD ghosting (e.g., flicker reduction in *Gun ZAS*)
@@ -109,7 +109,7 @@ First, make sure you have Rust installed. If you don't, install it with:
 ````
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ````
-Then, install dependencies: **SDL2**
+Then, install dependencies:
 
 Arch Linux:
 ```bash
@@ -121,76 +121,14 @@ After that, you should be able to build:
 cargo build --release
 ```
 
-## Test Results
+## Accuracy & Testing
 
-- ### SM83:
-Passes all of 356 000 tests ✅
+The emulator is continuously validated against comunity made test suites:
+- **SM83 JSON Tests** – Passes all 356,000 tests  
+- **Blargg Tests** – Passes all tests
+- **Mooneye Acceptance Tests** – Passes most of the tests
 
-- ### Blargg
-
-| CPU Instructions        | Memory Timing          | OAM Bug                 |
-| ----------------------- | ---------------------- | ----------------------- |
-| 01-special.gb ✅         | 01-read\_timing.gb ✅   | 1-lcd\_sync.gb ✅        |
-| 02-interrupts.gb ✅      | 02-write\_timing.gb ✅  | 2-causes.gb ✅           |
-| 03-op sp,hl.gb ✅        | 03-modify\_timing.gb ✅ | 3-non\_causes.gb ✅      |
-| 04-op r,imm.gb ✅        |                        | 4-scanline\_timing.gb ✅ |
-| 05-op rp.gb ✅           |                        | 5-timing\_bug.gb ✅      |
-| 06-ld r,r.gb ✅          |                        | 6-timing\_no\_bug.gb ✅  |
-| 07-jr,jp,call,ret,rst ✅ |                        | 7-timing\_effect.gb ✅   |
-| 08-misc instrs.gb ✅     |                        | 8-instr\_effect.gb ✅    |
-| 09-op r,r.gb ✅          |                        |                         |
-| 10-bit ops.gb ✅         |                        |                         |
-| 11-op a,(hl).gb ✅       |                        |                         |
-
-
-- ### Mooneye
-
-- acceptance
-
-| General & OAM DMA            | Timing                       | Timer Accuracy                 |
-|------------------------------|------------------------------|-------------------------------|
-| oam_dma/oam_dma_timing.gb ✅  | call_cc_timing.gb ✅          | div_write.gb ✅             |
-| bits/mem_oam.gb ✅            | call_cc_timing2.gb ✅         | rapid_toggle.gb ✅          |
-| bits/reg_f.gb ✅              | call_timing.gb ✅             | tim00.gb ✅                 |
-| instr/daa.gb ✅               | call_timing2.gb ✅            | tim00_div_trigger.gb ✅     |
-| oam_dma/basic.gb ✅           | div_timing.gb ✅              | tim01.gb ✅                 |
-| oam_dma/reg_read.gb ✅        | ei_timing.gb ✅               | tim01_div_trigger.gb ✅     |
-| oam_dma/oam_dma_restart.gb ✅ | halt_ime0_ei.gb ✅            | tim10.gb ✅                 |
-| oam_dma/oam_dma_start.gb ✅   | halt_ime0_nointr_timing.gb ✅ | tim10_div_trigger.gb ✅     |
-| sources-GS ✅                 | halt_ime1_timing.gb ✅        | tim11.gb ✅                 |
-| unused_hwio-GS.gb ✅          | halt_ime1_timing2-GS.gb ✅    | tim11_div_trigger.gb ✅     |
-| ie_push.gb ✅                | jp_cc_timing.gb ✅            | tima_reload.gb ✅           |
-|                              | jp_timing.gb ✅               | tima_write_reloading.gb ✅  |
-|                              | ld_hl_sp_e_timing.gb ✅       | tma_write_reloading.gb ✅   |
-|                              | pop_timing.gb ✅              |                               |
-|                              | push_timing.gb ✅             |                               |
-|                              | ret_cc_timing.gb ✅           |                               |
-|                              | ret_timing.gb ✅              |                               |
-|                              | reti_intr_timing.gb ✅        |                               |
-|                              | reti_timing.gb ✅             |                               |
-|                              | rst_timing.gb ✅              |                               |
-|                              |  add_sp_e_timing.gb ✅        |                               |
-|                              | di_timing-GS.gb ✅            |                               |
-|                              | intr_timing ✅                |                               |
-
-- emulator-only
-
-| mbc1                         | mbc2              | mbc5               |
-|------------------------------|-------------------|--------------------|
-| bits_bank1.gb ✅              | bits_ramg.gb ✅    | rom_512kb.gb ✅     |
-| bits_bank2.gb ✅              | bits_romb.gb ✅    | rom_1Mb.gb ✅       |
-| bits_mode.gb ✅               | bits_unused.gb ✅  | rom_2Mb.gb ✅       |
-| bits_ramg.gb ✅               | ram.gb ✅          | rom_4Mb.gb ✅       |
-| multicart_rom_8Mb.gb ✅      | rom_1Mb.gb ✅      | rom_8Mb.gb ✅       |
-| ram_64kb.gb ✅               | rom_2Mb.gb ✅      | rom_16Mb.gb ✅      |
-| ram_256kb.gb ✅              | rom_512kb.gb ✅    | rom_32Mb.gb ✅      |
-| rom_1Mb.gb ✅                |                   |                    |
-| rom_2Mb.gb ✅                |                   |                    |
-| rom_4Mb.gb ✅                |                   |                    |
-| rom_8Mb.gb ✅                |                   |                    |
-| rom_16Mb.gb ✅               |                   |                    |
-| rom_512kb.gb ✅              |                   |                    |
-
+For the complete, up-to-date results, see [TESTS.md](./TESTS.md).
 
 ## License
 
