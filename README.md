@@ -8,12 +8,13 @@ ___
 
 [![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
-[![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
 <!--[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)-->
 ![Android](https://img.shields.io/badge/Android-blue?logo=android)
 ![Windows](https://img.shields.io/badge/Windows-blue?logo=windows)
 ![Mac](https://img.shields.io/badge/Mac-blue?logo=apple)
 ![Linux](https://img.shields.io/badge/Linux-blue?logo=linux)
+[![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
+
 <!--
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
 
