@@ -65,7 +65,7 @@ Here are some highlights:
 - **GUI & Configuration** – Configuable through GUI with optional manual editing `config.json`
 
 ### Debugging & Testing
-- **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`)
+- **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`
 - **Tile Viewer** – Real-time background and sprite tile inspection
 
 ### Emulation
@@ -76,6 +76,15 @@ Here are some highlights:
 - **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
 - **Battery-backed SRAM**: Persistent save data
 - **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
+
+## Accuracy & Testing
+
+The emulator is continuously validated against comunity made test suites:
+- **SM83 JSON Tests** – Passes all 356,000 tests  
+- **Blargg Tests** – Passes all tests
+- **Mooneye Acceptance Tests** – Passes most of the tests
+
+For the complete, up-to-date results, see [TESTS.md](./TESTS.md).
 
 ## Default controls
 
@@ -121,15 +130,6 @@ After that, you should be able to build:
 ```bash
 cargo build --release
 ```
-
-## Accuracy & Testing
-
-The emulator is continuously validated against comunity made test suites:
-- **SM83 JSON Tests** – Passes all 356,000 tests  
-- **Blargg Tests** – Passes all tests
-- **Mooneye Acceptance Tests** – Passes most of the tests
-
-For the complete, up-to-date results, see [TESTS.md](./TESTS.md).
 
 ## License
 
