@@ -32,6 +32,14 @@ jobs:
           ndk: 26.3.11579264
           cmake: 3.22.1
 
+      - name: Install NDK 26.3.11579264
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "ndk;26.3.11579264"
+
+      - name: Verify NDK installation
+        run: ls $ANDROID_HOME/ndk
+
       - name: Build Rust libraries
         working-directory: ./android
         run: |
