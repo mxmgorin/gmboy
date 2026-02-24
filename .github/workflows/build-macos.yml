@@ -12,7 +12,6 @@ permissions:
 
 jobs:
   build-macos:
-    if: github.event_name == 'release'
     runs-on: macos-latest
 
     steps:
@@ -22,6 +21,8 @@ jobs:
         run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Build universal binary
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: 3.5
         run: |
           cargo build --release --target=aarch64-apple-darwin -p desktop
           cargo build --release --target=x86_64-apple-darwin -p desktop
