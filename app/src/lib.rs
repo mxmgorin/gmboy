@@ -12,7 +12,7 @@ use core::ppu::lcd::Lcd;
 use core::ppu::Ppu;
 use palette::LcdPalette;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{Read};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
@@ -59,7 +59,7 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let lcd = Lcd::new(colors);
     let mut ppu = Ppu::new(lcd);
     ppu.toggle_fps(config.video.interface.show_fps);
-    let apu = Apu::new(apu_config);    
+    let apu = Apu::new(apu_config);
     let bus = Bus::new(Cart::empty(), Io::new(ppu, apu));
 
     #[cfg(feature = "debug")]
@@ -160,16 +160,15 @@ pub fn get_base_dir() -> PathBuf {
 pub struct AppConfigFile;
 
 impl AppConfigFile {
-    pub fn write_save_state_file(v: &EmuSaveState, name: &str, suffix: &str) -> Result<(), String> {
+    pub fn write_save_state_file(state: &EmuSaveState, name: &str, suffix: &str) -> Result<(), String> {
         let path = AppConfigFile::get_save_state_path(name, suffix);
 
         if let Some(parent) = Path::new(&path).parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
 
-        let encoded: Vec<u8> = bincode::serialize(v).map_err(|e| e.to_string())?;
         let mut file = File::create(path).map_err(|e| e.to_string())?;
-        file.write_all(&encoded).map_err(|e| e.to_string())?;
+        postcard::to_io(state, &mut file).map_err(|e| e.to_string())?;
 
         Ok(())
     }
@@ -179,7 +178,7 @@ impl AppConfigFile {
         let mut file = File::open(path).map_err(|e| e.to_string())?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer).map_err(|e| e.to_string())?;
-        let decoded = bincode::deserialize(&buffer).map_err(|e| e.to_string())?;
+        let decoded: EmuSaveState = postcard::from_bytes(&buffer).map_err(|e| e.to_string())?;
 
         Ok(decoded)
     }

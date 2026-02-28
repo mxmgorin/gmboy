@@ -17,7 +17,7 @@ crc = "3.4.0"
 log = "0.4.27"
 
 [dev-dependencies]
-criterion = "0.6.0"
+criterion = "0.8.2"
 
 [[bench]]
 name = "bench"
