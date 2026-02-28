@@ -1,5 +1,4 @@
-name: Build macOS Release
-
+name: Build MacOS
 on:
   push:
     branches:
@@ -12,7 +11,6 @@ permissions:
 
 jobs:
   build-macos:
-    if: github.event_name == 'release'
     runs-on: macos-latest
 
     steps:
@@ -40,7 +38,17 @@ jobs:
       - name: Zip bundle
         run: cd dist && zip -r gmboy-macos-universal.zip .
 
+      - name: Upload artifact
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmboy-macos-universal.zip
+          path: dist/gmboy-macos-universal.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
       - name: Upload Linux zip to GitHub Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: dist/gmboy-macos-universal.zip

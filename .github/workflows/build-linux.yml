@@ -1,4 +1,4 @@
-name: Build linux release
+name: Build Linux
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 
 jobs:
   build-linux:
-    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +26,17 @@ jobs:
       - name: Zip Linux release
         run: cd dist && zip -r gmboy-linux-x86_64.zip .
 
+      - name: Upload artifact
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmboy-linux-x86_64.zip
+          path: dist/gmboy-linux-x86_64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
       - name: Upload Linux zip to GitHub Release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: dist/gmboy-linux-x86_64.zip

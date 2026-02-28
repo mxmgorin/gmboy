@@ -1,4 +1,4 @@
-name: Build windows release
+name: Build Windows
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
 
 jobs:
   build-windows:
-    if: github.event_name == 'release'
     runs-on: windows-latest
 
     steps:
@@ -46,7 +45,18 @@ jobs:
       run: |
         powershell Compress-Archive -Path dist\* -DestinationPath gmboy-windows-x86_64.zip
 
+
+    - name: Upload artifact
+      if: github.event_name != 'release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: gmboy-windows-x86_64.zip
+        path: gmboy-windows-x86_64.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
     - name: Upload zip to GitHub Release
+      if: github.event_name == 'release'
       uses: softprops/action-gh-release@v2
       with:
         files: gmboy-windows-x86_64.zip

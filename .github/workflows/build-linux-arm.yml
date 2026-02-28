@@ -1,4 +1,4 @@
-name: Build linux ARM release
+name: Build Linux-ARM
 
 on:
   push:
@@ -63,6 +63,7 @@ jobs:
         run: cd dist && zip -r ${{ matrix.out_name }} .
 
       - name: Upload artifact
+        if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.out_name }}
