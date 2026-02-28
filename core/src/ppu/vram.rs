@@ -1,6 +1,5 @@
 use crate::ppu::tile::{
-    TileData, TileLineData, BG_TILE_MAP_1_ADDR_END, BG_TILE_MAP_1_ADDR_START,
-    BG_TILE_MAP_2_ADDR_END, BG_TILE_MAP_2_ADDR_START, TILE_BIT_SIZE, TILE_HEIGHT,
+    TileData, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT,
     TILE_LINE_BYTES_COUNT, TILE_SET_2_END, TILE_SET_DATA_1_START,
 };
 use serde::de::{Error, SeqAccess, Visitor};
@@ -11,26 +10,6 @@ use std::fmt;
 pub const VRAM_SIZE: usize = 0x2000;
 pub const VRAM_ADDR_START: u16 = 0x8000;
 pub const VRAM_ADDR_END: u16 = 0x9FFF;
-
-pub enum VRamAddressLocation {
-    /// 0x8000 - 0x97FF
-    ChrRam,
-    /// 0x9800 - 0x9BFF
-    BgMap1,
-    /// 0x9C00 - 0x9FFF
-    BgMap2,
-}
-
-impl From<u16> for VRamAddressLocation {
-    fn from(address: u16) -> Self {
-        match address {
-            TILE_SET_DATA_1_START..=TILE_SET_2_END => VRamAddressLocation::ChrRam,
-            BG_TILE_MAP_1_ADDR_START..=BG_TILE_MAP_1_ADDR_END => VRamAddressLocation::BgMap1,
-            BG_TILE_MAP_2_ADDR_START..=BG_TILE_MAP_2_ADDR_END => VRamAddressLocation::BgMap2,
-            _ => panic!("Invalid VRAM address: {address:X}"),
-        }
-    }
-}
 
 impl Default for VideoRam {
     fn default() -> Self {
