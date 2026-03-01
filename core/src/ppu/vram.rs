@@ -93,7 +93,27 @@ impl VideoRam {
     #[inline(always)]
     fn get_bank_mut(&mut self) -> &mut [u8] {
         unsafe { self.banks.get_unchecked_mut(self.bank_number as usize) }
-    }}
+    }
+
+    #[inline(always)]
+    pub fn read_from_bank(&self, bank: u8, addr: u16) -> u8 {
+        let addr = (addr - VRAM_ADDR_START) as usize;
+        unsafe { *self.banks.get_unchecked(bank as usize).get_unchecked(addr) }
+    }
+
+    #[inline(always)]
+    pub fn read_tile_line_from_bank(&self, bank: u8, addr: u16) -> TileLineData {
+        let addr = (addr - VRAM_ADDR_START) as usize;
+        let bank_ref = unsafe { self.banks.get_unchecked(bank as usize) };
+
+        unsafe {
+            TileLineData::new(
+                *bank_ref.get_unchecked(addr),
+                *bank_ref.get_unchecked(addr.wrapping_add(1)),
+            )
+        }
+    }
+}
 
 pub struct TilesIterator<'a> {
     pub video_ram: &'a VideoRam,
