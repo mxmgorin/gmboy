@@ -2,6 +2,7 @@ use crate::apu::channels::wave_channel::{CH3_WAVE_RAM_END, CH3_WAVE_RAM_START};
 use crate::apu::Apu;
 use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
+use crate::auxiliary::ram::{Ram, WRAM_BANK_NUMBER_ADDR};
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::Interrupts;
@@ -24,6 +25,7 @@ pub struct Io {
     pub joypad: Joypad,
     pub apu: Apu,
     pub ppu: Ppu,
+    pub ram: Ram,
 }
 
 impl Io {
@@ -33,6 +35,7 @@ impl Io {
             timer: Timer::default(),
             interrupts: Interrupts::default(),
             joypad: Default::default(),
+            ram: Ram::default(),
             ppu,
             apu,
         }
@@ -49,15 +52,18 @@ impl Io {
                 self.apu.read(address)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(address),
-            VRAM_BANK_NUMBER_ADDR | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {
-                match cgb_flag {
-                    CgbFlag::NonCgbMode => 0xFF,
-                    CgbFlag::CgbMode => match address {
-                        VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
-                        _ => 0xFF,
-                    },
-                }
-            }
+            VRAM_BANK_NUMBER_ADDR
+            | 0xFF50
+            | 0xFF51..=0xFF55
+            | 0xFF68..=0xFF6B
+            | WRAM_BANK_NUMBER_ADDR => match cgb_flag {
+                CgbFlag::NonCgbMode => 0xFF,
+                CgbFlag::CgbMode => match address {
+                    VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
+                    WRAM_BANK_NUMBER_ADDR => self.ram.read_wram_bank(),
+                    _ => 0xFF,
+                },
+            },
             0xFF0F => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
             _ => 0xFF,
         }
@@ -74,15 +80,18 @@ impl Io {
                 self.apu.write(address, value)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(address, value),
-            VRAM_BANK_NUMBER_ADDR | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {
-                match cgb_flag {
-                    CgbFlag::CgbMode => match address {
-                        VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
-                        _ => {}
-                    },
+            VRAM_BANK_NUMBER_ADDR
+            | 0xFF50
+            | 0xFF51..=0xFF55
+            | 0xFF68..=0xFF6B
+            | WRAM_BANK_NUMBER_ADDR => match cgb_flag {
+                CgbFlag::CgbMode => match address {
+                    VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
+                    WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
                     _ => {}
-                }
-            }
+                },
+                _ => {}
+            },
             0xFF0F => self.interrupts.int_flags = value,
             _ => {}
         }

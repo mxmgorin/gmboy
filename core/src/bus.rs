@@ -1,6 +1,6 @@
 use crate::auxiliary::dma::Dma;
 use crate::auxiliary::io::Io;
-use crate::auxiliary::ram::{Ram, WRAM_BANK_NUMBER_ADDR, WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
+use crate::auxiliary::ram::{WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
 use crate::cart::header::CgbFlag;
 use crate::cart::Cart;
 use crate::emu::config::GbModel;
@@ -13,7 +13,6 @@ pub const ECHO_MIRROR_OFFSET: u16 = 0x2000;
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Bus {
     pub cart: Cart,
-    pub ram: Ram,
     pub io: Io,
     pub dma: Dma,
     model: GbModel,
@@ -24,7 +23,6 @@ impl Bus {
     pub fn clone_empty_cart(&self) -> Self {
         Self {
             cart: Cart::empty(),
-            ram: self.ram.clone(),
             io: self.io.clone(),
             flat_mem: self.flat_mem.clone(),
             dma: self.dma.clone(),
@@ -35,7 +33,6 @@ impl Bus {
     pub fn new(cart: Cart, io: Io, model: GbModel) -> Self {
         Self {
             cart,
-            ram: Ram::default(),
             io,
             flat_mem: None,
             dma: Default::default(),
@@ -66,11 +63,11 @@ impl Bus {
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(address),
             VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(address),
-            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.ram.read_wram(address),
+            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.io.ram.read_wram(address),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
-                self.ram.read_wram(mirrored_addr)
+                self.io.ram.read_wram(mirrored_addr)
             }
             0xFE00..=0xFE9F => {
                 if self.dma.is_transferring() {
@@ -80,18 +77,8 @@ impl Bus {
                 self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => {
-                match self.get_cgb_flag() {
-                    CgbFlag::CgbMode => match address {
-                        WRAM_BANK_NUMBER_ADDR => return self.ram.read_wram_bank(),
-                        _ => {}
-                    },
-                    CgbFlag::NonCgbMode => {}
-                }
-
-                self.io.read(address, self.get_cgb_flag())
-            }
-            0xFF80..=0xFFFE => self.ram.read_hram(address),
+            0xFF00..=0xFF7F => self.io.read(address, self.get_cgb_flag()),
+            0xFF80..=0xFFFE => self.io.ram.read_hram(address),
             0xFFFF => self.io.interrupts.ie,
         }
     }
@@ -110,11 +97,11 @@ impl Bus {
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(address, value),
             VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(address, value),
-            0xC000..=0xDFFF => self.ram.write_wram(address, value),
+            0xC000..=0xDFFF => self.io.ram.write_wram(address, value),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
-                self.ram.write_wram(mirrored_addr, value);
+                self.io.ram.write_wram(mirrored_addr, value);
             }
             0xFE00..=0xFE9F => {
                 if self.dma.is_active {
@@ -124,18 +111,8 @@ impl Bus {
                 self.io.ppu.oam_ram.write(address, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => {
-                match self.get_cgb_flag() {
-                    CgbFlag::CgbMode => match address {
-                        WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
-                        _ => {}
-                    },
-                    CgbFlag::NonCgbMode => {}
-                }
-
-                self.io.write(address, value, self.get_cgb_flag())
-            }
-            0xFF80..=0xFFFE => self.ram.write_hram(address, value),
+            0xFF00..=0xFF7F => self.io.write(address, value, self.get_cgb_flag()),
+            0xFF80..=0xFFFE => self.io.ram.write_hram(address, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
     }
