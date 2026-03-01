@@ -96,7 +96,7 @@ impl SpriteFetcher {
                     .wrapping_sub(oam.y)
                     .wrapping_mul(TILE_LINE_BYTES_COUNT as u8);
 
-                if oam.is_y_flip() {
+                if oam.flags.is_y_flip() {
                     tile_y = sprite_height
                         .wrapping_mul(2)
                         .wrapping_sub(2)
@@ -161,7 +161,7 @@ impl SpriteFetcher {
                 continue; // Out of sprite range
             }
 
-            let bit = if sprite.oam.is_x_flip() {
+            let bit = if sprite.oam.flags.is_x_flip() {
                 7 - offset
             } else {
                 offset
@@ -173,10 +173,8 @@ impl SpriteFetcher {
                 continue; // Transparent
             }
 
-            if !sprite.oam.is_bgw_priority() || bg_color_index == 0 {
-                let color = lcd
-                    .dmg_palette
-                    .get_obj_color(sprite.oam.is_second_dmg_palette(), color_idx);
+            if !sprite.oam.flags.is_bgw_priority() || bg_color_index == 0 {
+                let color = lcd.get_obj_color(sprite.oam.flags, color_idx);
                 return Some(color);
             }
         }

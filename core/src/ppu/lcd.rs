@@ -1,5 +1,6 @@
 use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::{InterruptType, Interrupts};
+use crate::ppu::tile::TileFlags;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
     TILE_SET_DATA_2_START,
@@ -82,6 +83,26 @@ impl Lcd {
             dmg_palette: DmgPalette::new(colors),
             cgb_palette: CgbPalette::default(),
             cgb_flag,
+        }
+    }
+
+    pub fn get_obj_color(&self, flags: TileFlags, color_idx: usize) -> PixelColor {
+        match self.cgb_flag {
+            CgbFlag::CgbMode => self
+                .cgb_palette
+                .get_color(flags.read_cgb_palette(), color_idx, true),
+            CgbFlag::NonCgbMode => self
+                .dmg_palette
+                .get_obj_color(flags.is_second_dmg_palette(), color_idx),
+        }
+    }
+
+    pub fn get_bgw_color(&self, color_idx: usize, enabled: bool, flags: TileFlags) -> PixelColor {
+        match self.cgb_flag {
+            CgbFlag::CgbMode => self
+                .cgb_palette
+                .get_color(flags.read_cgb_palette(), color_idx, false),
+            CgbFlag::NonCgbMode => self.dmg_palette.get_gbw_color(color_idx, enabled),
         }
     }
 

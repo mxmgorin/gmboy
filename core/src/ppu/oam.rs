@@ -5,6 +5,8 @@ use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
+use crate::ppu::tile::TileFlags;
+
 pub const OAM_ENTRIES_COUNT: usize = 40;
 pub const OAM_ADDR_START: u16 = 0xFE00;
 
@@ -69,7 +71,7 @@ pub struct OamEntry {
     pub y: u8,
     pub x: u8,
     pub tile_index: u8,
-    pub flags: u8,
+    pub flags: TileFlags,
 }
 
 impl OamEntry {
@@ -85,39 +87,6 @@ impl OamEntry {
     fn as_bytes(&self) -> &[u8; 4] {
         // SAFETY: OamEntry is #[repr(C)] with exactly 4 u8 fields, no padding
         unsafe { &*(self as *const OamEntry as *const [u8; 4]) }
-    }
-
-    #[inline(always)]
-    pub fn read_cgb_palette(&self) -> u8 {
-        self.flags & 0b0000_0111 // Extract bits 0-2
-    }
-
-    /// 0 = Fetch tile from VRAM bank 0, 1 = Fetch tile from VRAM bank 1
-    #[inline(always)]
-    pub fn read_cgb_vram_bank(&self) -> u8 {
-        self.flags & 0b0000_1000
-    }
-
-    /// 0 = OBP0, 1 = OBP1
-    #[inline(always)]
-    pub fn is_second_dmg_palette(&self) -> bool {
-         (self.flags & 0b0001_0000) != 0
-    }
-
-    #[inline(always)]
-    pub fn is_x_flip(&self) -> bool {
-        (self.flags & 0b0010_0000) != 0 // Bit 5
-    }
-
-    #[inline(always)]
-    pub fn is_y_flip(&self) -> bool {
-        (self.flags & 0b0100_0000) != 0 // Bit 6
-    }
-
-    /// Is BG and Window color indices 1–3 are drawn over this OBJ
-    #[inline(always)]
-    pub fn is_bgw_priority(&self) -> bool {
-        (self.flags & 0b1000_0000) != 0 // Bit 7
     }
 }
 

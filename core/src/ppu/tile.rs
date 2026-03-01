@@ -241,7 +241,7 @@ pub struct TileMapEntry {
     pub tile_idx: u8,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct TileFlags(u8);
 
 impl From<u8> for TileFlags {
