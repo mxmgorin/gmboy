@@ -378,7 +378,7 @@ impl DmgPalette {
     }
 
     #[inline(always)]
-    pub fn get_obj_color(&self, is_second_palette: bool, color: usize) -> PixelColor {
+    fn get_obj_color(&self, is_second_palette: bool, color: usize) -> PixelColor {
         unsafe {
             if is_second_palette {
                 *self.sp2_colors.get_unchecked(color)
@@ -389,7 +389,7 @@ impl DmgPalette {
     }
 
     #[inline(always)]
-    pub fn get_gbw_color(&self, index: usize, enabled: bool) -> PixelColor {
+    fn get_gbw_color(&self, index: usize, enabled: bool) -> PixelColor {
         if enabled {
             // SAFETY: always index 0-3
             unsafe { *self.bg_colors.get_unchecked(index) }
@@ -463,7 +463,7 @@ impl CgbPalette {
         }
     }
 
-    pub fn get_color(&self, palette_number: u8, color_index: usize, is_obj: bool) -> PixelColor {
+    fn get_color(&self, palette_number: u8, color_index: usize, is_obj: bool) -> PixelColor {
         let palette_number = palette_number as usize;
         // Each palette = 4 colors × 2 bytes
         let base = palette_number * 8 + color_index * 2;

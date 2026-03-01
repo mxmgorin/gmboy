@@ -133,10 +133,10 @@ impl PixelFetcher {
                 {
                     sprite_pixel
                 } else {
-                    lcd.dmg_palette.get_gbw_color(bgw_color_idx, bgw_enabled)
+                    lcd.get_bgw_color(bgw_color_idx, bgw_enabled, self.bgw_fetched_data.cgb_flags)
                 }
             } else {
-                lcd.dmg_palette.get_gbw_color(bgw_color_idx, bgw_enabled)
+                lcd.get_bgw_color(bgw_color_idx, bgw_enabled, self.bgw_fetched_data.cgb_flags)
             };
 
             self.pixel_fifo.push(color);
