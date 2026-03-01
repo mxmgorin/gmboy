@@ -101,7 +101,7 @@ impl OamEntry {
     /// 0 = OBP0, 1 = OBP1
     #[inline(always)]
     pub fn is_second_dmg_palette(&self) -> bool {
-        (self.flags & 0b0001_0000) != 0 // Bit 4
+         (self.flags & 0b0001_0000) != 0
     }
 
     #[inline(always)]

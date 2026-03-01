@@ -412,7 +412,15 @@ where
             .get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
-        emu.runtime.cpu.clock.bus.io.ppu.lcd.set_colors(colors);
+        emu.runtime
+            .cpu
+            .clock
+            .bus
+            .io
+            .ppu
+            .lcd
+            .dmg_palette
+            .set_colors(colors);
         self.menu.request_update();
 
         let suffix = if self.config.video.interface.is_palette_inverted {
@@ -479,7 +487,7 @@ where
                 };
 
                 emu.load_save_state(save_state);
-                emu.runtime.cpu.clock.bus.io.ppu.lcd.set_colors(
+                emu.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette.set_colors(
                     self.config
                         .video
                         .interface
@@ -563,7 +571,7 @@ where
         emu.load_cart(cart);
         self.roms.insert_or_update(path.to_path_buf());
 
-        emu.runtime.cpu.clock.bus.io.ppu.lcd.set_colors(
+        emu.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette.set_colors(
             self.config
                 .video
                 .interface

@@ -43,6 +43,7 @@ impl Bus {
     pub fn load_cart(&mut self, cart: Cart) {
         self.cart = cart;
         self.flat_mem = None;
+        self.io.ppu.lcd.cgb_flag = self.get_cgb_flag();
     }
 
     /// Creates with just array as memory. Use only for tests.
@@ -118,7 +119,7 @@ impl Bus {
     }
 
     #[inline(always)]
-    fn get_cgb_flag(&self) -> CgbFlag {
+    pub fn get_cgb_flag(&self) -> CgbFlag {
         match self.model {
             GbModel::Auto => self.cart.data.cgb_flag,
             GbModel::Dmg => CgbFlag::NonCgbMode,

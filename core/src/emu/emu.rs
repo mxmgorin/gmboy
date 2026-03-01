@@ -132,7 +132,7 @@ impl Emu {
     fn push_rewind(&mut self) {
         if self.config.rewind_size > 0 {
             let curr_frame = self.runtime.cpu.clock.bus.io.ppu.current_frame;
-            let diff =  curr_frame.saturating_sub(self.last_rewind_frame);
+            let diff = curr_frame.saturating_sub(self.last_rewind_frame);
 
             if diff >= self.config.rewind_frames {
                 if self.rewind_buffer.len() > self.config.rewind_size {
@@ -146,7 +146,10 @@ impl Emu {
     }
 
     pub fn load_cart(&mut self, cart: Cart) {
-        let lcd = Lcd::new(self.runtime.cpu.clock.bus.io.ppu.lcd.current_colors);
+        let lcd = Lcd::new(
+            self.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette.current_colors,
+            self.runtime.cpu.clock.bus.get_cgb_flag(),
+        );
         let ppu = Ppu::new(lcd);
         let apu = Apu::new(self.runtime.cpu.clock.bus.io.apu.config.clone());
         let io = Io::new(ppu, apu);

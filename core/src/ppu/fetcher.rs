@@ -1,7 +1,9 @@
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprites::SpriteFetcher;
-use crate::ppu::tile::{get_color_idx, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::tile::{
+    get_color_idx, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
+};
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +21,7 @@ const FETCH_FNS: [FetchFn; 5] = [
 pub struct BgwFetchedData {
     pub tile_line: TileLineData,
     pub is_window: bool,
+    pub cgb_flags: TileFlags,
 }
 
 #[inline(always)]
@@ -115,7 +118,6 @@ impl PixelFetcher {
 
         let obj_enabled = lcd.control.is_obj_enabled();
         let bgw_enabled = lcd.control.is_bgw_enabled();
-        let bg_colors = lcd.bg_colors;
 
         for bit in 0..TILE_BITS_COUNT {
             let bgw_color_idx = get_color_idx(
@@ -131,10 +133,10 @@ impl PixelFetcher {
                 {
                     sprite_pixel
                 } else {
-                    get_gbw_color(bg_colors, bgw_color_idx, bgw_enabled)
+                    lcd.dmg_palette.get_gbw_color(bgw_color_idx, bgw_enabled)
                 }
             } else {
-                get_gbw_color(bg_colors, bgw_color_idx, bgw_enabled)
+                lcd.dmg_palette.get_gbw_color(bgw_color_idx, bgw_enabled)
             };
 
             self.pixel_fifo.push(color);
@@ -169,6 +171,7 @@ impl PixelFetcher {
             let tile_idx = normalize_bgw_tile_idx(tile_idx, data_area);
             let addr = get_bgw_tile_addr(tile_idx, map_y, data_area);
             self.bgw_fetched_data.tile_line = vram.read_tile_line(addr);
+            self.bgw_fetched_data.cgb_flags = vram.read_from_bank(1, addr).into();
         }
 
         if control.is_obj_enabled() {
@@ -209,17 +212,6 @@ impl PixelFetcher {
         self.line_x = 0;
         self.fetch_x = 0;
         self.fifo_x = 0;
-    }
-}
-
-#[inline(always)]
-fn get_gbw_color(colors: [PixelColor; 4], index: usize, enabled: bool) -> PixelColor {
-    if enabled {
-        // SAFETY: always index 0-3
-        unsafe { *colors.get_unchecked(index) }
-    } else {
-        // SAFETY: there is always 4 colors
-        unsafe { *colors.get_unchecked(0) }
     }
 }
 

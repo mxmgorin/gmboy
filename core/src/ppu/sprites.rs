@@ -174,15 +174,10 @@ impl SpriteFetcher {
             }
 
             if !sprite.oam.is_bgw_priority() || bg_color_index == 0 {
-                let color = unsafe {
-                    if sprite.oam.is_second_dmg_palette() {
-                        lcd.sp2_colors.get_unchecked(color_idx)
-                    } else {
-                        lcd.sp1_colors.get_unchecked(color_idx)
-                    }
-                };
-
-                return Some(*color);
+                let color = lcd
+                    .dmg_palette
+                    .get_obj_color(sprite.oam.is_second_dmg_palette(), color_idx);
+                return Some(color);
             }
         }
 

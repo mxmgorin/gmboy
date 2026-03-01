@@ -1,3 +1,4 @@
+use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
@@ -47,33 +48,28 @@ pub struct Lcd {
     pub ly: u8,
     pub ly_compare: u8,
     pub dma_byte: u8,
-    /// BGP register
-    pub bg_palette: u8,
-    /// OBP0 and OBP1 registers
-    pub obj_palette: [u8; 2],
     pub window: LcdWindow,
+    pub dmg_palette: DmgPalette,
     pub cgb_palette: CgbPalette,
-
-    // Other data
-    pub bg_colors: [PixelColor; 4],
-    pub sp1_colors: [PixelColor; 4],
-    pub sp2_colors: [PixelColor; 4],
-    pub current_colors: [PixelColor; 4],
+    pub cgb_flag: CgbFlag,
 }
 
 impl Default for Lcd {
     fn default() -> Self {
-        Self::new([
-            PixelColor::from_hex_rgba("FFFFFFFF"),
-            PixelColor::from_hex_rgba("AAAAAAFF"),
-            PixelColor::from_hex_rgba("555555FF"),
-            PixelColor::from_hex_rgba("000000FF"),
-        ])
+        Self::new(
+            [
+                PixelColor::from_hex_rgba("FFFFFFFF"),
+                PixelColor::from_hex_rgba("AAAAAAFF"),
+                PixelColor::from_hex_rgba("555555FF"),
+                PixelColor::from_hex_rgba("000000FF"),
+            ],
+            CgbFlag::NonCgbMode,
+        )
     }
 }
 
 impl Lcd {
-    pub fn new(colors: [PixelColor; 4]) -> Self {
+    pub fn new(colors: [PixelColor; 4], cgb_flag: CgbFlag) -> Self {
         Self {
             control: LcdControl::default(),
             status: LcdStatus::default(),
@@ -82,14 +78,10 @@ impl Lcd {
             ly: 0,
             ly_compare: 0,
             dma_byte: 0,
-            bg_palette: 0xFC,
-            obj_palette: [0xFF, 0xFF],
             window: LcdWindow::default(),
-            current_colors: colors,
-            bg_colors: colors,
-            sp1_colors: colors,
-            sp2_colors: colors,
+            dmg_palette: DmgPalette::new(colors),
             cgb_palette: CgbPalette::default(),
+            cgb_flag,
         }
     }
 
@@ -103,36 +95,13 @@ impl Lcd {
             LCD_LY_ADDRESS => self.ly,
             LCD_LY_COMPARE_ADDRESS => self.ly_compare,
             LCD_DMA_ADDRESS => self.dma_byte,
-            LCD_BG_PALETTE_ADDRESS => self.bg_palette,
-            LCD_OBJ_PALETTE_0_ADDRESS => self.obj_palette[0],
-            LCD_OBJ_PALETTE_1_ADDRESS => self.obj_palette[1],
+            LCD_BG_PALETTE_ADDRESS => self.dmg_palette.bg_palette,
+            LCD_OBJ_PALETTE_0_ADDRESS => self.dmg_palette.obj_palette[0],
+            LCD_OBJ_PALETTE_1_ADDRESS => self.dmg_palette.obj_palette[1],
             LCD_WINDOW_Y_ADDRESS => self.window.y,
             LCD_WINDOW_X_ADDRESS => self.window.x,
             _ => unreachable!(),
         }
-    }
-
-    #[inline(always)]
-    fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
-        let colors: &mut [PixelColor; 4] = match pallet_type {
-            1 => &mut self.sp1_colors,
-            2 => &mut self.sp2_colors,
-            _ => &mut self.bg_colors,
-        };
-
-        colors[0] = self.current_colors[(palette_data & 0b11) as usize];
-        colors[1] = self.current_colors[((palette_data >> 2) & 0b11) as usize];
-        colors[2] = self.current_colors[((palette_data >> 4) & 0b11) as usize];
-        colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
-    }
-
-    #[inline(always)]
-    pub fn set_colors(&mut self, colors: [PixelColor; 4]) {
-        self.current_colors = colors;
-        // re-apply existing palette mappings
-        self.update_palette(self.bg_palette, 0);
-        self.update_palette(self.obj_palette[0], 1);
-        self.update_palette(self.obj_palette[1], 2);
     }
 
     #[inline(always)]
@@ -146,16 +115,16 @@ impl Lcd {
             LCD_LY_COMPARE_ADDRESS => self.ly_compare = value,
             LCD_DMA_ADDRESS => self.dma_byte = value,
             LCD_BG_PALETTE_ADDRESS => {
-                self.bg_palette = value;
-                self.update_palette(value, 0);
+                self.dmg_palette.bg_palette = value;
+                self.dmg_palette.update_palette(value, 0);
             }
             LCD_OBJ_PALETTE_0_ADDRESS => {
-                self.obj_palette[0] = value;
-                self.update_palette(value, 1);
+                self.dmg_palette.obj_palette[0] = value;
+                self.dmg_palette.update_palette(value, 1);
             }
             LCD_OBJ_PALETTE_1_ADDRESS => {
-                self.obj_palette[1] = value;
-                self.update_palette(value, 2);
+                self.dmg_palette.obj_palette[1] = value;
+                self.dmg_palette.update_palette(value, 2);
             }
             LCD_WINDOW_Y_ADDRESS => self.window.y = value,
             LCD_WINDOW_X_ADDRESS => self.window.x = value,
@@ -330,6 +299,87 @@ impl PpuMode {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DmgPalette {
+    /// BGP register
+    pub bg_palette: u8,
+    /// OBP0 and OBP1 registers
+    pub obj_palette: [u8; 2],
+    pub bg_colors: [PixelColor; 4],
+    pub sp1_colors: [PixelColor; 4],
+    pub sp2_colors: [PixelColor; 4],
+    pub current_colors: [PixelColor; 4],
+}
+
+impl Default for DmgPalette {
+    fn default() -> Self {
+        Self::new([
+            PixelColor::from_hex_rgba("FFFFFFFF"),
+            PixelColor::from_hex_rgba("AAAAAAFF"),
+            PixelColor::from_hex_rgba("555555FF"),
+            PixelColor::from_hex_rgba("000000FF"),
+        ])
+    }
+}
+
+impl DmgPalette {
+    pub fn new(colors: [PixelColor; 4]) -> Self {
+        Self {
+            current_colors: colors,
+            bg_colors: colors,
+            sp1_colors: colors,
+            sp2_colors: colors,
+            bg_palette: 0xFC,
+            obj_palette: [0xFF, 0xFF],
+        }
+    }
+
+    #[inline(always)]
+    fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
+        let colors: &mut [PixelColor; 4] = match pallet_type {
+            1 => &mut self.sp1_colors,
+            2 => &mut self.sp2_colors,
+            _ => &mut self.bg_colors,
+        };
+
+        colors[0] = self.current_colors[(palette_data & 0b11) as usize];
+        colors[1] = self.current_colors[((palette_data >> 2) & 0b11) as usize];
+        colors[2] = self.current_colors[((palette_data >> 4) & 0b11) as usize];
+        colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
+    }
+
+    #[inline(always)]
+    pub fn set_colors(&mut self, colors: [PixelColor; 4]) {
+        self.current_colors = colors;
+        // re-apply existing palette mappings
+        self.update_palette(self.bg_palette, 0);
+        self.update_palette(self.obj_palette[0], 1);
+        self.update_palette(self.obj_palette[1], 2);
+    }
+
+    #[inline(always)]
+    pub fn get_obj_color(&self, is_second_palette: bool, color: usize) -> PixelColor {
+        unsafe {
+            if is_second_palette {
+                *self.sp2_colors.get_unchecked(color)
+            } else {
+                *self.sp1_colors.get_unchecked(color)
+            }
+        }
+    }
+
+    #[inline(always)]
+    pub fn get_gbw_color(&self, index: usize, enabled: bool) -> PixelColor {
+        if enabled {
+            // SAFETY: always index 0-3
+            unsafe { *self.bg_colors.get_unchecked(index) }
+        } else {
+            // SAFETY: there is always 4 colors
+            unsafe { *self.bg_colors.get_unchecked(0) }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CgbPalette {
     bg_ram: Box<[u8]>,
     obj_ram: Box<[u8]>,
@@ -390,6 +440,19 @@ impl CgbPalette {
 
             _ => unreachable!(),
         }
+    }
+
+    pub fn get_color(&self, palette_number: u8, color_index: usize, is_obj: bool) -> PixelColor {
+        let palette_number = palette_number as usize;
+        // Each palette = 4 colors × 2 bytes
+        let base = palette_number * 8 + color_index * 2;
+        let ram = if is_obj { &self.obj_ram } else { &self.bg_ram };
+
+        let lo = ram[base];
+        let hi = ram[base + 1];
+        let value = u16::from_le_bytes([lo, hi]);
+
+        PixelColor::from_bgr555(value)
     }
 
     #[inline(always)]

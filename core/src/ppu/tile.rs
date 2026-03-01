@@ -177,6 +177,20 @@ impl PixelColor {
         PixelColor { rgb565 }
     }
 
+    #[inline(always)]
+    pub fn from_bgr555(value: u16) -> Self {
+        let r5 = value & 0x1F;
+        let g5 = (value >> 5) & 0x1F;
+        let b5 = (value >> 10) & 0x1F;
+
+        // Expand 5-bit green to 6-bit
+        let g6 = (g5 << 1) | (g5 >> 4);
+
+        let rgb565 = (r5 << 11) | (g6 << 5) | b5;
+
+        PixelColor { rgb565 }
+    }
+
     pub fn from_hex_rgba(hex: &str) -> PixelColor {
         assert!(hex.len() >= 6);
 
@@ -225,4 +239,48 @@ impl PixelColor {
 #[derive(Copy, Clone, Debug, Default)]
 pub struct TileMapEntry {
     pub tile_idx: u8,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TileFlags(u8);
+
+impl From<u8> for TileFlags {
+    fn from(value: u8) -> Self {
+        Self(value)
+    }
+}
+
+impl TileFlags {
+    #[inline(always)]
+    pub fn read_cgb_palette(&self) -> u8 {
+        self.0 & 0b0000_0111 // Extract bits 0-2
+    }
+
+    /// 0 = Fetch tile from VRAM bank 0, 1 = Fetch tile from VRAM bank 1
+    #[inline(always)]
+    pub fn read_cgb_vram_bank(&self) -> u8 {
+        self.0 & 0b0000_1000
+    }
+
+    /// 0 = OBP0, 1 = OBP1. Only for Sprites
+    #[inline(always)]
+    pub fn is_second_dmg_palette(&self) -> bool {
+        (self.0 & 0b0001_0000) != 0 // Bit 4
+    }
+
+    #[inline(always)]
+    pub fn is_x_flip(&self) -> bool {
+        (self.0 & 0b0010_0000) != 0 // Bit 5
+    }
+
+    #[inline(always)]
+    pub fn is_y_flip(&self) -> bool {
+        (self.0 & 0b0100_0000) != 0 // Bit 6
+    }
+
+    /// Is BG and Window color indices 1–3 are drawn over this OBJ
+    #[inline(always)]
+    pub fn is_bgw_priority(&self) -> bool {
+        (self.0 & 0b1000_0000) != 0 // Bit 7
+    }
 }
