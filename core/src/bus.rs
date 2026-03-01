@@ -66,11 +66,11 @@ impl Bus {
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(address),
             VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(address),
-            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.ram.read_wram_read(address),
+            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.ram.read_wram(address),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
-                self.ram.read_wram_read(mirrored_addr)
+                self.ram.read_wram(mirrored_addr)
             }
             0xFE00..=0xFE9F => {
                 if self.dma.is_transferring() {
@@ -91,7 +91,7 @@ impl Bus {
 
                 self.io.read(address, self.get_cgb_flag())
             }
-            0xFF80..=0xFFFE => self.ram.read_hram_read(address),
+            0xFF80..=0xFFFE => self.ram.read_hram(address),
             0xFFFF => self.io.interrupts.ie,
         }
     }
@@ -110,11 +110,11 @@ impl Bus {
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(address, value),
             VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(address, value),
-            0xC000..=0xDFFF => self.ram.write_wram_write(address, value),
+            0xC000..=0xDFFF => self.ram.write_wram(address, value),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
-                self.ram.write_wram_write(mirrored_addr, value);
+                self.ram.write_wram(mirrored_addr, value);
             }
             0xFE00..=0xFE9F => {
                 if self.dma.is_active {
@@ -135,7 +135,7 @@ impl Bus {
 
                 self.io.write(address, value, self.get_cgb_flag())
             }
-            0xFF80..=0xFFFE => self.ram.write_hram_write(address, value),
+            0xFF80..=0xFFFE => self.ram.write_hram(address, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
     }

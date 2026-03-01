@@ -36,9 +36,12 @@ pub struct Lcd {
     pub ly: u8,
     pub ly_compare: u8,
     pub dma_byte: u8,
+    /// BGP register
     pub bg_palette: u8,
+    /// OBP0 and OBP1 registers
     pub obj_palette: [u8; 2],
     pub window: LcdWindow,
+    cgb_palette: CgbPalette,
 
     // Other data
     pub bg_colors: [PixelColor; 4],
@@ -75,6 +78,7 @@ impl Lcd {
             bg_colors: colors,
             sp1_colors: colors,
             sp2_colors: colors,
+            cgb_palette: CgbPalette::default(),
         }
     }
 
@@ -311,5 +315,90 @@ impl PpuMode {
             3 => PpuMode::Transfer,
             _ => unreachable!(),
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CgbPalette {
+    bg_ram: Box<[u8]>,
+    obj_ram: Box<[u8]>,
+    bg_index: u8,
+    obj_index: u8,
+}
+
+impl Default for CgbPalette {
+    fn default() -> Self {
+        Self {
+            bg_ram: vec![0; 64].into_boxed_slice(),
+            obj_ram: vec![0; 64].into_boxed_slice(),
+            bg_index: 0,
+            obj_index: 0,
+        }
+    }
+}
+
+// BGPI
+const CGB_BG_PALLETE_INDEX_ADDR: u16 = 0xFF68;
+// BGPD
+const CGB_BG_PALLETE_DATA_ADDR: u16 = 0xFF69;
+// OBPI
+const CGB_OBJ_PALLETE_INDEX_ADDR: u16 = 0xFF6A;
+// OBPD
+const CGB_OBJ_PALLETE_DATA_ADDR: u16 = 0xFF6B;
+
+impl CgbPalette {
+    pub fn read(&self, addr: u16) -> u8 {
+        match addr {
+            CGB_BG_PALLETE_INDEX_ADDR => {
+                // Bit 6 always reads as 0
+                self.bg_index & 0xBF
+            }
+            CGB_BG_PALLETE_DATA_ADDR => {
+                let index = self.bg_index & 0x3F;
+                self.bg_ram[index as usize]
+            }
+            CGB_OBJ_PALLETE_INDEX_ADDR => self.obj_index & 0xBF,
+            CGB_OBJ_PALLETE_DATA_ADDR => {
+                let index = self.obj_index & 0x3F;
+                self.obj_ram[index as usize]
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn write(&mut self, addr: u16, value: u8) {
+        match addr {
+            CGB_BG_PALLETE_INDEX_ADDR => {
+                // Bit 6 ignored
+                self.bg_index = value & 0xBF;
+            }
+            CGB_BG_PALLETE_DATA_ADDR => {
+                let index = self.bg_index & 0x3F;
+                self.bg_ram[index as usize] = value;
+                self.bg_index = Self::update_index(self.bg_index);
+            }
+            CGB_OBJ_PALLETE_INDEX_ADDR => {
+                self.obj_index = value & 0xBF;
+            }
+            CGB_OBJ_PALLETE_DATA_ADDR => {
+                let index = self.obj_index & 0x3F;
+                self.obj_ram[index as usize] = value;
+                self.obj_index = Self::update_index(self.obj_index);
+            }
+
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline(always)]
+    fn update_index(index: u8) -> u8 {
+        const AUTO_INC_FLAG_MASK: u8 = 0x80;
+
+        if index & AUTO_INC_FLAG_MASK != 0 {
+            let new_index = ((index + 1) & 0x3F) | AUTO_INC_FLAG_MASK;
+            return new_index;
+        }
+
+        index
     }
 }

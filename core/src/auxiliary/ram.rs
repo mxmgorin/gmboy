@@ -52,7 +52,7 @@ impl Ram {
     }
 
     #[inline]
-    pub fn read_wram_read(&self, addr: u16) -> u8 {
+    pub fn read_wram(&self, addr: u16) -> u8 {
         match addr {
             WRAM_CGB_BANK_START_ADDR..=WRAM_CGB_BANK_END_ADDR => {
                 let addr = self.wram_cgb_bank_addr(addr);
@@ -66,7 +66,7 @@ impl Ram {
     }
 
     #[inline]
-    pub fn write_wram_write(&mut self, addr: u16, val: u8) {
+    pub fn write_wram(&mut self, addr: u16, val: u8) {
         match addr {
             WRAM_CGB_BANK_START_ADDR..=WRAM_CGB_BANK_END_ADDR => {
                 let addr = self.wram_cgb_bank_addr(addr);
@@ -82,13 +82,13 @@ impl Ram {
     }
 
     #[inline]
-    pub fn read_hram_read(&self, addr: u16) -> u8 {
+    pub fn read_hram(&self, addr: u16) -> u8 {
         // SAFETY: address is matched in bus
         unsafe { *self.hram.get_unchecked(normalize_h_addr(addr)) }
     }
 
     #[inline]
-    pub fn write_hram_write(&mut self, addr: u16, val: u8) {
+    pub fn write_hram(&mut self, addr: u16, val: u8) {
         // SAFETY: address is matched in bus
         unsafe {
             *self.hram.get_unchecked_mut(normalize_h_addr(addr)) = val;
