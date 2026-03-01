@@ -3,7 +3,7 @@ name: Build Linux-ARM
 on:
   push:
     branches:
-      - "*"
+      - "main"
   release:
     types: [published]
 

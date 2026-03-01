@@ -2,7 +2,7 @@ name: Build MacOS
 on:
   push:
     branches:
-      - "*"
+      - "main"
   release:
     types: [published]
 
