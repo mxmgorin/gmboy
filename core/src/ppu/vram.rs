@@ -1,51 +1,66 @@
 use crate::ppu::tile::{
-    TileData, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT,
-    TILE_LINE_BYTES_COUNT, TILE_SET_2_END, TILE_SET_DATA_1_START,
+    TileData, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_SET_2_END,
+    TILE_SET_DATA_1_START,
 };
-use serde::de::{Error, SeqAccess, Visitor};
-use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
+use serde::{Deserialize, Serialize};
 
-pub const VRAM_SIZE: usize = 0x2000;
+pub const VRAM_CGB_BANKS_COUNT: usize = 2;
+pub const VRAM_BANK_SIZE: usize = 0x2000;
 pub const VRAM_ADDR_START: u16 = 0x8000;
 pub const VRAM_ADDR_END: u16 = 0x9FFF;
+pub const VRAM_BANK_NUMBER_ADDR: u16 = 0xFF4F;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoRam {
+    banks: [Box<[u8]>; VRAM_CGB_BANKS_COUNT],
+    bank_number: u8,
+}
 
 impl Default for VideoRam {
     fn default() -> Self {
-        Self::new()
+        Self {
+            banks: std::array::from_fn(|_| vec![0u8; VRAM_BANK_SIZE].into_boxed_slice()),
+            bank_number: 0,
+        }
     }
 }
 
 impl VideoRam {
-    pub fn new() -> Self {
-        Self {
-            bytes: [0; VRAM_SIZE],
-        }
+    #[inline(always)]
+    pub fn write_bank_number(&mut self, val: u8) {
+        self.bank_number = val & 0x01;
+    }
+
+    #[inline(always)]
+    pub fn read_bank_number(&self) -> u8 {
+        self.bank_number | 0b1110
     }
 
     #[inline(always)]
     pub fn read(&self, addr: u16) -> u8 {
         let addr = (addr - VRAM_ADDR_START) as usize;
-        unsafe { *self.bytes.get_unchecked(addr) }
+        let bank = self.get_bank();
+        unsafe { *bank.get_unchecked(addr) }
     }
 
     #[inline(always)]
     pub fn write(&mut self, addr: u16, val: u8) {
         let addr = (addr - VRAM_ADDR_START) as usize;
+        let bank = self.get_bank_mut();
         unsafe {
-            *self.bytes.get_unchecked_mut(addr) = val;
+            *bank.get_unchecked_mut(addr) = val;
         }
     }
 
     #[inline(always)]
     pub fn read_tile_line(&self, addr: u16) -> TileLineData {
         let addr = (addr - VRAM_ADDR_START) as usize;
+        let bank = self.get_bank();
 
         unsafe {
             TileLineData::new(
-                *self.bytes.get_unchecked(addr),
-                *self.bytes.get_unchecked(addr.wrapping_add(1)),
+                *bank.get_unchecked(addr),
+                *bank.get_unchecked(addr.wrapping_add(1)),
             )
         }
     }
@@ -69,7 +84,16 @@ impl VideoRam {
             self.read_tile(addr)
         })
     }
-}
+
+    #[inline(always)]
+    fn get_bank(&self) -> &[u8] {
+        unsafe { self.banks.get_unchecked(self.bank_number as usize) }
+    }
+
+    #[inline(always)]
+    fn get_bank_mut(&mut self) -> &mut [u8] {
+        unsafe { self.banks.get_unchecked_mut(self.bank_number as usize) }
+    }}
 
 pub struct TilesIterator<'a> {
     pub video_ram: &'a VideoRam,
@@ -89,56 +113,4 @@ impl Iterator for TilesIterator<'_> {
 
         None
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VideoRam {
-    #[serde(
-        serialize_with = "serialize_array_vram",
-        deserialize_with = "deserialize_array_vram"
-    )]
-    pub bytes: [u8; VRAM_SIZE],
-}
-
-pub fn serialize_array_vram<S>(arr: &[u8; VRAM_SIZE], serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let mut seq = serializer.serialize_seq(Some(VRAM_SIZE))?;
-    for elem in arr.iter() {
-        seq.serialize_element(elem)?;
-    }
-    seq.end()
-}
-
-pub fn deserialize_array_vram<'de, D>(deserializer: D) -> Result<[u8; VRAM_SIZE], D::Error>
-where
-    D: Deserializer<'de>,
-{
-    struct ArrayVisitor;
-
-    impl<'de> Visitor<'de> for ArrayVisitor {
-        type Value = [u8; VRAM_SIZE];
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            write!(formatter, "an array of {VRAM_SIZE} u8")
-        }
-
-        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-        where
-            A: SeqAccess<'de>,
-        {
-            let mut vec = Vec::with_capacity(VRAM_SIZE);
-            for i in 0..VRAM_SIZE {
-                let value = seq
-                    .next_element()?
-                    .ok_or_else(|| Error::invalid_length(i, &self))?;
-                vec.push(value);
-            }
-            vec.try_into()
-                .map_err(|_| Error::custom("Failed to convert Vec to array"))
-        }
-    }
-
-    deserializer.deserialize_seq(ArrayVisitor)
 }

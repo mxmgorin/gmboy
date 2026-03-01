@@ -3,8 +3,10 @@ use crate::apu::Apu;
 use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
+use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{LCD_ADDRESS_END, LCD_ADDRESS_START};
+use crate::ppu::vram::VRAM_BANK_NUMBER_ADDR;
 use crate::ppu::Ppu;
 use serde::{Deserialize, Serialize};
 
@@ -37,7 +39,7 @@ impl Io {
     }
 
     #[inline(always)]
-    pub fn read(&self, address: u16) -> u8 {
+    pub fn read(&self, address: u16, cgb_flag: CgbFlag) -> u8 {
         match address {
             0xFF00 => self.joypad.get_byte(),
             0xFF01 => self.serial.sb,
@@ -47,14 +49,22 @@ impl Io {
                 self.apu.read(address)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(address),
-            0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => 0xFF,
+            VRAM_BANK_NUMBER_ADDR | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {
+                match cgb_flag {
+                    CgbFlag::NonCGBMode => 0xFF,
+                    CgbFlag::CGBMode => match address {
+                        VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
+                        _ => 0xFF,
+                    },
+                }
+            }
             0xFF0F => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
             _ => 0xFF,
         }
     }
 
     #[inline(always)]
-    pub fn write(&mut self, address: u16, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8, cgb_flag: CgbFlag) {
         match address {
             0xFF00 => self.joypad.set_byte(value),
             0xFF01 => self.serial.sb = value,
@@ -64,7 +74,15 @@ impl Io {
                 self.apu.write(address, value)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(address, value),
-            0xFF4F | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {}
+            VRAM_BANK_NUMBER_ADDR | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {
+                match cgb_flag {
+                    CgbFlag::CGBMode => match address {
+                        VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
+                        _ => {}
+                    },
+                    _ => {}
+                }
+            }
             0xFF0F => self.interrupts.int_flags = value,
             _ => {}
         }

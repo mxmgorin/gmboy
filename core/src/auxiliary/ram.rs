@@ -1,4 +1,3 @@
-use crate::ppu::vram::VRAM_SIZE;
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -76,7 +75,7 @@ pub fn serialize_array_wram<S>(arr: &[u8; W_RAM_SIZE], serializer: S) -> Result<
 where
     S: Serializer,
 {
-    let mut seq = serializer.serialize_seq(Some(VRAM_SIZE))?;
+    let mut seq = serializer.serialize_seq(Some(W_RAM_SIZE))?;
     for elem in arr.iter() {
         seq.serialize_element(elem)?;
     }
@@ -119,7 +118,7 @@ pub fn serialize_array_hram<S>(arr: &[u8; H_RAM_SIZE], serializer: S) -> Result<
 where
     S: Serializer,
 {
-    let mut seq = serializer.serialize_seq(Some(VRAM_SIZE))?;
+    let mut seq = serializer.serialize_seq(Some(H_RAM_SIZE))?;
     for elem in arr.iter() {
         seq.serialize_element(elem)?;
     }

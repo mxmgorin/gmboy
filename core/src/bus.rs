@@ -75,7 +75,7 @@ impl Bus {
                 self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => self.io.read(address),
+            0xFF00..=0xFF7F => self.io.read(address, self.cart.data.cgb_flag),
             0xFF80..=0xFFFE => self.ram.high_ram_read(address),
             0xFFFF => self.io.interrupts.ie,
         }
@@ -109,7 +109,7 @@ impl Bus {
                 self.io.ppu.oam_ram.write(address, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => self.io.write(address, value),
+            0xFF00..=0xFF7F => self.io.write(address, value, self.cart.data.cgb_flag),
             0xFF80..=0xFFFE => self.ram.high_ram_write(address, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
