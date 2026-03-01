@@ -150,7 +150,7 @@ impl Emu {
         let ppu = Ppu::new(lcd);
         let apu = Apu::new(self.runtime.cpu.clock.bus.io.apu.config.clone());
         let io = Io::new(ppu, apu);
-        let bus = Bus::new(cart, io);
+        let bus = Bus::new(cart, io, self.config.model);
         let clock = Clock::new(bus);
         self.runtime.cpu = Cpu::new(clock);
 

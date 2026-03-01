@@ -60,7 +60,7 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let mut ppu = Ppu::new(lcd);
     ppu.toggle_fps(config.video.interface.show_fps);
     let apu = Apu::new(apu_config);
-    let bus = Bus::new(Cart::empty(), Io::new(ppu, apu));
+    let bus = Bus::new(Cart::empty(), Io::new(ppu, apu), emu_config.model);
 
     #[cfg(feature = "debug")]
     {

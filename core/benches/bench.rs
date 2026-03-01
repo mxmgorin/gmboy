@@ -1,3 +1,4 @@
+use core::emu::config::GbModel;
 use core::ppu::vram::VRAM_BANK_SIZE;
 use std::hint::black_box;
 use core::apu::Apu;
@@ -23,9 +24,13 @@ pub fn get_cart() -> Cart {
     Cart::new(read_bytes(&path).unwrap()).unwrap()
 }
 
+pub fn new_bus() -> Bus {
+Bus::new(get_cart(), Default::default(), GbModel::Dmg)
+}
+
 pub fn new_cpu(cart: Option<Cart>) -> Cpu {
     let bus = if let Some(cart) = cart {
-        Bus::new(cart, Default::default())
+        Bus::new(cart, Default::default(), GbModel::Dmg)
     } else {
         Bus::with_bytes(vec![0; 100000], Default::default())
     };
@@ -38,7 +43,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("cpu_step_500_000", |b| {
         b.iter_batched(
             || {
-                let bus = Bus::new(get_cart(), Default::default());
+                let bus = new_bus();
                 let clock = Clock::new(bus);
 
                 Cpu::new(clock)
@@ -77,7 +82,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("fetch_execute_prefix_500_000", |b| {
         b.iter_batched(
             || {
-                let bus = Bus::new(get_cart(), Default::default());
+                let bus = new_bus();
                 let clock = Clock::new(bus);
 
                 Cpu::new(clock)
@@ -112,7 +117,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter_batched(
             || {
                 let ppu = Ppu::default();
-                let bus = Bus::new(get_cart(), Default::default());
+                let bus = new_bus();
                 (ppu, bus)
             },
             |(mut ppu, mut bus)| {

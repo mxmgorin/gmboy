@@ -51,8 +51,8 @@ impl Io {
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(address),
             VRAM_BANK_NUMBER_ADDR | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {
                 match cgb_flag {
-                    CgbFlag::NonCGBMode => 0xFF,
-                    CgbFlag::CGBMode => match address {
+                    CgbFlag::NonCgbMode => 0xFF,
+                    CgbFlag::CgbMode => match address {
                         VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
                         _ => 0xFF,
                     },
@@ -76,7 +76,7 @@ impl Io {
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(address, value),
             VRAM_BANK_NUMBER_ADDR | 0xFF50 | 0xFF51..=0xFF55 | 0xFF68..=0xFF6B | 0xFF70 => {
                 match cgb_flag {
-                    CgbFlag::CGBMode => match address {
+                    CgbFlag::CgbMode => match address {
                         VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
                         _ => {}
                     },

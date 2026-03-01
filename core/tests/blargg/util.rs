@@ -13,7 +13,7 @@ pub fn run_blargg_rom_serial(
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default());
+    let bus = Bus::new(cart, Default::default(), core::emu::config::GbModel::Auto);
     let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
@@ -42,7 +42,7 @@ pub fn run_blargg_rom_memory(
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default());
+    let bus = Bus::new(cart, Default::default(), core::emu::config::GbModel::Auto);
     let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();

@@ -97,7 +97,7 @@ impl CartHeader {
     }
 
     pub fn parse_cgb_flag(rom_bytes: &[u8]) -> CgbFlag {
-        rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCGBMode)
+        rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCgbMode)
     }
 }
 
@@ -229,13 +229,13 @@ impl TryFrom<u8> for DestinationCode {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum CgbFlag {
-    CGBMode,
-    NonCGBMode,
+    CgbMode,
+    NonCgbMode,
 }
 
 impl Default for CgbFlag {
     fn default() -> Self {
-        Self::NonCGBMode
+        Self::NonCgbMode
     }
 }
 
@@ -244,9 +244,9 @@ impl TryFrom<u8> for CgbFlag {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x80 => Ok(CgbFlag::CGBMode),
-            0xC0 => Ok(CgbFlag::NonCGBMode),
-            _ => Err("Invalid CGB flag".into()),
+            0x80 => Ok(CgbFlag::CgbMode),
+            0xC0 => Ok(CgbFlag::NonCgbMode),
+            _ => Ok(CgbFlag::NonCgbMode),
         }
     }
 }

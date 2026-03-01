@@ -1,7 +1,9 @@
 use crate::auxiliary::dma::Dma;
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::Ram;
+use crate::cart::header::CgbFlag;
 use crate::cart::Cart;
+use crate::emu::config::GbModel;
 use crate::ppu::lcd::LCD_DMA_ADDRESS;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
@@ -13,8 +15,9 @@ pub struct Bus {
     pub cart: Cart,
     pub ram: Ram,
     pub io: Io,
-    flat_mem: Option<Vec<u8>>,
     pub dma: Dma,
+    model: GbModel,
+    flat_mem: Option<Vec<u8>>,
 }
 
 impl Bus {
@@ -25,16 +28,18 @@ impl Bus {
             io: self.io.clone(),
             flat_mem: self.flat_mem.clone(),
             dma: self.dma.clone(),
+            model: self.model,
         }
     }
 
-    pub fn new(cart: Cart, io: Io) -> Self {
+    pub fn new(cart: Cart, io: Io, model: GbModel) -> Self {
         Self {
             cart,
             ram: Ram::default(),
             io,
             flat_mem: None,
             dma: Default::default(),
+            model,
         }
     }
 
@@ -46,7 +51,7 @@ impl Bus {
     /// Creates with just array as memory. Use only for tests.
     pub fn with_bytes(bytes: Vec<u8>, io: Io) -> Self {
         let cart = Cart::empty();
-        let mut obj = Self::new(cart, io);
+        let mut obj = Self::new(cart, io, GbModel::Dmg);
         obj.flat_mem = Some(bytes);
 
         obj
@@ -75,7 +80,7 @@ impl Bus {
                 self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => self.io.read(address, self.cart.data.cgb_flag),
+            0xFF00..=0xFF7F => self.io.read(address, self.get_cgb_flag()),
             0xFF80..=0xFFFE => self.ram.high_ram_read(address),
             0xFFFF => self.io.interrupts.ie,
         }
@@ -109,9 +114,18 @@ impl Bus {
                 self.io.ppu.oam_ram.write(address, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => self.io.write(address, value, self.cart.data.cgb_flag),
+            0xFF00..=0xFF7F => self.io.write(address, value, self.get_cgb_flag()),
             0xFF80..=0xFFFE => self.ram.high_ram_write(address, value),
             0xFFFF => self.io.interrupts.ie = value,
+        }
+    }
+
+    #[inline(always)]
+    fn get_cgb_flag(&self) -> CgbFlag {
+        match self.model {
+            GbModel::Auto => self.cart.data.cgb_flag,
+            GbModel::Dmg => CgbFlag::NonCgbMode,
+            GbModel::Cgb => CgbFlag::CgbMode,
         }
     }
 }
