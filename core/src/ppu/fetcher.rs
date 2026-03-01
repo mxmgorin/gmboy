@@ -120,6 +120,11 @@ impl PixelFetcher {
         let bgw_enabled = lcd.control.is_bgw_enabled();
 
         for bit in 0..TILE_BITS_COUNT {
+            let bit = if self.bgw_fetched_data.cgb_flags.is_x_flip() {
+                7 - bit
+            } else {
+                bit
+            };
             let bgw_color_idx = get_color_idx(
                 self.bgw_fetched_data.tile_line.byte1,
                 self.bgw_fetched_data.tile_line.byte2,
