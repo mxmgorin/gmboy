@@ -1,6 +1,6 @@
 use crate::auxiliary::dma::Dma;
 use crate::auxiliary::io::Io;
-use crate::auxiliary::ram::Ram;
+use crate::auxiliary::ram::{Ram, WRAM_BANK_NUMBER_ADDR, WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
 use crate::cart::header::CgbFlag;
 use crate::cart::Cart;
 use crate::emu::config::GbModel;
@@ -66,11 +66,11 @@ impl Bus {
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(address),
             VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(address),
-            0xC000..=0xDFFF => self.ram.working_ram_read(address),
+            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.ram.read_wram_read(address),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
-                self.ram.working_ram_read(mirrored_addr)
+                self.ram.read_wram_read(mirrored_addr)
             }
             0xFE00..=0xFE9F => {
                 if self.dma.is_transferring() {
@@ -80,8 +80,18 @@ impl Bus {
                 self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => self.io.read(address, self.get_cgb_flag()),
-            0xFF80..=0xFFFE => self.ram.high_ram_read(address),
+            0xFF00..=0xFF7F => {
+                match self.get_cgb_flag() {
+                    CgbFlag::CgbMode => match address {
+                        WRAM_BANK_NUMBER_ADDR => return self.ram.read_wram_bank(),
+                        _ => {}
+                    },
+                    CgbFlag::NonCgbMode => {}
+                }
+
+                self.io.read(address, self.get_cgb_flag())
+            }
+            0xFF80..=0xFFFE => self.ram.read_hram_read(address),
             0xFFFF => self.io.interrupts.ie,
         }
     }
@@ -100,11 +110,11 @@ impl Bus {
         match address {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(address, value),
             VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(address, value),
-            0xC000..=0xDFFF => self.ram.working_ram_write(address, value),
+            0xC000..=0xDFFF => self.ram.write_wram_write(address, value),
             0xE000..=0xFDFF => {
                 let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
-                self.ram.working_ram_write(mirrored_addr, value);
+                self.ram.write_wram_write(mirrored_addr, value);
             }
             0xFE00..=0xFE9F => {
                 if self.dma.is_active {
@@ -114,8 +124,18 @@ impl Bus {
                 self.io.ppu.oam_ram.write(address, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => self.io.write(address, value, self.get_cgb_flag()),
-            0xFF80..=0xFFFE => self.ram.high_ram_write(address, value),
+            0xFF00..=0xFF7F => {
+                match self.get_cgb_flag() {
+                    CgbFlag::CgbMode => match address {
+                        WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
+                        _ => {}
+                    },
+                    CgbFlag::NonCgbMode => {}
+                }
+
+                self.io.write(address, value, self.get_cgb_flag())
+            }
+            0xFF80..=0xFFFE => self.ram.write_hram_write(address, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
     }
