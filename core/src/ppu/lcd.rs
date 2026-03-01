@@ -23,6 +23,17 @@ pub const LCD_OBJ_PALETTE_0_ADDRESS: u16 = 0xFF48;
 pub const LCD_OBJ_PALETTE_1_ADDRESS: u16 = 0xFF49;
 pub const LCD_WINDOW_Y_ADDRESS: u16 = 0xFF4A;
 pub const LCD_WINDOW_X_ADDRESS: u16 = 0xFF4B;
+pub const CGB_PALLETE_START_ADDR: u16 = CGB_BG_PALLETE_INDEX_ADDR;
+pub const CGB_PALLETE_END_ADDR: u16 = CGB_OBJ_PALLETE_DATA_ADDR;
+/// BGPI
+pub const CGB_BG_PALLETE_INDEX_ADDR: u16 = 0xFF68;
+/// BGPD
+pub const CGB_BG_PALLETE_DATA_ADDR: u16 = 0xFF69;
+/// OBPI
+pub const CGB_OBJ_PALLETE_INDEX_ADDR: u16 = 0xFF6A;
+/// OBPD
+pub const CGB_OBJ_PALLETE_DATA_ADDR: u16 = 0xFF6B;
+
 const LCD_STATUS_UNUSED_MASK: u8 = 0b1000_0000;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,7 +52,7 @@ pub struct Lcd {
     /// OBP0 and OBP1 registers
     pub obj_palette: [u8; 2],
     pub window: LcdWindow,
-    cgb_palette: CgbPalette,
+    pub cgb_palette: CgbPalette,
 
     // Other data
     pub bg_colors: [PixelColor; 4],
@@ -336,15 +347,6 @@ impl Default for CgbPalette {
         }
     }
 }
-
-// BGPI
-const CGB_BG_PALLETE_INDEX_ADDR: u16 = 0xFF68;
-// BGPD
-const CGB_BG_PALLETE_DATA_ADDR: u16 = 0xFF69;
-// OBPI
-const CGB_OBJ_PALLETE_INDEX_ADDR: u16 = 0xFF6A;
-// OBPD
-const CGB_OBJ_PALLETE_DATA_ADDR: u16 = 0xFF6B;
 
 impl CgbPalette {
     pub fn read(&self, addr: u16) -> u8 {
