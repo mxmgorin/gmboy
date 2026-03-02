@@ -113,7 +113,8 @@ impl SpriteFetcher {
                 let addr = TILE_SET_DATA_1_START
                     .wrapping_add(tile_index as u16 * TILE_BIT_SIZE)
                     .wrapping_add(tile_y as u16);
-                let tile_line = vram.read_tile_line(addr);
+                let vram_bank = oam.flags.read_cgb_vram_bank();
+                let tile_line = vram.read_tile_line_from_bank(vram_bank, addr);
 
                 unsafe {
                     let sprite = self
