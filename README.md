@@ -31,7 +31,7 @@ ___
   </a>
 </p>
 
-`GMBoy` is a Game Boy emulator written in Rust.
+`GMBoy` is a Game Boy and Game Boy Color emulator written in Rust, using SDL2 for video, audio, and input.
 
 Here are some highlights:
 
