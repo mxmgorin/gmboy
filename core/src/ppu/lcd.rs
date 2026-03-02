@@ -88,9 +88,10 @@ impl Lcd {
 
     pub fn get_obj_color(&self, flags: TileFlags, color_idx: usize) -> PixelColor {
         match self.cgb_flag {
-            CgbFlag::CgbMode => self
-                .cgb_palette
-                .get_color(flags.read_cgb_palette(), color_idx, true),
+            CgbFlag::CgbMode => {
+                self.cgb_palette
+                    .get_color(flags.read_cgb_palette(), color_idx, true)
+            }
             CgbFlag::NonCgbMode => self
                 .dmg_palette
                 .get_obj_color(flags.is_second_dmg_palette(), color_idx),
@@ -99,9 +100,10 @@ impl Lcd {
 
     pub fn get_bgw_color(&self, color_idx: usize, enabled: bool, flags: TileFlags) -> PixelColor {
         match self.cgb_flag {
-            CgbFlag::CgbMode => self
-                .cgb_palette
-                .get_color(flags.read_cgb_palette(), color_idx, false),
+            CgbFlag::CgbMode => {
+                self.cgb_palette
+                    .get_color(flags.read_cgb_palette(), color_idx, false)
+            }
             CgbFlag::NonCgbMode => self.dmg_palette.get_gbw_color(color_idx, enabled),
         }
     }
@@ -411,16 +413,50 @@ pub struct CgbPalette {
 
 impl Default for CgbPalette {
     fn default() -> Self {
-        Self {
+        let mut obj = Self {
             bg_ram: vec![0; 64].into_boxed_slice(),
             obj_ram: vec![0; 64].into_boxed_slice(),
             bg_index: 0,
             obj_index: 0,
-        }
+        };
+        obj.boot_rom_init();
+
+        obj
     }
 }
 
 impl CgbPalette {
+    pub fn boot_rom_init(&mut self) {
+        // Clear palette RAM
+        self.bg_ram.fill(0);
+        self.obj_ram.fill(0);
+
+        // DMG grayscale palette (palette 0)
+        let dmg_palette: [u16; 4] = [
+            0x7FFF, // White
+            0x5294, // Light gray
+            0x294A, // Dark gray
+            0x0000, // Black
+        ];
+
+        for (i, color) in dmg_palette.iter().enumerate() {
+            let lo = (*color & 0xFF) as u8;
+            let hi = (*color >> 8) as u8;
+
+            // BG palette 0
+            self.bg_ram[i * 2] = lo;
+            self.bg_ram[i * 2 + 1] = hi;
+
+            // OBJ palette 0
+            self.obj_ram[i * 2] = lo;
+            self.obj_ram[i * 2 + 1] = hi;
+        }
+
+        // BCPS / OCPS registers after boot
+        self.bg_index = 0x00; // auto-increment disabled
+        self.obj_index = 0x00; // auto-increment disabled
+    }
+
     pub fn read(&self, addr: u16) -> u8 {
         match addr {
             CGB_BG_PALLETE_INDEX_ADDR => {
