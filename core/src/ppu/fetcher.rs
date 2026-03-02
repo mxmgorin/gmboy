@@ -185,6 +185,13 @@ impl PixelFetcher {
             let tile_index = vram.read(tile_map_addr);
             let data_area = control.get_bgw_data_area();
             let tile_index = normalize_bgw_tile_index(tile_index, data_area);
+
+            let y_flip = self.bgw_fetched_data.cgb_flags.is_y_flip();
+            let row_in_tile = map_y & 7;
+            let row = if y_flip { 7 - row_in_tile } else { row_in_tile };
+            // Replace map_y's low 3 bits with flipped row
+            let map_y = (map_y & !7) | row;
+
             let tile_data_addr = get_bgw_tile_addr(tile_index, map_y, data_area);
             let vram_bank = self.bgw_fetched_data.cgb_flags.read_cgb_vram_bank();
             self.bgw_fetched_data.tile_line =
