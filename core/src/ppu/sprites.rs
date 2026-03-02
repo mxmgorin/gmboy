@@ -43,7 +43,7 @@ impl SpriteFetcher {
                 let mut inserted = false;
 
                 // No sorting in CGB mode
-                if lcd.cgb_flag == CgbFlag::NonCgbMode {
+                if lcd.is_dmg_obj_priority_mode() {
                     // Iterate through sorted list to insert at correct position
                     for i in 0..line_sprites_count {
                         let added_entry = unsafe { self.line_sprites.get_unchecked(i) };
@@ -205,7 +205,7 @@ pub fn is_show_obj(
     }
 
     match lcd.cgb_flag {
-        CgbFlag::NonCgbMode => {
+        CgbFlag::DmgOnly => {
             if obj_flags.is_bgw_priority() {
                 return false;
             }
@@ -218,7 +218,7 @@ pub fn is_show_obj(
         // If LCDC bit 0 is clear, the OBJ will always have priority;
         // If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority
         // Otherwise, BG will have priority.
-        CgbFlag::CgbMode => {
+        CgbFlag::CgbOnly => {
             if !lcd.control.is_bgw_enabled() {
                 return true;
             }

@@ -119,8 +119,8 @@ impl Bus {
     pub fn detect_cgb_flag(&self, model: GbModel) -> CgbFlag {
         match model {
             GbModel::Auto => self.cart.data.cgb_flag,
-            GbModel::Dmg => CgbFlag::NonCgbMode,
-            GbModel::Cgb => CgbFlag::CgbMode,
+            GbModel::Dmg => CgbFlag::DmgOnly,
+            GbModel::Cgb => CgbFlag::CgbOnly,
         }
     }
 }

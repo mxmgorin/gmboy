@@ -35,6 +35,8 @@ pub const CGB_BG_PALLETE_DATA_ADDR: u16 = 0xFF69;
 pub const CGB_OBJ_PALLETE_INDEX_ADDR: u16 = 0xFF6A;
 /// OBPD
 pub const CGB_OBJ_PALLETE_DATA_ADDR: u16 = 0xFF6B;
+/// OPRI
+pub const CGB_OBJ_PRIORITY_MODE_ADDR: u16 = 0xFF6C;
 
 const LCD_STATUS_UNUSED_MASK: u8 = 0b1000_0000;
 
@@ -49,6 +51,7 @@ pub struct Lcd {
     pub ly: u8,
     pub ly_compare: u8,
     pub dma_byte: u8,
+    pub obj_priority_mode: u8,
     pub window: LcdWindow,
     pub dmg_palette: DmgPalette,
     pub cgb_palette: CgbPalette,
@@ -64,7 +67,7 @@ impl Default for Lcd {
                 PixelColor::from_hex_rgba("555555FF"),
                 PixelColor::from_hex_rgba("000000FF"),
             ],
-            CgbFlag::NonCgbMode,
+            CgbFlag::DmgOnly,
         )
     }
 }
@@ -82,17 +85,37 @@ impl Lcd {
             window: LcdWindow::default(),
             dmg_palette: DmgPalette::new(colors),
             cgb_palette: CgbPalette::default(),
+            obj_priority_mode: match cgb_flag {
+                CgbFlag::CgbOnly => 0x0,
+                CgbFlag::DmgOnly => 0x1,
+            },
             cgb_flag,
         }
     }
 
+    #[inline(always)]
+    pub fn read_obj_priority_mode(&self) -> u8 {
+        self.obj_priority_mode
+    }
+
+    #[inline(always)]
+    pub fn write_obj_priority_mode(&mut self, val: u8) {
+        self.obj_priority_mode = val;
+    }
+
+    #[inline(always)]
+    pub fn is_dmg_obj_priority_mode(&self) -> bool {
+        self.obj_priority_mode & 0x1 != 0
+    }
+
+    #[inline(always)]
     pub fn get_obj_color(&self, flags: TileFlags, color_idx: usize) -> PixelColor {
         match self.cgb_flag {
-            CgbFlag::CgbMode => {
+            CgbFlag::CgbOnly => {
                 self.cgb_palette
                     .get_color(flags.read_cgb_palette(), color_idx, true)
             }
-            CgbFlag::NonCgbMode => self
+            CgbFlag::DmgOnly => self
                 .dmg_palette
                 .get_obj_color(flags.is_second_dmg_palette(), color_idx),
         }
@@ -100,11 +123,11 @@ impl Lcd {
 
     pub fn get_bgw_color(&self, color_idx: usize, enabled: bool, flags: TileFlags) -> PixelColor {
         match self.cgb_flag {
-            CgbFlag::CgbMode => {
+            CgbFlag::CgbOnly => {
                 self.cgb_palette
                     .get_color(flags.read_cgb_palette(), color_idx, false)
             }
-            CgbFlag::NonCgbMode => self.dmg_palette.get_gbw_color(color_idx, enabled),
+            CgbFlag::DmgOnly => self.dmg_palette.get_gbw_color(color_idx, enabled),
         }
     }
 

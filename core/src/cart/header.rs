@@ -97,7 +97,7 @@ impl CartHeader {
     }
 
     pub fn parse_cgb_flag(rom_bytes: &[u8]) -> CgbFlag {
-        rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCgbMode)
+        rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::DmgOnly)
     }
 }
 
@@ -229,13 +229,13 @@ impl TryFrom<u8> for DestinationCode {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CgbFlag {
-    CgbMode,
-    NonCgbMode,
+    CgbOnly,
+    DmgOnly,
 }
 
 impl Default for CgbFlag {
     fn default() -> Self {
-        Self::NonCgbMode
+        Self::DmgOnly
     }
 }
 
@@ -244,9 +244,11 @@ impl TryFrom<u8> for CgbFlag {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x80 => Ok(CgbFlag::CgbMode),
-            0xC0 => Ok(CgbFlag::CgbMode),
-            _ => Ok(CgbFlag::NonCgbMode),
+            // The game supports CGB enhancements, but is backwards compatible with monochrome Game Boys
+            0x80 => Ok(CgbFlag::CgbOnly),
+            // The game works on CGB only (the hardware ignores bit 6, so this really functions the same as $80)
+            0xC0 => Ok(CgbFlag::CgbOnly),
+            _ => Ok(CgbFlag::DmgOnly),
         }
     }
 }

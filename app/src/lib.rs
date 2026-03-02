@@ -56,7 +56,7 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let apu_config = config.audio.get_apu_config();
     let colors = config.video.interface.get_palette_colors(palettes);
 
-    let lcd = Lcd::new(colors, core::cart::header::CgbFlag::NonCgbMode);
+    let lcd = Lcd::new(colors, core::cart::header::CgbFlag::DmgOnly);
     let mut ppu = Ppu::new(lcd);
     ppu.toggle_fps(config.video.interface.show_fps);
     let apu = Apu::new(apu_config);

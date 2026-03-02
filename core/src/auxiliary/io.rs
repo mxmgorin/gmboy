@@ -7,7 +7,7 @@ use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::Interrupts;
 use crate::ppu::lcd::{
-    CGB_PALLETE_END_ADDR, CGB_PALLETE_START_ADDR, LCD_ADDRESS_END, LCD_ADDRESS_START,
+    CGB_OBJ_PRIORITY_MODE_ADDR, CGB_PALLETE_END_ADDR, CGB_PALLETE_START_ADDR, LCD_ADDRESS_END, LCD_ADDRESS_START
 };
 use crate::ppu::vram::VRAM_BANK_NUMBER_ADDR;
 use crate::ppu::Ppu;
@@ -54,13 +54,14 @@ impl Io {
                 self.apu.read(addr)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(addr),
+            CGB_OBJ_PRIORITY_MODE_ADDR => self.ppu.lcd.read_obj_priority_mode(),
             VRAM_BANK_NUMBER_ADDR
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
             | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.cgb_flag {
-                CgbFlag::NonCgbMode => 0xFF,
-                CgbFlag::CgbMode => match addr {
+                CgbFlag::DmgOnly => 0xFF,
+                CgbFlag::CgbOnly => match addr {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
                     WRAM_BANK_NUMBER_ADDR => self.ram.read_wram_bank(),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
@@ -85,12 +86,13 @@ impl Io {
                 self.apu.write(addr, value)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(addr, value),
+            CGB_OBJ_PRIORITY_MODE_ADDR => self.ppu.lcd.write_obj_priority_mode(value),
             VRAM_BANK_NUMBER_ADDR
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
             | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.cgb_flag {
-                CgbFlag::CgbMode => match addr {
+                CgbFlag::CgbOnly => match addr {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
                     WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
