@@ -245,7 +245,7 @@ impl TryFrom<u8> for CgbFlag {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0x80 => Ok(CgbFlag::CgbMode),
-            0xC0 => Ok(CgbFlag::NonCgbMode),
+            0xC0 => Ok(CgbFlag::CgbMode),
             _ => Ok(CgbFlag::NonCgbMode),
         }
     }
