@@ -10,7 +10,7 @@ pub enum GbModel {
 
 impl Default for GbModel {
     fn default() -> Self {
-        GbModel::Dmg
+        GbModel::Auto
     }
 }
 

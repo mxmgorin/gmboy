@@ -40,7 +40,11 @@ impl Bus {
     pub fn load_cart(&mut self, cart: Cart, model: GbModel) {
         self.cart = cart;
         self.flat_mem = None;
-        self.io.ppu.lcd.cgb_flag = self.detect_cgb_flag(model);
+        self.adjust_model(model);
+    }
+
+    pub fn adjust_model(&mut self, model: GbModel) {
+        self.io.ppu.lcd.set_cgb_flag(self.detect_cgb_flag(model));
     }
 
     /// Creates with just array as memory. Use only for tests.

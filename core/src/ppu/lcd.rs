@@ -94,6 +94,15 @@ impl Lcd {
     }
 
     #[inline(always)]
+    pub fn set_cgb_flag(&mut self, flag: CgbFlag) {
+        self.obj_priority_mode = match flag {
+            CgbFlag::CgbOnly => 0x0,
+            CgbFlag::DmgOnly => 0x1,
+        };
+        self.cgb_flag = flag;
+    }
+
+    #[inline(always)]
     pub fn read_obj_priority_mode(&self) -> u8 {
         self.obj_priority_mode
     }
