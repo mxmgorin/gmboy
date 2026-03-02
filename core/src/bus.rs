@@ -15,7 +15,6 @@ pub struct Bus {
     pub cart: Cart,
     pub io: Io,
     pub dma: Dma,
-    model: GbModel,
     flat_mem: Option<Vec<u8>>,
 }
 
@@ -26,30 +25,28 @@ impl Bus {
             io: self.io.clone(),
             flat_mem: self.flat_mem.clone(),
             dma: self.dma.clone(),
-            model: self.model,
         }
     }
 
-    pub fn new(cart: Cart, io: Io, model: GbModel) -> Self {
+    pub fn new(cart: Cart, io: Io) -> Self {
         Self {
             cart,
             io,
             flat_mem: None,
             dma: Default::default(),
-            model,
         }
     }
 
-    pub fn load_cart(&mut self, cart: Cart) {
+    pub fn load_cart(&mut self, cart: Cart, model: GbModel) {
         self.cart = cart;
         self.flat_mem = None;
-        self.io.ppu.lcd.cgb_flag = self.get_cgb_flag();
+        self.io.ppu.lcd.cgb_flag = self.detect_cgb_flag(model);
     }
 
     /// Creates with just array as memory. Use only for tests.
     pub fn with_bytes(bytes: Vec<u8>, io: Io) -> Self {
         let cart = Cart::empty();
-        let mut obj = Self::new(cart, io, GbModel::Dmg);
+        let mut obj = Self::new(cart, io);
         obj.flat_mem = Some(bytes);
 
         obj
@@ -78,7 +75,7 @@ impl Bus {
                 self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => self.io.read(address, self.get_cgb_flag()),
+            0xFF00..=0xFF7F => self.io.read(address),
             0xFF80..=0xFFFE => self.io.ram.read_hram(address),
             0xFFFF => self.io.interrupts.ie,
         }
@@ -112,15 +109,15 @@ impl Bus {
                 self.io.ppu.oam_ram.write(address, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => self.io.write(address, value, self.get_cgb_flag()),
+            0xFF00..=0xFF7F => self.io.write(address, value),
             0xFF80..=0xFFFE => self.io.ram.write_hram(address, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
     }
 
     #[inline(always)]
-    pub fn get_cgb_flag(&self) -> CgbFlag {
-        match self.model {
+    pub fn detect_cgb_flag(&self, model: GbModel) -> CgbFlag {
+        match model {
             GbModel::Auto => self.cart.data.cgb_flag,
             GbModel::Dmg => CgbFlag::NonCgbMode,
             GbModel::Cgb => CgbFlag::CgbMode,

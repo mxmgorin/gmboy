@@ -44,7 +44,7 @@ impl Io {
     }
 
     #[inline(always)]
-    pub fn read(&self, addr: u16, cgb_flag: CgbFlag) -> u8 {
+    pub fn read(&self, addr: u16) -> u8 {
         match addr {
             0xFF00 => self.joypad.get_byte(),
             0xFF01 => self.serial.sb,
@@ -58,7 +58,7 @@ impl Io {
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
-            | WRAM_BANK_NUMBER_ADDR => match cgb_flag {
+            | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.cgb_flag {
                 CgbFlag::NonCgbMode => 0xFF,
                 CgbFlag::CgbMode => match addr {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
@@ -75,7 +75,7 @@ impl Io {
     }
 
     #[inline(always)]
-    pub fn write(&mut self, addr: u16, value: u8, cgb_flag: CgbFlag) {
+    pub fn write(&mut self, addr: u16, value: u8) {
         match addr {
             0xFF00 => self.joypad.set_byte(value),
             0xFF01 => self.serial.sb = value,
@@ -89,7 +89,7 @@ impl Io {
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
-            | WRAM_BANK_NUMBER_ADDR => match cgb_flag {
+            | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.cgb_flag {
                 CgbFlag::CgbMode => match addr {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
                     WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),

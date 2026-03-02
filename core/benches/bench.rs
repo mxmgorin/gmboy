@@ -1,6 +1,3 @@
-use core::emu::config::GbModel;
-use core::ppu::vram::VRAM_BANK_SIZE;
-use std::hint::black_box;
 use core::apu::Apu;
 use core::auxiliary::clock::Clock;
 use core::auxiliary::timer::Timer;
@@ -13,9 +10,11 @@ use core::ppu::oam::OAM_ADDR_START;
 use core::ppu::oam::OAM_ENTRIES_COUNT;
 use core::ppu::vram::VideoRam;
 use core::ppu::vram::VRAM_ADDR_START;
+use core::ppu::vram::VRAM_BANK_SIZE;
 use core::ppu::Ppu;
 use core::read_bytes;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
+use std::hint::black_box;
 use std::path::PathBuf;
 
 pub fn get_cart() -> Cart {
@@ -25,12 +24,12 @@ pub fn get_cart() -> Cart {
 }
 
 pub fn new_bus() -> Bus {
-Bus::new(get_cart(), Default::default(), GbModel::Dmg)
+    Bus::new(get_cart(), Default::default())
 }
 
 pub fn new_cpu(cart: Option<Cart>) -> Cpu {
     let bus = if let Some(cart) = cart {
-        Bus::new(cart, Default::default(), GbModel::Dmg)
+        Bus::new(cart, Default::default())
     } else {
         Bus::with_bytes(vec![0; 100000], Default::default())
     };
@@ -189,7 +188,10 @@ fn criterion_benchmark(c: &mut Criterion) {
             VideoRam::default,
             |mut vram| {
                 for i in 0..5_000_000 {
-                    vram.write((i % VRAM_BANK_SIZE) as u16 + VRAM_ADDR_START, (i & 0xFF) as u8);
+                    vram.write(
+                        (i % VRAM_BANK_SIZE) as u16 + VRAM_ADDR_START,
+                        (i & 0xFF) as u8,
+                    );
                 }
             },
             BatchSize::SmallInput,

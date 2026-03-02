@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use core::auxiliary::clock::Clock;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::fs;
 use std::path::PathBuf;
@@ -18,7 +18,12 @@ pub fn run_mooneye_rom(
     run_mooneye_rom_path(path, timeout)
 }
 
-pub fn run_mooneye_dir_roms(dir_path: PathBuf, take: usize, skip: usize, timeout: Duration) -> HashMap<PathBuf, Result<(), String>> {
+pub fn run_mooneye_dir_roms(
+    dir_path: PathBuf,
+    take: usize,
+    skip: usize,
+    timeout: Duration,
+) -> HashMap<PathBuf, Result<(), String>> {
     let dir = fs::read_dir(dir_path).unwrap();
 
     let roms: Vec<_> = dir
@@ -43,7 +48,7 @@ pub fn run_mooneye_dir_roms(dir_path: PathBuf, take: usize, skip: usize, timeout
 
 pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), String> {
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default(), core::emu::config::GbModel::Auto);
+    let bus = Bus::new(cart, Default::default());
     let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();

@@ -146,14 +146,18 @@ impl Emu {
     }
 
     pub fn load_cart(&mut self, cart: Cart) {
-        let lcd = Lcd::new(
-            self.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette.current_colors,
-            self.runtime.cpu.clock.bus.get_cgb_flag(),
-        );
+        let dmg_palette = &self.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette;
+        let cgb_flag = self
+            .runtime
+            .cpu
+            .clock
+            .bus
+            .detect_cgb_flag(self.config.model);
+        let lcd = Lcd::new(dmg_palette.current_colors, cgb_flag);
         let ppu = Ppu::new(lcd);
         let apu = Apu::new(self.runtime.cpu.clock.bus.io.apu.config.clone());
         let io = Io::new(ppu, apu);
-        let bus = Bus::new(cart, io, self.config.model);
+        let bus = Bus::new(cart, io);
         let clock = Clock::new(bus);
         self.runtime.cpu = Cpu::new(clock);
 
