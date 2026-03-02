@@ -34,7 +34,7 @@ pub fn get_bgw_tile_addr(tile_idx: u8, map_y: u8, data_area: u16) -> u16 {
 }
 
 #[inline(always)]
-pub fn normalize_bgw_tile_idx(tile_idx: u8, data_area: u16) -> u8 {
+pub fn normalize_bgw_tile_index(tile_idx: u8, data_area: u16) -> u8 {
     if data_area == 0x8800 {
         return tile_idx.wrapping_add(128);
     }
@@ -156,27 +156,32 @@ impl PixelFetcher {
         let control = lcd.control;
 
         if control.is_bgw_enabled() {
-            let (map_y, tile_idx) =
-                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, lcd, vram) {
-                    self.bgw_fetched_data.is_window = true;
+            let (map_y, tile_map_addr) = if let Some(tile_map_addr) =
+                lcd.window.get_tile_map_addr(self.fetch_x as u16, lcd)
+            {
+                self.bgw_fetched_data.is_window = true;
+                let map_y = lcd.ly.wrapping_add(lcd.window.y);
 
-                    (lcd.ly.wrapping_add(lcd.window.y), tile_idx)
-                } else {
-                    let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
-                    let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                    let addr = control.get_bg_map_area()
-                        + (map_x as u16 / TILE_WIDTH)
-                        + ((map_y as u16 / TILE_HEIGHT) * 32);
-                    self.bgw_fetched_data.is_window = false;
+                (map_y, tile_map_addr)
+            } else {
+                let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
+                let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
+                let tile_map_addr = control.get_bg_map_area()
+                    + (map_x as u16 / TILE_WIDTH)
+                    + ((map_y as u16 / TILE_HEIGHT) * 32);
+                self.bgw_fetched_data.is_window = false;
 
-                    (map_y, vram.read(addr))
-                };
+                (map_y, tile_map_addr)
+            };
 
+            self.bgw_fetched_data.cgb_flags = vram.read_from_bank(1, tile_map_addr).into();
+            let tile_index = vram.read(tile_map_addr);
             let data_area = control.get_bgw_data_area();
-            let tile_idx = normalize_bgw_tile_idx(tile_idx, data_area);
-            let addr = get_bgw_tile_addr(tile_idx, map_y, data_area);
-            self.bgw_fetched_data.tile_line = vram.read_tile_line(addr);
-            self.bgw_fetched_data.cgb_flags = vram.read_from_bank(1, addr).into();
+            let tile_index = normalize_bgw_tile_index(tile_index, data_area);
+            let tile_data_addr = get_bgw_tile_addr(tile_index, map_y, data_area);
+            let vram_bank = self.bgw_fetched_data.cgb_flags.read_cgb_vram_bank();
+            self.bgw_fetched_data.tile_line =
+                vram.read_tile_line_from_bank(vram_bank, tile_data_addr);
         }
 
         if control.is_obj_enabled() {

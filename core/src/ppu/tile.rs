@@ -259,7 +259,7 @@ impl TileFlags {
     /// 0 = Fetch tile from VRAM bank 0, 1 = Fetch tile from VRAM bank 1
     #[inline(always)]
     pub fn read_cgb_vram_bank(&self) -> u8 {
-        self.0 & 0b0000_1000
+        (self.0 & 0b0000_1000) >> 3
     }
 
     /// 0 = OBP0, 1 = OBP1. Only for Sprites
