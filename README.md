@@ -153,5 +153,6 @@ This project makes use of the following resources:
 - [SM83 Tests](https://github.com/SingleStepTests/sm83) - CPU instruction tests
 - [GB Test ROMs](https://github.com/retrio/gb-test-roms) - general accuracy tests
 - [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite) - general accuracy tests
-- [DMG acid2 Test](https://github.com/mattcurrie/dmg-acid2) - PPU testing
+- [DMG acid2 test](https://github.com/mattcurrie/dmg-acid2) - PPU testing for DMG
+- [CGB acid2 test](https://github.com/mattcurrie/cgb-acid2) - PPU testing for CGB
 - [SameBoy](https://github.com/LIJI32/SameBoy) - shaders (modified for compatibility with GLES)
