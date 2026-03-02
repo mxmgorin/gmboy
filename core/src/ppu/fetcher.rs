@@ -117,8 +117,8 @@ impl PixelFetcher {
             return true; // nothing to push
         }
 
-        let obj_enabled = lcd.control.is_obj_enabled();
-        let bg_enabled = lcd.control.is_bgw_enabled();
+        let lcdc_obj_enabled = lcd.control.is_obj_enabled();
+        let lcdc_bg_enabled = lcd.control.is_bgw_enabled();
         let bg_cgb_flags = self.bgw_fetched_data.cgb_flags;
         let is_x_flip = bg_cgb_flags.is_x_flip();
 
@@ -130,25 +130,18 @@ impl PixelFetcher {
                 bit,
             );
 
-            let color = if obj_enabled {
-                // If the BG color index is 0, the OBJ will always have priority;
-                // If LCDC bit 0 is clear, the OBJ will always have priority;
-                // If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority
-                // Otherwise, BG will have priority.
-                let obj_priority = bg_color_index == 0
-                    || (lcd.cgb_flag == CgbFlag::CgbMode
-                        && (bg_enabled || !bg_cgb_flags.is_bgw_priority()));
+            let color = if lcdc_obj_enabled {
                 let sprite_color = self
                     .sprite_fetcher
-                    .get_color(lcd, self.fifo_x, obj_priority);
+                    .get_color(lcd, self.fifo_x, bg_color_index, bg_cgb_flags);
 
                 if let Some(sprite_color) = sprite_color {
                     sprite_color
                 } else {
-                    lcd.get_bgw_color(bg_color_index, bg_enabled, bg_cgb_flags)
+                    lcd.get_bgw_color(bg_color_index, lcdc_bg_enabled, bg_cgb_flags)
                 }
             } else {
-                lcd.get_bgw_color(bg_color_index, bg_enabled, bg_cgb_flags)
+                lcd.get_bgw_color(bg_color_index, lcdc_bg_enabled, bg_cgb_flags)
             };
 
             self.pixel_fifo.push(color);

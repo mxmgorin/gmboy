@@ -2,7 +2,8 @@ use crate::cart::header::CgbFlag;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
-    get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
+    get_color_index, TileFlags, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
+    TILE_SET_DATA_1_START,
 };
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
@@ -145,12 +146,18 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn get_color(&self, lcd: &Lcd, fifo_x: u8, obj_priority: bool) -> Option<PixelColor> {
+    pub fn get_color(
+        &self,
+        lcd: &Lcd,
+        fifo_x: u8,
+        bg_color_index: usize,
+        bg_flags: TileFlags,
+    ) -> Option<PixelColor> {
         let scroll_x = lcd.scroll_x;
 
         for i in 0..self.fetched_sprites_count {
-            let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
-            let sprite_x = self.calc_sprite_x(sprite.oam.x, scroll_x);
+            let obj = unsafe { self.fetched_sprites.get_unchecked(i) };
+            let sprite_x = self.calc_sprite_x(obj.oam.x, scroll_x);
 
             if sprite_x.wrapping_add(8) < fifo_x {
                 continue; // Skip past sprites
@@ -161,24 +168,70 @@ impl SpriteFetcher {
                 continue; // Out of sprite range
             }
 
-            let bit = if sprite.oam.flags.is_x_flip() {
+            let bit = if obj.oam.flags.is_x_flip() {
                 7 - offset
             } else {
                 offset
             };
 
-            let color_index = get_color_index(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
+            let color_index = get_color_index(obj.tile_line.byte1, obj.tile_line.byte2, bit);
 
-            if color_index == 0 {
-                continue; // Transparent
-            }
-
-            if !sprite.oam.flags.is_bgw_priority() || obj_priority {
-                let color = lcd.get_obj_color(sprite.oam.flags, color_index);
+            if is_show_obj(lcd, bg_color_index, bg_flags, color_index, obj.oam.flags) {
+                let color = lcd.get_obj_color(obj.oam.flags, color_index);
                 return Some(color);
             }
         }
 
         None
+    }
+}
+
+#[inline(always)]
+pub fn is_show_obj(
+    lcd: &Lcd,
+    bg_color_index: usize,
+    bg_flags: TileFlags,
+    obj_color_index: usize,
+    obj_flags: TileFlags,
+) -> bool {
+    // Transparent
+    if obj_color_index == 0 {
+        return false;
+    }
+
+    // BG color 0 is always transparent for priority
+    if bg_color_index == 0 {
+        return true;
+    }
+
+    match lcd.cgb_flag {
+        CgbFlag::NonCgbMode => {
+            if obj_flags.is_bgw_priority() {
+                return false;
+            }
+
+            true
+        }
+
+        // In CGB mode:
+        // If the BG color index is 0, the OBJ will always have priority;
+        // If LCDC bit 0 is clear, the OBJ will always have priority;
+        // If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority
+        // Otherwise, BG will have priority.
+        CgbFlag::CgbMode => {
+            if !lcd.control.is_bgw_enabled() {
+                return true;
+            }
+
+            if bg_flags.is_bgw_priority() {
+                return false;
+            }
+
+            if obj_flags.is_bgw_priority() {
+                return false;
+            }
+
+            true
+        }
     }
 }

@@ -279,6 +279,7 @@ impl TileFlags {
     }
 
     /// Is BG and Window color indices 1–3 are drawn over this OBJ
+    /// OAM Attributes bit 7 will grant OBJ priority when clear, not when set.
     #[inline(always)]
     pub fn is_bgw_priority(&self) -> bool {
         (self.0 & 0b1000_0000) != 0 // Bit 7
