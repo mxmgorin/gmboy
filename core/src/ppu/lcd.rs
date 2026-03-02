@@ -200,6 +200,7 @@ impl LcdControl {
     pub fn is_bgw_enabled(&self) -> bool {
         get_bit_flag(self.byte, 0)
     }
+
     #[inline(always)]
     pub fn is_obj_enabled(&self) -> bool {
         get_bit_flag(self.byte, 1)

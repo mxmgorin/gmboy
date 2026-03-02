@@ -227,7 +227,7 @@ impl TryFrom<u8> for DestinationCode {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CgbFlag {
     CgbMode,
     NonCgbMode,

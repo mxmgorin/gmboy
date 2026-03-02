@@ -1,7 +1,7 @@
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
-    get_color_idx, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
+    get_color_index, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
 };
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
@@ -140,12 +140,7 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn get_sprite_color(
-        &self,
-        lcd: &Lcd,
-        fifo_x: u8,
-        bg_color_index: usize,
-    ) -> Option<PixelColor> {
+    pub fn get_color(&self, lcd: &Lcd, fifo_x: u8, obj_priority: bool) -> Option<PixelColor> {
         let scroll_x = lcd.scroll_x;
 
         for i in 0..self.fetched_sprites_count {
@@ -167,14 +162,14 @@ impl SpriteFetcher {
                 offset
             };
 
-            let color_idx = get_color_idx(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
+            let color_index = get_color_index(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
 
-            if color_idx == 0 {
+            if color_index == 0 {
                 continue; // Transparent
             }
 
-            if !sprite.oam.flags.is_bgw_priority() || bg_color_index == 0 {
-                let color = lcd.get_obj_color(sprite.oam.flags, color_idx);
+            if !sprite.oam.flags.is_bgw_priority() || obj_priority {
+                let color = lcd.get_obj_color(sprite.oam.flags, color_index);
                 return Some(color);
             }
         }

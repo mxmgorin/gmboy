@@ -1,8 +1,9 @@
+use crate::cart::header::CgbFlag;
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprites::SpriteFetcher;
 use crate::ppu::tile::{
-    get_color_idx, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
+    get_color_index, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
 };
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
@@ -117,31 +118,37 @@ impl PixelFetcher {
         }
 
         let obj_enabled = lcd.control.is_obj_enabled();
-        let bgw_enabled = lcd.control.is_bgw_enabled();
+        let bg_enabled = lcd.control.is_bgw_enabled();
+        let bg_cgb_flags = self.bgw_fetched_data.cgb_flags;
+        let is_x_flip = bg_cgb_flags.is_x_flip();
 
         for bit in 0..TILE_BITS_COUNT {
-            let bit = if self.bgw_fetched_data.cgb_flags.is_x_flip() {
-                7 - bit
-            } else {
-                bit
-            };
-            let bgw_color_idx = get_color_idx(
+            let bit = if is_x_flip { 7 - bit } else { bit };
+            let bg_color_index = get_color_index(
                 self.bgw_fetched_data.tile_line.byte1,
                 self.bgw_fetched_data.tile_line.byte2,
                 bit,
             );
 
             let color = if obj_enabled {
-                if let Some(sprite_pixel) =
-                    self.sprite_fetcher
-                        .get_sprite_color(lcd, self.fifo_x, bgw_color_idx)
-                {
-                    sprite_pixel
+                // If the BG color index is 0, the OBJ will always have priority;
+                // If LCDC bit 0 is clear, the OBJ will always have priority;
+                // If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority
+                // Otherwise, BG will have priority.
+                let obj_priority = bg_color_index == 0
+                    || (lcd.cgb_flag == CgbFlag::CgbMode
+                        && (bg_enabled || !bg_cgb_flags.is_bgw_priority()));
+                let sprite_color = self
+                    .sprite_fetcher
+                    .get_color(lcd, self.fifo_x, obj_priority);
+
+                if let Some(sprite_color) = sprite_color {
+                    sprite_color
                 } else {
-                    lcd.get_bgw_color(bgw_color_idx, bgw_enabled, self.bgw_fetched_data.cgb_flags)
+                    lcd.get_bgw_color(bg_color_index, bg_enabled, bg_cgb_flags)
                 }
             } else {
-                lcd.get_bgw_color(bgw_color_idx, bgw_enabled, self.bgw_fetched_data.cgb_flags)
+                lcd.get_bgw_color(bg_color_index, bg_enabled, bg_cgb_flags)
             };
 
             self.pixel_fifo.push(color);
