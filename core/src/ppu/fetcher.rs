@@ -162,7 +162,9 @@ impl PixelFetcher {
     fn fetch_tile(&mut self, lcd: &Lcd, vram: &VideoRam) {
         let control = lcd.control;
 
-        if control.is_bgw_enabled() {
+        // In CGB when LCDC bit 0 = 0, BG and Window are still drawn
+        // But OBJ always has priority over BG,
+        if control.is_bgw_enabled() || lcd.cgb_flag == CgbFlag::CgbMode {
             let (map_y, tile_map_addr) = if let Some(tile_map_addr) =
                 lcd.window.get_tile_map_addr(self.fetch_x as u16, lcd)
             {
