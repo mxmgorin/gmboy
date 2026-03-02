@@ -1,3 +1,4 @@
+use crate::cart::header::CgbFlag;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
@@ -40,22 +41,25 @@ impl SpriteFetcher {
             if ram_entry.y <= cur_y && ram_entry.y + sprite_height > cur_y {
                 let mut inserted = false;
 
-                // Iterate through sorted list to insert at correct position
-                for i in 0..line_sprites_count {
-                    let current_entry = unsafe { self.line_sprites.get_unchecked(i) };
+                // No sorting in CGB mode
+                if lcd.cgb_flag == CgbFlag::NonCgbMode {
+                    // Iterate through sorted list to insert at correct position
+                    for i in 0..line_sprites_count {
+                        let added_entry = unsafe { self.line_sprites.get_unchecked(i) };
 
-                    if ram_entry.x < current_entry.x && ram_entry.x != current_entry.x {
-                        // Sort by X first, then by OAM index if X is the same
-                        for j in (i..line_sprites_count).rev() {
-                            unsafe {
-                                *self.line_sprites.get_unchecked_mut(j + 1) =
-                                    *self.line_sprites.get_unchecked(j)
+                        if ram_entry.x < added_entry.x && ram_entry.x != added_entry.x {
+                            // Sort by X first, then by OAM index if X is the same
+                            for j in (i..line_sprites_count).rev() {
+                                unsafe {
+                                    *self.line_sprites.get_unchecked_mut(j + 1) =
+                                        *self.line_sprites.get_unchecked(j)
+                                }
                             }
-                        }
 
-                        unsafe { *self.line_sprites.get_unchecked_mut(i) = *ram_entry };
-                        inserted = true;
-                        break;
+                            unsafe { *self.line_sprites.get_unchecked_mut(i) = *ram_entry };
+                            inserted = true;
+                            break;
+                        }
                     }
                 }
 
@@ -83,8 +87,8 @@ impl SpriteFetcher {
         let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
         let sprite_height = lcd.control.get_obj_height();
 
-        for idx in 0..self.line_sprites_count {
-            let oam = unsafe { *self.line_sprites.get_unchecked(idx) };
+        for i in 0..self.line_sprites_count {
+            let oam = unsafe { *self.line_sprites.get_unchecked(i) };
             let sp_x = self.calc_sprite_x(oam.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x.wrapping_add(8))
