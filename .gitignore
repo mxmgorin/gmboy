@@ -22,7 +22,6 @@ Cargo.lock
 
 .vscode
 
-/roms/*
 docs/
 
 /android/build

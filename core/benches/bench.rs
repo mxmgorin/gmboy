@@ -15,10 +15,11 @@ use core::ppu::Ppu;
 use core::read_bytes;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::hint::black_box;
-use std::path::PathBuf;
 
 pub fn get_cart() -> Cart {
-    let path = PathBuf::from("benches").join("roms").join("cpu_instrs.gb");
+    let mut path = std::env::current_dir().unwrap();
+    path.pop();
+    let path = path.join("roms").join("cpu_instrs.gb");
 
     Cart::new(read_bytes(&path).unwrap()).unwrap()
 }
