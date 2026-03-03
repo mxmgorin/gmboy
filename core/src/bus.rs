@@ -1,4 +1,4 @@
-use crate::auxiliary::dma::Dma;
+use crate::auxiliary::dma::{Dma, VramDma, VRAM_DMA_ADDR_END, VRAM_DMA_ADDR_START};
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::{WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
 use crate::cart::header::CgbFlag;
@@ -15,6 +15,7 @@ pub struct Bus {
     pub cart: Cart,
     pub io: Io,
     pub dma: Dma,
+    pub vram_dma: VramDma,
     flat_mem: Option<Vec<u8>>,
 }
 
@@ -25,6 +26,7 @@ impl Bus {
             io: self.io.clone(),
             flat_mem: self.flat_mem.clone(),
             dma: self.dma.clone(),
+            vram_dma: self.vram_dma.clone(),
         }
     }
 
@@ -34,6 +36,7 @@ impl Bus {
             io,
             flat_mem: None,
             dma: Default::default(),
+            vram_dma: Default::default(),
         };
         obj.update_model(model);
 
@@ -90,29 +93,32 @@ impl Bus {
                 self.io.ppu.oam_ram.read(address)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => self.io.read(address),
+            0xFF00..=0xFF7F => match address {
+                VRAM_DMA_ADDR_START..VRAM_DMA_ADDR_END => VramDma::read(self),
+                _ => self.io.read(address),
+            },
             0xFF80..=0xFFFE => self.io.ram.read_hram(address),
             0xFFFF => self.io.interrupts.ie,
         }
     }
 
-    pub fn write(&mut self, address: u16, value: u8) {
+    pub fn write(&mut self, addr: u16, value: u8) {
         #[cfg(debug_assertions)]
         if let Some(test_bytes) = self.flat_mem.as_mut() {
-            test_bytes[address as usize] = value;
+            test_bytes[addr as usize] = value;
             return;
         }
 
-        if address == LCD_DMA_ADDRESS {
+        if addr == LCD_DMA_ADDRESS {
             self.dma.start(value);
         }
 
-        match address {
-            0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(address, value),
-            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(address, value),
-            0xC000..=0xDFFF => self.io.ram.write_wram(address, value),
+        match addr {
+            0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(addr, value),
+            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(addr, value),
+            0xC000..=0xDFFF => self.io.ram.write_wram(addr, value),
             0xE000..=0xFDFF => {
-                let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
+                let mirrored_addr = addr - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
                 self.io.ram.write_wram(mirrored_addr, value);
             }
@@ -121,11 +127,14 @@ impl Bus {
                     return;
                 }
 
-                self.io.ppu.oam_ram.write(address, value)
+                self.io.ppu.oam_ram.write(addr, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => self.io.write(address, value),
-            0xFF80..=0xFFFE => self.io.ram.write_hram(address, value),
+            0xFF00..=0xFF7F => match addr {
+                VRAM_DMA_ADDR_START..=VRAM_DMA_ADDR_END => VramDma::write(self, addr, value),
+                _ => self.io.write(addr, value),
+            },
+            0xFF80..=0xFFFE => self.io.ram.write_hram(addr, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
     }
