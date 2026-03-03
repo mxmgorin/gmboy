@@ -15,10 +15,6 @@ use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use std::{mem, thread};
 
-const CYCLES_PER_SECOND: usize = 4_194_304;
-const NANOS_PER_SECOND: usize = 1_000_000_000;
-const T_CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
-
 pub trait EmuAudioCallback {
     fn update(&mut self, output: &[f32], runtime: &EmuRuntime);
 }
@@ -114,8 +110,7 @@ impl Emu {
         self.prev_speed_multiplier = speed_multiplier;
 
         let emulated_duration_ns =
-            (self.runtime.cpu.clock.get_t_cycles() as f64 * T_CYCLE_DURATION_NS / speed_multiplier)
-                .round() as u64;
+            (self.runtime.cpu.clock.calc_elapsed_nanos() / speed_multiplier).round() as u64;
 
         Duration::from_nanos(emulated_duration_ns)
     }

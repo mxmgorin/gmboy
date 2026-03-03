@@ -29,6 +29,7 @@ pub struct Io {
     pub apu: Apu,
     pub ppu: Ppu,
     pub ram: Ram,
+    pub cgb_speed: CgbSpeed,
 }
 
 impl Io {
@@ -41,6 +42,7 @@ impl Io {
             ram: Ram::default(),
             ppu,
             apu,
+            cgb_speed: CgbSpeed::default(),
         }
     }
 
@@ -55,6 +57,10 @@ impl Io {
                 self.apu.read(addr)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(addr),
+            0xFF4D => match self.ppu.lcd.model {
+                GbModel::Dmg => 0xFF,
+                GbModel::Cgb => self.cgb_speed.read(),
+            },
             CGB_OBJ_PRIORITY_MODE_ADDR => match self.ppu.lcd.model {
                 GbModel::Cgb => self.ppu.lcd.read_obj_priority_mode(),
                 GbModel::Dmg => 0xFF,
@@ -90,6 +96,7 @@ impl Io {
                 self.apu.write(addr, value)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(addr, value),
+            0xFF4D => self.cgb_speed.write(value),
             CGB_OBJ_PRIORITY_MODE_ADDR => self.ppu.lcd.write_obj_priority_mode(value),
             VRAM_BANK_NUMBER_ADDR
             | 0xFF50
@@ -154,4 +161,42 @@ pub enum IoAddress {
     Background,
     WRAMBankSelect,
     Unused,
+}
+
+/// KEY1/SPD (CGB Mode only): Prepare speed switch
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CgbSpeed {
+    pub double_speed: bool,   // bit 7
+    pub prepare_switch: bool, // bit 0
+}
+
+impl CgbSpeed {
+    pub fn toggle(&mut self) {
+        // Only toggle if a switch was prepared (KEY1 bit 0)
+        if !self.prepare_switch {
+            return;
+        }
+
+        self.double_speed = !self.double_speed;
+        self.prepare_switch = false;
+    }
+
+    pub fn read(&self) -> u8 {
+        let mut value = 0x7E; // bits 1–6 always read as 1
+
+        if self.double_speed {
+            value |= 0x80; // bit 7
+        }
+
+        if self.prepare_switch {
+            value |= 0x01; // bit 0
+        }
+
+        value
+    }
+
+    pub fn write(&mut self, value: u8) {
+        // Only bit 0 is writable
+        self.prepare_switch = (value & 0x01) != 0;
+    }
 }
