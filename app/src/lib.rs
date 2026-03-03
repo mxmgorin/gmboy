@@ -12,7 +12,7 @@ use core::ppu::lcd::Lcd;
 use core::ppu::Ppu;
 use palette::LcdPalette;
 use std::fs::File;
-use std::io::{Read};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
@@ -56,18 +56,15 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
     let apu_config = config.audio.get_apu_config();
     let colors = config.video.interface.get_palette_colors(palettes);
 
-    let lcd = Lcd::new(colors, core::cart::header::CgbFlag::DmgOnly);
+    let lcd = Lcd::new(colors, core::emu::config::GbModel::default());
     let mut ppu = Ppu::new(lcd);
     ppu.toggle_fps(config.video.interface.show_fps);
     let apu = Apu::new(apu_config);
-    let bus = Bus::new(Cart::empty(), Io::new(ppu, apu));
+    let bus = Bus::new(Cart::empty(), Io::new(ppu, apu), emu_config.model);
 
     #[cfg(feature = "debug")]
     {
-        let debugger = core::debugger::Debugger::new(
-            core::debugger::CpuLogType::Asm,
-            false,
-        );
+        let debugger = core::debugger::Debugger::new(core::debugger::CpuLogType::Asm, false);
         return Emu::new(emu_config.clone(), EmuRuntime::new(bus)).unwrap();
     }
 
@@ -160,7 +157,11 @@ pub fn get_base_dir() -> PathBuf {
 pub struct AppConfigFile;
 
 impl AppConfigFile {
-    pub fn write_save_state_file(state: &EmuSaveState, name: &str, suffix: &str) -> Result<(), String> {
+    pub fn write_save_state_file(
+        state: &EmuSaveState,
+        name: &str,
+        suffix: &str,
+    ) -> Result<(), String> {
         let path = AppConfigFile::get_save_state_path(name, suffix);
 
         if let Some(parent) = Path::new(&path).parent() {

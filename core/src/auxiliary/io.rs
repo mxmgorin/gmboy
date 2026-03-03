@@ -4,8 +4,8 @@ use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::ram::{Ram, WRAM_BANK_NUMBER_ADDR};
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
-use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::Interrupts;
+use crate::emu::config::GbModel;
 use crate::ppu::lcd::{
     CGB_OBJ_PRIORITY_MODE_ADDR, CGB_PALLETE_END_ADDR, CGB_PALLETE_START_ADDR, LCD_ADDRESS_END,
     LCD_ADDRESS_START,
@@ -55,17 +55,17 @@ impl Io {
                 self.apu.read(addr)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(addr),
-            CGB_OBJ_PRIORITY_MODE_ADDR => match self.ppu.lcd.cgb_flag {
-                CgbFlag::CgbOnly => self.ppu.lcd.read_obj_priority_mode(),
-                CgbFlag::DmgOnly => 0xFF,
+            CGB_OBJ_PRIORITY_MODE_ADDR => match self.ppu.lcd.model {
+                GbModel::Cgb => self.ppu.lcd.read_obj_priority_mode(),
+                GbModel::Dmg => 0xFF,
             },
             VRAM_BANK_NUMBER_ADDR
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
-            | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.cgb_flag {
-                CgbFlag::DmgOnly => 0xFF,
-                CgbFlag::CgbOnly => match addr {
+            | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.model {
+                GbModel::Dmg => 0xFF,
+                GbModel::Cgb => match addr {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
                     WRAM_BANK_NUMBER_ADDR => self.ram.read_wram_bank(),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
@@ -95,8 +95,8 @@ impl Io {
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
-            | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.cgb_flag {
-                CgbFlag::CgbOnly => match addr {
+            | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.model {
+                GbModel::Cgb => match addr {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
                     WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {

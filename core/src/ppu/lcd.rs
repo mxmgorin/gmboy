@@ -1,5 +1,5 @@
-use crate::cart::header::CgbFlag;
 use crate::cpu::interrupts::{InterruptType, Interrupts};
+use crate::emu::config::GbModel;
 use crate::ppu::tile::TileFlags;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
@@ -55,7 +55,7 @@ pub struct Lcd {
     pub window: LcdWindow,
     pub dmg_palette: DmgPalette,
     pub cgb_palette: CgbPalette,
-    pub cgb_flag: CgbFlag,
+    pub model: GbModel,
 }
 
 impl Default for Lcd {
@@ -67,13 +67,13 @@ impl Default for Lcd {
                 PixelColor::from_hex_rgba("555555FF"),
                 PixelColor::from_hex_rgba("000000FF"),
             ],
-            CgbFlag::DmgOnly,
+            GbModel::default(),
         )
     }
 }
 
 impl Lcd {
-    pub fn new(colors: [PixelColor; 4], cgb_flag: CgbFlag) -> Self {
+    pub fn new(colors: [PixelColor; 4], model: GbModel) -> Self {
         Self {
             control: LcdControl::default(),
             status: LcdStatus::default(),
@@ -85,21 +85,21 @@ impl Lcd {
             window: LcdWindow::default(),
             dmg_palette: DmgPalette::new(colors),
             cgb_palette: CgbPalette::default(),
-            obj_priority_mode: match cgb_flag {
-                CgbFlag::CgbOnly => 0x0,
-                CgbFlag::DmgOnly => 0x1,
+            obj_priority_mode: match model {
+                GbModel::Cgb => 0x0,
+                GbModel::Dmg => 0x1,
             },
-            cgb_flag,
+            model,
         }
     }
 
     #[inline(always)]
-    pub fn set_cgb_flag(&mut self, flag: CgbFlag) {
-        self.obj_priority_mode = match flag {
-            CgbFlag::CgbOnly => 0x0,
-            CgbFlag::DmgOnly => 0x1,
+    pub fn set_model(&mut self, model: GbModel) {
+        self.obj_priority_mode = match model {
+            GbModel::Cgb => 0x0,
+            GbModel::Dmg => 0x1,
         };
-        self.cgb_flag = flag;
+        self.model = model;
     }
 
     #[inline(always)]
@@ -119,24 +119,24 @@ impl Lcd {
 
     #[inline(always)]
     pub fn get_obj_color(&self, flags: TileFlags, color_idx: usize) -> PixelColor {
-        match self.cgb_flag {
-            CgbFlag::CgbOnly => {
+        match self.model {
+            GbModel::Cgb => {
                 self.cgb_palette
                     .get_color(flags.read_cgb_palette(), color_idx, true)
             }
-            CgbFlag::DmgOnly => self
+            GbModel::Dmg => self
                 .dmg_palette
                 .get_obj_color(flags.is_second_dmg_palette(), color_idx),
         }
     }
 
     pub fn get_bgw_color(&self, color_idx: usize, enabled: bool, flags: TileFlags) -> PixelColor {
-        match self.cgb_flag {
-            CgbFlag::CgbOnly => {
+        match self.model {
+            GbModel::Cgb => {
                 self.cgb_palette
                     .get_color(flags.read_cgb_palette(), color_idx, false)
             }
-            CgbFlag::DmgOnly => self.dmg_palette.get_gbw_color(color_idx, enabled),
+            GbModel::Dmg => self.dmg_palette.get_gbw_color(color_idx, enabled),
         }
     }
 

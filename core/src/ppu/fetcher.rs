@@ -1,4 +1,4 @@
-use crate::cart::header::CgbFlag;
+use crate::emu::config::GbModel;
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprites::SpriteFetcher;
@@ -157,7 +157,7 @@ impl PixelFetcher {
 
         // In CGB when LCDC bit 0 = 0, BG and Window are still drawn
         // But OBJ always has priority over BG,
-        if control.is_bgw_enabled() || lcd.cgb_flag == CgbFlag::CgbOnly {
+        if control.is_bgw_enabled() || lcd.model == GbModel::Cgb {
             let (map_y, tile_map_addr) = if let Some(tile_map_addr) =
                 lcd.window.get_tile_map_addr(self.fetch_x as u16, lcd)
             {

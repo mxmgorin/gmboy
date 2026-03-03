@@ -25,12 +25,12 @@ pub fn get_cart() -> Cart {
 }
 
 pub fn new_bus() -> Bus {
-    Bus::new(get_cart(), Default::default())
+    Bus::new(get_cart(), Default::default(), None)
 }
 
 pub fn new_cpu(cart: Option<Cart>) -> Cpu {
     let bus = if let Some(cart) = cart {
-        Bus::new(cart, Default::default())
+        Bus::new(cart, Default::default(), None)
     } else {
         Bus::with_bytes(vec![0; 100000], Default::default())
     };

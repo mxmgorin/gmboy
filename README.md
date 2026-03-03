@@ -31,18 +31,29 @@ ___
   </a>
 </p>
 
-`GMBoy` is a Game Boy and Game Boy Color emulator written in Rust, using SDL2 for video, audio, and input.
+`GMBoy` is a cycle-accurate Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
 
 Here are some highlights:
 
 - Cross-platform: Windows, macOS, Linux, Android; SDL2 with optional OpenGL
 - Modern features: save states, filters and shaders, re-bindable controls, and more
-- Accuracy-focused: sub-instruction CPU timing, dot-based PPU, and synchronized components; validated against Blargg and Mooneye test suites
+- Accuracy-focused: sub-instruction CPU timing, dot-level PPU pipeline, and cycle-synchronized subsystems; validated against Blargg and Mooneye test suites
 - Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on H700)
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
 📥 [Download the latest release](https://github.com/mxmgorin/gmboy/releases/latest)
+
+## Accuracy & Testing
+
+The emulator is continuously validated against community made test suites:
+
+- **SM83 JSON Tests** – Passes all 356,000 tests  
+- **Blargg Tests** – Passes all tests
+- **Mooneye Tests** – Passes most of the tests
+- **PPU Tests** - Passes the DMG-acid2 and CGB-acid2
+
+For the complete results, see [TESTS.md](./TESTS.md).
 
 ## Features
 
@@ -75,15 +86,6 @@ Here are some highlights:
 - **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
 - **Battery-backed SRAM**: Persistent save data
 - **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
-
-## Accuracy & Testing
-
-The emulator is continuously validated against comunity made test suites:
-- **SM83 JSON Tests** – Passes all 356,000 tests  
-- **Blargg Tests** – Passes all tests
-- **Mooneye Acceptance Tests** – Passes most of the tests
-
-For the complete, up-to-date results, see [TESTS.md](./TESTS.md).
 
 ## Default controls
 

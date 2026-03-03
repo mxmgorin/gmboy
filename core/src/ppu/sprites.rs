@@ -1,4 +1,4 @@
-use crate::cart::header::CgbFlag;
+use crate::emu::config::GbModel;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
@@ -204,8 +204,8 @@ pub fn is_show_obj(
         return true;
     }
 
-    match lcd.cgb_flag {
-        CgbFlag::DmgOnly => {
+    match lcd.model {
+        GbModel::Dmg => {
             if obj_flags.is_bgw_priority() {
                 return false;
             }
@@ -218,7 +218,7 @@ pub fn is_show_obj(
         // If LCDC bit 0 is clear, the OBJ will always have priority;
         // If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority
         // Otherwise, BG will have priority.
-        CgbFlag::CgbOnly => {
+        GbModel::Cgb => {
             if !lcd.control.is_bgw_enabled() {
                 return true;
             }

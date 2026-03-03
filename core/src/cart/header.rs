@@ -229,6 +229,7 @@ impl TryFrom<u8> for DestinationCode {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CgbFlag {
+    CgbEnhanced,
     CgbOnly,
     DmgOnly,
 }
@@ -245,7 +246,7 @@ impl TryFrom<u8> for CgbFlag {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             // The game supports CGB enhancements, but is backwards compatible with monochrome Game Boys
-            0x80 => Ok(CgbFlag::CgbOnly),
+            0x80 => Ok(CgbFlag::CgbEnhanced),
             // The game works on CGB only (the hardware ignores bit 6, so this really functions the same as $80)
             0xC0 => Ok(CgbFlag::CgbOnly),
             _ => Ok(CgbFlag::DmgOnly),

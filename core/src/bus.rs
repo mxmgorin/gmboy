@@ -28,29 +28,38 @@ impl Bus {
         }
     }
 
-    pub fn new(cart: Cart, io: Io) -> Self {
-        Self {
+    pub fn new(cart: Cart, io: Io, model: Option<GbModel>) -> Self {
+        let mut obj = Self {
             cart,
             io,
             flat_mem: None,
             dma: Default::default(),
+        };
+        if let Some(model) = model {
+            obj.set_model(model);
+        }
+
+        obj
+    }
+
+    pub fn load_cart(&mut self, cart: Cart, model: Option<GbModel>) {
+        self.cart = cart;
+        self.flat_mem = None;
+        if let Some(model) = model {
+            self.set_model(model);
+        } else {
+            self.set_model(self.detect_gb_model());
         }
     }
 
-    pub fn load_cart(&mut self, cart: Cart, model: GbModel) {
-        self.cart = cart;
-        self.flat_mem = None;
-        self.adjust_model(model);
-    }
-
-    pub fn adjust_model(&mut self, model: GbModel) {
-        self.io.ppu.lcd.set_cgb_flag(self.detect_cgb_flag(model));
+    pub fn set_model(&mut self, model: GbModel) {
+        self.io.ppu.lcd.set_model(model);
     }
 
     /// Creates with just array as memory. Use only for tests.
     pub fn with_bytes(bytes: Vec<u8>, io: Io) -> Self {
         let cart = Cart::empty();
-        let mut obj = Self::new(cart, io);
+        let mut obj = Self::new(cart, io, None);
         obj.flat_mem = Some(bytes);
 
         obj
@@ -120,11 +129,11 @@ impl Bus {
     }
 
     #[inline(always)]
-    pub fn detect_cgb_flag(&self, model: GbModel) -> CgbFlag {
-        match model {
-            GbModel::Auto => self.cart.data.cgb_flag,
-            GbModel::Dmg => CgbFlag::DmgOnly,
-            GbModel::Cgb => CgbFlag::CgbOnly,
+    pub fn detect_gb_model(&self) -> GbModel {
+        match self.cart.data.cgb_flag {
+            CgbFlag::CgbEnhanced => GbModel::Cgb,
+            CgbFlag::DmgOnly => GbModel::Dmg,
+            CgbFlag::CgbOnly => GbModel::Cgb,
         }
     }
 }
