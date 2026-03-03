@@ -16,6 +16,7 @@ pub struct Cpu {
     pub is_halted: bool,
     pub clock: Clock,
     pub step_ctx: StepCtx,
+    pub stop_m_cycles: u32,
 }
 
 impl Cpu {
@@ -26,6 +27,7 @@ impl Cpu {
             step_ctx: StepCtx::default(),
             is_halted: false,
             clock,
+            stop_m_cycles: 0
         }
     }
 
@@ -98,6 +100,11 @@ impl Cpu {
 
     #[inline]
     pub fn step(&mut self) {
+        if self.stop_m_cycles > 0 {
+            self.stop_m_cycles -= 1;
+            return;
+        }
+
         self.handle_interrupts();
 
         if self.is_halted {
