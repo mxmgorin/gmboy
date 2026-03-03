@@ -1,3 +1,4 @@
+use crate::auxiliary::dma::VramDma;
 use crate::bus::Bus;
 use crate::{auxiliary::dma::Dma, cpu::CPU_CLOCK_SPEED};
 use serde::{Deserialize, Serialize};
@@ -69,7 +70,12 @@ impl Clock {
                 continue;
             }
 
-            self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
+            let hblank_started = self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
+
+            if hblank_started {
+                VramDma::on_hblank(&mut self.bus);
+            }
+
             self.bus.io.apu.tick();
         }
     }

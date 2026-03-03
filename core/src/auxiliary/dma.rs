@@ -102,7 +102,7 @@ impl VramDma {
         }
     }
 
-    pub fn tick_hblank(bus: &mut Bus) {
+    pub fn on_hblank(bus: &mut Bus) {
         if !bus.vram_dma.active || !bus.vram_dma.hblank_mode {
             return;
         }

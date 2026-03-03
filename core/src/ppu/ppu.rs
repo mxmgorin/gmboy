@@ -54,15 +54,17 @@ impl Ppu {
     }
 
     #[inline(always)]
-    pub fn tick(&mut self, interrupts: &mut Interrupts) {
+    pub fn tick(&mut self, interrupts: &mut Interrupts) -> bool {
         self.line_ticks += 1;
 
         match self.lcd.status.get_ppu_mode() {
             PpuMode::HBlank => self.mode_hblank(interrupts),
             PpuMode::VBlank => self.mode_vblank(interrupts),
             PpuMode::Oam => self.mode_oam(),
-            PpuMode::Transfer => self.mode_transfer(interrupts),
+            PpuMode::Transfer => return self.mode_transfer(interrupts),
         }
+
+        false
     }
 
     #[inline(always)]
@@ -84,7 +86,7 @@ impl Ppu {
     }
 
     #[inline(always)]
-    fn mode_transfer(&mut self, interrupts: &mut Interrupts) {
+    fn mode_transfer(&mut self, interrupts: &mut Interrupts) -> bool {
         let color = self
             .fetcher
             .fetch(&self.lcd, &self.video_ram, self.line_ticks);
@@ -95,7 +97,10 @@ impl Ppu {
 
         if self.buffer.count() >= LCD_X_RES as usize {
             self.set_mode_hblank(interrupts);
+            return true;
         }
+
+        false
     }
 
     #[inline(always)]
