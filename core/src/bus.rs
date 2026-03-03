@@ -70,18 +70,18 @@ impl Bus {
         obj
     }
 
-    pub fn read(&self, address: u16) -> u8 {
+    pub fn read(&self, addr: u16) -> u8 {
         #[cfg(debug_assertions)]
         if let Some(test_bytes) = self.flat_mem.as_ref() {
-            return test_bytes[address as usize];
+            return test_bytes[addr as usize];
         }
 
-        match address {
-            0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(address),
-            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(address),
-            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.io.ram.read_wram(address),
+        match addr {
+            0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(addr),
+            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(addr),
+            WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.io.ram.read_wram(addr),
             0xE000..=0xFDFF => {
-                let mirrored_addr = address - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
+                let mirrored_addr = addr - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
 
                 self.io.ram.read_wram(mirrored_addr)
             }
@@ -90,14 +90,20 @@ impl Bus {
                     return 0xFF;
                 }
 
-                self.io.ppu.oam_ram.read(address)
+                self.io.ppu.oam_ram.read(addr)
             }
             0xFEA0..=0xFEFF => 0xFF,
-            0xFF00..=0xFF7F => match address {
-                VRAM_DMA_ADDR_START..VRAM_DMA_ADDR_END => VramDma::read(self),
-                _ => self.io.read(address),
-            },
-            0xFF80..=0xFFFE => self.io.ram.read_hram(address),
+            0xFF00..=0xFF7F => {
+                if addr >= VRAM_DMA_ADDR_START
+                    && addr <= VRAM_DMA_ADDR_END
+                    && self.io.ppu.lcd.model == GbModel::Cgb
+                {
+                    return VramDma::read(self);
+                }
+
+                self.io.read(addr)
+            }
+            0xFF80..=0xFFFE => self.io.ram.read_hram(addr),
             0xFFFF => self.io.interrupts.ie,
         }
     }
@@ -130,10 +136,17 @@ impl Bus {
                 self.io.ppu.oam_ram.write(addr, value)
             }
             0xFEA0..=0xFEFF => {}
-            0xFF00..=0xFF7F => match addr {
-                VRAM_DMA_ADDR_START..=VRAM_DMA_ADDR_END => VramDma::write(self, addr, value),
-                _ => self.io.write(addr, value),
-            },
+            0xFF00..=0xFF7F => {
+                if addr >= VRAM_DMA_ADDR_START
+                    && addr <= VRAM_DMA_ADDR_END
+                    && self.io.ppu.lcd.model == GbModel::Cgb
+                {
+                    VramDma::write(self, addr, value);
+                    return;
+                }
+
+                self.io.write(addr, value);
+            }
             0xFF80..=0xFFFE => self.io.ram.write_hram(addr, value),
             0xFFFF => self.io.interrupts.ie = value,
         }
