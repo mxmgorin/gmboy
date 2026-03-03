@@ -1,5 +1,5 @@
+use crate::{cpu::flags::Flags, emu::config::GbModel};
 use serde::{Deserialize, Serialize};
-use crate::cpu::flags::Flags;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Registers {
@@ -109,10 +109,13 @@ impl RegisterType {
     }
 }
 
-impl Default for Registers {
-    fn default() -> Self {
+impl Registers {
+    pub fn new(model: GbModel) -> Self {
         Self {
-            a: 0x01,
+            a: match model {
+                GbModel::Dmg => 0x01,
+                GbModel::Cgb => 0x11,
+            },
             flags: Flags::default(),
             b: 0x00,
             c: 0x13,
@@ -124,9 +127,7 @@ impl Default for Registers {
             pc: 0x100,
         }
     }
-}
 
-impl Registers {
     #[inline(always)]
     pub fn get_register<const R: u8>(&mut self) -> u16 {
         let r = RegisterType::from_u8(R);
@@ -256,7 +257,7 @@ mod tests {
 
     #[test]
     fn test_get_flag_z() {
-        let mut regs = Registers::default();
+        let mut regs = Registers::new(crate::emu::config::GbModel::Dmg);
         regs.flags.set_byte(0b10000000);
         assert!(regs.flags.get_z());
 
@@ -266,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_get_flag_c() {
-        let mut regs = Registers::default();
+        let mut regs = Registers::new(crate::emu::config::GbModel::Dmg);
         regs.flags.set_byte(0b00010000);
         assert!(regs.flags.get_c());
 
@@ -276,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_set_flags() {
-        let mut regs = Registers::default();
+        let mut regs = Registers::new(crate::emu::config::GbModel::Dmg);
         regs.flags.set_byte(0b10000000);
 
         regs.flags.set_c_raw(true);

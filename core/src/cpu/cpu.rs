@@ -9,7 +9,7 @@ pub struct StepCtx {
     pub opcode: u8,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Cpu {
     pub registers: Registers,
     pub enabling_ime: bool,
@@ -21,7 +21,7 @@ pub struct Cpu {
 impl Cpu {
     pub fn new(clock: Clock) -> Self {
         Self {
-            registers: Default::default(),
+            registers: Registers::new(clock.bus.io.ppu.lcd.model),
             enabling_ime: false,
             step_ctx: StepCtx::default(),
             is_halted: false,

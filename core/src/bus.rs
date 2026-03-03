@@ -35,9 +35,7 @@ impl Bus {
             flat_mem: None,
             dma: Default::default(),
         };
-        if let Some(model) = model {
-            obj.set_model(model);
-        }
+        obj.update_model(model);
 
         obj
     }
@@ -45,6 +43,10 @@ impl Bus {
     pub fn load_cart(&mut self, cart: Cart, model: Option<GbModel>) {
         self.cart = cart;
         self.flat_mem = None;
+        self.update_model(model);
+    }
+
+    fn update_model(&mut self, model: Option<GbModel>) {
         if let Some(model) = model {
             self.set_model(model);
         } else {
@@ -52,7 +54,7 @@ impl Bus {
         }
     }
 
-    pub fn set_model(&mut self, model: GbModel) {
+    fn set_model(&mut self, model: GbModel) {
         self.io.ppu.lcd.set_model(model);
     }
 
