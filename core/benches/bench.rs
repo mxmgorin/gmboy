@@ -1,4 +1,3 @@
-use std::hint::black_box;
 use core::apu::Apu;
 use core::auxiliary::clock::Clock;
 use core::auxiliary::timer::Timer;
@@ -11,21 +10,27 @@ use core::ppu::oam::OAM_ADDR_START;
 use core::ppu::oam::OAM_ENTRIES_COUNT;
 use core::ppu::vram::VideoRam;
 use core::ppu::vram::VRAM_ADDR_START;
-use core::ppu::vram::VRAM_SIZE;
+use core::ppu::vram::VRAM_BANK_SIZE;
 use core::ppu::Ppu;
 use core::read_bytes;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use std::path::PathBuf;
+use std::hint::black_box;
 
 pub fn get_cart() -> Cart {
-    let path = PathBuf::from("benches").join("roms").join("cpu_instrs.gb");
+    let mut path = std::env::current_dir().unwrap();
+    path.pop();
+    let path = path.join("roms").join("cpu_instrs.gb");
 
     Cart::new(read_bytes(&path).unwrap()).unwrap()
 }
 
+pub fn new_bus() -> Bus {
+    Bus::new(get_cart(), Default::default(), None)
+}
+
 pub fn new_cpu(cart: Option<Cart>) -> Cpu {
     let bus = if let Some(cart) = cart {
-        Bus::new(cart, Default::default())
+        Bus::new(cart, Default::default(), None)
     } else {
         Bus::with_bytes(vec![0; 100000], Default::default())
     };
@@ -38,7 +43,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("cpu_step_500_000", |b| {
         b.iter_batched(
             || {
-                let bus = Bus::new(get_cart(), Default::default());
+                let bus = new_bus();
                 let clock = Clock::new(bus);
 
                 Cpu::new(clock)
@@ -77,7 +82,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("fetch_execute_prefix_500_000", |b| {
         b.iter_batched(
             || {
-                let bus = Bus::new(get_cart(), Default::default());
+                let bus = new_bus();
                 let clock = Clock::new(bus);
 
                 Cpu::new(clock)
@@ -112,7 +117,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter_batched(
             || {
                 let ppu = Ppu::default();
-                let bus = Bus::new(get_cart(), Default::default());
+                let bus = new_bus();
                 (ppu, bus)
             },
             |(mut ppu, mut bus)| {
@@ -184,7 +189,10 @@ fn criterion_benchmark(c: &mut Criterion) {
             VideoRam::default,
             |mut vram| {
                 for i in 0..5_000_000 {
-                    vram.write((i % VRAM_SIZE) as u16 + VRAM_ADDR_START, (i & 0xFF) as u8);
+                    vram.write(
+                        (i % VRAM_BANK_SIZE) as u16 + VRAM_ADDR_START,
+                        (i & 0xFF) as u8,
+                    );
                 }
             },
             BatchSize::SmallInput,

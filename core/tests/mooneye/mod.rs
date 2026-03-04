@@ -1,4 +1,9 @@
-use crate::mooneye::util::{assert_result, assert_result_path, print_result_path, run_mooneye_dir_roms, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory};
+use crate::mooneye::util::{
+    assert_result, assert_result_path, run_mooneye_dir_roms, run_mooneye_rom, run_mooneye_rom_path,
+    MooneyeRomCategory,
+};
+use crate::print_result_path;
+use core::emu::config::GbModel;
 use std::path::PathBuf;
 use std::time::Duration;
 
@@ -10,7 +15,7 @@ const TIMEOUT: Duration = Duration::from_secs(15);
 fn test_oam_dma_basic() {
     let name = "basic";
     let category = MooneyeRomCategory::OamDma.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -19,7 +24,7 @@ fn test_oam_dma_basic() {
 fn test_oam_dma_reg_read() {
     let name = "reg_read";
     let category = MooneyeRomCategory::OamDma.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -28,7 +33,7 @@ fn test_oam_dma_reg_read() {
 fn test_oam_dma_sources_gs() {
     let name = "sources-GS";
     let category = MooneyeRomCategory::OamDma.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -37,7 +42,7 @@ fn test_oam_dma_sources_gs() {
 fn test_oam_dma_restart() {
     let name = "oam_dma_restart";
     let category = MooneyeRomCategory::OamDma.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -46,7 +51,7 @@ fn test_oam_dma_restart() {
 fn test_oam_dma_start() {
     let name = "oam_dma_start";
     let category = MooneyeRomCategory::OamDma.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -55,7 +60,7 @@ fn test_oam_dma_start() {
 fn test_oam_dma_timing() {
     let name = "oam_dma_timing";
     let category = MooneyeRomCategory::OamDma.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -64,7 +69,7 @@ fn test_oam_dma_timing() {
 fn test_bits_mem_oam() {
     let name = "mem_oam";
     let category = MooneyeRomCategory::Bits.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -73,7 +78,7 @@ fn test_bits_mem_oam() {
 fn test_bits_reg_f() {
     let name = "reg_f";
     let category = MooneyeRomCategory::Bits.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -82,7 +87,7 @@ fn test_bits_reg_f() {
 fn test_bits_unused_hwio_gs() {
     let name = "unused_hwio-GS";
     let category = MooneyeRomCategory::Bits.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -91,7 +96,7 @@ fn test_bits_unused_hwio_gs() {
 fn test_instr_daa() {
     let name = "daa";
     let category = MooneyeRomCategory::Instr.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -100,7 +105,7 @@ fn test_instr_daa() {
 fn test_interrupts_ie_push() {
     let name = "ie_push";
     let category = MooneyeRomCategory::Interrupts.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -109,7 +114,7 @@ fn test_interrupts_ie_push() {
 fn test_timer_div_write() {
     let name = "div_write";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -118,7 +123,7 @@ fn test_timer_div_write() {
 fn test_timer_tim00() {
     let name = "tim00";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -127,7 +132,7 @@ fn test_timer_tim00() {
 fn test_timer_tim00_div_trigger() {
     let name = "tim00_div_trigger";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -136,7 +141,7 @@ fn test_timer_tim00_div_trigger() {
 fn test_timer_tim01() {
     let name = "tim01";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -145,7 +150,7 @@ fn test_timer_tim01() {
 fn test_timer_tim01_div_trigger() {
     let name = "tim01_div_trigger";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -154,7 +159,7 @@ fn test_timer_tim01_div_trigger() {
 fn test_timer_tim10() {
     let name = "tim10";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -163,7 +168,7 @@ fn test_timer_tim10() {
 fn test_timer_tim10_div_trigger() {
     let name = "tim10_div_trigger";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -172,7 +177,7 @@ fn test_timer_tim10_div_trigger() {
 fn test_timer_tim11() {
     let name = "tim11";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -181,7 +186,7 @@ fn test_timer_tim11() {
 fn test_timer_tim11_div_trigger() {
     let name = "tim11_div_trigger";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -190,7 +195,7 @@ fn test_timer_tim11_div_trigger() {
 fn test_timer_tima_reload() {
     let name = "tima_reload";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -199,7 +204,7 @@ fn test_timer_tima_reload() {
 fn test_timer_rapid_toggle() {
     let name = "rapid_toggle";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -208,7 +213,7 @@ fn test_timer_rapid_toggle() {
 fn test_timer_tima_write_reloading() {
     let name = "tima_write_reloading";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -217,7 +222,7 @@ fn test_timer_tima_write_reloading() {
 fn test_timer_tma_write_reloading() {
     let name = "tma_write_reloading";
     let category = MooneyeRomCategory::Timer.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -226,7 +231,7 @@ fn test_timer_tma_write_reloading() {
 fn test_add_sp_e_timing() {
     let name = "add_sp_e_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -235,7 +240,7 @@ fn test_add_sp_e_timing() {
 fn test_call_cc_timing() {
     let name = "call_cc_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -244,7 +249,7 @@ fn test_call_cc_timing() {
 fn test_call_cc_timing2() {
     let name = "call_cc_timing2";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -253,7 +258,7 @@ fn test_call_cc_timing2() {
 fn test_call_timing() {
     let name = "call_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -262,7 +267,7 @@ fn test_call_timing() {
 fn test_call_timing2() {
     let name = "call_timing2";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -271,7 +276,7 @@ fn test_call_timing2() {
 fn test_di_timing_gs() {
     let name = "di_timing-GS";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -280,7 +285,7 @@ fn test_di_timing_gs() {
 fn test_div_timing() {
     let name = "div_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -289,7 +294,7 @@ fn test_div_timing() {
 fn test_ei_timing() {
     let name = "ei_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -298,7 +303,7 @@ fn test_ei_timing() {
 fn test_halt_ime0_ei() {
     let name = "halt_ime0_ei";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -307,7 +312,7 @@ fn test_halt_ime0_ei() {
 fn test_halt_ime0_nointr_timing() {
     let name = "halt_ime0_nointr_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -316,7 +321,7 @@ fn test_halt_ime0_nointr_timing() {
 fn test_halt_ime1_timing() {
     let name = "halt_ime1_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -325,7 +330,7 @@ fn test_halt_ime1_timing() {
 fn test_halt_ime1_timing2_gs() {
     let name = "halt_ime1_timing2-GS";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -334,7 +339,7 @@ fn test_halt_ime1_timing2_gs() {
 fn test_intr_timing() {
     let name = "intr_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -343,7 +348,7 @@ fn test_intr_timing() {
 fn test_jp_cc_timing() {
     let name = "jp_cc_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -352,7 +357,7 @@ fn test_jp_cc_timing() {
 fn test_jp_timing() {
     let name = "jp_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -361,7 +366,7 @@ fn test_jp_timing() {
 fn test_ld_hl_sp_e_timing() {
     let name = "ld_hl_sp_e_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -370,7 +375,7 @@ fn test_ld_hl_sp_e_timing() {
 fn test_pop_timing() {
     let name = "pop_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -379,7 +384,7 @@ fn test_pop_timing() {
 fn test_push_timing() {
     let name = "push_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -388,7 +393,7 @@ fn test_push_timing() {
 fn test_ret_cc_timing() {
     let name = "ret_cc_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -397,7 +402,7 @@ fn test_ret_cc_timing() {
 fn test_ret_timing() {
     let name = "ret_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -406,7 +411,7 @@ fn test_ret_timing() {
 fn test_reti_intr_timing() {
     let name = "reti_intr_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -415,7 +420,7 @@ fn test_reti_intr_timing() {
 fn test_reti_timing() {
     let name = "reti_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -424,7 +429,7 @@ fn test_reti_timing() {
 fn test_rst_timing() {
     let name = "rst_timing";
     let category = MooneyeRomCategory::Timing.into();
-    let result = run_mooneye_rom(name, category, TIMEOUT);
+    let result = run_mooneye_rom(None, name, category, TIMEOUT);
 
     assert_result(name, category, result);
 }
@@ -432,7 +437,7 @@ fn test_rst_timing() {
 #[test]
 fn test_mbc1_bits_bank1() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/bits_bank1.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -440,7 +445,7 @@ fn test_mbc1_bits_bank1() {
 #[test]
 fn test_mbc1_bits_bank2() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/bits_bank2.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -448,7 +453,7 @@ fn test_mbc1_bits_bank2() {
 #[test]
 fn test_mbc1_bits_mode() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/bits_mode.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -456,7 +461,7 @@ fn test_mbc1_bits_mode() {
 #[test]
 fn test_mbc1_bits_ramg() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/bits_ramg.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -464,7 +469,7 @@ fn test_mbc1_bits_ramg() {
 #[test]
 fn test_mbc1_multicart_rom_8mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/multicart_rom_8Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -472,7 +477,7 @@ fn test_mbc1_multicart_rom_8mb() {
 #[test]
 fn test_mbc1_ram_64kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/ram_64kb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -480,7 +485,7 @@ fn test_mbc1_ram_64kb() {
 #[test]
 fn test_mbc1_ram_256kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/ram_256kb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -488,7 +493,7 @@ fn test_mbc1_ram_256kb() {
 #[test]
 fn test_mbc1_rom_1mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_1Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -496,7 +501,7 @@ fn test_mbc1_rom_1mb() {
 #[test]
 fn test_mbc1_rom_2mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_2Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -504,7 +509,7 @@ fn test_mbc1_rom_2mb() {
 #[test]
 fn test_mbc1_rom_4mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_4Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -512,7 +517,7 @@ fn test_mbc1_rom_4mb() {
 #[test]
 fn test_mbc1_rom_8mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_8Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -520,7 +525,7 @@ fn test_mbc1_rom_8mb() {
 #[test]
 fn test_mbc1_rom_16mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_16Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -528,7 +533,7 @@ fn test_mbc1_rom_16mb() {
 #[test]
 fn test_mbc1_rom_512kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc1/rom_512kb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -536,7 +541,7 @@ fn test_mbc1_rom_512kb() {
 #[test]
 fn test_mbc2_bits_ramg() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/bits_ramg.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -544,7 +549,7 @@ fn test_mbc2_bits_ramg() {
 #[test]
 fn test_mbc2_bits_romb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/bits_romb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -552,7 +557,7 @@ fn test_mbc2_bits_romb() {
 #[test]
 fn test_mbc2_bits_unused() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/bits_unused.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -560,7 +565,7 @@ fn test_mbc2_bits_unused() {
 #[test]
 fn test_mbc2_ram() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/ram.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -568,7 +573,7 @@ fn test_mbc2_ram() {
 #[test]
 fn test_mbc2_rom_1mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/rom_1Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -576,7 +581,7 @@ fn test_mbc2_rom_1mb() {
 #[test]
 fn test_mbc2_rom_2mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/rom_2Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -584,7 +589,7 @@ fn test_mbc2_rom_2mb() {
 #[test]
 fn test_mbc2_rom_512kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc2/rom_512kb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -592,7 +597,7 @@ fn test_mbc2_rom_512kb() {
 #[test]
 fn test_mbc5_rom_1mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_1Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -600,7 +605,7 @@ fn test_mbc5_rom_1mb() {
 #[test]
 fn test_mbc5_rom_2mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_2Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -608,7 +613,7 @@ fn test_mbc5_rom_2mb() {
 #[test]
 fn test_mbc5_rom_4mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_4Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -616,7 +621,7 @@ fn test_mbc5_rom_4mb() {
 #[test]
 fn test_mbc5_rom_8mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_8Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -624,7 +629,7 @@ fn test_mbc5_rom_8mb() {
 #[test]
 fn test_mbc5_rom_16mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_16Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -632,7 +637,7 @@ fn test_mbc5_rom_16mb() {
 #[test]
 fn test_mbc5_rom_32mb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_32Mb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -640,7 +645,7 @@ fn test_mbc5_rom_32mb() {
 #[test]
 fn test_mbc5_rom_512kb() {
     let path = PathBuf::from("tests/mooneye/emulator-only/mbc5/rom_512kb.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -648,7 +653,7 @@ fn test_mbc5_rom_512kb() {
 #[test]
 fn test_ei_sequence() {
     let path = PathBuf::from("tests/mooneye/acceptance/other/ei_sequence.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -656,7 +661,7 @@ fn test_ei_sequence() {
 #[test]
 fn test_if_ie_registers() {
     let path = PathBuf::from("tests/mooneye/acceptance/other/if_ie_registers.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -664,7 +669,7 @@ fn test_if_ie_registers() {
 #[test]
 fn test_rapid_di_ei() {
     let path = PathBuf::from("tests/mooneye/acceptance/other/rapid_di_ei.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -673,7 +678,7 @@ fn test_rapid_di_ei() {
 #[test]
 fn test_all_ppu() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu");
-    let results = run_mooneye_dir_roms(path, 1, 0, TIMEOUT);
+    let results = run_mooneye_dir_roms(None, path, 1, 0, TIMEOUT);
     let mut failed = false;
 
     for (path, result) in results.into_iter() {
@@ -688,7 +693,7 @@ fn test_all_ppu() {
 #[test]
 fn test_hblank_ly_scx_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/hblank_ly_scx_timing-GS.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -696,7 +701,7 @@ fn test_hblank_ly_scx_timing_gs() {
 #[test]
 fn test_intr_1_2_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_1_2_timing-GS.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -705,7 +710,7 @@ fn test_intr_1_2_timing_gs() {
 #[test]
 fn test_intr_2_0_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_0_timing.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -714,7 +719,7 @@ fn test_intr_2_0_timing() {
 #[test]
 fn test_intr_2_mode0_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode0_timing.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -723,7 +728,7 @@ fn test_intr_2_mode0_timing() {
 #[test]
 fn test_intr_2_mode0_timing_sprites() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -731,7 +736,7 @@ fn test_intr_2_mode0_timing_sprites() {
 #[test]
 fn test_intr_2_mode3_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode3_timing.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -740,7 +745,7 @@ fn test_intr_2_mode3_timing() {
 #[test]
 fn test_intr_2_oam_ok_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_oam_ok_timing.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -749,7 +754,7 @@ fn test_intr_2_oam_ok_timing() {
 #[test]
 fn test_lcdon_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/lcdon_timing-GS.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -758,7 +763,7 @@ fn test_lcdon_timing_gs() {
 #[test]
 fn test_lcdon_write_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/lcdon_write_timing-GS.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -767,7 +772,7 @@ fn test_lcdon_write_timing_gs() {
 #[test]
 fn test_stat_irq_blocking() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_irq_blocking-GS.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -776,7 +781,7 @@ fn test_stat_irq_blocking() {
 #[test]
 fn test_stat_lyc_onoff() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_lyc_onoff.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
@@ -785,7 +790,15 @@ fn test_stat_lyc_onoff() {
 #[test]
 fn test_vblank_stat_intr_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/vblank_stat_intr-GS.gb");
-    let result = run_mooneye_rom_path(path.clone(), TIMEOUT);
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_misc_boot_regs_cgb() {
+    let path = PathBuf::from("tests/mooneye/misc/boot_regs-cgb.gb");
+    let result = run_mooneye_rom_path(GbModel::Cgb.into(), path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }

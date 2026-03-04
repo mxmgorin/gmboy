@@ -153,13 +153,14 @@ pub fn change_usize(value: usize, delta: i32) -> usize {
 
 pub fn print_cart(cart: &Cart) -> Result<(), String> {
     log::info!(
-        "Cart Loaded:\n\
+        "Cart loaded:\n\
      \t\t\t\t  Title          : {}\n\
      \t\t\t\t  Type           : {:?}\n\
      \t\t\t\t  ROM Size       : {:?}\n\
      \t\t\t\t  ROM bytes      : {}\n\
      \t\t\t\t  RAM Size       : {:?}\n\
      \t\t\t\t  ROM Version    : {:02X}\n\
+     \t\t\t\t  CGB FLAG       : {:?}\n\
      \t\t\t\t  Checksum Valid : {}",
         cart.data.get_title(),
         cart.data.get_cart_type()?,
@@ -167,6 +168,7 @@ pub fn print_cart(cart: &Cart) -> Result<(), String> {
         cart.data.len(),
         cart.data.get_ram_size()?,
         cart.data.get_rom_version(),
+        cart.data.cgb_flag,
         cart.data.checksum_valid()
     );
 

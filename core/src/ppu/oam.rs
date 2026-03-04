@@ -5,6 +5,8 @@ use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
+use crate::ppu::tile::TileFlags;
+
 pub const OAM_ENTRIES_COUNT: usize = 40;
 pub const OAM_ADDR_START: u16 = 0xFE00;
 
@@ -69,7 +71,7 @@ pub struct OamEntry {
     pub y: u8,
     pub x: u8,
     pub tile_index: u8,
-    pub flags: u8,
+    pub flags: TileFlags,
 }
 
 impl OamEntry {
@@ -85,36 +87,6 @@ impl OamEntry {
     fn as_bytes(&self) -> &[u8; 4] {
         // SAFETY: OamEntry is #[repr(C)] with exactly 4 u8 fields, no padding
         unsafe { &*(self as *const OamEntry as *const [u8; 4]) }
-    }
-
-    #[inline(always)]
-    pub fn f_cgb_pn(&self) -> u8 {
-        self.flags & 0b0000_0111 // Extract bits 0-2
-    }
-
-    #[inline(always)]
-    pub fn f_cgb_vram_bank(&self) -> bool {
-        (self.flags & 0b0000_1000) != 0 // Bit 3
-    }
-
-    #[inline(always)]
-    pub fn f_pn(&self) -> bool {
-        (self.flags & 0b0001_0000) != 0 // Bit 4
-    }
-
-    #[inline(always)]
-    pub fn f_x_flip(&self) -> bool {
-        (self.flags & 0b0010_0000) != 0 // Bit 5
-    }
-
-    #[inline(always)]
-    pub fn f_y_flip(&self) -> bool {
-        (self.flags & 0b0100_0000) != 0 // Bit 6
-    }
-
-    #[inline(always)]
-    pub fn f_bgp(&self) -> bool {
-        (self.flags & 0b1000_0000) != 0 // Bit 7
     }
 }
 

@@ -8,13 +8,13 @@ ___
 
 [![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
+[![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
 <!--[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)-->
 [![Build android](https://github.com/mxmgorin/gmboy/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Build windows](https://github.com/mxmgorin/gmboy/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Build macOS](https://github.com/mxmgorin/gmboy/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Build linux](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Build linux arm](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
 
 <!--
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
@@ -31,18 +31,29 @@ ___
   </a>
 </p>
 
-`GMBoy` is a Game Boy emulator written in Rust.
+`GMBoy` is a cycle-accurate Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
 
 Here are some highlights:
 
 - Cross-platform: Windows, macOS, Linux, Android; SDL2 with optional OpenGL
 - Modern features: save states, filters and shaders, re-bindable controls, and more
-- Accuracy-focused: sub-instruction CPU timing, dot-based PPU, and synchronized components; validated against Blargg and Mooneye test suites
-- Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on H700)
+- Accuracy-focused: sub-instruction CPU timing, dot-level PPU pipeline, and cycle-synchronized subsystems; validated against Blargg and Mooneye test suites
+- Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on Allwinner H700)
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
 📥 [Download the latest release](https://github.com/mxmgorin/gmboy/releases/latest)
+
+## Accuracy & Testing
+
+The emulator is continuously validated against community made test suites:
+
+- **SM83 JSON Tests** – Passes all 356,000 tests  
+- **Blargg Tests** – Passes all tests
+- **Mooneye Tests** – Passes most of the tests
+- **PPU Tests** - Passes the DMG-acid2, CGB-acid2, CGB-acid-hell
+
+For the complete results, see [TESTS.md](./TESTS.md).
 
 ## Features
 
@@ -75,15 +86,6 @@ Here are some highlights:
 - **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
 - **Battery-backed SRAM**: Persistent save data
 - **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
-
-## Accuracy & Testing
-
-The emulator is continuously validated against comunity made test suites:
-- **SM83 JSON Tests** – Passes all 356,000 tests  
-- **Blargg Tests** – Passes all tests
-- **Mooneye Acceptance Tests** – Passes most of the tests
-
-For the complete, up-to-date results, see [TESTS.md](./TESTS.md).
 
 ## Default controls
 
@@ -153,5 +155,8 @@ This project makes use of the following resources:
 - [SM83 Tests](https://github.com/SingleStepTests/sm83) - CPU instruction tests
 - [GB Test ROMs](https://github.com/retrio/gb-test-roms) - general accuracy tests
 - [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite) - general accuracy tests
-- [DMG acid2 Test](https://github.com/mattcurrie/dmg-acid2) - PPU testing
+- [DMG acid2 test](https://github.com/mattcurrie/dmg-acid2) - PPU testing for DMG
+- [CGB acid2 test](https://github.com/mattcurrie/cgb-acid2) - PPU testing for CGB
+- [MagenTests](https://github.com/alloncm/MagenTests) - PPU testing for DMG and CGB
+- [Game Boy test roms](https://github.com/c-sp/game-boy-test-roms) - various test roms
 - [SameBoy](https://github.com/LIJI32/SameBoy) - shaders (modified for compatibility with GLES)

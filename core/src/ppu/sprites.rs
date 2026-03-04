@@ -1,7 +1,9 @@
+use crate::emu::config::GbModel;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
-    get_color_idx, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT, TILE_SET_DATA_1_START,
+    get_color_index, TileFlags, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
+    TILE_SET_DATA_1_START,
 };
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
@@ -40,22 +42,25 @@ impl SpriteFetcher {
             if ram_entry.y <= cur_y && ram_entry.y + sprite_height > cur_y {
                 let mut inserted = false;
 
-                // Iterate through sorted list to insert at correct position
-                for i in 0..line_sprites_count {
-                    let current_entry = unsafe { self.line_sprites.get_unchecked(i) };
+                // No sorting in CGB mode
+                if lcd.is_dmg_obj_priority_mode() {
+                    // Iterate through sorted list to insert at correct position
+                    for i in 0..line_sprites_count {
+                        let added_entry = unsafe { self.line_sprites.get_unchecked(i) };
 
-                    if ram_entry.x < current_entry.x && ram_entry.x != current_entry.x {
-                        // Sort by X first, then by OAM index if X is the same
-                        for j in (i..line_sprites_count).rev() {
-                            unsafe {
-                                *self.line_sprites.get_unchecked_mut(j + 1) =
-                                    *self.line_sprites.get_unchecked(j)
+                        if ram_entry.x < added_entry.x && ram_entry.x != added_entry.x {
+                            // Sort by X first, then by OAM index if X is the same
+                            for j in (i..line_sprites_count).rev() {
+                                unsafe {
+                                    *self.line_sprites.get_unchecked_mut(j + 1) =
+                                        *self.line_sprites.get_unchecked(j)
+                                }
                             }
-                        }
 
-                        unsafe { *self.line_sprites.get_unchecked_mut(i) = *ram_entry };
-                        inserted = true;
-                        break;
+                            unsafe { *self.line_sprites.get_unchecked_mut(i) = *ram_entry };
+                            inserted = true;
+                            break;
+                        }
                     }
                 }
 
@@ -83,20 +88,20 @@ impl SpriteFetcher {
         let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
         let sprite_height = lcd.control.get_obj_height();
 
-        for idx in 0..self.line_sprites_count {
-            let oam = unsafe { *self.line_sprites.get_unchecked(idx) };
+        for i in 0..self.line_sprites_count {
+            let oam = unsafe { *self.line_sprites.get_unchecked(i) };
             let sp_x = self.calc_sprite_x(oam.x, scroll_x);
 
             if (sp_x >= fetch_x && sp_x < fetch_x.wrapping_add(8))
                 || (sp_x.wrapping_add(8) >= fetch_x
-                && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
+                    && sp_x.wrapping_add(8) < fetch_x.wrapping_add(8))
             {
                 // need to add
                 let mut tile_y = cur_y
                     .wrapping_sub(oam.y)
                     .wrapping_mul(TILE_LINE_BYTES_COUNT as u8);
 
-                if oam.f_y_flip() {
+                if oam.flags.is_y_flip() {
                     tile_y = sprite_height
                         .wrapping_mul(2)
                         .wrapping_sub(2)
@@ -113,7 +118,8 @@ impl SpriteFetcher {
                 let addr = TILE_SET_DATA_1_START
                     .wrapping_add(tile_index as u16 * TILE_BIT_SIZE)
                     .wrapping_add(tile_y as u16);
-                let tile_line = vram.read_tile_line(addr);
+                let vram_bank = oam.flags.read_cgb_vram_bank();
+                let tile_line = vram.read_tile_line_from_bank(vram_bank, addr);
 
                 unsafe {
                     let sprite = self
@@ -140,17 +146,18 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn get_sprite_color(
+    pub fn get_color(
         &self,
         lcd: &Lcd,
         fifo_x: u8,
         bg_color_index: usize,
+        bg_flags: TileFlags,
     ) -> Option<PixelColor> {
         let scroll_x = lcd.scroll_x;
 
         for i in 0..self.fetched_sprites_count {
-            let sprite = unsafe { self.fetched_sprites.get_unchecked(i) };
-            let sprite_x = self.calc_sprite_x(sprite.oam.x, scroll_x);
+            let obj = unsafe { self.fetched_sprites.get_unchecked(i) };
+            let sprite_x = self.calc_sprite_x(obj.oam.x, scroll_x);
 
             if sprite_x.wrapping_add(8) < fifo_x {
                 continue; // Skip past sprites
@@ -161,31 +168,70 @@ impl SpriteFetcher {
                 continue; // Out of sprite range
             }
 
-            let bit = if sprite.oam.f_x_flip() {
+            let bit = if obj.oam.flags.is_x_flip() {
                 7 - offset
             } else {
                 offset
             };
 
-            let color_idx = get_color_idx(sprite.tile_line.byte1, sprite.tile_line.byte2, bit);
+            let color_index = get_color_index(obj.tile_line.byte1, obj.tile_line.byte2, bit);
 
-            if color_idx == 0 {
-                continue; // Transparent
-            }
-
-            if !sprite.oam.f_bgp() || bg_color_index == 0 {
-                let color = unsafe {
-                    if sprite.oam.f_pn() {
-                        lcd.sp2_colors.get_unchecked(color_idx)
-                    } else {
-                        lcd.sp1_colors.get_unchecked(color_idx)
-                    }
-                };
-
-                return Some(*color);
+            if is_show_obj(lcd, bg_color_index, bg_flags, color_index, obj.oam.flags) {
+                let color = lcd.get_obj_color(obj.oam.flags, color_index);
+                return Some(color);
             }
         }
 
         None
+    }
+}
+
+#[inline(always)]
+pub fn is_show_obj(
+    lcd: &Lcd,
+    bg_color_index: usize,
+    bg_flags: TileFlags,
+    obj_color_index: usize,
+    obj_flags: TileFlags,
+) -> bool {
+    // Transparent
+    if obj_color_index == 0 {
+        return false;
+    }
+
+    // BG color 0 is always transparent for priority
+    if bg_color_index == 0 {
+        return true;
+    }
+
+    match lcd.model {
+        GbModel::Dmg => {
+            if obj_flags.is_bgw_priority() {
+                return false;
+            }
+
+            true
+        }
+
+        // In CGB mode:
+        // If the BG color index is 0, the OBJ will always have priority;
+        // If LCDC bit 0 is clear, the OBJ will always have priority;
+        // If both the BG Attributes and the OAM Attributes have bit 7 clear, the OBJ will have priority
+        // Otherwise, BG will have priority.
+        GbModel::Cgb => {
+            if !lcd.control.is_bgw_enabled() {
+                return true;
+            }
+
+            if bg_flags.is_bgw_priority() {
+                return false;
+            }
+
+            if obj_flags.is_bgw_priority() {
+                return false;
+            }
+
+            true
+        }
     }
 }

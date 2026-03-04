@@ -1,4 +1,4 @@
-use crate::cart::header::{CartHeader, CartType, RamSize, RomSize};
+use crate::cart::header::{CartHeader, CartType, CgbFlag, RamSize, RomSize};
 use crate::cart::mbc::{Mbc, MbcVariant};
 use crate::cart::mbc::{
     RAM_EXTERNAL_END_ADDR, RAM_EXTERNAL_START_ADDR, ROM_BANK_NON_ZERO_END_ADDR,
@@ -147,11 +147,15 @@ impl Cart {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CartData {
     bytes: Box<[u8]>,
+    pub cgb_flag: CgbFlag,
 }
 
 impl CartData {
     pub fn new(bytes: Box<[u8]>) -> Self {
-        Self { bytes }
+        Self {
+            cgb_flag: CartHeader::parse_cgb_flag(&bytes),
+            bytes,
+        }
     }
 
     #[inline(always)]

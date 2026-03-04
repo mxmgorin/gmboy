@@ -15,10 +15,6 @@ use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 use std::{mem, thread};
 
-const CYCLES_PER_SECOND: usize = 4_194_304;
-const NANOS_PER_SECOND: usize = 1_000_000_000;
-const T_CYCLE_DURATION_NS: f64 = NANOS_PER_SECOND as f64 / CYCLES_PER_SECOND as f64;
-
 pub trait EmuAudioCallback {
     fn update(&mut self, output: &[f32], runtime: &EmuRuntime);
 }
@@ -114,8 +110,7 @@ impl Emu {
         self.prev_speed_multiplier = speed_multiplier;
 
         let emulated_duration_ns =
-            (self.runtime.cpu.clock.get_t_cycles() as f64 * T_CYCLE_DURATION_NS / speed_multiplier)
-                .round() as u64;
+            (self.runtime.cpu.clock.calc_elapsed_nanos() / speed_multiplier).round() as u64;
 
         Duration::from_nanos(emulated_duration_ns)
     }
@@ -132,7 +127,7 @@ impl Emu {
     fn push_rewind(&mut self) {
         if self.config.rewind_size > 0 {
             let curr_frame = self.runtime.cpu.clock.bus.io.ppu.current_frame;
-            let diff =  curr_frame.saturating_sub(self.last_rewind_frame);
+            let diff = curr_frame.saturating_sub(self.last_rewind_frame);
 
             if diff >= self.config.rewind_frames {
                 if self.rewind_buffer.len() > self.config.rewind_size {
@@ -146,11 +141,16 @@ impl Emu {
     }
 
     pub fn load_cart(&mut self, cart: Cart) {
-        let lcd = Lcd::new(self.runtime.cpu.clock.bus.io.ppu.lcd.current_colors);
+        let dmg_palette = &self.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette;
+        let lcd = Lcd::new(
+            dmg_palette.current_colors,
+            super::config::GbModel::default(),
+        );
         let ppu = Ppu::new(lcd);
         let apu = Apu::new(self.runtime.cpu.clock.bus.io.apu.config.clone());
         let io = Io::new(ppu, apu);
-        let bus = Bus::new(cart, io);
+        let bus = Bus::new(cart, io, self.config.model);
+
         let clock = Clock::new(bus);
         self.runtime.cpu = Cpu::new(clock);
 

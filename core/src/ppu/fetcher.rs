@@ -1,7 +1,10 @@
+use crate::emu::config::GbModel;
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::sprites::SpriteFetcher;
-use crate::ppu::tile::{get_color_idx, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
+use crate::ppu::tile::{
+    get_color_index, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
+};
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +22,7 @@ const FETCH_FNS: [FetchFn; 5] = [
 pub struct BgwFetchedData {
     pub tile_line: TileLineData,
     pub is_window: bool,
+    pub cgb_flags: TileFlags,
 }
 
 #[inline(always)]
@@ -31,7 +35,7 @@ pub fn get_bgw_tile_addr(tile_idx: u8, map_y: u8, data_area: u16) -> u16 {
 }
 
 #[inline(always)]
-pub fn normalize_bgw_tile_idx(tile_idx: u8, data_area: u16) -> u8 {
+pub fn normalize_bgw_tile_index(tile_idx: u8, data_area: u16) -> u8 {
     if data_area == 0x8800 {
         return tile_idx.wrapping_add(128);
     }
@@ -67,8 +71,9 @@ impl Default for PixelFetcher {
 impl PixelFetcher {
     #[inline(always)]
     pub fn fetch(&mut self, lcd: &Lcd, vram: &VideoRam, line_ticks: usize) -> Option<PixelColor> {
-        // fetch on odd lines
-        if line_ticks & 1 != 0 {
+        // The first four steps take 2 dots each and the fifth step is attempted every dot until it succeeds
+        // Fetch on odd lines.
+        if line_ticks & 1 != 0 || self.fetch_step == FetchStep::Push {
             // SAFETY: we control FETCH_FNS and FetchStep
             unsafe {
                 FETCH_FNS.get_unchecked(self.fetch_step as usize)(self, lcd, vram);
@@ -113,28 +118,31 @@ impl PixelFetcher {
             return true; // nothing to push
         }
 
-        let obj_enabled = lcd.control.is_obj_enabled();
-        let bgw_enabled = lcd.control.is_bgw_enabled();
-        let bg_colors = lcd.bg_colors;
+        let lcdc_obj_enabled = lcd.control.is_obj_enabled();
+        let lcdc_bg_enabled = lcd.control.is_bgw_enabled();
+        let bg_cgb_flags = self.bgw_fetched_data.cgb_flags;
+        let is_x_flip = bg_cgb_flags.is_x_flip();
 
         for bit in 0..TILE_BITS_COUNT {
-            let bgw_color_idx = get_color_idx(
+            let bit = if is_x_flip { 7 - bit } else { bit };
+            let bg_color_index = get_color_index(
                 self.bgw_fetched_data.tile_line.byte1,
                 self.bgw_fetched_data.tile_line.byte2,
                 bit,
             );
 
-            let color = if obj_enabled {
-                if let Some(sprite_pixel) =
+            let color = if lcdc_obj_enabled {
+                let sprite_color =
                     self.sprite_fetcher
-                        .get_sprite_color(lcd, self.fifo_x, bgw_color_idx)
-                {
-                    sprite_pixel
+                        .get_color(lcd, self.fifo_x, bg_color_index, bg_cgb_flags);
+
+                if let Some(sprite_color) = sprite_color {
+                    sprite_color
                 } else {
-                    get_gbw_color(bg_colors, bgw_color_idx, bgw_enabled)
+                    lcd.get_bgw_color(bg_color_index, lcdc_bg_enabled, bg_cgb_flags)
                 }
             } else {
-                get_gbw_color(bg_colors, bgw_color_idx, bgw_enabled)
+                lcd.get_bgw_color(bg_color_index, lcdc_bg_enabled, bg_cgb_flags)
             };
 
             self.pixel_fifo.push(color);
@@ -148,27 +156,42 @@ impl PixelFetcher {
     fn fetch_tile(&mut self, lcd: &Lcd, vram: &VideoRam) {
         let control = lcd.control;
 
-        if control.is_bgw_enabled() {
-            let (map_y, tile_idx) =
-                if let Some(tile_idx) = lcd.window.get_tile_idx(self.fetch_x as u16, lcd, vram) {
-                    self.bgw_fetched_data.is_window = true;
+        // In CGB when LCDC bit 0 = 0, BG and Window are still drawn
+        // But OBJ always has priority over BG,
+        if control.is_bgw_enabled() || lcd.model == GbModel::Cgb {
+            let (map_y, tile_map_addr) = if let Some(tile_map_addr) =
+                lcd.window.get_tile_map_addr(self.fetch_x as u16, lcd)
+            {
+                self.bgw_fetched_data.is_window = true;
+                let map_y = lcd.ly.wrapping_add(lcd.window.y);
 
-                    (lcd.ly.wrapping_add(lcd.window.y), tile_idx)
-                } else {
-                    let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
-                    let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                    let addr = control.get_bg_map_area()
-                        + (map_x as u16 / TILE_WIDTH)
-                        + ((map_y as u16 / TILE_HEIGHT) * 32);
-                    self.bgw_fetched_data.is_window = false;
+                (map_y, tile_map_addr)
+            } else {
+                let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
+                let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
+                let tile_map_addr = control.get_bg_map_area()
+                    + (map_x as u16 / TILE_WIDTH)
+                    + ((map_y as u16 / TILE_HEIGHT) * 32);
+                self.bgw_fetched_data.is_window = false;
 
-                    (map_y, vram.read(addr))
-                };
+                (map_y, tile_map_addr)
+            };
 
+            self.bgw_fetched_data.cgb_flags = vram.read_from_bank(1, tile_map_addr).into();
+            let tile_index = vram.read(tile_map_addr);
             let data_area = control.get_bgw_data_area();
-            let tile_idx = normalize_bgw_tile_idx(tile_idx, data_area);
-            let addr = get_bgw_tile_addr(tile_idx, map_y, data_area);
-            self.bgw_fetched_data.tile_line = vram.read_tile_line(addr);
+            let tile_index = normalize_bgw_tile_index(tile_index, data_area);
+
+            let y_flip = self.bgw_fetched_data.cgb_flags.is_y_flip();
+            let row_in_tile = map_y & 7;
+            let row = if y_flip { 7 - row_in_tile } else { row_in_tile };
+            // Replace map_y's low 3 bits with flipped row
+            let map_y = (map_y & !7) | row;
+
+            let tile_data_addr = get_bgw_tile_addr(tile_index, map_y, data_area);
+            let vram_bank = self.bgw_fetched_data.cgb_flags.read_cgb_vram_bank();
+            self.bgw_fetched_data.tile_line =
+                vram.read_tile_line_from_bank(vram_bank, tile_data_addr);
         }
 
         if control.is_obj_enabled() {
@@ -212,19 +235,8 @@ impl PixelFetcher {
     }
 }
 
-#[inline(always)]
-fn get_gbw_color(colors: [PixelColor; 4], index: usize, enabled: bool) -> PixelColor {
-    if enabled {
-        // SAFETY: always index 0-3
-        unsafe { *colors.get_unchecked(index) }
-    } else {
-        // SAFETY: there is always 4 colors
-        unsafe { *colors.get_unchecked(0) }
-    }
-}
-
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum FetchStep {
     Tile,
     Data0,

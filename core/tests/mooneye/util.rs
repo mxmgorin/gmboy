@@ -1,24 +1,32 @@
-use std::collections::HashMap;
 use core::auxiliary::clock::Clock;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
+use core::emu::config::GbModel;
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 pub fn run_mooneye_rom(
+    model: Option<GbModel>,
     name: &str,
     category: Option<MooneyeRomCategory>,
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_mooneye_rom_path(&format!("{name}.gb"), category);
 
-    run_mooneye_rom_path(path, timeout)
+    run_mooneye_rom_path(model, path, timeout)
 }
 
-pub fn run_mooneye_dir_roms(dir_path: PathBuf, take: usize, skip: usize, timeout: Duration) -> HashMap<PathBuf, Result<(), String>> {
+pub fn run_mooneye_dir_roms(
+    model: Option<GbModel>,
+    dir_path: PathBuf,
+    take: usize,
+    skip: usize,
+    timeout: Duration,
+) -> HashMap<PathBuf, Result<(), String>> {
     let dir = fs::read_dir(dir_path).unwrap();
 
     let roms: Vec<_> = dir
@@ -34,16 +42,16 @@ pub fn run_mooneye_dir_roms(dir_path: PathBuf, take: usize, skip: usize, timeout
     let mut results = HashMap::with_capacity(roms.len());
 
     for path in roms.into_iter().skip(skip).take(take) {
-        let result = run_mooneye_rom_path(path.clone(), timeout);
+        let result = run_mooneye_rom_path(model, path.clone(), timeout);
         results.insert(path, result);
     }
 
     results
 }
 
-pub fn run_mooneye_rom_path(path: PathBuf, timeout: Duration) -> Result<(), String> {
+pub fn run_mooneye_rom_path(model: Option<GbModel>, path: PathBuf, timeout: Duration) -> Result<(), String> {
     let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default());
+    let bus = Bus::new(cart, Default::default(), model);
     let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
@@ -88,16 +96,6 @@ pub fn assert_result_path(path: PathBuf, result: Result<(), String>) {
 
     if let Err(err) = result {
         panic!("{path}: FAILED\n{err}")
-    } else {
-        println!("{path}: OK");
-    }
-}
-
-pub fn print_result_path(path: PathBuf, result: Result<(), String>) {
-    let path = path.to_string_lossy().to_string();
-
-    if let Err(err) = result {
-        eprint!("{path}: FAILED\n{err}")
     } else {
         println!("{path}: OK");
     }

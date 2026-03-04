@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Clone)]
 pub struct CartHeader {
     /// 0x0100-0x0103: Execution start point
@@ -48,7 +50,7 @@ impl CartHeader {
             } else {
                 None
             },
-            cgb_flag: rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::NonCGBMode),
+            cgb_flag: Self::parse_cgb_flag(rom_bytes),
             new_licensee_code: rom_bytes[0x0144..0x0146].into(),
             sgb_flag: rom_bytes[0x0146],
             cart_type: Self::parse_cart_type(rom_bytes)?,
@@ -92,6 +94,10 @@ impl CartHeader {
 
     pub fn get_rom_version(rom_bytes: &[u8]) -> u8 {
         rom_bytes[0x014C]
+    }
+
+    pub fn parse_cgb_flag(rom_bytes: &[u8]) -> CgbFlag {
+        rom_bytes[0x0143].try_into().unwrap_or(CgbFlag::DmgOnly)
     }
 }
 
@@ -221,10 +227,17 @@ impl TryFrom<u8> for DestinationCode {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum CgbFlag {
-    CGBMode,
-    NonCGBMode,
+    CgbEnhanced,
+    CgbOnly,
+    DmgOnly,
+}
+
+impl Default for CgbFlag {
+    fn default() -> Self {
+        Self::DmgOnly
+    }
 }
 
 impl TryFrom<u8> for CgbFlag {
@@ -232,9 +245,11 @@ impl TryFrom<u8> for CgbFlag {
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0x80 => Ok(CgbFlag::CGBMode),
-            0xC0 => Ok(CgbFlag::NonCGBMode),
-            _ => Err("Invalid CGB flag".into()),
+            // The game supports CGB enhancements, but is backwards compatible with monochrome Game Boys
+            0x80 => Ok(CgbFlag::CgbEnhanced),
+            // The game works on CGB only (the hardware ignores bit 6, so this really functions the same as $80)
+            0xC0 => Ok(CgbFlag::CgbOnly),
+            _ => Ok(CgbFlag::DmgOnly),
         }
     }
 }

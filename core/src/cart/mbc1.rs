@@ -2,6 +2,9 @@ use crate::cart::header::{RamSize, RomSize};
 use crate::cart::mbc::{Mbc, MbcData};
 use crate::cart::{CartData, ROM_BANK_SIZE};
 use serde::{Deserialize, Serialize};
+use crc::{Crc, CRC_32_ISO_HDLC};
+
+const CRC32: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -38,7 +41,7 @@ impl Mbc1 {
                 let start = page * 0x40000 + 0x0104;
                 let end = start + 0x30;
 
-                crc::crc32::checksum_ieee(&rom_bytes[start..end])
+                CRC32.checksum(&rom_bytes[start..end])
             })
             .filter(|&checksum| checksum == 0x4619_5417)
             .count();
