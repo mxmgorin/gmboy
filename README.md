@@ -51,7 +51,7 @@ The emulator is continuously validated against community made test suites:
 - **SM83 JSON Tests** – Passes all 356,000 tests  
 - **Blargg Tests** – Passes all tests
 - **Mooneye Tests** – Passes most of the tests
-- **PPU Tests** - Passes the DMG-acid2, CGB-acid2, ColorBgOamPriority, ColorOamInternalPriority
+- **PPU Tests** - Passes the DMG-acid2, CGB-acid2, CGB-acid-hell
 
 For the complete results, see [TESTS.md](./TESTS.md).
 
@@ -158,4 +158,5 @@ This project makes use of the following resources:
 - [DMG acid2 test](https://github.com/mattcurrie/dmg-acid2) - PPU testing for DMG
 - [CGB acid2 test](https://github.com/mattcurrie/cgb-acid2) - PPU testing for CGB
 - [MagenTests](https://github.com/alloncm/MagenTests) - PPU testing for DMG and CGB
+- [Game Boy test roms](https://github.com/c-sp/game-boy-test-roms) - various test roms
 - [SameBoy](https://github.com/LIJI32/SameBoy) - shaders (modified for compatibility with GLES)
