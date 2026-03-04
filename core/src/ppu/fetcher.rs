@@ -71,8 +71,9 @@ impl Default for PixelFetcher {
 impl PixelFetcher {
     #[inline(always)]
     pub fn fetch(&mut self, lcd: &Lcd, vram: &VideoRam, line_ticks: usize) -> Option<PixelColor> {
-        // fetch on odd lines
-        if line_ticks & 1 != 0 {
+        // The first four steps take 2 dots each and the fifth step is attempted every dot until it succeeds
+        // Fetch on odd lines.
+        if line_ticks & 1 != 0 || self.fetch_step == FetchStep::Push {
             // SAFETY: we control FETCH_FNS and FetchStep
             unsafe {
                 FETCH_FNS.get_unchecked(self.fetch_step as usize)(self, lcd, vram);
@@ -131,9 +132,9 @@ impl PixelFetcher {
             );
 
             let color = if lcdc_obj_enabled {
-                let sprite_color = self
-                    .sprite_fetcher
-                    .get_color(lcd, self.fifo_x, bg_color_index, bg_cgb_flags);
+                let sprite_color =
+                    self.sprite_fetcher
+                        .get_color(lcd, self.fifo_x, bg_color_index, bg_cgb_flags);
 
                 if let Some(sprite_color) = sprite_color {
                     sprite_color
@@ -235,7 +236,7 @@ impl PixelFetcher {
 }
 
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub enum FetchStep {
     Tile,
     Data0,
