@@ -226,7 +226,8 @@ impl InputHandler {
                     app.config.emulation.rewind_size = emu.config.rewind_size;
                 }
                 ChangeConfigCmd::RewindFrames(delta) => {
-                    emu.config.rewind_frames = core::change_usize(emu.config.rewind_frames, delta).clamp(0, 600);
+                    emu.config.rewind_frames =
+                        core::change_usize(emu.config.rewind_frames, delta).clamp(0, 600);
                     app.config.emulation.rewind_frames = emu.config.rewind_frames;
                 }
                 ChangeConfigCmd::AutoSaveState => {
@@ -293,6 +294,11 @@ impl InputHandler {
                 ChangeConfigCmd::FrameSkip(x) => {
                     app.config.video.render.frame_skip = x;
                     app.video.update_config(&app.config.video);
+                },
+                ChangeConfigCmd::SetGbModel(model) => {
+                    app.config.emulation.model = model;
+                    emu.config.model = model;
+                    emu.runtime.cpu.clock.bus.update_model(model);
                 }
             },
             AppCmd::ReleaseButton(btn) => {

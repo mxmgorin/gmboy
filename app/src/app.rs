@@ -13,6 +13,7 @@ use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
 use arrayvec::ArrayString;
 use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
+use core::emu::config::GbModel;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
@@ -158,6 +159,7 @@ pub enum ChangeConfigCmd {
     NextShader,
     PrevShader,
     FrameSkip(usize),
+    SetGbModel(Option<GbModel>),
 }
 
 impl ChangeConfigCmd {
@@ -192,6 +194,7 @@ impl ChangeConfigCmd {
             ChangeConfigCmd::NextShader => "Next Shader",
             ChangeConfigCmd::PrevShader => "Prev Shader",
             ChangeConfigCmd::FrameSkip(_) => "Frame Skip",
+            ChangeConfigCmd::SetGbModel(_) => "Model",
         }
     }
 }
@@ -201,6 +204,7 @@ impl fmt::Display for ChangeConfigCmd {
         f.write_str(self.name())
     }
 }
+
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum AppState {
     Paused,

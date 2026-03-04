@@ -100,6 +100,7 @@ pub fn confirm_menu(cmd: AppCmd) -> Box<[AppMenuItem]> {
 
 pub fn system_menu() -> Box<[AppMenuItem]> {
     vec![
+        AppMenuItem::GbModel,
         AppMenuItem::AutoSaveState,
         AppMenuItem::NormalSpeed,
         AppMenuItem::TurboSpeed,

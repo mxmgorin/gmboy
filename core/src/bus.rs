@@ -49,7 +49,7 @@ impl Bus {
         self.update_model(model);
     }
 
-    fn update_model(&mut self, model: Option<GbModel>) {
+    pub fn update_model(&mut self, model: Option<GbModel>) {
         if let Some(model) = model {
             self.set_model(model);
         } else {

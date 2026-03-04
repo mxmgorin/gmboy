@@ -1,3 +1,5 @@
+use core::emu::config::GbModel;
+
 use crate::app::{AppCmd, BindTarget, ChangeConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, ScaleMode, VideoBackendType};
 use crate::menu::factory::{
@@ -93,9 +95,9 @@ impl super::AppMenu {
             AppMenuItem::TurboSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TurboSpeed(0.1))),
             AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(0.1))),
             AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(25))),
-            AppMenuItem::RewindFrames => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindFrames(
-                5,
-            ))),
+            AppMenuItem::RewindFrames => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindFrames(5)))
+            }
             AppMenuItem::AudioBufferSize => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::AudioBufferSize(2)))
             }
@@ -254,11 +256,22 @@ impl super::AppMenu {
                 conf.interface.scale_mode = match conf.interface.scale_mode {
                     ScaleMode::Integer => ScaleMode::Fit,
                     ScaleMode::Fit => ScaleMode::Stretch,
-                    ScaleMode::Stretch => ScaleMode::Integer
+                    ScaleMode::Stretch => ScaleMode::Integer,
                 };
                 self.items = interface_menu(&conf.interface);
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
+            }
+            AppMenuItem::GbModel => {
+                let model = match config.emulation.model {
+                    Some(model) => match model {
+                        GbModel::Dmg => Some(GbModel::Cgb),
+                        GbModel::Cgb => None,
+                    },
+                    None => Some(GbModel::Dmg),
+                };
+
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetGbModel(model)))
             }
         }
     }
@@ -318,9 +331,9 @@ impl super::AppMenu {
             }
             AppMenuItem::SlowSpeed => Some(AppCmd::ChangeConfig(ChangeConfigCmd::SlowSpeed(-0.1))),
             AppMenuItem::RewindSize => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindSize(-25))),
-            AppMenuItem::RewindFrames => Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindFrames(
-                -5,
-            ))),
+            AppMenuItem::RewindFrames => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::RewindFrames(-5)))
+            }
             AppMenuItem::AudioBufferSize => {
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::AudioBufferSize(-2)))
             }
@@ -477,11 +490,22 @@ impl super::AppMenu {
                 conf.interface.scale_mode = match conf.interface.scale_mode {
                     ScaleMode::Integer => ScaleMode::Stretch,
                     ScaleMode::Fit => ScaleMode::Integer,
-                    ScaleMode::Stretch => ScaleMode::Fit
+                    ScaleMode::Stretch => ScaleMode::Fit,
                 };
                 self.items = interface_menu(&conf.interface);
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
+            }
+            AppMenuItem::GbModel => {
+                let model = match config.emulation.model {
+                    Some(model) => match model {
+                        GbModel::Dmg => None,
+                        GbModel::Cgb => Some(GbModel::Dmg),
+                    },
+                    None => Some(GbModel::Cgb),
+                };
+
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetGbModel(model)))
             }
         }
     }
@@ -506,6 +530,7 @@ impl super::AppMenu {
         let item = self.items.get_mut(self.selected_index).unwrap();
 
         match item {
+            AppMenuItem::GbModel => None,
             AppMenuItem::Resume => Some(AppCmd::ToggleMenu),
             AppMenuItem::OpenRom => Some(AppCmd::SelectRom),
             AppMenuItem::Quit => Some(AppCmd::Quit),
@@ -676,7 +701,7 @@ impl super::AppMenu {
                 conf.interface.scale_mode = match conf.interface.scale_mode {
                     ScaleMode::Integer => ScaleMode::Fit,
                     ScaleMode::Fit => ScaleMode::Stretch,
-                    ScaleMode::Stretch => ScaleMode::Integer
+                    ScaleMode::Stretch => ScaleMode::Integer,
                 };
                 self.items = interface_menu(&conf.interface);
 

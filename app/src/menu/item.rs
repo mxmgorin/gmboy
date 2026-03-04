@@ -73,6 +73,7 @@ pub enum AppMenuItem {
     FrameSkip,
     OpenedRoms,
     OpenedRomsSubMenu(Box<dyn SubMenu>),
+    GbModel,
 }
 
 impl AppMenuItem {
@@ -138,6 +139,7 @@ impl AppMenuItem {
             | AppMenuItem::CmdsBinding(_)
             | AppMenuItem::KeyboardShortcuts
             | AppMenuItem::ScaleMode
+            | AppMenuItem::GbModel
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -207,6 +209,7 @@ impl AppMenuItem {
             | AppMenuItem::CmdsBinding(_)
             | AppMenuItem::KeyboardShortcuts
             | AppMenuItem::ScaleMode
+            | AppMenuItem::GbModel
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -385,6 +388,14 @@ impl AppMenuItem {
             AppMenuItem::WaitInput(_) => "Press a key".to_string(),
             AppMenuItem::KeyboardShortcuts => "Shortcuts".to_string(),
             AppMenuItem::ScaleMode => with_value("Scale Mode", config.video.interface.scale_mode),
+            AppMenuItem::GbModel => {
+                let model_name = match config.emulation.model {
+                    Some(m) => format!("{:?}", m),
+                    None => "Auto".to_string(),
+                };
+
+                with_value("Model", model_name)
+            },
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)
