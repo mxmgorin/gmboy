@@ -1,5 +1,4 @@
 use crate::bus::{Bus, ECHO_MIRROR_OFFSET};
-use crate::ppu::lcd::PpuMode;
 use crate::ppu::oam::OAM_ADDR_START;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +6,7 @@ pub const VRAM_DMA_ADDR_START: u16 = 0xFF51;
 pub const VRAM_DMA_ADDR_END: u16 = 0xFF55;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct Dma {
+pub struct OamDma {
     pub is_active: bool,
     pub current_index: u16,
     pub src_addr: u16,
@@ -15,7 +14,7 @@ pub struct Dma {
     pub queue_addr: Option<u16>,
 }
 
-impl Dma {
+impl OamDma {
     #[inline]
     pub fn start(&mut self, address: u8) {
         if self.is_active {
@@ -69,8 +68,7 @@ impl Dma {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct VramDma {
-    pub active: bool,
-    pub hblank_mode: bool,
+    pub hblank_active: bool,
     pub src: u16,
     pub dst: u16,
     pub blocks_remaining: u8,
@@ -83,31 +81,30 @@ pub struct VramDma {
 }
 
 impl VramDma {
+    #[inline]
     pub fn write(bus: &mut Bus, addr: u16, value: u8) {
         match addr {
             0xFF51 => bus.vram_dma.hdma1 = value,
             0xFF52 => bus.vram_dma.hdma2 = value & 0xF0,
             0xFF53 => bus.vram_dma.hdma3 = value & 0x1F,
             0xFF54 => bus.vram_dma.hdma4 = value & 0xF0,
-            0xFF55 => VramDma::start_dma(bus, value),
+            0xFF55 => VramDma::start(bus, value),
             _ => {}
         }
     }
 
+    #[inline]
     pub fn read(bus: &Bus) -> u8 {
-        if bus.vram_dma.active {
+        if bus.vram_dma.hblank_active {
             0x80 | (bus.vram_dma.blocks_remaining - 1)
         } else {
             0xFF
         }
     }
 
-    pub fn on_hblank(bus: &mut Bus) {
-        if !bus.vram_dma.active || !bus.vram_dma.hblank_mode {
-            return;
-        }
-
-        if bus.io.ppu.lcd.status.get_ppu_mode() != PpuMode::HBlank {
+    #[inline(always)]
+    pub fn tick_hblank(bus: &mut Bus) {
+        if !bus.vram_dma.hblank_active {
             return;
         }
 
@@ -115,15 +112,15 @@ impl VramDma {
         bus.vram_dma.blocks_remaining -= 1;
 
         if bus.vram_dma.blocks_remaining == 0 {
-            bus.vram_dma.active = false;
+            bus.vram_dma.hblank_active = false;
         }
     }
 
-    fn start_dma(bus: &mut Bus, value: u8) {
+    #[inline]
+    fn start(bus: &mut Bus, value: u8) {
         // Cancellation case
-        if bus.vram_dma.active && (value & 0x80) == 0 {
-            bus.vram_dma.active = false;
-            bus.vram_dma.hblank_mode = false;
+        if bus.vram_dma.hblank_active && (value & 0x80) == 0 {
+            bus.vram_dma.hblank_active = false;
             return;
         }
 
@@ -138,11 +135,11 @@ impl VramDma {
             VramDma::do_gdma(bus);
         } else {
             // HBlank DMA
-            bus.vram_dma.active = true;
-            bus.vram_dma.hblank_mode = true;
+            bus.vram_dma.hblank_active = true;
         }
     }
 
+    #[inline]
     fn do_gdma(bus: &mut Bus) {
         let blocks = bus.vram_dma.blocks_remaining;
 
@@ -150,30 +147,32 @@ impl VramDma {
             VramDma::copy_block(bus);
         }
 
-        // Stall CPU (8 M-cycles per block)
-        // cpu.stall_m_cycles((blocks as usize) * 8);
-
-        bus.vram_dma.active = false;
-        bus.vram_dma.hblank_mode = false;
+        bus.vram_dma.blocks_remaining = 0;
+        bus.vram_dma.hblank_active = false;
     }
 
+    #[inline(always)]
     fn copy_block(bus: &mut Bus) {
-        let src = bus.vram_dma.src;
-        let dst = bus.vram_dma.dst;
+        let mut src = bus.vram_dma.src;
+        let mut dst = bus.vram_dma.dst;
 
         for i in 0..0x10 {
-            let byte = bus.read(src + i);
-            bus.io.ppu.video_ram.write(dst + i, byte);
+            src += i;
+            dst += i;
+            let byte = bus.read(src);
+            bus.io.ppu.video_ram.write(dst, byte);
         }
 
-        bus.vram_dma.src = src.wrapping_add(0x10);
-        bus.vram_dma.dst = dst.wrapping_add(0x10);
+        bus.vram_dma.src = src;
+        bus.vram_dma.dst = dst;
     }
 
+    #[inline(always)]
     fn compute_src(dma: &VramDma) -> u16 {
         ((dma.hdma1 as u16) << 8) | ((dma.hdma2 as u16) & 0xF0)
     }
 
+    #[inline(always)]
     fn compute_dst(dma: &VramDma) -> u16 {
         0x8000 | (((dma.hdma3 as u16) & 0x1F) << 8) | ((dma.hdma4 as u16) & 0xF0)
     }

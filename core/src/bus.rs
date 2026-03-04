@@ -1,4 +1,4 @@
-use crate::auxiliary::dma::{Dma, VramDma, VRAM_DMA_ADDR_END, VRAM_DMA_ADDR_START};
+use crate::auxiliary::dma::{OamDma, VramDma, VRAM_DMA_ADDR_END, VRAM_DMA_ADDR_START};
 use crate::auxiliary::io::Io;
 use crate::auxiliary::ram::{WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
 use crate::cart::header::CgbFlag;
@@ -14,7 +14,7 @@ pub const ECHO_MIRROR_OFFSET: u16 = 0x2000;
 pub struct Bus {
     pub cart: Cart,
     pub io: Io,
-    pub dma: Dma,
+    pub dma: OamDma,
     pub vram_dma: VramDma,
     flat_mem: Option<Vec<u8>>,
 }

@@ -1,6 +1,6 @@
 use crate::auxiliary::dma::VramDma;
 use crate::bus::Bus;
-use crate::{auxiliary::dma::Dma, cpu::CPU_CLOCK_SPEED};
+use crate::{auxiliary::dma::OamDma, cpu::CPU_CLOCK_SPEED};
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
@@ -47,7 +47,7 @@ impl Clock {
         for _ in 0..m_cycles {
             self.m_cycles = self.m_cycles.wrapping_add(1);
             self.tick_t_cycles(T_CYCLES_PER_M_CYCLE);
-            Dma::tick(&mut self.bus);
+            OamDma::tick(&mut self.bus);
         }
     }
 
@@ -73,7 +73,7 @@ impl Clock {
             let hblank_started = self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
 
             if hblank_started {
-                VramDma::on_hblank(&mut self.bus);
+                VramDma::tick_hblank(&mut self.bus);
             }
 
             self.bus.io.apu.tick();
