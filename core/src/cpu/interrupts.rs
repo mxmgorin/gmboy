@@ -26,7 +26,7 @@ impl Cpu {
     fn handle_interrupt(&mut self) {
         self.clock.tick_m_cycles(2);
 
-        self.is_halted = false;
+        self.clock.cpu_halted = false;
         let [lo, hi] = u16::to_le_bytes(self.registers.pc);
         self.push(hi);
         let interrupt = self.clock.bus.io.interrupts.get_pending();

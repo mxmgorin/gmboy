@@ -120,10 +120,9 @@ impl Lcd {
     #[inline(always)]
     pub fn get_obj_color(&self, flags: TileFlags, color_idx: usize) -> PixelColor {
         match self.model {
-            GbModel::Cgb => {
-                self.cgb_palette
-                    .get_color(flags.read_cgb_palette(), color_idx, true)
-            }
+            GbModel::Cgb => self
+                .cgb_palette
+                .get_color(flags.read_cgb_palette(), color_idx, true),
             GbModel::Dmg => self
                 .dmg_palette
                 .get_obj_color(flags.is_second_dmg_palette(), color_idx),
@@ -132,10 +131,9 @@ impl Lcd {
 
     pub fn get_bgw_color(&self, color_idx: usize, enabled: bool, flags: TileFlags) -> PixelColor {
         match self.model {
-            GbModel::Cgb => {
-                self.cgb_palette
-                    .get_color(flags.read_cgb_palette(), color_idx, false)
-            }
+            GbModel::Cgb => self
+                .cgb_palette
+                .get_color(flags.read_cgb_palette(), color_idx, false),
             GbModel::Dmg => self.dmg_palette.get_gbw_color(color_idx, enabled),
         }
     }
@@ -144,7 +142,15 @@ impl Lcd {
     pub fn read(&self, address: u16) -> u8 {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte,
-            LCD_STATUS_ADDRESS => self.status.byte | LCD_STATUS_UNUSED_MASK,
+            LCD_STATUS_ADDRESS => {
+                let val = if self.control.is_lcd_enabled() {
+                    self.status.byte
+                } else {
+                    PpuMode::HBlank as u8
+                };
+
+                val | LCD_STATUS_UNUSED_MASK
+            }
             LCD_SCROLL_Y_ADDRESS => self.scroll_y,
             LCD_SCROLL_X_ADDRESS => self.scroll_x,
             LCD_LY_ADDRESS => self.ly,

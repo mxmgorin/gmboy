@@ -11,6 +11,6 @@ impl Cpu {
     // The CPU continues execution after the HALT, but the byte after it is read twice in a row (PC is not incremented, due to a hardware bug).
     #[inline(always)]
     pub fn execute_halt(&mut self) {
-        self.is_halted = true;
+        self.clock.cpu_halted = true;
     }
 }

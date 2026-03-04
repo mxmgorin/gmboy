@@ -13,7 +13,6 @@ pub struct StepCtx {
 pub struct Cpu {
     pub registers: Registers,
     pub enabling_ime: bool,
-    pub is_halted: bool,
     pub clock: Clock,
     pub step_ctx: StepCtx,
     pub stop_m_cycles: u32,
@@ -25,7 +24,6 @@ impl Cpu {
             registers: Registers::new(clock.bus.io.ppu.lcd.model),
             enabling_ime: false,
             step_ctx: StepCtx::default(),
-            is_halted: false,
             clock,
             stop_m_cycles: 0
         }
@@ -107,11 +105,11 @@ impl Cpu {
 
         self.handle_interrupts();
 
-        if self.is_halted {
+        if self.clock.cpu_halted {
             if !self.clock.bus.io.interrupts.ime && self.clock.bus.io.interrupts.has_pending() {
                 // HALT bug: continue executing instructions
                 // The CPU continues execution after the HALT, but the byte after it is read twice in a row (PC is not incremented).
-                self.is_halted = false;
+                self.clock.cpu_halted = false;
             } else {
                 // Do nothing, just wait for an interrupt to wake up
                 self.clock.tick_m_cycles(1);

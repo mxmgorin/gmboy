@@ -13,6 +13,7 @@ pub struct Clock {
     #[serde(with = "crate::instant_serde")]
     pub time: Instant,
     pub bus: Bus,
+    pub cpu_halted: bool,
     m_cycles: usize,
 }
 
@@ -27,6 +28,7 @@ impl Clock {
         Self {
             time: Instant::now(),
             bus,
+            cpu_halted: false,
             m_cycles: 0,
         }
     }
@@ -72,7 +74,7 @@ impl Clock {
 
             let hblank_started = self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
 
-            if hblank_started {
+            if hblank_started && !self.cpu_halted {
                 VramDma::tick_hblank(&mut self.bus);
             }
 
