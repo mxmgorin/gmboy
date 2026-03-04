@@ -390,7 +390,7 @@ impl AppMenuItem {
             AppMenuItem::ScaleMode => with_value("Scale Mode", config.video.interface.scale_mode),
             AppMenuItem::GbModel => {
                 let model_name = match config.emulation.model {
-                    Some(m) => format!("{:?}", m),
+                    Some(m) => format!("{:?}", m).to_uppercase(),
                     None => "Auto".to_string(),
                 };
 
