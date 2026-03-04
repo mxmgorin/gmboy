@@ -14,7 +14,7 @@ pub const ECHO_MIRROR_OFFSET: u16 = 0x2000;
 pub struct Bus {
     pub cart: Cart,
     pub io: Io,
-    pub dma: OamDma,
+    pub oam_dma: OamDma,
     pub vram_dma: VramDma,
     flat_mem: Option<Vec<u8>>,
 }
@@ -25,7 +25,7 @@ impl Bus {
             cart: Cart::empty(),
             io: self.io.clone(),
             flat_mem: self.flat_mem.clone(),
-            dma: self.dma.clone(),
+            oam_dma: self.oam_dma.clone(),
             vram_dma: self.vram_dma.clone(),
         }
     }
@@ -35,7 +35,7 @@ impl Bus {
             cart,
             io,
             flat_mem: None,
-            dma: Default::default(),
+            oam_dma: Default::default(),
             vram_dma: Default::default(),
         };
         obj.update_model(model);
@@ -86,7 +86,7 @@ impl Bus {
                 self.io.ram.read_wram(mirrored_addr)
             }
             0xFE00..=0xFE9F => {
-                if self.dma.is_transferring() {
+                if self.oam_dma.is_transferring() {
                     return 0xFF;
                 }
 
@@ -116,7 +116,7 @@ impl Bus {
         }
 
         if addr == LCD_DMA_ADDRESS {
-            self.dma.start(value);
+            self.oam_dma.start(value);
         }
 
         match addr {
@@ -129,7 +129,7 @@ impl Bus {
                 self.io.ram.write_wram(mirrored_addr, value);
             }
             0xFE00..=0xFE9F => {
-                if self.dma.is_active {
+                if self.oam_dma.is_active {
                     return;
                 }
 

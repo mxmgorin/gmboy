@@ -36,33 +36,33 @@ impl OamDma {
     /// Executes a single OAM DMA write and auto-increments the internal index cursor.
     #[inline]
     pub fn tick(bus: &mut Bus) {
-        if !bus.dma.is_active {
+        if !bus.oam_dma.is_active {
             return;
         }
 
-        if bus.dma.start_delay > 0 {
-            bus.dma.start_delay -= 1;
+        if bus.oam_dma.start_delay > 0 {
+            bus.oam_dma.start_delay -= 1;
 
-            if bus.dma.queue_addr.is_none() {
+            if bus.oam_dma.queue_addr.is_none() {
                 return;
             }
-        } else if let Some(queue_addr) = bus.dma.queue_addr {
-            bus.dma.queue_addr = None;
-            bus.dma.src_addr = queue_addr;
-            bus.dma.current_index = 0;
+        } else if let Some(queue_addr) = bus.oam_dma.queue_addr {
+            bus.oam_dma.queue_addr = None;
+            bus.oam_dma.src_addr = queue_addr;
+            bus.oam_dma.current_index = 0;
         }
 
-        let addr = bus.dma.src_addr + bus.dma.current_index;
+        let addr = bus.oam_dma.src_addr + bus.oam_dma.current_index;
         // DMA from high addresses doesn't read from HRAM or MMIO, it reads an extended echo ram instead
         let addr = match addr {
             0xFE00..=0xFFFF => addr - ECHO_MIRROR_OFFSET,
             _ => addr,
         };
         let byte = bus.read(addr);
-        let dest_addr = OAM_ADDR_START + bus.dma.current_index;
+        let dest_addr = OAM_ADDR_START + bus.oam_dma.current_index;
         bus.io.ppu.oam_ram.write(dest_addr, byte);
-        bus.dma.current_index = bus.dma.current_index.wrapping_add(1);
-        bus.dma.is_active = bus.dma.current_index < 160;
+        bus.oam_dma.current_index = bus.oam_dma.current_index.wrapping_add(1);
+        bus.oam_dma.is_active = bus.oam_dma.current_index < 160;
     }
 }
 
@@ -96,9 +96,12 @@ impl VramDma {
     #[inline]
     pub fn read(bus: &Bus) -> u8 {
         if bus.vram_dma.hblank_active {
-            0x80 | (bus.vram_dma.blocks_remaining - 1)
-        } else {
+            (bus.vram_dma.blocks_remaining - 1) & 0x7F
+        } else if bus.vram_dma.blocks_remaining == 0 {
             0xFF
+        } else {
+            // aborted
+            0x80 | ((bus.vram_dma.blocks_remaining - 1) & 0x7F)
         }
     }
 
@@ -118,8 +121,9 @@ impl VramDma {
 
     #[inline]
     fn start(bus: &mut Bus, value: u8) {
+        let bit_7_zero = (value & 0x80) == 0;
         // Cancellation case
-        if bus.vram_dma.hblank_active && (value & 0x80) == 0 {
+        if bus.vram_dma.hblank_active && bit_7_zero {
             bus.vram_dma.hblank_active = false;
             return;
         }
@@ -130,7 +134,7 @@ impl VramDma {
         bus.vram_dma.dst = VramDma::compute_dst(&bus.vram_dma);
         bus.vram_dma.blocks_remaining = blocks;
 
-        if value & 0x80 == 0 {
+        if bit_7_zero {
             // GDMA (Immediate)
             VramDma::do_gdma(bus);
         } else {
@@ -156,9 +160,16 @@ impl VramDma {
         let mut src = bus.vram_dma.src;
         let mut dst = bus.vram_dma.dst;
 
-        for i in 0..0x10 {
-            src += i;
-            dst += i;
+        for _ in 0..0x10 {
+            src += 1;
+            let (new_dst, dst_overflowed) = dst.overflowing_add(1);
+            dst = new_dst;
+
+            if dst_overflowed {
+                bus.vram_dma.hblank_active = false;
+                return;
+            }
+
             let byte = bus.read(src);
             bus.io.ppu.video_ram.write(dst, byte);
         }
