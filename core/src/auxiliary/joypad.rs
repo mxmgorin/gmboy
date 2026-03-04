@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::emu::config::GbModel;
+
 pub const JOYPAD_ADDR: u16 = 0xFF00;
 
 pub const A_OR_RIGHT_BIT: u8 = 0x00;
@@ -53,7 +55,7 @@ impl Joypad {
     }
 
     #[inline(always)]
-    pub fn get_byte(&self) -> u8 {
+    pub fn get_byte(&self, model: GbModel) -> u8 {
         if self.actions_selected {
             ((!self.a as u8) << A_OR_RIGHT_BIT)
                 | ((!self.b as u8) << B_OR_LEFT_BIT)
@@ -65,7 +67,10 @@ impl Joypad {
                 | ((!self.up as u8) << SELECT_OR_UP_BIT)
                 | ((!self.down as u8) << START_OR_DOWN_BIT)
         } else {
-            0xCF
+            match model {
+                GbModel::Dmg => 0xCF,
+                GbModel::Cgb => 0xFF,
+            }
         }
     }
 

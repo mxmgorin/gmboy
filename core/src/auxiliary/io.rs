@@ -49,7 +49,7 @@ impl Io {
     #[inline(always)]
     pub fn read(&self, addr: u16) -> u8 {
         match addr {
-            0xFF00 => self.joypad.get_byte(),
+            0xFF00 => self.joypad.get_byte(self.ppu.lcd.model),
             0xFF01 => self.serial.sb,
             0xFF02 => self.serial.sc | SERIAL_SC_UNUSED_MASK,
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.read(addr),

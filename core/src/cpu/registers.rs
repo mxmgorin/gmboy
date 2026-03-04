@@ -111,20 +111,31 @@ impl RegisterType {
 
 impl Registers {
     pub fn new(model: GbModel) -> Self {
-        Self {
-            a: match model {
-                GbModel::Dmg => 0x01,
-                GbModel::Cgb => 0x11,
+        match model {
+            GbModel::Dmg => Self {
+                a: 0x01,
+                flags: Flags::default(),
+                b: 0x00,
+                c: 0x13,
+                d: 0x00,
+                e: 0xD8,
+                h: 0x01,
+                l: 0x4D,
+                sp: 0xFFFE,
+                pc: 0x100,
             },
-            flags: Flags::default(),
-            b: 0x00,
-            c: 0x13,
-            d: 0x00,
-            e: 0xD8,
-            h: 0x01,
-            l: 0x4D,
-            sp: 0xFFFE,
-            pc: 0x100,
+            GbModel::Cgb => Self {
+                a: 0x11,
+                flags: Flags::new(0x80),
+                b: 0x00,
+                c: 0x00,
+                d: 0x00,
+                e: 0x08,
+                h: 0x00,
+                l: 0x7C,
+                sp: 0xFFFE,
+                pc: 0x100,
+            },
         }
     }
 

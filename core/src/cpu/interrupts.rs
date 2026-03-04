@@ -1,4 +1,4 @@
-use crate::cpu::Cpu;
+use crate::{cpu::Cpu, emu::config::GbModel};
 use serde::{Deserialize, Serialize};
 
 const INTERRUPTS: [(u16, InterruptType); 5] = [
@@ -67,6 +67,17 @@ pub struct Interrupts {
 }
 
 impl Interrupts {
+    pub fn new(model: GbModel) -> Self {
+        Self {
+            int_flags: match model {
+                GbModel::Dmg => 0x0,
+                GbModel::Cgb => 0x1,
+            },
+            ime: false,
+            ie: 0x0,
+        }
+    }
+
     #[inline(always)]
     pub fn get_pending(&mut self) -> Option<(u16, InterruptType)> {
         for (address, interrupt_type) in INTERRUPTS {
