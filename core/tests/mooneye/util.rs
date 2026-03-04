@@ -101,16 +101,6 @@ pub fn assert_result_path(path: PathBuf, result: Result<(), String>) {
     }
 }
 
-pub fn print_result_path(path: PathBuf, result: Result<(), String>) {
-    let path = path.to_string_lossy().to_string();
-
-    if let Err(err) = result {
-        eprint!("{path}: FAILED\n{err}")
-    } else {
-        println!("{path}: OK");
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum MooneyeRomCategory {
     OamDma,

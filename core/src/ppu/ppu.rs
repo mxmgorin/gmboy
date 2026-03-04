@@ -7,6 +7,8 @@ use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
+pub const OAM_DOTS: usize = 80;
+pub const TRANSFER_DOTS: usize = 172;
 pub const LINES_PER_FRAME: usize = 154;
 pub const TICKS_PER_LINE: usize = 456;
 pub const LCD_Y_RES: u8 = 144;

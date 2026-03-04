@@ -1,4 +1,8 @@
-use crate::mooneye::util::{assert_result, assert_result_path, print_result_path, run_mooneye_dir_roms, run_mooneye_rom, run_mooneye_rom_path, MooneyeRomCategory};
+use crate::mooneye::util::{
+    assert_result, assert_result_path, run_mooneye_dir_roms, run_mooneye_rom, run_mooneye_rom_path,
+    MooneyeRomCategory,
+};
+use crate::print_result_path;
 use core::emu::config::GbModel;
 use std::path::PathBuf;
 use std::time::Duration;
