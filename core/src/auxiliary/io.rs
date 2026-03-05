@@ -75,6 +75,10 @@ impl Io {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
                     WRAM_BANK_NUMBER_ADDR => self.ram.read_wram_bank(),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
+                        if self.ppu.lcd.is_vram_blocked() {
+                            return 0xFF;
+                        }
+
                         self.ppu.lcd.cgb_palette.read(addr)
                     }
                     _ => 0xFF,
@@ -107,6 +111,10 @@ impl Io {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
                     WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
+                        if self.ppu.lcd.is_vram_blocked() {
+                            return;
+                        }
+
                         self.ppu.lcd.cgb_palette.write(addr, value)
                     }
                     _ => {}

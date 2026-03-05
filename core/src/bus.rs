@@ -4,7 +4,7 @@ use crate::auxiliary::ram::{WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
 use crate::cart::header::CgbFlag;
 use crate::cart::Cart;
 use crate::emu::config::GbModel;
-use crate::ppu::lcd::{LCD_DMA_ADDRESS};
+use crate::ppu::lcd::LCD_DMA_ADDRESS;
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
 
@@ -79,7 +79,7 @@ impl Bus {
         match addr {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(addr),
             VRAM_ADDR_START..=VRAM_ADDR_END => {
-                if self.io.ppu.vram_blocked() {
+                if self.io.ppu.lcd.is_vram_blocked() {
                     return 0xFF;
                 }
 
@@ -92,7 +92,7 @@ impl Bus {
                 self.io.ram.read_wram(mirrored_addr)
             }
             0xFE00..=0xFE9F => {
-                if self.oam_dma.is_transferring() {
+                if self.oam_dma.is_transferring() || self.io.ppu.lcd.is_oam_blocked() {
                     return 0xFF;
                 }
 
@@ -128,7 +128,7 @@ impl Bus {
         match addr {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(addr, value),
             VRAM_ADDR_START..=VRAM_ADDR_END => {
-                if self.io.ppu.vram_blocked() {
+                if self.io.ppu.lcd.is_vram_blocked() {
                     return;
                 }
 
@@ -141,7 +141,7 @@ impl Bus {
                 self.io.ram.write_wram(mirrored_addr, value);
             }
             0xFE00..=0xFE9F => {
-                if self.oam_dma.is_active {
+                if self.oam_dma.is_transferring() || self.io.ppu.lcd.is_oam_blocked() {
                     return;
                 }
 

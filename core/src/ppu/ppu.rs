@@ -42,11 +42,6 @@ impl Ppu {
         }
     }
 
-    #[inline(always)]
-    pub fn vram_blocked(&self) -> bool {
-        self.lcd.status.get_ppu_mode() == PpuMode::Transfer && self.lcd.control.is_lcd_enabled()
-    }
-
     pub fn toggle_fps(&mut self, enable: bool) {
         if enable {
             self.fps_counter = Some(FpsCounter::default());

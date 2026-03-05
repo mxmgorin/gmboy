@@ -94,6 +94,18 @@ impl Lcd {
     }
 
     #[inline(always)]
+    pub fn is_vram_blocked(&self) -> bool {
+        self.status.get_ppu_mode() == PpuMode::Transfer && self.control.is_lcd_enabled()
+    }
+
+    #[inline(always)]
+    pub fn is_oam_blocked(&self) -> bool {
+        let mode = self.status.get_ppu_mode();
+
+        (mode == PpuMode::Transfer || mode == PpuMode::Oam) && self.control.is_lcd_enabled()
+    }
+
+    #[inline(always)]
     pub fn set_model(&mut self, model: GbModel) {
         self.obj_priority_mode = match model {
             GbModel::Cgb => 0x0,
