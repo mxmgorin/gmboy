@@ -554,18 +554,26 @@ where
     pub fn load_cart_file(&mut self, emu: &mut Emu, path: &Path) -> Result<(), String> {
         let is_reload = self.roms.get_last_path().map(|x| x.as_path()) == Some(path)
             && !emu.runtime.cpu.clock.bus.cart.is_empty();
+
         let file_name = self
             .platform
             .fs
             .get_file_name(path)
             .ok_or("filesystem.get_file_name: None")?;
         let ram_bytes = BatterySave::load_file(&file_name).ok().map(|x| x.ram_bytes);
-        let cart_bytes = self
+        let mut file_bytes = self
             .platform
             .fs
             .read_file_bytes(path)
             .ok_or("filesystem.read_file_bytes: None")?;
-        let mut cart = Cart::new(cart_bytes).map_err(|e| e.to_string())?;
+
+        println!("{:?}", path);
+
+        if crate::is_zip(path) {
+            file_bytes = crate::unzip_rom(&file_bytes)?.into_boxed_slice();
+        }
+
+        let mut cart = Cart::new(file_bytes).map_err(|e| e.to_string())?;
         _ = core::print_cart(&cart).map_err(|e| log::error!("Failed print_cart: {e}"));
 
         if let Some(ram_bytes) = ram_bytes {
