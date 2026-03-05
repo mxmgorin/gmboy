@@ -4,7 +4,7 @@ use crate::auxiliary::ram::{WRAM_CGB_BANK_END_ADDR, WRAM_START_ADDR};
 use crate::cart::header::CgbFlag;
 use crate::cart::Cart;
 use crate::emu::config::GbModel;
-use crate::ppu::lcd::LCD_DMA_ADDRESS;
+use crate::ppu::lcd::{LCD_DMA_ADDRESS};
 use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
 
@@ -78,7 +78,13 @@ impl Bus {
 
         match addr {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(addr),
-            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.read(addr),
+            VRAM_ADDR_START..=VRAM_ADDR_END => {
+                if self.io.ppu.vram_blocked() {
+                    return 0xFF;
+                }
+
+                self.io.ppu.video_ram.read(addr)
+            }
             WRAM_START_ADDR..=WRAM_CGB_BANK_END_ADDR => self.io.ram.read_wram(addr),
             0xE000..=0xFDFF => {
                 let mirrored_addr = addr - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)
@@ -121,7 +127,13 @@ impl Bus {
 
         match addr {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.write(addr, value),
-            VRAM_ADDR_START..=VRAM_ADDR_END => self.io.ppu.video_ram.write(addr, value),
+            VRAM_ADDR_START..=VRAM_ADDR_END => {
+                if self.io.ppu.vram_blocked() {
+                    return;
+                }
+
+                self.io.ppu.video_ram.write(addr, value);
+            }
             0xC000..=0xDFFF => self.io.ram.write_wram(addr, value),
             0xE000..=0xFDFF => {
                 let mirrored_addr = addr - ECHO_MIRROR_OFFSET; // Redirect to WRAM (0xC000 - 0xDDFF)

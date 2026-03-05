@@ -42,6 +42,11 @@ impl Ppu {
         }
     }
 
+    #[inline(always)]
+    pub fn vram_blocked(&self) -> bool {
+        self.lcd.status.get_ppu_mode() == PpuMode::Transfer && self.lcd.control.is_lcd_enabled()
+    }
+
     pub fn toggle_fps(&mut self, enable: bool) {
         if enable {
             self.fps_counter = Some(FpsCounter::default());
@@ -57,6 +62,13 @@ impl Ppu {
 
     #[inline(always)]
     pub fn tick(&mut self, interrupts: &mut Interrupts) -> bool {
+        if !self.lcd.control.is_lcd_enabled() {
+            self.lcd.ly = 0;
+            self.lcd.status.set_ppu_mode(PpuMode::HBlank);
+            self.line_ticks = 0;
+            return false;
+        }
+
         self.line_ticks += 1;
 
         match self.lcd.status.get_ppu_mode() {
