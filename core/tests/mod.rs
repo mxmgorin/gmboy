@@ -1,6 +1,7 @@
 use core::auxiliary::clock::Clock;
 use std::path::PathBuf;
 
+mod visual;
 mod blargg;
 mod gbmicrotest;
 mod mooneye;
@@ -21,4 +22,14 @@ pub fn print_result_path(path: PathBuf, result: Result<(), String>) {
     } else {
         println!("{path}: OK");
     }
+}
+
+pub fn get_roms_path() -> PathBuf {
+    let mut path = std::env::current_dir().unwrap();
+    path.pop();
+    path.join("roms")
+}
+
+pub fn get_tests_path() -> PathBuf {
+    PathBuf::from("tests")
 }

@@ -1,5 +1,5 @@
 use crate::ppu::lcd::PixelColor;
-use crate::ppu::{LCD_X_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL, PPU_PITCH};
+use crate::ppu::{LCD_X_RES, LCD_Y_RES, PPU_BUFFER_LEN, PPU_BYTES_PER_PIXEL, PPU_PITCH};
 use serde::{Deserialize, Serialize};
 use std::ops::{Deref, DerefMut};
 use std::ptr;
@@ -38,6 +38,25 @@ impl FrameBuffer {
             buffer,
             pushed_count: 0,
         }
+    }
+
+    pub fn rgb888(&self) -> Vec<u8> {
+        let size = LCD_X_RES as usize * LCD_Y_RES as usize * 3;
+        let mut rgb888 = Vec::with_capacity(size);
+
+        for chunk in self.buffer.chunks_exact(2) {
+            let pixel = u16::from_le_bytes([chunk[0], chunk[1]]);
+
+            let r = ((pixel >> 11) & 0x1F) as u16 * 255 / 31;
+            let g = ((pixel >> 5) & 0x3F) as u16 * 255 / 63;
+            let b = (pixel & 0x1F) as u16 * 255 / 31;
+
+            rgb888.push(r as u8);
+            rgb888.push(g as u8);
+            rgb888.push(b as u8);
+        }
+
+        rgb888
     }
 
     #[inline(always)]

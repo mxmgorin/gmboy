@@ -18,6 +18,7 @@ log = "0.4.27"
 
 [dev-dependencies]
 criterion = "0.8.2"
+image = "0.25.9"
 
 [[bench]]
 name = "bench"
