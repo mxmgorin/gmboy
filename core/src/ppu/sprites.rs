@@ -83,7 +83,7 @@ impl SpriteFetcher {
     }
 
     #[inline(always)]
-    pub fn fetch_sprites(&mut self, lcd: &Lcd, vram: &VideoRam, scroll_x: u8, fetch_x: u8) {
+    pub fn fetch(&mut self, lcd: &Lcd, vram: &VideoRam, scroll_x: u8, fetch_x: u8) {
         let mut fetched_sprites_count = 0;
         let cur_y = lcd.ly.wrapping_add(TILE_BIT_SIZE as u8);
         let sprite_height = lcd.control.get_obj_height();

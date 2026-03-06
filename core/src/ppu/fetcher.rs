@@ -191,7 +191,7 @@ impl PixelFetcher {
 
         if control.is_obj_enabled() {
             self.sprite_fetcher
-                .fetch_sprites(lcd, vram, lcd.scroll_x, self.fetch_x);
+                .fetch(lcd, vram, lcd.scroll_x, self.fetch_x);
         }
 
         self.fetch_step = FetchStep::Data0;
