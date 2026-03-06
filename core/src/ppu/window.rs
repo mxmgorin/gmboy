@@ -24,7 +24,7 @@ impl LcdWindow {
     }
 
     #[inline(always)]
-    pub fn get_tile_map_addr(&self, fetch_x: u16, lcd: &Lcd) -> Option<u16> {
+    pub fn get_tilemap_addr(&self, fetch_x: u16, lcd: &Lcd) -> Option<u16> {
         if !self.is_visible(lcd) {
             return None;
         }

@@ -1,6 +1,6 @@
 use crate::ppu::tile::{
-    TileData, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT, TILE_SET_2_END,
-    TILE_SET_DATA_1_START,
+    TileData, TileFlags, TileLineData, TILE_BIT_SIZE, TILE_HEIGHT, TILE_LINE_BYTES_COUNT,
+    TILE_SET_2_END, TILE_SET_DATA_1_START,
 };
 use serde::{Deserialize, Serialize};
 
@@ -99,6 +99,11 @@ impl VideoRam {
     pub fn read_from_bank(&self, bank: u8, addr: u16) -> u8 {
         let addr = (addr - VRAM_ADDR_START) as usize;
         unsafe { *self.banks.get_unchecked(bank as usize).get_unchecked(addr) }
+    }
+
+    #[inline(always)]
+    pub fn read_tile_flags(&self, addr: u16) -> TileFlags {
+        self.read_from_bank(1, addr).into()
     }
 
     #[inline(always)]
