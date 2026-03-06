@@ -174,7 +174,7 @@ impl SpriteFetcher {
                 offset
             };
 
-            let color_index = get_color_index(obj.tile_line.byte1, obj.tile_line.byte2, bit);
+            let color_index = get_color_index(obj.tile_line.byte0, obj.tile_line.byte1, bit);
 
             if is_show_obj(lcd, bg_color_index, bg_flags, color_index, obj.oam.flags) {
                 let color = lcd.get_obj_color(obj.oam.flags, color_index);

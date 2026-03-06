@@ -30,8 +30,8 @@ pub struct TileData {
 #[repr(C, packed)]
 #[derive(Copy, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct TileLineData {
+    pub byte0: u8,
     pub byte1: u8,
-    pub byte2: u8,
 }
 
 impl TileLineData {
@@ -122,14 +122,14 @@ impl TileLineData {
     #[inline(always)]
     pub fn new(byte_one: u8, byte_two: u8) -> TileLineData {
         Self {
-            byte1: byte_one,
-            byte2: byte_two,
+            byte0: byte_one,
+            byte1: byte_two,
         }
     }
 
     #[inline(always)]
     pub fn get_color_id(&self, bit: u8) -> ColorId {
-        ColorId::new(self.byte1, self.byte2, bit)
+        ColorId::new(self.byte0, self.byte1, bit)
     }
 
     #[inline(always)]

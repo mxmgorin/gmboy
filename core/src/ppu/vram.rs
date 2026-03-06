@@ -118,6 +118,14 @@ impl VideoRam {
             )
         }
     }
+
+    #[inline(always)]
+    pub fn read_tile_byte_from_bank(&self, bank: u8, addr: u16, byte: usize) -> u8 {
+        let addr = (addr - VRAM_ADDR_START) as usize;
+        let bank_ref = unsafe { self.banks.get_unchecked(bank as usize) };
+
+        unsafe { *bank_ref.get_unchecked(addr.wrapping_add(byte)) }
+    }
 }
 
 pub struct TilesIterator<'a> {

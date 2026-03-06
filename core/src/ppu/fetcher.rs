@@ -23,6 +23,8 @@ pub struct BgwFetchedData {
     pub tile_line: TileLineData,
     pub is_window: bool,
     pub cgb_flags: TileFlags,
+    pub map_y: u8,
+    pub tile_index: u8,
 }
 
 #[inline(always)]
@@ -126,8 +128,8 @@ impl PixelFetcher {
         for bit in 0..TILE_BITS_COUNT {
             let bit = if is_x_flip { 7 - bit } else { bit };
             let bg_color_index = get_color_index(
+                self.bgw_fetched_data.tile_line.byte0,
                 self.bgw_fetched_data.tile_line.byte1,
-                self.bgw_fetched_data.tile_line.byte2,
                 bit,
             );
 
@@ -181,18 +183,10 @@ impl PixelFetcher {
             let row_in_tile = map_y & 7;
             let row = if y_flip { 7 - row_in_tile } else { row_in_tile };
             // Replace map_y's low 3 bits with flipped row
-            let map_y = (map_y & !7) | row;
+            self.bgw_fetched_data.map_y = (map_y & !7) | row;
             self.bgw_fetched_data.cgb_flags = cgb_flags;
-
-            let raw_tile_index = vram.read(tilemap_addr);
-            // data area could change between data reads
-            let data_area = control.get_bgw_data_area();
-            let tile_index = bgw_tile_index_in_area(raw_tile_index, data_area);
-
-            let tiledata_addr = get_bgw_tile_addr(tile_index, map_y, data_area);
-            let vram_bank = cgb_flags.read_cgb_vram_bank();
-            self.bgw_fetched_data.tile_line =
-                vram.read_tile_line_from_bank(vram_bank, tiledata_addr);
+            // data area could change between data reads so re-read it on data steps
+            self.bgw_fetched_data.tile_index = vram.read(tilemap_addr);
         }
 
         if control.is_obj_enabled() {
@@ -205,12 +199,25 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    fn fetch_data0(&mut self, _: &Lcd, _: &VideoRam) {
+    fn read_tile_byte(&mut self, lcd: &Lcd, vram: &VideoRam, byte: usize) -> u8 {
+        let fetched_data = self.bgw_fetched_data.clone();
+        let data_area = lcd.control.get_bgw_data_area();
+        let tile_index = bgw_tile_index_in_area(fetched_data.tile_index, data_area);
+        let tiledata_addr = get_bgw_tile_addr(tile_index, fetched_data.map_y, data_area);
+        let vram_bank = fetched_data.cgb_flags.read_cgb_vram_bank();
+
+        vram.read_tile_byte_from_bank(vram_bank, tiledata_addr, byte)
+    }
+
+    #[inline(always)]
+    fn fetch_data0(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        self.bgw_fetched_data.tile_line.byte0 = self.read_tile_byte(lcd, vram, 0);
         self.fetch_step = FetchStep::Data1;
     }
 
     #[inline(always)]
-    fn fetch_data1(&mut self, _: &Lcd, _: &VideoRam) {
+    fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
+        self.bgw_fetched_data.tile_line.byte1 = self.read_tile_byte(lcd, vram, 1);
         self.fetch_step = FetchStep::Idle;
     }
 
