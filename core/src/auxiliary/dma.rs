@@ -1,5 +1,7 @@
 use crate::bus::{Bus, ECHO_MIRROR_OFFSET};
+use crate::ppu::lcd::PpuMode;
 use crate::ppu::oam::OAM_ADDR_START;
+use crate::ppu::vram::{VRAM_ADDR_END, VRAM_ADDR_START};
 use serde::{Deserialize, Serialize};
 
 pub const VRAM_DMA_ADDR_START: u16 = 0xFF51;
@@ -140,6 +142,11 @@ impl VramDma {
         } else {
             // HBlank DMA
             bus.vram_dma.hblank_active = true;
+
+            if bus.io.ppu.lcd.status.get_ppu_mode() == PpuMode::HBlank {
+                // Transfer immediately when HDMA is started on HBlank
+                VramDma::tick_hblank(bus);
+            }
         }
     }
 
@@ -161,7 +168,7 @@ impl VramDma {
         let mut dst = bus.vram_dma.dst;
 
         for _ in 0..0x10 {
-            src += 1;
+            src = src.wrapping_add(1);
             let (new_dst, dst_overflowed) = dst.overflowing_add(1);
             dst = new_dst;
 
@@ -170,7 +177,19 @@ impl VramDma {
                 return;
             }
 
-            let byte = bus.read(src);
+            let byte = match src {
+                0x0000..=0x7FFF | 0xA000..=0xBFFF => bus.cart.read(src),
+                0xC000..=0xDFFF => bus.io.ram.read_wram(src),
+                // VRAM, OAM, I/O registers, and HRAM are not accessible from VRAM DMA
+                VRAM_ADDR_START..=VRAM_ADDR_END | 0xE000..=0xFFFF => 0xFF,
+            };
+
+            if dst > VRAM_ADDR_END {
+                // can't write outside of vram
+                // todo: investigate why it event does this (reproduces on Toki Tori)
+                return;
+            }
+
             bus.io.ppu.video_ram.write(dst, byte);
         }
 
