@@ -70,10 +70,10 @@ impl OamDma {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct VramDma {
-    pub hblank_active: bool,
-    pub src: u16,
-    pub dst: u16,
-    pub blocks_remaining: u8,
+    pub src_addr: u16,
+    pub dst_addr: u16,
+    pub hdma_active: bool,
+    pub hdma_blocks: u8,
 
     // Registers
     pub hdma1: u8,
@@ -86,86 +86,96 @@ impl VramDma {
     #[inline]
     pub fn write(bus: &mut Bus, addr: u16, value: u8) {
         match addr {
-            0xFF51 => bus.vram_dma.hdma1 = value,
-            0xFF52 => bus.vram_dma.hdma2 = value & 0xF0,
-            0xFF53 => bus.vram_dma.hdma3 = value & 0x1F,
-            0xFF54 => bus.vram_dma.hdma4 = value & 0xF0,
-            0xFF55 => VramDma::start(bus, value),
+            0xFF51 => {
+                bus.vram_dma.hdma1 = value;
+                bus.vram_dma.src_addr = VramDma::compute_src(&bus.vram_dma);
+            }
+            0xFF52 => {
+                bus.vram_dma.hdma2 = value & 0xF0;
+                bus.vram_dma.src_addr = VramDma::compute_src(&bus.vram_dma);
+            }
+            0xFF53 => {
+                bus.vram_dma.hdma3 = value & 0x1F;
+                bus.vram_dma.dst_addr = VramDma::compute_dst(&bus.vram_dma);
+            }
+            0xFF54 => {
+                bus.vram_dma.hdma4 = value & 0xF0;
+                bus.vram_dma.dst_addr = VramDma::compute_dst(&bus.vram_dma);
+            }
+            0xFF55 => VramDma::write_hdma5(bus, value),
             _ => {}
         }
     }
 
     #[inline]
-    pub fn read(bus: &Bus) -> u8 {
-        if bus.vram_dma.hblank_active {
-            (bus.vram_dma.blocks_remaining - 1) & 0x7F
-        } else if bus.vram_dma.blocks_remaining == 0 {
+    pub fn read_hdma5(bus: &Bus) -> u8 {
+        if bus.vram_dma.hdma_active {
+            // active: bit7 reads as 0
+            (bus.vram_dma.hdma_blocks - 1) & 0x7F
+        } else if bus.vram_dma.hdma_blocks == 0 {
+            // completed
             0xFF
         } else {
-            // aborted
-            0x80 | ((bus.vram_dma.blocks_remaining - 1) & 0x7F)
+            // aborted: bit7 reads as 1
+            0x80 | ((bus.vram_dma.hdma_blocks - 1) & 0x7F)
         }
     }
 
     #[inline(always)]
-    pub fn tick_hblank(bus: &mut Bus) {
-        if !bus.vram_dma.hblank_active {
+    pub fn tick_hdma(bus: &mut Bus) {
+        if !bus.vram_dma.hdma_active {
             return;
         }
 
         VramDma::copy_block(bus);
-        bus.vram_dma.blocks_remaining -= 1;
+        bus.vram_dma.hdma_blocks -= 1;
 
-        if bus.vram_dma.blocks_remaining == 0 {
-            bus.vram_dma.hblank_active = false;
+        if bus.vram_dma.hdma_blocks == 0 {
+            bus.vram_dma.hdma_active = false;
         }
     }
 
     #[inline]
-    fn start(bus: &mut Bus, value: u8) {
+    fn write_hdma5(bus: &mut Bus, value: u8) {
+        bus.vram_dma.hdma_blocks = (value & 0x7F) + 1;
         let bit_7_zero = (value & 0x80) == 0;
+
         // Cancellation case
-        if bus.vram_dma.hblank_active && bit_7_zero {
-            bus.vram_dma.hblank_active = false;
+        if bus.vram_dma.hdma_active && bit_7_zero {
+            bus.vram_dma.hdma_active = false;
             return;
         }
 
-        let blocks = (value & 0x7F) + 1;
-
-        bus.vram_dma.src = VramDma::compute_src(&bus.vram_dma);
-        bus.vram_dma.dst = VramDma::compute_dst(&bus.vram_dma);
-        bus.vram_dma.blocks_remaining = blocks;
-
         if bit_7_zero {
-            // GDMA (Immediate)
-            VramDma::do_gdma(bus);
+            VramDma::tick_gdma(bus);
         } else {
-            // HBlank DMA
-            bus.vram_dma.hblank_active = true;
+            bus.vram_dma.hdma_active = true;
 
             if bus.io.ppu.lcd.status.get_ppu_mode() == PpuMode::HBlank {
                 // Transfer immediately when HDMA is started on HBlank
-                VramDma::tick_hblank(bus);
+                VramDma::tick_hdma(bus);
             }
         }
     }
 
+    /// General-Purpose DMA (GPDMA / GDMA): Copies all at once
     #[inline]
-    fn do_gdma(bus: &mut Bus) {
-        let blocks = bus.vram_dma.blocks_remaining;
+    fn tick_gdma(bus: &mut Bus) {
+        if bus.io.ppu.lcd.is_vram_blocked() {
+            return;
+        }
+
+        let blocks = bus.vram_dma.hdma_blocks;
 
         for _ in 0..blocks {
             VramDma::copy_block(bus);
         }
-
-        bus.vram_dma.blocks_remaining = 0;
-        bus.vram_dma.hblank_active = false;
     }
 
     #[inline(always)]
     fn copy_block(bus: &mut Bus) {
-        let mut src = bus.vram_dma.src;
-        let mut dst = bus.vram_dma.dst;
+        let mut src = bus.vram_dma.src_addr;
+        let mut dst = bus.vram_dma.dst_addr;
 
         for _ in 0..0x10 {
             src = src.wrapping_add(1);
@@ -173,7 +183,7 @@ impl VramDma {
             dst = new_dst;
 
             if dst_overflowed {
-                bus.vram_dma.hblank_active = false;
+                bus.vram_dma.hdma_active = false;
                 return;
             }
 
@@ -185,16 +195,14 @@ impl VramDma {
             };
 
             if dst > VRAM_ADDR_END {
-                // can't write outside of vram
-                // todo: investigate why it event does this (reproduces on Toki Tori)
-                return;
+                dst = VRAM_ADDR_START
             }
 
             bus.io.ppu.video_ram.write(dst, byte);
         }
 
-        bus.vram_dma.src = src;
-        bus.vram_dma.dst = dst;
+        bus.vram_dma.src_addr = src;
+        bus.vram_dma.dst_addr = dst;
     }
 
     #[inline(always)]

@@ -75,7 +75,7 @@ impl Clock {
             let hblank_started = self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
 
             if hblank_started && !self.cpu_halted {
-                VramDma::tick_hblank(&mut self.bus);
+                VramDma::tick_hdma(&mut self.bus);
             }
 
             self.bus.io.apu.tick();
