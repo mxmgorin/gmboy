@@ -211,7 +211,7 @@ impl Lcd {
             self.window.line_number = self.window.line_number.wrapping_add(1);
         }
 
-        self.ly += 1;
+        self.ly = self.ly.wrapping_add(1);
         self.compare_ly(interrupts);
     }
 
