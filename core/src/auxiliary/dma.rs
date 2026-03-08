@@ -137,14 +137,22 @@ impl VramDma {
 
     #[inline]
     fn write_hdma5(bus: &mut Bus, value: u8) {
-        bus.vram_dma.blocks = (value & 0x7F) + 1;
+        let blocks = (value & 0x7F) + 1;
         let bit_7_zero = (value & 0x80) == 0;
 
         // Cancellation case
-        if bus.vram_dma.hdma_active && bit_7_zero {
-            bus.vram_dma.hdma_active = false;
+        if bus.vram_dma.hdma_active {
+            if bit_7_zero {
+                bus.vram_dma.hdma_active = false;
+            } else {
+                // HDMA5 writes with bit 7 set can alter the length of an in-progress HDMA
+                bus.vram_dma.blocks = blocks;
+            }
+
             return;
         }
+
+        bus.vram_dma.blocks = blocks;
 
         if bit_7_zero {
             VramDma::tick_gdma(bus);
@@ -174,35 +182,34 @@ impl VramDma {
 
     #[inline(always)]
     fn copy_block(bus: &mut Bus) {
-        let mut src = bus.vram_dma.src_addr;
-        let mut dst = bus.vram_dma.dst_addr;
-
         for _ in 0..0x10 {
-            src = src.wrapping_add(1);
-            let (new_dst, dst_overflowed) = dst.overflowing_add(1);
-            dst = new_dst;
+            VramDma::copy_byte(bus);
+        }
+    }
 
-            if dst_overflowed {
-                bus.vram_dma.hdma_active = false;
-                return;
-            }
+    #[inline(always)]
+    fn copy_byte(bus: &mut Bus) {
+        bus.vram_dma.src_addr = bus.vram_dma.src_addr.wrapping_add(1);
+        let (new_dst, dst_overflowed) = bus.vram_dma.dst_addr.overflowing_add(1);
+        bus.vram_dma.dst_addr = new_dst;
 
-            let byte = match src {
-                0x0000..=0x7FFF | 0xA000..=0xBFFF => bus.cart.read(src),
-                0xC000..=0xDFFF => bus.io.ram.read_wram(src),
-                // VRAM, OAM, I/O registers, and HRAM are not accessible from VRAM DMA
-                VRAM_ADDR_START..=VRAM_ADDR_END | 0xE000..=0xFFFF => 0xFF,
-            };
-
-            if dst > VRAM_ADDR_END {
-                dst = VRAM_ADDR_START
-            }
-
-            bus.io.ppu.video_ram.write(dst, byte);
+        if dst_overflowed {
+            bus.vram_dma.hdma_active = false;
+            return;
         }
 
-        bus.vram_dma.src_addr = src;
-        bus.vram_dma.dst_addr = dst;
+        let byte = match bus.vram_dma.src_addr {
+            0x0000..=0x7FFF | 0xA000..=0xBFFF => bus.cart.read(bus.vram_dma.src_addr),
+            0xC000..=0xDFFF => bus.io.ram.read_wram(bus.vram_dma.src_addr),
+            // VRAM, OAM, I/O registers, and HRAM are not accessible from VRAM DMA
+            VRAM_ADDR_START..=VRAM_ADDR_END | 0xE000..=0xFFFF => 0xFF,
+        };
+
+        if bus.vram_dma.dst_addr > VRAM_ADDR_END {
+            bus.vram_dma.dst_addr = VRAM_ADDR_START
+        }
+
+        bus.io.ppu.video_ram.write(bus.vram_dma.dst_addr, byte);
     }
 
     #[inline(always)]
