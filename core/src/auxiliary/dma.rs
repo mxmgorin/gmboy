@@ -73,7 +73,7 @@ pub struct VramDma {
     pub src_addr: u16,
     pub dst_addr: u16,
     pub hdma_active: bool,
-    pub hdma_blocks: u8,
+    pub blocks: u8,
 
     // Registers
     pub hdma1: u8,
@@ -111,13 +111,13 @@ impl VramDma {
     pub fn read_hdma5(bus: &Bus) -> u8 {
         if bus.vram_dma.hdma_active {
             // active: bit7 reads as 0
-            (bus.vram_dma.hdma_blocks - 1) & 0x7F
-        } else if bus.vram_dma.hdma_blocks == 0 {
+            (bus.vram_dma.blocks - 1) & 0x7F
+        } else if bus.vram_dma.blocks == 0 {
             // completed
             0xFF
         } else {
             // aborted: bit7 reads as 1
-            0x80 | ((bus.vram_dma.hdma_blocks - 1) & 0x7F)
+            0x80 | ((bus.vram_dma.blocks - 1) & 0x7F)
         }
     }
 
@@ -128,16 +128,16 @@ impl VramDma {
         }
 
         VramDma::copy_block(bus);
-        bus.vram_dma.hdma_blocks -= 1;
+        bus.vram_dma.blocks -= 1;
 
-        if bus.vram_dma.hdma_blocks == 0 {
+        if bus.vram_dma.blocks == 0 {
             bus.vram_dma.hdma_active = false;
         }
     }
 
     #[inline]
     fn write_hdma5(bus: &mut Bus, value: u8) {
-        bus.vram_dma.hdma_blocks = (value & 0x7F) + 1;
+        bus.vram_dma.blocks = (value & 0x7F) + 1;
         let bit_7_zero = (value & 0x80) == 0;
 
         // Cancellation case
@@ -165,7 +165,7 @@ impl VramDma {
             return;
         }
 
-        let blocks = bus.vram_dma.hdma_blocks;
+        let blocks = bus.vram_dma.blocks;
 
         for _ in 0..blocks {
             VramDma::copy_block(bus);
