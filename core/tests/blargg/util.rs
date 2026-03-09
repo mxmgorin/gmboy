@@ -2,7 +2,7 @@ use crate::Clock;
 use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::Cpu;
-use core::debugger::{CpuLogType, Debugger};
+use core::debugger::{DebugLogType, Debugger};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -17,7 +17,7 @@ pub fn run_blargg_rom_serial(
     let clock = Clock::new(bus);
     let mut cpu = Cpu::new(clock);
     let instant = Instant::now();
-    let mut debugger = Debugger::new(CpuLogType::None, true);
+    let mut debugger = Debugger::new(DebugLogType::None, true);
 
     loop {
         cpu.step_debug(&mut debugger);

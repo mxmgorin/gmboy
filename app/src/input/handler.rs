@@ -358,6 +358,10 @@ impl InputHandler {
                 }
                 InputKind::Gamepad => {}
             },
+            AppCmd::ToggleDebug => {
+                #[cfg(feature = "debug")]
+                emu.runtime.toggle_debug();
+            }
         }
     }
 }

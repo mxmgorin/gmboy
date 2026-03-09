@@ -47,6 +47,7 @@ pub enum AppCmd {
     ToggleFullscreen,
     Macro(Box<[AppCmd]>),
     BindInput(BindInputCmd),
+    ToggleDebug,
 }
 
 impl AppCmd {
@@ -68,6 +69,7 @@ impl AppCmd {
             AppCmd::ToggleFullscreen => "Fullscreen",
             AppCmd::Macro(_) => "Macro",
             AppCmd::BindInput(_) => "Bind Input",
+            AppCmd::ToggleDebug => "Toggle Debug"
         }
     }
 }

@@ -94,8 +94,8 @@ pub fn new_emu(config: &AppConfig, palettes: &[LcdPalette]) -> Emu {
 
     #[cfg(feature = "debug")]
     {
-        let debugger = core::debugger::Debugger::new(core::debugger::CpuLogType::Asm, false);
-        return Emu::new(emu_config.clone(), EmuRuntime::new(bus)).unwrap();
+        let debugger = core::debugger::Debugger::new(core::debugger::DebugLogType::Asm, false);
+        return Emu::new(emu_config.clone(), EmuRuntime::new(bus, Some(debugger))).unwrap();
     }
 
     #[cfg(not(feature = "debug"))]

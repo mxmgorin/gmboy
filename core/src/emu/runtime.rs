@@ -84,4 +84,17 @@ impl EmuRuntime {
             }
         }
     }
+
+    #[cfg(feature = "debug")]
+    pub fn toggle_debug(&mut self) {
+        if let Some(debugger) = &mut self.debugger {
+            use crate::debugger::DebugLogType;
+
+            if debugger.log_type != DebugLogType::None {
+                debugger.log_type = DebugLogType::None;
+            } else {
+                debugger.log_type = DebugLogType::Asm;
+            }
+        }
+    }
 }

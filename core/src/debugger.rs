@@ -1,34 +1,34 @@
 use crate::bus::Bus;
-use crate::cpu::instructions::{AddressMode, Instruction, Mnemonic};
+use crate::cpu::instructions::{AddressMode, Instruction, JumpCondition, Mnemonic};
 use crate::cpu::Cpu;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Debugger {
-    msg: Vec<u8>,
-    size: usize,
-    cpu_log_type: CpuLogType,
-    serial_enabled: bool,
-}
-
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-pub enum CpuLogType {
+pub enum DebugLogType {
     None,
     Asm,
     GbDoc,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Debugger {
+    pub log_type: DebugLogType,
+    msg: Vec<u8>,
+    size: usize,
+    serial_enabled: bool,
+}
+
 impl Debugger {
     pub fn disabled() -> Self {
-        Self::new(CpuLogType::None, false)
+        Self::new(DebugLogType::None, false)
     }
 
-    pub fn new(log_type: CpuLogType, serial_enabled: bool) -> Self {
+    pub fn new(log_type: DebugLogType, serial_enabled: bool) -> Self {
         Debugger {
             msg: vec![0; 1024],
             size: 0,
-            cpu_log_type: log_type,
+            log_type,
             serial_enabled,
         }
     }
@@ -56,7 +56,7 @@ impl Debugger {
     }
 
     pub fn print_gb_doctor(&self, cpu: &mut Cpu) {
-        if self.cpu_log_type != CpuLogType::GbDoc {
+        if self.log_type != DebugLogType::GbDoc {
             return;
         }
 
@@ -84,20 +84,21 @@ impl Debugger {
     }
 
     pub fn print_asm(&self, cpu: &mut Cpu) {
-        if self.cpu_log_type != CpuLogType::Asm {
+        if self.log_type != DebugLogType::Asm {
             return;
         }
 
         let instruction = Instruction::get_by_opcode(cpu.step_ctx.opcode);
         let mode = instruction.get_address_mode();
         let mnemonic = instruction.get_mnemonic();
-        let pc = cpu.registers.pc - 1;
+        let cond = instruction.get_condition();
+        let pc = cpu.registers.pc.wrapping_sub(1);
 
         log::info!(
             "{:08} - {:04X}: {:<20} ({:02X} {:02X} {:02X}) A: {:02X} F: {} BC: {:02X}{:02X} DE: {:02X}{:02X} HL: {:02X}{:02X}",
             cpu.clock.get_t_cycles(),
             pc,
-            get_asm_string(mode, mnemonic, cpu),
+            get_asm_string(mode, mnemonic, cond, cpu),
             cpu.step_ctx.opcode,
             cpu.clock.bus.read(pc.wrapping_add(1)),
             cpu.clock.bus.read(pc.wrapping_add(2)),
@@ -113,86 +114,93 @@ impl Debugger {
     }
 }
 
-pub fn get_asm_string(mode: AddressMode, mnemonic: Mnemonic, cpu: &Cpu) -> String {
+pub fn get_asm_string(
+    mode: AddressMode,
+    mnemonic: Mnemonic,
+    cond: Option<JumpCondition>,
+    cpu: &Cpu,
+) -> String {
+    let cond = cond.unwrap_or(JumpCondition::None);
+    let cond = match cond {
+        JumpCondition::None => "".to_string(),
+        _ => format!(" {cond:?}"),
+    };
     let str = match mode {
-        AddressMode::IMP => format!("{mnemonic:?}"),
+        AddressMode::IMP => format!("{mnemonic:?}{cond}"),
         AddressMode::R_D16(r1) | AddressMode::R_A16(r1) => {
             format!(
-                "{mnemonic:?} {r1:?},${:04X}",
+                "{mnemonic:?}{cond} {r1:?},${:04X}",
                 0 //cpu.step_ctx.fetched_data.value
             )
         }
         AddressMode::R(r1) => {
-            format!("{mnemonic:?} {r1:?}")
+            format!("{mnemonic:?}{cond} {r1:?}")
         }
         AddressMode::R_R(r1, r2) => {
-            format!("{mnemonic:?} {r1:?},{r2:?}")
+            format!("{mnemonic:?}{cond} {r1:?},{r2:?}")
         }
         AddressMode::MR_R(r1, r2) => {
-            format!("{mnemonic:?} ({r1:?}),{r2:?}")
+            format!("{mnemonic:?}{cond} ({r1:?}),{r2:?}")
         }
         AddressMode::MR(r1) => {
-            format!("{mnemonic:?} ({r1:?})")
+            format!("{mnemonic:?}{cond} ({r1:?})")
         }
         AddressMode::R_MR(r1, r2) => {
-            format!("{mnemonic:?} {r1:?},({r2:?})")
+            format!("{mnemonic:?}{cond} {r1:?},({r2:?})")
         }
         AddressMode::R_HMR(r1, r2) => {
-            format!("{mnemonic:?} {r1:?},(FF00+{r2:?})")
+            format!("{mnemonic:?}{cond} {r1:?},(FF00+{r2:?})")
         }
-        AddressMode::R_D8(r1) | AddressMode::R_A8(r1) | AddressMode::R_HA8(r1) => {
-            format!(
-                "{mnemonic:?} {r1:?},${:02X}",
-                0,
-                //cpu.step_ctx.fetched_data.value & 0xFF
-            )
+        AddressMode::R_D8(r1) => {
+            format!("{mnemonic:?}{cond} {r1:?},${:02X}", read_d8(cpu),)
+        }
+        AddressMode::R_HA8(r1) | AddressMode::R_A8(r1) => {
+            format!("{mnemonic:?}{cond} {r1:?},(${:02X})", read_d8(cpu),)
         }
         AddressMode::R_HLI(r1) => {
-            format!("{mnemonic:?} {r1:?},(HL+)")
+            format!("{mnemonic:?}{cond} {r1:?},(HL+)")
         }
         AddressMode::R_HLD(r1) => {
-            format!("{mnemonic:?} {r1:?},(HL-)")
+            format!("{mnemonic:?}{cond} {r1:?},(HL-)")
         }
         AddressMode::HLI_R(r1) => {
-            format!("{mnemonic:?} (HL+),{r1:?}")
+            format!("{mnemonic:?}{cond} (HL+),{r1:?}")
         }
         AddressMode::HLD_R(r1) => {
-            format!("{mnemonic:?} (HL-),{r1:?}")
+            format!("{mnemonic:?}{cond} (HL-),{r1:?}")
         }
         AddressMode::A8_R(r2) => {
             format!(
-                "{mnemonic:?} ${:02X},{r2:?}",
+                "{mnemonic:?}{cond} (${:02X}),{r2:?}",
                 cpu.clock.bus.read(cpu.registers.pc - 1)
             )
         }
         AddressMode::LH_SPi8 => {
             format!(
-                "{mnemonic:?} (HL,SP+{:?})",
+                "{mnemonic:?}{cond} (HL,SP+{:?})",
                 0, //cpu.step_ctx.fetched_data.value & 0xFF
             )
         }
         AddressMode::D8 => {
-            format!(
-                "{mnemonic:?} ${:02X}",
-                0, //cpu.step_ctx.fetched_data.value & 0xFF
-            )
+            format!("{mnemonic:?}{cond} ${:02X}", read_d8(cpu))
         }
         AddressMode::D16 => {
-            format!("{mnemonic:?} ${:04X}", 0) // cpu.step_ctx.fetched_data.value
+            format!("{mnemonic:?}{cond} ${:04X}", 0) // cpu.step_ctx.fetched_data.value
         }
         AddressMode::MR_D8(r1) => {
-            format!(
-                "{mnemonic:?} ({r1:?}),${:02X}",
-                0 //cpu.step_ctx.fetched_data.value & 0xFF
-            )
+            format!("{mnemonic:?}{cond} ({r1:?}),${:02X}", read_d8(cpu))
         }
         AddressMode::A16_R(r2) => {
             format!(
-                "{mnemonic:?} (${:04X}),{r2:?}",
+                "{mnemonic:?}{cond} (${:04X}),{r2:?}",
                 0, //cpu.step_ctx.fetched_data.value
             )
         }
     };
 
     str.to_uppercase()
+}
+
+fn read_d8(cpu: &Cpu) -> u8 {
+    cpu.clock.bus.read(cpu.registers.pc)
 }

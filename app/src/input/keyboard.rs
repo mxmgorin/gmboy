@@ -46,6 +46,9 @@ pub fn handle_key(config: &InputConfig, sc: Scancode, pressed: bool) -> Option<A
 pub fn default_keys() -> InputBindings<Scancode> {
     let mut bindings = InputBindings::<Scancode>::default();
 
+    // dev
+    bindings.bind_cmd(Scancode::Grave, true, AppCmd::ToggleDebug);
+
     // vi-keys
     bindings.bind_btn(Scancode::K, JoypadButton::Up);
     bindings.bind_btn(Scancode::J, JoypadButton::Down);
