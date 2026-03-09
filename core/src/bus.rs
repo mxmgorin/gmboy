@@ -101,7 +101,7 @@ impl Bus {
             0xFEA0..=0xFEFF => 0xFF,
             0xFF00..=0xFF7F => {
                 if addr == VRAM_DMA_ADDR_END && self.io.ppu.lcd.model == GbModel::Cgb {
-                    return VramDma::read_hdma5(self);
+                    return self.vram_dma.read_hdma5();
                 }
 
                 self.io.read(addr)
@@ -150,7 +150,8 @@ impl Bus {
                     && addr <= VRAM_DMA_ADDR_END
                     && self.io.ppu.lcd.model == GbModel::Cgb
                 {
-                    VramDma::write(self, addr, value);
+                    self.vram_dma
+                        .write(addr, value, self.io.ppu.lcd.status.get_ppu_mode());
                     return;
                 }
 

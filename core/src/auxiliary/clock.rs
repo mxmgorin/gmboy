@@ -34,6 +34,11 @@ impl Clock {
     }
 
     #[inline(always)]
+    pub fn is_cpu_halted(&self) -> bool {
+        self.cpu_halted || self.bus.vram_dma.is_transferring()
+    }
+
+    #[inline(always)]
     pub fn calc_elapsed_nanos(&self) -> f64 {
         self.get_t_cycles() as f64 * self.get_t_cycle_duration_nanos()
     }
@@ -48,8 +53,23 @@ impl Clock {
     pub fn tick_m_cycles(&mut self, m_cycles: usize) {
         for _ in 0..m_cycles {
             self.m_cycles = self.m_cycles.wrapping_add(1);
-            self.tick_t_cycles(T_CYCLES_PER_M_CYCLE);
             OamDma::tick(&mut self.bus);
+            let odd_m_cycle = self.m_cycles % 2 == 0;
+
+            for t in 0..T_CYCLES_PER_M_CYCLE {
+                self.bus.io.timer.tick(&mut self.bus.io.interrupts);
+
+                if self.bus.io.cgb_speed.double_speed && odd_m_cycle {
+                    continue;
+                }
+
+                if t % 2 == 0 && !self.cpu_halted {
+                    VramDma::tick(&mut self.bus);
+                }
+
+                self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
+                self.bus.io.apu.tick();
+            }
         }
     }
 
@@ -63,24 +83,6 @@ impl Clock {
         self.m_cycles * T_CYCLES_PER_M_CYCLE
     }
 
-    #[inline(always)]
-    fn tick_t_cycles(&mut self, t_cycles: usize) {
-        for _ in 0..t_cycles {
-            self.bus.io.timer.tick(&mut self.bus.io.interrupts);
-
-            if self.bus.io.cgb_speed.double_speed && self.m_cycles % 2 != 0 {
-                continue;
-            }
-
-            let hblank_started = self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
-
-            if hblank_started && !self.cpu_halted {
-                VramDma::tick_hdma(&mut self.bus);
-            }
-
-            self.bus.io.apu.tick();
-        }
-    }
 
     fn get_t_cycle_duration_nanos(&self) -> f64 {
         if self.bus.io.cgb_speed.double_speed {

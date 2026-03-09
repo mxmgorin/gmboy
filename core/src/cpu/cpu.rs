@@ -105,7 +105,7 @@ impl Cpu {
 
         self.handle_interrupts();
 
-        if self.clock.cpu_halted {
+        if self.clock.is_cpu_halted() {
             if !self.clock.bus.io.interrupts.ime && self.clock.bus.io.interrupts.has_pending() {
                 // HALT bug: continue executing instructions
                 // The CPU continues execution after the HALT, but the byte after it is read twice in a row (PC is not incremented).

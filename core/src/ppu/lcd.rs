@@ -341,9 +341,10 @@ impl LcdStatus {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 #[repr(u8)]
 pub enum PpuMode {
+    #[default]
     HBlank = 0,
     VBlank = 1,
     Oam = 2,
