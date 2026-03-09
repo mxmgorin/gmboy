@@ -13,8 +13,7 @@ use core::emu::state::SaveStateCmd;
 use std::path::Path;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
-    let mut items = Vec::with_capacity(16);
-    items.push(AppMenuItem::TargetFps);
+    let mut items = Vec::with_capacity(15);
     items.push(AppMenuItem::VideoBackend);
 
     if conf.render.backend == VideoBackendType::Sdl2 {
@@ -117,6 +116,7 @@ pub fn system_menu() -> Box<[AppMenuItem]> {
 
 pub fn advanced_menu() -> Box<[AppMenuItem]> {
     vec![
+        AppMenuItem::TargetFps,
         AppMenuItem::TileWindow,
         AppMenuItem::SpinDuration,
         AppMenuItem::FrameSkip,
