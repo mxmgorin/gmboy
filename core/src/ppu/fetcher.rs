@@ -28,7 +28,7 @@ pub struct BgwFetchedData {
 }
 
 #[inline(always)]
-pub fn get_bgw_tile_addr(tile_idx: u8, map_y: u8, data_area: u16) -> u16 {
+pub fn calc_bgw_tile_addr(tile_idx: u8, map_y: u8, data_area: u16) -> u16 {
     let tile_y = (map_y % TILE_HEIGHT as u8) * 2;
 
     data_area
@@ -203,7 +203,7 @@ impl PixelFetcher {
         let fetched_data = self.bgw_fetched_data.clone();
         let data_area = lcd.control.get_bgw_data_area();
         let tile_index = bgw_tile_index_in_area(fetched_data.tile_index, data_area);
-        let tiledata_addr = get_bgw_tile_addr(tile_index, fetched_data.map_y, data_area);
+        let tiledata_addr = calc_bgw_tile_addr(tile_index, fetched_data.map_y, data_area);
         let vram_bank = fetched_data.cgb_flags.read_cgb_vram_bank();
 
         vram.read_tile_byte_from_bank(vram_bank, tiledata_addr, byte)

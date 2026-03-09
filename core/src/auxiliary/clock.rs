@@ -54,7 +54,7 @@ impl Clock {
         for _ in 0..m_cycles {
             self.m_cycles = self.m_cycles.wrapping_add(1);
             OamDma::tick(&mut self.bus);
-            let odd_m_cycle = self.m_cycles % 2 == 0;
+            let odd_m_cycle = self.m_cycles % 2 != 0;
 
             for t in 0..T_CYCLES_PER_M_CYCLE {
                 self.bus.io.timer.tick(&mut self.bus.io.interrupts);
