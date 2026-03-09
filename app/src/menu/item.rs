@@ -74,6 +74,7 @@ pub enum AppMenuItem {
     OpenedRoms,
     OpenedRomsSubMenu(Box<dyn SubMenu>),
     GbModel,
+    TargetFps,
 }
 
 impl AppMenuItem {
@@ -140,6 +141,7 @@ impl AppMenuItem {
             | AppMenuItem::KeyboardShortcuts
             | AppMenuItem::ScaleMode
             | AppMenuItem::GbModel
+            | AppMenuItem::TargetFps
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -210,6 +212,7 @@ impl AppMenuItem {
             | AppMenuItem::KeyboardShortcuts
             | AppMenuItem::ScaleMode
             | AppMenuItem::GbModel
+            | AppMenuItem::TargetFps
             | AppMenuItem::ButtonsBinding(_) => None,
             AppMenuItem::LoadedRomsSubMenu(x)
             | AppMenuItem::OpenedRomsSubMenu(x)
@@ -272,10 +275,9 @@ impl AppMenuItem {
             AppMenuItem::ResetConfig => "Reset Settings".to_string(),
             AppMenuItem::RestartGame => "Restart".to_string(),
             AppMenuItem::InputMenu => "Input".to_string(),
-            AppMenuItem::ComboInterval => with_value(
-                "Combo Dur(ms)",
-                config.input.combo_interval.as_millis(),
-            ),
+            AppMenuItem::ComboInterval => {
+                with_value("Combo Dur(ms)", config.input.combo_interval.as_millis())
+            }
             AppMenuItem::PaletteInverted => with_toggle(
                 "Palette Inverted",
                 config.video.interface.is_palette_inverted,
@@ -395,7 +397,8 @@ impl AppMenuItem {
                 };
 
                 with_value("Model", model_name)
-            },
+            }
+            AppMenuItem::TargetFps => with_value("Target FPS", config.video.render.target_fps as usize),
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

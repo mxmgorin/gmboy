@@ -160,6 +160,7 @@ pub enum ChangeConfigCmd {
     PrevShader,
     FrameSkip(usize),
     SetGbModel(Option<GbModel>),
+    TargetFps(f32),
 }
 
 impl ChangeConfigCmd {
@@ -195,6 +196,7 @@ impl ChangeConfigCmd {
             ChangeConfigCmd::PrevShader => "Prev Shader",
             ChangeConfigCmd::FrameSkip(_) => "Frame Skip",
             ChangeConfigCmd::SetGbModel(_) => "Model",
+            ChangeConfigCmd::TargetFps(_) => "Target Fps"
         }
     }
 }

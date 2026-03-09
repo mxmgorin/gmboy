@@ -1,7 +1,7 @@
 use crate::app::{AppCmd, BindCmds, BindTarget, ChangeConfigCmd};
 use crate::config::{InterfaceConfig, VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
-use crate::menu::item::{AppMenuItem};
+use crate::menu::item::AppMenuItem;
 use crate::menu::roms::RomsMenu;
 use crate::menu::SubMenu;
 use crate::roms::RomsState;
@@ -13,7 +13,8 @@ use core::emu::state::SaveStateCmd;
 use std::path::Path;
 
 pub fn video_menu(conf: &VideoConfig) -> Box<[AppMenuItem]> {
-    let mut items = Vec::with_capacity(15);
+    let mut items = Vec::with_capacity(16);
+    items.push(AppMenuItem::TargetFps);
     items.push(AppMenuItem::VideoBackend);
 
     if conf.render.backend == VideoBackendType::Sdl2 {

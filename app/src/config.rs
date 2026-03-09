@@ -79,6 +79,7 @@ pub struct RenderConfig {
     pub sdl2: Sdl2Config,
     pub gl: GlConfig,
     pub frame_skip: usize,
+    pub target_fps: f32,
 }
 
 impl RenderConfig {
@@ -86,7 +87,7 @@ impl RenderConfig {
         let frame_skip = self.frame_skip as f32;
         let frame_skip = frame_skip.clamp(0.0, 59.0);
 
-        Duration::from_secs_f32(1.0 / (60.0 - frame_skip))
+        Duration::from_secs_f32(1.0 / (self.target_fps - frame_skip))
     }
 
     pub fn change_dim(&mut self, v: f32) {
@@ -252,6 +253,7 @@ impl Default for AppConfig {
                         shader_frame_blend_mode: ShaderFrameBlendMode::Simple,
                         shader_precision: ShaderPrecision::Auto,
                     },
+                    target_fps: 60.0,
                 },
             },
             auto_continue: false,

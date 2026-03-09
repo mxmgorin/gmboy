@@ -294,11 +294,15 @@ impl InputHandler {
                 ChangeConfigCmd::FrameSkip(x) => {
                     app.config.video.render.frame_skip = x;
                     app.video.update_config(&app.config.video);
-                },
+                }
                 ChangeConfigCmd::SetGbModel(model) => {
                     app.config.emulation.model = model;
                     emu.config.model = model;
                     emu.runtime.cpu.clock.bus.update_model(model);
+                }
+                ChangeConfigCmd::TargetFps(x) => {
+                    app.config.video.render.target_fps = x;
+                    app.video.update_config(&app.config.video);
                 }
             },
             AppCmd::ReleaseButton(btn) => {

@@ -273,6 +273,9 @@ impl super::AppMenu {
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetGbModel(model)))
             }
+            AppMenuItem::TargetFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TargetFps(
+                config.video.render.target_fps + 1.0,
+            ))),
         }
     }
 
@@ -507,6 +510,9 @@ impl super::AppMenu {
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::SetGbModel(model)))
             }
+            AppMenuItem::TargetFps => Some(AppCmd::ChangeConfig(ChangeConfigCmd::TargetFps(
+                (config.video.render.target_fps - 1.0).max(1.0),
+            ))),
         }
     }
 
@@ -707,6 +713,7 @@ impl super::AppMenu {
 
                 Some(AppCmd::ChangeConfig(ChangeConfigCmd::Video(Box::new(conf))))
             }
+            AppMenuItem::TargetFps => None,
         }
     }
 }
