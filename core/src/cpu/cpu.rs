@@ -25,7 +25,7 @@ impl Cpu {
             enabling_ime: false,
             step_ctx: StepCtx::default(),
             clock,
-            stop_m_cycles: 0
+            stop_m_cycles: 0,
         }
     }
 
@@ -92,7 +92,7 @@ impl Cpu {
     #[inline]
     pub fn step_debug(&mut self, debugger: &mut crate::debugger::Debugger) {
         debugger.print(self);
-        debugger.update_serial(&mut self.clock.bus);
+        debugger.poll_serial(&mut self.clock.bus);
         self.step();
     }
 
