@@ -135,7 +135,13 @@ impl SquareChannel {
             }
             // Writes to this register while the channel is on require re-triggering it after wards.
             // If the write turns the channel off, re-triggering is not necessary (it would do nothing).
-            2 => self.nrx2_volume_envelope_and_dac.byte = value,
+            2 => {
+                self.nrx2_volume_envelope_and_dac.byte = value;
+                master_ctrl.on_dac_update(
+                    self.nrx2_volume_envelope_and_dac.is_dac_enabled(),
+                    self.ch_type,
+                );
+            }
             3 => self.nrx3x4_period_and_ctrl.period_low.write(value),
             4 => {
                 self.nrx3x4_period_and_ctrl.nrx4.write(value);

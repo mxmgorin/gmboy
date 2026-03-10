@@ -81,14 +81,17 @@ impl WaveChannel {
             CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => self.nrx3x4_period_and_ctrl.nrx4.read(),
             _ => panic!("Invalid WaveChannel address: {address:#X}"),
         };
-        
+
         val | CH3_NR30_UNUSED_MASK
     }
 
     #[inline]
-    pub fn write(&mut self, address: u16, value: u8, nr52_master_ctrl: &mut NR52) {
+    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
         match address {
-            CH3_NR30_DAC_ENABLE_ADDRESS => self.nrx0_dac_enable.byte = value,
+            CH3_NR30_DAC_ENABLE_ADDRESS => {
+                self.nrx0_dac_enable.byte = value;
+                master_ctrl.on_dac_update(self.nrx0_dac_enable.is_dac_enabled(), ChannelType::CH3);
+            }
             CH3_NR31_LENGTH_TIMER_ADDRESS => {
                 self.nrx1_length_timer.byte = value;
                 self.length_timer.reload(self.nrx1_length_timer); // research: do it must be reloaded after write?
@@ -99,7 +102,7 @@ impl WaveChannel {
                 self.nrx3x4_period_and_ctrl.nrx4.write(value);
 
                 if self.nrx3x4_period_and_ctrl.nrx4.is_triggered() {
-                    self.trigger(nr52_master_ctrl);
+                    self.trigger(master_ctrl);
                 }
             }
             _ => panic!("Invalid WaveChannel address: {:#X}", address),

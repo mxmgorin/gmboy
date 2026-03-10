@@ -89,7 +89,13 @@ impl NoiseChannel {
                 self.nrx1_len.byte = value;
                 self.length_timer.reload(self.nrx1_len);
             }
-            NR42_CH4_VOLUME_ENVELOPE_ADDRESS => self.nrx2_envelope_and_dac.byte = value,
+            NR42_CH4_VOLUME_ENVELOPE_ADDRESS => {
+                self.nrx2_envelope_and_dac.byte = value;
+                master_ctrl.on_dac_update(
+                    self.nrx2_envelope_and_dac.is_dac_enabled(),
+                    ChannelType::CH4,
+                );
+            }
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte = value,
             NR44_CH4_CONTROL_ADDRESS => {
                 self.nrx4_ctrl.write(value);

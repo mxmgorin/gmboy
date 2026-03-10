@@ -196,7 +196,7 @@ impl Apu {
         }
 
         if !self.nr52.is_audio_on() && address != AUDIO_MASTER_CONTROL_ADDRESS {
-            //return; todo: research Asteroids tries to write to panning before enabling
+            //return; //todo: research Asteroids tries to write to panning before enabling
         }
 
         // the length timers (in NRx1) on monochrome models also writable event when turned off
@@ -446,6 +446,14 @@ impl NR52 {
     #[inline]
     pub fn activate_ch(&mut self, ch_type: ChannelType) {
         set_bit(&mut self.byte, Self::get_enable_bit_pos(ch_type), true);
+    }
+
+    #[inline]
+    pub fn on_dac_update(&mut self, dac_enabled: bool, ch_type: ChannelType) {
+        // Disabling DAC always disables the channel
+        if !dac_enabled {
+            self.deactivate_ch(ch_type);
+        }
     }
 
     #[inline]
