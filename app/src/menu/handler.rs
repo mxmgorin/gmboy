@@ -1,6 +1,5 @@
 use core::emu::config::GbModel;
-
-use crate::app::{AppCmd, BindTarget, ChangeConfigCmd};
+use crate::cmd::{AppCmd, BindTarget, ChangeConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, ScaleMode, VideoBackendType};
 use crate::menu::factory::{
     advanced_menu, audio_menu, confirm_menu, files_menu, input_menu, interface_menu, keyboard_menu,

@@ -1,4 +1,4 @@
-use crate::app::AppCmd;
+use crate::cmd::AppCmd;
 use core::auxiliary::joypad::JoypadButton;
 use serde::de::{Error, MapAccess, Visitor};
 use serde::ser::SerializeMap;

@@ -5,7 +5,7 @@ pub mod handler;
 pub mod item;
 pub mod roms;
 
-use crate::app::{AppCmd, BindInputCmd};
+use crate::cmd::{AppCmd, BindInputCmd};
 use crate::config::AppConfig;
 use crate::input::bindings::BindableInput;
 use crate::menu::buffer::MenuBuffer;

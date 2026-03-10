@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, BindCmds, BindTarget, ChangeConfigCmd};
+use crate::cmd::{AppCmd, BindCmds, BindTarget, ChangeConfigCmd};
 use crate::config::{InterfaceConfig, VideoBackendType, VideoConfig};
 use crate::menu::files::FilesMenu;
 use crate::menu::item::AppMenuItem;

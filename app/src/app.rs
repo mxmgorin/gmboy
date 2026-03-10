@@ -1,7 +1,7 @@
 use crate::audio::AppAudio;
 use crate::battery::BatterySave;
-use crate::config::{AppConfig, VideoBackendType, VideoConfig};
-use crate::input::bindings::{BindableInput, InputIndex, InputKind};
+use crate::config::{AppConfig, VideoBackendType};
+
 use crate::input::handler::InputHandler;
 use crate::menu::AppMenu;
 use crate::notification::Notifications;
@@ -11,9 +11,7 @@ use crate::video::shader::{next_shader_by_name, prev_shader_by_name};
 use crate::video::AppVideo;
 use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
 use arrayvec::ArrayString;
-use core::auxiliary::joypad::JoypadButton;
 use core::cart::Cart;
-use core::emu::config::GbModel;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
@@ -21,199 +19,19 @@ use core::emu::Emu;
 use core::emu::EmuAudioCallback;
 use core::ppu::framebuffer::FrameBuffer;
 use sdl2::Sdl;
-use serde::{Deserialize, Serialize};
-use std::fmt::{self, Write};
-use std::path::{Path, PathBuf};
+use std::fmt::{Write};
+use std::path::{Path};
 use std::thread;
 use std::time::Duration;
 
 pub const AUTO_SAVE_STATE_SUFFIX: &str = "auto";
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum AppCmd {
-    ToggleMenu,
-    ToggleRewind,
-    LoadFile(PathBuf),
-    RestartRom,
-    ChangeMode(RunMode),
-    SaveState(SaveStateCmd, Option<usize>),
-    SelectRom,
-    Quit,
-    ChangeConfig(ChangeConfigCmd),
-    SelectRomsDir,
-    ReleaseButton(JoypadButton),
-    PressButton(JoypadButton),
-    SetFileBrowsePath(PathBuf),
-    ToggleFullscreen,
-    Macro(Box<[AppCmd]>),
-    BindInput(BindInputCmd),
-    ToggleDebug,
-}
-
-impl AppCmd {
-    pub const fn name(&self) -> &'static str {
-        match self {
-            AppCmd::ToggleMenu => "Toggle Menu",
-            AppCmd::ToggleRewind => "Rewind",
-            AppCmd::LoadFile(_) => "Load File",
-            AppCmd::RestartRom => "Restart ROM",
-            AppCmd::ChangeMode(m) => m.name(),
-            AppCmd::SaveState(m, _) => m.name(),
-            AppCmd::SelectRom => "Select ROM",
-            AppCmd::Quit => "Quit",
-            AppCmd::ChangeConfig(conf) => conf.name(),
-            AppCmd::SelectRomsDir => "Select ROMs Dir",
-            AppCmd::ReleaseButton(_) => "Release Button",
-            AppCmd::PressButton(_) => "Press Button",
-            AppCmd::SetFileBrowsePath(_) => "Set File Browse Path",
-            AppCmd::ToggleFullscreen => "Fullscreen",
-            AppCmd::Macro(_) => "Macro",
-            AppCmd::BindInput(_) => "Bind Input",
-            AppCmd::ToggleDebug => "Toggle Debug"
-        }
-    }
-}
-
-impl fmt::Display for AppCmd {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
-
-impl AppCmd {
-    pub fn new_macro_buttons<B: Into<Box<[JoypadButton]>>>(buttons: B, pressed: bool) -> AppCmd {
-        let buttons: Box<[JoypadButton]> = buttons.into();
-
-        if pressed {
-            AppCmd::Macro(buttons.iter().map(|b| AppCmd::PressButton(*b)).collect())
-        } else {
-            AppCmd::Macro(buttons.iter().map(|b| AppCmd::ReleaseButton(*b)).collect())
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct BindInputCmd {
-    pub input_index: InputIndex,
-    pub input_kind: InputKind,
-    pub target: BindTarget,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum BindTarget {
-    Buttons(Box<[JoypadButton]>),
-    Cmds(BindCmds),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct BindCmds {
-    pub pressed: Box<AppCmd>,
-    pub released: Option<Box<AppCmd>>,
-}
-
-impl BindCmds {
-    pub fn new(pressed: AppCmd, released: Option<AppCmd>) -> Self {
-        Self {
-            pressed: Box::new(pressed),
-            released: released.map(|c| Box::new(c)),
-        }
-    }
-}
-
-impl BindInputCmd {
-    pub fn new<I: BindableInput>(input: I, pressed: bool, target: BindTarget) -> Self {
-        Self {
-            input_index: InputIndex::new(input, pressed),
-            input_kind: input.kind(),
-            target,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub enum ChangeConfigCmd {
-    Reset,
-    Volume(f32),
-    Scale(f32),
-    TileWindow,
-    Fullscreen,
-    Fps,
-    SpinDuration(i32),
-    NextPalette,
-    PrevPalette,
-    ToggleMute,
-    NormalSpeed(f32),
-    TurboSpeed(f32),
-    SlowSpeed(f32),
-    RewindSize(i32),
-    RewindFrames(i32),
-    AutoSaveState,
-    AudioBufferSize(i32),
-    MuteTurbo,
-    MuteSlow,
-    ComboInterval(i32),
-    SetSaveSlot(usize),
-    SetLoadSlot(usize),
-    IncSaveAndLoadSlots,
-    DecSaveAndLoadSlots,
-    InvertPalette,
-    Video(Box<VideoConfig>),
-    NextShader,
-    PrevShader,
-    FrameSkip(usize),
-    SetGbModel(Option<GbModel>),
-    TargetFps(f32),
-}
-
-impl ChangeConfigCmd {
-    pub const fn name(&self) -> &'static str {
-        match self {
-            ChangeConfigCmd::Reset => "Reset",
-            ChangeConfigCmd::Volume(_) => "Volume",
-            ChangeConfigCmd::Scale(_) => "Scale",
-            ChangeConfigCmd::TileWindow => "Tile Window",
-            ChangeConfigCmd::Fullscreen => "Fullscreen",
-            ChangeConfigCmd::Fps => "Fps",
-            ChangeConfigCmd::SpinDuration(_) => "Spin Duration",
-            ChangeConfigCmd::NextPalette => "Next Palette",
-            ChangeConfigCmd::PrevPalette => "Prev Palette",
-            ChangeConfigCmd::ToggleMute => "Mute",
-            ChangeConfigCmd::NormalSpeed(_) => "Normal Speed",
-            ChangeConfigCmd::TurboSpeed(_) => "Turbo Speed",
-            ChangeConfigCmd::SlowSpeed(_) => "Slow Speed",
-            ChangeConfigCmd::RewindSize(_) => "Rewind Size",
-            ChangeConfigCmd::RewindFrames(_) => "Rewind Frames",
-            ChangeConfigCmd::AutoSaveState => "Auto Save State",
-            ChangeConfigCmd::AudioBufferSize(_) => "Audio Buffer Size",
-            ChangeConfigCmd::MuteTurbo => "Mute Turbo",
-            ChangeConfigCmd::MuteSlow => "Mute Slow",
-            ChangeConfigCmd::ComboInterval(_) => "Combo Interval",
-            ChangeConfigCmd::SetSaveSlot(_) => "Set Save Slot",
-            ChangeConfigCmd::SetLoadSlot(_) => "Set Load Slot",
-            ChangeConfigCmd::IncSaveAndLoadSlots => "Next Save Slot",
-            ChangeConfigCmd::DecSaveAndLoadSlots => "Prev Save Slot",
-            ChangeConfigCmd::InvertPalette => "Invert Palette",
-            ChangeConfigCmd::Video(_) => "Video",
-            ChangeConfigCmd::NextShader => "Next Shader",
-            ChangeConfigCmd::PrevShader => "Prev Shader",
-            ChangeConfigCmd::FrameSkip(_) => "Frame Skip",
-            ChangeConfigCmd::SetGbModel(_) => "Model",
-            ChangeConfigCmd::TargetFps(_) => "Target Fps"
-        }
-    }
-}
-
-impl fmt::Display for ChangeConfigCmd {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.name())
-    }
-}
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub enum AppState {
     Paused,
     Running,
     Quitting,
+    Stepping,
 }
 
 pub struct App<FS, FD>
@@ -317,6 +135,7 @@ where
                 AppState::Quitting => break,
                 AppState::Paused => self.update_menu(emu),
                 AppState::Running => self.update_game(emu),
+                AppState::Stepping => continue,
             }
         }
     }

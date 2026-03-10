@@ -1,4 +1,4 @@
-use crate::app::{AppCmd, ChangeConfigCmd};
+use crate::cmd::{AppCmd, ChangeConfigCmd};
 use crate::input::bindings::BindableInput;
 use crate::input::config::{GamepadBindings, InputConfig};
 use crate::input::gamepad_buttons;

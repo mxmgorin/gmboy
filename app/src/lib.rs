@@ -29,6 +29,7 @@ pub mod notification;
 pub mod palette;
 pub mod roms;
 pub mod video;
+pub mod cmd;
 
 pub fn is_zip(path: &Path) -> bool {
     let extension = path

@@ -1,4 +1,4 @@
-use crate::app::AppCmd;
+use crate::cmd::AppCmd;
 use crate::config::AppConfig;
 use crate::menu::{SubMenu, MAX_MENU_ITEMS_PER_PAGE, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;

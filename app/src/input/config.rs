@@ -1,4 +1,4 @@
-use crate::app::AppCmd;
+use crate::cmd::AppCmd;
 use crate::input::bindings::InputBindings;
 use crate::input::combo::ButtonComboBindings;
 use crate::input::gamepad::default_buttons;

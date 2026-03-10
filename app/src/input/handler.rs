@@ -1,4 +1,5 @@
-use crate::app::{App, AppCmd, AppState, ChangeConfigCmd};
+use crate::app::{App, AppState};
+use crate::cmd::{AppCmd, ChangeConfigCmd};
 use crate::config::AppConfig;
 use crate::input::bindings::InputKind;
 use crate::input::emu::handle_emu_btn;
@@ -326,14 +327,14 @@ impl InputHandler {
                 InputKind::Keyboard => {
                     if let Some(sc) = bind_cmd.input_index.into_input() {
                         match bind_cmd.target {
-                            crate::app::BindTarget::Buttons(buttons) => {
+                            crate::cmd::BindTarget::Buttons(buttons) => {
                                 if buttons.len() == 1 {
                                     app.config.input.bindings.keyboard.bind_btn(sc, buttons[0]);
                                 } else {
                                     app.config.input.bindings.keyboard.bind_macro(sc, buttons);
                                 }
                             }
-                            crate::app::BindTarget::Cmds(cmds) => {
+                            crate::cmd::BindTarget::Cmds(cmds) => {
                                 app.config.input.bindings.keyboard.bind_cmd(
                                     sc,
                                     true,

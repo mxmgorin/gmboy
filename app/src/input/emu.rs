@@ -1,4 +1,5 @@
-use crate::app::{App, AppCmd, AppState};
+use crate::app::{App, AppState};
+use crate::cmd::AppCmd;
 use crate::{PlatformFileDialog, PlatformFileSystem};
 use core::auxiliary::joypad::JoypadButton;
 use core::emu::Emu;
