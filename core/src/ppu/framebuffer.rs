@@ -82,4 +82,11 @@ impl FrameBuffer {
     pub const fn count(&self) -> usize {
         self.pushed_count
     }
+
+    #[inline]
+    pub fn clear(&mut self) {
+        for byte in self.buffer.iter_mut() {
+            *byte = 0;
+        }
+    }
 }

@@ -31,6 +31,7 @@ pub enum AppCmd {
     ToggleStepping,
     StepFrame,
     StepScanline,
+    ClearScreen,
 }
 
 impl AppCmd {
@@ -56,6 +57,7 @@ impl AppCmd {
             AppCmd::StepFrame => "Step Frame",
             AppCmd::ToggleStepping => "Toggle Stepping",
             AppCmd::StepScanline => "Step Scanline",
+            AppCmd::ClearScreen => "Clear Screen",
         }
     }
 }

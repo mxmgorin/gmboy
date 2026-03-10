@@ -381,6 +381,10 @@ impl InputHandler {
                 AppState::Running => app.state = AppState::Stepping,
                 AppState::Stepping => app.state = AppState::Running,
             },
+            AppCmd::ClearScreen => {
+                emu.get_framebuffer().clear();
+                app.render_framebuffer(emu);
+            }
         }
     }
 }
