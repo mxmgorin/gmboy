@@ -185,8 +185,9 @@ impl PixelFetcher {
             // Replace map_y's low 3 bits with flipped row
             self.bgw_fetched_data.map_y = (map_y & !7) | row;
             self.bgw_fetched_data.cgb_flags = cgb_flags;
-            // data area could change between data reads so re-read it on data steps
-            self.bgw_fetched_data.tile_index = vram.read(tilemap_addr);
+            // store only tile index because data area could change between data reads so read it on data steps
+            // tile map is olways in bank 0
+            self.bgw_fetched_data.tile_index = vram.read_from_bank(0, tilemap_addr);
         }
 
         if control.is_obj_enabled() {
