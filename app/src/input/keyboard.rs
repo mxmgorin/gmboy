@@ -48,6 +48,8 @@ pub fn default_keys() -> InputBindings<Scancode> {
 
     // dev
     bindings.bind_cmd(Scancode::Grave, true, AppCmd::ToggleDebug);
+    bindings.bind_cmd(Scancode::F5, true, AppCmd::ToggleStepping);
+    bindings.bind_cmd(Scancode::F6, true, AppCmd::StepFrame);
 
     // vi-keys
     bindings.bind_btn(Scancode::K, JoypadButton::Up);
@@ -212,31 +214,31 @@ pub fn default_keys() -> InputBindings<Scancode> {
         true,
         AppCmd::SaveState(SaveStateCmd::Load, Some(4)),
     );
-    bindings.bind_cmd(
-        Scancode::F5,
-        true,
-        AppCmd::SaveState(SaveStateCmd::Load, Some(5)),
-    );
-    bindings.bind_cmd(
-        Scancode::F6,
-        true,
-        AppCmd::SaveState(SaveStateCmd::Load, Some(6)),
-    );
-    bindings.bind_cmd(
-        Scancode::F7,
-        true,
-        AppCmd::SaveState(SaveStateCmd::Load, Some(7)),
-    );
-    bindings.bind_cmd(
-        Scancode::F8,
-        true,
-        AppCmd::SaveState(SaveStateCmd::Load, Some(8)),
-    );
-    bindings.bind_cmd(
-        Scancode::F9,
-        true,
-        AppCmd::SaveState(SaveStateCmd::Load, Some(9)),
-    );
+    // bindings.bind_cmd(
+    //     Scancode::F5,
+    //     true,
+    //     AppCmd::SaveState(SaveStateCmd::Load, Some(5)),
+    // );
+    // bindings.bind_cmd(
+    //     Scancode::F6,
+    //     true,
+    //     AppCmd::SaveState(SaveStateCmd::Load, Some(6)),
+    // );
+    // bindings.bind_cmd(
+    //     Scancode::F7,
+    //     true,
+    //     AppCmd::SaveState(SaveStateCmd::Load, Some(7)),
+    // );
+    // bindings.bind_cmd(
+    //     Scancode::F8,
+    //     true,
+    //     AppCmd::SaveState(SaveStateCmd::Load, Some(8)),
+    // );
+    // bindings.bind_cmd(
+    //     Scancode::F9,
+    //     true,
+    //     AppCmd::SaveState(SaveStateCmd::Load, Some(9)),
+    // );
 
     bindings
 }

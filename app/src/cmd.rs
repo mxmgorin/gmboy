@@ -28,6 +28,8 @@ pub enum AppCmd {
     Macro(Box<[AppCmd]>),
     BindInput(BindInputCmd),
     ToggleDebug,
+    ToggleStepping,
+    StepFrame,
 }
 
 impl AppCmd {
@@ -50,6 +52,8 @@ impl AppCmd {
             AppCmd::Macro(_) => "Macro",
             AppCmd::BindInput(_) => "Bind Input",
             AppCmd::ToggleDebug => "Toggle Debug",
+            AppCmd::StepFrame => "Step Frame",
+            AppCmd::ToggleStepping => "Toggle Stepping",
         }
     }
 }

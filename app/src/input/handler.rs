@@ -363,6 +363,19 @@ impl InputHandler {
                 #[cfg(feature = "debug")]
                 emu.runtime.toggle_debug();
             }
+            AppCmd::StepFrame => {
+                app.state = AppState::Stepping;
+                app.render_game(emu);
+                log::info!(
+                    "Step frame: {}",
+                    emu.runtime.cpu.clock.bus.io.ppu.current_frame
+                );
+            }
+            AppCmd::ToggleStepping => match app.state {
+                AppState::Paused | AppState::Quitting => {}
+                AppState::Running => app.state = AppState::Stepping,
+                AppState::Stepping => app.state = AppState::Running,
+            },
         }
     }
 }
