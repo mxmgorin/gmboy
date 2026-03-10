@@ -365,11 +365,16 @@ impl InputHandler {
             }
             AppCmd::StepFrame => {
                 app.state = AppState::Stepping;
-                app.render_game(emu);
+                app.render_frame(emu);
                 log::info!(
                     "Step frame: {}",
                     emu.runtime.cpu.clock.bus.io.ppu.current_frame
                 );
+            }
+            AppCmd::StepScanline => {
+                app.state = AppState::Stepping;
+                app.render_scanline(emu);
+                log::info!("Step scanline: {}", emu.runtime.cpu.clock.bus.io.ppu.lcd.ly);
             }
             AppCmd::ToggleStepping => match app.state {
                 AppState::Paused | AppState::Quitting => {}

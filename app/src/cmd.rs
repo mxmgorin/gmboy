@@ -30,6 +30,7 @@ pub enum AppCmd {
     ToggleDebug,
     ToggleStepping,
     StepFrame,
+    StepScanline,
 }
 
 impl AppCmd {
@@ -54,6 +55,7 @@ impl AppCmd {
             AppCmd::ToggleDebug => "Toggle Debug",
             AppCmd::StepFrame => "Step Frame",
             AppCmd::ToggleStepping => "Toggle Stepping",
+            AppCmd::StepScanline => "Step Scanline",
         }
     }
 }

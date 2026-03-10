@@ -69,19 +69,33 @@ impl EmuRuntime {
         let start_frame = self.cpu.clock.bus.io.ppu.current_frame;
 
         while start_frame == self.cpu.clock.bus.io.ppu.current_frame {
-            #[cfg(feature = "debug")]
-            if let Some(debugger) = self.debugger.as_mut() {
-                self.cpu.step_debug(debugger);
-            }
+            self.step(callback);
+        }
+    }
 
-            #[cfg(not(feature = "debug"))]
-            self.cpu.step();
+    #[inline(always)]
+    pub fn run_scanline(&mut self, callback: &mut impl EmuAudioCallback) {
+        let start_scanline = self.cpu.clock.bus.io.ppu.lcd.ly;
 
-            if self.cpu.clock.bus.io.apu.buffer_ready() {
-                let output = self.cpu.clock.bus.io.apu.get_buffer();
-                callback.update(output, self);
-                self.cpu.clock.bus.io.apu.clear_buffer();
-            }
+        while start_scanline == self.cpu.clock.bus.io.ppu.lcd.ly {
+            self.step(callback);
+        }
+    }
+
+    #[inline(always)]
+    pub fn step(&mut self, callback: &mut impl EmuAudioCallback) {
+        #[cfg(feature = "debug")]
+        if let Some(debugger) = self.debugger.as_mut() {
+            self.cpu.step_debug(debugger);
+        }
+
+        #[cfg(not(feature = "debug"))]
+        self.cpu.step();
+
+        if self.cpu.clock.bus.io.apu.buffer_ready() {
+            let output = self.cpu.clock.bus.io.apu.get_buffer();
+            callback.update(output, self);
+            self.cpu.clock.bus.io.apu.clear_buffer();
         }
     }
 

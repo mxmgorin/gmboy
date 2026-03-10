@@ -134,30 +134,41 @@ where
             match self.state {
                 AppState::Quitting => break,
                 AppState::Paused => self.render_menu(emu),
-                AppState::Running => self.render_game(emu),
+                AppState::Running => self.render_frame(emu),
                 AppState::Stepping => continue,
             }
         }
     }
 
     #[inline(always)]
-    pub fn render_game(&mut self, emu: &mut Emu) {
+    pub fn render_frame(&mut self, emu: &mut Emu) {
         let on_time = emu.run_frame(self);
 
         if on_time || self.video.must_render() {
-            let fps = emu.get_fps();
-            let fb = emu.get_framebuffer();
-            self.update_notif(fb);
-
-            if let Some(new_fps) = fps {
-                self.fps_str.clear();
-                write!(&mut self.fps_str, "{new_fps:.2}").unwrap();
-                self.video.ui.fill_fps(fb, &self.fps_str);
-            }
-
-            self.video.draw_buffer(fb);
-            self.video.render();
+            self.render_framebuffer(emu);
         }
+    }
+
+    #[inline(always)]
+    pub fn render_scanline(&mut self, emu: &mut Emu) {
+        emu.runtime.run_scanline(self);
+        self.render_framebuffer(emu);
+    }
+
+    #[inline(always)]
+    pub fn render_framebuffer(&mut self, emu: &mut Emu) {
+        let fps = emu.get_fps();
+        let fb = emu.get_framebuffer();
+        self.update_notif(fb);
+
+        if let Some(new_fps) = fps {
+            self.fps_str.clear();
+            write!(&mut self.fps_str, "{new_fps:.2}").unwrap();
+            self.video.ui.fill_fps(fb, &self.fps_str);
+        }
+
+        self.video.draw_buffer(fb);
+        self.video.render();
     }
 
     #[inline(always)]
