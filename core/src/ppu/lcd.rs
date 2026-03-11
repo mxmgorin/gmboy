@@ -182,7 +182,7 @@ impl Lcd {
     pub fn write(&mut self, address: u16, value: u8) {
         match address {
             LCD_CONTROL_ADDRESS => self.control.byte = value,
-            LCD_STATUS_ADDRESS => self.status.byte = value,
+            LCD_STATUS_ADDRESS => self.status.write(value),
             LCD_SCROLL_Y_ADDRESS => self.scroll_y = value,
             LCD_SCROLL_X_ADDRESS => self.scroll_x = value,
             LCD_LY_ADDRESS => self.ly = value,
@@ -307,14 +307,28 @@ impl LcdControl {
 }
 
 pub const PPU_MODE_MASK: u8 = 0b11;
+pub const LYC_MASK: u8 = 0b100;
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 #[repr(C)]
 pub struct LcdStatus {
-    pub byte: u8,
+    byte: u8,
 }
 
 impl LcdStatus {
+    #[inline(always)]
+    pub fn read(&self) -> u8 {
+        self.byte
+    }
+
+    #[inline(always)]
+    pub fn write(&mut self, value: u8) {
+        const MASK: u8 = PPU_MODE_MASK | LYC_MASK;
+        // clear lyc and mode bits in new value (they are read-only)
+        // get lyc and mode from the current value and combine
+        self.byte = (self.byte & MASK) | (value & !MASK);
+    }
+
     #[inline(always)]
     pub const fn get_ppu_mode(&self) -> PpuMode {
         PpuMode::from_u8(self.byte)
@@ -322,7 +336,7 @@ impl LcdStatus {
 
     #[inline(always)]
     pub const fn set_ppu_mode(&mut self, mode: PpuMode) {
-        self.byte &= !PPU_MODE_MASK;
+        self.byte &= !PPU_MODE_MASK; // clear ppu mode bits
         self.byte |= mode as u8;
     }
 
