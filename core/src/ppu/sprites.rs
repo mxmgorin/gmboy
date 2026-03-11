@@ -9,7 +9,7 @@ use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
 const MAX_LINE_SPRITES_COUNT: usize = 10;
-const MAX_FETCHED_SPRITES_COUNT: usize = 3;
+const MAX_FETCHED_SPRITES_COUNT: usize = 4;
 
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]
 pub struct SpriteFetchedData {
