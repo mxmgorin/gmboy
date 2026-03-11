@@ -7,7 +7,7 @@ use std::time::Duration;
 mod util;
 
 const DURATION: Duration = Duration::from_secs(1);
-const IMG_UPDATE: bool = false;
+const IMG_UPDATE: bool = true;
 
 #[test]
 fn test_cgb_acid2() {
