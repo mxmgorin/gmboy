@@ -48,6 +48,7 @@ pub struct Lcd {
     pub status: LcdStatus,
     pub scroll_y: u8,
     pub scroll_x: u8,
+    /// LY indicates the current horizontal line
     pub ly: u8,
     pub ly_compare: u8,
     pub dma_byte: u8,
