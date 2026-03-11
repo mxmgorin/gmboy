@@ -90,23 +90,20 @@ impl PixelFetcher {
 
     #[inline(always)]
     fn try_fifo_pop(&mut self, scroll_x: u8) -> Option<PixelColor> {
-        if let Some(pixel) = self.pixel_fifo.pop() {
+        let pixel = self.pixel_fifo.pop()?;
+
+        // Check if we are in the window or background layer
+        // For the window layer, bypass scroll_x to avoid horizontal scrolling
+        if self.bgw_fetched_data.is_window {
+            // No horizontal scroll for window
             self.line_x += 1;
-
-            // Check if we are in the window or background layer
-            // For the window layer, bypass scroll_x to avoid horizontal scrolling
-            let pixel = if self.bgw_fetched_data.is_window {
-                // No horizontal scroll for window
-                Some(pixel)
-            } else if self.line_x >= scroll_x % TILE_WIDTH as u8 {
-                // For the background layer, apply scroll_x for horizontal scrolling
-                Some(pixel)
-            } else {
-                None
-            };
-
-            return pixel;
-        }
+            return Some(pixel);
+        } else if self.line_x >= scroll_x % TILE_WIDTH as u8 {
+            // For the background layer, apply scroll_x for horizontal scrolling
+            self.line_x += 1;
+            return Some(pixel);
+        };
+        self.line_x += 1;
 
         None
     }
