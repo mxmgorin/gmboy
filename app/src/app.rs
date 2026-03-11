@@ -168,6 +168,12 @@ where
         }
 
         self.video.draw_buffer(fb);
+
+        if self.config.video.interface.show_tiles {
+            let tiles = emu.runtime.cpu.clock.bus.io.ppu.video_ram.iter_tiles();
+            self.video.draw_tiles(tiles);
+        }
+
         self.video.render();
     }
 
