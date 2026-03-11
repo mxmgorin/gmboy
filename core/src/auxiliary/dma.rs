@@ -196,34 +196,34 @@ impl VramDma {
 
     #[inline(always)]
     fn transfer_byte(bus: &mut Bus) {
-        bus.vram_dma.src_addr = bus.vram_dma.src_addr.wrapping_add(1);
-
         let byte = match bus.vram_dma.src_addr {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => bus.cart.read(bus.vram_dma.src_addr),
             0xC000..=0xDFFF => bus.io.ram.read_wram(bus.vram_dma.src_addr),
             // not accessible from VRAM DMA
             VRAM_ADDR_START..=VRAM_ADDR_END | 0xE000..=0xFFFF => 0xFF,
         };
+        bus.vram_dma.src_addr = bus.vram_dma.src_addr.wrapping_add(1);
 
         VramDma::write_byte(bus, byte);
     }
 
     #[inline(always)]
     fn write_byte(bus: &mut Bus, byte: u8) {
-        let (new_dst, dst_overflowed) = bus.vram_dma.dst_addr.overflowing_add(1);
-        bus.vram_dma.dst_addr = new_dst;
-
-        if dst_overflowed {
-            bus.vram_dma.state = VramDmaState::Idle;
-            return;
-        }
-
         if bus.vram_dma.dst_addr > VRAM_ADDR_END {
             bus.vram_dma.dst_addr = VRAM_ADDR_START
         }
 
         if !bus.io.ppu.lcd.is_vram_blocked() {
             bus.io.ppu.video_ram.write(bus.vram_dma.dst_addr, byte);
+        }
+
+        // todo: overflow check should be on full byte
+        let (new_dst, dst_overflowed) = bus.vram_dma.dst_addr.overflowing_add(1);
+        bus.vram_dma.dst_addr = new_dst;
+
+        if dst_overflowed {
+            bus.vram_dma.state = VramDmaState::Idle;
+            return;
         }
 
         bus.vram_dma.pending_bytes -= 1;
