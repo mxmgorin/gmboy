@@ -69,7 +69,7 @@ pub fn run_visual_test(
         cpu.step();
 
         if instant.elapsed() > duration {
-            let got_buffer = cpu.clock.bus.io.ppu.buffer.rgb888();
+            let got_buffer = cpu.clock.bus.io.ppu.lcd.buffer.rgb888();
 
             if img_update {
                 save_rgb888_image(img_path, &got_buffer, LCD_X_RES as u32, LCD_Y_RES as u32)?;

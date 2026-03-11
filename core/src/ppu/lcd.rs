@@ -1,5 +1,6 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::emu::config::GbModel;
+use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::tile::TileFlags;
 pub use crate::ppu::tile::{
     PixelColor, BG_TILE_MAP_1_ADDR_START, BG_TILE_MAP_2_ADDR_START, TILE_SET_DATA_1_START,
@@ -57,6 +58,7 @@ pub struct Lcd {
     pub dmg_palette: DmgPalette,
     pub cgb_palette: CgbPalette,
     pub model: GbModel,
+    pub buffer: FrameBuffer,
 }
 
 impl Default for Lcd {
@@ -91,7 +93,13 @@ impl Lcd {
                 GbModel::Dmg => 0x1,
             },
             model,
+            buffer: FrameBuffer::default(),
         }
+    }
+
+    #[inline(always)]
+    pub fn push_pixel(&mut self, pixel: PixelColor) {
+        self.buffer.push(self.ly, pixel);
     }
 
     #[inline(always)]

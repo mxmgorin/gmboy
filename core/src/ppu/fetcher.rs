@@ -1,6 +1,6 @@
 use crate::emu::config::GbModel;
 use crate::ppu::fifo::PixelFifo;
-use crate::ppu::lcd::{Lcd, PixelColor};
+use crate::ppu::lcd::Lcd;
 use crate::ppu::sprites::SpriteFetcher;
 use crate::ppu::tile::{
     get_color_index, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
@@ -49,8 +49,6 @@ pub fn bgw_tile_index_in_area(tile_idx: u8, data_area: u16) -> u8 {
 pub struct PixelFetcher {
     pub sprite_fetcher: SpriteFetcher,
     fetch_step: FetchStep,
-    /// X position on the current line
-    line_x: u8,
     /// X position for a tile on the current line
     fetch_x: u8,
     /// X position for the fifo on the current line
@@ -64,7 +62,6 @@ impl Default for PixelFetcher {
         Self {
             fetch_step: FetchStep::Tile,
             pixel_fifo: Default::default(),
-            line_x: 0,
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             fifo_x: 0,
@@ -75,7 +72,7 @@ impl Default for PixelFetcher {
 
 impl PixelFetcher {
     #[inline(always)]
-    pub fn fetch(&mut self, lcd: &Lcd, vram: &VideoRam, line_ticks: usize) -> Option<PixelColor> {
+    pub fn tick(&mut self, lcd: &mut Lcd, vram: &VideoRam, line_ticks: usize) {
         // The first four steps take 2 dots each and the fifth step is attempted every dot until it succeeds
         // Fetch on odd lines.
         if line_ticks & 1 != 0 || self.fetch_step == FetchStep::Push {
@@ -85,31 +82,22 @@ impl PixelFetcher {
             }
         }
 
-        self.try_fifo_pop(lcd.scroll_x)
+        // pop fifo to lcd
+        if let Some((pixel, x)) = self.pixel_fifo.pop() {
+            // Check if we are in the window or background layer
+            // For the window layer, bypass scroll_x to avoid horizontal scrolling
+            if self.bgw_fetched_data.is_window {
+                // No horizontal scroll for window
+                lcd.push_pixel(pixel);
+            } else if x >= lcd.scroll_x % TILE_WIDTH as u8 {
+                // For the background layer, apply scroll_x for horizontal scrolling
+                lcd.push_pixel(pixel);
+            };
+        }
     }
 
     #[inline(always)]
-    fn try_fifo_pop(&mut self, scroll_x: u8) -> Option<PixelColor> {
-        let pixel = self.pixel_fifo.pop()?;
-
-        // Check if we are in the window or background layer
-        // For the window layer, bypass scroll_x to avoid horizontal scrolling
-        if self.bgw_fetched_data.is_window {
-            // No horizontal scroll for window
-            self.line_x += 1;
-            return Some(pixel);
-        } else if self.line_x >= scroll_x % TILE_WIDTH as u8 {
-            // For the background layer, apply scroll_x for horizontal scrolling
-            self.line_x += 1;
-            return Some(pixel);
-        };
-        self.line_x += 1;
-
-        None
-    }
-
-    #[inline(always)]
-    fn try_fifo_push(&mut self, lcd: &Lcd) -> bool {
+    fn fifo_push(&mut self, lcd: &Lcd) -> bool {
         if self.pixel_fifo.is_full() {
             return false;
         }
@@ -229,7 +217,7 @@ impl PixelFetcher {
 
     #[inline(always)]
     fn fetch_push(&mut self, lcd: &Lcd, _: &VideoRam) {
-        if self.try_fifo_push(lcd) {
+        if self.fifo_push(lcd) {
             self.fetch_step = FetchStep::Tile;
         }
     }
@@ -238,7 +226,6 @@ impl PixelFetcher {
     pub const fn reset(&mut self) {
         self.fetch_step = FetchStep::Tile;
         self.pixel_fifo.clear();
-        self.line_x = 0;
         self.fetch_x = 0;
         self.fifo_x = 0;
     }

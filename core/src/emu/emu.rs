@@ -42,7 +42,7 @@ impl Emu {
 
     #[inline(always)]
     pub fn get_framebuffer(&mut self) -> &mut FrameBuffer {
-        &mut self.runtime.cpu.clock.bus.io.ppu.buffer
+        &mut self.runtime.cpu.clock.bus.io.ppu.lcd.buffer
     }
 
     #[inline(always)]

@@ -10,6 +10,7 @@ pub struct PixelFifo {
     head: usize,
     tail: usize,
     size: usize,
+    poped: u8,
 }
 
 impl Default for PixelFifo {
@@ -19,6 +20,7 @@ impl Default for PixelFifo {
             head: 0,
             tail: 0,
             size: 0,
+            poped: 0,
         }
     }
 }
@@ -37,8 +39,10 @@ impl PixelFifo {
     }
 
     #[inline(always)]
-    pub fn pop(&mut self) -> Option<PixelColor> {
+    pub fn pop(&mut self) -> Option<(PixelColor, u8)> {
         if self.size > MAX_FIFO_SIZE {
+            let poped = self.poped;
+            self.poped += 1;
             // SAFETY:
             // - we change head only here and don't give any mut reference
             // - buffer size is bigger than `MAX_FIFO_SIZE`
@@ -46,7 +50,7 @@ impl PixelFifo {
             self.head = (self.head + 1) % BUFFER_SIZE;
             self.size -= 1;
 
-            return Some(pixel);
+            return Some((pixel, poped));
         }
 
         None
@@ -57,6 +61,7 @@ impl PixelFifo {
         self.head = 0;
         self.tail = 0;
         self.size = 0;
+        self.poped = 0;
     }
 
     #[inline(always)]
@@ -120,11 +125,11 @@ mod tests {
         // Now pop should return the first pushed pixels
         let p = fifo.pop();
         assert!(p.is_some());
-        assert_eq!(p.unwrap(), create_pixel(0));
+        assert_eq!(p.unwrap().0, create_pixel(0));
 
         let p2 = fifo.pop();
         assert!(p2.is_some());
-        assert_eq!(p2.unwrap(), create_pixel(1));
+        assert_eq!(p2.unwrap().0, create_pixel(1));
     }
 
     #[test]

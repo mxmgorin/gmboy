@@ -60,8 +60,8 @@ impl FrameBuffer {
     }
 
     #[inline(always)]
-    pub fn push(&mut self, ly: usize, pixel: PixelColor) {
-        let pixel_index = self.pushed_x.wrapping_add(ly * LCD_X_RES as usize);
+    pub fn push(&mut self, ly: u8, pixel: PixelColor) {
+        let pixel_index = self.pushed_x.wrapping_add(ly as usize * LCD_X_RES as usize);
         let bytes_index = pixel_index * PPU_BYTES_PER_PIXEL;
         let bytes = pixel.as_rgb565_bytes();
 

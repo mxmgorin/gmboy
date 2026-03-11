@@ -1,6 +1,5 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::ppu::fetcher::PixelFetcher;
-use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::{Lcd, LcdStatSrc, PpuMode};
 use crate::ppu::oam::OamRam;
 use crate::ppu::vram::VideoRam;
@@ -24,7 +23,6 @@ pub const FRAME_DURATION: Duration = Duration::from_nanos(16_743_000); // ~59.7 
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Ppu {
-    pub buffer: FrameBuffer,
     pub video_ram: VideoRam,
     pub oam_ram: OamRam,
     pub lcd: Lcd,
@@ -77,7 +75,7 @@ impl Ppu {
     pub fn reset(&mut self) {
         self.line_ticks = 0;
         self.current_frame = 0;
-        self.buffer.reset_x();
+        self.lcd.buffer.reset_x();
         self.fetcher.reset();
     }
 
@@ -93,15 +91,11 @@ impl Ppu {
 
     #[inline(always)]
     fn mode_transfer(&mut self, interrupts: &mut Interrupts) {
-        let color = self
+         self
             .fetcher
-            .fetch(&self.lcd, &self.video_ram, self.line_ticks);
+            .tick(&mut self.lcd, &self.video_ram, self.line_ticks);
 
-        if let Some(color) = color {
-            self.buffer.push(self.lcd.ly as usize, color);
-        }
-
-        if self.buffer.count_x() >= LCD_X_RES as usize {
+        if self.lcd.buffer.count_x() >= LCD_X_RES as usize {
             self.set_mode_hblank(interrupts);
         }
     }
@@ -151,7 +145,7 @@ impl Ppu {
 
     #[inline(always)]
     const fn set_mode_transfer(&mut self) {
-        self.buffer.reset_x();
+        self.lcd.buffer.reset_x();
         self.fetcher.reset();
         self.lcd.status.set_ppu_mode(PpuMode::Transfer);
     }
