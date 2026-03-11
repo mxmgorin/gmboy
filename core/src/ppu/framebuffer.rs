@@ -6,20 +6,20 @@ use std::ptr;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FrameBuffer {
-    buffer: Box<[u8]>,
-    pushed_count: usize,
+    bytes: Box<[u8]>,
+    pushed_x: usize,
 }
 
 impl Deref for FrameBuffer {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
-        &self.buffer
+        &self.bytes
     }
 }
 
 impl DerefMut for FrameBuffer {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.buffer
+        &mut self.bytes
     }
 }
 
@@ -35,8 +35,8 @@ impl FrameBuffer {
 
     pub fn new(buffer: Box<[u8]>) -> Self {
         FrameBuffer {
-            buffer,
-            pushed_count: 0,
+            bytes: buffer,
+            pushed_x: 0,
         }
     }
 
@@ -44,7 +44,7 @@ impl FrameBuffer {
         let size = LCD_X_RES as usize * LCD_Y_RES as usize * 3;
         let mut rgb888 = Vec::with_capacity(size);
 
-        for chunk in self.buffer.chunks_exact(2) {
+        for chunk in self.bytes.chunks_exact(2) {
             let pixel = u16::from_le_bytes([chunk[0], chunk[1]]);
 
             let r = ((pixel >> 11) & 0x1F) as u16 * 255 / 31;
@@ -61,31 +61,34 @@ impl FrameBuffer {
 
     #[inline(always)]
     pub fn push(&mut self, ly: usize, pixel: PixelColor) {
-        let index = self.pushed_count.wrapping_add(ly * LCD_X_RES as usize);
-        let base = index * PPU_BYTES_PER_PIXEL;
+        let pixel_index = self.pushed_x.wrapping_add(ly * LCD_X_RES as usize);
+        let bytes_index = pixel_index * PPU_BYTES_PER_PIXEL;
         let bytes = pixel.as_rgb565_bytes();
 
         unsafe {
-            let dst = self.buffer.as_mut_ptr().add(base);
+            let dst = self.bytes.as_mut_ptr().add(bytes_index);
             ptr::copy_nonoverlapping(bytes.as_ptr(), dst, PPU_BYTES_PER_PIXEL);
         }
 
-        self.pushed_count += 1;
+        self.pushed_x += 1;
     }
 
+    /// Resets position of X position
     #[inline(always)]
-    pub const fn reset(&mut self) {
-        self.pushed_count = 0;
+    pub const fn reset_x(&mut self) {
+        self.pushed_x = 0;
     }
 
+    /// Returns count of pushed pixels on X position
     #[inline(always)]
-    pub const fn count(&self) -> usize {
-        self.pushed_count
+    pub const fn count_x(&self) -> usize {
+        self.pushed_x
     }
 
+    /// Sets the buffer to zero
     #[inline]
     pub fn clear(&mut self) {
-        for byte in self.buffer.iter_mut() {
+        for byte in self.bytes.iter_mut() {
             *byte = 0;
         }
     }

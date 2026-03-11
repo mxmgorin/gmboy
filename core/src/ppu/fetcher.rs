@@ -49,8 +49,11 @@ pub fn bgw_tile_index_in_area(tile_idx: u8, data_area: u16) -> u8 {
 pub struct PixelFetcher {
     pub sprite_fetcher: SpriteFetcher,
     fetch_step: FetchStep,
+    /// X position on the current line
     line_x: u8,
+    /// X position for a tile on the current line
     fetch_x: u8,
+    /// X position for the fifo on the current line
     fifo_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,

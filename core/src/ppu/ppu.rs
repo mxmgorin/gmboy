@@ -77,7 +77,7 @@ impl Ppu {
     pub fn reset(&mut self) {
         self.line_ticks = 0;
         self.current_frame = 0;
-        self.buffer.reset();
+        self.buffer.reset_x();
         self.fetcher.reset();
     }
 
@@ -101,7 +101,7 @@ impl Ppu {
             self.buffer.push(self.lcd.ly as usize, color);
         }
 
-        if self.buffer.count() >= LCD_X_RES as usize {
+        if self.buffer.count_x() >= LCD_X_RES as usize {
             self.set_mode_hblank(interrupts);
         }
     }
@@ -151,7 +151,7 @@ impl Ppu {
 
     #[inline(always)]
     const fn set_mode_transfer(&mut self) {
-        self.buffer.reset();
+        self.buffer.reset_x();
         self.fetcher.reset();
         self.lcd.status.set_ppu_mode(PpuMode::Transfer);
     }
