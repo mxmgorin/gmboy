@@ -6,18 +6,19 @@
 
 ___
 
-[![CI](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
-[![GitHub release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
-<!--[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)-->
-[![Build android](https://github.com/mxmgorin/gmboy/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Build windows](https://github.com/mxmgorin/gmboy/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Build macOS](https://github.com/mxmgorin/gmboy/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Build linux](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Build linux arm](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Tests](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Android](https://github.com/mxmgorin/gmboy/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Windows](https://github.com/mxmgorin/gmboy/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![MacOS](https://github.com/mxmgorin/gmboy/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Linux x86_64](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Linux ARM](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
+[![Release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
 
 <!--
-[![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases) -->
+[![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases)
+[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
+[![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
+-->
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
@@ -31,7 +32,7 @@ ___
   </a>
 </p>
 
-`GMBoy` is a cycle-accurate Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
+`GMBoy` is a Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
 
 Here are some highlights:
 
