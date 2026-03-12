@@ -51,8 +51,6 @@ pub struct PixelFetcher {
     fetch_step: FetchStep,
     /// X position for a tile on the current line
     fetch_x: u8,
-    /// X position for the fifo on the current line
-    fifo_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
 }
@@ -64,7 +62,6 @@ impl Default for PixelFetcher {
             pixel_fifo: Default::default(),
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
-            fifo_x: 0,
             sprite_fetcher: Default::default(),
         }
     }
@@ -102,41 +99,33 @@ impl PixelFetcher {
             return false;
         }
 
-        let x: i32 = self.fetch_x.wrapping_sub(8 - (lcd.scroll_x % 8)) as i32;
-
-        if x < 0 {
-            return true; // nothing to push
-        }
-
         let lcdc_obj_enabled = lcd.control.is_obj_enabled();
         let lcdc_bg_enabled = lcd.control.is_bgw_enabled();
-        let bg_cgb_flags = self.bgw_fetched_data.cgb_flags;
-        let is_x_flip = bg_cgb_flags.is_x_flip();
+        let cgb_gb_f = self.bgw_fetched_data.cgb_flags;
+        let cgb_bg_x_flip = cgb_gb_f.is_x_flip();
 
         for bit in 0..TILE_BITS_COUNT {
-            let bit = if is_x_flip { 7 - bit } else { bit };
-            let bg_color_index = get_color_index(
+            let bit = if cgb_bg_x_flip { 7 - bit } else { bit };
+            let bg_color_id = get_color_index(
                 self.bgw_fetched_data.tile_line.byte0,
                 self.bgw_fetched_data.tile_line.byte1,
                 bit,
             );
 
-            let color = if lcdc_obj_enabled {
-                let sprite_color =
-                    self.sprite_fetcher
-                        .get_color(lcd, self.fifo_x, bg_color_index, bg_cgb_flags);
+            if lcdc_obj_enabled {
+                let fifo_x = self.pixel_fifo.pushed_count();
+                let sp_color = self
+                    .sprite_fetcher
+                    .get_color(lcd, fifo_x, bg_color_id, cgb_gb_f);
 
-                if let Some(sprite_color) = sprite_color {
-                    sprite_color
-                } else {
-                    lcd.get_bgw_color(bg_color_index, lcdc_bg_enabled, bg_cgb_flags)
+                if let Some(color) = sp_color {
+                    self.pixel_fifo.push(color);
+                    continue;
                 }
-            } else {
-                lcd.get_bgw_color(bg_color_index, lcdc_bg_enabled, bg_cgb_flags)
-            };
+            }
 
+            let color = lcd.get_bgw_color(bg_color_id, lcdc_bg_enabled, cgb_gb_f);
             self.pixel_fifo.push(color);
-            self.fifo_x += 1;
         }
 
         true
@@ -144,11 +133,11 @@ impl PixelFetcher {
 
     #[inline(always)]
     fn fetch_tile(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        let control = lcd.control;
+        let lcdc = lcd.control;
 
         // In CGB when LCDC bit 0 = 0, BG and Window are still drawn
         // But OBJ always has priority over BG,
-        if control.is_bgw_enabled() || lcd.model == GbModel::Cgb {
+        if lcdc.is_bgw_enabled() || lcd.model == GbModel::Cgb {
             let (map_y, tilemap_addr) =
                 if let Some(tilemap_addr) = lcd.window.get_tilemap_addr(self.fetch_x as u16, lcd) {
                     self.bgw_fetched_data.is_window = true;
@@ -158,7 +147,7 @@ impl PixelFetcher {
                 } else {
                     let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
                     let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                    let tilemap_addr = control.get_bg_map_area()
+                    let tilemap_addr = lcdc.get_bg_map_area()
                         + (map_x as u16 / TILE_WIDTH)
                         + ((map_y as u16 / TILE_HEIGHT) * 32);
                     self.bgw_fetched_data.is_window = false;
@@ -178,7 +167,7 @@ impl PixelFetcher {
             self.bgw_fetched_data.tile_index = vram.read_from_bank(0, tilemap_addr);
         }
 
-        if control.is_obj_enabled() {
+        if lcdc.is_obj_enabled() {
             self.sprite_fetcher
                 .fetch(lcd, vram, lcd.scroll_x, self.fetch_x);
         }
@@ -227,7 +216,6 @@ impl PixelFetcher {
         self.fetch_step = FetchStep::Tile;
         self.pixel_fifo.clear();
         self.fetch_x = 0;
-        self.fifo_x = 0;
     }
 }
 

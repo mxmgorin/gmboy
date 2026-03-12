@@ -10,7 +10,8 @@ pub struct PixelFifo {
     head: usize,
     tail: usize,
     size: usize,
-    poped: u8,
+    popped: u8,
+    pushed: u8,
 }
 
 impl Default for PixelFifo {
@@ -20,7 +21,8 @@ impl Default for PixelFifo {
             head: 0,
             tail: 0,
             size: 0,
-            poped: 0,
+            popped: 0,
+            pushed: 0,
         }
     }
 }
@@ -36,13 +38,14 @@ impl PixelFifo {
 
         self.tail = (self.tail + 1) % BUFFER_SIZE;
         self.size += 1;
+        self.pushed += 1;
     }
 
     #[inline(always)]
     pub fn pop(&mut self) -> Option<(PixelColor, u8)> {
         if self.size > MAX_FIFO_SIZE {
-            let poped = self.poped;
-            self.poped += 1;
+            let poped = self.popped;
+            self.popped += 1;
             // SAFETY:
             // - we change head only here and don't give any mut reference
             // - buffer size is bigger than `MAX_FIFO_SIZE`
@@ -61,12 +64,18 @@ impl PixelFifo {
         self.head = 0;
         self.tail = 0;
         self.size = 0;
-        self.poped = 0;
+        self.popped = 0;
+        self.pushed = 0;
     }
 
     #[inline(always)]
     pub fn is_full(&self) -> bool {
         self.size > MAX_FIFO_SIZE
+    }
+
+    #[inline(always)]
+    pub fn pushed_count(&self) -> u8 {
+        self.pushed
     }
 }
 
