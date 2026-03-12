@@ -2,7 +2,7 @@ use crate::emu::config::GbModel;
 use crate::ppu::lcd::{Lcd, PixelColor};
 use crate::ppu::oam::{OamEntry, OamRam};
 use crate::ppu::tile::{
-    get_color_index, TileFlags, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
+    get_color_id, TileFlags, TileLineData, TILE_BIT_SIZE, TILE_LINE_BYTES_COUNT,
     TILE_SET_DATA_1_START,
 };
 use crate::ppu::vram::VideoRam;
@@ -150,9 +150,13 @@ impl SpriteFetcher {
         &self,
         lcd: &Lcd,
         fifo_x: u8,
-        bg_color_index: usize,
+        bg_color_id: usize,
         bg_flags: TileFlags,
     ) -> Option<PixelColor> {
+        if !lcd.control.is_obj_enabled() {
+            return None;
+        }
+
         let scroll_x = lcd.scroll_x;
 
         for i in 0..self.fetched_sprites_count {
@@ -170,9 +174,9 @@ impl SpriteFetcher {
                 offset
             };
 
-            let color_index = get_color_index(obj.tile_line.byte0, obj.tile_line.byte1, bit);
+            let color_index = get_color_id(obj.tile_line.byte0, obj.tile_line.byte1, bit);
 
-            if is_show_obj(lcd, bg_color_index, bg_flags, color_index, obj.oam.flags) {
+            if is_show_obj(lcd, bg_color_id, bg_flags, color_index, obj.oam.flags) {
                 let color = lcd.get_obj_color(obj.oam.flags, color_index);
                 return Some(color);
             }

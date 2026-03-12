@@ -78,7 +78,7 @@ impl PixelData {
 
     #[inline(always)]
     pub fn into_color_index(self) -> usize {
-        get_color_index(self.byte1, self.byte2, self.bit)
+        get_color_id(self.byte1, self.byte2, self.bit)
     }
 }
 
@@ -105,26 +105,23 @@ impl From<usize> for ColorId {
 
 impl ColorId {
     #[inline(always)]
-    pub fn new(byte1: u8, byte2: u8, bit: u8) -> ColorId {
-        get_color_index(byte1, byte2, bit).into()
+    pub fn new(byte0: u8, byte1: u8, bit: u8) -> ColorId {
+        get_color_id(byte0, byte1, bit).into()
     }
 }
 
 #[inline(always)]
-pub fn get_color_index(byte1: u8, byte2: u8, bit: u8) -> usize {
+pub fn get_color_id(byte0: u8, byte1: u8, bit: u8) -> usize {
+    let bit0 = (byte0 >> (7 - bit)) & 0x01;
     let bit1 = (byte1 >> (7 - bit)) & 0x01;
-    let bit2 = (byte2 >> (7 - bit)) & 0x01;
 
-    (bit2 << 1 | bit1) as usize
+    (bit1 << 1 | bit0) as usize
 }
 
 impl TileLineData {
     #[inline(always)]
-    pub fn new(byte_one: u8, byte_two: u8) -> TileLineData {
-        Self {
-            byte0: byte_one,
-            byte1: byte_two,
-        }
+    pub fn new(byte0: u8, byte1: u8) -> TileLineData {
+        Self { byte0, byte1 }
     }
 
     #[inline(always)]

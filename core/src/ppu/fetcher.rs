@@ -3,7 +3,7 @@ use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::sprites::SpriteFetcher;
 use crate::ppu::tile::{
-    get_color_index, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
+    get_color_id, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
 };
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
@@ -99,36 +99,34 @@ impl PixelFetcher {
             return false;
         }
 
-        let lcdc_obj_enabled = lcd.control.is_obj_enabled();
-        let lcdc_bg_enabled = lcd.control.is_bgw_enabled();
-        let cgb_gb_f = self.bgw_fetched_data.cgb_flags;
-        let cgb_bg_x_flip = cgb_gb_f.is_x_flip();
+        let bg_enabled = lcd.control.is_bgw_enabled();
+        let bg_flags = self.bgw_fetched_data.cgb_flags;
+        let bg_x_flip = bg_flags.is_x_flip();
+        let prev_fifo_x = self.pixel_fifo.pushed_count();
+        let mut fifo_x = prev_fifo_x;
 
         for bit in 0..TILE_BITS_COUNT {
-            let bit = if cgb_bg_x_flip { 7 - bit } else { bit };
-            let bg_color_id = get_color_index(
+            let bg_bit = if bg_x_flip { 7 - bit } else { bit };
+            let bg_color_id = get_color_id(
                 self.bgw_fetched_data.tile_line.byte0,
                 self.bgw_fetched_data.tile_line.byte1,
-                bit,
+                bg_bit,
             );
 
-            if lcdc_obj_enabled {
-                let fifo_x = self.pixel_fifo.pushed_count();
-                let sp_color = self
-                    .sprite_fetcher
-                    .get_color(lcd, fifo_x, bg_color_id, cgb_gb_f);
+            fifo_x = self.pixel_fifo.pushed_count();
+            let sp_color = self
+                .sprite_fetcher
+                .get_color(lcd, fifo_x, bg_color_id, bg_flags);
 
-                if let Some(color) = sp_color {
-                    self.pixel_fifo.push(color);
-                    continue;
-                }
+            if let Some(sp_color) = sp_color {
+                self.pixel_fifo.push(sp_color);
+            } else {
+                let bgw_color = lcd.get_bgw_color(bg_color_id, bg_enabled, bg_flags);
+                self.pixel_fifo.push(bgw_color);
             }
-
-            let color = lcd.get_bgw_color(bg_color_id, lcdc_bg_enabled, cgb_gb_f);
-            self.pixel_fifo.push(color);
         }
 
-        true
+        prev_fifo_x != fifo_x
     }
 
     #[inline(always)]

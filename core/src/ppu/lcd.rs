@@ -150,12 +150,12 @@ impl Lcd {
         }
     }
 
-    pub fn get_bgw_color(&self, color_idx: usize, enabled: bool, flags: TileFlags) -> PixelColor {
+    pub fn get_bgw_color(&self, color_id: usize, enabled: bool, flags: TileFlags) -> PixelColor {
         match self.model {
             GbModel::Cgb => self
                 .cgb_palette
-                .get_color(flags.read_cgb_palette(), color_idx, false),
-            GbModel::Dmg => self.dmg_palette.get_gbw_color(color_idx, enabled),
+                .get_color(flags.read_cgb_palette(), color_id, false),
+            GbModel::Dmg => self.dmg_palette.get_gbw_color(color_id, enabled),
         }
     }
 
@@ -466,10 +466,10 @@ impl DmgPalette {
     }
 
     #[inline(always)]
-    fn get_gbw_color(&self, index: usize, enabled: bool) -> PixelColor {
+    fn get_gbw_color(&self, id: usize, enabled: bool) -> PixelColor {
         if enabled {
             // SAFETY: always index 0-3
-            unsafe { *self.bg_colors.get_unchecked(index) }
+            unsafe { *self.bg_colors.get_unchecked(id) }
         } else {
             // SAFETY: there is always 4 colors
             unsafe { *self.bg_colors.get_unchecked(0) }
