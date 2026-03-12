@@ -74,10 +74,6 @@ For the complete results, see [TESTS.md](./TESTS.md).
 - **GUI & Configuration** – Configuable through GUI with optional manual editing `config.json`
 - **Tile Viewer** – Real-time background and sprite tile inspection (only with SDL2 rendering)
 
-### Debugging & Testing
-
-- **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`
-
 ### Emulation
 
 - **CPU**: Complete Sharp LR35902 instruction set with accurate timing
