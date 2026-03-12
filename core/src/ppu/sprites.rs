@@ -159,10 +159,6 @@ impl SpriteFetcher {
             let obj = unsafe { self.fetched_sprites.get_unchecked(i) };
             let sprite_x = self.calc_sprite_x(obj.oam.x, scroll_x);
 
-            if sprite_x.wrapping_add(8) < fifo_x {
-                continue; // Skip past sprites
-            }
-
             let offset = fifo_x.wrapping_sub(sprite_x);
             if !(0..=7).contains(&offset) {
                 continue; // Out of sprite range
