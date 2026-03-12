@@ -1,4 +1,4 @@
-name: Linux-ARM
+name: Linux ARM
 
 on:
   push:

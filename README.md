@@ -50,7 +50,7 @@ Here are some highlights:
 
 ## Accuracy & Testing
 
-The emulator is continuously validated against community made test suites:
+The emulator is continuously validated against community made test suites which are executed on CI via `cargo test`:
 
 - **Blargg** – Passes all tests
 - **Mooneye** – Passes most of the tests
@@ -72,11 +72,11 @@ For the complete results, see [TESTS.md](./TESTS.md).
 - **Custom Controls** – Fully rebindable inputs with support for button combinations
 - **Palettes** – Multiple built-in color palettes and user extendable by editing `palettes.json`
 - **GUI & Configuration** – Configuable through GUI with optional manual editing `config.json`
+- **Tile Viewer** – Real-time background and sprite tile inspection (only with SDL2 rendering)
 
 ### Debugging & Testing
 
 - **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`
-- **Tile Viewer** – Real-time background and sprite tile inspection
 
 ### Emulation
 
