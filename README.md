@@ -4,7 +4,7 @@
   </a>
 </p>
 
-___
+---
 
 [![Tests](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
 [![Android](https://github.com/mxmgorin/gmboy/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
@@ -22,13 +22,16 @@ ___
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" alt="Demo 1" width="260"/>
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" alt="Demo 1" width="200"/>
   </a>&nbsp;&nbsp;
   <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/02bg.gif" alt="Demo 2" width="260"/>
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/02bg.gif" alt="Demo 2" width="200"/>
   </a>&nbsp;&nbsp;
   <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/03bg.gif" alt="Demo 3" width="260"/>
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/03bg.gif" alt="Demo 3" width="200"/>
+  </a>&nbsp;&nbsp;  
+  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/pokemoncrystal.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/pokemoncrystal.gif" alt="Demo 4" width="200"/>
   </a>
 </p>
 
@@ -38,7 +41,7 @@ Here are some highlights:
 
 - Cross-platform: Windows, macOS, Linux, Android; SDL2 with optional OpenGL
 - Modern features: save states, filters and shaders, re-bindable controls, and more
-- Accuracy-focused: sub-instruction CPU timing, dot-level PPU pipeline, and cycle-synchronized subsystems; validated against Blargg and Mooneye test suites
+- Accuracy-focused: sub-instruction CPU timing, dot-level PPU, and cycle-synchronized systems; validated against Blargg and Mooneye test suites
 - Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on Allwinner H700)
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
@@ -49,26 +52,21 @@ Here are some highlights:
 
 The emulator is continuously validated against community made test suites:
 
-- **SM83 JSON Tests** – Passes all 356,000 tests  
-- **Blargg Tests** – Passes all tests
-- **Mooneye Tests** – Passes most of the tests
-- **PPU Tests** - Passes the DMG-acid2, CGB-acid2, CGB-acid-hell
+- **Blargg** – Passes all tests
+- **Mooneye** – Passes most of the tests
+- **Visual** - Passes the DMG-acid2, CGB-acid2, Mangen
+- **SM83 JSON** – Passes all 356,000 tests
 
 For the complete results, see [TESTS.md](./TESTS.md).
 
 ## Features
 
-### Gameplay
 - **Save States** – Save and resume progress with multiple slots; optional auto-save on exit and startup
 - **Rewind** – Configurable rewind for undoing gameplay actions
-- **Speed Control** – Configure the emulator’s base running speed and dynamically apply Slow or Turbo modes to temporarily decrease or increase it. All speed changes are available via settings and hotkeys.
-
-### Video & Rendering
-- **Frame Blending** – Configurable blending modes to emulate LCD ghosting (e.g., flicker reduction in *Gun ZAS*)
+- **Speed Control** – Change emulator’s base running speed and apply Slow or Turbo modes via keys
+- **Frame Blending** – Configurable blending modes to emulate LCD ghosting (e.g., flicker reduction in _Gun ZAS_)
 - **Visual Filters** – Grid, subpixel, scanline, dot-matrix, and vignette
 - **Rendering Backends** - SDL2 software renderer and optional OpenGL backend with shader support
-
-### Interface & Controls
 - **ROM Scanning** – Automatic ROM directory scanning with menu-based launching
 - **Built-in File Browser** – Load ROMs and manage directly from the UI
 - **Custom Controls** – Fully rebindable inputs with support for button combinations
@@ -76,6 +74,7 @@ For the complete results, see [TESTS.md](./TESTS.md).
 - **GUI & Configuration** – Configuable through GUI with optional manual editing `config.json`
 
 ### Debugging & Testing
+
 - **Automated Testing** – Integrated SM83 JSON tests, Blargg, and Mooneye test suites which are executed on CI via `cargo test`
 - **Tile Viewer** – Real-time background and sprite tile inspection
 
@@ -86,49 +85,57 @@ For the complete results, see [TESTS.md](./TESTS.md).
 - **APU (Audio)**: All 4 audio channels (Square 1 & 2, Wave, Noise)
 - **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
 - **Battery-backed SRAM**: Persistent save data
-- **Input**: Full Game Boy button support (D-Pad, A, B, Start, Select)
 
 ## Default controls
 
-| Action                        | ⌨️ Keyboard              | 🎮 Gamepad                                  |
-|-------------------------------|--------------------------|---------------------------------------------|
-| D-pad Up                      | Arrow Up                 | D-pad Up                                    |
-| D-pad Down                    | Arrow Down               | D-pad Down                                  |
-| D-pad Left                    | Arrow Left               | D-pad Left                                  |
-| D-pad Right                   | Arrow Right              | D-pad Right                                 |
-| B                             | Z                        | B                                           |
-| A                             | X                        | A                                           |
-| Start                         | Enter or S               | Start                                       |
-| Select                        | Backspace or A           | Select                                      |
-| Rewind (hold)                 | R                        | Y                                           |
-| Turbo mode (hold)             | Tab                      | RB                                          |
-| Slow mode (hold)              | Space                    | LB                                          |
-| Main menu                     | Esc or Q                 | Select + Start                              |
-| Screen scale Up and Down      | + (Equals) and - (Minus) |                                             |
-| Fullscreen Toggle             | F10                      |                                             |
-| Mute audio                    | M                        |                                             |
-| Invert palette                | I                        | Select + X                                  |
-| Next palette                  | P                        | X                                           |
-| Load save state (1–9)         | F1–F19                   | RT or Select + RB                           |
-| Create save state (1–9)       | 1–9                      | LT or Select + LB                           |
-| Volume Up and Down            | F12 and F11              | Start + D-pad Up and Start + D-pad Down     |
-| Prev and Next Save State Slot |                          | Start + D-pad Right  and Start + D-pad Left |
-| Prev and Next Shader          | [ and ]                  | Select + B and Select + A                   |
+| Action                           | ⌨️ Keyboard              | 🎮 Gamepad                                 |
+| -------------------------------- | ------------------------ | ------------------------------------------ |
+| D-pad Up                         | Arrow Up                 | D-pad Up                                   |
+| D-pad Down                       | Arrow Down               | D-pad Down                                 |
+| D-pad Left                       | Arrow Left               | D-pad Left                                 |
+| D-pad Right                      | Arrow Right              | D-pad Right                                |
+| B                                | Z                        | B                                          |
+| A                                | X                        | A                                          |
+| Start                            | Enter or S               | Start                                      |
+| Select                           | Backspace or A           | Select                                     |
+| Rewind (hold)                    | R                        | Y                                          |
+| Turbo mode (hold)                | Tab                      | RB                                         |
+| Slow mode (hold)                 | Space                    | LB                                         |
+| Main menu                        | Esc or Q                 | Select + Start                             |
+| Screen scale Up and Down         | + (Equals) and - (Minus) |                                            |
+| Fullscreen Toggle                | F11                      |                                            |
+| Mute audio                       | M                        |                                            |
+| Invert palette                   | I                        | Select + X                                 |
+| Next palette                     | P                        | X                                          |
+| Load save state (1–4)            | F1–F4                    | RT or Select + RB                          |
+| Create save state (1–9)          | 1–9                      | LT or Select + LB                          |
+| Volume Up and Down               | PageUp and PageDown      | Start + D-pad Up and Start + D-pad Down    |
+| Prev and Next Save State Slot    |                          | Start + D-pad Right and Start + D-pad Left |
+| Prev and Next Shader             | [ and ]                  | Select + B and Select + A                  |
+| Pause/Stepping mode              | F5                       |                                            |
+| Step frame                       | F6                       |                                            |
+| Step scanline                    | F7                       |                                            |
+| Clear screen                     | F10                      |                                            |
+| Toggle debugger (In debug build) | ~                        |                                            |
 
 ## 🛠️ Building
 
 First, make sure you have Rust installed. If you don't, install it with:
-````
+
+```
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-````
+```
+
 Then, install dependencies:
 
 Arch Linux:
+
 ```bash
 sudo pacman -S sdl2
-````
+```
 
 After that, you should be able to build:
+
 ```bash
 cargo build --release
 ```

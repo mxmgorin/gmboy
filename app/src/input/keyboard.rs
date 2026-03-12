@@ -51,7 +51,7 @@ pub fn default_keys() -> InputBindings<Scancode> {
     bindings.bind_cmd(Scancode::F5, true, AppCmd::ToggleStepping);
     bindings.bind_cmd(Scancode::F6, true, AppCmd::StepFrame);
     bindings.bind_cmd(Scancode::F7, true, AppCmd::StepScanline);
-    bindings.bind_cmd(Scancode::F9, true, AppCmd::ClearScreen);
+    bindings.bind_cmd(Scancode::F12, true, AppCmd::ClearScreen);
 
     // vi-keys
     bindings.bind_btn(Scancode::K, JoypadButton::Up);
@@ -104,31 +104,24 @@ pub fn default_keys() -> InputBindings<Scancode> {
         AppCmd::ChangeConfig(ChangeConfigCmd::Scale(-1.0)),
     );
 
-    // Audio / video toggles
+    // Fullscreen
+    bindings.bind_cmd(Scancode::F11, true, AppCmd::ToggleFullscreen);
+
+    // Volume
+    bindings.bind_cmd(
+        Scancode::PageDown,
+        true,
+        AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.1)),
+    );
+    bindings.bind_cmd(
+        Scancode::PageDown,
+        true,
+        AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.1)),
+    );
     bindings.bind_cmd(
         Scancode::M,
         true,
         AppCmd::ChangeConfig(ChangeConfigCmd::ToggleMute),
-    );
-    bindings.bind_cmd(
-        Scancode::I,
-        true,
-        AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
-    );
-
-    // Fullscreen (side-effect only)
-    bindings.bind_cmd(Scancode::F10, true, AppCmd::ToggleFullscreen);
-
-    // Volume
-    bindings.bind_cmd(
-        Scancode::F11,
-        true,
-        AppCmd::ChangeConfig(ChangeConfigCmd::Volume(-0.05)),
-    );
-    bindings.bind_cmd(
-        Scancode::F12,
-        true,
-        AppCmd::ChangeConfig(ChangeConfigCmd::Volume(0.05)),
     );
 
     // Shaders / palettes
@@ -146,6 +139,11 @@ pub fn default_keys() -> InputBindings<Scancode> {
         Scancode::P,
         true,
         AppCmd::ChangeConfig(ChangeConfigCmd::NextPalette),
+    );
+    bindings.bind_cmd(
+        Scancode::I,
+        true,
+        AppCmd::ChangeConfig(ChangeConfigCmd::InvertPalette),
     );
 
     // Save state – create
