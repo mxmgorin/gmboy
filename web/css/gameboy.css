@@ -33,6 +33,7 @@ html, body {
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
+  touch-action: manipulation;   /* disable double-tap-to-zoom, keep scrolling */
 }
 
 /* ----- GitHub corner (from ch8go) ----- */
@@ -204,3 +205,19 @@ kbd { background: #1b1d22; border: 1px solid #3a3d44; border-radius: 4px; paddin
   -webkit-tap-highlight-color: transparent;
 }
 .swatch.active { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* ----- Mobile: fit within the viewport (no right-side clipping) ----- */
+@media (max-width: 480px) {
+  .page { padding: 8px 6px 16px; }
+  .device {
+    min-width: 0;
+    max-width: 100vw;
+    padding: 8px 10px 92px;
+    border-radius: 14px 14px 20px 20px;
+  }
+  .screen-frame { padding: 8px; }
+  /* canvas display width capped so device (canvas + all paddings) fits the screen */
+  canvas#screen { max-width: calc(100vw - 60px); }
+  .speaker { width: 74px; height: 74px; right: 12px; bottom: 12px; }
+  .subtitle { font-size: 1rem; }
+}
