@@ -32,10 +32,7 @@ html, body {
   background: #0b0b0d;
   min-height: 100vh;
   margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: auto;
+  overflow-x: hidden;
 }
 
 /* ----- GitHub corner (from ch8go) ----- */
@@ -52,19 +49,20 @@ html, body {
 }
 
 /* ----- Layout / titles ----- */
-.page { margin: 0 auto; display: flex; flex-direction: column; align-items: center; padding: 18px 12px 32px; }
-.subtitle { font-size: 1.15rem; color: #ccc; text-align: center; line-height: 1.15rem; margin: 0.4rem 1rem 1rem; }
+.page { margin: 0 auto; display: flex; flex-direction: column; align-items: center; padding: 12px 12px 16px; }
+.subtitle { font-size: 1.15rem; color: #ccc; text-align: center; line-height: 1.15rem; margin: 0.3rem 1rem 0.6rem; }
 .subtitle .brand { font-weight: 800; font-size: 1.5em; letter-spacing: 1px; }
-.credit { font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px; }
+.credit { display: block; text-align: left; font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px; }
 
 /* ----- Game Boy Color body ----- */
 .device {
+  position: relative;
   width: fit-content;
   min-width: 320px;
   max-width: 96vw;
   background: linear-gradient(165deg, var(--shell) 0%, var(--shell-2) 100%);
   border-radius: 20px 20px 26px 26px;
-  padding: 14px 16px 22px;
+  padding: 7px 24px 125px;
   border: 1px solid var(--shell-edge);
   box-shadow:
     inset 0 -4px 8px rgba(0,0,0,0.25),
@@ -118,12 +116,10 @@ html, body {
   width: fit-content;
   background: linear-gradient(160deg, var(--screen-frame), var(--screen-frame-2));
   border-radius: 8px;
-  padding: 8px 12px 10px;
+  padding: 12px;
   margin: 8px auto 4px;
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.7);
 }
-.power { display: flex; align-items: center; gap: 5px; font-size: 0.58rem; color: #cdd; margin-bottom: 5px; }
-.power .led { width: 8px; height: 8px; border-radius: 50%; background: #4bd; box-shadow: 0 0 6px #4bd; opacity: 0.9; }
 
 .screen { background: linear-gradient(180deg, #071017, #0d1418); border-radius: 4px; padding: 4px; position: relative; overflow: hidden; }
 canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; height: auto; aspect-ratio: 160 / 144; background: #0d1418; }
@@ -150,7 +146,7 @@ canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; h
 @keyframes fill { 0%{background:#fff;opacity:.2} 50%{background:#fff;opacity:1} 100%{background:transparent;opacity:.2} }
 
 /* ----- Game Boy controls ----- */
-.gb-controls { display: flex; justify-content: space-between; align-items: center; margin: 24px 4px 4px; }
+.gb-controls { display: flex; justify-content: space-between; align-items: center; margin: 35px 4px 4px; }
 .gb-controls button { font-family: inherit; touch-action: none; -webkit-tap-highlight-color: transparent; outline: none; }
 
 .dpad { display: grid; grid-template-columns: repeat(3, 32px); grid-template-rows: repeat(3, 32px); filter: drop-shadow(0 3px 3px rgba(0,0,0,0.4)); }
@@ -174,16 +170,23 @@ canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; h
 .btn-round.pressed { transform: translateY(3px); box-shadow: 0 1px 0 var(--btn-ab-dark); }
 .btn-b { margin-top: 22px; }   /* B low, A high — Game Boy diagonal */
 
-.startselect { display: flex; justify-content: center; gap: 22px; margin: 14px auto 0; }
+.startselect { display: flex; justify-content: center; gap: 22px; margin: 29px auto 0; }
 .pill-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .pill-wrap .lbl { font-size: 0.7rem; letter-spacing: 0.5px; color: var(--label); }
 .pill { width: 48px; height: 15px; border-radius: 10px; border: none; cursor: pointer; background: #3a3340; box-shadow: 0 3px 0 #1b1820; transform: rotate(-20deg); }
 .pill.pressed { transform: rotate(-20deg) translateY(2px); box-shadow: 0 1px 0 #1b1820; }
 
-.speaker { display: flex; justify-content: flex-end; gap: 5px; margin-top: 18px; padding-right: 4px; transform: rotate(-20deg); }
-.speaker i { width: 4px; height: 30px; border-radius: 3px; background: rgba(0,0,0,0.28); box-shadow: inset 0 0 2px rgba(0,0,0,0.4); }
+.speaker {
+  position: absolute; right: 18px; bottom: 16px;   /* corner overlay — out of flow, so it won't grow the body */
+  width: 90px; height: 90px; border-radius: 50%;
+  background-image: radial-gradient(rgba(0,0,0,0.4) 1.6px, transparent 1.9px);
+  background-size: 8px 8px;
+  background-position: center;
+  transform: rotate(-25deg);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
 
-.hint { font-size: 0.85rem; opacity: 0.7; text-align: center; padding: 8px 12px 0; }
+.hint { font-size: 0.85rem; opacity: 0.7; text-align: center; padding: 6px 12px 0; }
 kbd { background: #1b1d22; border: 1px solid #3a3d44; border-radius: 4px; padding: 1px 5px; }
 
 /* ----- Shell color themes (canonical GBC colors) ----- */
