@@ -46,6 +46,8 @@ Here are some highlights:
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
+▶️ [**Try in your browser**](https://mxmgorin.github.io/gmboy/) — no install, runs on WASM
+
 📥 [Download the latest release](https://github.com/mxmgorin/gmboy/releases/latest)
 
 ## Accuracy & Testing
