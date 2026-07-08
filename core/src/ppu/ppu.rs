@@ -4,7 +4,8 @@ use crate::ppu::lcd::{Lcd, LcdStatSrc, PpuMode};
 use crate::ppu::oam::OamRam;
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use web_time::Instant;
 
 pub const OAM_DOTS: usize = 80;
 pub const TRANSFER_DOTS: usize = 172;

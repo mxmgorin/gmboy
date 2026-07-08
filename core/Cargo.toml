@@ -15,6 +15,9 @@ serde_json = "1.0.*"
 serde = { version = "1.0.*", features = ["derive"] }
 crc = "3.4.0"
 log = "0.4.27"
+# Drop-in `Instant`/`SystemTime` that also works on wasm (backed by performance.now()/Date).
+# On native targets this just re-exports `std::time`, so desktop/Android are unaffected.
+web-time = "1.1"
 
 [dev-dependencies]
 criterion = "0.8.2"

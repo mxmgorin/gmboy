@@ -2,7 +2,7 @@ use crate::auxiliary::dma::VramDma;
 use crate::bus::Bus;
 use crate::{auxiliary::dma::OamDma, cpu::CPU_CLOCK_SPEED};
 use serde::{Deserialize, Serialize};
-use std::time::Instant;
+use web_time::Instant;
 
 const T_CYCLES_PER_M_CYCLE: usize = 4;
 const NANOS_PER_SECOND: u32 = 1_000_000_000;

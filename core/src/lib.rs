@@ -5,8 +5,9 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::Duration;
 use std::{fs, io};
+use web_time::{Instant, SystemTime};
 
 pub mod apu;
 pub mod auxiliary;

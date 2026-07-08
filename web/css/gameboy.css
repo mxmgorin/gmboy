@@ -1,0 +1,203 @@
+/* GMBoy web front — ch8go's polish (VT323, control bars, dark LCD, overlays,
+   GitHub corner) wrapped in a Game Boy Color ("Grape" purple) body. */
+
+:root {
+  --terminal-color: #ffffff;
+  --shell: #8a5fc4;
+  --shell-2: #6b3fa8;
+  --shell-edge: #4a2b7e;
+  --shell-hi: rgba(255,255,255,0.22);
+  --screen-frame: #2b2b32;
+  --screen-frame-2: #17171c;
+  --btn-ab: #9b2257;
+  --btn-ab-dark: #6f1740;
+  --dpad: #232326;
+  --dpad-dark: #0f0f11;
+  --label: #efe9fb;
+}
+
+* { box-sizing: border-box; }
+
+canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+}
+
+html, body {
+  font-family: "VT323", ui-monospace, "Courier New", monospace;
+  font-size: 18px;
+  line-height: 22px;
+  color: var(--terminal-color);
+  background: #0b0b0d;
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+}
+
+/* ----- GitHub corner (from ch8go) ----- */
+.github-corner:hover .octo-arm { animation: octocat-wave 1500ms ease-in-out infinite; }
+@keyframes octocat-wave {
+  0%, 10% { transform: rotate(0); }
+  20%, 40% { transform: rotate(-25deg); }
+  30%, 50% { transform: rotate(10deg); }
+  60%, 100% { transform: rotate(0); }
+}
+@media (max-width: 500px) {
+  .github-corner:hover .octo-arm { animation: none; }
+  .github-corner .octo-arm { animation: octocat-wave 1500ms ease-in-out infinite; }
+}
+
+/* ----- Layout / titles ----- */
+.page { margin: 0 auto; display: flex; flex-direction: column; align-items: center; padding: 18px 12px 32px; }
+.subtitle { font-size: 1.15rem; color: #ccc; text-align: center; line-height: 1.15rem; margin: 0.4rem 1rem 1rem; }
+.subtitle .brand { font-weight: 800; font-size: 1.5em; letter-spacing: 1px; }
+.credit { font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px; }
+
+/* ----- Game Boy Color body ----- */
+.device {
+  width: fit-content;
+  min-width: 320px;
+  max-width: 96vw;
+  background: linear-gradient(165deg, var(--shell) 0%, var(--shell-2) 100%);
+  border-radius: 20px 20px 26px 26px;
+  padding: 14px 16px 22px;
+  border: 1px solid var(--shell-edge);
+  box-shadow:
+    inset 0 -4px 8px rgba(0,0,0,0.25),
+    0 12px 30px rgba(0,0,0,0.55);
+  user-select: none;
+}
+
+/* ----- Control bar (ch8go style) ----- */
+.inputs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+}
+.input-group {
+  display: flex; align-items: center; gap: 6px; height: 30px; padding: 2px 6px;
+  border: 1px solid rgba(255,255,255,0.28); border-radius: 6px; box-shadow: inset 0 0 3px #0003;
+  color: var(--label); font-size: 0.85rem;
+}
+.bezel-btn {
+  background: #f4f2f8; border: 1px solid rgba(0,0,0,0.15); box-shadow: 0 2px 0 var(--shell-edge);
+  color: var(--shell-edge); border-radius: 5px; cursor: pointer; min-width: 26px; min-height: 26px;
+  padding: 2px 6px; font-family: inherit; font-size: 0.85rem; touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent; outline: none;
+}
+.bezel-btn.pressed { box-shadow: 0 1px 0 var(--shell-edge); transform: translateY(1px); }
+.file-btn { padding: 3px 9px; line-height: 1; display: inline-flex; align-items: center; box-shadow: none; }
+.file-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--label); }
+#roms {
+  padding: 3px 6px; border: 1px solid rgba(0,0,0,0.15); border-radius: 5px; background: #fff; color: var(--shell-edge);
+  font-family: inherit; font-size: 0.85rem; cursor: pointer; max-width: 120px;
+}
+.sound {
+  background: #a02d5a; border: none; padding: 3px 8px; border-radius: 6px; min-width: 74px; height: 30px;
+  color: #fff; font-family: inherit; font-size: 0.8rem; cursor: pointer; box-shadow: 0 3px 0 #6f1740;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.sound.pressed { box-shadow: 0 1px 0 #6f1740; transform: translateY(2px); }
+.sound.off { opacity: 0.5; }
+.scale-control { display: flex; align-items: center; gap: 6px; color: var(--label); font-size: 0.85rem; }
+.scale-control label { font-size: 0.85rem; }
+.bezel-input {
+  width: 28px; height: 26px; text-align: center; background: #fff; color: var(--shell-edge);
+  border: 1px solid rgba(0,0,0,0.15); border-radius: 5px; font-family: inherit; font-size: 0.85rem;
+}
+
+/* ----- Screen block (dark GBC bezel) ----- */
+.screen-frame {
+  width: fit-content;
+  background: linear-gradient(160deg, var(--screen-frame), var(--screen-frame-2));
+  border-radius: 8px;
+  padding: 8px 12px 10px;
+  margin: 8px auto 4px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.7);
+}
+.power { display: flex; align-items: center; gap: 5px; font-size: 0.58rem; color: #cdd; margin-bottom: 5px; }
+.power .led { width: 8px; height: 8px; border-radius: 50%; background: #4bd; box-shadow: 0 0 6px #4bd; opacity: 0.9; }
+
+.screen { background: linear-gradient(180deg, #071017, #0d1418); border-radius: 4px; padding: 4px; position: relative; overflow: hidden; }
+canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; height: auto; aspect-ratio: 160 / 144; background: #0d1418; }
+
+.brand { text-align: center; margin-top: 8px; font-style: italic; font-weight: 800; font-size: 1.2rem; color: #f4f2fb; letter-spacing: 0.5px; }
+.brand .color {
+  font-weight: 900;
+  background: linear-gradient(90deg, #e33, #f80, #fd0, #3c3, #39f, #63f);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Overlays */
+#pause-overlay, .bar-loader { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #fff; }
+#pause-overlay { font-size: 34px; font-weight: 700; letter-spacing: 2px; display: none; }
+#pause-overlay.active { display: flex; }
+.bar-loader { flex-direction: column; gap: 12px; }
+.bar-loader.hidden { display: none; }
+.bar { display: flex; border: 2px solid #fff; padding: 4px; gap: 4px; }
+.bar span { display: block; width: 12px; height: 20px; opacity: 0.15; animation: fill 1.2s infinite; }
+.bar span:nth-child(1){animation-delay:0s}.bar span:nth-child(2){animation-delay:.1s}
+.bar span:nth-child(3){animation-delay:.2s}.bar span:nth-child(4){animation-delay:.3s}
+.bar span:nth-child(5){animation-delay:.4s}.bar span:nth-child(6){animation-delay:.5s}
+.bar span:nth-child(7){animation-delay:.6s}.bar span:nth-child(8){animation-delay:.7s}
+@keyframes fill { 0%{background:#fff;opacity:.2} 50%{background:#fff;opacity:1} 100%{background:transparent;opacity:.2} }
+
+/* ----- Game Boy controls ----- */
+.gb-controls { display: flex; justify-content: space-between; align-items: center; margin: 24px 4px 4px; }
+.gb-controls button { font-family: inherit; touch-action: none; -webkit-tap-highlight-color: transparent; outline: none; }
+
+.dpad { display: grid; grid-template-columns: repeat(3, 32px); grid-template-rows: repeat(3, 32px); filter: drop-shadow(0 3px 3px rgba(0,0,0,0.4)); }
+.dpad button { border: none; background: var(--dpad); cursor: pointer; }
+.dpad .up { grid-area: 1/2; border-radius: 6px 6px 0 0; }
+.dpad .left { grid-area: 2/1; border-radius: 6px 0 0 6px; }
+.dpad .mid { grid-area: 2/2; }
+.dpad .right { grid-area: 2/3; border-radius: 0 6px 6px 0; }
+.dpad .down { grid-area: 3/2; border-radius: 0 0 6px 6px; }
+.dpad .mid::after { content: ""; display: block; width: 12px; height: 12px; margin: 10px auto; border-radius: 50%; background: var(--dpad-dark); }
+.dpad button.pressed { background: var(--dpad-dark); }
+
+.ab { display: flex; align-items: center; gap: 16px; }
+.ab-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ab-wrap .lbl { font-weight: 700; font-size: 0.85rem; color: var(--label); }
+.btn-round {
+  width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+  background: radial-gradient(circle at 35% 30%, var(--btn-ab), var(--btn-ab-dark));
+  box-shadow: 0 4px 0 var(--btn-ab-dark); color: #f4d3e0; font-weight: 700;
+}
+.btn-round.pressed { transform: translateY(3px); box-shadow: 0 1px 0 var(--btn-ab-dark); }
+.btn-b { margin-top: 22px; }   /* B low, A high — Game Boy diagonal */
+
+.startselect { display: flex; justify-content: center; gap: 22px; margin: 14px auto 0; }
+.pill-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.pill-wrap .lbl { font-size: 0.7rem; letter-spacing: 0.5px; color: var(--label); }
+.pill { width: 48px; height: 15px; border-radius: 10px; border: none; cursor: pointer; background: #3a3340; box-shadow: 0 3px 0 #1b1820; transform: rotate(-20deg); }
+.pill.pressed { transform: rotate(-20deg) translateY(2px); box-shadow: 0 1px 0 #1b1820; }
+
+.speaker { display: flex; justify-content: flex-end; gap: 5px; margin-top: 18px; padding-right: 4px; transform: rotate(-20deg); }
+.speaker i { width: 4px; height: 30px; border-radius: 3px; background: rgba(0,0,0,0.28); box-shadow: inset 0 0 2px rgba(0,0,0,0.4); }
+
+.hint { font-size: 0.85rem; opacity: 0.7; text-align: center; padding: 8px 12px 0; }
+kbd { background: #1b1d22; border: 1px solid #3a3d44; border-radius: 4px; padding: 1px 5px; }
+
+/* ----- Shell color themes (canonical GBC colors) ----- */
+.device[data-theme="grape"]     { --shell: #8a5fc4; --shell-2: #6b3fa8; --shell-edge: #4a2b7e; --label: #efe9fb; }
+.device[data-theme="teal"]      { --shell: #3fc0cf; --shell-2: #1f97a6; --shell-edge: #0d5560; --label: #04343b; }
+.device[data-theme="berry"]     { --shell: #d24b86; --shell-2: #b3346c; --shell-edge: #7a1f48; --label: #fff0f6; }
+.device[data-theme="dandelion"] { --shell: #f2cf4c; --shell-2: #e0b52e; --shell-edge: #8a6a10; --label: #4a3908; }
+.device[data-theme="kiwi"]      { --shell: #8fc73f; --shell-2: #6fae2c; --shell-edge: #3f6a12; --label: #25390d; }
+.device[data-theme="atomic"]    { --shell: #b7b1d8; --shell-2: #9c96c2; --shell-edge: #56507a; --label: #282540; }
+
+.themes { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin: 0; }
+.swatch {
+  width: 20px; height: 20px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 2px solid rgba(255,255,255,0.55); box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  -webkit-tap-highlight-color: transparent;
+}
+.swatch.active { outline: 2px solid #fff; outline-offset: 1px; }

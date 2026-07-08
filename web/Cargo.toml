@@ -1,0 +1,22 @@
+[package]
+name = "gmboy-web"
+version = "0.1.0"
+edition = "2021"
+authors = ["troidem <mxmgorin@gmail.com>"]
+description = "Browser (WASM) frontend for the GMBoy Game Boy / Game Boy Color emulator"
+license = "GPL-3.0-only"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+core = { path = "../core" }
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+
+# Smaller, faster wasm artifact for the shipped demo.
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
