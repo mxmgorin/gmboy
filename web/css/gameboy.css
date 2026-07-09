@@ -51,9 +51,10 @@ html, body {
 
 /* ----- Layout / titles ----- */
 .page { margin: 0 auto; display: flex; flex-direction: column; align-items: center; padding: 12px 12px 16px; }
-.subtitle { font-size: 1.15rem; color: #ccc; text-align: center; line-height: 1.15rem; margin: 0.3rem 1rem 0.6rem; }
+.subtitle { font-size: 0.82rem; color: var(--label); text-align: center; line-height: 1.25; margin: 2px 6px 8px; opacity: 0.9; }
+.subtitle > span { display: inline-block; text-align: left; }
 .subtitle .brand { font-weight: 800; font-size: 1.5em; letter-spacing: 1px; }
-.credit { display: block; text-align: left; font-size: 0.7rem; opacity: 0.9; letter-spacing: 1px; }
+.credit { display: block; text-align: left; font-size: 0.62rem; opacity: 0.75; letter-spacing: 1px; }
 
 /* ----- Game Boy Color body ----- */
 .device {
@@ -99,22 +100,26 @@ html, body {
 .bezel-btn.pressed { box-shadow: 0 1px 0 var(--shell-edge); transform: translateY(1px); }
 .file-btn { padding: 3px 9px; line-height: 1; display: inline-flex; align-items: center; box-shadow: none; }
 .file-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--label); }
+.file-name:empty { display: none; }   /* no filename shown; only appears on a load error */
 #roms {
   padding: 3px 6px; border: 1px solid rgba(0,0,0,0.15); border-radius: 5px; background: #fff; color: var(--shell-edge);
   font-family: inherit; font-size: 0.85rem; cursor: pointer; max-width: 120px;
 }
 .sound {
-  background: #a02d5a; border: none; padding: 3px 8px; border-radius: 6px; min-width: 74px; height: 30px;
+  background: #a02d5a; border: none; padding: 0 7px; border-radius: 6px; min-width: 36px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
   color: #fff; font-family: inherit; font-size: 0.8rem; cursor: pointer; box-shadow: 0 3px 0 #6f1740;
   touch-action: manipulation; -webkit-tap-highlight-color: transparent;
 }
+.sound svg { display: block; }
 .sound.pressed { box-shadow: 0 1px 0 #6f1740; transform: translateY(2px); }
-.sound.off { opacity: 0.5; }
-.scale-control { display: flex; align-items: center; gap: 6px; color: var(--label); font-size: 0.85rem; }
+.sound.off { opacity: 0.8; }
+.scale-control { display: flex; align-items: center; gap: 3px; color: var(--label); font-size: 0.85rem; }
 .scale-control label { font-size: 0.85rem; }
+/* Scale −/+ use the flat bezel-control style (see .screen-frame rules below) */
 .bezel-input {
-  width: 28px; height: 26px; text-align: center; background: #fff; color: var(--shell-edge);
-  border: 1px solid rgba(0,0,0,0.15); border-radius: 5px; font-family: inherit; font-size: 0.85rem;
+  width: 15px; height: 22px; text-align: center; background: transparent; color: #e9eef4;
+  border: none; outline: none; font-family: inherit; font-size: 0.95rem; padding: 0;
 }
 
 /* ----- Screen block (dark GBC bezel) ----- */
@@ -127,10 +132,54 @@ html, body {
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.7);
 }
 
+/* Controls on the bezel: flat light icons/labels (no pills), like print on a real device */
+.screen-frame .inputs { margin: 0 0 10px; gap: 10px; justify-content: center; }
+.screen-frame .input-group { border: none; box-shadow: none; padding: 0; height: auto; gap: 6px; color: #e9eef4; }
+.screen-frame .scale-control { color: #e9eef4; }
+.screen-frame .file-name { color: #cfd6de; }
+
+.screen-frame .bezel-btn,
+.screen-frame .sound {
+  background: none; border: 1px solid rgba(255,255,255,0.2); box-shadow: none; border-radius: 5px;
+  color: #e9eef4; min-width: 26px; min-height: 24px; height: auto; padding: 2px 7px; opacity: 0.9;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.screen-frame .bezel-btn { font-size: 1.05rem; line-height: 1; }
+.screen-frame .scale-control .bezel-btn { min-width: 20px; min-height: 20px; padding: 0 4px; font-size: 1rem; }
+.screen-frame .file-btn svg { width: 16px; height: 16px; display: block; }
+.screen-frame #pause svg { width: 18px; height: 18px; display: block; }   /* 18 = 9×2 → integer scale, crisp equal bars */
+.screen-frame .sound svg { width: 20px; height: 20px; display: block; }
+.screen-frame .bezel-btn:hover, .screen-frame .sound:hover { opacity: 1; color: #fff; border-color: rgba(255,255,255,0.45); }
+.screen-frame .bezel-btn:active, .screen-frame .sound:active,
+.screen-frame .bezel-btn.pressed, .screen-frame .sound.pressed { opacity: 0.5; transform: none; }
+.screen-frame .sound.off { opacity: 0.9; }
+
+.screen-frame #roms {
+  background: none; border: none; border-bottom: 1px solid rgba(255,255,255,0.22);
+  color: #e9eef4; padding: 2px; max-width: 130px; cursor: pointer;
+}
+.screen-frame #roms option { color: #1a1a1a; }
+
+.screen-wrap { display: flex; align-items: center; justify-content: center; gap: 7px; width: fit-content; margin: 0 auto; }
 .screen { background: linear-gradient(180deg, #071017, #0d1418); border-radius: 4px; padding: 4px; position: relative; overflow: hidden; }
+
+/* Power LED + label as a column to the left of the screen (DMG-style) */
+.power { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; width: 44px; }
+.power-spacer { flex: none; width: 44px; display: flex; align-items: center; justify-content: center; }   /* right bezel: holds Pause, mirrors the power column */
+.power .led {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff9a9a, #d81414);
+  box-shadow: 0 0 6px 1px rgba(224,20,20,0.8);
+}
+.power .pwr-txt { font-size: 0.4rem; letter-spacing: 0.5px; color: #cfd6de; opacity: 0.85; white-space: nowrap; }
 canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; height: auto; aspect-ratio: 160 / 144; background: #0d1418; }
 
 .brand { text-align: center; margin-top: 8px; font-style: italic; font-weight: 800; font-size: 1.2rem; color: #f4f2fb; letter-spacing: 0.5px; }
+/* Sound | oxGBC | Scale — brand centred, controls on either side */
+.brand-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; margin-top: 8px; }
+.brand-row .sound { justify-self: start; }
+.brand-row .scale-control { justify-self: end; }
+.brand-row .brand { margin-top: 0; }
 /* Game Boy Color-style per-letter palette (matches assets/logo.svg) */
 .brand span { font-weight: 900; }
 .brand .c-o { color: #ff3b30; }   /* red */
@@ -206,6 +255,8 @@ kbd { background: #1b1d22; border: 1px solid #3a3d44; border-radius: 4px; paddin
 .device[data-theme="atomic"]    { --shell: #b7b1d8; --shell-2: #9c96c2; --shell-edge: #56507a; --label: #282540; }
 
 .themes { display: flex; gap: 7px; justify-content: center; flex-wrap: wrap; margin: 0; }
+/* Shell-colour picker lives on the body, between the D-pad and A/B — one row, up near the screen */
+.gb-controls .themes { flex-wrap: nowrap; align-self: flex-start; margin-top: -14px; }
 .swatch {
   width: 20px; height: 20px; border-radius: 50%; padding: 0; cursor: pointer;
   border: 2px solid rgba(255,255,255,0.55); box-shadow: 0 2px 4px rgba(0,0,0,0.4);
@@ -224,7 +275,10 @@ kbd { background: #1b1d22; border: 1px solid #3a3d44; border-radius: 4px; paddin
   }
   .screen-frame { padding: 8px; }
   /* canvas display width capped so device (canvas + all paddings) fits the screen */
-  canvas#screen { max-width: calc(100vw - 60px); }
+  canvas#screen { max-width: calc(100vw - 124px); }   /* room for the power/pause columns */
+  .power, .power-spacer { width: 34px; }
+  .power .pwr-txt { display: none; }
+  .gb-controls .themes { flex-wrap: wrap; max-width: 78px; margin-top: 0; }
   .speaker { width: 74px; height: 74px; right: 12px; bottom: 12px; }
   .subtitle { font-size: 1rem; }
 }

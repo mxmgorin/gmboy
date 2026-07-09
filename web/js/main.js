@@ -50,7 +50,7 @@ async function main() {
       romLoaded = true;
       paused = false;
       pauseOverlay.classList.remove('active');
-      fileName.textContent = label;
+      fileName.textContent = '';   // name hidden; span reused only for load errors
       loader.classList.add('hidden');
     } catch (err) {
       romLoaded = false;
@@ -85,7 +85,8 @@ async function main() {
     if (!romLoaded) return;
     paused = !paused;
     pauseOverlay.classList.toggle('active', paused);
-    pauseBtn.textContent = paused ? '▶' : '❚❚';
+    $('icon-pause').style.display = paused ? 'none' : 'inline';
+    $('icon-play').style.display = paused ? 'inline' : 'none';
   });
 
   // --- Audio toggle (also the user gesture that unlocks AudioContext) ---
@@ -94,7 +95,8 @@ async function main() {
     audioOn = on;
     if (on) audio.resume();
     audioBtn.classList.toggle('off', !on);
-    audioBtn.textContent = on ? 'Sound ♪' : 'Sound ✕';
+    $('icon-audio-on').style.display = on ? 'inline' : 'none';
+    $('icon-audio-off').style.display = on ? 'none' : 'inline';
   }
   audioBtn.addEventListener('click', () => setAudio(!audioOn));
 

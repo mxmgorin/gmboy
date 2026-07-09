@@ -23,55 +23,60 @@
 </head>
 <body>
   <div class="page">
-    <p class="subtitle">
-      <span class="brand">oxGBC</span> — Game Boy / Game Boy Color in your browser, powered by Rust and WASM
-      <br />
-      <span class="credit">PROGRAMMED BY MXMGORIN</span>
-    </p>
-
     <div class="device" data-theme="teal">
-      <div class="inputs">
-        <div class="input-group">
-          <label for="roms">ROM:</label>
-          <select id="roms">
-            <option value="tobudx">Tobu Tobu Girl DX</option>
-          </select>
-        </div>
-        <button id="pause" class="bezel-btn" aria-label="Pause">❚❚</button>
-        <div class="input-group">
-          <input type="file" id="romInput" accept=".gb,.gbc" hidden />
-          <label for="romInput" class="file-btn bezel-btn">FILE</label>
-          <span id="fileName" class="file-name">demo</span>
-        </div>
-      </div>
+      <p class="subtitle">
+          <span>
+        Game Boy / Game Boy Color in your browser · powered by Rust + WASM
+        <br />
+        <span class="credit">PROGRAMMED BY MXMGORIN</span>
+      </span>
+      </p>
 
       <div class="screen-frame">
-        <div class="screen">
-          <canvas id="screen" width="160" height="144"></canvas>
-          <div id="pause-overlay">PAUSED</div>
-          <div id="loader" class="bar-loader">
-            <div class="label">Loading…</div>
-            <div class="bar"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="inputs">
+          <div class="input-group">
+            <label for="roms">ROM:</label>
+            <select id="roms">
+              <option value="tobudx">Tobu Tobu Girl DX</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <input type="file" id="romInput" accept=".gb,.gbc" hidden />
+            <label for="romInput" class="file-btn bezel-btn" aria-label="Load ROM file" title="Load ROM file"><svg viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="1" width="3" height="1" fill="currentColor"/><rect x="1" y="2" width="7" height="1" fill="currentColor"/><rect x="1" y="3" width="1" height="1" fill="currentColor"/><rect x="7" y="3" width="1" height="1" fill="currentColor"/><rect x="1" y="4" width="1" height="1" fill="currentColor"/><rect x="7" y="4" width="1" height="1" fill="currentColor"/><rect x="1" y="5" width="1" height="1" fill="currentColor"/><rect x="7" y="5" width="1" height="1" fill="currentColor"/><rect x="1" y="6" width="7" height="1" fill="currentColor"/></svg></label>
+            <span id="fileName" class="file-name"></span>
           </div>
         </div>
-        <div class="brand"><span class="c-o">o</span><span class="c-x">x</span><span class="c-g">G</span><span class="c-b">B</span><span class="c-c">C</span></div>
-      </div>
 
-      <div class="inputs">
-        <button id="audio" class="sound off">Sound ✕</button>
-        <div class="themes" aria-label="Shell color">
-          <button class="swatch" data-theme="grape"     style="background:#8a5fc4" title="Grape"></button>
-          <button class="swatch" data-theme="teal"      style="background:#3fc0cf" title="Teal"></button>
-          <button class="swatch" data-theme="berry"     style="background:#d24b86" title="Berry"></button>
-          <button class="swatch" data-theme="dandelion" style="background:#f2cf4c" title="Dandelion"></button>
-          <button class="swatch" data-theme="kiwi"      style="background:#8fc73f" title="Kiwi"></button>
-          <button class="swatch" data-theme="atomic"    style="background:#b7b1d8" title="Atomic"></button>
+        <div class="screen-wrap">
+          <div class="power"><span class="led"></span><span class="pwr-txt">POWER</span></div>
+          <div class="screen">
+            <canvas id="screen" width="160" height="144"></canvas>
+            <div id="pause-overlay">PAUSED</div>
+            <div id="loader" class="bar-loader">
+              <div class="label">Loading…</div>
+              <div class="bar"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            </div>
+          </div>
+          <div class="power-spacer"><button id="pause" class="bezel-btn" aria-label="Pause"><svg id="icon-pause" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="1" width="2" height="7" fill="currentColor"/><rect x="5" y="1" width="2" height="7" fill="currentColor"/></svg><svg id="icon-play" style="display:none" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="1" width="1" height="7" fill="currentColor"/><rect x="3" y="2" width="1" height="5" fill="currentColor"/><rect x="4" y="3" width="1" height="3" fill="currentColor"/><rect x="5" y="4" width="1" height="1" fill="currentColor"/></svg></button></div>
         </div>
-        <div class="scale-control">
-          <label>Scale:</label>
-          <button id="scaleMinus" class="bezel-btn">−</button>
-          <input id="scaleInput" class="bezel-input" value="3" readonly />
-          <button id="scalePlus" class="bezel-btn">+</button>
+
+        <div class="brand-row">
+          <button id="audio" class="sound off" aria-label="Toggle sound">
+            <svg id="icon-audio-on" style="display:none" width="22" height="22" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true">
+              <rect x="0" y="3" width="1" height="3" fill="currentColor"/><rect x="1" y="3" width="1" height="1" fill="currentColor"/><rect x="1" y="5" width="1" height="1" fill="currentColor"/><rect x="2" y="2" width="1" height="1" fill="currentColor"/><rect x="2" y="6" width="1" height="1" fill="currentColor"/><rect x="3" y="1" width="1" height="1" fill="currentColor"/><rect x="3" y="7" width="1" height="1" fill="currentColor"/><rect x="4" y="1" width="1" height="7" fill="currentColor"/>
+              <rect x="7" y="1" width="1" height="1" fill="currentColor"/><rect x="6" y="2" width="1" height="1" fill="currentColor"/><rect x="6" y="4" width="2" height="1" fill="currentColor"/><rect x="7" y="7" width="1" height="1" fill="currentColor"/><rect x="6" y="6" width="1" height="1" fill="currentColor"/>
+            </svg>
+            <svg id="icon-audio-off" width="22" height="22" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true">
+              <rect x="0" y="3" width="1" height="3" fill="currentColor"/><rect x="1" y="3" width="1" height="1" fill="currentColor"/><rect x="1" y="5" width="1" height="1" fill="currentColor"/><rect x="2" y="2" width="1" height="1" fill="currentColor"/><rect x="2" y="6" width="1" height="1" fill="currentColor"/><rect x="3" y="1" width="1" height="1" fill="currentColor"/><rect x="3" y="7" width="1" height="1" fill="currentColor"/><rect x="4" y="1" width="1" height="7" fill="currentColor"/>
+              <rect x="6" y="3" width="1" height="1" fill="#ff5a5a"/><rect x="8" y="3" width="1" height="1" fill="#ff5a5a"/><rect x="7" y="4" width="1" height="1" fill="#ff5a5a"/><rect x="6" y="5" width="1" height="1" fill="#ff5a5a"/><rect x="8" y="5" width="1" height="1" fill="#ff5a5a"/>
+            </svg>
+          </button>
+          <div class="brand"><span class="c-o">o</span><span class="c-x">x</span><span class="c-g">G</span><span class="c-b">B</span><span class="c-c">C</span></div>
+          <div class="scale-control">
+            <button id="scaleMinus" class="bezel-btn">−</button>
+            <input id="scaleInput" class="bezel-input" value="3" readonly />
+            <button id="scalePlus" class="bezel-btn">+</button>
+          </div>
         </div>
       </div>
 
@@ -82,6 +87,14 @@
           <button class="mid" disabled></button>
           <button class="right" data-btn="right" aria-label="Right"></button>
           <button class="down"  data-btn="down"  aria-label="Down"></button>
+        </div>
+        <div class="themes" aria-label="Shell color">
+          <button class="swatch" data-theme="grape"     style="background:#8a5fc4" title="Grape"></button>
+          <button class="swatch" data-theme="teal"      style="background:#3fc0cf" title="Teal"></button>
+          <button class="swatch" data-theme="berry"     style="background:#d24b86" title="Berry"></button>
+          <button class="swatch" data-theme="dandelion" style="background:#f2cf4c" title="Dandelion"></button>
+          <button class="swatch" data-theme="kiwi"      style="background:#8fc73f" title="Kiwi"></button>
+          <button class="swatch" data-theme="atomic"    style="background:#b7b1d8" title="Atomic"></button>
         </div>
         <div class="ab">
           <div class="ab-wrap">
