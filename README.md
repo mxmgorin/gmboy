@@ -50,6 +50,8 @@ Here are some highlights:
 
 📥 [Download the latest release](https://github.com/mxmgorin/oxgbc/releases/latest)
 
+🎮 The web demo bundles free / open-source homebrew games (µCity, Geometrix, Libbet, Tobu Tobu Girl DX) plus test ROMs — see [ROM credits & licenses](web/assets/README.md).
+
 ## Accuracy & Testing
 
 The emulator is continuously validated against community made test suites which are executed on CI via `cargo test`:

@@ -246,6 +246,13 @@ canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; h
 .hint { font-size: 0.85rem; opacity: 0.7; text-align: center; padding: 6px 12px 0; }
 kbd { background: #1b1d22; border: 1px solid #3a3d44; border-radius: 4px; padding: 1px 5px; }
 
+/* Bundled-ROM attribution / credits */
+.rom-credits { max-width: 460px; margin: 12px auto 0; font-size: 0.72rem; line-height: 1.5; color: #9aa0aa; text-align: center; padding: 0 12px; }
+.rom-credits ul { list-style: none; padding: 0; margin: 6px 0 0; text-align: left; display: inline-block; }
+.rom-credits li { margin: 1px 0; }
+.rom-credits a { color: #b9c2cf; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.3); }
+.rom-credits a:hover { color: #fff; }
+
 /* ----- Shell color themes (canonical GBC colors) ----- */
 .device[data-theme="grape"]     { --shell: #8a5fc4; --shell-2: #6b3fa8; --shell-edge: #4a2b7e; --label: #efe9fb; }
 .device[data-theme="teal"]      { --shell: #3fc0cf; --shell-2: #1f97a6; --shell-edge: #0d5560; --label: #04343b; }

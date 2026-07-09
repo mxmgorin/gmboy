@@ -10,6 +10,12 @@ const KEYMAP = {
 // Bundled open-source demo ROMs shown in the ROM dropdown.
 const DEMOS = {
   tobudx: { url: './assets/tobudx.gb', name: 'Tobu Tobu Girl DX' },
+  ucity: { url: './assets/ucity.gbc', name: 'µCity' },
+  geometrix: { url: './assets/geometrix.gbc', name: 'Geometrix' },
+  libbet: { url: './assets/libbet.gb', name: 'Libbet & the Magic Floor' },
+  dmgacid2: { url: './assets/dmg-acid2.gb', name: 'dmg-acid2' },
+  cgbacid2: { url: './assets/cgb-acid2.gbc', name: 'cgb-acid2' },
+  cpuinstrs: { url: './assets/cpu_instrs.gb', name: 'cpu_instrs' },
 };
 
 // Real Game Boy frame rate (4194304 Hz / 70224 cycles ≈ 59.7275 Hz). Stepped with
