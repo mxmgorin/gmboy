@@ -24,17 +24,17 @@ jobs:
       - name: Prepare Linux release files
         run: |
           mkdir -p dist
-          cp target/release/gmboy dist/
+          cp target/release/oxgbc dist/
 
       - name: Zip Linux release
-        run: cd dist && zip -r gmboy-linux-x86_64.zip .
+        run: cd dist && zip -r oxgbc-linux-x86_64.zip .
 
       - name: Upload artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: gmboy-linux-x86_64.zip
-          path: dist/gmboy-linux-x86_64.zip
+          name: oxgbc-linux-x86_64.zip
+          path: dist/oxgbc-linux-x86_64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -42,6 +42,6 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/gmboy-linux-x86_64.zip
+          files: dist/oxgbc-linux-x86_64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

@@ -2,7 +2,7 @@ use crate::{get_activity, get_env, JVM};
 use jni::objects::{JByteArray, JObject, JString, JValue};
 use jni::AttachGuard;
 
-const CLASS_NAME: &str = "com/mxmgorin/gmboy/MainActivity";
+const CLASS_NAME: &str = "com/mxmgorin/oxgbc/MainActivity";
 
 /// Call this to show the file picker
 pub fn show_android_file_picker() {

@@ -19,5 +19,5 @@ log = "0.4.27"
 env_logger = "0.11.8"
 
 [[bin]]
-name = "gmboy"
+name = "oxgbc"
 path = "src/main.rs"

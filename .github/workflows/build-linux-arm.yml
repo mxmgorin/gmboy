@@ -25,7 +25,7 @@ jobs:
             cc_bin: aarch64-linux-gnu-gcc
             cxx_bin: aarch64-linux-gnu-g++
             ar_bin: aarch64-linux-gnu-ar
-            out_name: gmboy-linux-aarch64.zip
+            out_name: oxgbc-linux-aarch64.zip
           - arch: armv7
             rust_target: armv7-unknown-linux-gnueabihf
             gcc_pkg: gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
@@ -35,7 +35,7 @@ jobs:
             cc_bin: arm-linux-gnueabihf-gcc
             cxx_bin: arm-linux-gnueabihf-g++
             ar_bin: arm-linux-gnueabihf-ar
-            out_name: gmboy-linux-armv7.zip
+            out_name: oxgbc-linux-armv7.zip
 
     steps:
       - uses: actions/checkout@v2
@@ -60,7 +60,7 @@ jobs:
       - name: Prepare release
         run: |
           mkdir -p dist
-          cp target/${{ matrix.rust_target }}/release/gmboy dist/
+          cp target/${{ matrix.rust_target }}/release/oxgbc dist/
 
       - name: Zip release
         run: cd dist && zip -r ${{ matrix.out_name }} .

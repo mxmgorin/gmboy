@@ -23,7 +23,7 @@ impl Sdl2Backend {
     pub fn new(sdl: &Sdl, config: &VideoConfig, game_rect: Rect) -> Self {
         let video_subsystem = sdl.video().unwrap();
         let window = video_subsystem
-            .window("GMBoy SDL2", game_rect.width(), game_rect.height())
+            .window("oxGBC SDL2", game_rect.width(), game_rect.height())
             .position_centered()
             .resizable()
             .build()

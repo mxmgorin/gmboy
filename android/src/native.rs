@@ -5,13 +5,13 @@ use jni::JNIEnv;
 
 /// Called from SDLActivity.onCreate or SDL2 main to store the JavaVM
 #[no_mangle]
-pub extern "C" fn Java_com_mxmgorin_gmboy_MainActivity_nativeInit(env: JNIEnv, _class: JClass) {
+pub extern "C" fn Java_com_mxmgorin_oxgbc_MainActivity_nativeInit(env: JNIEnv, _class: JClass) {
     JVM.set(env.get_java_vm().unwrap()).ok();
 }
 
 /// This is the callback from Java when a directory is picked
 #[no_mangle]
-pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnDirectoryPicked(
+pub extern "system" fn Java_com_mxmgorin_oxgbc_MainActivity_nativeOnDirectoryPicked(
     env: JNIEnv,
     _class: JObject,
     uri: JString,
@@ -22,7 +22,7 @@ pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnDirectoryPic
 
 /// This is the callback from Java when a file is picked
 #[no_mangle]
-pub extern "system" fn Java_com_mxmgorin_gmboy_MainActivity_nativeOnFilePicked(
+pub extern "system" fn Java_com_mxmgorin_oxgbc_MainActivity_nativeOnFilePicked(
     env: JNIEnv,
     _class: JObject,
     uri: JString,

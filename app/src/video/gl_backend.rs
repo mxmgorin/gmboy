@@ -387,7 +387,7 @@ pub fn create_gl_with_fallback(sdl: &Sdl, width: u32, height: u32) -> Result<GLS
         video.gl_attr().set_context_version(major, minor);
 
         let window = match video
-            .window("GMBoy GL", width, height)
+            .window("oxGBC GL", width, height)
             .position_centered()
             .opengl()
             .build()

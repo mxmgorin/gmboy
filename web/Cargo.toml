@@ -1,9 +1,9 @@
 [package]
-name = "gmboy-web"
+name = "oxgbc-web"
 version = "0.1.0"
 edition = "2021"
 authors = ["troidem <mxmgorin@gmail.com>"]
-description = "Browser (WASM) frontend for the GMBoy Game Boy / Game Boy Color emulator"
+description = "Browser (WASM) frontend for the oxGBC Game Boy / Game Boy Color emulator"
 license = "GPL-3.0-only"
 
 [lib]

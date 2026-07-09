@@ -26,24 +26,24 @@ jobs:
           cargo build --release --target=aarch64-apple-darwin -p desktop
           cargo build --release --target=x86_64-apple-darwin -p desktop
           mkdir -p target/universal/release
-          lipo -create -output target/universal/release/gmboy \
-            target/aarch64-apple-darwin/release/gmboy \
-            target/x86_64-apple-darwin/release/gmboy
+          lipo -create -output target/universal/release/oxgbc \
+            target/aarch64-apple-darwin/release/oxgbc \
+            target/x86_64-apple-darwin/release/oxgbc
 
       - name: Prepare macOS release files
         run: |
           mkdir -p dist
-          cp target/universal/release/gmboy dist/
+          cp target/universal/release/oxgbc dist/
 
       - name: Zip bundle
-        run: cd dist && zip -r gmboy-macos-universal.zip .
+        run: cd dist && zip -r oxgbc-macos-universal.zip .
 
       - name: Upload artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: gmboy-macos-universal.zip
-          path: dist/gmboy-macos-universal.zip
+          name: oxgbc-macos-universal.zip
+          path: dist/oxgbc-macos-universal.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -51,6 +51,6 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/gmboy-macos-universal.zip
+          files: dist/oxgbc-macos-universal.zip
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

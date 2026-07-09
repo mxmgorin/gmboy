@@ -1,41 +1,41 @@
 <p align="left">
-  <a href="https://github.com/mxmgorin/gmboy">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01l.gif" alt="Logo" width="200">
+  <a href="https://github.com/mxmgorin/oxgbc">
+    <img src="assets/logo.svg" alt="oxGBC" width="180">
   </a>
 </p>
 
 ---
 
-[![Tests](https://github.com/mxmgorin/gmboy/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Android](https://github.com/mxmgorin/gmboy/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Windows](https://github.com/mxmgorin/gmboy/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![MacOS](https://github.com/mxmgorin/gmboy/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Linux x86_64](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Linux ARM](https://github.com/mxmgorin/gmboy/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/gmboy/actions)
-[![Release](https://img.shields.io/github/v/release/mxmgorin/gmboy.svg?color=blue)](https://github.com/mxmgorin/gmboy/releases)
+[![Tests](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
+[![Android](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
+[![Windows](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
+[![MacOS](https://github.com/mxmgorin/oxgbc/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
+[![Linux x86_64](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
+[![Linux ARM](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
+[![Release](https://img.shields.io/github/v/release/mxmgorin/oxgbc.svg?color=blue)](https://github.com/mxmgorin/oxgbc/releases)
 
 <!--
-[![Lines of code](https://tokei.rs/b1/github/mxmgorin/gmboy)](https://github.com/mxmgorin/gmboy) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/gmboy/total.svg)](https://github.com/mxgorin/gmboy/releases)
+[![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg)](https://github.com/mxgorin/oxgbc/releases)
 [![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
-[![Dependencies](https://deps.rs/repo/github/mxmgorin/gmboy/status.svg)](https://deps.rs/repo/github/mxmgorin/gmboy)
+[![Dependencies](https://deps.rs/repo/github/mxmgorin/oxgbc/status.svg)](https://deps.rs/repo/github/mxmgorin/oxgbc)
 -->
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" alt="Demo 1" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" alt="Demo 1" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/02bg.gif" alt="Demo 2" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/02bg.gif" alt="Demo 2" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/03bg.gif" alt="Demo 3" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/03bg.gif" alt="Demo 3" width="200"/>
   </a>&nbsp;&nbsp;  
-  <a href="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/pokemoncrystal.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/gmboy/main/assets/pokemoncrystal.gif" alt="Demo 4" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/pokemoncrystal.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/pokemoncrystal.gif" alt="Demo 4" width="200"/>
   </a>
 </p>
 
-`GMBoy` is a Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
+`oxGBC` is a Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
 
 Here are some highlights:
 
@@ -46,9 +46,9 @@ Here are some highlights:
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
-▶️ [**Try in your browser**](https://mxmgorin.github.io/gmboy/) — no install, runs on WASM
+▶️ [**Try in your browser**](https://mxmgorin.github.io/oxgbc/) — no install, runs on WASM
 
-📥 [Download the latest release](https://github.com/mxmgorin/gmboy/releases/latest)
+📥 [Download the latest release](https://github.com/mxmgorin/oxgbc/releases/latest)
 
 ## Accuracy & Testing
 

@@ -12,4 +12,4 @@ page opens. Renders in full CGB color.
   **CC BY 4.0**.
 
 Redistribution is permitted under these licenses (keep this attribution). Both are
-compatible with GMBoy's GPL-3.0 license.
+compatible with oxGBC's GPL-3.0 license.

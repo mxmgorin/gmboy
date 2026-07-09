@@ -180,7 +180,7 @@ pub fn get_palettes() -> Box<[LcdPalette]> {
 }
 
 pub fn get_base_dir() -> PathBuf {
-    let path = sdl2::filesystem::pref_path("mxmgorin", "GMBoy").unwrap();
+    let path = sdl2::filesystem::pref_path("mxmgorin", "oxGBC").unwrap();
 
     PathBuf::from(path)
 }

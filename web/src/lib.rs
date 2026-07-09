@@ -1,4 +1,4 @@
-//! Browser (WASM) frontend for GMBoy.
+//! Browser (WASM) frontend for oxGBC.
 //!
 //! This crate is a thin shell around `core`: it constructs an [`Emu`], feeds it a
 //! ROM, and steps it exactly one frame at a time. The browser drives the pace via
@@ -6,7 +6,7 @@
 //! [`EmuRuntime::run_frame`] directly and never let the emulator sleep/spin itself.
 //!
 //! Scope: video + input + audio. The APU's samples are buffered by [`AudioSink`]
-//! each frame and drained by JS via [`GmBoy::take_audio`] into a WebAudio scheduler.
+//! each frame and drained by JS via [`OxGbc::take_audio`] into a WebAudio scheduler.
 
 use core::apu::apu::ApuConfig;
 use core::apu::{Apu, SAMPLING_FREQUENCY};
@@ -23,7 +23,7 @@ use core::ppu::{Ppu, LCD_X_RES, LCD_Y_RES};
 use wasm_bindgen::prelude::*;
 
 /// Accumulates the APU's interleaved stereo samples produced during a frame.
-/// Drained once per frame by [`GmBoy::take_audio`].
+/// Drained once per frame by [`OxGbc::take_audio`].
 #[derive(Default)]
 struct AudioSink {
     samples: Vec<f32>,
@@ -35,16 +35,16 @@ impl EmuAudioCallback for AudioSink {
     }
 }
 
-#[wasm_bindgen]
-pub struct GmBoy {
+#[wasm_bindgen(js_name = oxGBC)]
+pub struct OxGbc {
     emu: Emu,
     audio: AudioSink,
 }
 
-#[wasm_bindgen]
-impl GmBoy {
+#[wasm_bindgen(js_class = oxGBC)]
+impl OxGbc {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> GmBoy {
+    pub fn new() -> OxGbc {
         // Surface Rust panics in the browser console instead of an opaque trap.
         console_error_panic_hook::set_once();
 
@@ -62,7 +62,7 @@ impl GmBoy {
         let bus = Bus::new(Cart::empty(), Io::new(ppu, apu), config.model);
         let emu = Emu::new(config, EmuRuntime::new(bus)).expect("failed to build emu");
 
-        GmBoy {
+        OxGbc {
             emu,
             audio: AudioSink::default(),
         }
@@ -139,7 +139,7 @@ impl GmBoy {
     }
 }
 
-impl Default for GmBoy {
+impl Default for OxGbc {
     fn default() -> Self {
         Self::new()
     }

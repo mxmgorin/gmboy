@@ -22,7 +22,7 @@
             android:required="false" />
 
     <application
-            android:label="GMBoy"
+            android:label="oxGBC"
             android:icon="@mipmap/ic_launcher"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
 

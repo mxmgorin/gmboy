@@ -1,4 +1,4 @@
-/* GMBoy web front — ch8go's polish (VT323, control bars, dark LCD, overlays,
+/* oxGBC web front — ch8go's polish (VT323, control bars, dark LCD, overlays,
    GitHub corner) wrapped in a Game Boy Color ("Grape" purple) body. */
 
 :root {
@@ -131,11 +131,13 @@ html, body {
 canvas#screen { display: block; margin: 0 auto; width: 320px; max-width: 86vw; height: auto; aspect-ratio: 160 / 144; background: #0d1418; }
 
 .brand { text-align: center; margin-top: 8px; font-style: italic; font-weight: 800; font-size: 1.2rem; color: #f4f2fb; letter-spacing: 0.5px; }
-.brand .color {
-  font-weight: 900;
-  background: linear-gradient(90deg, #e33, #f80, #fd0, #3c3, #39f, #63f);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+/* Game Boy Color-style per-letter palette (matches assets/logo.svg) */
+.brand span { font-weight: 900; }
+.brand .c-o { color: #ff3b30; }   /* red */
+.brand .c-x { color: #a259ff; }   /* purple */
+.brand .c-g { color: #34c759; }   /* green */
+.brand .c-b { color: #ffd60a; }   /* yellow */
+.brand .c-c { color: #30d5c8; }   /* turquoise */
 
 /* Overlays */
 #pause-overlay, .bar-loader { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.9); color: #fff; }

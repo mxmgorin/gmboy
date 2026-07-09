@@ -1,4 +1,4 @@
-import init, { GmBoy } from '../pkg/gmboy_web.js';
+import init, { oxGBC } from '../pkg/oxgbc_web.js';
 import { AudioScheduler } from './audio.js';
 
 const KEYMAP = {
@@ -19,7 +19,7 @@ const FRAME_MS = 1000 / GB_FPS;
 
 async function main() {
   await init();
-  const gb = new GmBoy();
+  const gb = new oxGBC();
   const audio = new AudioScheduler(gb.sample_rate());
 
   const $ = (id) => document.getElementById(id);
@@ -107,12 +107,12 @@ async function main() {
   const swatches = document.querySelectorAll('.swatch');
   function setTheme(t) {
     device.dataset.theme = t;
-    try { localStorage.setItem('gmboy-theme', t); } catch (_) {}
+    try { localStorage.setItem('oxgbc-theme', t); } catch (_) {}
     for (const s of swatches) s.classList.toggle('active', s.dataset.theme === t);
   }
   for (const s of swatches) s.addEventListener('click', () => setTheme(s.dataset.theme));
   let savedTheme = 'teal';
-  try { savedTheme = localStorage.getItem('gmboy-theme') || 'teal'; } catch (_) {}
+  try { savedTheme = localStorage.getItem('oxgbc-theme') || 'teal'; } catch (_) {}
   setTheme(savedTheme);
 
   // --- Keyboard ---

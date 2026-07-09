@@ -1,4 +1,4 @@
-package com.mxmgorin.gmboy;
+package com.mxmgorin.oxgbc;
 
 import android.app.Activity;
 import android.content.ContentResolver;

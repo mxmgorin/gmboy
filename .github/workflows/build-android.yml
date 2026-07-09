@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      APK_PATH: android/app/build/outputs/apk/debug/gmboy-android-universal.apk
+      APK_PATH: android/app/build/outputs/apk/debug/oxgbc-android-universal.apk
       APK_BUILD_PATH: android/app/build/outputs/apk/debug/app-debug.apk
-      APK_NAME: gmboy-android-universal.apk
+      APK_NAME: oxgbc-android-universal.apk
 
     steps:
       - name: Checkout source
