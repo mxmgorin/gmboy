@@ -2,6 +2,11 @@ plugins {
     id 'com.android.application'
 }
 
+// ABIs to package. Override per build to split targets into separate APKs, e.g.:
+//   ./gradlew assembleRelease -PoxgbcAbis=arm64-v8a,armeabi-v7a
+def oxgbcAbis = (project.findProperty('oxgbcAbis') ?: 'arm64-v8a,armeabi-v7a,x86_64,x86')
+        .toString().split(',').findAll { it }
+
 android {
     namespace 'com.mxmgorin.oxgbc'
     compileSdk 34
@@ -12,13 +17,20 @@ android {
         targetSdk 34
 
         ndk {
-            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64", "x86"
+            abiFilters(*oxgbcAbis)
         }
+    }
 
-        externalNativeBuild {
-            cmake {
-                // Optional if you use cmake; here you can skip this if you don't use CMake
-            }
+    // A signed release APK is installable and updatable in place. CI restores a
+    // stable keystore from the OXGBC_KEYSTORE_BASE64 secret (or generates an
+    // ephemeral one) and points these env vars at it. The defaults let a local
+    // `./gradlew assembleRelease` work with a throwaway debug-style key.
+    signingConfigs {
+        release {
+            storeFile file(System.getenv("OXGBC_KEYSTORE") ?: "release.keystore")
+            storePassword System.getenv("OXGBC_KEYSTORE_PASS") ?: "android"
+            keyAlias System.getenv("OXGBC_KEY_ALIAS") ?: "androiddebugkey"
+            keyPassword System.getenv("OXGBC_KEY_PASS") ?: "android"
         }
     }
 
@@ -26,6 +38,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 

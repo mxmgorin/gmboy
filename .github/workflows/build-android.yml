@@ -1,6 +1,7 @@
 name: Android
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
@@ -14,14 +15,26 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name != 'release' }}
 
+env:
+  NDK_VERSION: "26.3.11579264"
+  ANDROID_API: "21"
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
-
-    env:
-      APK_PATH: android/app/build/outputs/apk/debug/oxgbc-android-universal.apk
-      APK_BUILD_PATH: android/app/build/outputs/apk/debug/app-debug.apk
-      APK_NAME: oxgbc-android-universal.apk
+    strategy:
+      fail-fast: false
+      # Two APKs, built in parallel: real ARM devices vs x86 (emulators/ChromeOS).
+      matrix:
+        include:
+          - variant: arm
+            abis: "arm64-v8a armeabi-v7a"
+            gradle_abis: "arm64-v8a,armeabi-v7a"
+            apk_name: oxgbc-android-arm.apk
+          - variant: x86
+            abis: "x86_64 x86"
+            gradle_abis: "x86_64,x86"
+            apk_name: oxgbc-android-x86.apk
 
     steps:
       - name: Checkout source
@@ -29,11 +42,34 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - run: |
-          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+      - name: Install cargo-ndk
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-ndk
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 33
+          ndk: ${{ env.NDK_VERSION }}
+          cmake: 3.22.1
+
+      - name: Install NDK ${{ env.NDK_VERSION }}
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "ndk;${NDK_VERSION}"
+          echo "ANDROID_NDK_HOME=${ANDROID_SDK_ROOT}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Install native build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build
 
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
+        with:
+          key: android-${{ matrix.variant }}
 
       # Caches the pinned SDL2 source clone and the per-ABI libSDL2.so outputs so
       # build.sh skips the slow cmake builds on subsequent runs.
@@ -43,52 +79,54 @@ jobs:
           path: |
             android/SDL2
             android/app/src/main/jniLibs
-          key: android-sdl2-${{ hashFiles('android/build.sh') }}-v1
-
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: 33
-          ndk: 26.3.11579264
-          cmake: 3.22.1
-
-      - name: Install NDK 26.3.11579264
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "ndk;26.3.11579264"
-
-      - name: Verify NDK installation
-        run: ls $ANDROID_HOME/ndk
-
-      - name: Build Rust libraries
-        working-directory: ./android
-        run: |
-          export ANDROID_NDK_HOME=$(ls -d $ANDROID_HOME/ndk/* | head -n 1)
-          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-          echo "Using NDK at $ANDROID_NDK_HOME"
-          ./build.sh
-
-      - name: Install native build tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential ninja-build
+          key: android-sdl2-${{ matrix.variant }}-${{ hashFiles('android/build.sh') }}-v1
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK
+      - name: Build native libs (SDL2 + Rust cdylib)
         working-directory: ./android
-        run: ./gradlew assembleDebug
+        env:
+          ABIS: ${{ matrix.abis }}
+        run: ./build.sh
 
-      - name: Rename APK
-        run: mv "$APK_BUILD_PATH" "$APK_PATH"
+      # Restore a STABLE signing key from a repo secret so every release APK is
+      # signed with the same key and installs update in place. Without the secret
+      # (e.g. a fork) fall back to an ephemeral key so the build still runs.
+      # No `set -x` here: keep the base64 secret out of the logs.
+      - name: Restore signing keystore
+        env:
+          KS_B64: ${{ secrets.OXGBC_KEYSTORE_BASE64 }}
+        run: |
+          set -eu
+          if [ -n "${KS_B64:-}" ]; then
+            echo "$KS_B64" | base64 -d > android/app/release.keystore
+            echo "Using keystore from OXGBC_KEYSTORE_BASE64 (stable signature)."
+          else
+            keytool -genkeypair -v -keystore android/app/release.keystore \
+              -storepass android -keypass android -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=oxgbc,O=oxgbc,C=US"
+            echo "::warning::OXGBC_KEYSTORE_BASE64 not set; using an ephemeral key (APKs won't update in place)."
+          fi
+
+      - name: Assemble release APK
+        working-directory: ./android
+        env:
+          OXGBC_KEYSTORE: release.keystore
+          OXGBC_KEYSTORE_PASS: ${{ secrets.OXGBC_KEYSTORE_PASS || 'android' }}
+          OXGBC_KEY_ALIAS: ${{ secrets.OXGBC_KEY_ALIAS || 'androiddebugkey' }}
+          OXGBC_KEY_PASS: ${{ secrets.OXGBC_KEY_PASS || 'android' }}
+        run: |
+          ./gradlew --no-daemon assembleRelease -PoxgbcAbis=${{ matrix.gradle_abis }}
+          mv app/build/outputs/apk/release/app-release.apk "${{ matrix.apk_name }}"
 
       - name: Upload artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.APK_NAME }}
-          path: ${{ env.APK_PATH }}
+          name: ${{ matrix.apk_name }}
+          path: android/${{ matrix.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -96,6 +134,6 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.APK_PATH }}
+          files: android/${{ matrix.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

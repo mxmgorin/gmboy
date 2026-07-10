@@ -1,0 +1,17 @@
+# Android cross-compile link paths, scoped per target so desktop/web/Linux-ARM
+# builds are completely untouched. The bundled libSDL2.so for each ABI lives in
+# android/app/src/main/jniLibs/<abi>/ (built by android/build.sh); the sdl2 crate
+# links `-lSDL2` against it. Paths are relative to the workspace root, which is
+# cargo's rustc working directory. Kept here rather than in RUSTFLAGS so builds
+# stay cache-stable (a changing RUSTFLAGS invalidates every crate).
+[target.aarch64-linux-android]
+rustflags = ["-L", "android/app/src/main/jniLibs/arm64-v8a"]
+
+[target.armv7-linux-androideabi]
+rustflags = ["-L", "android/app/src/main/jniLibs/armeabi-v7a"]
+
+[target.x86_64-linux-android]
+rustflags = ["-L", "android/app/src/main/jniLibs/x86_64"]
+
+[target.i686-linux-android]
+rustflags = ["-L", "android/app/src/main/jniLibs/x86"]
