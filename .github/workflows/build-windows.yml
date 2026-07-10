@@ -10,30 +10,46 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
+
 jobs:
   build-windows:
     runs-on: windows-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
+    - name: Cache vcpkg SDL2
+      id: cache-sdl2
+      uses: actions/cache@v4
+      with:
+        path: C:\vcpkg\installed
+        key: vcpkg-sdl2-${{ runner.os }}-v1
+
+    # Only SDL2 is linked (no image/mixer/ttf). Skipped entirely on cache hit.
     - name: Install SDL2 (via vcpkg)
+      if: steps.cache-sdl2.outputs.cache-hit != 'true'
       run: |
-        git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git C:\vcpkg
         C:\vcpkg\bootstrap-vcpkg.bat
-        C:\vcpkg\vcpkg.exe install sdl2 sdl2-image sdl2-mixer sdl2-ttf
-        echo "VCPKG_ROOT=C:\\vcpkg" >> $GITHUB_ENV
+        C:\vcpkg\vcpkg.exe install sdl2
 
-    - name: Set RUSTFLAGS for SDL2 linking
-      run: echo "RUSTFLAGS=-L C:\\vcpkg\\installed\\x64-windows\\lib" >> $env:GITHUB_ENV
+    - name: Set SDL2 env vars
+      run: |
+        echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
+        echo "RUSTFLAGS=-L C:\vcpkg\installed\x64-windows\lib" >> $env:GITHUB_ENV
       shell: powershell
 
     - name: Install Rust toolchain
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable-x86_64-pc-windows-msvc
-        override: true
+        targets: x86_64-pc-windows-msvc
+
+    - name: Cache Rust build
+      uses: Swatinem/rust-cache@v2
 
     - name: Build release
       run: cargo build --release -p desktop

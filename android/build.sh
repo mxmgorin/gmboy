@@ -37,6 +37,13 @@ build_sdl2() {
     API=$2
     JNI_DIR=$3
 
+    # SDL2 source is pinned (release-2.28.x), so its output is deterministic.
+    # Skip the slow cmake build when the library is already present (e.g. cached).
+    if [ -f "app/src/main/jniLibs/$JNI_DIR/libSDL2.so" ]; then
+        echo ">>> SDL2 for $JNI_DIR already present, skipping build"
+        return
+    fi
+
     echo ">>> Building SDL2 for $JNI_DIR"
     TOOLCHAIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64"
 
@@ -58,8 +65,13 @@ build_sdl2() {
     cp "$BUILD_DIR/libSDL2.so" "app/src/main/jniLibs/$JNI_DIR/"
 }
 
-# ✅ Clean old builds
-cargo clean
+# Note: no `cargo clean` here — cargo tracks dependencies correctly, and cleaning
+# on every run forces a full recompile that defeats build caching. Set CLEAN=1 to
+# force a clean rebuild locally if ever needed.
+if [ "${CLEAN:-0}" = "1" ]; then
+    echo ">>> CLEAN=1 set, running cargo clean"
+    cargo clean
+fi
 
 # ✅ Loop through each arch, build SDL2 and Rust .so
 for target in "${TARGETS[@]}"; do

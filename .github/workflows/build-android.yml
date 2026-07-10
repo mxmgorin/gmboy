@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'release' }}
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -27,6 +31,19 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - run: |
           rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+
+      # Caches the pinned SDL2 source clone and the per-ABI libSDL2.so outputs so
+      # build.sh skips the slow cmake builds on subsequent runs.
+      - name: Cache Android SDL2
+        uses: actions/cache@v4
+        with:
+          path: |
+            android/SDL2
+            android/app/src/main/jniLibs
+          key: android-sdl2-${{ hashFiles('android/build.sh') }}-v1
 
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
@@ -55,6 +72,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential ninja-build
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build APK
         working-directory: ./android
