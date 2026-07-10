@@ -1,4 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 128" width="480" height="128" role="img" aria-label="oxGBC">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 128" width="480" height="128" shape-rendering="crispEdges" role="img" aria-label="oxGBC">
+  <defs>
+    <clipPath id="letters">
+    <rect x="24" y="40" width="16" height="16" fill="#ff3b30"/>
+    <rect x="40" y="40" width="16" height="16" fill="#ff3b30"/>
+    <rect x="56" y="40" width="16" height="16" fill="#ff3b30"/>
+    <rect x="8" y="56" width="16" height="16" fill="#ff3b30"/>
+    <rect x="72" y="56" width="16" height="16" fill="#ff3b30"/>
+    <rect x="8" y="72" width="16" height="16" fill="#ff3b30"/>
+    <rect x="72" y="72" width="16" height="16" fill="#ff3b30"/>
+    <rect x="8" y="88" width="16" height="16" fill="#ff3b30"/>
+    <rect x="72" y="88" width="16" height="16" fill="#ff3b30"/>
+    <rect x="24" y="104" width="16" height="16" fill="#ff3b30"/>
+    <rect x="40" y="104" width="16" height="16" fill="#ff3b30"/>
+    <rect x="56" y="104" width="16" height="16" fill="#ff3b30"/>
+    <rect x="104" y="40" width="16" height="16" fill="#a259ff"/>
+    <rect x="168" y="40" width="16" height="16" fill="#a259ff"/>
+    <rect x="120" y="56" width="16" height="16" fill="#a259ff"/>
+    <rect x="152" y="56" width="16" height="16" fill="#a259ff"/>
+    <rect x="136" y="72" width="16" height="16" fill="#a259ff"/>
+    <rect x="120" y="88" width="16" height="16" fill="#a259ff"/>
+    <rect x="152" y="88" width="16" height="16" fill="#a259ff"/>
+    <rect x="104" y="104" width="16" height="16" fill="#a259ff"/>
+    <rect x="168" y="104" width="16" height="16" fill="#a259ff"/>
+    <rect x="216" y="8" width="16" height="16" fill="#34c759"/>
+    <rect x="232" y="8" width="16" height="16" fill="#34c759"/>
+    <rect x="248" y="8" width="16" height="16" fill="#34c759"/>
+    <rect x="200" y="24" width="16" height="16" fill="#34c759"/>
+    <rect x="264" y="24" width="16" height="16" fill="#34c759"/>
+    <rect x="200" y="40" width="16" height="16" fill="#34c759"/>
+    <rect x="200" y="56" width="16" height="16" fill="#34c759"/>
+    <rect x="232" y="56" width="16" height="16" fill="#34c759"/>
+    <rect x="248" y="56" width="16" height="16" fill="#34c759"/>
+    <rect x="264" y="56" width="16" height="16" fill="#34c759"/>
+    <rect x="200" y="72" width="16" height="16" fill="#34c759"/>
+    <rect x="264" y="72" width="16" height="16" fill="#34c759"/>
+    <rect x="200" y="88" width="16" height="16" fill="#34c759"/>
+    <rect x="264" y="88" width="16" height="16" fill="#34c759"/>
+    <rect x="216" y="104" width="16" height="16" fill="#34c759"/>
+    <rect x="232" y="104" width="16" height="16" fill="#34c759"/>
+    <rect x="248" y="104" width="16" height="16" fill="#34c759"/>
+    <rect x="296" y="8" width="16" height="16" fill="#ffd60a"/>
+    <rect x="312" y="8" width="16" height="16" fill="#ffd60a"/>
+    <rect x="328" y="8" width="16" height="16" fill="#ffd60a"/>
+    <rect x="344" y="8" width="16" height="16" fill="#ffd60a"/>
+    <rect x="296" y="24" width="16" height="16" fill="#ffd60a"/>
+    <rect x="360" y="24" width="16" height="16" fill="#ffd60a"/>
+    <rect x="296" y="40" width="16" height="16" fill="#ffd60a"/>
+    <rect x="360" y="40" width="16" height="16" fill="#ffd60a"/>
+    <rect x="296" y="56" width="16" height="16" fill="#ffd60a"/>
+    <rect x="312" y="56" width="16" height="16" fill="#ffd60a"/>
+    <rect x="328" y="56" width="16" height="16" fill="#ffd60a"/>
+    <rect x="344" y="56" width="16" height="16" fill="#ffd60a"/>
+    <rect x="296" y="72" width="16" height="16" fill="#ffd60a"/>
+    <rect x="360" y="72" width="16" height="16" fill="#ffd60a"/>
+    <rect x="296" y="88" width="16" height="16" fill="#ffd60a"/>
+    <rect x="360" y="88" width="16" height="16" fill="#ffd60a"/>
+    <rect x="296" y="104" width="16" height="16" fill="#ffd60a"/>
+    <rect x="312" y="104" width="16" height="16" fill="#ffd60a"/>
+    <rect x="328" y="104" width="16" height="16" fill="#ffd60a"/>
+    <rect x="344" y="104" width="16" height="16" fill="#ffd60a"/>
+    <rect x="408" y="8" width="16" height="16" fill="#30d5c8"/>
+    <rect x="424" y="8" width="16" height="16" fill="#30d5c8"/>
+    <rect x="440" y="8" width="16" height="16" fill="#30d5c8"/>
+    <rect x="392" y="24" width="16" height="16" fill="#30d5c8"/>
+    <rect x="456" y="24" width="16" height="16" fill="#30d5c8"/>
+    <rect x="392" y="40" width="16" height="16" fill="#30d5c8"/>
+    <rect x="392" y="56" width="16" height="16" fill="#30d5c8"/>
+    <rect x="392" y="72" width="16" height="16" fill="#30d5c8"/>
+    <rect x="392" y="88" width="16" height="16" fill="#30d5c8"/>
+    <rect x="456" y="88" width="16" height="16" fill="#30d5c8"/>
+    <rect x="408" y="104" width="16" height="16" fill="#30d5c8"/>
+    <rect x="424" y="104" width="16" height="16" fill="#30d5c8"/>
+    <rect x="440" y="104" width="16" height="16" fill="#30d5c8"/>
+    </clipPath>
+  </defs>
   <rect x="21" y="37" width="22" height="22" fill="#0d1117"/>
   <rect x="37" y="37" width="22" height="22" fill="#0d1117"/>
   <rect x="53" y="37" width="22" height="22" fill="#0d1117"/>
@@ -141,4 +216,44 @@
   <rect x="408" y="104" width="16" height="16" fill="#30d5c8"/>
   <rect x="424" y="104" width="16" height="16" fill="#30d5c8"/>
   <rect x="440" y="104" width="16" height="16" fill="#30d5c8"/>
+  <g clip-path="url(#letters)" stroke="#000" stroke-opacity="0.3" stroke-width="2">
+    <line x1="8" y1="8" x2="8" y2="120"/>
+    <line x1="24" y1="8" x2="24" y2="120"/>
+    <line x1="40" y1="8" x2="40" y2="120"/>
+    <line x1="56" y1="8" x2="56" y2="120"/>
+    <line x1="72" y1="8" x2="72" y2="120"/>
+    <line x1="88" y1="8" x2="88" y2="120"/>
+    <line x1="104" y1="8" x2="104" y2="120"/>
+    <line x1="120" y1="8" x2="120" y2="120"/>
+    <line x1="136" y1="8" x2="136" y2="120"/>
+    <line x1="152" y1="8" x2="152" y2="120"/>
+    <line x1="168" y1="8" x2="168" y2="120"/>
+    <line x1="184" y1="8" x2="184" y2="120"/>
+    <line x1="200" y1="8" x2="200" y2="120"/>
+    <line x1="216" y1="8" x2="216" y2="120"/>
+    <line x1="232" y1="8" x2="232" y2="120"/>
+    <line x1="248" y1="8" x2="248" y2="120"/>
+    <line x1="264" y1="8" x2="264" y2="120"/>
+    <line x1="280" y1="8" x2="280" y2="120"/>
+    <line x1="296" y1="8" x2="296" y2="120"/>
+    <line x1="312" y1="8" x2="312" y2="120"/>
+    <line x1="328" y1="8" x2="328" y2="120"/>
+    <line x1="344" y1="8" x2="344" y2="120"/>
+    <line x1="360" y1="8" x2="360" y2="120"/>
+    <line x1="376" y1="8" x2="376" y2="120"/>
+    <line x1="392" y1="8" x2="392" y2="120"/>
+    <line x1="408" y1="8" x2="408" y2="120"/>
+    <line x1="424" y1="8" x2="424" y2="120"/>
+    <line x1="440" y1="8" x2="440" y2="120"/>
+    <line x1="456" y1="8" x2="456" y2="120"/>
+    <line x1="472" y1="8" x2="472" y2="120"/>
+    <line x1="8" y1="8" x2="472" y2="8"/>
+    <line x1="8" y1="24" x2="472" y2="24"/>
+    <line x1="8" y1="40" x2="472" y2="40"/>
+    <line x1="8" y1="56" x2="472" y2="56"/>
+    <line x1="8" y1="72" x2="472" y2="72"/>
+    <line x1="8" y1="88" x2="472" y2="88"/>
+    <line x1="8" y1="104" x2="472" y2="104"/>
+    <line x1="8" y1="120" x2="472" y2="120"/>
+  </g>
 </svg>

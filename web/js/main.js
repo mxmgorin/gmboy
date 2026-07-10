@@ -119,8 +119,8 @@ async function main() {
     for (const s of swatches) s.classList.toggle('active', s.dataset.theme === t);
   }
   for (const s of swatches) s.addEventListener('click', () => setTheme(s.dataset.theme));
-  let savedTheme = 'teal';
-  try { savedTheme = localStorage.getItem('oxgbc-theme') || 'teal'; } catch (_) {}
+  let savedTheme = 'atomic';
+  try { savedTheme = localStorage.getItem('oxgbc-theme') || 'atomic'; } catch (_) {}
   setTheme(savedTheme);
 
   // --- Keyboard ---

@@ -69,9 +69,31 @@ for g in order:
                 outline.append(rect(x - OUT, y - OUT, CELL + 2 * OUT, CELL + 2 * OUT, OUTLINE))
                 fore.append(rect(x, y, CELL, CELL, fill))
 
+# LCD-style pixel grid: thin dark seams on every cell boundary, clipped to the
+# coloured pixels so they show only on the letters (the logo is transparent).
+grid = []
+gx0, gy0 = PAD, PAD
+gx1, gy1 = PAD + grid_cols * CELL, PAD + grid_rows * CELL
+for k in range(grid_cols + 1):
+    x = PAD + k * CELL
+    grid.append(f'<line x1="{x}" y1="{gy0}" x2="{x}" y2="{gy1}"/>')
+for k in range(grid_rows + 1):
+    y = PAD + k * CELL
+    grid.append(f'<line x1="{gx0}" y1="{y}" x2="{gx1}" y2="{y}"/>')
+
 body = "\n".join("  " + r for r in outline + fore)
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img" aria-label="oxGBC">
+clip_body = "\n".join("    " + r for r in fore)
+grid_body = "\n".join("    " + g for g in grid)
+svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" shape-rendering="crispEdges" role="img" aria-label="oxGBC">
+  <defs>
+    <clipPath id="letters">
+{clip_body}
+    </clipPath>
+  </defs>
 {body}
+  <g clip-path="url(#letters)" stroke="#000" stroke-opacity="0.3" stroke-width="2">
+{grid_body}
+  </g>
 </svg>
 '''
 

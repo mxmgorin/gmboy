@@ -1,7 +1,17 @@
-<p align="left">
+<p align="center">
   <a href="https://github.com/mxmgorin/oxgbc">
-    <img src="assets/logo.svg" alt="oxGBC" width="180">
+    <img src="assets/logo.svg" alt="oxGBC" width="200">
   </a>
+</p>
+
+<p align="center">
+  <b>A Game Boy &amp; Game Boy Color emulator written in Rust.</b>
+</p>
+
+<p align="center">
+  <a href="https://mxmgorin.github.io/oxgbc/"><b>🕹️&nbsp;&nbsp;Play online</b></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/mxmgorin/oxgbc/releases/latest"><b>📥&nbsp;&nbsp;Download</b></a>
 </p>
 
 ---
@@ -15,7 +25,7 @@
 [![Release](https://img.shields.io/github/v/release/mxmgorin/oxgbc.svg?color=blue)](https://github.com/mxmgorin/oxgbc/releases)
 
 <!--
-[![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg)](https://github.com/mxgorin/oxgbc/releases)
+[![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg)](https://github.com/mxmgorin/oxgbc/releases)
 [![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
 [![Dependencies](https://deps.rs/repo/github/mxmgorin/oxgbc/status.svg)](https://deps.rs/repo/github/mxmgorin/oxgbc)
 -->
@@ -24,10 +34,10 @@
   <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" alt="Demo 1" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/02bg.gif" target="_blank">
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/02bg.gif" alt="Demo 2" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/03bg.gif" target="_blank">
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/03bg.gif" alt="Demo 3" width="200"/>
   </a>&nbsp;&nbsp;  
   <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/pokemoncrystal.gif" target="_blank">
@@ -46,11 +56,7 @@ Here are some highlights:
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
-▶️ [**Try in your browser**](https://mxmgorin.github.io/oxgbc/) — no install, runs on WASM
-
-📥 [Download the latest release](https://github.com/mxmgorin/oxgbc/releases/latest)
-
-🎮 The web demo bundles free / open-source homebrew games (µCity, Geometrix, Libbet, Tobu Tobu Girl DX) plus test ROMs — see [ROM credits & licenses](web/assets/README.md).
+The web demo bundles open-source homebrew games and test ROMs — see [ROM credits & licenses](web/assets/README.md).
 
 ## Accuracy & Testing
 
@@ -75,7 +81,7 @@ For the complete results, see [TESTS.md](./TESTS.md).
 - **Built-in File Browser** – Load ROMs and manage directly from the UI
 - **Custom Controls** – Fully rebindable inputs with support for button combinations
 - **Palettes** – Multiple built-in color palettes and user extendable by editing `palettes.json`
-- **GUI & Configuration** – Configuable through GUI with optional manual editing `config.json`
+- **GUI & Configuration** – Configurable through GUI with optional manual editing `config.json`
 - **Tile Viewer** – Real-time background and sprite tile inspection (only with SDL2 rendering)
 
 ### Emulation
@@ -86,7 +92,10 @@ For the complete results, see [TESTS.md](./TESTS.md).
 - **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
 - **Battery-backed SRAM**: Persistent save data
 
-## Default controls
+## 🎮 Controls
+
+<details>
+<summary><b>Default control mappings</b> (click to expand)</summary>
 
 | Action                           | ⌨️ Keyboard              | 🎮 Gamepad                                 |
 | -------------------------------- | ------------------------ | ------------------------------------------ |
@@ -118,6 +127,8 @@ For the complete results, see [TESTS.md](./TESTS.md).
 | Clear screen                     | F10                      |                                            |
 | Toggle debugger (In debug build) | ~                        |                                            |
 
+</details>
+
 ## 🛠️ Building
 
 First, make sure you have Rust installed. If you don't, install it with:
@@ -126,18 +137,43 @@ First, make sure you have Rust installed. If you don't, install it with:
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-Then, install dependencies:
-
-Arch Linux:
+Then install the SDL2 development libraries for your platform:
 
 ```bash
+# Arch Linux
 sudo pacman -S sdl2
+
+# Debian / Ubuntu
+sudo apt install libsdl2-dev
+
+# Fedora
+sudo dnf install SDL2-devel
+
+# macOS (Homebrew)
+brew install sdl2
 ```
 
-After that, you should be able to build:
+> No system SDL2 (e.g. Windows)? Compile it from source with the bundled feature:
+> `cargo build --release -p desktop --features sdl2-bundled`
+
+After that, build the release binary:
 
 ```bash
 cargo build --release
+```
+
+## Running
+
+Launch with a ROM:
+
+```bash
+cargo run --release -p desktop -- path/to/game.gb
+```
+
+Or run without arguments and use the built-in file browser / ROM scanner to pick a game from the GUI:
+
+```bash
+cargo run --release -p desktop
 ```
 
 ## License

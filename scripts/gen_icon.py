@@ -78,15 +78,29 @@ rects = [
 ]
 
 rx = round(SIDE_PX * 0.18)
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" role="img" aria-label="oxGBC">
+
+# LCD-style pixel grid: thin dark seams on every cell boundary, clipped to the
+# rounded screen. Reads as pixel separation over the bright letters; near-
+# invisible over the dark background.
+grid = []
+for k in range(1, side):
+    p = k * CELL
+    grid.append(f'<line x1="{p}" y1="0" x2="{p}" y2="{SIDE_PX}"/>')
+    grid.append(f'<line x1="0" y1="{p}" x2="{SIDE_PX}" y2="{p}"/>')
+
+svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" shape-rendering="crispEdges" role="img" aria-label="oxGBC">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#1b2430"/>
       <stop offset="1" stop-color="#0d1117"/>
     </linearGradient>
+    <clipPath id="screen"><rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}"/></clipPath>
   </defs>
   <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="url(#bg)"/>
   {chr(10).join("  " + r for r in rects)}
+  <g clip-path="url(#screen)" stroke="#000" stroke-opacity="0.3" stroke-width="2">
+  {chr(10).join("  " + g for g in grid)}
+  </g>
 </svg>
 '''
 
