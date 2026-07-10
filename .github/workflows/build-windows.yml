@@ -40,7 +40,7 @@ jobs:
     - name: Set SDL2 env vars
       run: |
         echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
-        echo "RUSTFLAGS=-L C:\vcpkg\installed\x64-windows\lib" >> $env:GITHUB_ENV
+        echo "RUSTFLAGS=-L C:\vcpkg\installed\x64-windows\lib -C target-cpu=x86-64-v2" >> $env:GITHUB_ENV
       shell: powershell
 
     - name: Install Rust toolchain

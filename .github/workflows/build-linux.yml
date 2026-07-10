@@ -26,7 +26,10 @@ jobs:
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
 
-      - run: cargo build --release -p desktop
+      - name: Build release
+        env:
+          RUSTFLAGS: "-C target-cpu=x86-64-v2"
+        run: cargo build --release -p desktop
 
       - name: Prepare Linux release files
         run: |

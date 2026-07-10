@@ -16,4 +16,9 @@ resolver = "2"
 [profile.release]
 codegen-units = 1
 lto = "fat"
+# Aborting on panic drops unwinding tables/landing pads: slightly faster hot
+# paths and a smaller binary. Cargo forces unwind for tests/benches regardless,
+# and for the Android cdylib it also avoids unwinding across the FFI boundary.
+panic = "abort"
+strip = true
 #debug = 1

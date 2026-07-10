@@ -30,8 +30,9 @@ jobs:
         env:
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
         run: |
+          # aarch64-apple-darwin already defaults to an Apple-Silicon (M1+) baseline.
           cargo build --release --target=aarch64-apple-darwin -p desktop
-          cargo build --release --target=x86_64-apple-darwin -p desktop
+          RUSTFLAGS="-C target-cpu=x86-64-v2" cargo build --release --target=x86_64-apple-darwin -p desktop
           mkdir -p target/universal/release
           lipo -create -output target/universal/release/oxgbc \
             target/aarch64-apple-darwin/release/oxgbc \
