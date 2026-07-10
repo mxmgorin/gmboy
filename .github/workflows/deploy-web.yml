@@ -26,18 +26,18 @@ jobs:
       - name: Cache Rust build
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: "web"
+          workspaces: "crates/web"
 
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Build wasm
-        run: cd web && wasm-pack build --target web --release --out-dir pkg
+        run: cd crates/web && wasm-pack build --target web --release --out-dir pkg
 
       - name: Assemble site
         run: |
           mkdir -p dist
-          cp -r web/index.html web/css web/js web/assets web/pkg dist/
+          cp -r crates/web/index.html crates/web/css crates/web/js crates/web/assets crates/web/pkg dist/
           touch dist/.nojekyll
 
       - uses: actions/configure-pages@v5

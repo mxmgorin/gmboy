@@ -17,8 +17,10 @@ use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use std::hint::black_box;
 
 pub fn get_cart() -> Cart {
+    // Benches run with crates/core as the working dir; pop twice for the repo root.
     let mut path = std::env::current_dir().unwrap();
-    path.pop();
+    path.pop(); // crates/core -> crates
+    path.pop(); // crates -> repo root
     let path = path.join("roms").join("cpu_instrs.gb");
 
     Cart::new(read_bytes(&path).unwrap()).unwrap()

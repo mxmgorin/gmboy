@@ -13,7 +13,7 @@
 # Requires: cargo-ndk (`cargo install cargo-ndk --locked`), the Android NDK
 # (ANDROID_NDK_HOME) and cmake on PATH.
 set -euo pipefail
-cd "$(dirname "$0")"   # android/
+cd "$(dirname "$0")"   # crates/android/
 
 ABIS="${ABIS:-arm64-v8a armeabi-v7a x86_64 x86}"
 API="${ANDROID_API:-21}"
@@ -33,7 +33,7 @@ command -v cargo-ndk >/dev/null 2>&1 || {
 # otherwise, so a clean is only ever needed to recover from a broken state).
 if [ "${CLEAN:-0}" = "1" ]; then
     echo ">>> CLEAN=1 set, running cargo clean"
-    ( cd .. && cargo clean )
+    ( cd ../.. && cargo clean )
 fi
 
 # Map an Android ABI to its Rust target triple.
@@ -82,7 +82,7 @@ done
 # workspace-root .cargo/config.toml. Run from the workspace root so that applies.
 ndk_targets=()
 for abi in $ABIS; do ndk_targets+=(-t "$abi"); done
-( cd .. && cargo ndk "${ndk_targets[@]}" --platform "$API" \
-    -o android/app/src/main/jniLibs build --release --package android )
+( cd ../.. && cargo ndk "${ndk_targets[@]}" --platform "$API" \
+    -o crates/android/app/src/main/jniLibs build --release --package android )
 
 echo "=== ✅ Android build complete for: $ABIS ==="

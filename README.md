@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/mxmgorin/oxgbc">
-    <img src="assets/logo.svg" alt="oxGBC" width="200">
+    <img src="media/logo.svg" alt="oxGBC" width="200">
   </a>
 </p>
 
@@ -31,17 +31,17 @@
 -->
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/01bg.gif" alt="Demo 1" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/01bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/01bg.gif" alt="Demo 1" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/02bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/02bg.gif" alt="Demo 2" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/02bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/02bg.gif" alt="Demo 2" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/03bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/03bg.gif" alt="Demo 3" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/03bg.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/03bg.gif" alt="Demo 3" width="200"/>
   </a>&nbsp;&nbsp;  
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/pokemoncrystal.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/assets/pokemoncrystal.gif" alt="Demo 4" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" alt="Demo 4" width="200"/>
   </a>
 </p>
 
@@ -56,7 +56,7 @@ Here are some highlights:
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
-The web demo bundles open-source homebrew games and test ROMs — see [ROM credits & licenses](web/assets/README.md).
+The web demo bundles open-source homebrew games and test ROMs — see [ROM credits & licenses](crates/web/assets/README.md).
 
 ## Accuracy & Testing
 

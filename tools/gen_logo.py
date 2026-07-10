@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the oxGBC wordmark logo (assets/logo.svg).
+"""Generate the oxGBC wordmark logo (media/logo.svg).
 
 Pure-stdlib pixel-art generator: each "on" pixel becomes an SVG <rect>, so the
 result renders reliably on GitHub (no web fonts, no rasterization) and scales
@@ -8,12 +8,12 @@ a thin dark pixel outline keeps every colour (incl. yellow) legible on both the
 light and dark README themes over a transparent background.
 
 Usage:
-    python3 scripts/gen_logo.py         # rewrites assets/logo.svg
+    python3 tools/gen_logo.py         # rewrites media/logo.svg
 
 Tweak CELL (pixel size), PAD (margin), the PALETTE, or OUTLINE/OUT below, then
 re-run. Preview on both README themes with e.g.:
-    rsvg-convert -w 300 --background-color=white assets/logo.svg -o /tmp/w.png
-    rsvg-convert -w 300 --background-color='#0d1117' assets/logo.svg -o /tmp/d.png
+    rsvg-convert -w 300 --background-color=white media/logo.svg -o /tmp/w.png
+    rsvg-convert -w 300 --background-color='#0d1117' media/logo.svg -o /tmp/d.png
 """
 import os
 
@@ -98,7 +98,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{
 '''
 
 out = os.path.normpath(os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "assets", "logo.svg"))
+    os.path.dirname(os.path.abspath(__file__)), "..", "media", "logo.svg"))
 with open(out, "w") as f:
     f.write(svg)
 print(f"wrote {out}  ({W}x{H}, {len(fore)} pixels)")

@@ -77,15 +77,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            android/SDL2
-            android/app/src/main/jniLibs
-          key: android-sdl2-${{ matrix.variant }}-${{ hashFiles('android/build.sh') }}-v1
+            crates/android/SDL2
+            crates/android/app/src/main/jniLibs
+          key: android-sdl2-${{ matrix.variant }}-${{ hashFiles('crates/android/build.sh') }}-v1
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build native libs (SDL2 + Rust cdylib)
-        working-directory: ./android
+        working-directory: ./crates/android
         env:
           ABIS: ${{ matrix.abis }}
         run: ./build.sh
@@ -100,10 +100,10 @@ jobs:
         run: |
           set -eu
           if [ -n "${KS_B64:-}" ]; then
-            echo "$KS_B64" | base64 -d > android/app/release.keystore
+            echo "$KS_B64" | base64 -d > crates/android/app/release.keystore
             echo "Using keystore from OXGBC_KEYSTORE_BASE64 (stable signature)."
           else
-            keytool -genkeypair -v -keystore android/app/release.keystore \
+            keytool -genkeypair -v -keystore crates/android/app/release.keystore \
               -storepass android -keypass android -alias androiddebugkey \
               -keyalg RSA -keysize 2048 -validity 10000 \
               -dname "CN=oxgbc,O=oxgbc,C=US"
@@ -111,7 +111,7 @@ jobs:
           fi
 
       - name: Assemble release APK
-        working-directory: ./android
+        working-directory: ./crates/android
         env:
           OXGBC_KEYSTORE: release.keystore
           OXGBC_KEYSTORE_PASS: ${{ secrets.OXGBC_KEYSTORE_PASS || 'android' }}
@@ -126,7 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.apk_name }}
-          path: android/${{ matrix.apk_name }}
+          path: crates/android/${{ matrix.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
@@ -134,6 +134,6 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: android/${{ matrix.apk_name }}
+          files: crates/android/${{ matrix.apk_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

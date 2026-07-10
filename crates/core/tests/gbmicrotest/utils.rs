@@ -7,8 +7,10 @@ use std::{
 };
 
 pub fn get_gbmicrotest_dir() -> PathBuf {
+    // Runs with crates/core as the working dir; pop twice to reach the repo root.
     let mut path = std::env::current_dir().unwrap();
-    path.pop();
+    path.pop(); // crates/core -> crates
+    path.pop(); // crates -> repo root
     path.join("roms").join("gbmicrotest")
 }
 

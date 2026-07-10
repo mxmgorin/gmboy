@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Generate the web favicon (web/assets/favicon.svg + PNG fallbacks).
+"""Generate the web favicon (crates/web/assets/favicon.svg + PNG fallbacks).
 
-The full app icon (scripts/gen_icon.py) is a muddy blur at 16px, so the favicon
+The full app icon (tools/gen_icon.py) is a muddy blur at 16px, so the favicon
 is a simpler, bolder mark: just "ox" (red o + purple x) on the same dark rounded
 "screen" background — legible in a browser tab.
 
-Outputs into web/assets/ (the dir the Pages deploy workflow copies):
+Outputs into crates/web/assets/ (the dir the Pages deploy workflow copies):
     favicon.svg            modern browsers
     favicon-32.png         fallback
     favicon-16.png         fallback
     apple-touch-icon.png   iOS home screen (180x180)
 
 Usage:
-    python3 scripts/gen_favicon.py
+    python3 tools/gen_favicon.py
 """
 import os
 import shutil
@@ -78,7 +78,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_P
 '''
 
 root = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-assets = os.path.join(root, "web", "assets")
+assets = os.path.join(root, "crates", "web", "assets")
 svg_path = os.path.join(assets, "favicon.svg")
 with open(svg_path, "w") as f:
     f.write(svg)

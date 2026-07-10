@@ -6,14 +6,14 @@ one <rect> per pixel on the same dark rounded "screen" background as the app
 icon, with a subtle LCD pixel grid to match the rest of the brand marks.
 
 This is a sibling to gen_favicon.py (the "ox" wordmark favicon); both write the
-same web/assets/ outputs, so run whichever mark you want to ship:
+same crates/web/assets/ outputs, so run whichever mark you want to ship:
     favicon.svg            modern browsers
     favicon-32.png         fallback
     favicon-16.png         fallback
     apple-touch-icon.png   iOS home screen (180x180)
 
 Usage:
-    python3 scripts/gen_favicon_gbc.py
+    python3 tools/gen_favicon_gbc.py
 
 Tweak CELL, the DEVICE bitmap, or COLORS below, then re-run.
 """
@@ -94,7 +94,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_P
 '''
 
 root = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-assets = os.path.join(root, "web", "assets")
+assets = os.path.join(root, "crates", "web", "assets")
 svg_path = os.path.join(assets, "favicon.svg")
 with open(svg_path, "w") as f:
     f.write(svg)

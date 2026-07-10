@@ -25,8 +25,11 @@ pub fn print_result_path(path: PathBuf, result: Result<(), String>) {
 }
 
 pub fn get_roms_path() -> PathBuf {
+    // `cargo test` runs with the crate dir (crates/core) as the working dir;
+    // pop twice to reach the repo root, where roms/ lives.
     let mut path = std::env::current_dir().unwrap();
-    path.pop();
+    path.pop(); // crates/core -> crates
+    path.pop(); // crates -> repo root
     path.join("roms")
 }
 

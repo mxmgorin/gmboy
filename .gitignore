@@ -24,9 +24,9 @@ Cargo.lock
 
 docs/
 
-/android/build
-/android/app/build
-/android/.gradle
-/android/app/src/main/jniLibs
-/android/SDL2
-/android/app/*.keystore
+/crates/android/build
+/crates/android/app/build
+/crates/android/.gradle
+/crates/android/app/src/main/jniLibs
+/crates/android/SDL2
+/crates/android/app/*.keystore

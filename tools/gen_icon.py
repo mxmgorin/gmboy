@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the oxGBC Android launcher icon (assets/icon.svg + mipmap PNGs).
+"""Generate the oxGBC Android launcher icon (media/icon.svg + mipmap PNGs).
 
 Staggered layout on a dark rounded "screen" background:
 
@@ -10,10 +10,10 @@ Lowercase "ox" with the "o" jutting out top-left; "x" sits directly above "G".
 Each letter uses one solid Game Boy Color-style colour (matching the wordmark).
 
 Pixel-art via SVG <rect>. If `rsvg-convert` is on PATH, this also rasterizes the
-five density buckets straight into android/app/src/main/res/mipmap-*/ic_launcher.png.
+five density buckets straight into crates/android/app/src/main/res/mipmap-*/ic_launcher.png.
 
 Usage:
-    python3 scripts/gen_icon.py
+    python3 tools/gen_icon.py
 """
 import os
 import shutil
@@ -105,7 +105,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_P
 '''
 
 root = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-svg_path = os.path.join(root, "assets", "icon.svg")
+svg_path = os.path.join(root, "media", "icon.svg")
 with open(svg_path, "w") as f:
     f.write(svg)
 print(f"wrote {svg_path}  ({SIDE_PX}x{SIDE_PX})")
@@ -117,7 +117,7 @@ if not rsvg:
     print("rsvg-convert not found — SVG written; PNGs not regenerated.")
 else:
     for name, px in buckets.items():
-        out = os.path.join(root, "android", "app", "src", "main", "res",
+        out = os.path.join(root, "crates", "android", "app", "src", "main", "res",
                            f"mipmap-{name}", "ic_launcher.png")
         subprocess.run([rsvg, "-w", str(px), "-h", str(px), svg_path, "-o", out], check=True)
         print(f"  {name}: {px}x{px} -> {os.path.relpath(out, root)}")
