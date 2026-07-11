@@ -71,6 +71,13 @@ jobs:
         with:
           key: android-${{ matrix.variant }}
 
+      # Set up Gradle BEFORE the SDL2 cache is restored. setup-gradle validates every
+      # gradle-wrapper.jar in the workspace, and the cached SDL2 clone bundles an
+      # unknown wrapper (SDL's android-project sample) that fails validation. Running
+      # it first means only our own committed wrapper is present to check.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       # Caches the pinned SDL2 source clone and the per-ABI libSDL2.so outputs so
       # build.sh skips the slow cmake builds on subsequent runs.
       - name: Cache Android SDL2
@@ -80,9 +87,6 @@ jobs:
             crates/android/SDL2
             crates/android/app/src/main/jniLibs
           key: android-sdl2-${{ matrix.variant }}-${{ hashFiles('crates/android/build.sh') }}-v1
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
 
       - name: Build native libs (SDL2 + Rust cdylib)
         working-directory: ./crates/android
