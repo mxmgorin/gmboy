@@ -18,6 +18,11 @@ tinyfiledialogs = { version = "3.9", optional = true }
 log = "0.4.27"
 env_logger = "0.11.8"
 
+# Embeds the app icon + version metadata into oxgbc.exe via build.rs. Windows
+# hosts only, so desktop/Linux/macOS builds never fetch or compile it.
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
+
 [[bin]]
 name = "oxgbc"
 path = "src/main.rs"
