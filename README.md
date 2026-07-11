@@ -129,6 +129,21 @@ For the complete results, see [TESTS.md](./TESTS.md).
 
 </details>
 
+## 📦 Installing (macOS)
+
+Grab `oxgbc-macos.dmg` from the [latest release](https://github.com/mxmgorin/oxgbc/releases),
+open it, and drag **oxGBC** onto the **Applications** folder. The bundle is a
+universal binary (Apple Silicon + Intel).
+
+Because the app is only ad-hoc signed (no paid Apple Developer ID), Gatekeeper
+will refuse the first launch with an *"unidentified developer"* warning. To open
+it the first time: **right-click oxGBC → Open → Open**. Alternatively, clear the
+quarantine flag from a terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/oxGBC.app
+```
+
 ## 🛠️ Building
 
 First, make sure you have Rust installed. If you don't, install it with:

@@ -38,27 +38,84 @@ jobs:
             target/aarch64-apple-darwin/release/oxgbc \
             target/x86_64-apple-darwin/release/oxgbc
 
-      - name: Prepare macOS release files
+      - name: Resolve version
+        id: ver
         run: |
-          mkdir -p dist
-          cp target/universal/release/oxgbc dist/
+          if [ "${{ github.event_name }}" = "release" ]; then
+            short="${GITHUB_REF_NAME#v}"          # tag drives the marketing version
+          else
+            short="0.0.0"                          # dev builds off main
+          fi
+          echo "short=$short" >> "$GITHUB_OUTPUT"
+          echo "build=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Zip bundle
-        run: cd dist && zip -r oxgbc-macos-universal.zip .
+      - name: Build .icns
+        # iconutil (built into macOS) assembles the committed iconset — rendered
+        # from media/icon.svg by tools/gen_macos_icon.py — into a single .icns.
+        run: iconutil -c icns media/oxgbc.iconset -o oxGBC.icns
+
+      - name: Assemble oxGBC.app
+        env:
+          SHORT_VERSION: ${{ steps.ver.outputs.short }}
+          BUILD_VERSION: ${{ steps.ver.outputs.build }}
+        run: |
+          APP="oxGBC.app"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+          cp target/universal/release/oxgbc "$APP/Contents/MacOS/oxgbc"
+          chmod +x "$APP/Contents/MacOS/oxgbc"
+          cp oxGBC.icns "$APP/Contents/Resources/oxGBC.icns"
+          cat > "$APP/Contents/Info.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>                   <string>oxGBC</string>
+            <key>CFBundleDisplayName</key>            <string>oxGBC</string>
+            <key>CFBundleIdentifier</key>             <string>io.github.mxmgorin.oxgbc</string>
+            <key>CFBundleExecutable</key>             <string>oxgbc</string>
+            <key>CFBundleIconFile</key>               <string>oxGBC</string>
+            <key>CFBundlePackageType</key>            <string>APPL</string>
+            <key>CFBundleInfoDictionaryVersion</key>  <string>6.0</string>
+            <key>CFBundleShortVersionString</key>     <string>${SHORT_VERSION}</string>
+            <key>CFBundleVersion</key>                <string>${BUILD_VERSION}</string>
+            <key>LSMinimumSystemVersion</key>         <string>10.13</string>
+            <key>NSHighResolutionCapable</key>        <true/>
+            <key>NSPrincipalClass</key>               <string>NSApplication</string>
+            <key>LSApplicationCategoryType</key>      <string>public.app-category.games</string>
+          </dict>
+          </plist>
+          PLIST
+
+      - name: Ad-hoc sign
+        # No paid Developer ID: sign the bundle to itself. Required for the arm64
+        # slice to launch at all on Apple Silicon; Gatekeeper still shows the
+        # "unidentified developer" prompt (right-click -> Open, documented in README).
+        run: |
+          codesign --force --deep --sign - oxGBC.app
+          codesign --verify --deep --strict --verbose=2 oxGBC.app
+
+      - name: Create DMG
+        run: |
+          staging="dmg-staging"
+          mkdir -p "$staging"
+          cp -R oxGBC.app "$staging/"
+          ln -s /Applications "$staging/Applications"
+          hdiutil create -volname "oxGBC" -srcfolder "$staging" \
+            -ov -format UDZO oxgbc-macos.dmg
 
       - name: Upload artifact
         if: github.event_name != 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: oxgbc-macos-universal.zip
-          path: dist/oxgbc-macos-universal.zip
+          name: oxgbc-macos.dmg
+          path: oxgbc-macos.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
-      - name: Upload Linux zip to GitHub Release
+      - name: Upload DMG to GitHub Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/oxgbc-macos-universal.zip
+          files: oxgbc-macos.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}

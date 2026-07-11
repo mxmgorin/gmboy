@@ -5,7 +5,7 @@ PORT ?= 8080
 WEB  := crates/web
 
 .DEFAULT_GOAL := help
-.PHONY: help serve web icons favicon favicon-ox app-icon logo
+.PHONY: help serve web icons favicon favicon-ox app-icon mac-icon logo
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -18,7 +18,7 @@ serve: ## Serve the web frontend at http://localhost:$(PORT)
 web: ## Build the WASM module + JS bindings into crates/web/pkg
 	./$(WEB)/build.sh
 
-icons: favicon app-icon logo ## Regenerate every brand asset
+icons: favicon app-icon mac-icon logo ## Regenerate every brand asset
 
 favicon: ## Regenerate the Game Boy Color favicon (crates/web/assets)
 	python3 tools/gen_favicon_gbc.py
@@ -28,6 +28,9 @@ favicon-ox: ## Regenerate the "ox" wordmark favicon (crates/web/assets)
 
 app-icon: ## Regenerate the Android launcher icon (media/icon.svg + mipmaps)
 	python3 tools/gen_icon.py
+
+mac-icon: ## Regenerate the macOS app iconset (media/icon.svg -> media/oxgbc.iconset)
+	python3 tools/gen_macos_icon.py
 
 logo: ## Regenerate the oxGBC wordmark logo (media/logo.svg)
 	python3 tools/gen_logo.py
