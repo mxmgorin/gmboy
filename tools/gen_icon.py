@@ -82,6 +82,13 @@ rx = round(SIDE_PX * 0.18)
 # LCD-style pixel grid: thin dark seams on every cell boundary, clipped to the
 # rounded screen. Reads as pixel separation over the bright letters; near-
 # invisible over the dark background.
+#
+# The grid is rendered with geometricPrecision (anti-aliased) rather than the
+# document-wide crispEdges: at export sizes that aren't an integer multiple of
+# the cell count, crispEdges snaps each seam to the nearest device pixel, which
+# makes the spacing jitter (visibly uneven grid). geometricPrecision keeps the
+# seams evenly distributed at any size; the letters keep crispEdges for solid
+# pixel blocks.
 grid = []
 for k in range(1, side):
     p = k * CELL
@@ -98,7 +105,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_P
   </defs>
   <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="url(#bg)"/>
   {chr(10).join("  " + r for r in rects)}
-  <g clip-path="url(#screen)" stroke="#000" stroke-opacity="0.3" stroke-width="2">
+  <g clip-path="url(#screen)" stroke="#000" stroke-opacity="0.3" stroke-width="2" shape-rendering="geometricPrecision">
   {chr(10).join("  " + g for g in grid)}
   </g>
 </svg>
