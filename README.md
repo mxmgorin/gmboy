@@ -16,18 +16,21 @@
 
 ---
 
-[![Tests](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
-[![Android](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
-[![Windows](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
-[![MacOS](https://github.com/mxmgorin/oxgbc/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
-[![Linux x86_64](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
-[![Linux ARM](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions)
-[![Release](https://img.shields.io/github/v/release/mxmgorin/oxgbc.svg?color=blue)](https://github.com/mxmgorin/oxgbc/releases)
+[![Tests](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml)
+[![Android](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml)
+[![Windows](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml)
+[![macOS](https://github.com/mxmgorin/oxgbc/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-macos.yml)
+[![Linux](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux.yml)
+[![Linux ARM](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux-arm.yml)
 
-<!--
-[![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc) [![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg)](https://github.com/mxmgorin/oxgbc/releases)
+[![Release](https://img.shields.io/github/v/release/mxmgorin/oxgbc?color=blue)](https://github.com/mxmgorin/oxgbc/releases/latest)
+[![License](https://img.shields.io/github/license/mxmgorin/oxgbc?color=blue)](./LICENSE)
 [![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
 [![Dependencies](https://deps.rs/repo/github/mxmgorin/oxgbc/status.svg)](https://deps.rs/repo/github/mxmgorin/oxgbc)
+
+<!-- optional extras (re-enable Downloads once the count is higher):
+[![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg?color=blue)](https://github.com/mxmgorin/oxgbc/releases)
+[![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
 
 <p align="center">
@@ -45,7 +48,7 @@
   </a>
 </p>
 
-`oxGBC` is an accuracy-focused Game Boy and Game Boy Color emulator written in Rust. A single portable core runs [in your browser](https://mxmgorin.github.io/oxgbc/) via WebAssembly, on Windows, macOS, and Linux, on Android, and fast enough for low-power ARM handhelds. It passes the majority of widely used accuracy test suites and ships with a full-featured GUI — save states, rewind, shaders, and more.
+`oxGBC` (**ox**ide + **GBC**) is an accuracy-focused Game Boy and Game Boy Color emulator written in Rust. A single portable core runs [in browser](https://mxmgorin.github.io/oxgbc/) via WebAssembly, on Windows, macOS, and Linux, on Android, and fast enough for low-power ARM handhelds. It passes the majority of widely used accuracy test suites and ships with a full-featured GUI — save states, rewind, shaders, and more.
 
 Here are some highlights:
 
