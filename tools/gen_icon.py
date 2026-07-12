@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Generate the oxGBC Android launcher icon (media/icon.svg + mipmap PNGs).
 
-Staggered layout on a dark rounded "screen" background:
+Staggered layout, engraved into the cool-blue steel plate:
 
     o x
       G B C
 
-Lowercase "ox" with the "o" jutting out top-left; "x" sits directly above "G".
-Each letter uses one solid Game Boy Color-style colour (matching the wordmark).
+Lowercase "ox" juts out top-left with "x" above "G"; the "ox" grooves rust (the
+name is the pun — ox = oxide), "GBC" keep their Game Boy Color hue. The look
+lives in tools/brand.py; this just lays out the letters and wraps the plate.
 
 Pixel-art via SVG <rect>. If `rsvg-convert` is on PATH, this also rasterizes the
 five density buckets straight into crates/android/app/src/main/res/mipmap-*/ic_launcher.png.
@@ -19,18 +20,11 @@ import os
 import shutil
 import subprocess
 
+from brand import BG_BOTTOM, engraved_body  # tools/brand.py
+
 CELL = 24
 MARGIN = 3          # cells of padding inside the square
 GAP = 1             # empty rows between the "ox" and "GBC" rows
-
-# Game Boy Color-style palette, one solid colour per letter (matches the wordmark).
-PALETTE = {
-    'o': "#ff3b30",  # red
-    'x': "#a259ff",  # purple
-    'G': "#34c759",  # green
-    'B': "#ffd60a",  # yellow
-    'C': "#30d5c8",  # turquoise
-}
 
 # 5-wide bitmaps: lowercase o/x (top 2 rows empty -> short) + uppercase G/B/C.
 glyphs = {
@@ -52,14 +46,14 @@ placements = [
     ('C', 3, BOT),
 ]
 
-# Collect filled cells (col, row, colour) in an un-offset grid.
+# Collect filled cells (col, row, glyph) in an un-offset grid.
 cells = []
 for g, cstep, rbase in placements:
     bc = cstep * 6
     for r, line in enumerate(glyphs[g]):
         for c, bit in enumerate(line):
             if bit == '1':
-                cells.append((bc + c, rbase + r, PALETTE[g]))
+                cells.append((bc + c, rbase + r, g))
 
 minc = min(c for c, _, _ in cells)
 maxc = max(c for c, _, _ in cells)
@@ -72,41 +66,19 @@ SIDE_PX = side * CELL
 offx = (side - content_w) // 2 - minc
 offy = (side - content_h) // 2 - minr
 
-rects = [
-    f'<rect x="{(c + offx) * CELL}" y="{(r + offy) * CELL}" width="{CELL}" height="{CELL}" fill="{col}"/>'
-    for c, r, col in cells
-]
+# Letters engraved into the plate: brand.py bakes the rust/GBC grooves + bevels.
+letterset = {(c + offx, r + offy): g for c, r, g in cells}
+body = engraved_body(side, side, CELL, letterset)
 
 rx = round(SIDE_PX * 0.18)
 
-# LCD-style pixel grid: thin dark seams on every cell boundary, clipped to the
-# rounded screen. Reads as pixel separation over the bright letters; near-
-# invisible over the dark background.
-#
-# The grid is rendered with geometricPrecision (anti-aliased) rather than the
-# document-wide crispEdges: at export sizes that aren't an integer multiple of
-# the cell count, crispEdges snaps each seam to the nearest device pixel, which
-# makes the spacing jitter (visibly uneven grid). geometricPrecision keeps the
-# seams evenly distributed at any size; the letters keep crispEdges for solid
-# pixel blocks.
-grid = []
-for k in range(1, side):
-    p = k * CELL
-    grid.append(f'<line x1="{p}" y1="0" x2="{p}" y2="{SIDE_PX}"/>')
-    grid.append(f'<line x1="0" y1="{p}" x2="{SIDE_PX}" y2="{p}"/>')
-
 svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" shape-rendering="crispEdges" role="img" aria-label="oxGBC">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1b2430"/>
-      <stop offset="1" stop-color="#0d1117"/>
-    </linearGradient>
     <clipPath id="screen"><rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}"/></clipPath>
   </defs>
-  <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="url(#bg)"/>
-  {chr(10).join("  " + r for r in rects)}
-  <g clip-path="url(#screen)" stroke="#000" stroke-opacity="0.3" stroke-width="2" shape-rendering="geometricPrecision">
-  {chr(10).join("  " + g for g in grid)}
+  <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="{BG_BOTTOM}"/>
+  <g clip-path="url(#screen)">
+  {body}
   </g>
 </svg>
 '''

@@ -2,11 +2,11 @@
 """Generate an alternative web favicon: a pixel-art Game Boy Color handheld.
 
 A tiny GBC — lit screen, power LED, D-pad, A/B buttons, Start/Select — drawn as
-one <rect> per pixel on the same dark rounded "screen" background as the app
-icon, with a subtle LCD pixel grid to match the rest of the brand marks.
+one <rect> per pixel, sitting on the same cool-blue steel plate as the rest of
+the brand marks (tools/brand.py), with a subtle LCD pixel grid on the device.
 
-This is a sibling to gen_favicon.py (the "ox" wordmark favicon); both write the
-same crates/web/assets/ outputs, so run whichever mark you want to ship:
+This is a sibling to gen_favicon.py (the rusted "ox" wordmark favicon); both
+write the same crates/web/assets/ outputs, so run whichever mark you want to ship:
     favicon.svg            modern browsers
     favicon-32.png         fallback
     favicon-16.png         fallback
@@ -21,10 +21,13 @@ import os
 import shutil
 import subprocess
 
-CELL = 20
-MARGIN = 0  # no padding: the device fills the canvas top-to-bottom
+from brand import BG_BOTTOM, steel_tiles  # tools/brand.py
 
-# Palette. '.' pixels are transparent and show the dark background through.
+CELL = 20
+MARGIN = 1  # one-cell border so the steel plate shows around the device
+
+# A clean Game Boy Color handheld sitting on the steel plate: atomic-purple
+# shell, grey LCD, red power LED. '.' pixels show the plate through.
 COLORS = {
     '#': "#b7b1d8",   # body shell (atomic purple)
     'k': "#161b22",   # screen bezel (dark)
@@ -60,6 +63,10 @@ SIDE_PX = side * CELL
 offx = (side - dev_w) // 2
 offy = (side - dev_h) // 2
 
+# Cool-blue steel plate behind the device.
+tiles = steel_tiles(side, side, CELL)
+rx = round(SIDE_PX * 0.18)
+
 rects = []
 clip = []
 for r, row in enumerate(DEVICE):
@@ -72,20 +79,30 @@ for r, row in enumerate(DEVICE):
             f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" fill="{COLORS[ch]}"/>')
         clip.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}"/>')
 
-# LCD-style pixel grid: thin dark seams on every cell boundary, clipped to the
-# device pixels so seams show only on the handheld (background is transparent).
+# LCD-style pixel grid: thin dark seams clipped to the device pixels so seams
+# show only on the handheld (not across the plate).
 grid = []
 for k in range(1, side):
     p = k * CELL
     grid.append(f'<line x1="{p}" y1="0" x2="{p}" y2="{SIDE_PX}"/>')
     grid.append(f'<line x1="0" y1="{p}" x2="{SIDE_PX}" y2="{p}"/>')
 
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" shape-rendering="crispEdges" role="img" aria-label="oxGBC">
+# NB: geometricPrecision (not the crispEdges used by the app icon/logo). A
+# favicon is displayed at 16-24px; at that size crispEdges snaps each ~1px cell
+# to the nearest device pixel unevenly and drops the device's right wall, so the
+# handheld looks cropped. Antialiasing keeps it complete and centred at 16px, and
+# stays effectively crisp at the 180px apple-touch size.
+svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" shape-rendering="geometricPrecision" role="img" aria-label="oxGBC">
   <defs>
+    <clipPath id="plate"><rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}"/></clipPath>
     <clipPath id="device">
   {chr(10).join("  " + c for c in clip)}
     </clipPath>
   </defs>
+  <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="{BG_BOTTOM}"/>
+  <g clip-path="url(#plate)">
+  {chr(10).join("  " + r for r in tiles)}
+  </g>
   {chr(10).join("  " + r for r in rects)}
   <g clip-path="url(#device)" stroke="#000" stroke-opacity="0.22" stroke-width="2">
   {chr(10).join("  " + g for g in grid)}

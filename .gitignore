@@ -30,3 +30,7 @@ docs/
 /crates/android/app/src/main/jniLibs
 /crates/android/SDL2
 /crates/android/app/*.keystore
+
+# Python bytecode cache from the tools/gen_*.py brand generators
+__pycache__/
+*.py[cod]

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate the web favicon (crates/web/assets/favicon.svg + PNG fallbacks).
 
-The full app icon (tools/gen_icon.py) is a muddy blur at 16px, so the favicon
-is a simpler, bolder mark: just "ox" (red o + purple x) on the same dark rounded
-"screen" background — legible in a browser tab.
+The full app icon (tools/gen_icon.py) is a muddy blur at 16px, so the favicon is
+a simpler, bolder mark: just "ox" — both letters rusted, engraved into the same
+cool-blue steel plate (ox = oxide) — legible in a browser tab. The look lives in
+tools/brand.py.
 
 Outputs into crates/web/assets/ (the dir the Pages deploy workflow copies):
     favicon.svg            modern browsers
@@ -18,11 +19,10 @@ import os
 import shutil
 import subprocess
 
+from brand import BG_BOTTOM, engraved_body  # tools/brand.py
+
 CELL = 24
 MARGIN = 2
-
-# Match the wordmark/icon palette.
-COLORS = {'o': "#ff3b30", 'x': "#a259ff"}  # red, purple
 
 # Bold 7-row glyphs so "ox" fills the tab icon.
 glyphs = {
@@ -38,41 +38,29 @@ SIDE_PX = side * CELL
 offx = (side - content_w) // 2
 offy = (side - content_h) // 2
 
-rects = []
+# Both letters rust (ox = oxide), engraved into the plate.
+letterset = {}
 col = offx
 for g in order:
     for r, line in enumerate(glyphs[g]):
         for c, bit in enumerate(line):
             if bit == '1':
-                x = (col + c) * CELL
-                y = (offy + r) * CELL
-                rects.append(
-                    f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" fill="{COLORS[g]}"/>')
+                letterset[(col + c, offy + r)] = g
     col += 6
+body = engraved_body(side, side, CELL, letterset, oxide=('o', 'x'))
 
 rx = round(SIDE_PX * 0.18)
 
-# LCD-style pixel grid: thin dark seams on every cell boundary, clipped to the
-# rounded screen. Reads as pixel separation over the bright letters; near-
-# invisible over the dark background.
-grid = []
-for k in range(1, side):
-    p = k * CELL
-    grid.append(f'<line x1="{p}" y1="0" x2="{p}" y2="{SIDE_PX}"/>')
-    grid.append(f'<line x1="0" y1="{p}" x2="{SIDE_PX}" y2="{p}"/>')
-
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" shape-rendering="crispEdges" role="img" aria-label="oxGBC">
+# NB: geometricPrecision (not the crispEdges used by the app icon/logo) — a
+# favicon renders at 16-24px, where crispEdges snaps each ~1px cell unevenly and
+# mangles the mark. Antialiasing keeps the engraved "ox" complete at that size.
+svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {SIDE_PX} {SIDE_PX}" width="{SIDE_PX}" height="{SIDE_PX}" shape-rendering="geometricPrecision" role="img" aria-label="oxGBC">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1b2430"/>
-      <stop offset="1" stop-color="#0d1117"/>
-    </linearGradient>
     <clipPath id="screen"><rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}"/></clipPath>
   </defs>
-  <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="url(#bg)"/>
-  {chr(10).join("  " + r for r in rects)}
-  <g clip-path="url(#screen)" stroke="#000" stroke-opacity="0.3" stroke-width="2">
-  {chr(10).join("  " + g for g in grid)}
+  <rect x="0" y="0" width="{SIDE_PX}" height="{SIDE_PX}" rx="{rx}" fill="{BG_BOTTOM}"/>
+  <g clip-path="url(#screen)">
+  {body}
   </g>
 </svg>
 '''
