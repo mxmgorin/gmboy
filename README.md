@@ -45,14 +45,14 @@
   </a>
 </p>
 
-`oxGBC` is a Game Boy and Game Boy Color emulator written in Rust, with an SDL2-based frontend for video, audio, and input. It passes the majority of widely used accuracy tests, includes a fully featured GUI, and supports multiple platforms.
+`oxGBC` is an accuracy-focused Game Boy and Game Boy Color emulator written in Rust. A single portable core runs [in your browser](https://mxmgorin.github.io/oxgbc/) via WebAssembly, on Windows, macOS, and Linux, on Android, and fast enough for low-power ARM handhelds. It passes the majority of widely used accuracy test suites and ships with a full-featured GUI — save states, rewind, shaders, and more.
 
 Here are some highlights:
 
-- Cross-platform: Windows, macOS, Linux, Android; SDL2 with optional OpenGL
-- Modern features: save states, filters and shaders, re-bindable controls, and more
-- Accuracy-focused: sub-instruction CPU timing, dot-level PPU, and cycle-synchronized systems; validated against Blargg and Mooneye test suites
-- Performance-conscious: capable of running up to 10× speed on low-power ARM handhelds (tested on Allwinner H700)
+- **Cross-platform** — one core across Windows, macOS, Linux, Android, and the web; SDL2 desktop frontend with an optional OpenGL backend
+- **Accuracy-focused** — sub-instruction CPU timing, dot-level PPU, and cycle-synchronized subsystems; validated against Blargg, Mooneye, and acid2 suites in CI
+- **Performance-conscious** — runs up to 10× speed on low-power ARM handhelds (tested on Allwinner H700)
+- **Feature-rich** — save states, rewind, shaders and filters, palettes, rebindable controls, and a built-in tile viewer
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
@@ -65,32 +65,40 @@ The emulator is continuously validated against community made test suites which 
 - **Blargg** – Passes all tests
 - **Mooneye** – Passes most of the tests
 - **Visual** - Passes the DMG-acid2, CGB-acid2, Mangen
-- **SM83 JSON** – Passes all 356,000 tests
 
 For the complete results, see [TESTS.md](./TESTS.md).
 
 ## Features
 
+### Gameplay
+
 - **Save States** – Save and resume progress with multiple slots; optional auto-save on exit and startup
 - **Rewind** – Configurable rewind for undoing gameplay actions
-- **Speed Control** – Change emulator’s base running speed and apply Slow or Turbo modes via keys
-- **Frame Blending** – Configurable blending modes to emulate LCD ghosting (e.g., flicker reduction in _Gun ZAS_)
-- **Visual Filters** – Grid, subpixel, scanline, dot-matrix, and vignette
-- **Rendering Backends** - SDL2 software renderer and optional OpenGL backend with shader support
-- **ROM Scanning** – Automatic ROM directory scanning with menu-based launching
-- **Built-in File Browser** – Load ROMs and manage directly from the UI
+- **Speed Control** – Change the emulator's base running speed and apply Slow or Turbo modes via keys
 - **Custom Controls** – Fully rebindable inputs with support for button combinations
-- **Palettes** – Multiple built-in color palettes and user extendable by editing `palettes.json`
-- **GUI & Configuration** – Configurable through GUI with optional manual editing `config.json`
-- **Tile Viewer** – Real-time background and sprite tile inspection (only with SDL2 rendering)
+
+### Video & Rendering
+
+- **Rendering Backends** – SDL2 software renderer and optional OpenGL backend with shader support
+- **Visual Filters** – Grid, subpixel, scanline, dot-matrix, and vignette
+- **Frame Blending** – Configurable blending modes to emulate LCD ghosting (e.g., flicker reduction in _Gun ZAS_)
+- **Palettes** – Multiple built-in color palettes, user-extendable by editing `palettes.json`
+
+### Interface & Tooling
+
+- **Web Build (WASM)** – Runs entirely in the browser via WebAssembly, no install required
+- **GUI & Configuration** – Configurable through the GUI, with optional manual editing of `config.json`
+- **Built-in File Browser** – Load and manage ROMs directly from the UI
+- **ROM Scanning** – Automatic ROM directory scanning with menu-based launching
+- **Tile Viewer** – Real-time background and sprite tile inspection (SDL2 rendering only)
 
 ### Emulation
 
-- **CPU**: Complete Sharp LR35902 instruction set with accurate timing
-- **PPU (Graphics)**: Background, window, and sprite rendering
-- **APU (Audio)**: All 4 audio channels (Square 1 & 2, Wave, Noise)
-- **Cartridge MBCs**: MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
-- **Battery-backed SRAM**: Persistent save data
+- **CPU** – Complete Sharp LR35902 instruction set with accurate timing
+- **PPU (Graphics)** – Background, window, and sprite rendering
+- **APU (Audio)** – All 4 audio channels (Square 1 & 2, Wave, Noise)
+- **Cartridge MBCs** – MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
+- **Battery-backed SRAM** – Persistent save data
 
 ## 🎮 Controls
 
@@ -130,10 +138,6 @@ For the complete results, see [TESTS.md](./TESTS.md).
 </details>
 
 ## 📦 Installing (macOS)
-
-Grab `oxgbc-macos.dmg` from the [latest release](https://github.com/mxmgorin/oxgbc/releases),
-open it, and drag **oxGBC** onto the **Applications** folder. The bundle is a
-universal binary (Apple Silicon + Intel).
 
 Because the app is only ad-hoc signed (no paid Apple Developer ID), Gatekeeper
 will refuse the first launch with an *"unidentified developer"* warning. To open
