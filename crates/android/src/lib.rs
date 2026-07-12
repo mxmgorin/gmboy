@@ -7,8 +7,7 @@ use crate::file_dialog::AndroidFileDialog;
 use crate::file_system::AndroidFileSystem;
 use android_logger::Config;
 use app::AppPlatform;
-use jni::objects::JObject;
-use jni::{JNIEnv, JavaVM};
+use jni::JavaVM;
 use log::LevelFilter;
 use std::backtrace::Backtrace;
 use std::sync::OnceLock;
@@ -40,10 +39,15 @@ extern "C" {
     fn SDL_AndroidGetJNIEnv() -> *mut std::os::raw::c_void;
 }
 
-fn get_activity<'a>() -> JObject<'a> {
-    unsafe { JObject::from_raw(SDL_AndroidGetActivity() as jni::sys::jobject) }
+/// Raw `JNIEnv` pointer for the current (SDL main) thread, as provided by SDL2.
+///
+/// Since jni 0.22 removed `Env::from_raw`, callers wrap this in an
+/// [`jni::EnvUnowned`] and upgrade to an `Env` via `with_env`.
+pub(crate) fn sdl_jni_env_ptr() -> *mut jni::sys::JNIEnv {
+    unsafe { SDL_AndroidGetJNIEnv() as *mut jni::sys::JNIEnv }
 }
 
-fn get_env() -> JNIEnv<'static> {
-    unsafe { JNIEnv::from_raw(SDL_AndroidGetJNIEnv() as *mut _).unwrap() }
+/// Raw `jobject` handle to the current SDL activity.
+pub(crate) fn sdl_activity_raw() -> jni::sys::jobject {
+    unsafe { SDL_AndroidGetActivity() as jni::sys::jobject }
 }
