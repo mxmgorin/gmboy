@@ -116,6 +116,13 @@ impl InputHandler {
                         self.handle_cmd(app, emu, AppCmd::Quit);
                     }
                 }
+                Event::Window {
+                    win_event: sdl2::event::WindowEvent::SizeChanged(..),
+                    ..
+                } => {
+                    let mode = app.config.video.interface.scale_mode;
+                    app.video.handle_resize(mode);
+                }
                 _ => {}
             }
         }

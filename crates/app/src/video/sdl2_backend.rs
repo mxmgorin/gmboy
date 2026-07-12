@@ -114,6 +114,12 @@ impl Sdl2Backend {
         Ok(())
     }
 
+    /// Recomputes the game rect for the window's current size (e.g. after an
+    /// orientation change), without changing the window size.
+    pub fn handle_resize(&mut self, mode: ScaleMode) {
+        self.update_game_rect(mode);
+    }
+
     pub fn set_fullscreen(&mut self, fullscreen: bool, scale_mode: ScaleMode) {
         if fullscreen {
             self.canvas

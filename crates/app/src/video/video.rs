@@ -106,4 +106,8 @@ impl AppVideo {
     pub fn set_fullscreen(&mut self, fullscreen: bool, scale_mode: ScaleMode) {
         self.backend.set_fullscreen(fullscreen, scale_mode);
     }
+
+    pub fn handle_resize(&mut self, mode: ScaleMode) {
+        self.backend.handle_resize(mode);
+    }
 }

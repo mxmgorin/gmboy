@@ -113,6 +113,12 @@ impl GlBackend {
         self.update_game_rect(scale_mode);
     }
 
+    /// Recomputes the game rect for the window's current size (e.g. after an
+    /// orientation change), without changing the window size.
+    pub fn handle_resize(&mut self, mode: ScaleMode) {
+        self.update_game_rect(mode);
+    }
+
     pub fn draw_buffer(&mut self, buffer: &[u8]) {
         let width = RenderConfig::WIDTH;
         let height = RenderConfig::HEIGHT;
@@ -390,6 +396,7 @@ pub fn create_gl_with_fallback(sdl: &Sdl, width: u32, height: u32) -> Result<GLS
             .window("oxGBC GL", width, height)
             .position_centered()
             .opengl()
+            .resizable()
             .build()
         {
             Ok(w) => w,

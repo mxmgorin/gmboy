@@ -202,6 +202,13 @@ impl VideoBackend {
         }
     }
 
+    pub fn handle_resize(&mut self, mode: ScaleMode) {
+        match self {
+            VideoBackend::Sdl2(x) => x.handle_resize(mode),
+            VideoBackend::Gl(x) => x.handle_resize(mode),
+        }
+    }
+
     pub fn update_config(&mut self, config: &VideoConfig) {
         match self {
             VideoBackend::Sdl2(x) => x.update_config(config),
