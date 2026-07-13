@@ -69,7 +69,7 @@ The emulator is continuously validated against community made test suites which 
 - **Mooneye** – Passes most of the tests
 - **Visual** - Passes the DMG-acid2, CGB-acid2, Mangen
 
-For the complete results, see [TESTS.md](.docs/TESTS.md).
+For the complete results, see [TESTS.md](./docs/TESTS.md).
 
 ## Features
 
