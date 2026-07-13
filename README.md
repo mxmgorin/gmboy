@@ -16,6 +16,8 @@
 
 ---
 
+<div align="center">
+
 [![Tests](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml)
 [![Android](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml)
 [![Windows](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml)
@@ -27,6 +29,8 @@
 [![License](https://img.shields.io/github/license/mxmgorin/oxgbc?color=blue)](./LICENSE)
 [![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
 [![Dependencies](https://deps.rs/repo/github/mxmgorin/oxgbc/status.svg)](https://deps.rs/repo/github/mxmgorin/oxgbc)
+
+</div>
 
 <!-- optional extras (re-enable Downloads once the count is higher):
 [![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg?color=blue)](https://github.com/mxmgorin/oxgbc/releases)
