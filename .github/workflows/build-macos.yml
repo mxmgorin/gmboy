@@ -51,7 +51,7 @@ jobs:
 
       - name: Build .icns
         # iconutil (built into macOS) assembles the committed iconset — rendered
-        # from media/icon.svg by tools/gen_macos_icon.py — into a single .icns.
+        # from media/icon.svg into a single .icns.
         run: iconutil -c icns media/oxgbc.iconset -o oxGBC.icns
 
       - name: Assemble oxGBC.app
