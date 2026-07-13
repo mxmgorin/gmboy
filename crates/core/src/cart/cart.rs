@@ -83,7 +83,13 @@ impl Cart {
             | CartType::Mbc5RumbleRamBattery => MbcVariant::Mbc5(Mbc5::new(ram_size, rom_size)),
             CartType::Mbc3RamBattery
             | CartType::Mbc3TimerBattery
-            | CartType::Mbc3TimerRamBattery => MbcVariant::Mbc3(Mbc3::new(ram_size, rom_size)),
+            | CartType::Mbc3TimerRamBattery => {
+                let has_timer = matches!(
+                    cart_type,
+                    CartType::Mbc3TimerBattery | CartType::Mbc3TimerRamBattery
+                );
+                MbcVariant::Mbc3(Mbc3::new(ram_size, rom_size, has_timer))
+            }
             CartType::Mmm01
             | CartType::Mmm01Ram
             | CartType::Mmm01RamBattery

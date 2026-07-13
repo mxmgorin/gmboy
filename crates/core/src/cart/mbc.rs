@@ -203,6 +203,11 @@ impl MbcData {
         Some(self.ram_bytes.clone())
     }
 
+    #[inline(always)]
+    pub fn ram_len(&self) -> usize {
+        self.ram_bytes.len()
+    }
+
     pub fn clamp_rom_bank_number(&mut self) {
         self.rom_bank_number %= self.rom_banks_count as u16;
     }

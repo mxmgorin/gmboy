@@ -101,10 +101,9 @@ For the complete results, see [TESTS.md](./docs/TESTS.md).
 
 ### Emulation
 
-- **CPU** – Complete Sharp LR35902 instruction set with accurate timing
-- **PPU (Graphics)** – Background, window, and sprite rendering
 - **APU (Audio)** – All 4 audio channels (Square 1 & 2, Wave, Noise)
 - **Cartridge MBCs** – MBC0, MBC1, MBC1M, MBC2, MBC3, MBC5
+- **Real-Time Clock (RTC)** – MBC3 clock with battery-backed persistence, driving time-based events like day/night in Pokémon Gold/Silver/Crystal
 - **Battery-backed SRAM** – Persistent save data
 
 ## 🎮 Controls
@@ -144,12 +143,23 @@ For the complete results, see [TESTS.md](./docs/TESTS.md).
 
 </details>
 
-## 📦 Installing (macOS)
+## 📦 Installing
+
+Grab the latest build for your platform — Windows, macOS, Linux (x86-64 and
+ARM for retro handhelds), or Android — from the
+[**Releases**](https://github.com/mxmgorin/oxgbc/releases/latest) page, or
+[**play online**](https://mxmgorin.github.io/oxgbc/) with nothing to install.
+
+### macOS first launch
 
 Because the app is only ad-hoc signed (no paid Apple Developer ID), Gatekeeper
-will refuse the first launch with an *"unidentified developer"* warning. To open
-it the first time: **right-click oxGBC → Open → Open**. Alternatively, clear the
-quarantine flag from a terminal:
+blocks the first launch with an *"unidentified developer"* warning. To open it:
+
+- **macOS 15 (Sequoia) and later:** go to **System Settings → Privacy &
+  Security**, scroll to the message about oxGBC, and click **Open Anyway**.
+- **macOS 14 (Sonoma) and earlier:** right-click oxGBC → **Open** → **Open**.
+
+Or clear the quarantine flag from a terminal (works on every version):
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/oxGBC.app
@@ -201,6 +211,13 @@ Or run without arguments and use the built-in file browser / ROM scanner to pick
 ```bash
 cargo run --release -p desktop
 ```
+
+## Contributing
+
+Bug reports, and feature requests are welcome. If a game
+misbehaves, please [open an issue](https://github.com/mxmgorin/oxgbc/issues)
+with the ROM title and what went wrong — accuracy reports are especially
+valuable.
 
 ## License
 
