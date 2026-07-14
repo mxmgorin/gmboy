@@ -1,3 +1,4 @@
+pub mod cgb_boot_palette;
 pub mod fetcher;
 pub mod fifo;
 pub mod framebuffer;
