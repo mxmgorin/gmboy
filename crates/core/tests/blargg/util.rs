@@ -1,10 +1,6 @@
-use crate::Clock;
-use core::bus::Bus;
-use core::cart::Cart;
-use core::cpu::Cpu;
-use core::debugger::{DebugLogType, Debugger};
+use core::harness::{self, TestProtocol};
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub fn run_blargg_rom_serial(
     name: &str,
@@ -12,27 +8,8 @@ pub fn run_blargg_rom_serial(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
-    let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default(), None);
-    let clock = Clock::new(bus);
-    let mut cpu = Cpu::new(clock);
-    let instant = Instant::now();
-    let mut debugger = Debugger::new(DebugLogType::None, true);
 
-    loop {
-        cpu.step_debug(&mut debugger);
-        let serial_msg = debugger.get_serial_msg().to_lowercase();
-
-        if serial_msg.contains("passed") {
-            return Ok(());
-        } else if serial_msg.contains("failed") || serial_msg.contains("error") {
-            return Err(serial_msg);
-        }
-
-        if instant.elapsed() > timeout {
-            return Err(format!("TIMEOUT: {}", timeout.as_secs()));
-        }
-    }
+    harness::run_rom(&path, None, TestProtocol::BlarggSerial, timeout)?.into_result()
 }
 
 pub fn run_blargg_rom_memory(
@@ -41,32 +18,8 @@ pub fn run_blargg_rom_memory(
     timeout: Duration,
 ) -> Result<(), String> {
     let path = get_blargg_rom_path(&format!("{name}.gb"), category);
-    let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default(), None);
-    let clock = Clock::new(bus);
-    let mut cpu = Cpu::new(clock);
-    let instant = Instant::now();
 
-    loop {
-        cpu.step();
-        let b1 = cpu.clock.bus.read(0xA001);
-        let b2 = cpu.clock.bus.read(0xA002);
-        let b3 = cpu.clock.bus.read(0xA003);
-        let result = cpu.clock.bus.read(0xA000);
-
-        if b1 == 0xDE && b2 == 0xB0 && b3 == 0x61 && result != 0x80 {
-            match result {
-                0 => return Ok(()),
-                1 => return Err(format!("{result}: failed")),
-                2 => return Err(format!("{result}: error2")),
-                _ => unreachable!(),
-            }
-        }
-
-        if instant.elapsed() > timeout {
-            return Err(format!("TIMEOUT: {}", timeout.as_secs()));
-        }
-    }
+    harness::run_rom(&path, None, TestProtocol::BlarggMemory, timeout)?.into_result()
 }
 
 pub fn assert_result(name: &str, category: Option<BlarggRomCategory>, result: Result<(), String>) {

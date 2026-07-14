@@ -16,6 +16,7 @@ pub mod cart;
 pub mod cpu;
 pub mod debugger;
 pub mod emu;
+pub mod harness;
 pub mod ppu;
 
 /// Returns true if the n-th bit of byte is set, false otherwise.

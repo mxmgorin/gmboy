@@ -1,10 +1,6 @@
-use core::{auxiliary::clock::Clock, bus::Bus, cart::Cart, cpu::Cpu, emu::config::GbModel};
-use std::{
-    collections::BTreeMap,
-    fs,
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use core::emu::config::GbModel;
+use core::harness::{self, TestProtocol};
+use std::{collections::BTreeMap, fs, path::PathBuf, time::Duration};
 
 pub fn get_gbmicrotest_dir() -> PathBuf {
     // Runs with crates/core as the working dir; pop twice to reach the repo root.
@@ -53,27 +49,5 @@ pub fn run_gbmicrotest_rom_path(
     path: PathBuf,
     timeout: Duration,
 ) -> Result<(), String> {
-    let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default(), model);
-    let clock = Clock::new(bus);
-    let mut cpu = Cpu::new(clock);
-    let instant = Instant::now();
-
-    loop {
-        cpu.step();
-
-        let _expected = cpu.clock.bus.read(0xFF81);
-        let _actual = cpu.clock.bus.read(0xFF80);
-        let result = cpu.clock.bus.read(0xFF82);
-
-        if result == 0xFF {
-            return Err(format!("FAILING RESULT"));
-        } else if result == 0x01 {
-            return Ok(());
-        }
-
-        if instant.elapsed() > timeout {
-            return Err(format!("TIMEOUT: {}", timeout.as_secs()));
-        }
-    }
+    harness::run_rom(&path, model, TestProtocol::GbMicrotest, timeout)?.into_result()
 }

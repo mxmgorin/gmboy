@@ -1,10 +1,8 @@
 use crate::get_roms_path;
 use core::{
-    auxiliary::{clock::Clock, joypad::JoypadButton},
-    bus::Bus,
-    cart::Cart,
-    cpu::Cpu,
+    auxiliary::joypad::JoypadButton,
     emu::config::GbModel,
+    harness,
     ppu::{LCD_X_RES, LCD_Y_RES},
 };
 use std::{
@@ -31,10 +29,7 @@ fn reference_path() -> PathBuf {
 /// let it run for `secs` of real time, and return the RGB888 framebuffer.
 fn run_basic_tests(secs: f64) -> Vec<u8> {
     let rom = get_roms_path().join("rtc3test").join("rtc3test.gb");
-    let cart = Cart::new(core::read_bytes(&rom).unwrap()).unwrap();
-    let bus = Bus::new(cart, Default::default(), Some(GbModel::Dmg));
-    let clock = Clock::new(bus);
-    let mut cpu = Cpu::new(clock);
+    let mut cpu = harness::build_cpu_from_path(&rom, Some(GbModel::Dmg)).unwrap();
 
     let start = Instant::now();
     let total = Duration::from_secs_f64(secs);

@@ -1,16 +1,13 @@
 use core::{
-    auxiliary::clock::Clock,
-    bus::Bus,
-    cart::Cart,
-    cpu::Cpu,
     emu::config::GbModel,
+    harness,
     ppu::{LCD_X_RES, LCD_Y_RES},
 };
 use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 pub fn get_expected_path() -> PathBuf {
@@ -59,28 +56,19 @@ pub fn run_visual_test(
     img_update: bool,
     duration: Duration,
 ) -> Result<(), String> {
-    let cart = Cart::new(core::read_bytes(rom_path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default(), model);
-    let clock = Clock::new(bus);
-    let mut cpu = Cpu::new(clock);
-    let instant = Instant::now();
+    let mut cpu = harness::build_cpu_from_path(rom_path.as_path(), model)?;
+    harness::run_duration(&mut cpu, duration);
 
-    loop {
-        cpu.step();
+    let got_buffer = cpu.clock.bus.io.ppu.lcd.buffer.rgb888();
 
-        if instant.elapsed() > duration {
-            let got_buffer = cpu.clock.bus.io.ppu.lcd.buffer.rgb888();
-
-            if img_update {
-                save_rgb888_image(img_path, &got_buffer, LCD_X_RES as u32, LCD_Y_RES as u32)?;
-            }
-
-            let want_buffer = load_image_rgb(&img_path)?;
-            buffers_match(&got_buffer, &want_buffer)?;
-
-            return Ok(());
-        }
+    if img_update {
+        save_rgb888_image(img_path, &got_buffer, LCD_X_RES as u32, LCD_Y_RES as u32)?;
     }
+
+    let want_buffer = load_image_rgb(img_path)?;
+    buffers_match(&got_buffer, &want_buffer)?;
+
+    Ok(())
 }
 
 fn load_image_rgb(path: &Path) -> Result<Vec<u8>, String> {

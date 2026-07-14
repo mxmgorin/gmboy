@@ -1,13 +1,10 @@
-use core::auxiliary::clock::Clock;
-use core::bus::Bus;
-use core::cart::Cart;
-use core::cpu::Cpu;
 use core::emu::config::GbModel;
+use core::harness::{self, TestProtocol};
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::fs;
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub fn run_mooneye_rom(
     model: Option<GbModel>,
@@ -49,40 +46,12 @@ pub fn run_mooneye_dir_roms(
     results
 }
 
-pub fn run_mooneye_rom_path(model: Option<GbModel>, path: PathBuf, timeout: Duration) -> Result<(), String> {
-    let cart = Cart::new(core::read_bytes(path.as_path())?)?;
-    let bus = Bus::new(cart, Default::default(), model);
-    let clock = Clock::new(bus);
-    let mut cpu = Cpu::new(clock);
-    let instant = Instant::now();
-
-    loop {
-        cpu.step();
-
-        if cpu.registers.b == 3
-            && cpu.registers.c == 5
-            && cpu.registers.d == 8
-            && cpu.registers.e == 13
-            && cpu.registers.h == 21
-            && cpu.registers.l == 34
-        {
-            return Ok(());
-        }
-
-        if cpu.registers.b == 0x42
-            && cpu.registers.c == 0x42
-            && cpu.registers.d == 0x42
-            && cpu.registers.e == 0x42
-            && cpu.registers.h == 0x42
-            && cpu.registers.l == 0x42
-        {
-            return Err(format!("FAILING RESULT ({:?})", instant.elapsed()));
-        }
-
-        if instant.elapsed() > timeout {
-            return Err(format!("TIMEOUT: {}", timeout.as_secs()));
-        }
-    }
+pub fn run_mooneye_rom_path(
+    model: Option<GbModel>,
+    path: PathBuf,
+    timeout: Duration,
+) -> Result<(), String> {
+    harness::run_rom(&path, model, TestProtocol::Mooneye, timeout)?.into_result()
 }
 
 pub fn assert_result(name: &str, category: Option<MooneyeRomCategory>, result: Result<(), String>) {
