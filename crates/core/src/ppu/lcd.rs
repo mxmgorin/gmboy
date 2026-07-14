@@ -402,10 +402,15 @@ pub struct DmgPalette {
     pub bg_palette: u8,
     /// OBP0 and OBP1 registers
     pub obj_palette: [u8; 2],
+    /// Base color LUTs (indexed by color id 0-3), one per hardware palette.
+    /// Kept independent so a colorizer can tint BG / OBJ0 / OBJ1 differently —
+    /// as the CGB boot ROM does when it colorizes a DMG game.
+    bg_base: [PixelColor; 4],
+    obj_base: [[PixelColor; 4]; 2],
+    /// Colors actually drawn, after applying each register's index permutation.
     pub bg_colors: [PixelColor; 4],
     pub sp1_colors: [PixelColor; 4],
     pub sp2_colors: [PixelColor; 4],
-    pub current_colors: [PixelColor; 4],
 }
 
 impl Default for DmgPalette {
@@ -422,36 +427,69 @@ impl Default for DmgPalette {
 impl DmgPalette {
     pub fn new(colors: [PixelColor; 4]) -> Self {
         Self {
-            current_colors: colors,
+            bg_palette: 0xFC,
+            obj_palette: [0xFF, 0xFF],
+            bg_base: colors,
+            obj_base: [colors, colors],
             bg_colors: colors,
             sp1_colors: colors,
             sp2_colors: colors,
-            bg_palette: 0xFC,
-            obj_palette: [0xFF, 0xFF],
         }
     }
 
     #[inline(always)]
     fn update_palette(&mut self, palette_data: u8, pallet_type: u8) {
-        let colors: &mut [PixelColor; 4] = match pallet_type {
+        let base = match pallet_type {
+            1 => &self.obj_base[0],
+            2 => &self.obj_base[1],
+            _ => &self.bg_base,
+        };
+
+        // Resolve into a local first so the immutable borrow of `base` ends
+        // before we take the mutable borrow of the destination array.
+        let resolved = [
+            base[(palette_data & 0b11) as usize],
+            base[((palette_data >> 2) & 0b11) as usize],
+            base[((palette_data >> 4) & 0b11) as usize],
+            base[((palette_data >> 6) & 0b11) as usize],
+        ];
+
+        let dst = match pallet_type {
             1 => &mut self.sp1_colors,
             2 => &mut self.sp2_colors,
             _ => &mut self.bg_colors,
         };
-
-        colors[0] = self.current_colors[(palette_data & 0b11) as usize];
-        colors[1] = self.current_colors[((palette_data >> 2) & 0b11) as usize];
-        colors[2] = self.current_colors[((palette_data >> 4) & 0b11) as usize];
-        colors[3] = self.current_colors[((palette_data >> 6) & 0b11) as usize];
+        *dst = resolved;
     }
 
+    /// Set a single 4-color palette shared by BG, OBJ0 and OBJ1 (the classic
+    /// monochrome recolor).
     #[inline(always)]
     pub fn set_colors(&mut self, colors: [PixelColor; 4]) {
-        self.current_colors = colors;
-        // re-apply existing palette mappings
+        self.set_palettes(colors, colors, colors);
+    }
+
+    /// Assign independent base palettes to BG, OBJ0 and OBJ1. Reproduces the CGB
+    /// boot ROM's colorization of DMG games, where the background and the two
+    /// sprite layers can each get a different set of colors. The game's
+    /// BGP/OBP register mappings are re-applied on top of the new bases.
+    pub fn set_palettes(
+        &mut self,
+        bg: [PixelColor; 4],
+        obj0: [PixelColor; 4],
+        obj1: [PixelColor; 4],
+    ) {
+        self.bg_base = bg;
+        self.obj_base = [obj0, obj1];
         self.update_palette(self.bg_palette, 0);
         self.update_palette(self.obj_palette[0], 1);
         self.update_palette(self.obj_palette[1], 2);
+    }
+
+    /// The BG base palette — used to carry the active colors across a cart reload.
+    #[inline(always)]
+    pub fn base_colors(&self) -> [PixelColor; 4] {
+        self.bg_base
     }
 
     #[inline(always)]
@@ -597,5 +635,90 @@ impl CgbPalette {
         }
 
         index
+    }
+}
+
+#[cfg(test)]
+mod dmg_palette_tests {
+    use super::*;
+
+    // Distinct, easily identifiable base palettes.
+    fn ramp(base: u8) -> [PixelColor; 4] {
+        [
+            PixelColor::new(base, 0, 0),
+            PixelColor::new(0, base, 0),
+            PixelColor::new(0, 0, base),
+            PixelColor::new(base, base, base),
+        ]
+    }
+
+    /// Identity BGP/OBP mapping (id0->0, id1->1, id2->2, id3->3).
+    fn set_identity_regs(p: &mut DmgPalette) {
+        p.bg_palette = 0xE4;
+        p.obj_palette = [0xE4, 0xE4];
+    }
+
+    #[test]
+    fn set_colors_keeps_all_palettes_identical() {
+        let colors = ramp(0xFF);
+        let mut p = DmgPalette::new(ramp(0x11));
+        set_identity_regs(&mut p);
+        p.set_colors(colors);
+
+        for id in 0..4 {
+            assert_eq!(p.get_gbw_color(id, true), colors[id]);
+            assert_eq!(p.get_obj_color(false, id), colors[id]); // OBJ0
+            assert_eq!(p.get_obj_color(true, id), colors[id]); // OBJ1
+        }
+    }
+
+    #[test]
+    fn set_palettes_are_independent() {
+        let bg = ramp(0x10);
+        let obj0 = ramp(0x20);
+        let obj1 = ramp(0x30);
+
+        let mut p = DmgPalette::new(ramp(0x00));
+        set_identity_regs(&mut p);
+        p.set_palettes(bg, obj0, obj1);
+
+        for id in 0..4 {
+            assert_eq!(p.get_gbw_color(id, true), bg[id]);
+            assert_eq!(p.get_obj_color(false, id), obj0[id]);
+            assert_eq!(p.get_obj_color(true, id), obj1[id]);
+        }
+    }
+
+    #[test]
+    fn register_permutes_within_its_own_base() {
+        let bg = ramp(0x10);
+        let obj0 = ramp(0x20);
+        let obj1 = ramp(0x30);
+
+        let mut p = DmgPalette::new(ramp(0x00));
+        set_identity_regs(&mut p);
+        p.set_palettes(bg, obj0, obj1);
+
+        // Reverse the BG mapping: 0x1B = 0b00_01_10_11 -> id0->3, id1->2, id2->1, id3->0.
+        p.update_palette(0x1B, 0);
+
+        assert_eq!(p.get_gbw_color(0, true), bg[3]);
+        assert_eq!(p.get_gbw_color(1, true), bg[2]);
+        assert_eq!(p.get_gbw_color(2, true), bg[1]);
+        assert_eq!(p.get_gbw_color(3, true), bg[0]);
+
+        // Sprite palettes are untouched by a BG register write.
+        for id in 0..4 {
+            assert_eq!(p.get_obj_color(false, id), obj0[id]);
+            assert_eq!(p.get_obj_color(true, id), obj1[id]);
+        }
+    }
+
+    #[test]
+    fn base_colors_returns_bg_base() {
+        let bg = ramp(0x40);
+        let mut p = DmgPalette::new(ramp(0x00));
+        p.set_palettes(bg, ramp(0x50), ramp(0x60));
+        assert_eq!(p.base_colors(), bg);
     }
 }

@@ -143,7 +143,7 @@ impl Emu {
     pub fn load_cart(&mut self, cart: Cart) {
         let dmg_palette = &self.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette;
         let lcd = Lcd::new(
-            dmg_palette.current_colors,
+            dmg_palette.base_colors(),
             super::config::GbModel::default(),
         );
         let ppu = Ppu::new(lcd);
