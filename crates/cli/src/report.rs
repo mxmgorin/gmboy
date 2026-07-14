@@ -1,0 +1,106 @@
+//! The per-ROM result model, its aggregate report, and their console/JSON
+//! rendering.
+
+use core::harness::{TestOutcome, TestRun};
+use serde::Serialize;
+use std::path::Path;
+
+/// The outcome of running one ROM.
+#[derive(Serialize)]
+pub struct RomResult {
+    rom: String,
+    outcome: &'static str,
+    elapsed_s: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    detail: Option<String>,
+}
+
+impl RomResult {
+    pub fn from_run(rom: String, run: &TestRun) -> Self {
+        let (outcome, detail) = match &run.outcome {
+            TestOutcome::Pass => ("pass", None),
+            TestOutcome::Fail(msg) => ("fail", Some(msg.clone())),
+            TestOutcome::Timeout => ("timeout", None),
+        };
+
+        Self {
+            rom,
+            outcome,
+            elapsed_s: round2(run.elapsed.as_secs_f64()),
+            detail,
+        }
+    }
+
+    /// A ROM that could not even be booted (bad file / unsupported cart).
+    pub fn error(rom: String, err: String) -> Self {
+        Self {
+            rom,
+            outcome: "error",
+            elapsed_s: 0.0,
+            detail: Some(err),
+        }
+    }
+}
+
+/// A batch run over a directory of ROMs — the accuracy scoreboard.
+#[derive(Serialize)]
+pub struct Report {
+    pub dir: String,
+    pub total: usize,
+    pub passed: usize,
+    pub failed: usize,
+    pub timeout: usize,
+    pub errored: usize,
+    pub results: Vec<RomResult>,
+}
+
+impl Report {
+    pub fn new(dir: &Path, results: Vec<RomResult>) -> Self {
+        let mut report = Report {
+            dir: dir.display().to_string(),
+            total: results.len(),
+            passed: 0,
+            failed: 0,
+            timeout: 0,
+            errored: 0,
+            results,
+        };
+
+        for res in &report.results {
+            match res.outcome {
+                "pass" => report.passed += 1,
+                "fail" => report.failed += 1,
+                "timeout" => report.timeout += 1,
+                _ => report.errored += 1,
+            }
+        }
+
+        report
+    }
+
+    /// One-line human summary printed after a non-JSON `check`.
+    pub fn print_summary(&self) {
+        print!(
+            "--- {}/{} passed, {} failed, {} timeout",
+            self.passed, self.total, self.failed, self.timeout
+        );
+        if self.errored > 0 {
+            print!(", {} error", self.errored);
+        }
+        println!(" ---");
+    }
+}
+
+/// `TAG    rom/path.gb  (0.31s)  optional detail`
+pub fn print_result_line(r: &RomResult) {
+    let tag = r.outcome.to_uppercase();
+    print!("{tag:<8}{}  ({:.2}s)", r.rom, r.elapsed_s);
+    if let Some(detail) = &r.detail {
+        print!("  {detail}");
+    }
+    println!();
+}
+
+fn round2(x: f64) -> f64 {
+    (x * 100.0).round() / 100.0
+}

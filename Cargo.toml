@@ -2,6 +2,7 @@
 members = [
     "crates/core",
     "crates/app",
+    "crates/cli",
     "crates/desktop",
     "crates/android"
 ]

@@ -1,0 +1,17 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["troidem <mxmgorin@gmail.com>"]
+
+[[bin]]
+name = "oxgbc-cli"
+path = "src/main.rs"
+
+[dependencies]
+core = { path = "../core" }
+# Only PNG is needed for screenshots; the default features pull in heavy codecs
+# (AVIF via rav1e) that balloon build time for nothing.
+image = { version = "0.25.9", default-features = false, features = ["png"] }
+serde = { version = "1.0.*", features = ["derive"] }
+serde_json = "1.0.*"
