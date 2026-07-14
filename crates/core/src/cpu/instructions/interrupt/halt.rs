@@ -11,6 +11,19 @@ impl Cpu {
     // The CPU continues execution after the HALT, but the byte after it is read twice in a row (PC is not incremented, due to a hardware bug).
     #[inline(always)]
     pub fn execute_halt(&mut self) {
+        let interrupts = &self.clock.bus.io.interrupts;
+
+        // With interrupts enabled (or being enabled via the EI delay) and one
+        // already pending, HALT does not actually halt: the CPU services the
+        // interrupt but leaves PC on the HALT so it re-runs after the handler
+        // returns, repeating until nothing is pending. Rewind past the opcode
+        // we just fetched so the pushed return address points at the HALT (only
+        // an interrupt that wakes a truly-halted CPU returns to HALT+1).
+        if interrupts.has_pending() && (interrupts.ime || self.enabling_ime) {
+            self.registers.pc = self.registers.pc.wrapping_sub(1);
+            return;
+        }
+
         self.clock.cpu_halted = true;
     }
 }

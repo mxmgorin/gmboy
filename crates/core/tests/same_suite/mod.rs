@@ -25,6 +25,14 @@ fn ppu_blocking_bgpi_increase() {
 }
 
 #[test]
+fn interrupt_ei_delay_halt() {
+    // Regression: `EI; HALT` with interrupts already pending services them while
+    // leaving PC on the HALT (return address = halt), re-running HALT until none
+    // are pending; only a later interrupt that wakes the halt returns to halt+1.
+    run("interrupt/ei_delay_halt.gb").unwrap();
+}
+
+#[test]
 fn apu_channel_3_wave_ram_dac_on_rw() {
     run("apu/channel_3/channel_3_wave_ram_dac_on_rw.gb").unwrap();
 }
