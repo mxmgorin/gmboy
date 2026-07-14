@@ -4,7 +4,7 @@ use crate::apu::{AUDIO_END_ADDRESS, AUDIO_START_ADDRESS};
 use crate::auxiliary::joypad::Joypad;
 use crate::auxiliary::ram::{Ram, WRAM_BANK_NUMBER_ADDR};
 use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
-use crate::cpu::interrupts::Interrupts;
+use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::emu::config::GbModel;
 use crate::ppu::lcd::{
     CGB_BG_PALLETE_DATA_ADDR, CGB_OBJ_PALLETE_DATA_ADDR, CGB_OBJ_PRIORITY_MODE_ADDR,
@@ -101,7 +101,7 @@ impl Io {
         match addr {
             0xFF00 => self.joypad.set_byte(value),
             0xFF01 => self.serial.sb = value,
-            0xFF02 => self.serial.sc = value,
+            0xFF02 => self.serial.write_sc(value),
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.write(addr, value),
             AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
                 self.apu.write(addr, value)
@@ -150,21 +150,56 @@ pub struct Serial {
     sb: u8,
     /// FF02 — SC: Serial transfer control
     sc: u8,
+    /// T-cycles left in the in-progress transfer (0 = idle).
+    transfer_cycles: u16,
+    /// Byte latched when a transfer starts, for the debug serial log. Kept
+    /// independent of the transfer timing so blargg's text output is captured
+    /// even when the ROM fires bytes back-to-back without waiting.
+    output: Option<u8>,
 }
 
 const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 
 impl Serial {
+    /// Write SC ($FF02). Starting a transfer requires the transfer bit (7) and
+    /// the internal clock (bit 0); bit 1 selects the CGB fast clock.
+    #[inline]
+    pub fn write_sc(&mut self, value: u8) {
+        self.sc = value;
+
+        if value & 0x81 == 0x81 {
+            self.output = Some(self.sb);
+            let cycles_per_bit: u16 = if value & 0x02 != 0 { 16 } else { 512 };
+            self.transfer_cycles = cycles_per_bit * 8;
+        }
+    }
+
+    /// Advance the in-progress transfer by one T-cycle. On completion the CPU
+    /// with no link partner shifts in all 1s, the transfer bit clears, and the
+    /// serial interrupt is requested.
+    #[inline(always)]
+    pub fn tick(&mut self, interrupts: &mut Interrupts) {
+        if self.transfer_cycles == 0 {
+            return;
+        }
+
+        self.transfer_cycles -= 1;
+
+        if self.transfer_cycles == 0 {
+            self.sc &= 0x7F;
+            self.sb = 0xFF;
+            interrupts.request_interrupt(InterruptType::Serial);
+        }
+    }
+
     #[inline(always)]
     pub fn has_data(&self) -> bool {
-        self.sc == 0x81
+        self.output.is_some()
     }
 
     #[inline(always)]
     pub fn take_data(&mut self) -> u8 {
-        self.sc = 0;
-
-        self.sb
+        self.output.take().unwrap_or(0)
     }
 }
 

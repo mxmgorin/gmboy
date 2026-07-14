@@ -58,6 +58,7 @@ impl Clock {
 
             for t in 0..T_CYCLES_PER_M_CYCLE {
                 self.bus.io.timer.tick(&mut self.bus.io.interrupts);
+                self.bus.io.serial.tick(&mut self.bus.io.interrupts);
 
                 if self.bus.io.cgb_speed.double_speed && odd_m_cycle {
                     continue;
