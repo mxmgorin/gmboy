@@ -11,6 +11,7 @@
 
 mod args;
 mod commands;
+mod inspect;
 mod report;
 mod rom;
 
@@ -69,8 +70,10 @@ pub fn print_usage() {
     eprintln!("run OPTIONS:");
     eprintln!("  --screenshot <PATH>      save the final framebuffer as PNG");
     eprintln!("  --serial                 print captured serial output");
+    eprintln!("  --regs                   print CPU registers + opcode bytes at PC after the run");
     eprintln!("  --dump <ADDR[:LEN]>      hex-dump memory after the run (ADDR hex, LEN dec;");
-    eprintln!("                           repeatable, e.g. --dump C000:8)\n");
+    eprintln!("                           repeatable, e.g. --dump C000:8)");
+    eprintln!("  --trace <N>              record the last N instructions (freezes on a hang)\n");
     eprintln!("check OPTIONS:");
     eprintln!("  -r, --recursive          descend into subdirectories");
     eprintln!("  --json                   emit a JSON scoreboard");

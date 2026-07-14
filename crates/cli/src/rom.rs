@@ -51,21 +51,3 @@ pub fn save_screenshot(cpu: &Cpu, path: &Path) -> Result<(), String> {
 pub fn sanitize(rel: &Path) -> String {
     rel.to_string_lossy().replace(['/', '\\'], "_")
 }
-
-/// Print a hex dump of `len` bytes starting at `addr`, as seen through the bus
-/// (so memory-mapping/PPU-mode blocking applies, just like the CPU sees it).
-pub fn dump_memory(cpu: &Cpu, addr: u16, len: u16) {
-    for row in (0..len).step_by(16) {
-        let base = addr.wrapping_add(row);
-        print!("{base:04X}:");
-
-        for col in 0..16 {
-            if row + col >= len {
-                break;
-            }
-            print!(" {:02X}", cpu.clock.bus.read(base.wrapping_add(col)));
-        }
-
-        println!();
-    }
-}
