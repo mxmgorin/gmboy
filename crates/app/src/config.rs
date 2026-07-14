@@ -4,7 +4,7 @@ use crate::palette::LcdPalette;
 use crate::video::frame_blend::FrameBlendMode;
 use crate::video::shader::{ShaderFrameBlendMode, ShaderPrecision};
 use core::apu::apu::ApuConfig;
-use core::emu::config::EmuConfig;
+use core::emu::config::{EmuConfig, GbModel};
 use core::ppu::tile::PixelColor;
 use core::ppu::LCD_X_RES;
 use core::ppu::LCD_Y_RES;
@@ -217,7 +217,13 @@ impl Default for AppConfig {
             auto_save_state: false,
             current_save_slot: 0,
             current_load_slot: 0,
-            emulation: Default::default(),
+            // Default to CGB so DMG games are colorized out of the box, like a
+            // real Game Boy Color. DMG-only carts still render on the DMG-compat
+            // path (see App::apply_dmg_palette); users can pick DMG for mono.
+            emulation: EmuConfig {
+                model: Some(GbModel::Cgb),
+                ..Default::default()
+            },
             audio: AudioConfig {
                 mute: false,
                 mute_turbo: true,
