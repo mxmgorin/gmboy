@@ -4,6 +4,7 @@ use crate::{
 };
 use std::time::Duration;
 
+mod colorization;
 mod util;
 
 const DURATION: Duration = Duration::from_secs(1);
