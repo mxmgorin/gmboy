@@ -56,17 +56,12 @@ fn test_interrupt_time() {
     );
 }
 
-#[ignore]
 #[test]
 fn test_instr_timing() {
     let name = "instr_timing";
     let category = None;
 
-    assert_result(
-        name,
-        category,
-        run_blargg_rom_serial(name, category, Duration::from_secs(180)),
-    );
+    assert_result(name, category, run_blargg_rom_serial(name, category, TIMEOUT));
 }
 
 #[test]
