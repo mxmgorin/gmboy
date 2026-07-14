@@ -6,6 +6,7 @@ mod blargg;
 mod gbmicrotest;
 mod mooneye;
 mod rtc;
+mod same_suite;
 mod sm83;
 
 pub fn print_with_dashes(content: &str) {

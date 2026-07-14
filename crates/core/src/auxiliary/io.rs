@@ -7,8 +7,8 @@ use crate::auxiliary::timer::{Timer, TIMER_DIV_ADDRESS, TIMER_TAC_ADDRESS};
 use crate::cpu::interrupts::Interrupts;
 use crate::emu::config::GbModel;
 use crate::ppu::lcd::{
-    CGB_OBJ_PRIORITY_MODE_ADDR, CGB_PALLETE_END_ADDR, CGB_PALLETE_START_ADDR, LCD_ADDRESS_END,
-    LCD_ADDRESS_START,
+    CGB_BG_PALLETE_DATA_ADDR, CGB_OBJ_PALLETE_DATA_ADDR, CGB_OBJ_PRIORITY_MODE_ADDR,
+    CGB_PALLETE_END_ADDR, CGB_PALLETE_START_ADDR, LCD_ADDRESS_END, LCD_ADDRESS_START,
 };
 use crate::ppu::vram::VRAM_BANK_NUMBER_ADDR;
 use crate::ppu::Ppu;
@@ -75,7 +75,14 @@ impl Io {
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
                     WRAM_BANK_NUMBER_ADDR => self.ram.read_wram_bank(),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
-                        if self.ppu.lcd.is_vram_blocked() {
+                        // Only the data ports (BCPD/OCPD) are inaccessible during
+                        // mode 3; the BCPS/OCPS index registers stay readable.
+                        if self.ppu.lcd.is_vram_blocked()
+                            && matches!(
+                                addr,
+                                CGB_BG_PALLETE_DATA_ADDR | CGB_OBJ_PALLETE_DATA_ADDR
+                            )
+                        {
                             return 0xFF;
                         }
 
@@ -112,6 +119,16 @@ impl Io {
                     WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
                         if self.ppu.lcd.is_vram_blocked() {
+                            // During mode 3 a data-port (BCPD/OCPD) write is dropped
+                            // but still advances the auto-increment index; index-port
+                            // (BCPS/OCPS) writes stay allowed.
+                            match addr {
+                                CGB_BG_PALLETE_DATA_ADDR | CGB_OBJ_PALLETE_DATA_ADDR => {
+                                    self.ppu.lcd.cgb_palette.tick_index_on_blocked_write(addr);
+                                }
+                                _ => self.ppu.lcd.cgb_palette.write(addr, value),
+                            }
+
                             return;
                         }
 

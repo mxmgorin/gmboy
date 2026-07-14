@@ -572,14 +572,14 @@ impl CgbPalette {
     pub fn read(&self, addr: u16) -> u8 {
         match addr {
             CGB_BG_PALLETE_INDEX_ADDR => {
-                // Bit 6 always reads as 0
-                self.bg_index & 0xBF
+                // Bit 6 is unused and always reads back as 1 on CGB.
+                self.bg_index | 0x40
             }
             CGB_BG_PALLETE_DATA_ADDR => {
                 let index = self.bg_index & 0x3F;
                 self.bg_ram[index as usize]
             }
-            CGB_OBJ_PALLETE_INDEX_ADDR => self.obj_index & 0xBF,
+            CGB_OBJ_PALLETE_INDEX_ADDR => self.obj_index | 0x40,
             CGB_OBJ_PALLETE_DATA_ADDR => {
                 let index = self.obj_index & 0x3F;
                 self.obj_ram[index as usize]
@@ -609,6 +609,17 @@ impl CgbPalette {
             }
 
             _ => unreachable!(),
+        }
+    }
+
+    /// A write to a data port (BCPD/OCPD) that is blocked because the PPU is in
+    /// mode 3: the data byte is dropped, but the auto-increment index still
+    /// advances — matches CGB hardware (see same-suite `blocking_bgpi_increase`).
+    pub fn tick_index_on_blocked_write(&mut self, addr: u16) {
+        match addr {
+            CGB_BG_PALLETE_DATA_ADDR => self.bg_index = Self::update_index(self.bg_index),
+            CGB_OBJ_PALLETE_DATA_ADDR => self.obj_index = Self::update_index(self.obj_index),
+            _ => {}
         }
     }
 
