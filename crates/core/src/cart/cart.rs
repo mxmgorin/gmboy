@@ -164,6 +164,12 @@ impl CartData {
         }
     }
 
+    /// Raw ROM image, including the cartridge header.
+    #[inline(always)]
+    pub fn rom(&self) -> &[u8] {
+        &self.bytes
+    }
+
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.bytes.len()

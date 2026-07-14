@@ -8,6 +8,8 @@ use crate::cpu::Cpu;
 use crate::emu::config::EmuConfig;
 use crate::emu::runtime::{EmuRuntime, RunMode};
 use crate::emu::state::{EmuSaveState, EmuState};
+use crate::cart::header::CgbFlag;
+use crate::ppu::cgb_boot_palette::{self, DmgCompatPalette};
 use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::Ppu;
@@ -41,6 +43,16 @@ impl Emu {
     }
 
     #[inline(always)]
+    /// The authentic CGB boot-ROM colorization for the loaded cart, or `None`
+    /// when no monochrome cart is loaded (CGB games already provide color).
+    pub fn dmg_compat_palette(&self) -> Option<DmgCompatPalette> {
+        let bus = &self.runtime.cpu.clock.bus;
+        if bus.cart.is_empty() || bus.cart.data.cgb_flag != CgbFlag::DmgOnly {
+            return None;
+        }
+        Some(cgb_boot_palette::dmg_compat_palette(bus.cart.data.rom()))
+    }
+
     pub fn get_framebuffer(&mut self) -> &mut FrameBuffer {
         &mut self.runtime.cpu.clock.bus.io.ppu.lcd.buffer
     }

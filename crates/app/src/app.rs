@@ -12,12 +12,14 @@ use crate::video::AppVideo;
 use crate::{AppConfigFile, AppPlatform, PlatformFileDialog, PlatformFileSystem};
 use arrayvec::ArrayString;
 use core::cart::Cart;
+use core::emu::config::GbModel;
 use core::emu::runtime::EmuRuntime;
 use core::emu::runtime::RunMode;
 use core::emu::state::SaveStateCmd;
 use core::emu::Emu;
 use core::emu::EmuAudioCallback;
 use core::ppu::framebuffer::FrameBuffer;
+use core::ppu::tile::PixelColor;
 use sdl2::Sdl;
 use std::fmt::Write;
 use std::path::Path;
@@ -247,6 +249,38 @@ where
         self.update_palette(emu);
     }
 
+    /// Apply the DMG palette to the emulator: the authentic GBC boot-ROM
+    /// colorization when the CGB model is selected for a monochrome cart,
+    /// otherwise the selected preset `colors`.
+    fn apply_dmg_palette(&self, emu: &mut Emu, colors: [PixelColor; 4]) {
+        let compat = (emu.config.model == Some(GbModel::Cgb))
+            .then(|| emu.dmg_compat_palette())
+            .flatten();
+
+        let lcd = &mut emu.runtime.cpu.clock.bus.io.ppu.lcd;
+        match compat {
+            Some(compat) => {
+                // Colorized DMG game: force the DMG-compat render path (the CGB
+                // path has no DMG-compat handling) so BGP/OBP still permute the
+                // assigned colors.
+                lcd.set_model(GbModel::Dmg);
+                compat.apply(&mut lcd.dmg_palette);
+            }
+            None => lcd.dmg_palette.set_colors(colors),
+        }
+    }
+
+    /// Re-apply the DMG palette using the current config (preset colors or the
+    /// GBC colorization). Call after the model or preset changes.
+    pub(crate) fn refresh_dmg_palette(&self, emu: &mut Emu) {
+        let colors = self
+            .config
+            .video
+            .interface
+            .get_palette_colors(&self.palettes);
+        self.apply_dmg_palette(emu, colors);
+    }
+
     pub fn update_palette(&mut self, emu: &mut Emu) {
         let palette = &self.palettes[self.config.video.interface.selected_palette_idx];
         let colors = self
@@ -256,15 +290,7 @@ where
             .get_palette_colors(&self.palettes);
         self.video.ui.text_color = colors[0];
         self.video.ui.bg_color = colors[3];
-        emu.runtime
-            .cpu
-            .clock
-            .bus
-            .io
-            .ppu
-            .lcd
-            .dmg_palette
-            .set_colors(colors);
+        self.apply_dmg_palette(emu, colors);
         self.menu.request_update();
 
         let suffix = if self.config.video.interface.is_palette_inverted {
@@ -331,12 +357,12 @@ where
                 };
 
                 emu.load_save_state(save_state);
-                emu.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette.set_colors(
-                    self.config
-                        .video
-                        .interface
-                        .get_palette_colors(&self.palettes),
-                );
+                let colors = self
+                    .config
+                    .video
+                    .interface
+                    .get_palette_colors(&self.palettes);
+                self.apply_dmg_palette(emu, colors);
                 emu.runtime.cpu.clock.bus.io.apu.config = self.config.audio.get_apu_config();
 
                 let msg = format!("Loaded save state: {index}");
@@ -423,12 +449,12 @@ where
         emu.load_cart(cart);
         self.roms.insert_or_update(path.to_path_buf());
 
-        emu.runtime.cpu.clock.bus.io.ppu.lcd.dmg_palette.set_colors(
-            self.config
-                .video
-                .interface
-                .get_palette_colors(&self.palettes),
-        );
+        let colors = self
+            .config
+            .video
+            .interface
+            .get_palette_colors(&self.palettes);
+        self.apply_dmg_palette(emu, colors);
         emu.runtime
             .cpu
             .clock

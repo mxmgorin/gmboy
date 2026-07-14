@@ -307,6 +307,7 @@ impl InputHandler {
                     app.config.emulation.model = model;
                     emu.config.model = model;
                     emu.runtime.cpu.clock.bus.update_model(model);
+                    app.refresh_dmg_palette(emu);
                 }
                 ChangeConfigCmd::TargetFps(x) => {
                     app.config.video.render.target_fps = x;
