@@ -19,6 +19,7 @@ pub fn cmd_run(args: &[String]) -> Result<ExitCode, String> {
     let mut compare: Option<PathBuf> = None;
     let mut tolerance: u8 = 0;
     let mut dumps: Vec<(u16, u16)> = Vec::new();
+    let mut no_detect = false;
 
     let mut it = args.iter();
     while let Some(arg) = it.next() {
@@ -53,6 +54,7 @@ pub fn cmd_run(args: &[String]) -> Result<ExitCode, String> {
                     .map_err(|_| format!("invalid tolerance '{v}'"))?;
             }
             "--dump" => dumps.push(parse_dump(&next_val(&mut it, "--dump")?)?),
+            "--no-detect" => no_detect = true,
             other if other.starts_with('-') => return Err(format!("unknown flag '{other}'")),
             other if rom.is_none() => rom = Some(PathBuf::from(other)),
             other => return Err(format!("unexpected argument '{other}'")),
@@ -80,6 +82,19 @@ pub fn cmd_run(args: &[String]) -> Result<ExitCode, String> {
         // Trace mode is a debugging run (no pass/fail protocol).
         trace(&mut cpu, opts.timeout, len);
         false
+    } else if no_detect {
+        // Run the full timeout with no pass/fail detection — lets you screenshot
+        // or dump a ROM whose result is screen-only, or whose memory happens to
+        // trip a false detection (e.g. `auto` matching gbmicrotest's $FF82),
+        // without the detector stopping the run after the first frame.
+        let start = std::time::Instant::now();
+        harness::run_duration(&mut cpu, opts.timeout);
+        println!(
+            "RAN     {}  ({:.2}s, no-detect)",
+            rom.display(),
+            start.elapsed().as_secs_f64()
+        );
+        true
     } else {
         let run = harness::run(&mut cpu, opts.protocol, opts.timeout);
         print_result_line(&RomResult::from_run(rom.display().to_string(), &run));

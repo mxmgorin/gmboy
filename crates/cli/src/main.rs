@@ -5,7 +5,7 @@
 //! screenshotted, and batch-scored. Two commands:
 //!
 //! ```text
-//! oxgbc-cli run   <ROM> [--model ..] [--timeout ..] [--protocol ..] [--screenshot P] [--serial]
+//! oxgbc-cli run   <ROM> [--model ..] [--timeout ..] [--protocol ..] [--no-detect] [--screenshot P] [--serial]
 //! oxgbc-cli check <DIR> [--model ..] [--timeout ..] [--protocol ..] [-r] [--json] [--screenshot-dir D]
 //! ```
 
@@ -69,6 +69,8 @@ pub fn print_usage() {
     eprintln!("                           (default: auto)\n");
     eprintln!("run OPTIONS:");
     eprintln!("  --screenshot <PATH>      save the final framebuffer as PNG");
+    eprintln!("  --no-detect              run the full timeout with no pass/fail detection");
+    eprintln!("                           (for screen-only ROMs / to avoid false detections)");
     eprintln!("  --serial                 print captured serial output");
     eprintln!("  --regs                   print CPU registers + opcode bytes at PC after the run");
     eprintln!("  --dump <ADDR[:LEN]>      hex-dump memory after the run (ADDR hex, LEN dec;");
