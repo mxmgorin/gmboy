@@ -4,7 +4,7 @@
 use crate::args::{next_val, parse_dump, ArgMatch, CommonOpts};
 use crate::inspect::{dump_memory, dump_regs, trace};
 use crate::report::{print_result_line, RomResult};
-use crate::rom::save_screenshot;
+use crate::rom::{compare_to_reference, save_screenshot};
 use core::harness;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -16,6 +16,8 @@ pub fn cmd_run(args: &[String]) -> Result<ExitCode, String> {
     let mut serial = false;
     let mut regs = false;
     let mut trace_len: Option<usize> = None;
+    let mut compare: Option<PathBuf> = None;
+    let mut tolerance: u8 = 0;
     let mut dumps: Vec<(u16, u16)> = Vec::new();
 
     let mut it = args.iter();
@@ -43,6 +45,13 @@ pub fn cmd_run(args: &[String]) -> Result<ExitCode, String> {
                 }
                 trace_len = Some(n);
             }
+            "--compare" => compare = Some(PathBuf::from(next_val(&mut it, "--compare")?)),
+            "--tolerance" => {
+                let v = next_val(&mut it, "--tolerance")?;
+                tolerance = v
+                    .parse::<u8>()
+                    .map_err(|_| format!("invalid tolerance '{v}'"))?;
+            }
             "--dump" => dumps.push(parse_dump(&next_val(&mut it, "--dump")?)?),
             other if other.starts_with('-') => return Err(format!("unknown flag '{other}'")),
             other if rom.is_none() => rom = Some(PathBuf::from(other)),
@@ -53,9 +62,22 @@ pub fn cmd_run(args: &[String]) -> Result<ExitCode, String> {
     let rom = rom.ok_or("missing <ROM> path")?;
     let mut cpu = harness::build_cpu_from_path(&rom, opts.model)?;
 
-    // Trace mode is a debugging run (no pass/fail protocol); otherwise run the
-    // ROM normally and report its outcome.
-    let passed = if let Some(len) = trace_len {
+    let passed = if let Some(ref_path) = &compare {
+        // Visual mode: run for the timeout, then diff the framebuffer against a
+        // reference PNG (screenshot-based tests have no register/serial signal).
+        harness::run_duration(&mut cpu, opts.timeout);
+        match compare_to_reference(&cpu, ref_path, tolerance) {
+            Ok(()) => {
+                println!("PASS    {}  (visual)", rom.display());
+                true
+            }
+            Err(detail) => {
+                println!("FAIL    {}  (visual)  {detail}", rom.display());
+                false
+            }
+        }
+    } else if let Some(len) = trace_len {
+        // Trace mode is a debugging run (no pass/fail protocol).
         trace(&mut cpu, opts.timeout, len);
         false
     } else {
