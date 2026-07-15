@@ -14,6 +14,7 @@
 //! palette 0, OBP0 becomes OBJ palette 0, OBP1 becomes OBJ palette 1, and the
 //! game's own BGP/OBP register writes still permute the four colors within each.
 
+use crate::cart::header::{NewLicenseeCode, OldLicenseeCode};
 use crate::ppu::lcd::DmgPalette;
 use crate::ppu::tile::PixelColor;
 
@@ -100,12 +101,16 @@ fn title_checksum(rom: &[u8]) -> u8 {
 
 /// The boot ROM only colorizes first-party titles (licensee code 01 / Nintendo).
 fn is_nintendo(rom: &[u8]) -> bool {
-    match rom.get(0x014B).copied().unwrap_or(0) {
-        // New-licensee marker: the real code lives in the header at 0x144-0x145.
-        0x33 => {
-            rom.get(0x0144).copied() == Some(b'0') && rom.get(0x0145).copied() == Some(b'1')
-        }
-        old => old == 0x01,
+    let old_code = rom.get(0x014B).copied().unwrap_or(0);
+    match OldLicenseeCode::from(old_code) {
+        // 0x33 defers to the new licensee code in the header at 0x144-0x145.
+        OldLicenseeCode::UseNewLicenseeCode => matches!(
+            NewLicenseeCode::from(&rom[0x0144..0x0146]),
+            NewLicenseeCode::NintendoResearchAndDevelopment1
+        ),
+        // The boot ROM recognizes only old licensee code 0x01. (0x31 also maps to
+        // Nintendo in the header table, but the boot ROM ignores it.)
+        _ => old_code == 0x01,
     }
 }
 
