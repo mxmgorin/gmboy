@@ -77,7 +77,7 @@ impl Ppu {
         self.line_ticks = 0;
         self.current_frame = 0;
         self.lcd.buffer.reset_x();
-        self.fetcher.reset();
+        self.fetcher.reset(self.lcd.scroll_x);
     }
 
     #[inline(always)]
@@ -147,7 +147,7 @@ impl Ppu {
     #[inline(always)]
     const fn set_mode_transfer(&mut self) {
         self.lcd.buffer.reset_x();
-        self.fetcher.reset();
+        self.fetcher.reset(self.lcd.scroll_x);
         self.lcd.status.set_ppu_mode(PpuMode::Transfer);
     }
 

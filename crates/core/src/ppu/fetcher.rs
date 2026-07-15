@@ -53,6 +53,10 @@ pub struct PixelFetcher {
     fetch_x: u8,
     pixel_fifo: PixelFifo,
     bgw_fetched_data: BgwFetchedData,
+    /// Fine-scroll pixels to discard, latched from `SCX & 7` at the start of
+    /// mode 3. Latched (not read live) so a mid-scanline SCX write can't change
+    /// how many pixels are dropped at the left edge.
+    scx_discard: u8,
 }
 
 impl Default for PixelFetcher {
@@ -63,6 +67,7 @@ impl Default for PixelFetcher {
             fetch_x: 0,
             bgw_fetched_data: Default::default(),
             sprite_fetcher: Default::default(),
+            scx_discard: 0,
         }
     }
 }
@@ -86,8 +91,9 @@ impl PixelFetcher {
             if self.bgw_fetched_data.is_window {
                 // No horizontal scroll for window
                 lcd.push_pixel(pixel);
-            } else if x >= lcd.scroll_x % TILE_WIDTH as u8 {
-                // For the background layer, apply scroll_x for horizontal scrolling
+            } else if x >= self.scx_discard {
+                // Drop the first `SCX & 7` background pixels (fine horizontal
+                // scroll), latched at mode-3 start.
                 lcd.push_pixel(pixel);
             };
         }
@@ -210,10 +216,11 @@ impl PixelFetcher {
     }
 
     #[inline(always)]
-    pub const fn reset(&mut self) {
+    pub const fn reset(&mut self, scroll_x: u8) {
         self.fetch_step = FetchStep::Tile;
         self.pixel_fifo.clear();
         self.fetch_x = 0;
+        self.scx_discard = scroll_x % TILE_WIDTH as u8;
     }
 }
 
