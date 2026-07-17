@@ -31,6 +31,14 @@ pub struct Ppu {
     line_ticks: usize,
     fps_counter: Option<FpsCounter>,
     fetcher: PixelFetcher,
+    /// Composite STAT interrupt line: OR of all enabled STAT sources. The
+    /// LCDStat interrupt is requested only on a rising edge of this line.
+    #[serde(default)]
+    stat_line: bool,
+    /// First scanline after the LCD was enabled runs a special short sequence
+    /// (no mode 2, shifted timings).
+    #[serde(default)]
+    lcdon_line0: bool,
 }
 
 impl Ppu {
@@ -57,12 +65,32 @@ impl Ppu {
     #[inline(always)]
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         if !self.lcd.control.is_lcd_enabled() {
-            self.lcd.ly = 0;
-            self.lcd.status.set_ppu_mode(PpuMode::HBlank);
-            self.line_ticks = 0;
+            // Frozen while the LCD is off; state was fixed up at disable time.
+            return;
         }
 
         self.line_ticks += 1;
+
+        // LY becomes visible 4 dots before the line's mode events (mooneye
+        // hblank_ly_scx_timing). While the new LY comparison is in flight the
+        // LYC coincidence flag reads 0; it is recomputed at the line boundary.
+        // OAM reads (but not writes) are already blocked in this window when
+        // the next line is a visible one.
+        if self.line_ticks == TICKS_PER_LINE - 4 {
+            self.lcd.increment_ly();
+
+            if self.lcd.ly as usize >= LINES_PER_FRAME {
+                self.lcd.reset_ly();
+            }
+
+            self.lcd.status.set_lyc(false);
+
+            if self.lcd.ly < LCD_Y_RES {
+                self.lcd.oam_read_blocked = true;
+            }
+        } else if self.line_ticks == TICKS_PER_LINE {
+            self.lcd.update_lyc_flag();
+        }
 
         match self.lcd.status.get_ppu_mode() {
             PpuMode::HBlank => self.mode_hblank(interrupts),
@@ -70,6 +98,75 @@ impl Ppu {
             PpuMode::Oam => self.mode_oam(),
             PpuMode::Transfer => return self.mode_transfer(interrupts),
         }
+    }
+
+    /// LCD register write with PPU side effects (LCDC enable/disable, STAT and
+    /// LYC writes re-evaluate the composite STAT line).
+    pub fn write_lcd(&mut self, address: u16, value: u8, interrupts: &mut Interrupts) {
+        match address {
+            crate::ppu::lcd::LCD_CONTROL_ADDRESS => {
+                let was_enabled = self.lcd.control.is_lcd_enabled();
+                self.lcd.control.byte = value;
+                let now_enabled = self.lcd.control.is_lcd_enabled();
+
+                if was_enabled && !now_enabled {
+                    // Turning the LCD off resets LY and the mode bits, but the
+                    // LYC coincidence flag is frozen (not recomputed).
+                    self.lcd.ly = 0;
+                    self.lcd.window.line_number = 0;
+                    self.line_ticks = 0;
+                    self.lcd.status.set_ppu_mode(PpuMode::HBlank);
+                    self.lcd.oam_read_blocked = false;
+                    self.lcd.oam_write_blocked = false;
+                    self.lcd.vram_read_prelock = false;
+                } else if !was_enabled && now_enabled {
+                    // The first line after enabling has no mode 2 and starts
+                    // in mode 0; the comparison clock restarts immediately.
+                    self.line_ticks = 0;
+                    self.lcdon_line0 = true;
+                    self.lcd.status.set_ppu_mode(PpuMode::HBlank);
+                    self.lcd.update_lyc_flag();
+                    self.update_stat_line(false, interrupts);
+                }
+            }
+            crate::ppu::lcd::LCD_STATUS_ADDRESS => {
+                self.lcd.status.write(value);
+
+                if self.lcd.control.is_lcd_enabled() {
+                    self.update_stat_line(false, interrupts);
+                }
+            }
+            crate::ppu::lcd::LCD_LY_COMPARE_ADDRESS => {
+                self.lcd.ly_compare = value;
+
+                // The comparison clock only runs while the LCD is on.
+                if self.lcd.control.is_lcd_enabled() {
+                    self.lcd.update_lyc_flag();
+                    self.update_stat_line(false, interrupts);
+                }
+            }
+            _ => self.lcd.write(address, value),
+        }
+    }
+
+    /// Recompute the composite STAT line and request the LCDStat interrupt on
+    /// a rising edge. `oam_pulse` models the OAM source firing at the start of
+    /// line 144 together with VBlank (DMG behavior).
+    #[inline(always)]
+    fn update_stat_line(&mut self, oam_pulse: bool, interrupts: &mut Interrupts) {
+        let status = &self.lcd.status;
+        let mode = status.get_ppu_mode();
+
+        let line = (status.is_stat_interrupt(LcdStatSrc::HBlank) && mode == PpuMode::HBlank)
+            || (status.is_stat_interrupt(LcdStatSrc::VBlank) && mode == PpuMode::VBlank)
+            || (status.is_stat_interrupt(LcdStatSrc::Oam) && (mode == PpuMode::Oam || oam_pulse))
+            || (status.is_stat_interrupt(LcdStatSrc::Lyc) && status.get_lyc());
+
+        if line && !self.stat_line {
+            interrupts.request_interrupt(InterruptType::LCDStat);
+        }
+
+        self.stat_line = line;
     }
 
     #[inline(always)]
@@ -82,7 +179,15 @@ impl Ppu {
 
     #[inline(always)]
     fn mode_oam(&mut self) {
-        if self.line_ticks >= 80 {
+        // For the last 4 dots of mode 2, OAM write access unblocks and VRAM
+        // read access already blocks (mooneye lcdon_write_timing-GS /
+        // lcdon_timing-GS); OAM reads stay blocked.
+        if self.line_ticks == OAM_DOTS - 4 {
+            self.lcd.oam_write_blocked = false;
+            self.lcd.vram_read_prelock = true;
+        }
+
+        if self.line_ticks >= OAM_DOTS {
             self.fetcher
                 .sprite_fetcher
                 .scan_oam(&self.lcd, &self.oam_ram);
@@ -92,23 +197,25 @@ impl Ppu {
 
     #[inline(always)]
     fn mode_transfer(&mut self, interrupts: &mut Interrupts) {
-         self
-            .fetcher
-            .tick(&mut self.lcd, &self.video_ram, self.line_ticks);
-
+        // Check completion before ticking so mode 0 begins on the dot after
+        // the 160th pixel was pushed (dot 252 + SCX%8 + sprite penalties).
         if self.lcd.buffer.count_x() >= LCD_X_RES as usize {
             self.set_mode_hblank(interrupts);
+            return;
         }
+
+        self.fetcher
+            .tick(&mut self.lcd, &self.video_ram, self.line_ticks);
     }
 
     #[inline(always)]
     fn mode_vblank(&mut self, interrupts: &mut Interrupts) {
         if self.line_ticks >= TICKS_PER_LINE {
-            self.lcd.increment_ly(interrupts);
-
-            if self.lcd.ly as usize >= LINES_PER_FRAME {
+            if self.lcd.ly == 0 {
+                // LY wrapped 4 dots ago: new frame begins.
                 self.set_mode_oam(interrupts);
-                self.lcd.reset_ly(interrupts);
+            } else {
+                self.update_stat_line(false, interrupts);
             }
 
             self.line_ticks = 0;
@@ -117,9 +224,22 @@ impl Ppu {
 
     #[inline(always)]
     fn mode_hblank(&mut self, interrupts: &mut Interrupts) {
-        if self.line_ticks >= TICKS_PER_LINE {
-            self.lcd.increment_ly(interrupts);
+        if self.lcdon_line0 {
+            // First line after LCD-enable: the mode bits read 0 instead of 2
+            // and OAM stays accessible, then the line continues normally from
+            // mode 3 (mooneye lcdon_timing-GS).
+            if self.line_ticks >= OAM_DOTS {
+                self.lcdon_line0 = false;
+                self.fetcher
+                    .sprite_fetcher
+                    .scan_oam(&self.lcd, &self.oam_ram);
+                self.set_mode_transfer();
+            }
 
+            return;
+        }
+
+        if self.line_ticks >= TICKS_PER_LINE {
             if self.lcd.ly >= LCD_Y_RES {
                 self.set_mode_vblank(interrupts);
                 self.current_frame += 1;
@@ -136,39 +256,43 @@ impl Ppu {
     }
 
     #[inline(always)]
-    const fn set_mode_oam(&mut self, interrupts: &mut Interrupts) {
+    fn set_mode_oam(&mut self, interrupts: &mut Interrupts) {
         self.lcd.status.set_ppu_mode(PpuMode::Oam);
-
-        if self.lcd.status.is_stat_interrupt(LcdStatSrc::Oam) {
-            interrupts.request_interrupt(InterruptType::LCDStat);
-        }
+        self.lcd.oam_read_blocked = true;
+        self.lcd.oam_write_blocked = true;
+        self.update_stat_line(false, interrupts);
     }
 
     #[inline(always)]
     const fn set_mode_transfer(&mut self) {
         self.lcd.buffer.reset_x();
         self.fetcher.reset(self.lcd.scroll_x);
+        self.lcd.oam_read_blocked = true;
+        self.lcd.oam_write_blocked = true;
         self.lcd.status.set_ppu_mode(PpuMode::Transfer);
     }
 
     #[inline(always)]
-    const fn set_mode_hblank(&mut self, interrupts: &mut Interrupts) {
+    fn set_mode_hblank(&mut self, interrupts: &mut Interrupts) {
         self.lcd.status.set_ppu_mode(PpuMode::HBlank);
-
-        // TODO: STAT mode=0 interrupt happens one cycle before the actual mode switch!
-        if self.lcd.status.is_stat_interrupt(LcdStatSrc::HBlank) {
-            interrupts.request_interrupt(InterruptType::LCDStat);
-        }
+        self.lcd.oam_read_blocked = false;
+        self.lcd.oam_write_blocked = false;
+        self.lcd.vram_read_prelock = false;
+        self.update_stat_line(false, interrupts);
     }
 
     #[inline(always)]
-    const fn set_mode_vblank(&mut self, interrupts: &mut Interrupts) {
+    fn set_mode_vblank(&mut self, interrupts: &mut Interrupts) {
         self.lcd.status.set_ppu_mode(PpuMode::VBlank);
+        self.lcd.oam_read_blocked = false;
+        self.lcd.oam_write_blocked = false;
+        self.lcd.vram_read_prelock = false;
         interrupts.request_interrupt(InterruptType::VBlank);
 
-        if self.lcd.status.is_stat_interrupt(LcdStatSrc::VBlank) {
-            interrupts.request_interrupt(InterruptType::LCDStat);
-        }
+        // On DMG the OAM STAT source also pulses at the start of line 144,
+        // simultaneously with VBlank (mooneye vblank_stat_intr-GS).
+        let oam_pulse = self.lcd.model == crate::emu::config::GbModel::Dmg;
+        self.update_stat_line(oam_pulse, interrupts);
     }
 }
 

@@ -1,4 +1,3 @@
-use crate::cpu::interrupts::{InterruptType, Interrupts};
 use crate::emu::config::GbModel;
 use crate::ppu::framebuffer::FrameBuffer;
 use crate::ppu::tile::TileFlags;
@@ -59,6 +58,18 @@ pub struct Lcd {
     pub cgb_palette: CgbPalette,
     pub model: GbModel,
     pub buffer: FrameBuffer,
+    /// OAM read/write accessibility, maintained by the PPU at event dots.
+    /// Reads are blocked from 4 dots before a visible line starts through the
+    /// end of mode 3; writes stay open until mode 2 proper begins and reopen
+    /// for the last 4 dots of mode 2 (mooneye lcdon_write_timing-GS).
+    #[serde(default)]
+    pub oam_read_blocked: bool,
+    #[serde(default)]
+    pub oam_write_blocked: bool,
+    /// VRAM reads are blocked 4 dots before mode 3 begins; writes only from
+    /// mode 3 itself (mooneye lcdon_timing-GS vs lcdon_write_timing-GS).
+    #[serde(default)]
+    pub vram_read_prelock: bool,
 }
 
 impl Default for Lcd {
@@ -94,6 +105,9 @@ impl Lcd {
             },
             model,
             buffer: FrameBuffer::default(),
+            oam_read_blocked: false,
+            oam_write_blocked: false,
+            vram_read_prelock: false,
         }
     }
 
@@ -108,10 +122,19 @@ impl Lcd {
     }
 
     #[inline(always)]
-    pub fn is_oam_blocked(&self) -> bool {
-        let mode = self.status.get_ppu_mode();
+    pub fn is_vram_read_blocked(&self) -> bool {
+        (self.vram_read_prelock || self.status.get_ppu_mode() == PpuMode::Transfer)
+            && self.control.is_lcd_enabled()
+    }
 
-        (mode == PpuMode::Transfer || mode == PpuMode::Oam) && self.control.is_lcd_enabled()
+    #[inline(always)]
+    pub fn is_oam_read_blocked(&self) -> bool {
+        self.oam_read_blocked && self.control.is_lcd_enabled()
+    }
+
+    #[inline(always)]
+    pub fn is_oam_write_blocked(&self) -> bool {
+        self.oam_write_blocked && self.control.is_lcd_enabled()
     }
 
     #[inline(always)]
@@ -167,7 +190,9 @@ impl Lcd {
                 let val = if self.control.is_lcd_enabled() {
                     self.status.byte
                 } else {
-                    PpuMode::HBlank as u8
+                    // LCD off: mode bits read 0, but the interrupt-enable bits
+                    // and the (frozen) LYC coincidence flag stay readable.
+                    self.status.byte & !PPU_MODE_MASK
                 };
 
                 val | LCD_STATUS_UNUSED_MASK
@@ -215,32 +240,28 @@ impl Lcd {
     }
 
     #[inline(always)]
-    pub fn increment_ly(&mut self, interrupts: &mut Interrupts) {
+    pub fn increment_ly(&mut self) {
         if self.window.is_visible(self) && self.window.on(self) {
             self.window.line_number = self.window.line_number.wrapping_add(1);
         }
 
         self.ly = self.ly.wrapping_add(1);
-        self.compare_ly(interrupts);
+        self.update_lyc_flag();
     }
 
     #[inline(always)]
-    pub fn reset_ly(&mut self, interrupts: &mut Interrupts) {
+    pub fn reset_ly(&mut self) {
         self.ly = 0;
         self.window.line_number = 0;
-        self.compare_ly(interrupts);
+        self.update_lyc_flag();
     }
 
+    /// Recompute the LY=LYC coincidence flag. The flag is set whenever the
+    /// values match, independently of the LYC interrupt-enable bit; the STAT
+    /// interrupt itself is edge-triggered off the composite STAT line in `Ppu`.
     #[inline(always)]
-    fn compare_ly(&mut self, interrupts: &mut Interrupts) {
-        if self.ly == self.ly_compare {
-            if self.status.is_stat_interrupt(LcdStatSrc::Lyc) {
-                self.status.set_lyc(true);
-                interrupts.request_interrupt(InterruptType::LCDStat);
-            } else {
-                self.status.set_lyc(false);
-            }
-        }
+    pub fn update_lyc_flag(&mut self) {
+        self.status.set_lyc(self.ly == self.ly_compare);
     }
 }
 

@@ -23,6 +23,10 @@ pub struct SpriteFetcher {
     line_sprites: [OamEntry; MAX_LINE_SPRITES_COUNT],
     fetched_sprites_count: usize,
     fetched_sprites: [SpriteFetchedData; MAX_FETCHED_SPRITES_COUNT],
+    /// Sprites (by `line_sprites` index) whose mode-3 fetch penalty has
+    /// already been paid on this scanline.
+    #[serde(default)]
+    penalty_paid: u16,
 }
 
 impl SpriteFetcher {
@@ -31,12 +35,11 @@ impl SpriteFetcher {
         let mut line_sprites_count = 0;
         let cur_y = lcd.ly.wrapping_add(16);
         let sprite_height = lcd.control.get_obj_height();
+        self.penalty_paid = 0;
 
         for ram_entry in oam_ram.entries.iter() {
-            if ram_entry.x == 0 {
-                // Not visible (X = 0 means hidden on real hardware)
-                continue;
-            }
+            // Note: X = 0 sprites are fully offscreen but still occupy a slot
+            // in the 10-sprite line limit and still stall the fetcher.
 
             // Check if the sprite is on the current scanline
             if ram_entry.y <= cur_y && ram_entry.y + sprite_height > cur_y {
@@ -143,6 +146,54 @@ impl SpriteFetcher {
     #[inline(always)]
     fn calc_sprite_x(&self, sprite_x: u8, scroll_x: u8) -> u8 {
         sprite_x.wrapping_sub(8).wrapping_add(scroll_x % 8)
+    }
+
+    /// Mode-3 sprite fetch penalty for the pixel about to be output at `x`.
+    /// Each sprite reaching its first visible pixel stalls the fetcher for
+    /// 6 dots; the first sprite of a batch pays an extra background-fetch
+    /// alignment penalty of `5 - min(5, (X + SCX) % 8)` dots, and the first
+    /// stall of the scanline overlaps the fetcher warm-up by 3 dots. Sprites
+    /// with OAM X < 8 (including the hidden X = 0) trigger at pixel 0.
+    /// Calibrated against the full mooneye intr_2_mode0_timing_sprites table.
+    #[inline(always)]
+    pub fn take_penalty(&mut self, x: u8, scroll_x: u8) -> u8 {
+        if self.line_sprites_count == 0 {
+            return 0;
+        }
+
+        let first_of_line = self.penalty_paid == 0;
+        let mut penalty = 0u8;
+        // A batch = consecutive sprites sharing one OAM X; each batch pays the
+        // alignment part once (sprites at X and X+8 both trigger at pixel 0
+        // but are separate batches).
+        let mut batch_x = None;
+
+        for i in 0..self.line_sprites_count {
+            if self.penalty_paid & (1 << i) != 0 {
+                continue;
+            }
+
+            let oam = unsafe { self.line_sprites.get_unchecked(i) };
+
+            if oam.x.saturating_sub(8) != x {
+                continue;
+            }
+
+            self.penalty_paid |= 1 << i;
+            penalty += 6;
+
+            if batch_x != Some(oam.x) {
+                batch_x = Some(oam.x);
+                let align = (oam.x.wrapping_add(scroll_x)) % 8;
+                penalty += 5u8.saturating_sub(align);
+            }
+        }
+
+        if first_of_line && penalty > 0 {
+            penalty -= 3;
+        }
+
+        penalty
     }
 
     #[inline(always)]

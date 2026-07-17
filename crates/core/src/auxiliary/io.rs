@@ -106,7 +106,9 @@ impl Io {
             AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
                 self.apu.write(addr, value)
             }
-            LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.write(addr, value),
+            LCD_ADDRESS_START..=LCD_ADDRESS_END => {
+                self.ppu.write_lcd(addr, value, &mut self.interrupts)
+            }
             0xFF4D => self.cgb_speed.write(value),
             CGB_OBJ_PRIORITY_MODE_ADDR => self.ppu.lcd.write_obj_priority_mode(value),
             VRAM_BANK_NUMBER_ADDR

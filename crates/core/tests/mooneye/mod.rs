@@ -674,7 +674,6 @@ fn test_rapid_di_ei() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_all_ppu() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu");
@@ -689,7 +688,6 @@ fn test_all_ppu() {
     assert!(!failed);
 }
 
-#[ignore]
 #[test]
 fn test_hblank_ly_scx_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/hblank_ly_scx_timing-GS.gb");
@@ -706,7 +704,6 @@ fn test_intr_1_2_timing_gs() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_intr_2_0_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_0_timing.gb");
@@ -715,7 +712,6 @@ fn test_intr_2_0_timing() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_intr_2_mode0_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode0_timing.gb");
@@ -724,7 +720,6 @@ fn test_intr_2_mode0_timing() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_intr_2_mode0_timing_sprites() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_mode0_timing_sprites.gb");
@@ -741,7 +736,6 @@ fn test_intr_2_mode3_timing() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_intr_2_oam_ok_timing() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/intr_2_oam_ok_timing.gb");
@@ -750,7 +744,6 @@ fn test_intr_2_oam_ok_timing() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_lcdon_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/lcdon_timing-GS.gb");
@@ -759,7 +752,6 @@ fn test_lcdon_timing_gs() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_lcdon_write_timing_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/lcdon_write_timing-GS.gb");
@@ -768,16 +760,14 @@ fn test_lcdon_write_timing_gs() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_stat_irq_blocking() {
-    let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_irq_blocking-GS.gb");
+    let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_irq_blocking.gb");
     let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_stat_lyc_onoff() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/stat_lyc_onoff.gb");
@@ -786,7 +776,6 @@ fn test_stat_lyc_onoff() {
     assert_result_path(path, result);
 }
 
-#[ignore]
 #[test]
 fn test_vblank_stat_intr_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/vblank_stat_intr-GS.gb");

@@ -79,7 +79,7 @@ impl Bus {
         match addr {
             0x0000..=0x7FFF | 0xA000..=0xBFFF => self.cart.read(addr),
             VRAM_ADDR_START..=VRAM_ADDR_END => {
-                if self.io.ppu.lcd.is_vram_blocked() {
+                if self.io.ppu.lcd.is_vram_read_blocked() {
                     return 0xFF;
                 }
 
@@ -92,7 +92,7 @@ impl Bus {
                 self.io.ram.read_wram(mirrored_addr)
             }
             0xFE00..=0xFE9F => {
-                if self.oam_dma.is_transferring() || self.io.ppu.lcd.is_oam_blocked() {
+                if self.oam_dma.is_transferring() || self.io.ppu.lcd.is_oam_read_blocked() {
                     return 0xFF;
                 }
 
@@ -138,7 +138,7 @@ impl Bus {
                 self.io.ram.write_wram(mirrored_addr, value);
             }
             0xFE00..=0xFE9F => {
-                if self.oam_dma.is_transferring() || self.io.ppu.lcd.is_oam_blocked() {
+                if self.oam_dma.is_transferring() || self.io.ppu.lcd.is_oam_write_blocked() {
                     return;
                 }
 

@@ -10,11 +10,10 @@ use serde::{Deserialize, Serialize};
 
 type FetchFn = fn(&mut PixelFetcher, &Lcd, &VideoRam);
 
-const FETCH_FNS: [FetchFn; 5] = [
+const FETCH_FNS: [FetchFn; 4] = [
     PixelFetcher::fetch_tile,
     PixelFetcher::fetch_data0,
     PixelFetcher::fetch_data1,
-    PixelFetcher::fetch_idle,
     PixelFetcher::fetch_push,
 ];
 
@@ -57,6 +56,14 @@ pub struct PixelFetcher {
     /// mode 3. Latched (not read live) so a mid-scanline SCX write can't change
     /// how many pixels are dropped at the left edge.
     scx_discard: u8,
+    /// Remaining sprite-fetch stall dots; while non-zero the fetcher and the
+    /// pixel output are frozen (extends mode 3).
+    #[serde(default)]
+    stall_dots: u8,
+    /// Dots the fetcher has run this line (excluding stalls). Drives the
+    /// 2-dots-per-step cadence so a stall of odd length can't desync it.
+    #[serde(default)]
+    fetch_dot: u16,
 }
 
 impl Default for PixelFetcher {
@@ -68,16 +75,35 @@ impl Default for PixelFetcher {
             bgw_fetched_data: Default::default(),
             sprite_fetcher: Default::default(),
             scx_discard: 0,
+            stall_dots: 0,
+            fetch_dot: 0,
         }
     }
 }
 
 impl PixelFetcher {
     #[inline(always)]
-    pub fn tick(&mut self, lcd: &mut Lcd, vram: &VideoRam, line_ticks: usize) {
-        // The first four steps take 2 dots each and the fifth step is attempted every dot until it succeeds
-        // Fetch on odd lines.
-        if line_ticks & 1 != 0 || self.fetch_step == FetchStep::Push {
+    pub fn tick(&mut self, lcd: &mut Lcd, vram: &VideoRam, _line_ticks: usize) {
+        // Sprite fetches stall the whole pipeline, extending mode 3.
+        if self.stall_dots > 0 {
+            self.stall_dots -= 1;
+            return;
+        }
+
+        if lcd.control.is_obj_enabled() {
+            let x = lcd.buffer.count_x() as u8;
+            let stall = self.sprite_fetcher.take_penalty(x, lcd.scroll_x);
+
+            if stall > 0 {
+                self.stall_dots = stall - 1; // this dot is part of the stall
+                return;
+            }
+        }
+
+        self.fetch_dot += 1;
+
+        // The first three steps take 2 dots each and the push step is attempted every dot until it succeeds
+        if self.fetch_dot & 1 != 0 || self.fetch_step == FetchStep::Push {
             // SAFETY: we control FETCH_FNS and FetchStep
             unsafe {
                 FETCH_FNS.get_unchecked(self.fetch_step as usize)(self, lcd, vram);
@@ -200,11 +226,6 @@ impl PixelFetcher {
     #[inline(always)]
     fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
         self.bgw_fetched_data.tile_line.byte1 = self.read_tile_byte(lcd, vram, 1);
-        self.fetch_step = FetchStep::Idle;
-    }
-
-    #[inline(always)]
-    fn fetch_idle(&mut self, _: &Lcd, _: &VideoRam) {
         self.fetch_step = FetchStep::Push;
     }
 
@@ -221,6 +242,8 @@ impl PixelFetcher {
         self.pixel_fifo.clear();
         self.fetch_x = 0;
         self.scx_discard = scroll_x % TILE_WIDTH as u8;
+        self.stall_dots = 0;
+        self.fetch_dot = 0;
     }
 }
 
@@ -230,6 +253,5 @@ pub enum FetchStep {
     Tile,
     Data0,
     Data1,
-    Idle,
     Push,
 }
