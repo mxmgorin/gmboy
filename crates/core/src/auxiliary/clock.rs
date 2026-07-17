@@ -58,7 +58,12 @@ impl Clock {
 
             for t in 0..T_CYCLES_PER_M_CYCLE {
                 self.bus.io.timer.tick(&mut self.bus.io.interrupts);
-                self.bus.io.serial.tick(&mut self.bus.io.interrupts);
+                let sclk = self
+                    .bus
+                    .io
+                    .timer
+                    .serial_clock_bit(self.bus.io.serial.is_fast_clock());
+                self.bus.io.serial.tick(sclk, &mut self.bus.io.interrupts);
 
                 if self.bus.io.cgb_speed.double_speed && odd_m_cycle {
                     continue;

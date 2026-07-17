@@ -73,16 +73,17 @@ impl Default for WaveChannel {
 impl WaveChannel {
     #[inline]
     pub fn read(&self, address: u16) -> u8 {
-        let val = match address {
+        // Write-only bits read back as 1.
+        match address {
             CH3_NR30_DAC_ENABLE_ADDRESS => self.nrx0_dac_enable.read(),
             CH3_NR31_LENGTH_TIMER_ADDRESS => 0xFF, // write-only
-            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.nrx2_output_level.read(),
+            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.nrx2_output_level.read() | 0x9F,
             CH3_NR33_PERIOD_LOW_ADDRESS => 0xFF, // write-only
-            CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => self.nrx3x4_period_and_ctrl.nrx4.read(),
+            CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => {
+                self.nrx3x4_period_and_ctrl.nrx4.read() | 0xBF
+            }
             _ => panic!("Invalid WaveChannel address: {address:#X}"),
-        };
-
-        val | CH3_NR30_UNUSED_MASK
+        }
     }
 
     #[inline]
@@ -199,7 +200,8 @@ impl NR30 {
     }
 
     pub fn read(&self) -> u8 {
-        self.byte | (1 << CH3_NR30_DAC_ENABLE_POS)
+        // Only the DAC-enable bit is readable; the rest read as 1.
+        self.byte | CH3_NR30_UNUSED_MASK
     }
 }
 

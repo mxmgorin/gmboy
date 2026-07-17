@@ -33,7 +33,7 @@ impl VideoRam {
 
     #[inline(always)]
     pub fn read_bank_number(&self) -> u8 {
-        self.bank_number | 0b1110
+        self.bank_number | 0xFE // all bits except bit 0 read as 1
     }
 
     #[inline(always)]

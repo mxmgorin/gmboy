@@ -10,7 +10,7 @@ use crate::apu::channels::square_channel::{
 use crate::apu::channels::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
-use crate::apu::dac::apply_dac;
+use crate::apu::dac::{apply_dac, DigitalSampleProducer};
 use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
 use crate::cpu::CPU_CLOCK_SPEED;
@@ -248,6 +248,31 @@ impl Apu {
                 panic!("Invalid APU address: {address:x}");
             }
         }
+    }
+
+    /// Register state the boot ROM leaves behind: master power on with the
+    /// ch1 status flag set, boot-beep duty/envelope in ch1, default panning
+    /// and volume (mooneye boot_hwio).
+    pub fn set_boot_state(&mut self) {
+        self.nr52.byte = 0x81;
+        self.mixer.nr50_volume.byte = 0x77;
+        self.mixer.nr51_panning.byte = 0xF3;
+        self.write(0xFF11, 0x80); // NR11: duty 2 (the boot beep), length 0
+        self.write(0xFF12, 0xF3); // NR12: initial volume 15, decreasing, pace 3
+    }
+
+    /// PCM12 ($FF76, CGB): current digital output of channels 1 (low nibble)
+    /// and 2 (high nibble).
+    #[inline(always)]
+    pub fn read_pcm12(&self) -> u8 {
+        self.ch1.get_sample(self.nr52) | (self.ch2.get_sample(self.nr52) << 4)
+    }
+
+    /// PCM34 ($FF77, CGB): current digital output of channels 3 (low nibble)
+    /// and 4 (high nibble).
+    #[inline(always)]
+    pub fn read_pcm34(&self) -> u8 {
+        self.ch3.get_sample(self.nr52) | (self.ch4.get_sample(self.nr52) << 4)
     }
 
     #[inline(always)]

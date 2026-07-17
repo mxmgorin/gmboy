@@ -71,15 +71,14 @@ impl DigitalSampleProducer for NoiseChannel {
 impl NoiseChannel {
     #[inline]
     pub fn read(&self, addr: u16) -> u8 {
-        let val = match addr {
+        // Write-only bits read back as 1; NR42/NR43 are fully readable.
+        match addr {
             NR41_CH4_LENGTH_TIMER_ADDRESS => 0xFF,
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => self.nrx2_envelope_and_dac.byte,
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte,
-            NR44_CH4_CONTROL_ADDRESS => self.nrx4_ctrl.read(),
+            NR44_CH4_CONTROL_ADDRESS => self.nrx4_ctrl.read() | NR44_CH4_UNUSED_MASK | 0x80,
             _ => panic!("Invalid NoiseChannel address: {addr:#X}"),
-        };
-
-        val | NR44_CH4_UNUSED_MASK
+        }
     }
 
     #[inline]

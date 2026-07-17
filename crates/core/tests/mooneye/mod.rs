@@ -9,7 +9,9 @@ use std::time::Duration;
 
 mod util;
 
-const TIMEOUT: Duration = Duration::from_secs(15);
+// Wall-clock budget per ROM. Debug-build emulation is slow and the suite runs
+// ROMs in parallel, so long tests (bits_ramg ~10 s alone) need generous slack.
+const TIMEOUT: Duration = Duration::from_secs(60);
 
 #[test]
 fn test_oam_dma_basic() {
@@ -780,6 +782,62 @@ fn test_stat_lyc_onoff() {
 fn test_vblank_stat_intr_gs() {
     let path = PathBuf::from("tests/mooneye/acceptance/ppu/vblank_stat_intr-GS.gb");
     let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_boot_div_dmgabcmgb() {
+    let path = PathBuf::from("tests/mooneye/acceptance/boot/boot_div-dmgABCmgb.gb");
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_boot_hwio_dmgabcmgb() {
+    let path = PathBuf::from("tests/mooneye/acceptance/boot/boot_hwio-dmgABCmgb.gb");
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_boot_sclk_align_dmgabcmgb() {
+    let path = PathBuf::from("tests/mooneye/acceptance/serial/boot_sclk_align-dmgABCmgb.gb");
+    let result = run_mooneye_rom_path(None, path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_misc_boot_div_cgbabcde() {
+    let path = PathBuf::from("tests/mooneye/misc/boot_div-cgbABCDE.gb");
+    let result = run_mooneye_rom_path(GbModel::Cgb.into(), path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_misc_boot_hwio_c() {
+    let path = PathBuf::from("tests/mooneye/misc/boot_hwio-C.gb");
+    let result = run_mooneye_rom_path(GbModel::Cgb.into(), path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_misc_bits_unused_hwio_c() {
+    let path = PathBuf::from("tests/mooneye/misc/bits/unused_hwio-C.gb");
+    let result = run_mooneye_rom_path(GbModel::Cgb.into(), path.clone(), TIMEOUT);
+
+    assert_result_path(path, result);
+}
+
+#[test]
+fn test_misc_ppu_vblank_stat_intr_c() {
+    let path = PathBuf::from("tests/mooneye/misc/ppu/vblank_stat_intr-C.gb");
+    let result = run_mooneye_rom_path(GbModel::Cgb.into(), path.clone(), TIMEOUT);
 
     assert_result_path(path, result);
 }

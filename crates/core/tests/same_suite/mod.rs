@@ -9,7 +9,7 @@ use crate::get_roms_path;
 use core::harness::{self, TestProtocol};
 use std::time::Duration;
 
-const TIMEOUT: Duration = Duration::from_secs(10);
+const TIMEOUT: Duration = Duration::from_secs(30);
 
 fn run(rel: &str) -> Result<(), String> {
     let path = get_roms_path().join("same-suite").join(rel);

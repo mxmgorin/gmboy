@@ -37,6 +37,12 @@
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
 
+The name `oxGBC` blends **ox**ide with **GBC** — it runs both the original Game Boy (DMG) and the Game Boy Color (CGB), built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds. It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, while providing modern features such as save states, rewind, shaders, and configurable controls.
+
+***Work in progress**: while most games run correctly, some issues may still occur.*
+
+## Demos
+
 <p align="center">
   <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/01bg.gif" target="_blank">
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/01bg.gif" alt="Demo 1" width="200"/>
@@ -46,25 +52,19 @@
   </a>&nbsp;&nbsp;
   <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/03bg.gif" target="_blank">
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/03bg.gif" alt="Demo 3" width="200"/>
-  </a>&nbsp;&nbsp;  
+  </a>&nbsp;&nbsp;
   <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" target="_blank">
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" alt="Demo 4" width="200"/>
   </a>
 </p>
 
-`oxGBC` (**ox**ide + **GBC**) is a Game Boy (DMG) and Game Boy Color (CGB) emulator written in Rust. It is built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds. The emulator aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, and cycle-synchronized subsystems, while providing modern features such as save states, rewind, shaders, and configurable controls.
-
-***Work in progress**: while most games run correctly, some issues may still occur.*
-
 ## Accuracy & Testing
 
-The emulator is continuously validated against community made test suites which are executed on CI via `cargo test`:
+The emulator is continuously validated against community made test suites which are executed on CI:
 
 - **Blargg** – Passes all tests
-- **Mooneye** – Passes most of the tests
+- **Mooneye** – Passes all tests
 - **Visual** - Passes the DMG-acid2, CGB-acid2, Mangen
-
-For the complete results, see [TESTS.md](./docs/TESTS.md).
 
 ## Features
 

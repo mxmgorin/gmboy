@@ -70,6 +70,11 @@ pub struct Lcd {
     /// mode 3 itself (mooneye lcdon_timing-GS vs lcdon_write_timing-GS).
     #[serde(default)]
     pub vram_read_prelock: bool,
+    /// CGB hardware running a DMG-only cart (compatibility mode): most
+    /// CGB-only registers (KEY1, SVBK, HDMA, FF74, OPRI, palette data ports)
+    /// read as $FF and ignore writes.
+    #[serde(default)]
+    pub dmg_compat: bool,
 }
 
 impl Default for Lcd {
@@ -108,7 +113,14 @@ impl Lcd {
             oam_read_blocked: false,
             oam_write_blocked: false,
             vram_read_prelock: false,
+            dmg_compat: false,
         }
+    }
+
+    /// Full CGB register set available: CGB hardware running a CGB cart.
+    #[inline(always)]
+    pub fn is_cgb_mode(&self) -> bool {
+        self.model == GbModel::Cgb && !self.dmg_compat
     }
 
     #[inline(always)]
@@ -585,9 +597,10 @@ impl CgbPalette {
             self.obj_ram[i * 2 + 1] = hi;
         }
 
-        // BCPS / OCPS registers after boot
-        self.bg_index = 0x00; // auto-increment disabled
-        self.obj_index = 0x00; // auto-increment disabled
+        // BCPS / OCPS after boot: the boot ROM leaves auto-increment on with
+        // the index past its last palette write (mooneye boot_hwio-C).
+        self.bg_index = 0x88;
+        self.obj_index = 0x90;
     }
 
     pub fn read(&self, addr: u16) -> u8 {

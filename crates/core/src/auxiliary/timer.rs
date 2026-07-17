@@ -103,6 +103,23 @@ impl Default for Timer {
 }
 
 impl Timer {
+    /// The serial clock is divided from this same counter: 8192 Hz (bit 8) or
+    /// the CGB fast 262144 Hz clock (bit 3).
+    #[inline(always)]
+    pub fn serial_clock_bit(&self, fast: bool) -> bool {
+        let mask = if fast { 1 << 3 } else { 1 << 8 };
+        self.div & mask != 0
+    }
+
+    /// Post-boot DIV phase differs per model (mooneye boot_div-dmgABCmgb /
+    /// boot_div-cgbABCDE).
+    pub fn set_boot_phase(&mut self, model: crate::emu::config::GbModel) {
+        self.div = match model {
+            crate::emu::config::GbModel::Dmg => 0xABCC,
+            crate::emu::config::GbModel::Cgb => 0x267A,
+        };
+    }
+
     #[inline]
     pub fn tick(&mut self, interrupts: &mut Interrupts) {
         // TIMA overflowed during the last cycle
@@ -240,7 +257,14 @@ impl Timer {
     #[inline(always)]
     pub fn read(&self, address: u16) -> u8 {
         match address {
-            TIMER_DIV_ADDRESS => (self.div >> 8) as u8, // most significant byte in a 16-bit long number
+            TIMER_DIV_ADDRESS => {
+                #[cfg(debug_assertions)]
+                if std::env::var_os("OXGBC_TRACE_DIV").is_some() {
+                    eprintln!("RD DIV counter={:04X}", self.div);
+                }
+
+                (self.div >> 8) as u8 // most significant byte in a 16-bit long number
+            }
             TIMER_TIMA_ADDRESS => {
                 // fix for tima_reload
                 if let Some(overflow_ticks) = self.tima_overflow_ticks {

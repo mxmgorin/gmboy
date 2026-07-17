@@ -87,6 +87,13 @@ impl Ppu {
 
             if self.lcd.ly < LCD_Y_RES {
                 self.lcd.oam_read_blocked = true;
+            } else if self.lcd.ly == LCD_Y_RES
+                && self.lcd.model == crate::emu::config::GbModel::Cgb
+            {
+                // On CGB the line-144 OAM STAT pulse fires one M-cycle before
+                // the VBlank interrupt (mooneye vblank_stat_intr-C); on DMG
+                // they are simultaneous (handled in set_mode_vblank).
+                self.update_stat_line(true, interrupts);
             }
         } else if self.line_ticks == TICKS_PER_LINE {
             self.lcd.update_lyc_flag();

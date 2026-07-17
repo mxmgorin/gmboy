@@ -59,6 +59,20 @@ impl Bus {
 
     fn set_model(&mut self, model: GbModel) {
         self.io.ppu.lcd.set_model(model);
+        self.io.timer.set_boot_phase(model);
+
+        // Post-boot-ROM state; only applies when running an actual cart (test
+        // harnesses build carts-less buses with their own initial state).
+        if !self.cart.is_empty() {
+            self.io.apu.set_boot_state();
+            // The boot ROM leaves a VBlank interrupt pending (mooneye boot_hwio).
+            self.io.interrupts.int_flags = 0x1;
+        }
+        // CGB hardware with a DMG-only cart runs in compatibility mode, where
+        // the CGB-only registers are disabled.
+        self.io.ppu.lcd.dmg_compat = model == GbModel::Cgb
+            && matches!(self.cart.data.cgb_flag, crate::cart::header::CgbFlag::DmgOnly)
+            && !self.cart.is_empty();
     }
 
     /// Creates with just array as memory. Use only for tests.
@@ -148,7 +162,7 @@ impl Bus {
             0xFF00..=0xFF7F => {
                 if addr >= VRAM_DMA_ADDR_START
                     && addr <= VRAM_DMA_ADDR_END
-                    && self.io.ppu.lcd.model == GbModel::Cgb
+                    && self.io.ppu.lcd.is_cgb_mode()
                 {
                     self.vram_dma
                         .write(addr, value, self.io.ppu.lcd.status.get_ppu_mode());

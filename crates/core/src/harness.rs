@@ -51,9 +51,11 @@ pub enum TestProtocol {
     BlarggMemory,
     /// gbmicrotest: result byte at `$FF82` (`0x01` = pass, `0xFF` = fail).
     GbMicrotest,
-    /// Watch every protocol above; whichever reports first wins. Convenient for
-    /// triaging an unknown ROM, but pass an explicit protocol when the suite is
-    /// known to avoid the (small) chance of a coincidental memory match.
+    /// Watch mooneye + both blargg protocols; whichever reports first wins.
+    /// Reliable for blargg (serial *and* memory ROMs in one pass), mooneye and
+    /// same-suite. Deliberately excludes [`GbMicrotest`], whose bare `$FF82` byte
+    /// reads `0xFF` (= "fail") on unrelated ROMs and would false-trigger — run
+    /// gbmicrotest with `--protocol gbmicrotest` explicitly.
     Auto,
 }
 
@@ -194,7 +196,9 @@ fn probe(cpu: &Cpu, protocol: TestProtocol) -> Option<TestOutcome> {
         }
     }
 
-    if protocol.watches(TestProtocol::GbMicrotest) {
+    // gbmicrotest is opt-in only: its bare `$FF82` byte collides with unrelated
+    // ROMs' HRAM, so it is never part of `Auto`.
+    if protocol == TestProtocol::GbMicrotest {
         if let Some(o) = gbmicrotest_probe(cpu) {
             return Some(o);
         }
@@ -204,6 +208,13 @@ fn probe(cpu: &Cpu, protocol: TestProtocol) -> Option<TestOutcome> {
 }
 
 fn mooneye_probe(cpu: &Cpu) -> Option<TestOutcome> {
+    // Mooneye signals its result with the `LD B,B` debug breakpoint; the
+    // registers are only meaningful there. Sampling them continuously gives
+    // false failures (boot_sclk_align counts B..L in lockstep through $42).
+    if cpu.step_ctx.opcode != 0x40 {
+        return None;
+    }
+
     let r = &cpu.registers;
 
     if r.b == 3 && r.c == 5 && r.d == 8 && r.e == 13 && r.h == 21 && r.l == 34 {

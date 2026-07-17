@@ -30,6 +30,18 @@ pub struct Io {
     pub ppu: Ppu,
     pub ram: Ram,
     pub cgb_speed: CgbSpeed,
+    /// CGB undocumented registers FF72-FF75.
+    #[serde(default)]
+    pub undoc: CgbUndocumented,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CgbUndocumented {
+    pub ff72: u8,
+    pub ff73: u8,
+    pub ff74: u8,
+    /// Only bits 4-6 are stored; the rest read back as 1.
+    pub ff75: u8,
 }
 
 impl Io {
@@ -43,6 +55,7 @@ impl Io {
             ppu,
             apu,
             cgb_speed: CgbSpeed::default(),
+            undoc: CgbUndocumented::default(),
         }
     }
 
@@ -57,14 +70,21 @@ impl Io {
                 self.apu.read(addr)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => self.ppu.lcd.read(addr),
-            0xFF4D => match self.ppu.lcd.model {
-                GbModel::Dmg => 0xFF,
-                GbModel::Cgb => self.cgb_speed.read(),
-            },
-            CGB_OBJ_PRIORITY_MODE_ADDR => match self.ppu.lcd.model {
-                GbModel::Cgb => self.ppu.lcd.read_obj_priority_mode(),
-                GbModel::Dmg => 0xFF,
-            },
+            // KEY1 is disabled in DMG-compat mode on CGB.
+            0xFF4D => {
+                if self.ppu.lcd.is_cgb_mode() {
+                    self.cgb_speed.read()
+                } else {
+                    0xFF
+                }
+            }
+            CGB_OBJ_PRIORITY_MODE_ADDR => {
+                if self.ppu.lcd.is_cgb_mode() {
+                    self.ppu.lcd.read_obj_priority_mode()
+                } else {
+                    0xFF
+                }
+            }
             VRAM_BANK_NUMBER_ADDR
             | 0xFF50
             | 0xFF51..=0xFF55
@@ -72,16 +92,22 @@ impl Io {
             | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.model {
                 GbModel::Dmg => 0xFF,
                 GbModel::Cgb => match addr {
+                    // VBK responds on CGB hardware even in DMG-compat mode
+                    // (locked to bank 0 there).
                     VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.read_bank_number(),
-                    WRAM_BANK_NUMBER_ADDR => self.ram.read_wram_bank(),
+                    WRAM_BANK_NUMBER_ADDR => {
+                        if self.ppu.lcd.is_cgb_mode() {
+                            self.ram.read_wram_bank()
+                        } else {
+                            0xFF
+                        }
+                    }
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
-                        // Only the data ports (BCPD/OCPD) are inaccessible during
-                        // mode 3; the BCPS/OCPS index registers stay readable.
-                        if self.ppu.lcd.is_vram_blocked()
-                            && matches!(
-                                addr,
-                                CGB_BG_PALLETE_DATA_ADDR | CGB_OBJ_PALLETE_DATA_ADDR
-                            )
+                        // The data ports (BCPD/OCPD) are inaccessible during
+                        // mode 3 and in DMG-compat mode; the BCPS/OCPS index
+                        // registers stay readable on CGB hardware.
+                        if matches!(addr, CGB_BG_PALLETE_DATA_ADDR | CGB_OBJ_PALLETE_DATA_ADDR)
+                            && (self.ppu.lcd.is_vram_blocked() || !self.ppu.lcd.is_cgb_mode())
                         {
                             return 0xFF;
                         }
@@ -91,6 +117,15 @@ impl Io {
                     _ => 0xFF,
                 },
             },
+            // CGB undocumented registers; present in DMG-compat mode too,
+            // except FF74 which is CGB-mode only.
+            0xFF72 if self.ppu.lcd.model == GbModel::Cgb => self.undoc.ff72,
+            0xFF73 if self.ppu.lcd.model == GbModel::Cgb => self.undoc.ff73,
+            0xFF74 if self.ppu.lcd.is_cgb_mode() => self.undoc.ff74,
+            0xFF75 if self.ppu.lcd.model == GbModel::Cgb => self.undoc.ff75 | 0x8F,
+            // PCM12 / PCM34: current digital output of the APU channels.
+            0xFF76 if self.ppu.lcd.model == GbModel::Cgb => self.apu.read_pcm12(),
+            0xFF77 if self.ppu.lcd.model == GbModel::Cgb => self.apu.read_pcm34(),
             0xFF0F => self.interrupts.int_flags | IO_IF_UNUSED_MASK,
             _ => 0xFF,
         }
@@ -109,17 +144,40 @@ impl Io {
             LCD_ADDRESS_START..=LCD_ADDRESS_END => {
                 self.ppu.write_lcd(addr, value, &mut self.interrupts)
             }
-            0xFF4D => self.cgb_speed.write(value),
-            CGB_OBJ_PRIORITY_MODE_ADDR => self.ppu.lcd.write_obj_priority_mode(value),
+            0xFF4D => {
+                if self.ppu.lcd.is_cgb_mode() {
+                    self.cgb_speed.write(value)
+                }
+            }
+            CGB_OBJ_PRIORITY_MODE_ADDR => {
+                if self.ppu.lcd.is_cgb_mode() {
+                    self.ppu.lcd.write_obj_priority_mode(value)
+                }
+            }
             VRAM_BANK_NUMBER_ADDR
             | 0xFF50
             | 0xFF51..=0xFF55
             | CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR
             | WRAM_BANK_NUMBER_ADDR => match self.ppu.lcd.model {
                 GbModel::Cgb => match addr {
-                    VRAM_BANK_NUMBER_ADDR => self.ppu.video_ram.write_bank_number(value),
-                    WRAM_BANK_NUMBER_ADDR => self.ram.write_wram_bank(value),
+                    VRAM_BANK_NUMBER_ADDR => {
+                        if self.ppu.lcd.is_cgb_mode() {
+                            self.ppu.video_ram.write_bank_number(value)
+                        }
+                    }
+                    WRAM_BANK_NUMBER_ADDR => {
+                        if self.ppu.lcd.is_cgb_mode() {
+                            self.ram.write_wram_bank(value)
+                        }
+                    }
                     CGB_PALLETE_START_ADDR..=CGB_PALLETE_END_ADDR => {
+                        // Data ports (BCPD/OCPD) are disabled in DMG-compat mode.
+                        if matches!(addr, CGB_BG_PALLETE_DATA_ADDR | CGB_OBJ_PALLETE_DATA_ADDR)
+                            && !self.ppu.lcd.is_cgb_mode()
+                        {
+                            return;
+                        }
+
                         if self.ppu.lcd.is_vram_blocked() {
                             // During mode 3 a data-port (BCPD/OCPD) write is dropped
                             // but still advances the auto-increment index; index-port
@@ -140,6 +198,10 @@ impl Io {
                 },
                 _ => {}
             },
+            0xFF72 if self.ppu.lcd.model == GbModel::Cgb => self.undoc.ff72 = value,
+            0xFF73 if self.ppu.lcd.model == GbModel::Cgb => self.undoc.ff73 = value,
+            0xFF74 if self.ppu.lcd.is_cgb_mode() => self.undoc.ff74 = value,
+            0xFF75 if self.ppu.lcd.model == GbModel::Cgb => self.undoc.ff75 = value & 0x70,
             0xFF0F => self.interrupts.int_flags = value,
             _ => {}
         }
@@ -153,7 +215,12 @@ pub struct Serial {
     /// FF02 — SC: Serial transfer control
     sc: u8,
     /// T-cycles left in the in-progress transfer (0 = idle).
-    transfer_cycles: u16,
+    /// Bits left in the in-progress transfer (0 = idle).
+    #[serde(default)]
+    bits_left: u8,
+    /// Previous state of the serial clock bit, for edge detection.
+    #[serde(default)]
+    prev_clock: bool,
     /// Byte latched when a transfer starts, for the debug serial log. Kept
     /// independent of the transfer timing so blargg's text output is captured
     /// even when the ROM fires bytes back-to-back without waiting.
@@ -171,25 +238,36 @@ impl Serial {
 
         if value & 0x81 == 0x81 {
             self.output = Some(self.sb);
-            let cycles_per_bit: u16 = if value & 0x02 != 0 { 16 } else { 512 };
-            self.transfer_cycles = cycles_per_bit * 8;
+            self.bits_left = 8;
         }
     }
 
-    /// Advance the in-progress transfer by one T-cycle. On completion the CPU
-    /// with no link partner shifts in all 1s, the transfer bit clears, and the
-    /// serial interrupt is requested.
+    /// The CGB fast clock (SC bit 1) is selected for the active transfer.
     #[inline(always)]
-    pub fn tick(&mut self, interrupts: &mut Interrupts) {
-        if self.transfer_cycles == 0 {
+    pub fn is_fast_clock(&self) -> bool {
+        self.sc & 0x02 != 0
+    }
+
+    /// Advance one T-cycle. The serial clock is divided from the same
+    /// free-running counter as DIV, so bit shifts align to edges anchored at
+    /// reset time, not at the SC write (mooneye boot_sclk_align): one bit per
+    /// falling edge of `clock_bit`. On completion the CPU with no link partner
+    /// has shifted in all 1s, the transfer bit clears, and the serial
+    /// interrupt is requested.
+    #[inline(always)]
+    pub fn tick(&mut self, clock_bit: bool, interrupts: &mut Interrupts) {
+        let falling = self.prev_clock && !clock_bit;
+        self.prev_clock = clock_bit;
+
+        if self.bits_left == 0 || !falling {
             return;
         }
 
-        self.transfer_cycles -= 1;
+        self.sb = (self.sb << 1) | 1;
+        self.bits_left -= 1;
 
-        if self.transfer_cycles == 0 {
+        if self.bits_left == 0 {
             self.sc &= 0x7F;
-            self.sb = 0xFF;
             interrupts.request_interrupt(InterruptType::Serial);
         }
     }

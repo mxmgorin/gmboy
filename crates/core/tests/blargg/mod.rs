@@ -5,7 +5,9 @@ use std::time::Duration;
 
 mod util;
 
-const TIMEOUT: Duration = Duration::from_secs(30);
+// Generous wall-clock budget: debug-build emulation under full-suite
+// parallelism can stretch a passing ROM well past its solo runtime.
+const TIMEOUT: Duration = Duration::from_secs(90);
 
 #[test]
 fn test_mem_read_timing() {

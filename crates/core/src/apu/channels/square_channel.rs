@@ -101,22 +101,22 @@ impl SquareChannel {
     pub fn read(&self, address: u16) -> u8 {
         let offset = self.get_offset(address);
 
-        let val = match offset {
+        // Write-only bits read back as 1: NRx0 bit 7, NRx1 length bits,
+        // NRx3 entirely, NRx4 everything but the length-enable bit.
+        match offset {
             0 => {
                 if let Some(sweep_timer) = &self.sweep_timer {
-                    sweep_timer.nr10.byte
+                    sweep_timer.nr10.byte | NR10_CH1_UNUSED_MASK
                 } else {
                     0xFF
                 }
             }
-            1 => self.nrx1_len_timer_duty_cycle.byte,
+            1 => self.nrx1_len_timer_duty_cycle.byte | 0x3F,
             2 => self.nrx2_volume_envelope_and_dac.byte,
             3 => 0xFF,
-            4 => self.nrx3x4_period_and_ctrl.nrx4.read(),
+            4 => self.nrx3x4_period_and_ctrl.nrx4.read() | 0xBF,
             _ => panic!("Invalid Square address: {address:#X}"),
-        };
-
-        val | NR10_CH1_UNUSED_MASK
+        }
     }
 
     #[inline]
