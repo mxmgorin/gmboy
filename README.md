@@ -60,11 +60,7 @@ The name `oxGBC` blends **ox**ide with **GBC** — it runs both the original Gam
 
 ## Accuracy & Testing
 
-The emulator is continuously validated against community made test suites which are executed on CI:
-
-- **Blargg** – Passes all tests
-- **Mooneye** – Passes all tests
-- **Visual** - Passes the DMG-acid2, CGB-acid2, Mangen
+Continuously validated in CI against community test ROMs and test suites: Blargg (all tests), Mooneye (all tests), DMG-acid2, CGB-acid2, CGB-acid-hell, and Mangen.
 
 ## Features
 

@@ -15,6 +15,7 @@ const DEMOS = {
   libbet: { url: './assets/libbet.gb', name: 'Libbet & the Magic Floor' },
   dmgacid2: { url: './assets/dmg-acid2.gb', name: 'dmg-acid2' },
   cgbacid2: { url: './assets/cgb-acid2.gbc', name: 'cgb-acid2' },
+  cgbacidhell: { url: './assets/cgb-acid-hell.gbc', name: 'cgb-acid-hell' },
   cpuinstrs: { url: './assets/cpu_instrs.gb', name: 'cpu_instrs' },
 };
 

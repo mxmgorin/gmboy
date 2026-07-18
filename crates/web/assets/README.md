@@ -36,11 +36,13 @@ Puzzle game — roll a ball to erase every tile.
 
 ## Test ROMs
 
-### dmg-acid2 (`dmg-acid2.gb`) · cgb-acid2 (`cgb-acid2.gbc`)
-PPU accuracy tests that render a reference "acid2" face.
+### dmg-acid2 (`dmg-acid2.gb`) · cgb-acid2 (`cgb-acid2.gbc`) · cgb-acid-hell (`cgb-acid-hell.gbc`)
+PPU accuracy tests that render a reference "acid2" face. `cgb-acid-hell` is a
+harder CGB-only variant that stresses mid-scanline PPU register changes.
 - **Author:** Matt Currie (mattcurrie)
 - **Source:** https://github.com/mattcurrie/dmg-acid2 ·
-  https://github.com/mattcurrie/cgb-acid2
+  https://github.com/mattcurrie/cgb-acid2 ·
+  https://github.com/mattcurrie/cgb-acid-hell
 - **License:** **MIT**
 
 ### cpu_instrs (`cpu_instrs.gb`)
