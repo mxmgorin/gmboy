@@ -1,5 +1,5 @@
 use crate::ppu::lcd::Lcd;
-use crate::ppu::{LCD_X_RES, LCD_Y_RES};
+use crate::ppu::LCD_Y_RES;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -23,27 +23,4 @@ impl LcdWindow {
         lcd.control.is_win_enabled() && self.x <= 166 && self.y < LCD_Y_RES
     }
 
-    #[inline(always)]
-    pub fn get_tilemap_addr(&self, fetch_x: u16, lcd: &Lcd) -> Option<u16> {
-        if !self.is_visible(lcd) {
-            return None;
-        }
-
-        let fetch_x = fetch_x.wrapping_add(7);
-
-        if fetch_x >= self.x as u16
-            && fetch_x < self.x as u16 + LCD_X_RES as u16 + 14
-            && lcd.ly as u16 >= self.y as u16
-            && (lcd.ly as u16) < self.y as u16 + LCD_Y_RES as u16
-        {
-            let w_tile_x = (fetch_x - self.x as u16) / 8; // Convert pixel X to tile X
-            let w_tile_y = (self.line_number / 8) as u16; // Convert pixel Y to tile Y
-            let area = lcd.control.get_win_map_area(); // Get window tile map base address (0x9800 or 0x9C00)
-            let map_addr = area + w_tile_x + (w_tile_y * 32);
-
-            return Some(map_addr);
-        }
-
-        None
-    }
 }

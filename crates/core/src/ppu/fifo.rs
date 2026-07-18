@@ -68,6 +68,17 @@ impl PixelFifo {
         self.pushed = 0;
     }
 
+    /// Drop the queued pixels but keep the line's stream position: the next
+    /// push takes the fifo index right after the last popped pixel, as if the
+    /// dropped in-flight pixels were never fetched. Used by the mid-line
+    /// window restart, where sprite mixing must stay in line coordinates.
+    #[inline(always)]
+    pub const fn restart(&mut self) {
+        self.tail = self.head;
+        self.size = 0;
+        self.pushed = self.popped;
+    }
+
     #[inline(always)]
     pub fn is_full(&self) -> bool {
         self.size > MAX_FIFO_SIZE

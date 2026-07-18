@@ -56,6 +56,21 @@ pub struct PixelFetcher {
     /// mode 3. Latched (not read live) so a mid-scanline SCX write can't change
     /// how many pixels are dropped at the left edge.
     scx_discard: u8,
+    /// The window trigger fired on this line (screen x reached WX-7 with the
+    /// window enabled): the BG fifo was dropped and fetching switched to
+    /// window tiles. Stays set for the rest of the line even if the window is
+    /// disabled mid-line, so a re-enable resumes instead of re-triggering.
+    #[serde(default)]
+    in_window: bool,
+    /// Window-space tile counter, incremented per window fetch. Independent of
+    /// `fetch_x` so the window always starts at its own column 0 regardless of
+    /// where on the line it triggered.
+    #[serde(default)]
+    win_fetch_x: u8,
+    /// Pixels to drop from the first window tile when WX < 7 (the window
+    /// hangs off the left edge of the screen).
+    #[serde(default)]
+    win_discard: u8,
     /// Remaining sprite-fetch stall dots; while non-zero the fetcher and the
     /// pixel output are frozen (extends mode 3).
     #[serde(default)]
@@ -75,6 +90,9 @@ impl Default for PixelFetcher {
             bgw_fetched_data: Default::default(),
             sprite_fetcher: Default::default(),
             scx_discard: 0,
+            in_window: false,
+            win_fetch_x: 0,
+            win_discard: 0,
             stall_dots: 0,
             fetch_dot: 0,
         }
@@ -84,6 +102,26 @@ impl Default for PixelFetcher {
 impl PixelFetcher {
     #[inline(always)]
     pub fn tick(&mut self, lcd: &mut Lcd, vram: &VideoRam, _line_ticks: usize) {
+        // Window trigger: the dot where the next screen pixel is WX-7 (or 0
+        // when WX < 7, with the off-screen part of the first tile dropped).
+        // In-flight BG pixels are discarded and fetching restarts at the
+        // window's own column 0 — pixel-exact, independent of the tile grid.
+        if !self.in_window && lcd.window.on(lcd) {
+            let wx = lcd.window.x;
+            let trigger_x = wx.saturating_sub(7);
+
+            if lcd.buffer.count_x() == trigger_x as usize {
+                self.in_window = true;
+                self.win_discard = 7u8.saturating_sub(wx);
+                // Drop the in-flight BG pixels but keep the line's stream
+                // position, and rewind the fetch column to match — sprite
+                // mixing and a later mid-line window-off both stay aligned.
+                self.pixel_fifo.restart();
+                self.fetch_x = self.pixel_fifo.pushed_count();
+                self.fetch_step = FetchStep::Tile;
+            }
+        }
+
         // Sprite fetches stall the whole pipeline, extending mode 3.
         if self.stall_dots > 0 {
             self.stall_dots -= 1;
@@ -112,11 +150,15 @@ impl PixelFetcher {
 
         // pop fifo to lcd
         if let Some((pixel, x)) = self.pixel_fifo.pop() {
-            // Check if we are in the window or background layer
-            // For the window layer, bypass scroll_x to avoid horizontal scrolling
-            if self.bgw_fetched_data.is_window {
-                // No horizontal scroll for window
-                lcd.push_pixel(pixel);
+            if self.in_window {
+                // Window pixels bypass the SCX fine scroll; when WX < 7 the
+                // first tile hangs off the left edge and its hidden pixels
+                // are dropped instead.
+                if self.win_discard > 0 {
+                    self.win_discard -= 1;
+                } else {
+                    lcd.push_pixel(pixel);
+                }
             } else if x >= self.scx_discard {
                 // Drop the first `SCX & 7` background pixels (fine horizontal
                 // scroll), latched at mode-3 start.
@@ -168,22 +210,29 @@ impl PixelFetcher {
         // In CGB when LCDC bit 0 = 0, BG and Window are still drawn
         // But OBJ always has priority over BG,
         if lcdc.is_bgw_enabled() || lcd.model == GbModel::Cgb {
-            let (map_y, tilemap_addr) =
-                if let Some(tilemap_addr) = lcd.window.get_tilemap_addr(self.fetch_x as u16, lcd) {
-                    self.bgw_fetched_data.is_window = true;
-                    let map_y = lcd.ly.wrapping_add(lcd.window.y);
+            // Once triggered, the window supplies tiles until the end of the
+            // line unless it gets disabled mid-line; its row comes from the
+            // internal line counter, its column from the window-space fetch
+            // counter (both independent of LY/SCX).
+            let (map_y, tilemap_addr) = if self.in_window && lcd.window.is_visible(lcd) {
+                self.bgw_fetched_data.is_window = true;
+                let map_y = lcd.window.line_number;
+                let tilemap_addr = lcd.control.get_win_map_area()
+                    + (self.win_fetch_x as u16 & 31)
+                    + ((map_y as u16 / TILE_HEIGHT) * 32);
+                self.win_fetch_x = self.win_fetch_x.wrapping_add(1);
 
-                    (map_y, tilemap_addr)
-                } else {
-                    let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
-                    let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
-                    let tilemap_addr = lcdc.get_bg_map_area()
-                        + (map_x as u16 / TILE_WIDTH)
-                        + ((map_y as u16 / TILE_HEIGHT) * 32);
-                    self.bgw_fetched_data.is_window = false;
+                (map_y, tilemap_addr)
+            } else {
+                let map_y = lcd.ly.wrapping_add(lcd.scroll_y);
+                let map_x = self.fetch_x.wrapping_add(lcd.scroll_x);
+                let tilemap_addr = lcdc.get_bg_map_area()
+                    + (map_x as u16 / TILE_WIDTH)
+                    + ((map_y as u16 / TILE_HEIGHT) * 32);
+                self.bgw_fetched_data.is_window = false;
 
-                    (map_y, tilemap_addr)
-                };
+                (map_y, tilemap_addr)
+            };
 
             let cgb_flags = vram.read_tile_flags(tilemap_addr);
             let y_flip = cgb_flags.is_y_flip();
@@ -242,6 +291,9 @@ impl PixelFetcher {
         self.pixel_fifo.clear();
         self.fetch_x = 0;
         self.scx_discard = scroll_x % TILE_WIDTH as u8;
+        self.in_window = false;
+        self.win_fetch_x = 0;
+        self.win_discard = 0;
         self.stall_dots = 0;
         self.fetch_dot = 0;
     }
