@@ -24,6 +24,14 @@ pub struct BgwFetchedData {
     pub cgb_flags: TileFlags,
     pub map_y: u8,
     pub tile_index: u8,
+    /// Tilemap address the index was read from; the LCDC.4 mid-fetch glitch
+    /// re-reads it as tile data.
+    #[serde(default)]
+    pub map_addr: u16,
+    /// LCDC.4 (tile data area is $8000) latched when the tile index was
+    /// fetched, to detect a mid-fetch flip at the data1 read.
+    #[serde(default)]
+    pub area_8000: bool,
 }
 
 #[inline(always)]
@@ -244,6 +252,8 @@ impl PixelFetcher {
             // store only tile index because data area could change between data reads so read it on data steps
             // tile map is olways in bank 0
             self.bgw_fetched_data.tile_index = vram.read_from_bank(0, tilemap_addr);
+            self.bgw_fetched_data.map_addr = tilemap_addr;
+            self.bgw_fetched_data.area_8000 = lcdc.get_bgw_data_area() == 0x8000;
         }
 
         if lcdc.is_obj_enabled() {
@@ -274,7 +284,17 @@ impl PixelFetcher {
 
     #[inline(always)]
     fn fetch_data1(&mut self, lcd: &Lcd, vram: &VideoRam) {
-        self.bgw_fetched_data.tile_line.byte1 = self.read_tile_byte(lcd, vram, 1);
+        // LCDC.4 mid-fetch glitch: flipping the tile data area from $8800 to
+        // $8000 mid-fetch makes the second data read go through the tilemap
+        // address instead, returning the tile index byte (cgb-acid-hell draws
+        // its face with this).
+        let area_8000 = lcd.control.get_bgw_data_area() == 0x8000;
+
+        self.bgw_fetched_data.tile_line.byte1 = if area_8000 && !self.bgw_fetched_data.area_8000 {
+            vram.read_from_bank(0, self.bgw_fetched_data.map_addr)
+        } else {
+            self.read_tile_byte(lcd, vram, 1)
+        };
         self.fetch_step = FetchStep::Push;
     }
 
