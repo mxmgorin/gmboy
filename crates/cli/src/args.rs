@@ -116,6 +116,25 @@ pub fn parse_dump(s: &str) -> Result<(u16, u16), String> {
     Ok((addr, len))
 }
 
+/// Parse a `--vram` argument `BANK:ADDR[:LEN]`: BANK is 0/1, ADDR is hex
+/// (optional `0x`/`$` prefix), LEN is decimal (default 16). Returns
+/// `(bank, addr, len)`.
+pub fn parse_vram(s: &str) -> Result<(u8, u16, u16), String> {
+    let (bank_s, rest) = s
+        .split_once(':')
+        .ok_or_else(|| format!("invalid vram spec '{s}' (use BANK:ADDR[:LEN])"))?;
+
+    let bank = match bank_s {
+        "0" => 0,
+        "1" => 1,
+        other => return Err(format!("invalid vram bank '{other}' (use 0 or 1)")),
+    };
+
+    let (addr, len) = parse_dump(rest)?;
+
+    Ok((bank, addr, len))
+}
+
 fn parse_u16_hex(s: &str) -> Option<u16> {
     let s = s
         .trim_start_matches("0x")

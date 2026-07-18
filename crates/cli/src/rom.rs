@@ -32,6 +32,44 @@ fn is_rom(path: &Path) -> bool {
     )
 }
 
+/// True if `rel` (a ROM path relative to the scanned dir) matches any exclude
+/// glob. Patterns use `*` (any run, including `/`) and `?` (one char), e.g.
+/// `interrupt_time.gb` or `manual-only/*`.
+pub fn is_excluded(rel: &Path, excludes: &[String]) -> bool {
+    let rel = rel.to_string_lossy().replace('\\', "/");
+    excludes.iter().any(|g| glob_match(g, &rel))
+}
+
+/// Minimal wildcard match (`*` = any run incl. `/`, `?` = one char) — enough for
+/// the exclude patterns above, without pulling in a glob crate.
+pub fn glob_match(pattern: &str, text: &str) -> bool {
+    let p: Vec<char> = pattern.chars().collect();
+    let t: Vec<char> = text.chars().collect();
+    let (mut pi, mut ti) = (0, 0);
+    let (mut star, mut mark) = (None, 0);
+
+    while ti < t.len() {
+        if pi < p.len() && (p[pi] == '?' || p[pi] == t[ti]) {
+            pi += 1;
+            ti += 1;
+        } else if pi < p.len() && p[pi] == '*' {
+            star = Some(pi);
+            mark = ti;
+            pi += 1;
+        } else if let Some(s) = star {
+            pi = s + 1;
+            mark += 1;
+            ti = mark;
+        } else {
+            return false;
+        }
+    }
+    while pi < p.len() && p[pi] == '*' {
+        pi += 1;
+    }
+    pi == p.len()
+}
+
 /// Save the CPU's current LCD framebuffer as an RGB PNG.
 pub fn save_screenshot(cpu: &Cpu, path: &Path) -> Result<(), String> {
     let buffer = cpu.clock.bus.io.ppu.lcd.buffer.rgb888();

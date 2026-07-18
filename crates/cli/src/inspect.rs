@@ -53,6 +53,72 @@ pub fn dump_memory(cpu: &Cpu, addr: u16, len: u16) {
     }
 }
 
+/// Print the PPU register set, window state, and every in-use OAM entry — the
+/// state needed to understand what a raster effect was doing when the run
+/// stopped.
+pub fn dump_ppu(cpu: &Cpu) {
+    let ppu = &cpu.clock.bus.io.ppu;
+    let lcd = &ppu.lcd;
+
+    println!(
+        "ppu:  LCDC={:02X} STAT={:02X} LY={:3} LYC={:3} SCY={:3} SCX={:3} WY={:3} WX={:3}",
+        lcd.control.byte,
+        lcd.status.read(),
+        lcd.ly,
+        lcd.ly_compare,
+        lcd.scroll_y,
+        lcd.scroll_x,
+        lcd.window.y,
+        lcd.window.x,
+    );
+    println!(
+        "      win_line={} OPRI={} model={:?} dmg_compat={}",
+        lcd.window.line_number, lcd.obj_priority_mode, lcd.model, lcd.dmg_compat
+    );
+
+    println!("oam:  ## |   y   x tile flags");
+    for i in 0..40u16 {
+        let base = 0xFE00 + i * 4;
+        let y = ppu.oam_ram.read(base);
+        let x = ppu.oam_ram.read(base + 1);
+        let tile = ppu.oam_ram.read(base + 2);
+        let flags = ppu.oam_ram.read(base + 3);
+
+        // Skip untouched slots; keep off-screen-but-configured ones visible.
+        if (y, x, tile, flags) == (0, 0, 0, 0) {
+            continue;
+        }
+
+        println!("      {i:2} | {y:3} {x:3}   {tile:02X}    {flags:02X}");
+    }
+}
+
+/// Hex dump read straight out of VRAM with an explicit CGB bank, bypassing the
+/// bus (and therefore mode-3 access blocking, unlike `--dump`).
+pub fn dump_vram(cpu: &Cpu, bank: u8, addr: u16, len: u16) {
+    for row in (0..len).step_by(16) {
+        let base = addr.wrapping_add(row);
+        print!("vram{bank} {base:04X}:");
+
+        for col in 0..16 {
+            if row + col >= len {
+                break;
+            }
+            print!(
+                " {:02X}",
+                cpu.clock
+                    .bus
+                    .io
+                    .ppu
+                    .video_ram
+                    .read_from_bank(bank, base.wrapping_add(col))
+            );
+        }
+
+        println!();
+    }
+}
+
 // A self-loop (an instruction that jumps to itself, e.g. `JR -2`) has to repeat
 // this many times before we call it a hang — one repeat can be a transient
 // (e.g. a HALT that rewinds PC to service a pending interrupt next step).

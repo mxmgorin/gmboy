@@ -3,7 +3,7 @@
 
 use crate::args::{next_val, ArgMatch, CommonOpts};
 use crate::report::{print_result_line, Report, RomResult};
-use crate::rom::{collect_roms, sanitize, save_screenshot};
+use crate::rom::{collect_roms, is_excluded, sanitize, save_screenshot};
 use core::harness;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -14,6 +14,7 @@ pub fn cmd_check(args: &[String]) -> Result<ExitCode, String> {
     let mut recursive = false;
     let mut json = false;
     let mut screenshot_dir: Option<PathBuf> = None;
+    let mut excludes: Vec<String> = Vec::new();
 
     let mut it = args.iter();
     while let Some(arg) = it.next() {
@@ -32,6 +33,7 @@ pub fn cmd_check(args: &[String]) -> Result<ExitCode, String> {
             "--screenshot-dir" => {
                 screenshot_dir = Some(PathBuf::from(next_val(&mut it, "--screenshot-dir")?))
             }
+            "--exclude" => excludes.push(next_val(&mut it, "--exclude")?),
             other if other.starts_with('-') => return Err(format!("unknown flag '{other}'")),
             other if dir.is_none() => dir = Some(PathBuf::from(other)),
             other => return Err(format!("unexpected argument '{other}'")),
@@ -46,6 +48,12 @@ pub fn cmd_check(args: &[String]) -> Result<ExitCode, String> {
     let mut roms = Vec::new();
     collect_roms(&dir, recursive, &mut roms).map_err(|e| e.to_string())?;
     roms.sort();
+    if !excludes.is_empty() {
+        roms.retain(|rom| {
+            let rel = rom.strip_prefix(&dir).unwrap_or(rom);
+            !is_excluded(rel, &excludes)
+        });
+    }
     if roms.is_empty() {
         return Err(format!("no .gb/.gbc ROMs found in {}", dir.display()));
     }

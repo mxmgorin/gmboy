@@ -3,6 +3,8 @@
 
 pub mod check;
 pub mod run;
+pub mod score;
 
 pub use check::cmd_check;
 pub use run::cmd_run;
+pub use score::cmd_score;
