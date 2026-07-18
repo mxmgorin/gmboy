@@ -16,7 +16,6 @@ mod inspect;
 mod report;
 mod rom;
 
-use crate::args::DEFAULT_TIMEOUT_SECS;
 use crate::commands::{cmd_check, cmd_run, cmd_score};
 use std::process::ExitCode;
 
@@ -59,37 +58,16 @@ pub fn exit_code(ok: bool) -> ExitCode {
     }
 }
 
+/// The global usage: overview plus every command's option block. Each command
+/// keeps its own block next to its parser and prints only that on `<cmd> -h`.
 pub fn print_usage() {
     eprintln!("oxgbc-cli — headless Game Boy test-ROM runner\n");
     eprintln!("USAGE:");
     eprintln!("  oxgbc-cli run   <ROM> [options]");
     eprintln!("  oxgbc-cli check <DIR> [options]");
     eprintln!("  oxgbc-cli score [SUITE...] [options]\n");
-    eprintln!("COMMON OPTIONS:");
-    eprintln!("  --model <dmg|cgb|auto>   force hardware model (default: auto from header)");
-    eprintln!("  --timeout <secs>         per-ROM timeout (default: {DEFAULT_TIMEOUT_SECS})");
-    eprintln!("  --protocol <p>           auto|mooneye|blargg-serial|blargg-memory|gbmicrotest");
-    eprintln!("                           (default: auto)\n");
-    eprintln!("run OPTIONS:");
-    eprintln!("  --screenshot <PATH>      save the final framebuffer as PNG");
-    eprintln!("  --no-detect              run the full timeout with no pass/fail detection");
-    eprintln!("                           (for screen-only ROMs / to avoid false detections)");
-    eprintln!("  --serial                 print captured serial output");
-    eprintln!("  --regs                   print CPU registers + opcode bytes at PC after the run");
-    eprintln!("  --dump <ADDR[:LEN]>      hex-dump memory after the run (ADDR hex, LEN dec;");
-    eprintln!("                           repeatable, e.g. --dump C000:8)");
-    eprintln!("  --vram <B:ADDR[:LEN]>    hex-dump VRAM bank B directly (no mode-3 blocking;");
-    eprintln!("                           repeatable, e.g. --vram 1:9C00:32)");
-    eprintln!("  --ppu                    print PPU registers, window state, and OAM after the run");
-    eprintln!("  --trace <N>              record the last N instructions (freezes on a hang)");
-    eprintln!("  --compare <PNG>          diff the final framebuffer against a reference PNG");
-    eprintln!("  --tolerance <N>          per-channel diff allowed by --compare (default 0)\n");
-    eprintln!("check OPTIONS:");
-    eprintln!("  -r, --recursive          descend into subdirectories");
-    eprintln!("  --exclude <GLOB>         skip ROMs matching a glob (repeatable; * ? incl. /)");
-    eprintln!("  --json                   emit a JSON scoreboard");
-    eprintln!("  --screenshot-dir <DIR>   save each ROM's framebuffer as PNG\n");
-    eprintln!("score OPTIONS:  (regenerate the project scoreboards; run from repo root)");
-    eprintln!("  [SUITE...]               suites to score (default all): blargg mooneye same-suite");
-    eprintln!("  --out <DIR>              output dir (default: docs/testing/scores)");
+    args::print_common_usage();
+    commands::run::print_options();
+    commands::check::print_options();
+    commands::score::print_options();
 }

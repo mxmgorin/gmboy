@@ -6,7 +6,7 @@
 //! writes `<suite>.json` per suite plus a combined `README.md` into the output
 //! directory (default `docs/testing/scores`).
 
-use crate::args::{next_val, ArgMatch, CommonOpts};
+use crate::args::{next_val, parse_args, print_common_usage, CommonOpts};
 use crate::report::{render_index, Report, RomResult};
 use crate::rom::{collect_roms, is_excluded};
 use core::harness;
@@ -61,22 +61,17 @@ pub fn cmd_score(args: &[String]) -> Result<ExitCode, String> {
     let mut out = PathBuf::from(DEFAULT_OUT);
     let mut wanted: Vec<String> = Vec::new();
 
-    let mut it = args.iter();
-    while let Some(arg) = it.next() {
-        match opts.match_common(arg, &mut it)? {
-            ArgMatch::Common => continue,
-            ArgMatch::Help => {
-                crate::print_usage();
-                return Ok(ExitCode::SUCCESS);
-            }
-            ArgMatch::Other => {}
-        }
-
-        match arg.as_str() {
-            "--out" => out = PathBuf::from(next_val(&mut it, "--out")?),
+    let help = parse_args(args, &mut opts, |arg, it| {
+        match arg {
+            "--out" => out = PathBuf::from(next_val(it, "--out")?),
             other if other.starts_with('-') => return Err(format!("unknown flag '{other}'")),
             other => wanted.push(other.to_string()),
         }
+        Ok(())
+    })?;
+    if help {
+        print_usage();
+        return Ok(ExitCode::SUCCESS);
     }
 
     let selected = select_suites(&wanted)?;
@@ -104,6 +99,20 @@ pub fn cmd_score(args: &[String]) -> Result<ExitCode, String> {
     eprintln!("wrote {} scoreboard(s) -> {}", reports.len(), out.display());
 
     Ok(crate::exit_code(all_pass))
+}
+
+/// `score`'s full help: synopsis, common options, own flags.
+pub fn print_usage() {
+    eprintln!("USAGE:  oxgbc-cli score [SUITE...] [options]\n");
+    print_common_usage();
+    print_options();
+}
+
+/// Only `score`'s option block (also part of the global usage).
+pub fn print_options() {
+    eprintln!("score OPTIONS:  (regenerate the project scoreboards; run from repo root)");
+    eprintln!("  [SUITE...]               suites to score (default all): blargg mooneye same-suite");
+    eprintln!("  --out <DIR>              output dir (default: {DEFAULT_OUT})");
 }
 
 /// Resolve the requested suite names (empty = all), erroring on an unknown one.

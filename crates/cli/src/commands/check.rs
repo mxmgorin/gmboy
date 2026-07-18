@@ -1,7 +1,7 @@
 //! `oxgbc-cli check <DIR>` — batch-run every ROM under a directory and print a
 //! pass/fail table (or a JSON scoreboard with `--json`).
 
-use crate::args::{next_val, ArgMatch, CommonOpts};
+use crate::args::{next_val, parse_args, print_common_usage, CommonOpts};
 use crate::report::{print_result_line, Report, RomResult};
 use crate::rom::{collect_roms, is_excluded, sanitize, save_screenshot};
 use core::harness;
@@ -9,35 +9,30 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 pub fn cmd_check(args: &[String]) -> Result<ExitCode, String> {
-    let mut dir: Option<PathBuf> = None;
     let mut opts = CommonOpts::default();
+    let mut dir: Option<PathBuf> = None;
     let mut recursive = false;
     let mut json = false;
     let mut screenshot_dir: Option<PathBuf> = None;
     let mut excludes: Vec<String> = Vec::new();
 
-    let mut it = args.iter();
-    while let Some(arg) = it.next() {
-        match opts.match_common(arg, &mut it)? {
-            ArgMatch::Common => continue,
-            ArgMatch::Help => {
-                crate::print_usage();
-                return Ok(ExitCode::SUCCESS);
-            }
-            ArgMatch::Other => {}
-        }
-
-        match arg.as_str() {
+    let help = parse_args(args, &mut opts, |arg, it| {
+        match arg {
             "-r" | "--recursive" => recursive = true,
             "--json" => json = true,
             "--screenshot-dir" => {
-                screenshot_dir = Some(PathBuf::from(next_val(&mut it, "--screenshot-dir")?))
+                screenshot_dir = Some(PathBuf::from(next_val(it, "--screenshot-dir")?))
             }
-            "--exclude" => excludes.push(next_val(&mut it, "--exclude")?),
+            "--exclude" => excludes.push(next_val(it, "--exclude")?),
             other if other.starts_with('-') => return Err(format!("unknown flag '{other}'")),
             other if dir.is_none() => dir = Some(PathBuf::from(other)),
             other => return Err(format!("unexpected argument '{other}'")),
         }
+        Ok(())
+    })?;
+    if help {
+        print_usage();
+        return Ok(ExitCode::SUCCESS);
     }
 
     let dir = dir.ok_or("missing <DIR> path")?;
@@ -98,4 +93,20 @@ pub fn cmd_check(args: &[String]) -> Result<ExitCode, String> {
     }
 
     Ok(crate::exit_code(report.passed == report.total))
+}
+
+/// `check`'s full help: synopsis, common options, own flags.
+pub fn print_usage() {
+    eprintln!("USAGE:  oxgbc-cli check <DIR> [options]\n");
+    print_common_usage();
+    print_options();
+}
+
+/// Only `check`'s option block (also part of the global usage).
+pub fn print_options() {
+    eprintln!("check OPTIONS:");
+    eprintln!("  -r, --recursive          descend into subdirectories");
+    eprintln!("  --exclude <GLOB>         skip ROMs matching a glob (repeatable; * ? incl. /)");
+    eprintln!("  --json                   emit a JSON scoreboard");
+    eprintln!("  --screenshot-dir <DIR>   save each ROM's framebuffer as PNG\n");
 }

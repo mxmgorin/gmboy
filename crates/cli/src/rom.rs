@@ -130,3 +130,33 @@ pub fn compare_to_reference(cpu: &Cpu, ref_path: &Path, tolerance: u8) -> Result
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::glob_match;
+
+    #[test]
+    fn literal_and_question() {
+        assert!(glob_match("reg_f.gb", "reg_f.gb"));
+        assert!(glob_match("reg_?.gb", "reg_f.gb"));
+        assert!(!glob_match("reg_f.gb", "reg_f.gbc"));
+        assert!(!glob_match("reg_?.gb", "reg_ff.gb"));
+    }
+
+    #[test]
+    fn star_crosses_separators() {
+        assert!(glob_match("manual-only/*", "manual-only/sprite_priority.gb"));
+        assert!(glob_match("*-dmg0.gb", "boot_regs-dmg0.gb"));
+        assert!(glob_match("*div*", "acceptance/timer/div_write.gb"));
+        assert!(!glob_match("manual-only/*", "acceptance/manual-only.gb"));
+    }
+
+    #[test]
+    fn star_backtracking() {
+        assert!(glob_match("*.gb", "a.gb"));
+        assert!(glob_match("a*b*c", "a_x_b_y_c"));
+        assert!(!glob_match("a*b*c", "a_x_b_y"));
+        assert!(glob_match("*", ""));
+        assert!(!glob_match("?", ""));
+    }
+}

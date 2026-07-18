@@ -25,31 +25,36 @@ impl Default for CommonOpts {
     }
 }
 
-/// How one argument matched against the shared options.
-pub enum ArgMatch {
-    /// Consumed as a common flag — continue the parse loop.
-    Common,
-    /// `-h`/`--help` seen — the caller should print usage and exit 0.
-    Help,
-    /// Not a common flag — the caller handles it (command flag or positional).
-    Other,
+/// Drive the parse loop shared by every command: the common flags are consumed
+/// here, anything else (command flags and positionals) goes to `on_arg`, which
+/// pulls a flag's value from the iterator when it takes one. Returns `true`
+/// when `-h`/`--help` was seen — the caller should print its usage and exit 0.
+pub fn parse_args(
+    args: &[String],
+    common: &mut CommonOpts,
+    mut on_arg: impl FnMut(&str, &mut Iter<String>) -> Result<(), String>,
+) -> Result<bool, String> {
+    let mut it = args.iter();
+    while let Some(arg) = it.next() {
+        match arg.as_str() {
+            "--model" => common.model = parse_model(&next_val(&mut it, "--model")?)?,
+            "--timeout" => common.timeout = parse_timeout(&next_val(&mut it, "--timeout")?)?,
+            "--protocol" => common.protocol = parse_protocol(&next_val(&mut it, "--protocol")?)?,
+            "-h" | "--help" => return Ok(true),
+            other => on_arg(other, &mut it)?,
+        }
+    }
+
+    Ok(false)
 }
 
-impl CommonOpts {
-    /// Match `arg` against the shared flags, pulling its value from `it` when the
-    /// flag takes one. Lets each command reuse the common parsing and only spell
-    /// out its own flags and positionals.
-    pub fn match_common(&mut self, arg: &str, it: &mut Iter<String>) -> Result<ArgMatch, String> {
-        match arg {
-            "--model" => self.model = parse_model(&next_val(it, "--model")?)?,
-            "--timeout" => self.timeout = parse_timeout(&next_val(it, "--timeout")?)?,
-            "--protocol" => self.protocol = parse_protocol(&next_val(it, "--protocol")?)?,
-            "-h" | "--help" => return Ok(ArgMatch::Help),
-            _ => return Ok(ArgMatch::Other),
-        }
-
-        Ok(ArgMatch::Common)
-    }
+/// Print the option block shared by every command.
+pub fn print_common_usage() {
+    eprintln!("COMMON OPTIONS:");
+    eprintln!("  --model <dmg|cgb|auto>   force hardware model (default: auto from header)");
+    eprintln!("  --timeout <secs>         per-ROM timeout (default: {DEFAULT_TIMEOUT_SECS})");
+    eprintln!("  --protocol <p>           auto|mooneye|blargg-serial|blargg-memory|gbmicrotest");
+    eprintln!("                           (default: auto)\n");
 }
 
 /// Pull the value that follows a value-taking flag, erroring if it is missing.
@@ -142,4 +147,34 @@ fn parse_u16_hex(s: &str) -> Option<u16> {
         .trim_start_matches('$');
 
     u16::from_str_radix(s, 16).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dump_specs() {
+        assert_eq!(parse_dump("C000"), Ok((0xC000, 16)));
+        assert_eq!(parse_dump("0xC000:8"), Ok((0xC000, 8)));
+        assert_eq!(parse_dump("$ff80:2"), Ok((0xFF80, 2)));
+        assert!(parse_dump("C000:0").is_err());
+        assert!(parse_dump("xyz").is_err());
+    }
+
+    #[test]
+    fn vram_specs() {
+        assert_eq!(parse_vram("1:9C00:32"), Ok((1, 0x9C00, 32)));
+        assert_eq!(parse_vram("0:8000"), Ok((0, 0x8000, 16)));
+        assert!(parse_vram("2:8000").is_err());
+        assert!(parse_vram("9C00").is_err());
+    }
+
+    #[test]
+    fn timeouts() {
+        assert_eq!(parse_timeout("1.5"), Ok(Duration::from_secs_f64(1.5)));
+        assert!(parse_timeout("0").is_err());
+        assert!(parse_timeout("-3").is_err());
+        assert!(parse_timeout("inf").is_err());
+    }
 }

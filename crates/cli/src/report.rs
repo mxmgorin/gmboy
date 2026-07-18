@@ -5,11 +5,34 @@ use core::harness::{TestOutcome, TestRun};
 use serde::Serialize;
 use std::path::Path;
 
+/// The classified result of one ROM run. Serializes to its lowercase name in
+/// JSON, matching the label used in the Markdown tables.
+#[derive(Serialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum Outcome {
+    Pass,
+    Fail,
+    Timeout,
+    /// Could not even be booted (bad file / unsupported cart).
+    Error,
+}
+
+impl Outcome {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Pass => "pass",
+            Self::Fail => "fail",
+            Self::Timeout => "timeout",
+            Self::Error => "error",
+        }
+    }
+}
+
 /// The outcome of running one ROM.
 #[derive(Serialize)]
 pub struct RomResult {
     rom: String,
-    outcome: &'static str,
+    outcome: Outcome,
     elapsed_s: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     detail: Option<String>,
@@ -18,9 +41,9 @@ pub struct RomResult {
 impl RomResult {
     pub fn from_run(rom: String, run: &TestRun) -> Self {
         let (outcome, detail) = match &run.outcome {
-            TestOutcome::Pass => ("pass", None),
-            TestOutcome::Fail(msg) => ("fail", Some(msg.clone())),
-            TestOutcome::Timeout => ("timeout", None),
+            TestOutcome::Pass => (Outcome::Pass, None),
+            TestOutcome::Fail(msg) => (Outcome::Fail, Some(msg.clone())),
+            TestOutcome::Timeout => (Outcome::Timeout, None),
         };
 
         Self {
@@ -35,7 +58,7 @@ impl RomResult {
     pub fn error(rom: String, err: String) -> Self {
         Self {
             rom,
-            outcome: "error",
+            outcome: Outcome::Error,
             elapsed_s: 0.0,
             detail: Some(err),
         }
@@ -68,10 +91,10 @@ impl Report {
 
         for res in &report.results {
             match res.outcome {
-                "pass" => report.passed += 1,
-                "fail" => report.failed += 1,
-                "timeout" => report.timeout += 1,
-                _ => report.errored += 1,
+                Outcome::Pass => report.passed += 1,
+                Outcome::Fail => report.failed += 1,
+                Outcome::Timeout => report.timeout += 1,
+                Outcome::Error => report.errored += 1,
             }
         }
 
@@ -86,7 +109,11 @@ impl Report {
             self.passed, self.total, self.failed, self.timeout, self.errored
         );
 
-        let bad: Vec<&RomResult> = self.results.iter().filter(|r| r.outcome != "pass").collect();
+        let bad: Vec<&RomResult> = self
+            .results
+            .iter()
+            .filter(|r| r.outcome != Outcome::Pass)
+            .collect();
         if bad.is_empty() {
             s.push_str("All ROMs pass ✅\n");
             return s;
@@ -100,7 +127,7 @@ impl Report {
             s.push_str(&format!(
                 "| `{}` | {} | {} |\n",
                 r.rom,
-                r.outcome,
+                r.outcome.label(),
                 r.detail.as_deref().unwrap_or("")
             ));
         }
@@ -123,7 +150,7 @@ impl Report {
 
 /// `TAG    rom/path.gb  (0.31s)  optional detail`
 pub fn print_result_line(r: &RomResult) {
-    let tag = r.outcome.to_uppercase();
+    let tag = r.outcome.label().to_uppercase();
     print!("{tag:<8}{}  ({:.2}s)", r.rom, r.elapsed_s);
     if let Some(detail) = &r.detail {
         print!("  {detail}");
