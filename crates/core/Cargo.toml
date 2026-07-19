@@ -9,6 +9,8 @@ authors = ["troidem <mxmgorin@gmail.com>"]
 default = []
 debug = []
 lazy-flags = []
+# temporary instrumentation for same-suite APU timing calibration
+apu-trace = []
 
 [dependencies]
 serde_json = "1.0.*"

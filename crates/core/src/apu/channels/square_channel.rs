@@ -50,6 +50,10 @@ pub struct SquareChannel {
     length_timer: LengthTimer,
     envelope_timer: EnvelopeTimer,
     pub duty_sequence: usize,
+    /// A freshly (re)triggered channel outputs digital 0 until the first
+    /// duty step after the trigger delay elapses.
+    #[serde(default)]
+    suppressed: bool,
 }
 
 impl DacEnable for SquareChannel {
@@ -60,7 +64,7 @@ impl DacEnable for SquareChannel {
 
 impl DigitalSampleProducer for SquareChannel {
     fn get_sample(&self, master_ctrl: NR52) -> u8 {
-        if !master_ctrl.is_ch_on(self.ch_type) {
+        if !master_ctrl.is_ch_on(self.ch_type) || self.suppressed {
             return 0;
         }
 
@@ -94,6 +98,7 @@ impl SquareChannel {
             period_timer: PeriodTimer::new(ch_type),
             duty_sequence: 0,
             envelope_timer: Default::default(),
+            suppressed: false,
         }
     }
 
@@ -120,7 +125,14 @@ impl SquareChannel {
     }
 
     #[inline]
-    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52, len_first_half: bool) {
+    pub fn write(
+        &mut self,
+        address: u16,
+        value: u8,
+        master_ctrl: &mut NR52,
+        len_first_half: bool,
+        lf_odd: bool,
+    ) {
         let offset = self.get_offset(address);
 
         match offset {
@@ -154,7 +166,7 @@ impl SquareChannel {
                 }
 
                 if nrx4.is_triggered() {
-                    self.trigger(master_ctrl, len_first_half);
+                    self.trigger(master_ctrl, len_first_half, lf_odd);
                 }
             }
             _ => panic!("Invalid Square address: {:#X}", address),
@@ -188,11 +200,13 @@ impl SquareChannel {
     pub fn tick(&mut self) {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.duty_sequence = (self.duty_sequence + 1) & 0x07;
+            self.suppressed = false;
         }
     }
 
     #[inline]
-    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool) {
+    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool, lf_odd: bool) {
+        let was_active = nr52.is_ch_on(self.ch_type);
         nr52.activate_ch(self.ch_type);
 
         if self.length_timer.is_expired() {
@@ -200,7 +214,19 @@ impl SquareChannel {
             self.length_timer.reset(extra);
         }
 
-        self.period_timer.reload(&self.nrx3x4_period_and_ctrl);
+        // Trigger-to-first-duty-step latency (SameBoy, in T-cycles = 2x its
+        // 2 MHz units): restarting an inactive channel takes 2 extra duty
+        // cycles minus the 1 MHz phase, an active one 1 extra.
+        let delay = if was_active { 8 } else { 12 } - 2 * lf_odd as u16;
+        self.period_timer
+            .reload_with_delay(&self.nrx3x4_period_and_ctrl, delay);
+
+        // A channel activated from off holds digital 0 until its first duty
+        // step; retriggering an active one keeps outputting the current step.
+        if !was_active {
+            self.suppressed = true;
+        }
+
         self.envelope_timer
             .reload(self.nrx2_volume_envelope_and_dac);
 

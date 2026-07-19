@@ -72,6 +72,86 @@ fn apu_channel_4_volume_div() {
     run("apu/channel_4/channel_4_volume_div.gb").unwrap();
 }
 
+// Square-channel trigger semantics: inactive channels freeze their frequency
+// timer, a fresh activation is suppressed (digital 0) until its first duty
+// step, and the trigger-to-step latency depends on channel state and the
+// 1 MHz phase.
+
+#[test]
+fn apu_channel_1_delay() {
+    run("apu/channel_1/channel_1_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_freq_change() {
+    run("apu/channel_1/channel_1_freq_change.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_restart() {
+    run("apu/channel_1/channel_1_restart.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_restart_nrx2_glitch() {
+    run("apu/channel_1/channel_1_restart_nrx2_glitch.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_stop_div() {
+    run("apu/channel_1/channel_1_stop_div.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_stop_restart() {
+    run("apu/channel_1/channel_1_stop_restart.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_volume_div() {
+    run("apu/channel_1/channel_1_volume_div.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_delay() {
+    run("apu/channel_2/channel_2_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_freq_change() {
+    run("apu/channel_2/channel_2_freq_change.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_restart() {
+    run("apu/channel_2/channel_2_restart.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_restart_nrx2_glitch() {
+    run("apu/channel_2/channel_2_restart_nrx2_glitch.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_stop_div() {
+    run("apu/channel_2/channel_2_stop_div.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_stop_restart() {
+    run("apu/channel_2/channel_2_stop_restart.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_volume() {
+    run("apu/channel_2/channel_2_volume.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_volume_div() {
+    run("apu/channel_2/channel_2_volume_div.gb").unwrap();
+}
+
 #[test]
 fn dma_gbc_dma_cont() {
     run("dma/gbc_dma_cont.gb").unwrap();

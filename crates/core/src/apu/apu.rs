@@ -129,10 +129,20 @@ impl Apu {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.sequence_frame(div_apu_bit);
 
-        self.ch1.tick();
-        self.ch2.tick();
-        self.ch3.tick();
-        self.ch4.tick();
+        // Inactive channels do not clock their frequency timers: the duty /
+        // sample position stays frozen until the next trigger.
+        if self.nr52.is_ch1_on() {
+            self.ch1.tick();
+        }
+        if self.nr52.is_ch2_on() {
+            self.ch2.tick();
+        }
+        if self.nr52.is_ch3_on() {
+            self.ch3.tick();
+        }
+        if self.nr52.is_ch4_on() {
+            self.ch4.tick();
+        }
 
         // down sample by nearest-neighbor
         if self.ticks_count % TICKS_PER_SAMPLE == 0 {
@@ -229,17 +239,27 @@ impl Apu {
             value
         };
 
-        // First half of a length period: the next sequencer step is one that
-        // does NOT clock length (length clocks on even steps). NRx4 writes in
-        // this phase get the extra length clocking quirks.
+        // First half of a length period: the sequencer phase parity says the
+        // next event does NOT clock length. NRx4 writes in this phase get the
+        // extra length clocking quirks.
         let len_first_half = self.frame_sequencer_step & 1 == 1;
+        // 1 MHz phase of the 2 MHz APU clock (SameBoy's lf_div): trigger
+        // delays depend on it.
+        let lf_odd = self.ticks_count & 2 != 0;
+
+        #[cfg(feature = "apu-trace")]
+        if address == 0xFF19 || address == 0xFF18 {
+            eprintln!("NR2x write {address:04X}={value:02X} t={} lf={}", self.ticks_count, lf_odd);
+        }
 
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => {
-                self.ch1.write(address, value, &mut self.nr52, len_first_half)
+                self.ch1
+                    .write(address, value, &mut self.nr52, len_first_half, lf_odd)
             }
             CH2_START_ADDRESS..=CH2_END_ADDRESS => {
-                self.ch2.write(address, value, &mut self.nr52, len_first_half)
+                self.ch2
+                    .write(address, value, &mut self.nr52, len_first_half, lf_odd)
             }
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
                 self.ch3.write(address, value, &mut self.nr52, len_first_half)
@@ -303,7 +323,10 @@ impl Apu {
     /// and 2 (high nibble).
     #[inline(always)]
     pub fn read_pcm12(&self) -> u8 {
-        self.ch1.get_sample(self.nr52) | (self.ch2.get_sample(self.nr52) << 4)
+        let v = self.ch1.get_sample(self.nr52) | (self.ch2.get_sample(self.nr52) << 4);
+        #[cfg(feature = "apu-trace")]
+        eprintln!("PCM12 read t={} -> {v:02X}", self.ticks_count);
+        v
     }
 
     /// PCM34 ($FF77, CGB): current digital output of channels 3 (low nibble)

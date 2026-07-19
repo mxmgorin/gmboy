@@ -35,6 +35,13 @@ impl PeriodTimer {
         self.counter = (2048 - nrx3x4.get_period()) * self.get_multiplier();
     }
 
+    /// Trigger reload with an explicit T-cycle latency instead of the steady
+    /// `(2048 - period) * mult` cadence (square-channel trigger delays).
+    #[inline(always)]
+    pub fn reload_with_delay(&mut self, nrx3x4: &NRx3x4, delay: u16) {
+        self.counter = (2047 - nrx3x4.get_period()) * self.get_multiplier() + delay;
+    }
+
     #[inline(always)]
     fn is_expired(&self) -> bool {
         self.counter == 0
