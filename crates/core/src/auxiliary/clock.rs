@@ -15,6 +15,14 @@ pub struct Clock {
     pub bus: Bus,
     pub cpu_halted: bool,
     m_cycles: usize,
+    /// Toggles every CPU T-cycle in double speed: PPU/APU/VRAM-DMA sit on the
+    /// fixed 4 MHz clock, so they tick on every other CPU T-cycle,
+    /// phase-continuous across M-cycles (not in per-M-cycle bursts).
+    #[serde(default)]
+    ds_phase: bool,
+    /// Parity of device (4 MHz) ticks, drives the 2 MHz VRAM-DMA cadence.
+    #[serde(default)]
+    device_phase: bool,
 }
 
 impl Default for Clock {
@@ -30,6 +38,8 @@ impl Clock {
             bus,
             cpu_halted: false,
             m_cycles: 0,
+            ds_phase: false,
+            device_phase: false,
         }
     }
 
@@ -54,9 +64,8 @@ impl Clock {
         for _ in 0..m_cycles {
             self.m_cycles = self.m_cycles.wrapping_add(1);
             OamDma::tick(&mut self.bus);
-            let odd_m_cycle = self.m_cycles % 2 != 0;
 
-            for t in 0..T_CYCLES_PER_M_CYCLE {
+            for _ in 0..T_CYCLES_PER_M_CYCLE {
                 self.bus.io.timer.tick(&mut self.bus.io.interrupts);
                 let sclk = self
                     .bus
@@ -65,11 +74,20 @@ impl Clock {
                     .serial_clock_bit(self.bus.io.serial.is_fast_clock());
                 self.bus.io.serial.tick(sclk, &mut self.bus.io.interrupts);
 
-                if self.bus.io.cgb_speed.double_speed && odd_m_cycle {
-                    continue;
+                // PPU/APU/VRAM-DMA run on the fixed 4 MHz clock: every other
+                // CPU T-cycle in double speed, phase-continuous, so a 1
+                // M-cycle shift moves their observable phase by half a period.
+                if self.bus.io.cgb_speed.double_speed {
+                    self.ds_phase = !self.ds_phase;
+
+                    if self.ds_phase {
+                        continue;
+                    }
                 }
 
-                if t % 2 == 0 && !self.cpu_halted {
+                self.device_phase = !self.device_phase;
+
+                if self.device_phase && !self.cpu_halted {
                     VramDma::tick(&mut self.bus);
                 }
 

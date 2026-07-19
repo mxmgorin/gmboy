@@ -139,7 +139,7 @@ impl Io {
             0xFF02 => self.serial.write_sc(value),
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.write(addr, value),
             AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
-                self.apu.write(addr, value)
+                self.apu.write(addr, value, self.cgb_speed.double_speed)
             }
             LCD_ADDRESS_START..=LCD_ADDRESS_END => {
                 self.ppu.write_lcd(addr, value, &mut self.interrupts)

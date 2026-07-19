@@ -131,7 +131,7 @@ impl SquareChannel {
         value: u8,
         master_ctrl: &mut NR52,
         len_first_half: bool,
-        lf_odd: bool,
+        trigger_delay: u16,
     ) {
         let offset = self.get_offset(address);
 
@@ -166,7 +166,7 @@ impl SquareChannel {
                 }
 
                 if nrx4.is_triggered() {
-                    self.trigger(master_ctrl, len_first_half, lf_odd);
+                    self.trigger(master_ctrl, len_first_half, trigger_delay);
                 }
             }
             _ => panic!("Invalid Square address: {:#X}", address),
@@ -205,7 +205,7 @@ impl SquareChannel {
     }
 
     #[inline]
-    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool, lf_odd: bool) {
+    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool, trigger_delay: u16) {
         let was_active = nr52.is_ch_on(self.ch_type);
         nr52.activate_ch(self.ch_type);
 
@@ -214,10 +214,9 @@ impl SquareChannel {
             self.length_timer.reset(extra);
         }
 
-        // Trigger-to-first-duty-step latency (SameBoy, in T-cycles = 2x its
-        // 2 MHz units): restarting an inactive channel takes 2 extra duty
-        // cycles minus the 1 MHz phase, an active one 1 extra.
-        let delay = if was_active { 8 } else { 12 } - 2 * lf_odd as u16;
+        // Trigger-to-first-duty-step latency: an already-active channel
+        // restarts one 2 MHz cycle (4 T) sooner than an inactive one.
+        let delay = trigger_delay - if was_active { 4 } else { 0 };
         self.period_timer
             .reload_with_delay(&self.nrx3x4_period_and_ctrl, delay);
 

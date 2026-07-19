@@ -215,7 +215,7 @@ impl Apu {
     }
 
     #[inline(always)]
-    pub fn write(&mut self, address: u16, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8, double_speed: bool) {
         if (CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END).contains(&address) {
             self.ch3.wave_ram.write(address, value);
             return;
@@ -244,22 +244,29 @@ impl Apu {
         // extra length clocking quirks.
         let len_first_half = self.frame_sequencer_step & 1 == 1;
         // 1 MHz phase of the 2 MHz APU clock (SameBoy's lf_div): trigger
-        // delays depend on it.
+        // delays depend on it. In double speed a CPU write lands half a
+        // 2 MHz period later relative to the APU grid (calibrated against
+        // same-suite channel_2_delay / channel_2_align).
         let lf_odd = self.ticks_count & 2 != 0;
+        let trigger_delay_base: u16 = if double_speed { 14 } else { 12 };
 
         #[cfg(feature = "apu-trace")]
         if address == 0xFF19 || address == 0xFF18 {
             eprintln!("NR2x write {address:04X}={value:02X} t={} lf={}", self.ticks_count, lf_odd);
         }
 
+        // Trigger-to-first-duty-step latency for an inactive square channel;
+        // an active one restarts 4 T-cycles sooner (see SquareChannel).
+        let trigger_delay = trigger_delay_base - 2 * lf_odd as u16;
+
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => {
                 self.ch1
-                    .write(address, value, &mut self.nr52, len_first_half, lf_odd)
+                    .write(address, value, &mut self.nr52, len_first_half, trigger_delay)
             }
             CH2_START_ADDRESS..=CH2_END_ADDRESS => {
                 self.ch2
-                    .write(address, value, &mut self.nr52, len_first_half, lf_odd)
+                    .write(address, value, &mut self.nr52, len_first_half, trigger_delay)
             }
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
                 self.ch3.write(address, value, &mut self.nr52, len_first_half)
@@ -285,7 +292,7 @@ impl Apu {
                 } else if prev_enable && !self.nr52.is_audio_on() {
                     // turning_off
                     for addr in CH1_START_ADDRESS..=0xFF25 {
-                        self.write(addr, 0x00);
+                        self.write(addr, 0x00, double_speed);
                     }
 
                     self.frame_sequencer_step = 0;
@@ -315,8 +322,8 @@ impl Apu {
         self.nr52.byte = 0x81;
         self.mixer.nr50_volume.byte = 0x77;
         self.mixer.nr51_panning.byte = 0xF3;
-        self.write(0xFF11, 0x80); // NR11: duty 2 (the boot beep), length 0
-        self.write(0xFF12, 0xF3); // NR12: initial volume 15, decreasing, pace 3
+        self.write(0xFF11, 0x80, false); // NR11: duty 2 (the boot beep), length 0
+        self.write(0xFF12, 0xF3, false); // NR12: initial volume 15, decreasing, pace 3
     }
 
     /// PCM12 ($FF76, CGB): current digital output of channels 1 (low nibble)

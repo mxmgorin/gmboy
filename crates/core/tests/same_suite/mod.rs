@@ -78,6 +78,19 @@ fn apu_channel_4_volume_div() {
 // 1 MHz phase.
 
 #[test]
+fn apu_channel_1_align() {
+    // Runs in double speed: PPU/APU tick on every other CPU T-cycle,
+    // phase-continuous, so a 1 M-cycle shift flips the 1 MHz phase the
+    // trigger delay depends on.
+    run("apu/channel_1/channel_1_align.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_align() {
+    run("apu/channel_2/channel_2_align.gb").unwrap();
+}
+
+#[test]
 fn apu_channel_1_delay() {
     run("apu/channel_1/channel_1_delay.gb").unwrap();
 }
