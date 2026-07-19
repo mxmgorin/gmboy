@@ -50,6 +50,29 @@ fn apu_div_write_trigger_volume() {
 }
 
 #[test]
+fn apu_div_write_trigger_10() {
+    // Power-on while the DIV-APU bit is set: the first event is swallowed and
+    // the sequencer starts in the first half of a length period, so the NRx4
+    // extra length clocking quirks apply to the very first trigger.
+    run("apu/div_write_trigger_10.gb").unwrap();
+}
+
+#[test]
+fn apu_div_trigger_volume_10() {
+    run("apu/div_trigger_volume_10.gb").unwrap();
+}
+
+#[test]
+fn apu_div_write_trigger_volume_10() {
+    run("apu/div_write_trigger_volume_10.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_volume_div() {
+    run("apu/channel_4/channel_4_volume_div.gb").unwrap();
+}
+
+#[test]
 fn dma_gbc_dma_cont() {
     run("dma/gbc_dma_cont.gb").unwrap();
 }

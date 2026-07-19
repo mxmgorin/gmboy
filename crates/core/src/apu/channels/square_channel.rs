@@ -120,7 +120,7 @@ impl SquareChannel {
     }
 
     #[inline]
-    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
+    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52, len_first_half: bool) {
         let offset = self.get_offset(address);
 
         match offset {
@@ -144,10 +144,17 @@ impl SquareChannel {
             }
             3 => self.nrx3x4_period_and_ctrl.period_low.write(value),
             4 => {
+                let was_len_enabled = self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();
                 self.nrx3x4_period_and_ctrl.nrx4.write(value);
+                let nrx4 = self.nrx3x4_period_and_ctrl.nrx4;
 
-                if self.nrx3x4_period_and_ctrl.nrx4.is_triggered() {
-                    self.trigger(master_ctrl);
+                if len_first_half && !was_len_enabled && nrx4.is_length_enabled() {
+                    self.length_timer
+                        .extra_clock(master_ctrl, nrx4.is_triggered());
+                }
+
+                if nrx4.is_triggered() {
+                    self.trigger(master_ctrl, len_first_half);
                 }
             }
             _ => panic!("Invalid Square address: {:#X}", address),
@@ -185,11 +192,12 @@ impl SquareChannel {
     }
 
     #[inline]
-    fn trigger(&mut self, nr52: &mut NR52) {
+    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool) {
         nr52.activate_ch(self.ch_type);
 
         if self.length_timer.is_expired() {
-            self.length_timer.reset();
+            let extra = len_first_half && self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();
+            self.length_timer.reset(extra);
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);

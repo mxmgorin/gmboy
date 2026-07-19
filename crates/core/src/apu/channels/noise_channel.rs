@@ -82,7 +82,7 @@ impl NoiseChannel {
     }
 
     #[inline]
-    pub fn write(&mut self, addr: u16, value: u8, master_ctrl: &mut NR52) {
+    pub fn write(&mut self, addr: u16, value: u8, master_ctrl: &mut NR52, len_first_half: bool) {
         match addr {
             NR41_CH4_LENGTH_TIMER_ADDRESS => {
                 self.nrx1_len.byte = value;
@@ -97,10 +97,16 @@ impl NoiseChannel {
             }
             NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte = value,
             NR44_CH4_CONTROL_ADDRESS => {
+                let was_len_enabled = self.nrx4_ctrl.is_length_enabled();
                 self.nrx4_ctrl.write(value);
 
+                if len_first_half && !was_len_enabled && self.nrx4_ctrl.is_length_enabled() {
+                    self.length_timer
+                        .extra_clock(master_ctrl, self.nrx4_ctrl.is_triggered());
+                }
+
                 if self.nrx4_ctrl.is_triggered() {
-                    self.trigger(master_ctrl);
+                    self.trigger(master_ctrl, len_first_half);
                 }
             }
             _ => panic!("Invalid NoiseChannel address: {:#X}", addr),
@@ -141,11 +147,12 @@ impl NoiseChannel {
     }
 
     #[inline]
-    fn trigger(&mut self, nr52: &mut NR52) {
+    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool) {
         nr52.activate_ch4();
 
         if self.length_timer.is_expired() {
-            self.length_timer.reset();
+            let extra = len_first_half && self.nrx4_ctrl.is_length_enabled();
+            self.length_timer.reset(extra);
         }
 
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);

@@ -87,7 +87,7 @@ impl WaveChannel {
     }
 
     #[inline]
-    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52) {
+    pub fn write(&mut self, address: u16, value: u8, master_ctrl: &mut NR52, len_first_half: bool) {
         match address {
             CH3_NR30_DAC_ENABLE_ADDRESS => {
                 self.nrx0_dac_enable.byte = value;
@@ -100,10 +100,17 @@ impl WaveChannel {
             CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.nrx2_output_level.byte = value,
             CH3_NR33_PERIOD_LOW_ADDRESS => self.nrx3x4_period_and_ctrl.period_low.write(value),
             CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => {
+                let was_len_enabled = self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();
                 self.nrx3x4_period_and_ctrl.nrx4.write(value);
+                let nrx4 = self.nrx3x4_period_and_ctrl.nrx4;
 
-                if self.nrx3x4_period_and_ctrl.nrx4.is_triggered() {
-                    self.trigger(master_ctrl);
+                if len_first_half && !was_len_enabled && nrx4.is_length_enabled() {
+                    self.length_timer
+                        .extra_clock(master_ctrl, nrx4.is_triggered());
+                }
+
+                if nrx4.is_triggered() {
+                    self.trigger(master_ctrl, len_first_half);
                 }
             }
             _ => panic!("Invalid WaveChannel address: {:#X}", address),
@@ -124,11 +131,12 @@ impl WaveChannel {
     }
 
     #[inline]
-    fn trigger(&mut self, master_ctrl: &mut NR52) {
+    fn trigger(&mut self, master_ctrl: &mut NR52, len_first_half: bool) {
         master_ctrl.activate_ch3();
 
         if self.length_timer.is_expired() {
-            self.length_timer.reset();
+            let extra = len_first_half && self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();
+            self.length_timer.reset(extra);
         }
 
         self.period_timer.reload(&self.nrx3x4_period_and_ctrl);

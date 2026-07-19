@@ -66,11 +66,21 @@ pub struct Apu {
     mixer: Mixer,
 
     // other data
+    /// Frame sequencer phase, incremented per DIV-APU event (SameBoy's
+    /// div_divider): length clocks when it becomes odd, sweep when
+    /// `& 3 == 3`, envelope when `& 7 == 0`. Its parity while idle is the
+    /// length-period half that the NRx4 extra-clocking quirks key on.
     frame_sequencer_step: u8,
     /// Last sampled DIV-APU bit for falling-edge detection (the frame
     /// sequencer is clocked by DIV, not by an internal timer).
     #[serde(default)]
     prev_div_apu_bit: bool,
+    /// Powering the APU on while the DIV-APU bit is set makes the first
+    /// falling edge a leftover of the pre-power period: it is swallowed, and
+    /// the one after it runs without advancing the phase
+    /// (same-suite div_write_trigger_10).
+    #[serde(default)]
+    skip_div_event: SkipDivEvent,
     ticks_count: u32,
     buffer_idx: usize,
     buffer: Box<[f32]>,
@@ -99,6 +109,7 @@ impl Apu {
             mixer: Default::default(),
             frame_sequencer_step: 0,
             prev_div_apu_bit: false,
+            skip_div_event: SkipDivEvent::None,
             ticks_count: 0,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
@@ -218,11 +229,24 @@ impl Apu {
             value
         };
 
+        // First half of a length period: the next sequencer step is one that
+        // does NOT clock length (length clocks on even steps). NRx4 writes in
+        // this phase get the extra length clocking quirks.
+        let len_first_half = self.frame_sequencer_step & 1 == 1;
+
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(address, value, &mut self.nr52),
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(address, value, &mut self.nr52),
-            CH3_START_ADDRESS..=CH3_END_ADDRESS => self.ch3.write(address, value, &mut self.nr52),
-            CH4_START_ADDRESS..=CH4_END_ADDRESS => self.ch4.write(address, value, &mut self.nr52),
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => {
+                self.ch1.write(address, value, &mut self.nr52, len_first_half)
+            }
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => {
+                self.ch2.write(address, value, &mut self.nr52, len_first_half)
+            }
+            CH3_START_ADDRESS..=CH3_END_ADDRESS => {
+                self.ch3.write(address, value, &mut self.nr52, len_first_half)
+            }
+            CH4_START_ADDRESS..=CH4_END_ADDRESS => {
+                self.ch4.write(address, value, &mut self.nr52, len_first_half)
+            }
             AUDIO_MASTER_CONTROL_ADDRESS => {
                 let prev_enable = self.nr52.is_audio_on();
                 self.nr52.write(value);
@@ -230,6 +254,14 @@ impl Apu {
                 if !prev_enable && self.nr52.is_audio_on() {
                     // turning on
                     self.ch3.wave_ram.clear_sample_buffer();
+
+                    // Power-on while the DIV-APU bit is set: the leftover
+                    // falling edge is swallowed and the sequencer starts in
+                    // the first half of a length period (phase 1).
+                    if self.prev_div_apu_bit {
+                        self.skip_div_event = SkipDivEvent::Skip;
+                        self.frame_sequencer_step = 1;
+                    }
                 } else if prev_enable && !self.nr52.is_audio_on() {
                     // turning_off
                     for addr in CH1_START_ADDRESS..=0xFF25 {
@@ -237,6 +269,7 @@ impl Apu {
                     }
 
                     self.frame_sequencer_step = 0;
+                    self.skip_div_event = SkipDivEvent::None;
                     self.ch1.duty_sequence = 0;
                     self.ch2.duty_sequence = 0;
                     self.ch3.wave_ram.reset_sample_index();
@@ -311,43 +344,54 @@ impl Apu {
         let falling_edge = self.prev_div_apu_bit && !div_apu_bit;
         self.prev_div_apu_bit = div_apu_bit;
 
-        if !falling_edge {
+        if !falling_edge || !self.nr52.is_audio_on() {
             return;
         }
 
-        // SAFETY: there is 8 steps and frame_sequencer_step is in range 0-7
-        unsafe {
-            FRAME_STEP_FNS.get_unchecked(self.frame_sequencer_step as usize)(self);
+        match self.skip_div_event {
+            // The first edge after power-on with the DIV-APU bit set belongs
+            // to the pre-power period and is swallowed entirely.
+            SkipDivEvent::Skip => {
+                self.skip_div_event = SkipDivEvent::Skipped;
+                return;
+            }
+            // The next one runs, but the phase does not advance.
+            SkipDivEvent::Skipped => self.skip_div_event = SkipDivEvent::None,
+            SkipDivEvent::None => {
+                self.frame_sequencer_step = self.frame_sequencer_step.wrapping_add(1) & 7;
+            }
         }
 
-        self.frame_sequencer_step = (self.frame_sequencer_step + 1) & 7;
+        if self.frame_sequencer_step & 1 == 1 {
+            tick_length_all(self);
+        }
+
+        if self.frame_sequencer_step & 3 == 3 {
+            self.ch1.tick_sweep(&mut self.nr52);
+        }
+
+        if self.frame_sequencer_step & 7 == 0 {
+            tick_envelope_some(self);
+        }
     }
 }
 
-type FrameStepFn = fn(&mut Apu);
-
-// Step   Length Ctr  Vol Env     Sweep
-// ---------------------------------------
-// 0      Clock       -           -
-// 1      -           -           -
-// 2      Clock       -           Clock
-// 3      -           -           -
-// 4      Clock       -           -
-// 5      -           -           -
-// 6      Clock       -           Clock
-// 7      -           Clock       -
-// ---------------------------------------
-// Rate   256 Hz      64 Hz       128 Hz
-const FRAME_STEP_FNS: [FrameStepFn; 8] = [
-    tick_length_all,           // step 0
-    noop,                      // step 1
-    tick_length_all_and_sweep, // step 2
-    noop,                      // step 3
-    tick_length_all,           // step 4
-    noop,                      // step 5
-    tick_length_all_and_sweep, // step 6
-    tick_envelope_some,        // step 7
-];
+/// Phase   Length Ctr  Vol Env     Sweep
+/// ---------------------------------------
+/// odd     Clock       -           -
+/// & 3==3  -           -           Clock
+/// & 7==0  -           Clock       -
+/// ---------------------------------------
+/// Rate    256 Hz      64 Hz       128 Hz
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SkipDivEvent {
+    #[default]
+    None,
+    /// The next DIV-APU event is swallowed entirely.
+    Skip,
+    /// The event after a swallowed one runs without advancing the phase.
+    Skipped,
+}
 
 #[inline(always)]
 fn tick_length_all(apu: &mut Apu) {
@@ -358,20 +402,11 @@ fn tick_length_all(apu: &mut Apu) {
 }
 
 #[inline(always)]
-fn tick_length_all_and_sweep(apu: &mut Apu) {
-    tick_length_all(apu);
-    apu.ch1.tick_sweep(&mut apu.nr52);
-}
-
-#[inline(always)]
 fn tick_envelope_some(apu: &mut Apu) {
     apu.ch1.tick_envelope();
     apu.ch2.tick_envelope();
     apu.ch4.tick_envelope();
 }
-
-#[inline(always)]
-fn noop(_apu: &mut Apu) {}
 
 /// FF26 — NR52: Audio master control
 #[derive(Debug, Clone, Default, Copy, Serialize, Deserialize)]

@@ -44,14 +44,33 @@ impl LengthTimer {
         self.counter == 0
     }
 
+    /// Obscure behavior: an NRx4 write that enables length while the frame
+    /// sequencer is in the first half of a length period (next step does not
+    /// clock length) decrements the counter once; hitting zero without a
+    /// simultaneous trigger disables the channel.
+    pub fn extra_clock(&mut self, nr52: &mut NR52, triggered: bool) {
+        if self.is_expired() {
+            return;
+        }
+
+        self.counter -= 1;
+
+        if self.is_expired() && !triggered {
+            nr52.deactivate_ch(self.ch_type);
+        }
+    }
+
     #[inline(always)]
     pub fn reload(&mut self, nrx1: NRx1) {
         self.counter = self.get_initial_length() - nrx1.initial_length_timer() as u16;
     }
 
+    /// Trigger reload of an expired counter. In the first half of a length
+    /// period with length enabled the fresh maximum is immediately clocked
+    /// once (64 -> 63, 256 -> 255).
     #[inline(always)]
-    pub fn reset(&mut self) {
-        self.counter = self.get_initial_length();
+    pub fn reset(&mut self, extra_clock: bool) {
+        self.counter = self.get_initial_length() - extra_clock as u16;
     }
 
     #[inline(always)]
