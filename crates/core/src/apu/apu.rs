@@ -81,6 +81,11 @@ pub struct Apu {
     /// (same-suite div_write_trigger_10).
     #[serde(default)]
     skip_div_event: SkipDivEvent,
+    /// 2 MHz cycle counter for the 1 MHz phase (SameBoy's lf_div), reseeded
+    /// at APU power-on — the phase is deterministic from NR52, not from
+    /// absolute time (same-suite channel_2_align vs channel_2_duty).
+    #[serde(default)]
+    lf_ticks: u32,
     ticks_count: u32,
     buffer_idx: usize,
     buffer: Box<[f32]>,
@@ -110,6 +115,7 @@ impl Apu {
             frame_sequencer_step: 0,
             prev_div_apu_bit: false,
             skip_div_event: SkipDivEvent::None,
+            lf_ticks: 0,
             ticks_count: 0,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
@@ -127,6 +133,7 @@ impl Apu {
     #[inline(always)]
     pub fn tick(&mut self, div_apu_bit: bool) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
+        self.lf_ticks = self.lf_ticks.wrapping_add(1);
         self.sequence_frame(div_apu_bit);
 
         // Inactive channels do not clock their frequency timers: the duty /
@@ -135,7 +142,13 @@ impl Apu {
             self.ch1.tick();
         }
         if self.nr52.is_ch2_on() {
+            #[cfg(feature = "apu-trace")]
+            let before = self.ch2.duty_sequence;
             self.ch2.tick();
+            #[cfg(feature = "apu-trace")]
+            if before != self.ch2.duty_sequence {
+                eprintln!("CH2 step -> {} t={}", self.ch2.duty_sequence, self.ticks_count);
+            }
         }
         if self.nr52.is_ch3_on() {
             self.ch3.tick();
@@ -244,11 +257,8 @@ impl Apu {
         // extra length clocking quirks.
         let len_first_half = self.frame_sequencer_step & 1 == 1;
         // 1 MHz phase of the 2 MHz APU clock (SameBoy's lf_div): trigger
-        // delays depend on it. In double speed a CPU write lands half a
-        // 2 MHz period later relative to the APU grid (calibrated against
-        // same-suite channel_2_delay / channel_2_align).
-        let lf_odd = self.ticks_count & 2 != 0;
-        let trigger_delay_base: u16 = if double_speed { 14 } else { 12 };
+        // delays depend on it. Reseeded at APU power-on, see `lf_ticks`.
+        let lf_odd = self.lf_ticks & 2 != 0;
 
         #[cfg(feature = "apu-trace")]
         if address == 0xFF19 || address == 0xFF18 {
@@ -256,8 +266,15 @@ impl Apu {
         }
 
         // Trigger-to-first-duty-step latency for an inactive square channel;
-        // an active one restarts 4 T-cycles sooner (see SquareChannel).
-        let trigger_delay = trigger_delay_base - 2 * lf_odd as u16;
+        // an active one restarts 4 T-cycles sooner (see SquareChannel). In
+        // double speed a CPU write lands on the opposite half of the 2 MHz
+        // period, flipping the sign of the phase term (calibrated against
+        // same-suite channel_2 delay/align/duty).
+        let trigger_delay = if double_speed {
+            12 + 2 * lf_odd as u16
+        } else {
+            12 - 2 * lf_odd as u16
+        };
 
         match address {
             CH1_START_ADDRESS..=CH1_END_ADDRESS => {
@@ -281,6 +298,9 @@ impl Apu {
                 if !prev_enable && self.nr52.is_audio_on() {
                     // turning on
                     self.ch3.wave_ram.clear_sample_buffer();
+                    // The 1 MHz phase restarts at power-on (SameBoy seeds
+                    // lf_div = 1).
+                    self.lf_ticks = 0;
 
                     // Power-on while the DIV-APU bit is set: the leftover
                     // falling edge is swallowed and the sequencer starts in

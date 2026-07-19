@@ -91,6 +91,26 @@ fn apu_channel_2_align() {
 }
 
 #[test]
+fn apu_channel_1_align_cpu() {
+    run("apu/channel_1/channel_1_align_cpu.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_align_cpu() {
+    run("apu/channel_2/channel_2_align_cpu.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_duty() {
+    run("apu/channel_1/channel_1_duty.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_duty() {
+    run("apu/channel_2/channel_2_duty.gb").unwrap();
+}
+
+#[test]
 fn apu_channel_1_delay() {
     run("apu/channel_1/channel_1_delay.gb").unwrap();
 }
