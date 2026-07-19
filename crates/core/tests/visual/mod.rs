@@ -5,6 +5,7 @@ use crate::{
 use std::time::Duration;
 
 mod colorization;
+mod mealybug;
 mod util;
 
 const DURATION: Duration = Duration::from_secs(1);

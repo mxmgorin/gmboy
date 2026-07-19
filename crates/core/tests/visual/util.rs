@@ -56,6 +56,21 @@ pub fn run_visual_test(
     img_update: bool,
     duration: Duration,
 ) -> Result<(), String> {
+    run_visual_test_tolerance(model, rom_path, img_path, img_update, duration, 0)
+}
+
+/// Like `run_visual_test`, but allows a per-channel difference of up to
+/// `tolerance`. Needed for references produced with the canonical
+/// `(c << 3) | (c >> 2)` 5-to-8-bit expansion (e.g. mealybug): our RGB565
+/// framebuffer rounds the low bits slightly differently (up to 3 off).
+pub fn run_visual_test_tolerance(
+    model: Option<GbModel>,
+    rom_path: &PathBuf,
+    img_path: &PathBuf,
+    img_update: bool,
+    duration: Duration,
+    tolerance: u8,
+) -> Result<(), String> {
     let mut cpu = harness::build_cpu_from_path(rom_path.as_path(), model)?;
     harness::run_duration(&mut cpu, duration);
 
@@ -66,7 +81,7 @@ pub fn run_visual_test(
     }
 
     let want_buffer = load_image_rgb(img_path)?;
-    buffers_match(&got_buffer, &want_buffer)?;
+    buffers_match(&got_buffer, &want_buffer, tolerance)?;
 
     Ok(())
 }
@@ -77,13 +92,13 @@ fn load_image_rgb(path: &Path) -> Result<Vec<u8>, String> {
     Ok(img.into_raw())
 }
 
-fn buffers_match(a: &[u8], b: &[u8]) -> Result<(), String> {
+fn buffers_match(a: &[u8], b: &[u8], tolerance: u8) -> Result<(), String> {
     if a.len() != b.len() {
         return Err(format!("Buffer size mismatch: {} vs {}", a.len(), b.len()));
     }
 
     for (i, (pa, pb)) in a.iter().zip(b.iter()).enumerate() {
-        if pa != pb {
+        if pa.abs_diff(*pb) > tolerance {
             return Err(format!("Pixel mismatch at byte {}: {} != {}", i, pa, pb));
         }
     }
