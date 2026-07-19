@@ -37,7 +37,9 @@
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
 
-The name `oxGBC` blends **ox**ide with **GBC** — it runs both the original Game Boy (DMG) and the Game Boy Color (CGB), built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds. It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, while providing modern features such as save states, rewind, shaders, and configurable controls.
+`oxGBC` (**ox**ide + **GBC**) — runs both the original Game Boy (DMG) and the Game Boy Color (GBC), built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds.
+
+It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, while providing modern features such as save states, rewind, shaders, and configurable controls.
 
 ***Work in progress**: while most games run correctly, some issues may still occur.*
 
@@ -60,7 +62,7 @@ The name `oxGBC` blends **ox**ide with **GBC** — it runs both the original Gam
 
 ## Accuracy & Testing
 
-Continuously validated in CI against community test ROMs and test suites: Blargg (all tests), Mooneye (all tests), DMG-acid2, CGB-acid2, CGB-acid-hell, and Mangen.
+The emulator is continuously validated in CI against community test ROMs and test suites: Blargg (all tests), Mooneye (all tests), DMG-acid2, CGB-acid2, CGB-acid-hell, and Mangen.
 
 ## Features
 
