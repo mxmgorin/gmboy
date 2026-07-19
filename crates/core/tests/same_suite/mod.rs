@@ -38,6 +38,18 @@ fn apu_channel_3_wave_ram_dac_on_rw() {
 }
 
 #[test]
+fn apu_div_write_trigger() {
+    // The frame sequencer is clocked by the DIV-APU bit falling edge, so a
+    // DIV write that resets the counter while the bit is set steps it early.
+    run("apu/div_write_trigger.gb").unwrap();
+}
+
+#[test]
+fn apu_div_write_trigger_volume() {
+    run("apu/div_write_trigger_volume.gb").unwrap();
+}
+
+#[test]
 fn dma_gbc_dma_cont() {
     run("dma/gbc_dma_cont.gb").unwrap();
 }

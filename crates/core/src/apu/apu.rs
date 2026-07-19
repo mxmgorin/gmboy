@@ -67,6 +67,10 @@ pub struct Apu {
 
     // other data
     frame_sequencer_step: u8,
+    /// Last sampled DIV-APU bit for falling-edge detection (the frame
+    /// sequencer is clocked by DIV, not by an internal timer).
+    #[serde(default)]
+    prev_div_apu_bit: bool,
     ticks_count: u32,
     buffer_idx: usize,
     buffer: Box<[f32]>,
@@ -94,6 +98,7 @@ impl Apu {
             nr52: NR52::default(),
             mixer: Default::default(),
             frame_sequencer_step: 0,
+            prev_div_apu_bit: false,
             ticks_count: 0,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
@@ -109,9 +114,9 @@ impl Apu {
     }
 
     #[inline(always)]
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, div_apu_bit: bool) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
-        self.sequence_frame();
+        self.sequence_frame(div_apu_bit);
 
         self.ch1.tick();
         self.ch2.tick();
@@ -296,10 +301,17 @@ impl Apu {
         }
     }
 
-    /// The frame sequencer generates low frequency clocks for the modulation units. It is clocked by a 512 Hz timer.
+    /// The frame sequencer generates low frequency clocks for the modulation
+    /// units. It is clocked at 512 Hz by the falling edge of the DIV-APU bit
+    /// (DIV bit 4, bit 5 in double speed) — so a DIV write that resets the
+    /// counter while the bit is set produces an extra, early step
+    /// (same-suite div_write_trigger*).
     #[inline(always)]
-    fn sequence_frame(&mut self) {
-        if self.ticks_count % FRAME_SEQUENCER_DIV as u32 != 0 {
+    fn sequence_frame(&mut self, div_apu_bit: bool) {
+        let falling_edge = self.prev_div_apu_bit && !div_apu_bit;
+        self.prev_div_apu_bit = div_apu_bit;
+
+        if !falling_edge {
             return;
         }
 

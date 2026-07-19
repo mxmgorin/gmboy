@@ -135,8 +135,9 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter_batched(
             Apu::default,
             |mut apu| {
-                for _ in 0..5_000_000 {
-                    apu.tick();
+                for i in 0..5_000_000u32 {
+                    // emulate the 512 Hz DIV-APU bit (counter bit 12)
+                    apu.tick(i & (1 << 12) != 0);
                 }
             },
             BatchSize::SmallInput,

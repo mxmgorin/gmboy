@@ -74,7 +74,12 @@ impl Clock {
                 }
 
                 self.bus.io.ppu.tick(&mut self.bus.io.interrupts);
-                self.bus.io.apu.tick();
+                let div_apu_bit = self
+                    .bus
+                    .io
+                    .timer
+                    .div_apu_bit(self.bus.io.cgb_speed.double_speed);
+                self.bus.io.apu.tick(div_apu_bit);
             }
         }
     }

@@ -111,6 +111,15 @@ impl Timer {
         self.div & mask != 0
     }
 
+    /// DIV-APU: the frame sequencer is clocked by the falling edge of this
+    /// bit of the internal counter — bit 12 (DIV bit 4) at normal speed,
+    /// bit 13 (DIV bit 5) in CGB double speed, keeping it at 512 Hz.
+    #[inline(always)]
+    pub fn div_apu_bit(&self, double_speed: bool) -> bool {
+        let mask = if double_speed { 1 << 13 } else { 1 << 12 };
+        self.div & mask != 0
+    }
+
     /// Post-boot DIV phase differs per model (mooneye boot_div-dmgABCmgb /
     /// boot_div-cgbABCDE).
     pub fn set_boot_phase(&mut self, model: crate::emu::config::GbModel) {
