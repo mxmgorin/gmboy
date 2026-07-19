@@ -317,8 +317,8 @@ impl Apu {
 
                     self.frame_sequencer_step = 0;
                     self.skip_div_event = SkipDivEvent::None;
-                    self.ch1.duty_sequence = 0;
-                    self.ch2.duty_sequence = 0;
+                    self.ch1.reset_duty();
+                    self.ch2.reset_duty();
                     self.ch3.wave_ram.reset_sample_index();
                 }
             }

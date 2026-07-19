@@ -54,6 +54,11 @@ pub struct SquareChannel {
     /// duty step after the trigger delay elapses.
     #[serde(default)]
     suppressed: bool,
+    /// Output latched at the last duty step: an NR x1 duty change becomes
+    /// effective only when the current sample finishes
+    /// (same-suite channel_x_duty_delay).
+    #[serde(default)]
+    current_sample: u8,
 }
 
 impl DacEnable for SquareChannel {
@@ -68,9 +73,7 @@ impl DigitalSampleProducer for SquareChannel {
             return 0;
         }
 
-        let duty_cycle = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
-
-        WAVE_DUTY_PATTERNS[duty_cycle][self.duty_sequence] * self.envelope_timer.get_volume()
+        self.current_sample * self.envelope_timer.get_volume()
     }
 }
 
@@ -99,6 +102,7 @@ impl SquareChannel {
             duty_sequence: 0,
             envelope_timer: Default::default(),
             suppressed: false,
+            current_sample: 0,
         }
     }
 
@@ -200,8 +204,17 @@ impl SquareChannel {
     pub fn tick(&mut self) {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.duty_sequence = (self.duty_sequence + 1) & 0x07;
+            let duty = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
+            self.current_sample = WAVE_DUTY_PATTERNS[duty][self.duty_sequence];
             self.suppressed = false;
         }
+    }
+
+    /// APU power-off: the duty position and the latched output restart.
+    #[inline]
+    pub fn reset_duty(&mut self) {
+        self.duty_sequence = 0;
+        self.current_sample = 0;
     }
 
     #[inline]

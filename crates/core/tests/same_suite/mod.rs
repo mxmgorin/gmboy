@@ -111,6 +111,18 @@ fn apu_channel_2_duty() {
 }
 
 #[test]
+fn apu_channel_1_duty_delay() {
+    // An NRx1 duty change becomes effective only after the current duty step
+    // finishes (the output sample is latched per step).
+    run("apu/channel_1/channel_1_duty_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_duty_delay() {
+    run("apu/channel_2/channel_2_duty_delay.gb").unwrap();
+}
+
+#[test]
 fn apu_channel_1_delay() {
     run("apu/channel_1/channel_1_delay.gb").unwrap();
 }
