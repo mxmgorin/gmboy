@@ -72,6 +72,66 @@ fn apu_channel_4_volume_div() {
     run("apu/channel_4/channel_4_volume_div.gb").unwrap();
 }
 
+// Noise: a free-running 14-bit counter clocks the LFSR on rising edges of the
+// NR43-selected bit; it keeps counting in the background while the channel is
+// inactive, and trigger/NR43-write countdown reseeds depend on the 2 MHz
+// alignment (SameBoy's model).
+
+#[test]
+fn apu_channel_4_align() {
+    run("apu/channel_4/channel_4_align.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_delay() {
+    run("apu/channel_4/channel_4_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_equivalent_frequencies() {
+    run("apu/channel_4/channel_4_equivalent_frequencies.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_freq_change() {
+    run("apu/channel_4/channel_4_freq_change.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_frequency_alignment() {
+    run("apu/channel_4/channel_4_frequency_alignment.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_lfsr() {
+    run("apu/channel_4/channel_4_lfsr.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_lfsr15() {
+    run("apu/channel_4/channel_4_lfsr15.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_lfsr_15_7() {
+    run("apu/channel_4/channel_4_lfsr_15_7.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_lfsr_7_15() {
+    run("apu/channel_4/channel_4_lfsr_7_15.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_lfsr_restart() {
+    run("apu/channel_4/channel_4_lfsr_restart.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_4_lfsr_restart_fast() {
+    run("apu/channel_4/channel_4_lfsr_restart_fast.gb").unwrap();
+}
+
 // Square-channel trigger semantics: inactive channels freeze their frequency
 // timer, a fresh activation is suppressed (digital 0) until its first duty
 // step, and the trigger-to-step latency depends on channel state and the

@@ -17,8 +17,10 @@ pub const NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS: u16 = 0xFF22;
 pub const NR44_CH4_CONTROL_ADDRESS: u16 = 0xFF23;
 pub const NR44_CH4_UNUSED_MASK: u8 = 0b0011_1111;
 
-const DIVISORS: [u16; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
-
+/// Noise runs a free 14-bit counter; the LFSR steps on the rising edge of the
+/// counter bit selected by the NR43 shift (SameBoy's model). The counter
+/// increments every `divisor * 8` T-cycles (4 when the divisor code is 0), so
+/// an LFSR step period is `divisor * 16 << shift` — the classic table.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NoiseChannel {
     nrx1_len: NRx1,
@@ -28,10 +30,36 @@ pub struct NoiseChannel {
 
     length_timer: LengthTimer,
     envelope_timer: EnvelopeTimer,
-    freq_timer: u16,
-    /// linear feedback shift register:
-    /// 15 bits for its current state and 1 bit to temporarily store the next bit to shift in
+    /// 15-bit LFSR, XNOR feedback, all-zero start (SameBoy convention:
+    /// the DAC input is bit 0 as-is).
     lfsr: u16,
+    /// Free-running 14-bit counter whose bit edges clock the LFSR.
+    #[serde(default)]
+    counter: u16,
+    /// T-cycles until the next counter increment.
+    #[serde(default)]
+    counter_countdown: u16,
+    /// The countdown was reloaded on the previous T-cycle (an NR43 write in
+    /// that window re-seeds the countdown with an alignment-dependent value).
+    #[serde(default)]
+    countdown_reloaded: bool,
+    /// The counter stepped at least once since the last trigger.
+    #[serde(default)]
+    did_step_counter: bool,
+    /// The channel was triggered with the DAC on; cleared on APU off and DAC
+    /// disable. Keeps the counter running.
+    #[serde(default)]
+    counter_active: bool,
+    /// The counter keeps counting in the background after any trigger, even
+    /// with the channel inactive; cleared on APU off.
+    #[serde(default)]
+    background_active: bool,
+    /// Last trigger happened with the DAC disabled.
+    #[serde(default)]
+    started_with_dac_disabled: bool,
+    /// Output latched at the last LFSR step.
+    #[serde(default)]
+    current_sample: u8,
 }
 
 impl Default for NoiseChannel {
@@ -45,8 +73,15 @@ impl Default for NoiseChannel {
             nrx4_ctrl: Default::default(),
             length_timer: LengthTimer::new(ch_type),
             envelope_timer: Default::default(),
-            freq_timer: 0,
-            lfsr: 0x7FFF,
+            lfsr: 0,
+            counter: 0,
+            counter_countdown: 0,
+            countdown_reloaded: false,
+            did_step_counter: false,
+            counter_active: false,
+            background_active: false,
+            started_with_dac_disabled: false,
+            current_sample: 0,
         }
     }
 }
@@ -59,9 +94,8 @@ impl DacEnable for NoiseChannel {
 
 impl DigitalSampleProducer for NoiseChannel {
     fn get_sample(&self, master_ctrl: NR52) -> u8 {
-        // If the bit shifted out is a 0, the channel emits a 0; otherwise, it emits the volume selected in NR42
-        if master_ctrl.is_ch4_on() && (self.lfsr & 0b01) == 0 {
-            return self.envelope_timer.get_volume();
+        if master_ctrl.is_ch4_on() {
+            return self.current_sample * self.envelope_timer.get_volume();
         }
 
         0
@@ -82,7 +116,14 @@ impl NoiseChannel {
     }
 
     #[inline]
-    pub fn write(&mut self, addr: u16, value: u8, master_ctrl: &mut NR52, len_first_half: bool) {
+    pub fn write(
+        &mut self,
+        addr: u16,
+        value: u8,
+        master_ctrl: &mut NR52,
+        len_first_half: bool,
+        alignment: u8,
+    ) {
         match addr {
             NR41_CH4_LENGTH_TIMER_ADDRESS => {
                 self.nrx1_len.byte = value;
@@ -90,12 +131,29 @@ impl NoiseChannel {
             }
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => {
                 self.nrx2_envelope_and_dac.byte = value;
-                master_ctrl.on_dac_update(
-                    self.nrx2_envelope_and_dac.is_dac_enabled(),
-                    ChannelType::CH4,
-                );
+                let dac_enabled = self.nrx2_envelope_and_dac.is_dac_enabled();
+
+                if !dac_enabled {
+                    self.counter_active = false;
+                }
+
+                master_ctrl.on_dac_update(dac_enabled, ChannelType::CH4);
             }
-            NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => self.nr43_freq_and_rnd.byte = value,
+            NR43_CH4_FREQUENCY_RANDOMNESS_ADDRESS => {
+                // A write that lands on the very cycle the counter countdown
+                // reloaded re-seeds it with an alignment-dependent value.
+                if self.countdown_reloaded {
+                    let divisor = (((value & 7) as u16) << 2).max(2);
+                    let adjust = if divisor == 2 {
+                        0
+                    } else {
+                        [2u16, 1, 0, 3][(alignment & 3) as usize]
+                    };
+                    self.counter_countdown = (divisor + adjust) * 2;
+                }
+
+                self.nr43_freq_and_rnd.byte = value;
+            }
             NR44_CH4_CONTROL_ADDRESS => {
                 let was_len_enabled = self.nrx4_ctrl.is_length_enabled();
                 self.nrx4_ctrl.write(value);
@@ -106,34 +164,73 @@ impl NoiseChannel {
                 }
 
                 if self.nrx4_ctrl.is_triggered() {
-                    self.trigger(master_ctrl, len_first_half);
+                    self.trigger(master_ctrl, len_first_half, alignment);
                 }
             }
             _ => panic!("Invalid NoiseChannel address: {:#X}", addr),
         }
     }
 
+    /// Ticks every T-cycle regardless of the NR52 status: once triggered, the
+    /// counter keeps counting in the background, but the LFSR only steps
+    /// while the channel is active.
     #[inline]
-    pub fn tick(&mut self) {
-        if self.freq_timer > 0 {
-            self.freq_timer -= 1;
+    pub fn tick(&mut self, active: bool) {
+        if !(self.counter_active || self.background_active) {
+            return;
         }
 
-        // If the frequency timer decrement to 0, it is reloaded with the formula
-        // `divisor_code << clock_shift` and wave position is advanced by one.
-        if self.freq_timer == 0 {
-            self.reload_freq_timer();
+        if self.counter_countdown == 0 {
+            self.counter_countdown = self.divisor_ticks();
+        }
 
-            // The XOR result of the 0th and 1st bit of LFSR is computed
-            let xor_result = (self.lfsr & 0b01) ^ ((self.lfsr & 0b10) >> 1);
-            self.lfsr = (self.lfsr >> 1) | (xor_result << 14);
+        self.counter_countdown -= 1;
+        self.countdown_reloaded = false;
 
-            // If the width mode bit is set, the XOR result is also stored in bit 6.
-            if self.nr43_freq_and_rnd.lfsr_width() {
-                self.lfsr &= !(1 << 6);
-                self.lfsr |= xor_result << 6;
+        if self.counter_countdown == 0 {
+            self.counter_countdown = self.divisor_ticks();
+            self.countdown_reloaded = true;
+
+            let mask = 1u16 << self.nr43_freq_and_rnd.clock_shift();
+            let old_bit = self.counter & mask != 0;
+            self.counter = self.counter.wrapping_add(1) & 0x3FFF;
+            self.did_step_counter = true;
+            let new_bit = self.counter & mask != 0;
+
+            if new_bit && !old_bit && active {
+                self.step_lfsr();
             }
         }
+    }
+
+    /// T-cycles between counter increments: `divisor * 8`, or 4 for the 0
+    /// divisor code.
+    #[inline(always)]
+    fn divisor_ticks(&self) -> u16 {
+        let d = ((self.nr43_freq_and_rnd.clock_divider() as u16) << 2).max(2);
+        d * 2
+    }
+
+    #[inline]
+    fn step_lfsr(&mut self) {
+        // XNOR of the two low bits shifts in from the top; in 7-bit (narrow)
+        // mode bit 6 is written as well, and the explicit clear matters when
+        // switching widths mid-run.
+        let high_mask: u16 = if self.nr43_freq_and_rnd.lfsr_width() {
+            0x4040
+        } else {
+            0x4000
+        };
+        let new_high = (self.lfsr ^ (self.lfsr >> 1) ^ 1) & 1 != 0;
+        self.lfsr >>= 1;
+
+        if new_high {
+            self.lfsr |= high_mask;
+        } else {
+            self.lfsr &= !high_mask;
+        }
+
+        self.current_sample = (self.lfsr & 1) as u8;
     }
 
     #[inline]
@@ -146,9 +243,26 @@ impl NoiseChannel {
         self.envelope_timer.tick(self.nrx2_envelope_and_dac);
     }
 
+    /// APU power-off: the counter state and LFSR reset fully.
     #[inline]
-    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool) {
-        nr52.activate_ch4();
+    pub fn power_off(&mut self) {
+        self.lfsr = 0;
+        self.counter = 0;
+        self.counter_countdown = 0;
+        self.countdown_reloaded = false;
+        self.did_step_counter = false;
+        self.counter_active = false;
+        self.background_active = false;
+        self.started_with_dac_disabled = false;
+        self.current_sample = 0;
+    }
+
+    /// SameBoy's prepare_noise_start for CGB D/E: the fresh countdown gets a
+    /// pile of alignment/divisor-dependent adjustments (in T-cycles = 2x the
+    /// reference 2 MHz units).
+    fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool, alignment: u8) {
+        // `active` state before this trigger takes effect.
+        let active = nr52.is_ch4_on();
 
         if self.length_timer.is_expired() {
             let extra = len_first_half && self.nrx4_ctrl.is_length_enabled();
@@ -156,14 +270,104 @@ impl NoiseChannel {
         }
 
         self.envelope_timer.reload(self.nrx2_envelope_and_dac);
-        self.lfsr = 0x7FFF;
-    }
 
-    #[inline]
-    fn reload_freq_timer(&mut self) {
-        // Reload the frequency timer with the correct divisor
-        let divisor = DIVISORS[self.nr43_freq_and_rnd.clock_divider() as usize];
-        self.freq_timer = divisor << self.nr43_freq_and_rnd.clock_shift();
+        self.lfsr = 0;
+        self.current_sample = 0;
+
+        let dac_on = self.nrx2_envelope_and_dac.is_dac_enabled();
+        let was_started_with_dac_disabled = self.started_with_dac_disabled;
+        self.counter_active = dac_on;
+        self.started_with_dac_disabled = !dac_on;
+        let was_background = self.background_active;
+        self.background_active = true;
+
+        let mut divisor = (self.nr43_freq_and_rnd.byte & 7) as i32;
+        let shift_bits = self.nr43_freq_and_rnd.byte & 0xF0;
+        let mut instant_step = false;
+        let mut div_1_glitch = false;
+
+        if divisor > 1 && self.counter_countdown == 2 {
+            self.counter = self.counter.wrapping_add(1) & 0x3FFF;
+        } else if self.counter_countdown == 4 && alignment & 3 == 0 && active {
+            if divisor == 0 {
+                divisor = 8;
+            } else if divisor == 1 {
+                if !self.did_step_counter {
+                    div_1_glitch = true;
+                }
+
+                let mask = 1u16 << self.nr43_freq_and_rnd.clock_shift();
+                let old_bit = self.counter & mask != 0;
+                self.counter = self.counter.wrapping_add(1) & 0x3FFF;
+
+                if self.counter & mask != 0 && !old_bit {
+                    instant_step = true;
+                }
+            }
+        }
+
+        let mut cd: i32 = if divisor == 0 { 6 } else { divisor * 4 + 6 };
+
+        if alignment & 1 == 1 {
+            if divisor == 0 {
+                cd += if was_background { -1 } else { 1 };
+            } else if alignment & 2 != 0 {
+                if divisor == 1 && !active {
+                    cd += 1;
+                } else {
+                    cd -= 3;
+                }
+            } else {
+                cd -= 1;
+
+                if divisor == 1 && active {
+                    cd -= 4;
+                }
+            }
+        } else if divisor != 0 {
+            if alignment & 2 != 0 {
+                cd -= 2;
+            } else if divisor > 1 {
+                cd -= 4;
+            } else if divisor == 1 && active && shift_bits == 0 {
+                cd -= 4;
+            }
+        }
+
+        // Background counting glitches.
+        if divisor > 1 {
+            if !self.counter_active && alignment & 3 == 0 {
+                cd += 4;
+            }
+        } else if was_background && !active && alignment & 3 == 0 {
+            if divisor == 0 {
+                if was_started_with_dac_disabled {
+                    cd += 28;
+                }
+            } else {
+                cd -= 4;
+            }
+        }
+
+        if div_1_glitch {
+            cd -= 4;
+        }
+
+        self.counter_countdown = (cd * 2).max(1) as u16;
+        self.did_step_counter = alignment & 3 == 2;
+
+        // Arbitrary but hardware-confirmed LFSR seed for this edge case.
+        if divisor == 0 && active && alignment & 3 == 3 {
+            self.lfsr = 0x0055;
+        }
+
+        if instant_step {
+            self.step_lfsr();
+        }
+
+        if dac_on {
+            nr52.activate_ch4();
+        }
     }
 }
 

@@ -153,9 +153,9 @@ impl Apu {
         if self.nr52.is_ch3_on() {
             self.ch3.tick();
         }
-        if self.nr52.is_ch4_on() {
-            self.ch4.tick();
-        }
+        // The noise counter free-runs in the background once triggered; only
+        // the LFSR stepping is gated on the channel being active.
+        self.ch4.tick(self.nr52.is_ch4_on());
 
         // down sample by nearest-neighbor
         if self.ticks_count % TICKS_PER_SAMPLE == 0 {
@@ -289,7 +289,10 @@ impl Apu {
                 self.ch3.write(address, value, &mut self.nr52, len_first_half)
             }
             CH4_START_ADDRESS..=CH4_END_ADDRESS => {
-                self.ch4.write(address, value, &mut self.nr52, len_first_half)
+                // 2 MHz cycle alignment (SameBoy's noise_channel.alignment).
+                let alignment = ((self.lf_ticks >> 1) & 3) as u8;
+                self.ch4
+                    .write(address, value, &mut self.nr52, len_first_half, alignment)
             }
             AUDIO_MASTER_CONTROL_ADDRESS => {
                 let prev_enable = self.nr52.is_audio_on();
@@ -320,6 +323,7 @@ impl Apu {
                     self.ch1.reset_duty();
                     self.ch2.reset_duty();
                     self.ch3.wave_ram.reset_sample_index();
+                    self.ch4.power_off();
                 }
             }
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
