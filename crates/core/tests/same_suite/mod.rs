@@ -77,6 +77,71 @@ fn apu_channel_4_volume_div() {
 // inactive, and trigger/NR43-write countdown reseeds depend on the 2 MHz
 // alignment (SameBoy's model).
 
+// Wave: the output byte is latched at each sample step (a trigger restarts
+// the position but keeps the stale byte until the first step, 4 T late), the
+// NR32 level applies immediately, and CPU wave-RAM access while the channel
+// plays hits the currently-addressed byte (CGB).
+
+#[test]
+fn apu_channel_3_and_glitch() {
+    run("apu/channel_3/channel_3_and_glitch.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_delay() {
+    run("apu/channel_3/channel_3_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_first_sample() {
+    run("apu/channel_3/channel_3_first_sample.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_freq_change_delay() {
+    run("apu/channel_3/channel_3_freq_change_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_restart_delay() {
+    run("apu/channel_3/channel_3_restart_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_restart_during_delay() {
+    run("apu/channel_3/channel_3_restart_during_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_restart_stop_delay() {
+    run("apu/channel_3/channel_3_restart_stop_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_shift_delay() {
+    run("apu/channel_3/channel_3_shift_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_shift_skip_delay() {
+    run("apu/channel_3/channel_3_shift_skip_delay.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_stop_div() {
+    run("apu/channel_3/channel_3_stop_div.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_wave_ram_locked_write() {
+    run("apu/channel_3/channel_3_wave_ram_locked_write.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_3_wave_ram_sync() {
+    run("apu/channel_3/channel_3_wave_ram_sync.gb").unwrap();
+}
+
 #[test]
 fn apu_channel_4_align() {
     run("apu/channel_4/channel_4_align.gb").unwrap();

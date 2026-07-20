@@ -30,9 +30,7 @@ impl DacEnable for WaveChannel {
 impl DigitalSampleProducer for WaveChannel {
     fn get_sample(&self, nr52: NR52) -> u8 {
         if nr52.is_ch3_on() {
-            let output = self.wave_ram.sample_buffer >> self.volume_shift;
-
-            return output;
+            return self.wave_ram.current_nibble() >> self.volume_shift;
         }
 
         0
@@ -97,7 +95,12 @@ impl WaveChannel {
                 self.nrx1_length_timer.byte = value;
                 self.length_timer.reload(self.nrx1_length_timer); // research: do it must be reloaded after write?
             }
-            CH3_NR32_OUTPUT_LEVEL_ADDRESS => self.nrx2_output_level.byte = value,
+            CH3_NR32_OUTPUT_LEVEL_ADDRESS => {
+                self.nrx2_output_level.byte = value;
+                // The output level change applies to the already-latched
+                // sample immediately, not at the next trigger.
+                self.volume_shift = self.nrx2_output_level.get_volume_shift();
+            }
             CH3_NR33_PERIOD_LOW_ADDRESS => self.nrx3x4_period_and_ctrl.period_low.write(value),
             CH3_NR33_PERIOD_HIGH_CONTROL_ADDRESS => {
                 let was_len_enabled = self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();
@@ -132,16 +135,32 @@ impl WaveChannel {
 
     #[inline]
     fn trigger(&mut self, master_ctrl: &mut NR52, len_first_half: bool) {
-        master_ctrl.activate_ch3();
+        let was_active = master_ctrl.is_ch3_on();
 
         if self.length_timer.is_expired() {
             let extra = len_first_half && self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();
             self.length_timer.reset(extra);
         }
 
-        self.period_timer.reload(&self.nrx3x4_period_and_ctrl);
-        self.volume_shift = self.nrx2_output_level.get_volume_shift();
+        // Retriggering exactly when the sample countdown expired latches
+        // WAV[0] immediately; otherwise the stale byte keeps playing until
+        // the first step.
         self.wave_ram.reset_sample_index();
+
+        if was_active && self.period_timer.is_expired() {
+            self.wave_ram.reload_sample_buffer();
+        }
+
+        // The first step after a trigger comes 2 extra 2 MHz cycles late
+        // (SameBoy: sample_countdown = (length ^ 0x7FF) + 3; calibrated
+        // against same-suite channel_3_delay).
+        self.period_timer
+            .reload_with_delay(&self.nrx3x4_period_and_ctrl, 8);
+        self.volume_shift = self.nrx2_output_level.get_volume_shift();
+
+        if self.nrx0_dac_enable.is_dac_enabled() {
+            master_ctrl.activate_ch3();
+        }
     }
 }
 
@@ -150,43 +169,62 @@ pub struct WaveRam {
     // 32 samples, 4 bit each
     bytes: [u8; 16],
     sample_index: usize,
+    /// Whole wave RAM byte latched at the last sample step; the output
+    /// nibble is selected by the index parity.
     sample_buffer: u8,
 }
 
 impl WaveRam {
+    /// CPU access while the channel plays (CGB): the bus hits the byte the
+    /// channel is currently reading instead of the addressed one.
     #[inline]
-    pub fn read(&self, addr: u16) -> u8 {
+    pub fn read(&self, addr: u16, ch_active: bool) -> u8 {
+        if ch_active {
+            return self.bytes[self.sample_index / 2];
+        }
+
         let addr = addr - CH3_WAVE_RAM_START;
         self.bytes[addr as usize]
     }
 
     #[inline]
-    pub fn write(&mut self, addr: u16, value: u8) {
+    pub fn write(&mut self, addr: u16, value: u8, ch_active: bool) {
+        if ch_active {
+            self.bytes[self.sample_index / 2] = value;
+            return;
+        }
+
         let index = addr - CH3_WAVE_RAM_START;
         self.bytes[index as usize] = value;
     }
 
+    /// Output nibble of the latched byte: even sample index = high nibble.
     #[inline]
-    fn read_sample(&self) -> u8 {
-        let byte_index = self.sample_index / 2;
-        let is_high_nibble = self.sample_index % 2 == 0;
-
-        if is_high_nibble {
-            self.bytes[byte_index] >> 4
+    fn current_nibble(&self) -> u8 {
+        if self.sample_index % 2 == 0 {
+            self.sample_buffer >> 4
         } else {
-            self.bytes[byte_index] & 0x0F
+            self.sample_buffer & 0x0F
         }
     }
 
     #[inline]
     pub fn inc_sample_index(&mut self) {
         self.sample_index = (self.sample_index + 1) % 32;
-        self.sample_buffer = self.read_sample();
+        self.sample_buffer = self.bytes[self.sample_index / 2];
     }
 
+    /// Trigger: the position restarts but the latched byte is NOT reloaded
+    /// yet ("we don't change the sample just yet", SameBoy) — the first
+    /// output after a trigger is the high nibble of the stale byte.
     #[inline]
     pub fn reset_sample_index(&mut self) {
         self.sample_index = 0;
+    }
+
+    #[inline]
+    pub fn reload_sample_buffer(&mut self) {
+        self.sample_buffer = self.bytes[self.sample_index / 2];
     }
 
     #[inline]

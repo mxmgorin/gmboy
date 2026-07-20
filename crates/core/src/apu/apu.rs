@@ -230,7 +230,9 @@ impl Apu {
     #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8, double_speed: bool) {
         if (CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END).contains(&address) {
-            self.ch3.wave_ram.write(address, value);
+            self.ch3
+                .wave_ram
+                .write(address, value, self.nr52.is_ch3_on());
             return;
         }
 
@@ -328,7 +330,11 @@ impl Apu {
             }
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte = value,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte = value,
-            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.write(address, value),
+            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
+                self.ch3
+                    .wave_ram
+                    .write(address, value, self.nr52.is_ch3_on())
+            }
             _ => {
                 if (AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS).contains(&address) {
                     return;
@@ -377,7 +383,9 @@ impl Apu {
             AUDIO_MASTER_CONTROL_ADDRESS => self.nr52.read(),
             SOUND_PLANNING_ADDRESS => self.mixer.nr51_panning.byte,
             MASTER_VOLUME_ADDRESS => self.mixer.nr50_volume.byte,
-            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => self.ch3.wave_ram.read(address),
+            CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
+                self.ch3.wave_ram.read(address, self.nr52.is_ch3_on())
+            }
             _ => {
                 if (AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS).contains(&address) {
                     return 0xFF;

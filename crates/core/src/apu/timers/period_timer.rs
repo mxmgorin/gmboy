@@ -43,7 +43,7 @@ impl PeriodTimer {
     }
 
     #[inline(always)]
-    fn is_expired(&self) -> bool {
+    pub fn is_expired(&self) -> bool {
         self.counter == 0
     }
 
