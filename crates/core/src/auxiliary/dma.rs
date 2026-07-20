@@ -166,23 +166,23 @@ impl VramDma {
         let bytes = VRAM_DMA_CHUNK_SIZE as u16 * length;
         let is_bit7_set = get_bit_flag(value, 7);
 
-        if self.state != VramDmaState::Idle {
-            if is_bit7_set {
-                // writes with bit 7 set can alter the length of an in-progress HDMA
-                self.pending_bytes = bytes;
-            } else {
-                // Cancel transferring
-                self.state = VramDmaState::Idle;
-            }
+        // The length field is stored on EVERY write — including the one that
+        // pauses a waiting HBlank transfer, so a paused HDMA5 reads back the
+        // written length (same-suite hdma_lcd_off expects $00 -> $80).
+        // The CPU is stalled while bytes actually move, so a write can only
+        // land in Idle or WaitingHBlank.
+        self.pending_bytes = bytes;
 
+        if !is_bit7_set && self.state == VramDmaState::WaitingHBlank {
+            // Pause the pending HBlank transfer.
+            self.state = VramDmaState::Idle;
             return;
         }
 
-        self.pending_bytes = bytes;
-
         if is_bit7_set {
             if ppu_mode == PpuMode::HBlank {
-                // Transfer immediately when HDMA is started on HBlank
+                // Transfer immediately when HDMA is started on HBlank (this
+                // includes the LCD-off state, where the mode reads 0).
                 self.state = VramDmaState::HDmaTransferring {
                     chunk_bytes: VRAM_DMA_CHUNK_SIZE,
                 };

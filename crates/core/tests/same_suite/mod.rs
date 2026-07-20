@@ -361,3 +361,16 @@ fn dma_gbc_dma_cont() {
 fn dma_gdma_addr_mask() {
     run("dma/gdma_addr_mask.gb").unwrap();
 }
+
+#[test]
+fn dma_hdma_lcd_off() {
+    // HDMA5's length field is stored on every write (a pausing write reads
+    // back its own length), and starting HBlank DMA with the LCD off (mode
+    // reads 0) copies one block immediately.
+    run("dma/hdma_lcd_off.gb").unwrap();
+}
+
+#[test]
+fn dma_hdma_mode0() {
+    run("dma/hdma_mode0.gb").unwrap();
+}
