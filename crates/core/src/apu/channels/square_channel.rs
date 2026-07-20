@@ -149,10 +149,16 @@ impl SquareChannel {
                 self.nrx1_len_timer_duty_cycle.byte = value;
                 self.length_timer.reload(self.nrx1_len_timer_duty_cycle); // research: do it must be reloaded after write?
             }
-            // Writes to this register while the channel is on require re-triggering it after wards.
-            // If the write turns the channel off, re-triggering is not necessary (it would do nothing).
+            // Writes to this register while the channel is on hit the
+            // envelope through the glitchy "zombie mode" paths.
             2 => {
+                let old = self.nrx2_volume_envelope_and_dac.byte;
                 self.nrx2_volume_envelope_and_dac.byte = value;
+
+                if master_ctrl.is_ch_on(self.ch_type) && value & 0xF8 != 0 {
+                    self.envelope_timer.nrx2_glitch(value, old);
+                }
+
                 master_ctrl.on_dac_update(
                     self.nrx2_volume_envelope_and_dac.is_dac_enabled(),
                     self.ch_type,
@@ -188,6 +194,19 @@ impl SquareChannel {
     }
 
     #[inline]
+    pub fn countdown_envelope(&mut self) {
+        self.envelope_timer.countdown_tick();
+    }
+
+    #[inline]
+    pub fn arm_envelope(&mut self, master_ctrl: &NR52) {
+        self.envelope_timer.arm(
+            self.nrx2_volume_envelope_and_dac,
+            master_ctrl.is_ch_on(self.ch_type),
+        );
+    }
+
+    #[inline]
     pub fn tick_sweep(&mut self, nr52: &mut NR52) {
         if let Some(sweep) = self.sweep_timer.as_mut() {
             sweep.tick(nr52, &mut self.nrx3x4_period_and_ctrl);
@@ -220,7 +239,11 @@ impl SquareChannel {
     #[inline]
     fn trigger(&mut self, nr52: &mut NR52, len_first_half: bool, trigger_delay: u16) {
         let was_active = nr52.is_ch_on(self.ch_type);
-        nr52.activate_ch(self.ch_type);
+
+        // A trigger with the DAC disabled does not activate the channel.
+        if self.nrx2_volume_envelope_and_dac.is_dac_enabled() {
+            nr52.activate_ch(self.ch_type);
+        }
 
         if self.length_timer.is_expired() {
             let extra = len_first_half && self.nrx3x4_period_and_ctrl.nrx4.is_length_enabled();

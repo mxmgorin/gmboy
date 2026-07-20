@@ -72,9 +72,11 @@ impl NRx2 {
         self.byte & 0b0000_0111
     }
 
+    /// The DAC is powered by the volume bits AND the direction bit: envelope
+    /// direction alone (0x08) keeps it on.
     #[inline(always)]
     pub fn is_dac_enabled(&self) -> bool {
-        (self.byte & 0xF0) != 0
+        (self.byte & 0xF8) != 0
     }
 }
 

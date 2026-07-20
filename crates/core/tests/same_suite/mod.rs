@@ -317,6 +317,36 @@ fn apu_channel_2_volume() {
     run("apu/channel_2/channel_2_volume.gb").unwrap();
 }
 
+// Envelope pipeline (SameBoy model): 64 Hz countdown -> clock armed at the
+// DIV-APU rising edge -> volume step on the next event; NRx2 writes while
+// active go through the zombie-mode glitch, and the DAC stays on for 0x08
+// (direction bit only).
+
+#[test]
+fn apu_channel_1_volume() {
+    run("apu/channel_1/channel_1_volume.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_nrx2_glitch() {
+    run("apu/channel_1/channel_1_nrx2_glitch.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_nrx2_glitch() {
+    run("apu/channel_2/channel_2_nrx2_glitch.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_nrx2_speed_change() {
+    run("apu/channel_1/channel_1_nrx2_speed_change.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_2_nrx2_speed_change() {
+    run("apu/channel_2/channel_2_nrx2_speed_change.gb").unwrap();
+}
+
 #[test]
 fn apu_channel_2_volume_div() {
     run("apu/channel_2/channel_2_volume_div.gb").unwrap();

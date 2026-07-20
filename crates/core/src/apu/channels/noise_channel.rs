@@ -130,11 +130,25 @@ impl NoiseChannel {
                 self.length_timer.reload(self.nrx1_len);
             }
             NR42_CH4_VOLUME_ENVELOPE_ADDRESS => {
+                let old = self.nrx2_envelope_and_dac.byte;
+                let active = master_ctrl.is_ch4_on();
                 self.nrx2_envelope_and_dac.byte = value;
                 let dac_enabled = self.nrx2_envelope_and_dac.is_dac_enabled();
 
                 if !dac_enabled {
+                    // Disabling the DAC stops the background counter with a
+                    // final adjustment when it was about to step.
+                    if active && self.nr43_freq_and_rnd.clock_divider() != 0 {
+                        if self.counter_countdown <= 4 {
+                            self.counter = self.counter.wrapping_add(1) & 0x3FFF;
+                        }
+
+                        self.background_active = false;
+                    }
+
                     self.counter_active = false;
+                } else if active {
+                    self.envelope_timer.nrx2_glitch(value, old);
                 }
 
                 master_ctrl.on_dac_update(dac_enabled, ChannelType::CH4);
@@ -241,6 +255,17 @@ impl NoiseChannel {
     #[inline]
     pub fn tick_envelope(&mut self) {
         self.envelope_timer.tick(self.nrx2_envelope_and_dac);
+    }
+
+    #[inline]
+    pub fn countdown_envelope(&mut self) {
+        self.envelope_timer.countdown_tick();
+    }
+
+    #[inline]
+    pub fn arm_envelope(&mut self, master_ctrl: &NR52) {
+        self.envelope_timer
+            .arm(self.nrx2_envelope_and_dac, master_ctrl.is_ch4_on());
     }
 
     /// APU power-off: the counter state and LFSR reset fully.

@@ -404,9 +404,23 @@ impl Apu {
     #[inline(always)]
     fn sequence_frame(&mut self, div_apu_bit: bool) {
         let falling_edge = self.prev_div_apu_bit && !div_apu_bit;
+        let rising_edge = !self.prev_div_apu_bit && div_apu_bit;
         self.prev_div_apu_bit = div_apu_bit;
 
-        if !falling_edge || !self.nr52.is_audio_on() {
+        if !self.nr52.is_audio_on() {
+            return;
+        }
+
+        // Secondary event: the rising edge between frame-sequencer events
+        // arms the envelope clocks of channels with expired countdowns.
+        if rising_edge {
+            self.ch1.arm_envelope(&self.nr52);
+            self.ch2.arm_envelope(&self.nr52);
+            self.ch4.arm_envelope(&self.nr52);
+            return;
+        }
+
+        if !falling_edge {
             return;
         }
 
@@ -424,16 +438,22 @@ impl Apu {
             }
         }
 
+        // 64 Hz: envelope countdowns run while their clock isn't armed.
+        if self.frame_sequencer_step & 7 == 7 {
+            self.ch1.countdown_envelope();
+            self.ch2.countdown_envelope();
+            self.ch4.countdown_envelope();
+        }
+
+        // Armed envelope clocks apply their volume step on every event.
+        tick_envelope_some(self);
+
         if self.frame_sequencer_step & 1 == 1 {
             tick_length_all(self);
         }
 
         if self.frame_sequencer_step & 3 == 3 {
             self.ch1.tick_sweep(&mut self.nr52);
-        }
-
-        if self.frame_sequencer_step & 7 == 0 {
-            tick_envelope_some(self);
         }
     }
 }
