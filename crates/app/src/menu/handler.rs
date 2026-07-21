@@ -1,4 +1,3 @@
-use core::emu::config::GbModel;
 use crate::cmd::{AppCmd, BindTarget, ChangeConfigCmd};
 use crate::config::{update_frame_skip, AppConfig, ScaleMode, VideoBackendType};
 use crate::menu::factory::{
@@ -14,6 +13,7 @@ use crate::video::frame_blend::{
 };
 use crate::video::shader::ShaderFrameBlendMode;
 use crate::PlatformFileSystem;
+use core::emu::config::GbModel;
 
 impl super::AppMenu {
     #[inline]
@@ -102,6 +102,9 @@ impl super::AppMenu {
             }
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
+            AppMenuItem::AudioChannel(i) => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::ToggleChannel(*i)))
+            }
             AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
@@ -341,6 +344,9 @@ impl super::AppMenu {
             }
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
+            AppMenuItem::AudioChannel(i) => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::ToggleChannel(*i)))
+            }
             AppMenuItem::ResetConfig => None,
             AppMenuItem::RestartGame => None,
             AppMenuItem::InputMenu => None,
@@ -593,6 +599,9 @@ impl super::AppMenu {
             AppMenuItem::AudioBufferSize => None,
             AppMenuItem::MuteTurbo => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteTurbo)),
             AppMenuItem::MuteSlow => Some(AppCmd::ChangeConfig(ChangeConfigCmd::MuteSlow)),
+            AppMenuItem::AudioChannel(i) => {
+                Some(AppCmd::ChangeConfig(ChangeConfigCmd::ToggleChannel(*i)))
+            }
             AppMenuItem::ResetConfig => {
                 self.next_items(confirm_menu(AppCmd::ChangeConfig(ChangeConfigCmd::Reset)));
                 None

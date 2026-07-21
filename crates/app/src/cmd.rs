@@ -139,6 +139,8 @@ pub enum ChangeConfigCmd {
     AudioBufferSize(i32),
     MuteTurbo,
     MuteSlow,
+    /// Flips the audibility of channel N (0-based) in the mix.
+    ToggleChannel(u8),
     ComboInterval(i32),
     SetSaveSlot(usize),
     SetLoadSlot(usize),
@@ -175,6 +177,7 @@ impl ChangeConfigCmd {
             ChangeConfigCmd::AudioBufferSize(_) => "Audio Buffer Size",
             ChangeConfigCmd::MuteTurbo => "Mute Turbo",
             ChangeConfigCmd::MuteSlow => "Mute Slow",
+            ChangeConfigCmd::ToggleChannel(_) => "Toggle Channel",
             ChangeConfigCmd::ComboInterval(_) => "Combo Interval",
             ChangeConfigCmd::SetSaveSlot(_) => "Set Save Slot",
             ChangeConfigCmd::SetLoadSlot(_) => "Set Load Slot",

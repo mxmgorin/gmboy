@@ -48,6 +48,14 @@ fn soft_clip(x: f32) -> f32 {
 pub struct ApuConfig {
     pub buffer_size: usize,
     pub volume: f32,
+    /// User-facing mute mask, bit N audible = channel N+1 in the mix. Not a
+    /// hardware feature — NR51 panning and channel status are unaffected.
+    #[serde(default = "default_channel_mask")]
+    pub channel_mask: u8,
+}
+
+pub fn default_channel_mask() -> u8 {
+    0x0F
 }
 
 impl ApuConfig {
@@ -55,6 +63,7 @@ impl ApuConfig {
         Self {
             buffer_size,
             volume,
+            channel_mask: default_channel_mask(),
         }
     }
 
@@ -232,7 +241,7 @@ impl Apu {
         (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
         (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
         (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
-        let (left, right) = self.mixer.mix();
+        let (left, right) = self.mixer.mix(self.config.channel_mask);
         self.window_left += left;
         self.window_right += right;
         self.window_ticks += 1;

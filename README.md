@@ -41,8 +41,6 @@
 
 It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, while providing modern features such as save states, rewind, shaders, and configurable controls.
 
-***Work in progress**: while most games run correctly, some issues may still occur.*
-
 ## Demos
 
 <p align="center">
@@ -71,11 +69,11 @@ The emulator is continuously validated in CI against community test ROMs and tes
 - **Save States** — Multiple save slots with optional automatic save and restore
 - **Rewind** — Configurable rewind for undoing gameplay actions
 - **Speed Control** — Adjustable emulation speed with configurable Slow and Turbo modes
-- **Custom Controls** — Fully rebindable controls with support for button combinations
+- **Custom Controls** — Rebindable controls for keyboard and gamepad with support for button combinations
 
 **Video & Rendering**
 
-- **Rendering Backends** — SDL2 software renderer with an optional OpenGL backend supporting GLSL shaders
+- **Shader Support** — Optional OpenGL backend with custom GLSL shaders.
 - **Visual Filters** — Grid, subpixel, scanline, dot-matrix, and vignette effects
 - **Frame Blending** — Configurable LCD ghosting simulation with multiple blending modes
 - **Palettes** — Multiple built-in palettes with support for user-defined palettes via `palettes.json`
@@ -83,7 +81,7 @@ The emulator is continuously validated in CI against community test ROMs and tes
 **Interface & Tooling**
 
 - **GUI & Configuration** — Full graphical configuration with optional manual editing of `config.json`
-- **Built-in File Browser** — Browse and launch ROMs directly from the emulator
+- **File Browser** — Browse and launch ROMs directly from the emulator
 - **ROM Library** — Automatic ROM directory scanning with menu-based launching
 - **WebAssembly Build** — Runs entirely in the browser with no installation required
 - **Tile Viewer** — Real-time inspection of background and sprite tiles (SDL2 renderer)

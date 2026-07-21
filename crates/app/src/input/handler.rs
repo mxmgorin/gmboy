@@ -255,6 +255,11 @@ impl InputHandler {
                 ChangeConfigCmd::MuteSlow => {
                     app.config.audio.mute_slow = !app.config.audio.mute_slow
                 }
+                ChangeConfigCmd::ToggleChannel(i) => {
+                    app.config.audio.channel_mask ^= 1 << i;
+                    emu.runtime.cpu.clock.bus.io.apu.config.channel_mask =
+                        app.config.audio.channel_mask;
+                }
                 ChangeConfigCmd::Reset => {
                     app.config = AppConfig::default();
                     emu.config = app.config.emulation.clone();

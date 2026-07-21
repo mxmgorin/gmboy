@@ -1,9 +1,9 @@
-use core::auxiliary::joypad::JoypadButton;
 use crate::cmd::{AppCmd, BindCmds, BindTarget};
 use crate::config::AppConfig;
 use crate::menu::{get_menu_toggle, SubMenu, MAX_MENU_ITEM_CHARS};
 use crate::roms::RomsState;
 use crate::video::truncate_text;
+use core::auxiliary::joypad::JoypadButton;
 
 pub enum AppMenuItem {
     Resume,
@@ -34,6 +34,8 @@ pub enum AppMenuItem {
     AudioBufferSize,
     MuteTurbo,
     MuteSlow,
+    /// Audibility toggle for channel N (0-based).
+    AudioChannel(u8),
     ResetConfig,
     RestartGame,
 
@@ -113,6 +115,7 @@ impl AppMenuItem {
             | AppMenuItem::AudioBufferSize
             | AppMenuItem::MuteTurbo
             | AppMenuItem::MuteSlow
+            | AppMenuItem::AudioChannel(_)
             | AppMenuItem::ResetConfig
             | AppMenuItem::RestartGame
             | AppMenuItem::InputMenu
@@ -184,6 +187,7 @@ impl AppMenuItem {
             | AppMenuItem::AudioBufferSize
             | AppMenuItem::MuteTurbo
             | AppMenuItem::MuteSlow
+            | AppMenuItem::AudioChannel(_)
             | AppMenuItem::ResetConfig
             | AppMenuItem::RestartGame
             | AppMenuItem::InputMenu
@@ -271,6 +275,10 @@ impl AppMenuItem {
             AppMenuItem::AudioBufferSize => with_value("Buffer Size", config.audio.buffer_size),
             AppMenuItem::MuteTurbo => with_toggle("Mute Turbo", config.audio.mute_turbo),
             AppMenuItem::MuteSlow => with_toggle("Mute Slow", config.audio.mute_slow),
+            AppMenuItem::AudioChannel(i) => with_toggle(
+                &format!("Channel {}", i + 1),
+                config.audio.channel_mask & (1 << i) != 0,
+            ),
             AppMenuItem::ResetConfig => "Reset Settings".to_string(),
             AppMenuItem::RestartGame => "Restart".to_string(),
             AppMenuItem::InputMenu => "Input".to_string(),
@@ -397,7 +405,9 @@ impl AppMenuItem {
 
                 with_value("Model", model_name)
             }
-            AppMenuItem::TargetFps => with_value("Target FPS", config.video.render.target_fps as usize),
+            AppMenuItem::TargetFps => {
+                with_value("Target FPS", config.video.render.target_fps as usize)
+            }
         };
 
         truncate_text(&item_str, MAX_MENU_ITEM_CHARS)

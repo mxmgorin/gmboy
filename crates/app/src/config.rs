@@ -141,6 +141,9 @@ pub struct AudioConfig {
     /// latency. Too low risks underruns when a frame runs long.
     #[serde(default = "default_latency_ms")]
     pub latency_ms: u32,
+    /// Per-channel mute mask, bit N audible = channel N+1.
+    #[serde(default = "core::apu::apu::default_channel_mask")]
+    pub channel_mask: u8,
 }
 
 fn default_latency_ms() -> u32 {
@@ -149,7 +152,10 @@ fn default_latency_ms() -> u32 {
 
 impl AudioConfig {
     pub fn get_apu_config(&self) -> ApuConfig {
-        ApuConfig::new(self.buffer_size, self.volume)
+        let mut config = ApuConfig::new(self.buffer_size, self.volume);
+        config.channel_mask = self.channel_mask;
+
+        config
     }
 }
 
@@ -239,6 +245,7 @@ impl Default for AppConfig {
                 buffer_size: apu_config.buffer_size,
                 volume: apu_config.volume,
                 latency_ms: default_latency_ms(),
+                channel_mask: apu_config.channel_mask,
             },
             input: InputConfig::default(),
             video: VideoConfig {

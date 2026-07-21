@@ -197,6 +197,10 @@ pub fn audio_menu() -> Box<[AppMenuItem]> {
         AppMenuItem::AudioBufferSize,
         AppMenuItem::MuteTurbo,
         AppMenuItem::MuteSlow,
+        AppMenuItem::AudioChannel(0),
+        AppMenuItem::AudioChannel(1),
+        AppMenuItem::AudioChannel(2),
+        AppMenuItem::AudioChannel(3),
         AppMenuItem::Back,
     ]
     .into_boxed_slice()

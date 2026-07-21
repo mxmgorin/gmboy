@@ -13,45 +13,50 @@ pub struct Mixer {
 }
 
 impl Mixer {
-    /// Combines samples from all channels
+    /// Combines samples from all channels. `channel_mask` is the user-facing
+    /// mute (bit N audible = channel N+1); it gates the hardware panning
+    /// selection without touching any observable APU state.
     #[inline]
-    pub fn mix(&self) -> (f32, f32) {
+    pub fn mix(&self, channel_mask: u8) -> (f32, f32) {
+        let pan = NR51 {
+            byte: self.nr51_panning.byte & (channel_mask << 4 | channel_mask),
+        };
         let mut left_sample = 0.0;
         let mut right_sample = 0.0;
 
         // Channel 1
-        if self.nr51_panning.ch1_left() {
+        if pan.ch1_left() {
             left_sample += self.sample1;
         }
 
-        if self.nr51_panning.ch1_right() {
+        if pan.ch1_right() {
             right_sample += self.sample1;
         }
 
         // Channel 2
-        if self.nr51_panning.ch2_left() {
+        if pan.ch2_left() {
             left_sample += self.sample2;
         }
 
-        if self.nr51_panning.ch2_right() {
+        if pan.ch2_right() {
             right_sample += self.sample2;
         }
 
         // Channel 3
-        if self.nr51_panning.ch3_left() {
+        if pan.ch3_left() {
             left_sample += self.sample3;
         }
 
-        if self.nr51_panning.ch3_right() {
+        if pan.ch3_right() {
             right_sample += self.sample3;
         }
 
         // Channel 4
-        if self.nr51_panning.ch4_left() {
+        if pan.ch4_left() {
             left_sample += self.sample4;
         }
 
-        if self.nr51_panning.ch4_right() {
+        if pan.ch4_right() {
             right_sample += self.sample4;
         }
 
