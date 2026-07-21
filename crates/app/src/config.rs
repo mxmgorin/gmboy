@@ -137,6 +137,14 @@ pub struct AudioConfig {
     pub mute_slow: bool,
     pub buffer_size: usize,
     pub volume: f32,
+    /// Ring-buffer fill the audio output converges to; the effective output
+    /// latency. Too low risks underruns when a frame runs long.
+    #[serde(default = "default_latency_ms")]
+    pub latency_ms: u32,
+}
+
+fn default_latency_ms() -> u32 {
+    50
 }
 
 impl AudioConfig {
@@ -230,6 +238,7 @@ impl Default for AppConfig {
                 mute_slow: true,
                 buffer_size: apu_config.buffer_size,
                 volume: apu_config.volume,
+                latency_ms: default_latency_ms(),
             },
             input: InputConfig::default(),
             video: VideoConfig {
