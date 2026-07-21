@@ -60,6 +60,7 @@ impl Bus {
     fn set_model(&mut self, model: GbModel) {
         self.io.ppu.lcd.set_model(model);
         self.io.timer.set_boot_phase(model);
+        self.io.apu.set_model(model);
 
         // Post-boot-ROM state; only applies when running an actual cart (test
         // harnesses build carts-less buses with their own initial state).
@@ -71,7 +72,10 @@ impl Bus {
         // CGB hardware with a DMG-only cart runs in compatibility mode, where
         // the CGB-only registers are disabled.
         self.io.ppu.lcd.dmg_compat = model == GbModel::Cgb
-            && matches!(self.cart.data.cgb_flag, crate::cart::header::CgbFlag::DmgOnly)
+            && matches!(
+                self.cart.data.cgb_flag,
+                crate::cart::header::CgbFlag::DmgOnly
+            )
             && !self.cart.is_empty();
     }
 

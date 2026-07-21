@@ -35,6 +35,15 @@ fn default_sample_rate() -> u32 {
     SAMPLING_FREQUENCY
 }
 
+/// Rational tanh approximation: monotonic, unit slope at 0, saturating to
+/// ±1 toward |x| = 3. The mixer output times the volume cap (2.0) stays well
+/// inside the valid range.
+#[inline(always)]
+fn soft_clip(x: f32) -> f32 {
+    let x = x.clamp(-3.0, 3.0);
+    x * (27.0 + x * x) / (27.0 + 9.0 * x * x)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApuConfig {
     pub buffer_size: usize,
@@ -160,6 +169,11 @@ impl Apu {
         self.clear_buffer();
     }
 
+    /// Applies the resolved hardware model (the HPF leak differs per model).
+    pub fn set_model(&mut self, model: crate::emu::config::GbModel) {
+        self.hpf.set_model(SAMPLING_FREQUENCY, model);
+    }
+
     /// Sets the output sample rate, clamped to nominal ± [`MAX_SAMPLE_RATE_SKEW`].
     /// The clamp doubles as a guard against degenerate frontend math (a NaN
     /// cast to u32 is 0, which would silence the APU forever).
@@ -241,6 +255,17 @@ impl Apu {
 
     #[inline(always)]
     pub fn push_buffer(&mut self, output_left: f32, output_right: f32) {
+        let mut output_left = output_left * self.config.volume;
+        let mut output_right = output_right * self.config.volume;
+
+        // Volume above 1.0 can push the signal past the backend's [-1, 1]
+        // range, which hard-clips with harsh harmonics; saturate smoothly
+        // instead. Gated so the default volume stays bit-exact linear.
+        if self.config.volume > 1.0 {
+            output_left = soft_clip(output_left);
+            output_right = soft_clip(output_right);
+        }
+
         let buffer_len = self.buffer.len();
         debug_assert!(buffer_len % 2 == 0);
 
@@ -260,12 +285,7 @@ impl Apu {
         //   preserving their exact bit pattern without changing the data.
         // - All bit patterns are valid for both `f32` and `u64`, so this is safe and defined behavior.
         // - Endianness affects byte order but does not affect safety or correctness for raw packing.
-        let packed = unsafe {
-            std::mem::transmute::<[f32; 2], u64>([
-                output_left * self.config.volume,
-                output_right * self.config.volume,
-            ])
-        };
+        let packed = unsafe { std::mem::transmute::<[f32; 2], u64>([output_left, output_right]) };
 
         if self.buffer_idx >= buffer_len {
             self.clear_buffer();
@@ -589,6 +609,15 @@ mod tests {
         }
 
         assert_eq!(apu.get_buffer().len(), SAMPLING_FREQUENCY as usize * 2);
+    }
+
+    #[test]
+    fn test_soft_clip() {
+        // transparent-ish near zero, bounded at the extremes, odd-symmetric
+        assert!((soft_clip(0.1) - 0.1).abs() < 0.001);
+        assert!(soft_clip(2.0) <= 1.0);
+        assert!(soft_clip(100.0) <= 1.0);
+        assert_eq!(soft_clip(-0.5), -soft_clip(0.5));
     }
 
     #[test]
