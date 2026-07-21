@@ -136,6 +136,14 @@ impl Apu {
         self.lf_ticks = self.lf_ticks.wrapping_add(1);
         self.sequence_frame(div_apu_bit);
 
+        // The sweep pipeline runs regardless of the channel state: the
+        // scheduled recalculation on the 1 MHz grid, the restart hold on the
+        // 2 MHz grid.
+        let tick_1mhz = self.lf_ticks & 3 == 3;
+        let tick_2mhz = self.lf_ticks & 1 == 1;
+        self.ch1
+            .tick_sweep_pipeline(&mut self.nr52, tick_1mhz, tick_2mhz);
+
         // Inactive channels do not clock their frequency timers: the duty /
         // sample position stays frozen until the next trigger.
         if self.nr52.is_ch1_on() {
@@ -279,14 +287,22 @@ impl Apu {
         };
 
         match address {
-            CH1_START_ADDRESS..=CH1_END_ADDRESS => {
-                self.ch1
-                    .write(address, value, &mut self.nr52, len_first_half, trigger_delay)
-            }
-            CH2_START_ADDRESS..=CH2_END_ADDRESS => {
-                self.ch2
-                    .write(address, value, &mut self.nr52, len_first_half, trigger_delay)
-            }
+            CH1_START_ADDRESS..=CH1_END_ADDRESS => self.ch1.write(
+                address,
+                value,
+                &mut self.nr52,
+                len_first_half,
+                trigger_delay,
+                lf_odd,
+            ),
+            CH2_START_ADDRESS..=CH2_END_ADDRESS => self.ch2.write(
+                address,
+                value,
+                &mut self.nr52,
+                len_first_half,
+                trigger_delay,
+                lf_odd,
+            ),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
                 self.ch3.write(address, value, &mut self.nr52, len_first_half)
             }
@@ -453,7 +469,8 @@ impl Apu {
         }
 
         if self.frame_sequencer_step & 3 == 3 {
-            self.ch1.tick_sweep(&mut self.nr52);
+            let lf_odd = self.lf_ticks & 2 != 0;
+            self.ch1.sweep_frame_event(lf_odd);
         }
     }
 }

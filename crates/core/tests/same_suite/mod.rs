@@ -327,6 +327,32 @@ fn apu_channel_1_volume() {
     run("apu/channel_1/channel_1_volume.gb").unwrap();
 }
 
+// Sweep (SameBoy pipeline): the 128 Hz event applies the pending addend and
+// schedules a recalculation + overflow check `shift` 1 MHz cycles later;
+// NR10 writes and retriggers (restart hold) interact with the in-flight
+// calculation. Period writes get the just-reloaded reseed and the CGB D/E
+// duty-bump glitches.
+
+#[test]
+fn apu_channel_1_sweep() {
+    run("apu/channel_1/channel_1_sweep.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_sweep_restart() {
+    run("apu/channel_1/channel_1_sweep_restart.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_sweep_restart_2() {
+    run("apu/channel_1/channel_1_sweep_restart_2.gb").unwrap();
+}
+
+#[test]
+fn apu_channel_1_freq_change_timing_cgb_de() {
+    run("apu/channel_1/channel_1_freq_change_timing-cgbDE.gb").unwrap();
+}
+
 #[test]
 fn apu_channel_1_nrx2_glitch() {
     run("apu/channel_1/channel_1_nrx2_glitch.gb").unwrap();

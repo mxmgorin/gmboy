@@ -6,6 +6,10 @@ use serde::{Deserialize, Serialize};
 pub struct PeriodTimer {
     counter: u16,
     ch_type: ChannelType,
+    /// T-cycles left in the "countdown just reloaded" window after a step;
+    /// period writes landing in it reseed the countdown immediately.
+    #[serde(default)]
+    just_reloaded: u8,
 }
 
 impl PeriodTimer {
@@ -13,6 +17,7 @@ impl PeriodTimer {
         Self {
             counter: 0,
             ch_type,
+            just_reloaded: 0,
         }
     }
 
@@ -24,10 +29,25 @@ impl PeriodTimer {
 
         if self.is_expired() {
             self.reload(nrx3x4);
+            self.just_reloaded = 2;
             return true;
         }
 
+        if self.just_reloaded > 0 {
+            self.just_reloaded -= 1;
+        }
+
         false
+    }
+
+    #[inline(always)]
+    pub fn is_just_reloaded(&self) -> bool {
+        self.just_reloaded > 0
+    }
+
+    #[inline(always)]
+    pub fn counter(&self) -> u16 {
+        self.counter
     }
 
     #[inline(always)]
