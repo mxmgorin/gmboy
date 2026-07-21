@@ -10,7 +10,7 @@ use crate::apu::channels::square_channel::{
 use crate::apu::channels::wave_channel::{
     WaveChannel, CH3_END_ADDRESS, CH3_START_ADDRESS, CH3_WAVE_RAM_END, CH3_WAVE_RAM_START,
 };
-use crate::apu::dac::{apply_dac, DigitalSampleProducer};
+use crate::apu::dac::{apply_dac, DacEnable, DigitalSampleProducer};
 use crate::apu::hpf::Hpf;
 use crate::apu::mixer::Mixer;
 use crate::cpu::CPU_CLOCK_SPEED;
@@ -33,6 +33,16 @@ pub const MAX_SAMPLE_RATE_SKEW: u32 = SAMPLING_FREQUENCY / 200;
 
 fn default_sample_rate() -> u32 {
     SAMPLING_FREQUENCY
+}
+
+/// Unreachable as a real key (bits 40+ are never set), so it forces the mix
+/// recompute on the first tick after construction or an old savestate.
+fn invalid_mix_key() -> u64 {
+    u64::MAX
+}
+
+fn default_true() -> bool {
+    true
 }
 
 /// Rational tanh approximation: monotonic, unit slope at 0, saturating to
@@ -130,6 +140,33 @@ pub struct Apu {
     window_right: f32,
     #[serde(default)]
     window_ticks: u32,
+    /// Digital state the analog mix is a pure function of, packed by
+    /// [`Self::pack_mix_key`] for change detection. It holds for hundreds of
+    /// ticks between duty/wave/LFSR steps, so the float mix reruns only when
+    /// it changes; a tick otherwise just extends the run of the cached value.
+    #[serde(default = "invalid_mix_key")]
+    mix_key: u64,
+    /// Analog mix cached for the current `mix_key`.
+    #[serde(default)]
+    cached_left: f32,
+    #[serde(default)]
+    cached_right: f32,
+    /// Ticks spent at the cached mix since it was last folded into the
+    /// window sums.
+    #[serde(default)]
+    run_ticks: u32,
+    /// Forces the next tick to re-derive the mix key: set by every APU
+    /// register write, since write quirks can change a channel's digital
+    /// output without a waveform step. Defaults to true so fresh state and
+    /// old savestates recompute immediately.
+    #[serde(default = "default_true")]
+    mix_dirty: bool,
+    /// Mix inputs watched by direct compare instead of a dirty flag, packed:
+    /// NR52 (sweep overflow deactivates ch1 outside `write`, off the DIV-APU
+    /// grid) and the user channel mask (the frontend pokes the config
+    /// directly). NR51/NR50 need no watch: they change only through `write`.
+    #[serde(default)]
+    mix_cold: u32,
     buffer_idx: usize,
     buffer: Box<[f32]>,
     hpf: Hpf,
@@ -165,6 +202,12 @@ impl Apu {
             window_left: 0.0,
             window_right: 0.0,
             window_ticks: 0,
+            mix_key: invalid_mix_key(),
+            cached_left: 0.0,
+            cached_right: 0.0,
+            run_ticks: 0,
+            mix_dirty: true,
+            mix_cold: 0,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
             hpf: Hpf::new(SAMPLING_FREQUENCY),
@@ -198,6 +241,9 @@ impl Apu {
     pub fn tick(&mut self, div_apu_bit: bool) {
         self.ticks_count = self.ticks_count.wrapping_add(1);
         self.lf_ticks = self.lf_ticks.wrapping_add(1);
+        // Any DIV-APU edge can move a digital output: falling edges clock
+        // length/envelope/sweep, rising edges arm envelopes.
+        let div_edge = self.prev_div_apu_bit != div_apu_bit;
         self.sequence_frame(div_apu_bit);
 
         // The sweep pipeline runs regardless of the channel state: the
@@ -210,13 +256,14 @@ impl Apu {
 
         // Inactive channels do not clock their frequency timers: the duty /
         // sample position stays frozen until the next trigger.
+        let mut stepped = false;
         if self.nr52.is_ch1_on() {
-            self.ch1.tick();
+            stepped |= self.ch1.tick();
         }
         if self.nr52.is_ch2_on() {
             #[cfg(feature = "apu-trace")]
             let before = self.ch2.duty_sequence;
-            self.ch2.tick();
+            stepped |= self.ch2.tick();
             #[cfg(feature = "apu-trace")]
             if before != self.ch2.duty_sequence {
                 eprintln!(
@@ -226,29 +273,45 @@ impl Apu {
             }
         }
         if self.nr52.is_ch3_on() {
-            self.ch3.tick();
+            stepped |= self.ch3.tick();
         }
         // The noise counter free-runs in the background once triggered; only
         // the LFSR stepping is gated on the channel being active.
-        self.ch4.tick(self.nr52.is_ch4_on());
+        stepped |= self.ch4.tick(self.nr52.is_ch4_on());
 
         // Integrate the analog mix over the whole inter-sample window (a box
         // filter) instead of point-sampling it once per 95 ticks: transitions
         // land in the average with sub-sample weight, attenuating the
         // square-wave harmonics above Nyquist that used to alias back down as
-        // inharmonic ringing.
-        (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
-        (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
-        (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
-        (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
-        let (left, right) = self.mixer.mix(self.config.channel_mask);
-        self.window_left += left;
-        self.window_right += right;
-        self.window_ticks += 1;
+        // inharmonic ringing. Running the DAC+mix float path on all 4 M ticks
+        // is too slow for real games, so two layers gate it: a cheap check of
+        // the events that can move a digital input (a waveform step, a
+        // DIV-APU edge, a register write, one of the directly-watched bytes),
+        // then a compare of the packed digital state itself. Between changes
+        // a tick costs a few integer ops and a run-length increment.
+        let cold = self.nr52.byte as u32 | (self.config.channel_mask as u32) << 8;
+
+        if stepped || div_edge || self.mix_dirty || cold != self.mix_cold {
+            self.mix_dirty = false;
+            self.mix_cold = cold;
+
+            let key = self.pack_mix_key();
+            if key != self.mix_key {
+                self.flush_mix_run();
+                self.mix_key = key;
+                (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
+                (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
+                (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
+                (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
+                (self.cached_left, self.cached_right) = self.mixer.mix(self.config.channel_mask);
+            }
+        }
+        self.run_ticks += 1;
 
         self.sample_acc += self.sample_rate;
         if self.sample_acc >= CPU_CLOCK_SPEED {
             self.sample_acc -= CPU_CLOCK_SPEED;
+            self.flush_mix_run();
 
             let scale = 1.0 / self.window_ticks as f32;
             let (output_left, output_right) = self
@@ -259,6 +322,41 @@ impl Apu {
             self.window_ticks = 0;
 
             self.push_buffer(output_left, output_right);
+        }
+    }
+
+    /// Digital state the mixer output is a function of, packed for change
+    /// detection: channel samples in bits 0-15, DAC enables in 16-19, NR51 in
+    /// 20-27, NR50 in 28-35, the user channel mask in 36-39. The cached mix
+    /// stays correct against any event the tick gate lets through spuriously
+    /// (a duty step to the same sample, a DIV edge that clocked nothing) —
+    /// the key, not the gate, decides whether the float path reruns.
+    #[inline]
+    fn pack_mix_key(&self) -> u64 {
+        let dacs = self.ch1.is_dac_enabled() as u64
+            | (self.ch2.is_dac_enabled() as u64) << 1
+            | (self.ch3.is_dac_enabled() as u64) << 2
+            | (self.ch4.is_dac_enabled() as u64) << 3;
+
+        self.ch1.get_sample(self.nr52) as u64
+            | (self.ch2.get_sample(self.nr52) as u64) << 4
+            | (self.ch3.get_sample(self.nr52) as u64) << 8
+            | (self.ch4.get_sample(self.nr52) as u64) << 12
+            | dacs << 16
+            | (self.mixer.nr51_panning.byte as u64) << 20
+            | (self.mixer.nr50_volume.byte as u64) << 28
+            | (self.config.channel_mask as u64) << 36
+    }
+
+    /// Folds the run of ticks spent at the cached mix into the window sums.
+    #[inline(always)]
+    fn flush_mix_run(&mut self) {
+        if self.run_ticks > 0 {
+            let run = self.run_ticks as f32;
+            self.window_left += self.cached_left * run;
+            self.window_right += self.cached_right * run;
+            self.window_ticks += self.run_ticks;
+            self.run_ticks = 0;
         }
     }
 
@@ -327,6 +425,8 @@ impl Apu {
 
     #[inline(always)]
     pub fn write(&mut self, address: u16, value: u8, double_speed: bool) {
+        self.mix_dirty = true;
+
         if (CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END).contains(&address) {
             self.ch3
                 .wave_ram
@@ -459,6 +559,7 @@ impl Apu {
     /// ch1 status flag set, boot-beep duty/envelope in ch1, default panning
     /// and volume (mooneye boot_hwio).
     pub fn set_boot_state(&mut self) {
+        self.mix_dirty = true;
         self.nr52.byte = 0x81;
         self.mixer.nr50_volume.byte = 0x77;
         self.mixer.nr51_panning.byte = 0xF3;
@@ -627,6 +728,140 @@ mod tests {
         assert!(soft_clip(2.0) <= 1.0);
         assert!(soft_clip(100.0) <= 1.0);
         assert_eq!(soft_clip(-0.5), -soft_clip(0.5));
+    }
+
+    /// All four channels running with their DACs on — the busy-game worst
+    /// case for the per-tick mix path.
+    fn make_busy_apu() -> Apu {
+        let mut apu = Apu::new(ApuConfig::new(1 << 14, 1.0));
+        apu.write(0xFF26, 0x80, false); // power on
+        apu.write(0xFF25, 0xFF, false); // everything panned both sides
+        apu.write(0xFF24, 0x77, false); // max master volume
+
+        // wave RAM pattern (writable while ch3 is off)
+        for (i, addr) in (CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END).enumerate() {
+            apu.write(addr, (i as u8) << 4 | (15 - i as u8), false);
+        }
+
+        apu.write(0xFF12, 0xF0, false); // ch1 max volume, DAC on
+        apu.write(0xFF13, 0x83, false);
+        apu.write(0xFF14, 0x87, false); // trigger
+
+        apu.write(0xFF17, 0xF0, false); // ch2
+        apu.write(0xFF18, 0x21, false);
+        apu.write(0xFF19, 0x86, false); // trigger
+
+        apu.write(0xFF1A, 0x80, false); // ch3 DAC on
+        apu.write(0xFF1C, 0x20, false); // full output level
+        apu.write(0xFF1D, 0x00, false);
+        apu.write(0xFF1E, 0x87, false); // trigger
+
+        apu.write(0xFF21, 0xF0, false); // ch4
+        apu.write(0xFF22, 0x44, false);
+        apu.write(0xFF23, 0x80, false); // trigger
+
+        apu
+    }
+
+    /// The cached mix must be invalidated by every input the mixer reads.
+    /// Reference: the pre-cache code path — recompute the DAC+mix floats on
+    /// every tick — run in lockstep against the keyed APU. The scenario
+    /// covers every invalidation route: waveform steps, envelope decay and
+    /// length expiry off the DIV-APU clock (NR52 changes outside `write`),
+    /// mid-window NR50/NR51 writes, and a direct channel_mask config edit.
+    /// Tolerance covers the float summation-order difference (per-tick adds
+    /// vs cached-value-times-run-length).
+    #[test]
+    fn test_keyed_mix_matches_direct() {
+        let mut apu = make_busy_apu();
+        apu.write(0xFF12, 0xF4, false); // ch1 envelope: decreasing, pace 4
+        apu.write(0xFF14, 0x87, false); // retrigger to reload it
+        apu.write(0xFF16, 0x30, false); // ch2 length load 48
+        apu.write(0xFF17, 0xF3, false); // ch2 envelope: decreasing, pace 3
+        apu.write(0xFF19, 0xC6, false); // retrigger with length enabled
+
+        let mut ref_hpf = Hpf::new(SAMPLING_FREQUENCY);
+        let mut ref_mixer = apu.mixer.clone();
+        let (mut ref_left, mut ref_right, mut ref_ticks) = (0.0f32, 0.0f32, 0u32);
+        let mut ref_acc = apu.sample_acc;
+        let mut emitted = 0usize;
+
+        for i in 0..CPU_CLOCK_SPEED {
+            match i {
+                1_000_000 => apu.write(MASTER_VOLUME_ADDRESS, 0x34, false),
+                2_000_000 => apu.write(SOUND_PLANNING_ADDRESS, 0xF0, false),
+                3_000_000 => apu.config.channel_mask = 0b0101,
+                _ => {}
+            }
+
+            let idx_before = apu.buffer_idx;
+            // DIV bit driving the frame sequencer: 512 Hz falling edges
+            apu.tick(i & (1 << 12) != 0);
+
+            // Channel state after tick() is exactly what its mix observed.
+            let (d1, s1) = apply_dac(apu.nr52, &apu.ch1);
+            let (d2, s2) = apply_dac(apu.nr52, &apu.ch2);
+            let (d3, s3) = apply_dac(apu.nr52, &apu.ch3);
+            let (d4, s4) = apply_dac(apu.nr52, &apu.ch4);
+            (ref_mixer.sample1, ref_mixer.sample2) = (s1, s2);
+            (ref_mixer.sample3, ref_mixer.sample4) = (s3, s4);
+            ref_mixer.nr50_volume.byte = apu.mixer.nr50_volume.byte;
+            ref_mixer.nr51_panning.byte = apu.mixer.nr51_panning.byte;
+            let (left, right) = ref_mixer.mix(apu.config.channel_mask);
+            ref_left += left;
+            ref_right += right;
+            ref_ticks += 1;
+
+            ref_acc += apu.sample_rate;
+            if ref_acc >= CPU_CLOCK_SPEED {
+                ref_acc -= CPU_CLOCK_SPEED;
+                (ref_hpf.dac1_enabled, ref_hpf.dac2_enabled) = (d1, d2);
+                (ref_hpf.dac3_enabled, ref_hpf.dac4_enabled) = (d3, d4);
+                let scale = 1.0 / ref_ticks as f32;
+                let (out_left, out_right) =
+                    ref_hpf.apply_filter(ref_left * scale, ref_right * scale);
+                (ref_left, ref_right, ref_ticks) = (0.0, 0.0, 0);
+
+                assert_ne!(apu.buffer_idx, idx_before, "tick {i}: no pair emitted");
+                let got_left = apu.buffer[apu.buffer_idx - 2];
+                let got_right = apu.buffer[apu.buffer_idx - 1];
+                assert!(
+                    (got_left - out_left).abs() < 1e-4 && (got_right - out_right).abs() < 1e-4,
+                    "tick {i}: keyed ({got_left}, {got_right}) vs direct ({out_left}, {out_right})"
+                );
+                emitted += 1;
+            }
+        }
+
+        assert_eq!(emitted, SAMPLING_FREQUENCY as usize);
+    }
+
+    /// Throughput probe, not a pass/fail test: run with
+    /// `cargo test -p core --release bench_tick -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn bench_tick_throughput() {
+        let mut apu = make_busy_apu();
+
+        for _ in 0..CPU_CLOCK_SPEED {
+            apu.tick(false); // warm-up second
+        }
+
+        const SECONDS: u32 = 4;
+        let start = std::time::Instant::now();
+        for _ in 0..SECONDS * CPU_CLOCK_SPEED {
+            apu.tick(false);
+        }
+        let elapsed = start.elapsed();
+
+        std::hint::black_box(&apu);
+        let ticks = (SECONDS * CPU_CLOCK_SPEED) as f64;
+        println!(
+            "APU tick: {:.1} Mticks/s ({:.2} ns/tick, {:.1}x realtime)",
+            ticks / elapsed.as_secs_f64() / 1e6,
+            elapsed.as_nanos() as f64 / ticks,
+            ticks / CPU_CLOCK_SPEED as f64 / elapsed.as_secs_f64(),
+        );
     }
 
     #[test]

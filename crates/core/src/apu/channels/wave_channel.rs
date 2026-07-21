@@ -126,11 +126,16 @@ impl WaveChannel {
             .tick(master_ctrl, &mut self.nrx3x4_period_and_ctrl.nrx4);
     }
 
+    /// Returns whether the sample position advanced — the only point where
+    /// this tick can change the channel's digital output.
     #[inline]
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self) -> bool {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.wave_ram.inc_sample_index();
+            return true;
         }
+
+        false
     }
 
     #[inline]

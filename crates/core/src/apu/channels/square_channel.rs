@@ -278,15 +278,20 @@ impl SquareChannel {
             .tick(master_ctrl, &mut self.nrx3x4_period_and_ctrl.nrx4);
     }
 
+    /// Returns whether the duty stepped — the only point where this tick can
+    /// change the channel's digital output.
     #[inline]
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self) -> bool {
         if self.period_timer.tick(&self.nrx3x4_period_and_ctrl) {
             self.duty_sequence = (self.duty_sequence + 1) & 0x07;
             let duty = self.nrx1_len_timer_duty_cycle.get_duty_cycle_idx() as usize;
             self.current_sample = WAVE_DUTY_PATTERNS[duty][self.duty_sequence];
             self.suppressed = false;
             self.did_tick = true;
+            return true;
         }
+
+        false
     }
 
     /// APU power-off: the duty position and the latched output restart.

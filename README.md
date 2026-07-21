@@ -37,7 +37,7 @@
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
 
-`oxGBC` (**ox**ide + **GBC**) — runs both the original Game Boy (DMG) and the Game Boy Color (GBC), built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds.
+`oxGBC` (**ox**ide + **Game Boy Color**) — built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds.
 
 It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, while providing modern features such as save states, rewind, shaders, and configurable controls.
 

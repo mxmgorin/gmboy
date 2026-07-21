@@ -189,9 +189,11 @@ impl NoiseChannel {
     /// counter keeps counting in the background, but the LFSR only steps
     /// while the channel is active.
     #[inline]
-    pub fn tick(&mut self, active: bool) {
+    /// Returns whether the LFSR stepped — the only point where this tick can
+    /// change the channel's digital output.
+    pub fn tick(&mut self, active: bool) -> bool {
         if !(self.counter_active || self.background_active) {
-            return;
+            return false;
         }
 
         if self.counter_countdown == 0 {
@@ -213,8 +215,11 @@ impl NoiseChannel {
 
             if new_bit && !old_bit && active {
                 self.step_lfsr();
+                return true;
             }
         }
+
+        false
     }
 
     /// T-cycles between counter increments: `divisor * 8`, or 4 for the 0
