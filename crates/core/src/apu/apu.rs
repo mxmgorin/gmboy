@@ -104,6 +104,14 @@ pub struct Apu {
     /// [`MAX_SAMPLE_RATE_SKEW`] to keep its audio queue at the target fill.
     #[serde(default = "default_sample_rate")]
     sample_rate: u32,
+    /// Running sums of the mixed analog output over the current inter-sample
+    /// window; divided by `window_ticks` at emission (box-filter average).
+    #[serde(default)]
+    window_left: f32,
+    #[serde(default)]
+    window_right: f32,
+    #[serde(default)]
+    window_ticks: u32,
     buffer_idx: usize,
     buffer: Box<[f32]>,
     hpf: Hpf,
@@ -136,6 +144,9 @@ impl Apu {
             ticks_count: 0,
             sample_acc: 0,
             sample_rate: SAMPLING_FREQUENCY,
+            window_left: 0.0,
+            window_right: 0.0,
+            window_ticks: 0,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
             hpf: Hpf::new(SAMPLING_FREQUENCY),
@@ -198,17 +209,32 @@ impl Apu {
         // the LFSR stepping is gated on the channel being active.
         self.ch4.tick(self.nr52.is_ch4_on());
 
-        // down sample by nearest-neighbor
+        // Integrate the analog mix over the whole inter-sample window (a box
+        // filter) instead of point-sampling it once per 95 ticks: transitions
+        // land in the average with sub-sample weight, attenuating the
+        // square-wave harmonics above Nyquist that used to alias back down as
+        // inharmonic ringing.
+        (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
+        (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
+        (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
+        (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
+        let (left, right) = self.mixer.mix();
+        self.window_left += left;
+        self.window_right += right;
+        self.window_ticks += 1;
+
         self.sample_acc += self.sample_rate;
         if self.sample_acc >= CPU_CLOCK_SPEED {
             self.sample_acc -= CPU_CLOCK_SPEED;
-            (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
-            (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
-            (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
-            (self.hpf.dac4_enabled, self.mixer.sample4) = apply_dac(self.nr52, &self.ch4);
-            let (output_left, output_right) = self.mixer.mix();
 
-            let (output_left, output_right) = self.hpf.apply_filter(output_left, output_right);
+            let scale = 1.0 / self.window_ticks as f32;
+            let (output_left, output_right) = self
+                .hpf
+                .apply_filter(self.window_left * scale, self.window_right * scale);
+            self.window_left = 0.0;
+            self.window_right = 0.0;
+            self.window_ticks = 0;
+
             self.push_buffer(output_left, output_right);
         }
     }
