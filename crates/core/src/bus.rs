@@ -85,7 +85,11 @@ impl Bus {
     }
 
     pub fn read(&self, addr: u16) -> u8 {
-        #[cfg(debug_assertions)]
+        // Kept out of production builds (every bus read would pay for the
+        // check); the test-bus feature brings it back for test builds so
+        // `cargo test --release` doesn't read the zero-sized Cart::empty()
+        // through get_unchecked and segfault.
+        #[cfg(any(debug_assertions, feature = "test-bus"))]
         if let Some(test_bytes) = self.flat_mem.as_ref() {
             return test_bytes[addr as usize];
         }
@@ -126,7 +130,7 @@ impl Bus {
     }
 
     pub fn write(&mut self, addr: u16, value: u8) {
-        #[cfg(debug_assertions)]
+        #[cfg(any(debug_assertions, feature = "test-bus"))]
         if let Some(test_bytes) = self.flat_mem.as_mut() {
             test_bytes[addr as usize] = value;
             return;

@@ -26,8 +26,14 @@ pub const SOUND_PLANNING_ADDRESS: u16 = 0xFF25;
 pub const MASTER_VOLUME_ADDRESS: u16 = 0xFF24;
 
 pub const FRAME_SEQUENCER_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
-pub const SAMPLING_FREQUENCY: u32 = 44_100; // native is 41_943
-const TICKS_PER_SAMPLE: u32 = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY;
+pub const SAMPLING_FREQUENCY: u32 = 44_100;
+/// Dynamic rate control may nudge the emission rate this far from nominal
+/// (~0.5%) — enough to absorb clock drift, too small to hear as a pitch shift.
+pub const MAX_SAMPLE_RATE_SKEW: u32 = SAMPLING_FREQUENCY / 200;
+
+fn default_sample_rate() -> u32 {
+    SAMPLING_FREQUENCY
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApuConfig {
@@ -87,6 +93,17 @@ pub struct Apu {
     #[serde(default)]
     lf_ticks: u32,
     ticks_count: u32,
+    /// Fractional phase of the output-sample clock: gains `sample_rate` per
+    /// 4 MHz tick, emits a sample and wraps at `CPU_CLOCK_SPEED`. Emission is
+    /// thus exactly `sample_rate` Hz of emulated time — no truncation drift
+    /// against the audio device (4194304/95 would be ~44145 Hz, +0.1%).
+    #[serde(default)]
+    sample_acc: u32,
+    /// Output sample rate in Hz, nominally [`SAMPLING_FREQUENCY`]; the
+    /// frontend's dynamic rate control nudges it within
+    /// [`MAX_SAMPLE_RATE_SKEW`] to keep its audio queue at the target fill.
+    #[serde(default = "default_sample_rate")]
+    sample_rate: u32,
     buffer_idx: usize,
     buffer: Box<[f32]>,
     hpf: Hpf,
@@ -117,6 +134,8 @@ impl Apu {
             skip_div_event: SkipDivEvent::None,
             lf_ticks: 0,
             ticks_count: 0,
+            sample_acc: 0,
+            sample_rate: SAMPLING_FREQUENCY,
             buffer: vec![0.0; config.buffer_size].into_boxed_slice(),
             buffer_idx: 0,
             hpf: Hpf::new(SAMPLING_FREQUENCY),
@@ -128,6 +147,17 @@ impl Apu {
     pub fn update_buffer_size(&mut self) {
         self.buffer = vec![0.0; self.config.buffer_size].into_boxed_slice();
         self.clear_buffer();
+    }
+
+    /// Sets the output sample rate, clamped to nominal ± [`MAX_SAMPLE_RATE_SKEW`].
+    /// The clamp doubles as a guard against degenerate frontend math (a NaN
+    /// cast to u32 is 0, which would silence the APU forever).
+    #[inline(always)]
+    pub fn set_sample_rate(&mut self, rate: u32) {
+        self.sample_rate = rate.clamp(
+            SAMPLING_FREQUENCY - MAX_SAMPLE_RATE_SKEW,
+            SAMPLING_FREQUENCY + MAX_SAMPLE_RATE_SKEW,
+        );
     }
 
     #[inline(always)]
@@ -155,7 +185,10 @@ impl Apu {
             self.ch2.tick();
             #[cfg(feature = "apu-trace")]
             if before != self.ch2.duty_sequence {
-                eprintln!("CH2 step -> {} t={}", self.ch2.duty_sequence, self.ticks_count);
+                eprintln!(
+                    "CH2 step -> {} t={}",
+                    self.ch2.duty_sequence, self.ticks_count
+                );
             }
         }
         if self.nr52.is_ch3_on() {
@@ -166,7 +199,9 @@ impl Apu {
         self.ch4.tick(self.nr52.is_ch4_on());
 
         // down sample by nearest-neighbor
-        if self.ticks_count % TICKS_PER_SAMPLE == 0 {
+        self.sample_acc += self.sample_rate;
+        if self.sample_acc >= CPU_CLOCK_SPEED {
+            self.sample_acc -= CPU_CLOCK_SPEED;
             (self.hpf.dac1_enabled, self.mixer.sample1) = apply_dac(self.nr52, &self.ch1);
             (self.hpf.dac2_enabled, self.mixer.sample2) = apply_dac(self.nr52, &self.ch2);
             (self.hpf.dac3_enabled, self.mixer.sample3) = apply_dac(self.nr52, &self.ch3);
@@ -272,7 +307,10 @@ impl Apu {
 
         #[cfg(feature = "apu-trace")]
         if address == 0xFF19 || address == 0xFF18 {
-            eprintln!("NR2x write {address:04X}={value:02X} t={} lf={}", self.ticks_count, lf_odd);
+            eprintln!(
+                "NR2x write {address:04X}={value:02X} t={} lf={}",
+                self.ticks_count, lf_odd
+            );
         }
 
         // Trigger-to-first-duty-step latency for an inactive square channel;
@@ -304,7 +342,8 @@ impl Apu {
                 lf_odd,
             ),
             CH3_START_ADDRESS..=CH3_END_ADDRESS => {
-                self.ch3.write(address, value, &mut self.nr52, len_first_half)
+                self.ch3
+                    .write(address, value, &mut self.nr52, len_first_half)
             }
             CH4_START_ADDRESS..=CH4_END_ADDRESS => {
                 // 2 MHz cycle alignment (SameBoy's noise_channel.alignment).
@@ -505,6 +544,37 @@ fn tick_envelope_some(apu: &mut Apu) {
     apu.ch1.tick_envelope();
     apu.ch2.tick_envelope();
     apu.ch4.tick_envelope();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// One emulated second (4194304 APU ticks) must emit exactly
+    /// `sample_rate` stereo pairs — the fractional accumulator may not
+    /// truncate like the old integer `ticks % 95` did.
+    #[test]
+    fn test_exact_sample_rate() {
+        // buffer larger than a second of stereo pairs so it never wraps
+        let mut apu = Apu::new(ApuConfig::new(SAMPLING_FREQUENCY as usize * 2 + 2, 1.0));
+
+        for _ in 0..CPU_CLOCK_SPEED {
+            apu.tick(false);
+        }
+
+        assert_eq!(apu.get_buffer().len(), SAMPLING_FREQUENCY as usize * 2);
+    }
+
+    #[test]
+    fn test_sample_rate_clamp() {
+        let mut apu = Apu::default();
+
+        apu.set_sample_rate(0);
+        assert_eq!(apu.sample_rate, SAMPLING_FREQUENCY - MAX_SAMPLE_RATE_SKEW);
+
+        apu.set_sample_rate(u32::MAX);
+        assert_eq!(apu.sample_rate, SAMPLING_FREQUENCY + MAX_SAMPLE_RATE_SKEW);
+    }
 }
 
 /// FF26 — NR52: Audio master control

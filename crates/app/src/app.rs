@@ -146,6 +146,16 @@ where
     pub fn render_frame(&mut self, emu: &mut Emu) {
         let on_time = emu.run_frame(self);
 
+        // The audio callback only gets a shared runtime borrow, so the rate
+        // computed by the queue's rate control is applied here instead.
+        emu.runtime
+            .cpu
+            .clock
+            .bus
+            .io
+            .apu
+            .set_sample_rate(self.audio.sample_rate());
+
         if on_time || self.video.must_render() {
             self.render_framebuffer(emu);
         }
