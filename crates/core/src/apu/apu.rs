@@ -239,7 +239,12 @@ impl Apu {
 
     #[inline(always)]
     pub fn tick(&mut self, div_apu_bit: bool) {
-        self.ticks_count = self.ticks_count.wrapping_add(1);
+        // Only the trace output reads this counter; the field stays for the
+        // savestate layout (postcard is positional).
+        #[cfg(feature = "apu-trace")]
+        {
+            self.ticks_count = self.ticks_count.wrapping_add(1);
+        }
         self.lf_ticks = self.lf_ticks.wrapping_add(1);
         // Any DIV-APU edge can move a digital output: falling edges clock
         // length/envelope/sweep, rising edges arm envelopes.

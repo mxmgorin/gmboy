@@ -2,9 +2,7 @@ use crate::emu::config::GbModel;
 use crate::ppu::fifo::PixelFifo;
 use crate::ppu::lcd::Lcd;
 use crate::ppu::sprites::SpriteFetcher;
-use crate::ppu::tile::{
-    get_color_id, TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH,
-};
+use crate::ppu::tile::{TileFlags, TileLineData, TILE_BITS_COUNT, TILE_HEIGHT, TILE_WIDTH};
 use crate::ppu::vram::VideoRam;
 use serde::{Deserialize, Serialize};
 
@@ -175,6 +173,8 @@ impl PixelFetcher {
         }
     }
 
+    /// Pushes the fetched tile row (8 pixels) unless the FIFO still holds the
+    /// previous one; returns whether it pushed.
     #[inline(always)]
     fn fifo_push(&mut self, lcd: &Lcd) -> bool {
         if self.pixel_fifo.is_full() {
@@ -183,19 +183,26 @@ impl PixelFetcher {
 
         let bg_enabled = lcd.control.is_bgw_enabled();
         let bg_flags = self.bgw_fetched_data.cgb_flags;
-        let bg_x_flip = bg_flags.is_x_flip();
-        let prev_fifo_x = self.pixel_fifo.pushed_count();
-        let mut fifo_x = prev_fifo_x;
-
-        for bit in 0..TILE_BITS_COUNT {
-            let bg_bit = if bg_x_flip { 7 - bit } else { bit };
-            let bg_color_id = get_color_id(
+        // X-flip reverses the bitplanes once; the loop then walks MSB-first
+        // with constant-distance shifts instead of re-indexing per pixel.
+        let (mut byte0, mut byte1) = if bg_flags.is_x_flip() {
+            (
+                self.bgw_fetched_data.tile_line.byte0.reverse_bits(),
+                self.bgw_fetched_data.tile_line.byte1.reverse_bits(),
+            )
+        } else {
+            (
                 self.bgw_fetched_data.tile_line.byte0,
                 self.bgw_fetched_data.tile_line.byte1,
-                bg_bit,
-            );
+            )
+        };
+        let mut fifo_x = self.pixel_fifo.pushed_count();
 
-            fifo_x = self.pixel_fifo.pushed_count();
+        for _ in 0..TILE_BITS_COUNT {
+            let bg_color_id = ((byte1 >> 6) & 0b10 | byte0 >> 7) as usize;
+            byte0 <<= 1;
+            byte1 <<= 1;
+
             let sp_color = self
                 .sprite_fetcher
                 .get_color(lcd, fifo_x, bg_color_id, bg_flags);
@@ -206,9 +213,11 @@ impl PixelFetcher {
                 let bgw_color = lcd.get_bgw_color(bg_color_id, bg_enabled, bg_flags);
                 self.pixel_fifo.push(bgw_color);
             }
+
+            fifo_x += 1;
         }
 
-        prev_fifo_x != fifo_x
+        true
     }
 
     #[inline(always)]
@@ -267,11 +276,10 @@ impl PixelFetcher {
 
     #[inline(always)]
     fn read_tile_byte(&mut self, lcd: &Lcd, vram: &VideoRam, byte: usize) -> u8 {
-        let fetched_data = self.bgw_fetched_data.clone();
         let data_area = lcd.control.get_bgw_data_area();
-        let tile_index = bgw_tile_index_in_area(fetched_data.tile_index, data_area);
-        let tiledata_addr = calc_bgw_tile_addr(tile_index, fetched_data.map_y, data_area);
-        let vram_bank = fetched_data.cgb_flags.read_cgb_vram_bank();
+        let tile_index = bgw_tile_index_in_area(self.bgw_fetched_data.tile_index, data_area);
+        let tiledata_addr = calc_bgw_tile_addr(tile_index, self.bgw_fetched_data.map_y, data_area);
+        let vram_bank = self.bgw_fetched_data.cgb_flags.read_cgb_vram_bank();
 
         vram.read_tile_byte_from_bank(vram_bank, tiledata_addr, byte)
     }
