@@ -100,10 +100,15 @@ impl Emu {
             thread::sleep(duration - self.config.spin_duration);
         }
 
-        // Spin the rest to get close to the target duration
+        // Spin the rest to get close to the target duration. The window is
+        // wall-clock-bound either way; batching pauses between clock checks
+        // (~25k clock_gettime calls per frame otherwise) keeps the spin in
+        // `pause`, which is kinder to power and the SMT sibling, at a
+        // sub-microsecond precision cost.
         while start.elapsed() < duration {
-            std::hint::spin_loop();
-            //thread::yield_now();
+            for _ in 0..16 {
+                std::hint::spin_loop();
+            }
         }
     }
 
@@ -128,11 +133,19 @@ impl Emu {
     }
 
     #[inline(always)]
-    pub fn create_save_state(&self) -> EmuSaveState {
-        EmuSaveState {
+    pub fn create_save_state(&mut self) -> EmuSaveState {
+        // The snapshot never needs the ROM image: load_save_state swaps the
+        // live one back in. Move it out for the clone so a snapshot doesn't
+        // copy (and the rewind buffer doesn't retain) megabytes of read-only
+        // ROM per entry.
+        let data = mem::take(&mut self.runtime.cpu.clock.bus.cart.data);
+        let state = EmuSaveState {
             cpu: self.runtime.cpu.clone(),
             cart_save_state: self.runtime.cpu.clock.bus.cart.create_save_state(),
-        }
+        };
+        self.runtime.cpu.clock.bus.cart.data = data;
+
+        state
     }
 
     #[inline(always)]
@@ -146,7 +159,8 @@ impl Emu {
                     self.rewind_buffer.pop_front();
                 }
 
-                self.rewind_buffer.push_back(self.create_save_state());
+                let state = self.create_save_state();
+                self.rewind_buffer.push_back(state);
                 self.last_rewind_frame = curr_frame;
             }
         }
@@ -184,5 +198,36 @@ impl Emu {
         self.runtime.cpu = save_state.cpu;
         self.runtime.cpu.clock.bus.io.joypad = Joypad::default(); // reset controls
         self.runtime.cpu.clock.reset();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn new_emu() -> Emu {
+        // an all-zero 32 KiB image is a valid RomOnly header
+        let cart = Cart::new(vec![0u8; 0x8000].into_boxed_slice()).unwrap();
+        let bus = Bus::new(cart, Default::default(), None);
+
+        Emu::new(EmuConfig::default(), EmuRuntime::new(bus)).unwrap()
+    }
+
+    #[test]
+    fn test_save_state_skips_rom_and_load_restores_it() {
+        let mut emu = new_emu();
+
+        let state = emu.create_save_state();
+        // the snapshot must not carry the ROM image, the live cart keeps it
+        assert!(state.cpu.clock.bus.cart.is_empty());
+        assert_eq!(emu.runtime.cpu.clock.bus.cart.data.rom().len(), 0x8000);
+
+        let pc = emu.runtime.cpu.registers.pc;
+        emu.runtime.cpu.registers.pc = pc.wrapping_add(0x1234);
+        emu.load_save_state(state);
+
+        // loading swaps the live ROM back in and restores the CPU state
+        assert_eq!(emu.runtime.cpu.registers.pc, pc);
+        assert_eq!(emu.runtime.cpu.clock.bus.cart.data.rom().len(), 0x8000);
     }
 }

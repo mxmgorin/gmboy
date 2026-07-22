@@ -5,6 +5,9 @@ use core::bus::Bus;
 use core::cart::Cart;
 use core::cpu::interrupts::Interrupts;
 use core::cpu::Cpu;
+use core::emu::config::EmuConfig;
+use core::emu::runtime::EmuRuntime;
+use core::emu::Emu;
 use core::ppu::oam::OamRam;
 use core::ppu::oam::OAM_ADDR_START;
 use core::ppu::oam::OAM_ENTRIES_COUNT;
@@ -30,6 +33,22 @@ pub fn new_bus() -> Bus {
     Bus::new(get_cart(), Default::default(), None)
 }
 
+/// cpu_instrs padded to a real-game-sized 1 MiB image (rom-size header byte
+/// bumped to match): save-state cost scales with the ROM copy, so the small
+/// test ROM alone would understate it.
+pub fn get_cart_1mb() -> Cart {
+    let mut path = std::env::current_dir().unwrap();
+    path.pop();
+    path.pop();
+    let path = path.join("roms").join("cpu_instrs.gb");
+
+    let mut bytes = read_bytes(&path).unwrap().into_vec();
+    bytes[0x148] = 0x05; // 1 MiB
+    bytes.resize(1024 * 1024, 0);
+
+    Cart::new(bytes.into_boxed_slice()).unwrap()
+}
+
 pub fn new_cpu(cart: Option<Cart>) -> Cpu {
     let bus = if let Some(cart) = cart {
         Bus::new(cart, Default::default(), None)
@@ -42,6 +61,13 @@ pub fn new_cpu(cart: Option<Cart>) -> Cpu {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("create_save_state_1mb_rom", |b| {
+        let bus = Bus::new(get_cart_1mb(), Default::default(), None);
+        let mut emu = Emu::new(EmuConfig::default(), EmuRuntime::new(bus)).unwrap();
+
+        b.iter(|| black_box(emu.create_save_state()));
+    });
+
     c.bench_function("cpu_step_500_000", |b| {
         b.iter_batched(
             || {
