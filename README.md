@@ -37,7 +37,7 @@
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
 
-`oxGBC` (**ox**ide + **Game Boy Color**) is built around a single portable emulation core powering Windows, macOS, Linux, Android, and WebAssembly. It aims for high accuracy through sub-instruction CPU timing and dot-level PPU emulation while providing modern features such as save states, rewind, shaders, and configurable controls.
+`oxGBC` (**ox**ide + **G**ame **B**oy **C**olor) is built around a single portable emulation core powering Windows, macOS, Linux, Android, and WebAssembly. It aims for high accuracy through sub-instruction CPU timing and dot-level PPU emulation while providing modern features such as save states, rewind, shaders, and configurable controls.
 
 The emulator passes a wide range of community test suites and is continuously validated against them in CI, including [Blargg](https://github.com/retrio/gb-test-roms), [Mooneye](https://github.com/Gekkio/mooneye-test-suite), [SameSuite](https://github.com/liji32/samesuite), [DMG-acid2](https://github.com/mattcurrie/dmg-acid2), [CGB-acid2](https://github.com/mattcurrie/cgb-acid2), [CGB-acid-hell](https://github.com/mattcurrie/cgb-acid-hell), and [Magen](https://github.com/alloncm/MagenTests).
 
@@ -197,12 +197,14 @@ Or run without arguments and use the built-in file browser / ROM scanner to pick
 cargo run --release -p desktop
 ```
 
-## Contributing
+## Support the project ⭐
 
-Bug reports, and feature requests are welcome. If a game
-misbehaves, please [open an issue](https://github.com/mxmgorin/oxgbc/issues)
+Bug reports, and feature requests are welcome. If a game misbehaves, please [open an issue](https://github.com/mxmgorin/oxgbc/issues)
 with the ROM title and what went wrong — accuracy reports are especially
 valuable.
+
+If you find the project useful, please give it a star on GitHub. It helps others
+discover it and keeps development going.
 
 ## License
 
