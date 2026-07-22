@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, AppState};
 use crate::config::AppConfig;
 use crate::input::handler::InputHandler;
 use core::apu::Apu;
@@ -116,11 +116,17 @@ where
     .map(PathBuf::from);
 
     if let Some(cart_path) = cart_path {
+        // An explicitly requested ROM starts running regardless of
+        // auto_continue.
         if let Err(err) = app.load_cart_file(emu, Path::new(&cart_path)) {
             log::warn!("Failed to load cart file: {err}");
         }
     } else {
         app.restart_rom(emu);
+
+        if !app.config.auto_continue {
+            app.state = AppState::Paused;
+        }
     }
 }
 

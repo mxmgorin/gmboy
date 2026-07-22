@@ -122,13 +122,13 @@ where
         })
     }
 
-    /// Execution loop
+    /// Execution loop. The starting state is decided at cart-load time (see
+    /// `crate::load_cart`): an explicitly passed ROM always runs, the
+    /// remembered one only with `auto_continue`.
     pub fn run(&mut self, emu: &mut Emu, input: &mut InputHandler) {
-        self.state = if self.config.auto_continue && !emu.runtime.cpu.clock.bus.cart.is_empty() {
-            AppState::Running
-        } else {
-            AppState::Paused
-        };
+        if emu.runtime.cpu.clock.bus.cart.is_empty() {
+            self.state = AppState::Paused;
+        }
 
         loop {
             input.handle_events(self, emu);
