@@ -37,9 +37,9 @@
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
 
-`oxGBC` (**ox**ide + **Game Boy Color**) — built around a single portable emulation core that powers Windows, macOS, Linux, Android, and WebAssembly builds.
+`oxGBC` (**ox**ide + **Game Boy Color**) is built around a single portable emulation core powering Windows, macOS, Linux, Android, and WebAssembly. It aims for high accuracy through sub-instruction CPU timing and dot-level PPU emulation while providing modern features such as save states, rewind, shaders, and configurable controls.
 
-It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emulation, while providing modern features such as save states, rewind, shaders, and configurable controls.
+The emulator passes a wide range of community test suites and is continuously validated against them in CI, including [Blargg](https://github.com/retrio/gb-test-roms), [Mooneye](https://github.com/Gekkio/mooneye-test-suite), [SameSuite](https://github.com/liji32/samesuite), [DMG-acid2](https://github.com/mattcurrie/dmg-acid2), [CGB-acid2](https://github.com/mattcurrie/cgb-acid2), [CGB-acid-hell](https://github.com/mattcurrie/cgb-acid-hell), and [Magen](https://github.com/alloncm/MagenTests).
 
 ## Demos
 
@@ -57,10 +57,6 @@ It aims for high accuracy through sub-instruction CPU timing, dot-level PPU emul
     <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" alt="Demo 4" width="200"/>
   </a>
 </p>
-
-## Accuracy & Testing
-
-The emulator is continuously validated in CI against community test ROMs and test suites: Blargg (all tests), Mooneye (all tests), DMG-acid2, CGB-acid2, CGB-acid-hell, and Mangen.
 
 ## Features
 
