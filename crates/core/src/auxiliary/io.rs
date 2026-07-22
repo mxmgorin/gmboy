@@ -136,7 +136,12 @@ impl Io {
         match addr {
             0xFF00 => self.joypad.set_byte(value),
             0xFF01 => self.serial.sb = value,
-            0xFF02 => self.serial.write_sc(value),
+            0xFF02 => {
+                // Seed the edge detector as continuous tracking would have
+                // left it (the pre-write clock selection).
+                let clk = self.timer.serial_clock_bit(self.serial.is_fast_clock());
+                self.serial.write_sc(value, clk);
+            }
             TIMER_DIV_ADDRESS..=TIMER_TAC_ADDRESS => self.timer.write(addr, value),
             AUDIO_START_ADDRESS..=AUDIO_END_ADDRESS | CH3_WAVE_RAM_START..=CH3_WAVE_RAM_END => {
                 self.apu.write(addr, value, self.cgb_speed.double_speed)
@@ -232,14 +237,23 @@ const SERIAL_SC_UNUSED_MASK: u8 = 0b01111110;
 impl Serial {
     /// Write SC ($FF02). Starting a transfer requires the transfer bit (7) and
     /// the internal clock (bit 0); bit 1 selects the CGB fast clock.
+    /// `clock_bit` is the current serial clock bit: `tick` is skipped while no
+    /// transfer runs, so the idle edge detector is re-seeded here instead.
     #[inline]
-    pub fn write_sc(&mut self, value: u8) {
+    pub fn write_sc(&mut self, value: u8, clock_bit: bool) {
+        self.prev_clock = clock_bit;
         self.sc = value;
 
         if value & 0x81 == 0x81 {
             self.output = Some(self.sb);
             self.bits_left = 8;
         }
+    }
+
+    /// A transfer is in progress — the only time `tick` can do anything.
+    #[inline(always)]
+    pub fn is_active(&self) -> bool {
+        self.bits_left != 0
     }
 
     /// The CGB fast clock (SC bit 1) is selected for the active transfer.

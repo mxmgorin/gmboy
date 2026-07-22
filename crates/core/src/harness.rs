@@ -164,12 +164,20 @@ pub fn run_rom(
 /// visual ROMs whose result is the framebuffer rather than a serial/register code.
 pub fn run_duration(cpu: &mut Cpu, duration: Duration) {
     let start = Instant::now();
+    let mut since_poll: u32 = 0;
 
     loop {
         cpu.step();
 
-        if start.elapsed() > duration {
-            return;
+        // Batch the wall-clock checks like `run` does: `Instant::now()` per
+        // step is ~20% of the whole run in profiles.
+        since_poll += 1;
+        if since_poll >= POLL_STEPS {
+            since_poll = 0;
+
+            if start.elapsed() > duration {
+                return;
+            }
         }
     }
 }

@@ -67,12 +67,16 @@ impl Clock {
 
             for _ in 0..T_CYCLES_PER_M_CYCLE {
                 self.bus.io.timer.tick(&mut self.bus.io.interrupts);
-                let sclk = self
-                    .bus
-                    .io
-                    .timer
-                    .serial_clock_bit(self.bus.io.serial.is_fast_clock());
-                self.bus.io.serial.tick(sclk, &mut self.bus.io.interrupts);
+                // The serial edge detector only matters mid-transfer; its
+                // idle state is re-seeded on the SC write that starts one.
+                if self.bus.io.serial.is_active() {
+                    let sclk = self
+                        .bus
+                        .io
+                        .timer
+                        .serial_clock_bit(self.bus.io.serial.is_fast_clock());
+                    self.bus.io.serial.tick(sclk, &mut self.bus.io.interrupts);
+                }
 
                 // PPU/APU/VRAM-DMA run on the fixed 4 MHz clock: every other
                 // CPU T-cycle in double speed, phase-continuous, so a 1
