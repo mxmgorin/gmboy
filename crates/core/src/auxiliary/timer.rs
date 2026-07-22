@@ -1,5 +1,4 @@
 use crate::cpu::interrupts::{InterruptType, Interrupts};
-use crate::{get_bit_flag, get_bit_flag16};
 use serde::{Deserialize, Serialize};
 
 pub const TIMER_DIV_ADDRESS: u16 = 0xFF04;
@@ -43,32 +42,22 @@ pub struct FallingEdgeDetector {
     pub prev_result: bool,
 }
 
+/// DIV masks of the TAC clock bits, indexed by TAC bits 0-1:
+/// 4096 Hz (bit 9), 262144 Hz (bit 3), 65536 Hz (bit 5), 16384 Hz (bit 7).
+const TAC_CLOCK_MASKS: [u16; 4] = [1 << 9, 1 << 3, 1 << 5, 1 << 7];
+
 impl FallingEdgeDetector {
+    /// Branchless on purpose: this runs on every T-cycle.
     #[inline(always)]
     pub fn detect(&mut self, div: u16, tac: u8) -> bool {
-        let clock_bit = get_bit_flag16(div, get_clock_bit_position(tac));
-        let enable_bit = get_bit_flag(tac, TAC_ENABLE_BIT);
-        let and_result = clock_bit && enable_bit;
+        // all-ones when the TAC enable bit is set, zero otherwise
+        let enabled = 0u16.wrapping_sub(((tac >> TAC_ENABLE_BIT) & 1) as u16);
+        let and_result = div & TAC_CLOCK_MASKS[(tac & 0b11) as usize] & enabled != 0;
 
         let is_falling_edge = self.prev_result && !and_result;
         self.prev_result = and_result;
 
         is_falling_edge
-    }
-}
-
-#[inline(always)]
-fn get_clock_bit_position(tac: u8) -> u8 {
-    match tac & 0b11 {
-        // 0b00 (4096 Hz): div bit 9, increment every 256 M-cycles
-        0b00 => 9,
-        // 0b01 (262144 Hz): div bit 3, increment every 4 M-cycles
-        0b01 => 3,
-        // 0b10 (65536 Hz): div bit 5, increment every 16 M-cycles
-        0b10 => 5,
-        // 0b11 (16384 Hz): div bit 7, increment every 64 M-cycles
-        0b11 => 7,
-        _ => unreachable!(),
     }
 }
 

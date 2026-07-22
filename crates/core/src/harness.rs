@@ -169,8 +169,7 @@ pub fn run_duration(cpu: &mut Cpu, duration: Duration) {
     loop {
         cpu.step();
 
-        // Batch the wall-clock checks like `run` does: `Instant::now()` per
-        // step is ~20% of the whole run in profiles.
+        // Batch the check: `Instant::now()` per step is ~20% of the run
         since_poll += 1;
         if since_poll >= POLL_STEPS {
             since_poll = 0;
