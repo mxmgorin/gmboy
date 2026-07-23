@@ -44,17 +44,11 @@ The emulator passes a wide range of community test suites and is continuously va
 ## Demos
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/01bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/01bg.gif" alt="Demo 1" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/acid.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/acid.gif" alt="Passing the CGB-acid2 and CGB-acid-hell PPU tests" width="200"/>
   </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/02bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/02bg.gif" alt="Demo 2" width="200"/>
-  </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/03bg.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/03bg.gif" alt="Demo 3" width="200"/>
-  </a>&nbsp;&nbsp;
-  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" target="_blank">
-    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/pokemoncrystal.gif" alt="Demo 4" width="200"/>
+  <a href="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/prehistorik.gif" target="_blank">
+    <img src="https://raw.githubusercontent.com/mxmgorin/oxgbc/main/media/prehistorik.gif" alt="Prehistorik Man" width="200"/>
   </a>
 </p>
 
