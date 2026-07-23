@@ -19,20 +19,21 @@
 <div align="center">
 
 [![Tests](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/mxmgorin/oxgbc?color=blue)](https://github.com/mxmgorin/oxgbc/releases/latest)
+[![License](https://img.shields.io/github/license/mxmgorin/oxgbc?color=blue)](./LICENSE)
+[![Dependencies](https://deps.rs/repo/github/mxmgorin/oxgbc/status.svg)](https://deps.rs/repo/github/mxmgorin/oxgbc)
+
+</div>
+
+<!-- optional extras:
+per-platform build badges (re-enable if you want them back):
 [![Android](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-android.yml)
 [![Windows](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-windows.yml)
 [![macOS](https://github.com/mxmgorin/oxgbc/actions/workflows/build-macos.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-macos.yml)
 [![Linux](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux.yml)
 [![Linux ARM](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux-arm.yml/badge.svg)](https://github.com/mxmgorin/oxgbc/actions/workflows/build-linux-arm.yml)
 
-[![Release](https://img.shields.io/github/v/release/mxmgorin/oxgbc?color=blue)](https://github.com/mxmgorin/oxgbc/releases/latest)
-[![License](https://img.shields.io/github/license/mxmgorin/oxgbc?color=blue)](./LICENSE)
-[![Rust](https://img.shields.io/badge/language-Rust-blue.svg)](https://www.rust-lang.org)
-[![Dependencies](https://deps.rs/repo/github/mxmgorin/oxgbc/status.svg)](https://deps.rs/repo/github/mxmgorin/oxgbc)
-
-</div>
-
-<!-- optional extras (re-enable Downloads once the count is higher):
+re-enable Downloads once the count is higher:
 [![Downloads](https://img.shields.io/github/downloads/mxmgorin/oxgbc/total.svg?color=blue)](https://github.com/mxmgorin/oxgbc/releases)
 [![Lines of code](https://tokei.rs/b1/github/mxmgorin/oxgbc)](https://github.com/mxmgorin/oxgbc)
 -->
