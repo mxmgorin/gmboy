@@ -88,6 +88,9 @@ The emulator passes a wide range of community test suites and is continuously va
 
 ## 🎮 Controls
 
+Every binding is customizable from the in-app settings menu (or by editing
+`config.json`), for both keyboard and gamepad.
+
 <details>
 <summary><b>Default control mappings</b> (click to expand)</summary>
 
@@ -219,15 +222,26 @@ Here are some useful resources for Game Boy development and emulation:
 
 ## Acknowledgments
 
-This project makes use of the following resources:
+This project was possible because of homebrew and emulation community. Huge thanks to everyone who wrote the documentation and test suites that make accurate emulation possible.
 
-- [SM83 Tests](https://github.com/SingleStepTests/sm83) - CPU instruction tests
-- [GB Test ROMs](https://github.com/retrio/gb-test-roms) - general accuracy tests
-- [mooneye test suite](https://github.com/Gekkio/mooneye-test-suite) - general accuracy tests
-- [DMG acid2 test](https://github.com/mattcurrie/dmg-acid2) - PPU testing for DMG
-- [CGB acid2 test](https://github.com/mattcurrie/cgb-acid2) - PPU testing for CGB
-- [MagenTests](https://github.com/alloncm/MagenTests) - PPU testing for DMG and CGB
-- [Game Boy test roms](https://github.com/c-sp/game-boy-test-roms) - various test roms
-- [SameBoy](https://github.com/LIJI32/SameBoy) - shaders (modified for compatibility with GLES)
+**Test suites** — bundled in [`roms/`](roms):
 
-The web demo bundles open-source homebrew games and test ROMs — see [ROM credits & licenses](crates/web/assets/README.md).
+- [SM83 tests](https://github.com/SingleStepTests/sm83) — single-step CPU instruction tests
+- [Blargg's test ROMs](https://github.com/retrio/gb-test-roms) — CPU, timing, and APU accuracy
+- [Mooneye test suite](https://github.com/Gekkio/mooneye-test-suite) — timing and hardware-behavior tests
+- [SameSuite](https://github.com/LIJI32/SameSuite) — APU and edge-case hardware tests
+- [GBMicrotest](https://github.com/aappleby/GBMicrotest) — fine-grained timing microtests
+- [dmg-acid2](https://github.com/mattcurrie/dmg-acid2) — PPU rendering (DMG)
+- [cgb-acid2](https://github.com/mattcurrie/cgb-acid2) — PPU rendering (CGB)
+- [cgb-acid-hell](https://github.com/mattcurrie/cgb-acid-hell) — advanced mid-frame PPU rendering (CGB)
+- [Mealybug Tearoom tests](https://github.com/mattcurrie/mealybug-tearoom-tests) — mid-scanline PPU rendering
+- [MagenTests](https://github.com/alloncm/MagenTests) — PPU rendering (DMG and CGB)
+- [rtc3test](https://github.com/aaaaaa123456789/rtc3test) — MBC3 real-time-clock tests
+
+Many of these are packaged through c-sp's [game-boy-test-roms](https://github.com/c-sp/game-boy-test-roms) collection.
+
+**Code & assets:**
+
+- [SameBoy](https://github.com/LIJI32/SameBoy) — used as a reference for cross-checking behavior (especially the APU), and the source of the shaders (modified for GLES compatibility)
+
+The web demo also bundles open-source homebrew games and test ROMs — see [ROM credits & licenses](crates/web/assets/README.md).
